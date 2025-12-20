@@ -47,7 +47,7 @@ import { Link } from '@inertiajs/vue3';
             <!-- Footer -->
             <div class="mt-8 text-center">
                 <p class="text-white/40 text-sm">
-                    NetSendo v2 © {{ new Date().getFullYear() }}
+                    NetSendo v{{ $page.props.appVersion || '1.0.0' }} © {{ new Date().getFullYear() }}
                 </p>
             </div>
         </div>
