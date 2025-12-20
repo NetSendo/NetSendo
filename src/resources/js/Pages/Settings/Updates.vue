@@ -145,21 +145,51 @@ const getTypeBadge = (type) => {
     }
 };
 
-// Computed changelog - use GitHub data or fallback
+// Computed changelog - merge GitHub data with fallback (GitHub has priority per version)
 const changelog = computed(() => {
-    if (changelogData.value?.releases?.length > 0) {
-        return changelogData.value.releases
-            .filter(r => !r.prerelease)
-            .map(r => ({
+    const githubReleases = changelogData.value?.releases || [];
+    
+    // Create a map of GitHub releases by version for quick lookup
+    const githubVersionMap = new Map();
+    githubReleases
+        .filter(r => !r.prerelease)
+        .forEach(r => {
+            githubVersionMap.set(r.version, {
                 version: r.version,
                 date: r.published_at,
                 type: getTypeFromVersion(r.version),
                 title: r.name || `Version ${r.version}`,
                 changes: parseChangelog(r.body),
                 url: r.url,
-            }));
+                source: 'github',
+            });
+        });
+    
+    // Merge: GitHub entries take priority, fallback fills gaps
+    const mergedChangelog = [];
+    const addedVersions = new Set();
+    
+    // First, add all GitHub entries
+    for (const [version, entry] of githubVersionMap) {
+        mergedChangelog.push(entry);
+        addedVersions.add(version);
     }
-    return fallbackChangelog;
+    
+    // Then, add fallback entries for versions not in GitHub
+    for (const fallbackEntry of fallbackChangelog) {
+        if (!addedVersions.has(fallbackEntry.version)) {
+            mergedChangelog.push({
+                ...fallbackEntry,
+                source: 'local',
+            });
+            addedVersions.add(fallbackEntry.version);
+        }
+    }
+    
+    // Sort by version descending (newest first)
+    return mergedChangelog.sort((a, b) => {
+        return -1 * (a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' }));
+    });
 });
 
 onMounted(() => {

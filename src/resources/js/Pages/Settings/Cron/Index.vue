@@ -673,7 +673,7 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                 </h4>
                                 
                                 <!-- Token not generated -->
-                                <div v-if="!settings.webhook_token" class="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
+                                <div v-if="!webhookSettings.has_token" class="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
                                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                                         {{ t('cron.webhook.no_token') }}
                                     </p>
@@ -708,10 +708,10 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                         <div class="flex gap-2">
                                             <input 
                                                 readonly 
-                                                :value="settings.webhook_token"
+                                                :value="webhookSettings.token"
                                                 class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
                                             />
-                                            <button @click="copyToClipboard(settings.webhook_token)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
+                                            <button @click="copyToClipboard(webhookSettings.token)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
                                         </div>
                                     </div>
                                     
