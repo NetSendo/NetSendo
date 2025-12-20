@@ -35,6 +35,18 @@ NetSendo is a modern email marketing and automation platform that enables:
 
 ---
 
+## 📸 Dashboard Preview
+
+<div align="center">
+
+![NetSendo Dashboard](https://gregciupek.com/wp-content/uploads/2025/12/CleanShot-2025-12-20-at-13.58.34.png)
+
+*Modern, intuitive dashboard with real-time analytics and campaign management*
+
+</div>
+
+---
+
 ## 📋 Requirements
 
 - **Docker Desktop** (recommended) or:
@@ -47,6 +59,31 @@ NetSendo is a modern email marketing and automation platform that enables:
 ---
 
 ## 🐳 Installation (Docker)
+
+> [!IMPORTANT]
+> **Required Configuration Before Starting Docker**
+> 
+> Before running Docker, you MUST configure the following environment variables in `src/.env.docker`:
+> 
+> **1. APP_KEY** (Required - Docker will NOT build without this!):
+> ```env
+> # Find the line: APP_KEY=
+> # Replace with (IMPORTANT: must start with base64:):
+> APP_KEY=base64:YOUR_32_BYTE_KEY_HERE
+> ```
+> Generate a key using: `openssl rand -base64 32`
+> 
+> **2. DB_PASSWORD** (Required - change from default):
+> ```env
+> DB_PASSWORD=your_secure_password
+> ```
+> 
+> **3. AI API Keys** (Optional - for AI features):
+> ```env
+> OPENAI_API_KEY=sk-...
+> ANTHROPIC_API_KEY=sk-ant-...
+> GOOGLE_AI_API_KEY=...
+> ```
 
 ### Option 1: Quick Install (Recommended)
 
@@ -173,17 +210,24 @@ NetSendo/
 
 Configuration is stored in `src/.env` (automatically created from `src/.env.docker`).
 
-### Important Environment Variables
+> [!CAUTION]
+> **You MUST configure these variables before building Docker!**
+
+### Required Environment Variables
 
 ```env
+# REQUIRED: Application Key (must start with base64:)
+# Generate with: openssl rand -base64 32
+APP_KEY=base64:YOUR_GENERATED_KEY_HERE
+
 APP_URL=http://localhost:8080
 APP_LOCALE=en
 
-# Database (Docker)
+# Database (Docker) - CHANGE THE PASSWORD!
 DB_HOST=db
 DB_DATABASE=netsendo
 DB_USERNAME=netsendo
-DB_PASSWORD=root
+DB_PASSWORD=your_secure_password_here
 
 # Redis
 REDIS_HOST=redis
@@ -191,6 +235,19 @@ REDIS_HOST=redis
 # Mail (Mailpit in Docker)
 MAIL_HOST=mailpit
 MAIL_PORT=1025
+```
+
+### Optional: AI Integration Keys
+
+```env
+# OpenAI (for GPT features)
+OPENAI_API_KEY=sk-...
+
+# Anthropic Claude
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Google AI (Gemini)
+GOOGLE_AI_API_KEY=...
 ```
 
 ---
