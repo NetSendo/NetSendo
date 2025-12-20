@@ -38,8 +38,23 @@ RUN mkdir -p /home/dev/.composer && \
     chown -R dev:dev /home/dev
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Copy application source code
+COPY --chown=dev:www-data src/ /var/www/
+
+# Install Composer dependencies (as root for proper permissions, then fix ownership)
+USER root
+RUN cd /var/www && composer install --no-dev --optimize-autoloader --no-interaction
+
+# Build frontend assets
+RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
+
+# Set proper permissions
+RUN chown -R dev:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
 
 USER dev
 
