@@ -1483,6 +1483,10 @@
         "back_to_plans": "Back to plans selection",
         "already_have_key": "I already have a license key",
         "generic_error": "An error occurred. Please try again.",
+        "domain": "Domain",
+        "email": "Contact Email",
+        "show": "Show",
+        "hide": "Hide",
         "plans": {
             "silver": {
                 "name": "SILVER",

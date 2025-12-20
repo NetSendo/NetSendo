@@ -18,12 +18,16 @@ class LicenseController extends Controller
         $licenseKey = Setting::where('key', 'license_key')->first();
         $licensePlan = Setting::where('key', 'license_plan')->first();
         $licenseExpiresAt = Setting::where('key', 'license_expires_at')->first();
+        $licenseEmail = Setting::where('key', 'license_email')->first();
+        $licenseDomain = Setting::where('key', 'license_domain')->first();
 
         return Inertia::render('License/Activate', [
             'licenseActive' => $licenseKey !== null,
             'licensePlan' => $licensePlan?->value,
             'licenseKey' => $licenseKey?->value,
             'licenseExpiresAt' => $licenseExpiresAt?->value,
+            'licenseEmail' => $licenseEmail?->value,
+            'licenseDomain' => $licenseDomain?->value,
             'appVersion' => config('netsendo.version'),
             'plans' => config('netsendo.plans'),
             'stripeGoldPaymentLink' => config('netsendo.stripe_gold_payment_link'),
@@ -139,17 +143,17 @@ class LicenseController extends Controller
     public function activate(Request $request)
     {
         $request->validate([
-            'license_key' => 'required|string|min:20',
+            'license_key' => 'required|string|min:10',
         ]);
 
-        $key = $request->license_key;
+        $key = trim($request->license_key);
         $parts = explode('-', $key);
         
-        if (count($parts) < 3) {
+        if (count($parts) < 2) {
             return back()->withErrors(['license_key' => 'Nieprawidłowy format klucza licencji.']);
         }
 
-        // Decode plan from license key
+        // Decode plan from license key (first part is base64 encoded plan)
         $decodedPlan = @base64_decode($parts[0]);
         if (!$decodedPlan || !in_array(strtoupper($decodedPlan), ['SILVER', 'GOLD'])) {
             return back()->withErrors(['license_key' => 'Nieprawidłowy klucz licencji.']);
@@ -157,46 +161,17 @@ class LicenseController extends Controller
 
         $plan = strtoupper($decodedPlan);
         
-        // Validate license via webhook
-        $webhookUrl = config('netsendo.license_validate_webhook_url');
-        $domain = $request->getHost();
+        // Save the license directly (offline validation - no external webhook needed)
+        $this->saveLicense($key, $plan, null);
         
-        try {
-            $response = Http::timeout(30)->post($webhookUrl, [
-                'action' => 'validate_license',
-                'license_key' => $key,
-                'domain' => $domain,
-                'version' => config('netsendo.version'),
-            ]);
+        // Save domain from current request
+        $domain = $request->getHost();
+        Setting::updateOrCreate(
+            ['key' => 'license_domain'],
+            ['value' => $domain]
+        );
 
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                if ($data['status'] === 'VALID_LIFETIME' || $data['status'] === 'VALID_GOLD') {
-                    // Save license
-                    $expiresAt = $data['expires_at'] ?? null;
-                    $this->saveLicense($key, $plan, $expiresAt);
-
-                    return Redirect::route('dashboard')->with('success', 'Licencja ' . $plan . ' została aktywowana!');
-                } else {
-                    $errorMessage = match($data['status']) {
-                        'EXPIRED_GOLD' => 'Licencja GOLD wygasła. Odnów subskrypcję.',
-                        'INVALID' => 'Nieprawidłowy klucz licencji.',
-                        default => 'Nie udało się zweryfikować licencji.',
-                    };
-                    return back()->withErrors(['license_key' => $errorMessage]);
-                }
-            }
-            
-            // If webhook fails, try offline validation (basic format check)
-            $this->saveLicense($key, $plan, null);
-            return Redirect::route('dashboard')->with('success', 'Licencja ' . $plan . ' została aktywowana (tryb offline).');
-            
-        } catch (\Exception $e) {
-            // Offline activation as fallback
-            $this->saveLicense($key, $plan, null);
-            return Redirect::route('dashboard')->with('success', 'Licencja ' . $plan . ' została aktywowana (tryb offline).');
-        }
+        return Redirect::route('dashboard')->with('success', 'Licencja ' . $plan . ' została aktywowana!');
     }
 
     /**

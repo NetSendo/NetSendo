@@ -1031,6 +1031,10 @@
         "back_to_plans": "Wróć do wyboru planów",
         "already_have_key": "Mam już klucz licencji",
         "generic_error": "Wystąpił błąd. Spróbuj ponownie.",
+        "domain": "Domena",
+        "email": "Email kontaktowy",
+        "show": "Pokaż",
+        "hide": "Ukryj",
         "plans": {
             "silver": {
                 "name": "SILVER",

@@ -969,6 +969,10 @@
         "back_to_plans": "Volver a la selección de planes",
         "already_have_key": "Ya tengo un código de licencia",
         "generic_error": "Ha ocurrido un error. Por favor, inténtelo de nuevo.",
+        "domain": "Dominio",
+        "email": "Correo de contacto",
+        "show": "Mostrar",
+        "hide": "Ocultar",
         "plans": {
             "silver": {
                 "name": "SILVER",

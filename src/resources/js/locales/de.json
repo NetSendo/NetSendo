@@ -1059,6 +1059,10 @@
         "back_to_plans": "Zurück zur Tarifauswahl",
         "already_have_key": "Ich habe bereits einen Lizenzschlüssel",
         "generic_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        "domain": "Domain",
+        "email": "Kontakt-E-Mail",
+        "show": "Anzeigen",
+        "hide": "Verbergen",
         "plans": {
             "silver": {
                 "name": "SILVER",
