@@ -99,6 +99,16 @@
         "soon": "Pronto",
         "source_placeholder": "Escriba o pegue el código HTML..."
     },
+    "first_run": {
+        "modal_title": "¡Bienvenido a NetSendo! 🚀",
+        "modal_subtitle": "Su plataforma de email marketing esta lista para configurar",
+        "modal_description": "Esta es la primera ejecucion del sistema. Para comenzar, cree una cuenta de administrador que gestionara todas las funciones de NetSendo.",
+        "create_admin_button": "Crear cuenta de administrador",
+        "features_heading": "Pronto podra:",
+        "feature_1": "Gestionar listas de correo",
+        "feature_2": "Crear campanas de email",
+        "feature_3": "Analizar estadisticas"
+    },
     "editor": {
         "mode_visual": "Editor",
         "mode_source": "Código HTML",

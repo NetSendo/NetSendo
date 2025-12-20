@@ -97,6 +97,16 @@
             "december": "Dezember"
         }
     },
+    "first_run": {
+        "modal_title": "Willkommen bei NetSendo! 🚀",
+        "modal_subtitle": "Ihre E-Mail-Marketing-Plattform ist bereit zur Einrichtung",
+        "modal_description": "Dies ist der erste Start des Systems. Um zu beginnen, erstellen Sie ein Administratorkonto, das alle NetSendo-Funktionen verwalten wird.",
+        "create_admin_button": "Administratorkonto erstellen",
+        "features_heading": "Bald werden Sie in der Lage sein:",
+        "feature_1": "Mailinglisten zu verwalten",
+        "feature_2": "E-Mail-Kampagnen zu erstellen",
+        "feature_3": "Statistiken zu analysieren"
+    },
     "editor": {
         "mode_visual": "Editor",
         "mode_source": "HTML-Code",
