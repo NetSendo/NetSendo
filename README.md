@@ -4,7 +4,7 @@
 
 # NetSendo
 
-**Profesjonalny system e-mail marketingu i automatyzacji**
+**Professional Email Marketing & Automation Platform**
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
 [![PHP](https://img.shields.io/badge/PHP-8.3-purple.svg)](https://php.net)
@@ -12,30 +12,32 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](LICENSE)
 
-[📖 Dokumentacja](https://docs.netsendo.com) • [🎓 Szkolenia](https://netsendo.com/kursy) • [💬 Forum](https://forum.netsendo.com) • [🐛 Zgłoś błąd](https://support.netsendo.com)
+[📖 Documentation](https://docs.netsendo.com) • [🎓 Courses](https://netsendo.com/courses) • [💬 Forum](https://forum.netsendo.com) • [🐛 Report Bug](https://support.netsendo.com)
+
+**[🇺🇸 English](#-about-netsendo)** | [🇵🇱 Polski](#-o-netsendo-pl) | [🇩🇪 Deutsch](#-über-netsendo-de) | [🇪🇸 Español](#-acerca-de-netsendo-es)
 
 </div>
 
 ---
 
-## 🚀 O NetSendo
+## 🚀 About NetSendo
 
-NetSendo to nowoczesna platforma e-mail marketingu i automatyzacji, pozwalająca na:
+NetSendo is a modern email marketing and automation platform that enables:
 
-- 📧 **E-mail Marketing** - Tworzenie i wysyłka kampanii emailowych z zaawansowanym edytorem MJML
-- 📱 **SMS Marketing** - Wysyłka wiadomości SMS do subskrybentów
-- 🤖 **Automatyzacje** - Tworzenie automatycznych lejków sprzedażowych
-- 📊 **Analityka** - Szczegółowe statystyki otwarć, kliknięć i konwersji
-- 🎨 **Szablony** - Drag & drop edytor szablonów email
-- 🔗 **Integracje AI** - Obsługa OpenAI, Anthropic Claude, Google Gemini
-- 📝 **Formularze** - Generowanie formularzy zapisu z webhookami
-- 👥 **CRM** - Zarządzanie subskrybentami, grupami i tagami
+- 📧 **Email Marketing** - Create and send email campaigns with advanced MJML editor
+- 📱 **SMS Marketing** - Send SMS messages to your subscribers
+- 🤖 **Automations** - Build automated sales funnels and workflows
+- 📊 **Analytics** - Detailed open, click, and conversion statistics
+- 🎨 **Templates** - Drag & drop email template builder
+- 🔗 **AI Integrations** - OpenAI, Anthropic Claude, Google Gemini support
+- 📝 **Forms** - Generate subscription forms with webhooks
+- 👥 **CRM** - Manage subscribers, groups, and tags
 
 ---
 
-## 📋 Wymagania
+## 📋 Requirements
 
-- **Docker Desktop** (zalecane) lub:
+- **Docker Desktop** (recommended) or:
   - PHP 8.3+
   - MySQL 8.0+
   - Redis
@@ -44,118 +46,118 @@ NetSendo to nowoczesna platforma e-mail marketingu i automatyzacji, pozwalająca
 
 ---
 
-## 🐳 Instalacja (Docker)
+## 🐳 Installation (Docker)
 
-### 1. Klonowanie repozytorium
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
 ```
 
-### 2. Uruchomienie
+### 2. Start the application
 
 ```bash
 docker compose up -d --build
 ```
 
-Przy pierwszym uruchomieniu kontener automatycznie:
-- ✅ Zainstaluje zależności Composer i NPM
-- ✅ Wygeneruje klucz aplikacji
-- ✅ Uruchomi migracje bazy danych
-- ✅ Zbuduje assety frontendowe
+On first run, the container will automatically:
+- ✅ Install Composer and NPM dependencies
+- ✅ Generate application key
+- ✅ Run database migrations
+- ✅ Build frontend assets
 
-### 3. Dostęp do aplikacji
+### 3. Access the application
 
-| Usługa | URL | Opis |
-|--------|-----|------|
-| **NetSendo** | http://localhost:8080 | Panel główny |
-| **Mailpit** | http://localhost:8025 | Testowa skrzynka email |
-| **MySQL** | localhost:33006 | Baza danych |
-
----
-
-## 🔑 Licencjonowanie
-
-NetSendo wymaga aktywnej licencji do działania.
-
-### Plany licencyjne
-
-| Plan | Cena | Funkcje |
-|------|------|---------|
-| **SILVER** | Darmowa | Wszystkie podstawowe funkcje, nieograniczone kontakty |
-| **GOLD** | $97/mies. | Zaawansowane automatyzacje, priorytetowe wsparcie, API, white-label |
-
-### Aktywacja licencji
-
-1. Uruchom aplikację i przejdź na stronę główną
-2. Zarejestruj konto administratora
-3. Na stronie licencji wybierz plan SILVER (darmowy) lub GOLD
-4. Wprowadź swój email - licencja zostanie automatycznie aktywowana
+| Service | URL | Description |
+|---------|-----|-------------|
+| **NetSendo** | http://localhost:8080 | Main dashboard |
+| **Mailpit** | http://localhost:8025 | Test email inbox |
+| **MySQL** | localhost:33006 | Database |
 
 ---
 
-## 🛠️ Komendy Docker
+## 🔑 Licensing
+
+NetSendo requires an active license to operate.
+
+### License Plans
+
+| Plan | Price | Features |
+|------|-------|----------|
+| **SILVER** | Free | All basic features, unlimited contacts |
+| **GOLD** | $97/mo | Advanced automations, priority support, API, white-label |
+
+### License Activation
+
+1. Launch the application and go to the main page
+2. Register an administrator account
+3. On the license page, select SILVER (free) or GOLD plan
+4. Enter your email - the license will be automatically activated
+
+---
+
+## 🛠️ Docker Commands
 
 ```bash
-# Uruchomienie
+# Start
 docker compose up -d
 
-# Zatrzymanie
+# Stop
 docker compose down
 
-# Logi aplikacji
+# View logs
 docker compose logs -f app
 
-# Shell w kontenerze
+# Shell access
 docker exec -it netsendo-app bash
 
-# Artisan
-docker exec netsendo-app php artisan <polecenie>
+# Artisan commands
+docker exec netsendo-app php artisan <command>
 
 # Composer
-docker exec netsendo-app composer <polecenie>
+docker exec netsendo-app composer <command>
 
 # NPM
-docker exec netsendo-app npm <polecenie>
+docker exec netsendo-app npm <command>
 
-# Przebudowanie obrazów
+# Rebuild images
 docker compose up -d --build
 ```
 
 ---
 
-## 📁 Struktura projektu
+## 📁 Project Structure
 
 ```
 NetSendo/
-├── docker/                 # Konfiguracja Docker
-│   ├── nginx/             # Konfiguracja Nginx
-│   └── php/               # Dockerfile PHP + entrypoint
-├── src/                    # Kod źródłowy Laravel
-│   ├── app/               # Logika aplikacji
-│   ├── config/            # Konfiguracja
-│   ├── database/          # Migracje i seedery
+├── docker/                 # Docker configuration
+│   ├── nginx/             # Nginx config
+│   └── php/               # PHP Dockerfile + entrypoint
+├── src/                    # Laravel source code
+│   ├── app/               # Application logic
+│   ├── config/            # Configuration
+│   ├── database/          # Migrations and seeders
 │   ├── resources/         # Frontend (Vue.js, CSS)
 │   ├── routes/            # Routing
-│   └── public/            # Pliki publiczne
-├── docker-compose.yml      # Definicja usług Docker
-└── README.md              # Ten plik
+│   └── public/            # Public files
+├── docker-compose.yml      # Docker services definition
+└── README.md              # This file
 ```
 
 ---
 
-## 🔧 Konfiguracja
+## 🔧 Configuration
 
-Konfiguracja znajduje się w pliku `src/.env` (tworzony automatycznie z `src/.env.docker`).
+Configuration is stored in `src/.env` (automatically created from `src/.env.docker`).
 
-### Ważne zmienne środowiskowe
+### Important Environment Variables
 
 ```env
 APP_URL=http://localhost:8080
-APP_LOCALE=pl
+APP_LOCALE=en
 
-# Baza danych (Docker)
+# Database (Docker)
 DB_HOST=db
 DB_DATABASE=netsendo
 DB_USERNAME=netsendo
@@ -164,60 +166,125 @@ DB_PASSWORD=root
 # Redis
 REDIS_HOST=redis
 
-# Mail (Mailpit w Docker)
+# Mail (Mailpit in Docker)
 MAIL_HOST=mailpit
 MAIL_PORT=1025
 ```
 
 ---
 
-## 🌍 Wielojęzyczność
+## 🌍 Internationalization
 
-NetSendo wspiera następujące języki:
+NetSendo supports the following languages:
 
-- 🇵🇱 Polski (domyślny)
-- 🇬🇧 English
+- 🇺🇸 English (default)
+- 🇵🇱 Polski
 - 🇩🇪 Deutsch
 - 🇪🇸 Español
 
-Zmiana języka: Przycisk w nagłówku aplikacji.
+Language switcher is available in the application header.
 
 ---
 
-## 📈 Aktualizacje
+## 📈 Updates
 
-Sprawdź dostępne aktualizacje:
-1. W aplikacji: **Ustawienia → Aktualizacje**
-2. Na GitHub: [Releases](https://github.com/NetSendo/NetSendo/releases)
+Check for available updates:
+1. In the app: **Settings → Updates**
+2. On GitHub: [Releases](https://github.com/NetSendo/NetSendo/releases)
 
-### Proces aktualizacji
+### Update Process
 
 ```bash
-# Zatrzymaj kontenery
+# Stop containers
 docker compose down
 
-# Pobierz najnowszą wersję
+# Pull latest version
 git pull
 
-# Przebuduj i uruchom
+# Rebuild and start
 docker compose up -d --build
 ```
 
 ---
 
-## 🤝 Wsparcie
+## 🤝 Support
 
-- 📖 **Dokumentacja**: https://docs.netsendo.com
+- 📖 **Documentation**: https://docs.netsendo.com
 - 💬 **Forum**: https://forum.netsendo.com
-- 🎓 **Szkolenia**: https://netsendo.com/kursy
-- 🐛 **Zgłoś błąd**: https://support.netsendo.com
+- 🎓 **Courses**: https://netsendo.com/courses
+- 🐛 **Report Bug**: https://support.netsendo.com
 - 📧 **Email**: support@netsendo.com
 
 ---
 
-## 📄 Licencja
+## 📄 License
 
-NetSendo jest oprogramowaniem własnościowym. Szczegóły w pliku [LICENSE](LICENSE).
+NetSendo is proprietary software. See [LICENSE](LICENSE) for details.
+
+---
+
+<details>
+<summary>
+
+## 🇵🇱 O NetSendo (PL)
+
+</summary>
+
+NetSendo to nowoczesna platforma e-mail marketingu i automatyzacji. Umożliwia tworzenie kampanii emailowych, SMS, automatyzacji sprzedażowych i szczegółowej analityki.
+
+### Instalacja
+
+```bash
+git clone https://github.com/NetSendo/NetSendo.git
+cd NetSendo
+docker compose up -d --build
+```
+
+Aplikacja dostępna pod: http://localhost:8080
+
+</details>
+
+<details>
+<summary>
+
+## 🇩🇪 Über NetSendo (DE)
+
+</summary>
+
+NetSendo ist eine moderne E-Mail-Marketing- und Automatisierungsplattform. Erstellen Sie E-Mail-Kampagnen, SMS, Verkaufsautomatisierungen und detaillierte Analysen.
+
+### Installation
+
+```bash
+git clone https://github.com/NetSendo/NetSendo.git
+cd NetSendo
+docker compose up -d --build
+```
+
+Anwendung verfügbar unter: http://localhost:8080
+
+</details>
+
+<details>
+<summary>
+
+## 🇪🇸 Acerca de NetSendo (ES)
+
+</summary>
+
+NetSendo es una plataforma moderna de email marketing y automatización. Cree campañas de correo electrónico, SMS, automatizaciones de ventas y análisis detallados.
+
+### Instalación
+
+```bash
+git clone https://github.com/NetSendo/NetSendo.git
+cd NetSendo
+docker compose up -d --build
+```
+
+Aplicación disponible en: http://localhost:8080
+
+</details>
 
 ---
 
