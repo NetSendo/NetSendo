@@ -63,6 +63,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'appVersion' => config('netsendo.version', '1.0.0'),
         ];
     }
 }

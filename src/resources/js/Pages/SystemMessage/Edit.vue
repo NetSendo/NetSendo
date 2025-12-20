@@ -21,9 +21,13 @@ const props = defineProps({
     },
     list_name: {
         type: String,
-        default: () => t('settings.system_messages.global_default'),
+        default: null,
     },
 });
+
+// Computed property for translated list name
+import { computed } from 'vue';
+const displayListName = computed(() => props.list_name || t('settings.system_messages.global_default'));
 
 const form = useForm({
     title: props.message.title,
@@ -49,7 +53,7 @@ const submit = () => {
                         {{ t('settings.system_messages.edit_title', { name: message.name }) }}
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('settings.system_messages.context') }} <span class="font-medium text-gray-700 dark:text-gray-300">{{ list_name }}</span>
+                        {{ t('settings.system_messages.context') }} <span class="font-medium text-gray-700 dark:text-gray-300">{{ displayListName }}</span>
                     </p>
                 </div>
                 <Link

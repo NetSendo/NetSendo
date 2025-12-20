@@ -615,7 +615,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 <ThemeToggle />
                 
                 <div v-if="!collapsed" class="text-right">
-                    <div class="text-xs text-slate-400">NetSendo v2</div>
+                    <div class="text-xs text-slate-400">NetSendo v{{ $page.props.appVersion || '1.0.0' }}</div>
                     <div 
                         v-if="license?.active" 
                         class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"

@@ -37,6 +37,14 @@ else
     echo "✅ NPM dependencies already installed"
 fi
 
+# Build frontend assets if manifest doesn't exist
+if [ ! -f "public/build/manifest.json" ]; then
+    echo "🔨 Building frontend assets..."
+    npm run build
+else
+    echo "✅ Frontend assets already built"
+fi
+
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
 max_attempts=30

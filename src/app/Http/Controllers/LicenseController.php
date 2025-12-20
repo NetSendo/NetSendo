@@ -247,4 +247,75 @@ class LicenseController extends Controller
             'is_expired' => $isExpired,
         ]);
     }
+
+    /**
+     * Webhook endpoint for automatic license activation from external system.
+     * Expects JSON array with license data:
+     * [{"package": "SILVER", "licenseKey": "...", "domain": "...", "contact_email": "...", "is_active": true}]
+     */
+    public function webhookActivate(Request $request)
+    {
+        // Get the payload - can be array or object
+        $payload = $request->all();
+        
+        // If it's an array with numeric keys, get the first item
+        if (isset($payload[0])) {
+            $licenseData = $payload[0];
+        } else {
+            $licenseData = $payload;
+        }
+
+        // Validate required fields
+        if (!isset($licenseData['licenseKey']) || empty($licenseData['licenseKey'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing licenseKey field',
+            ], 400);
+        }
+
+        if (!isset($licenseData['is_active']) || $licenseData['is_active'] !== true) {
+            return response()->json([
+                'success' => false,
+                'message' => 'License is not active',
+            ], 400);
+        }
+
+        // Extract license information
+        $licenseKey = $licenseData['licenseKey'];
+        $package = strtoupper($licenseData['package'] ?? 'SILVER');
+        $contactEmail = $licenseData['contact_email'] ?? null;
+        $domain = $licenseData['domain'] ?? null;
+
+        // Validate package
+        if (!in_array($package, ['SILVER', 'GOLD'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid package type',
+            ], 400);
+        }
+
+        // Save the license
+        $this->saveLicense($licenseKey, $package, null);
+
+        // Optionally save contact email if provided
+        if ($contactEmail) {
+            Setting::updateOrCreate(
+                ['key' => 'license_email'],
+                ['value' => $contactEmail]
+            );
+        }
+
+        // Log the activation
+        \Illuminate\Support\Facades\Log::info('License activated via webhook', [
+            'package' => $package,
+            'domain' => $domain,
+            'email' => $contactEmail,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'License activated successfully',
+            'package' => $package,
+        ]);
+    }
 }

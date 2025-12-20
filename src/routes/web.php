@@ -253,11 +253,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/show', [\App\Http\Controllers\TrackedLinksController::class, 'show'])->name('show');
         Route::get('/export', [\App\Http\Controllers\TrackedLinksController::class, 'export'])->name('export');
     });
+
+    // Updates/Changelog
+    Route::get('/update', [\App\Http\Controllers\UpdatesController::class, 'index'])->name('update.index');
 });
 
 
 // API route for license status (no auth required for setup checks)
 Route::get('/api/license/status', [LicenseController::class, 'status'])->name('license.status');
+
+// Webhook for automatic license activation from external system (no auth, public endpoint)
+Route::post('/api/license/webhook', [LicenseController::class, 'webhookActivate'])->name('license.webhook');
 
 // Locale switching (works for guests and authenticated users)
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
