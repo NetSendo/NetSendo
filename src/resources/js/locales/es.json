@@ -1998,7 +1998,7 @@
             "title": "Información de proveedores",
             "smtp": "Servidor SMTP propio o servicio de correo (Mailgun, Amazon SES, etc.)",
             "sendgrid": "API de SendGrid - obtenga su clave API en sendgrid.com",
-            "gmail": "API de Gmail (OAuth 2.0) - envío seguro sin 'via gmail.com'"
+            "gmail": "API de Gmail (OAuth 2.0) - envio seguro sin via gmail.com"
         },
         "oauth": {
             "save_first": "Guarde la cuenta para poder conectarla con una cuenta de Gmail.",

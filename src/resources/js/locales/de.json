@@ -909,7 +909,7 @@
             "title": "Anbieterinformationen",
             "smtp": "Eigener SMTP-Server oder E-Mail-Dienst (Mailgun, Amazon SES usw.)",
             "sendgrid": "SendGrid-API - API-Key auf sendgrid.com anfordern",
-            "gmail": "Gmail-API (OAuth 2.0) - sicherer Versand ohne 'via gmail.com'"
+            "gmail": "Gmail-API (OAuth 2.0) - sicherer Versand ohne via gmail.com"
         },
         "oauth": {
             "save_first": "Speichern Sie das Postfach, um es mit einem Gmail-Konto verknüpfen zu können.",
@@ -2173,7 +2173,7 @@
         "community_forum": "Community-Forum",
         "courses_training": "Kurse & Training",
         "report_bug": "Fehler melden",
-        "whats_new": "Was gibt's Neues",
+        "whats_new": "Was gibt es Neues",
         "full_changelog": "Vollständiges Changelog",
         "about": "Über NetSendo",
         "checking_updates": "Suche nach Updates...",

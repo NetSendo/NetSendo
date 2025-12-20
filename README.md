@@ -85,9 +85,11 @@ NetSendo is a modern email marketing and automation platform that enables:
 > GOOGLE_AI_API_KEY=...
 > ```
 
-### Option 1: Quick Install (Recommended)
+---
 
-One-line installation using pre-built Docker images:
+### 🚀 Production Deployment
+
+**Option 1: Quick Install Script (Recommended)**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
@@ -98,26 +100,43 @@ To install a specific version:
 VERSION=1.0.0 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-### Option 2: Manual Installation
+**Option 2: Manual Production Deployment**
 
 ```bash
 # Clone repository
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
 
-# Pull and start (latest version)
+# Create .env file from example
+cp .env.example .env
+# Edit .env with your production settings
+
+# Start production stack (uses pre-built images)
 docker compose up -d
 
 # Or specify a version
 NETSENDO_VERSION=1.0.0 docker compose up -d
 ```
 
-### Option 3: Build from Source (Development)
+| Service | URL | Description |
+|---------|-----|-------------|
+| **NetSendo** | http://localhost:5029 | Main dashboard |
+| **Mailpit** | http://localhost:5031 | Test email inbox |
+| **MySQL** | localhost:5030 | Database |
+
+> [!TIP]
+> All ports are bound to `127.0.0.1` for security. Use a reverse proxy (nginx, Caddy) for public access.
+
+---
+
+### 🛠️ Development Setup
 
 ```bash
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
-docker compose up -d --build
+
+# Start development stack (builds from source)
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
 On first run, the container will automatically:
@@ -126,13 +145,12 @@ On first run, the container will automatically:
 - ✅ Run database migrations
 - ✅ Build frontend assets
 
-### Access the application
-
 | Service | URL | Description |
 |---------|-----|-------------|
 | **NetSendo** | http://localhost:8080 | Main dashboard |
 | **Mailpit** | http://localhost:8025 | Test email inbox |
 | **MySQL** | localhost:33006 | Database |
+| **Vite HMR** | http://localhost:5173 | Hot Module Replacement |
 
 ---
 
@@ -158,8 +176,10 @@ NetSendo requires an active license to operate.
 
 ## 🛠️ Docker Commands
 
+### Production
+
 ```bash
-# Start
+# Start production stack
 docker compose up -d
 
 # Stop
@@ -173,15 +193,31 @@ docker exec -it netsendo-app bash
 
 # Artisan commands
 docker exec netsendo-app php artisan <command>
+```
+
+### Development
+
+```bash
+# Start development stack
+docker compose -f docker-compose.dev.yml up -d --build
+
+# Stop
+docker compose -f docker-compose.dev.yml down
+
+# View logs
+docker compose -f docker-compose.dev.yml logs -f app
+
+# Shell access
+docker exec -it netsendo-app bash
+
+# Artisan commands
+docker exec netsendo-app php artisan <command>
 
 # Composer
 docker exec netsendo-app composer <command>
 
 # NPM
 docker exec netsendo-app npm <command>
-
-# Rebuild images
-docker compose up -d --build
 ```
 
 ---
@@ -190,18 +226,21 @@ docker compose up -d --build
 
 ```
 NetSendo/
-├── docker/                 # Docker configuration
-│   ├── nginx/             # Nginx config
-│   └── php/               # PHP Dockerfile + entrypoint
-├── src/                    # Laravel source code
-│   ├── app/               # Application logic
-│   ├── config/            # Configuration
-│   ├── database/          # Migrations and seeders
-│   ├── resources/         # Frontend (Vue.js, CSS)
-│   ├── routes/            # Routing
-│   └── public/            # Public files
-├── docker-compose.yml      # Docker services definition
-└── README.md              # This file
+├── docker/                     # Docker configuration
+│   ├── nginx/                 # Nginx config
+│   └── php/                   # PHP Dockerfile + entrypoint
+├── src/                        # Laravel source code
+│   ├── app/                   # Application logic
+│   ├── config/                # Configuration
+│   ├── database/              # Migrations and seeders
+│   ├── resources/             # Frontend (Vue.js, CSS)
+│   ├── routes/                # Routing
+│   └── public/                # Public files
+├── backups/                    # Database backups
+│   └── db/                    # MySQL backup files
+├── docker-compose.yml          # Production configuration (main)
+├── docker-compose.dev.yml      # Development configuration
+└── README.md                  # This file
 ```
 
 ---

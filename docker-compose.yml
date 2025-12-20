@@ -1,33 +1,33 @@
 # =============================================================================
-# NetSendo - Docker Compose
+# NetSendo - Docker Compose (Production)
 # =============================================================================
-# Single configuration file for both production and development.
+# Pre-built image deployment for production environments.
 #
-# PRODUCTION (pull pre-built images):
+# USAGE:
 #   docker compose up -d
 #   NETSENDO_VERSION=1.0.0 docker compose up -d
 #
-# DEVELOPMENT (build from source):
-#   docker compose up -d --build
+# REQUIREMENTS:
+#   - Copy .env.example to .env and configure
+#   - Create docker/nginx/default.conf
+#   - Create backups/db directory for database backups
 # =============================================================================
 
 services:
   app:
     image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
-    build:
-      context: ./docker/php
-      dockerfile: Dockerfile
     container_name: netsendo-app
     restart: unless-stopped
     working_dir: /var/www
     volumes:
-      - ./src:/var/www
-    ports:
-      - "5173:5173"
+      - app-data:/var/www
+      - ./.env:/var/www/.env
     environment:
       - DB_HOST=db
       - REDIS_HOST=redis
-      - MAIL_HOST=mailpit
+      - MAIL_HOST=${MAIL_HOST:-mailpit}
+      - APP_ENV=production
+      - APP_DEBUG=false
     networks:
       - netsendo-network
     depends_on:
@@ -35,66 +35,119 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    healthcheck:
+      test: [ "CMD-SHELL", "php artisan about || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   webserver:
     image: nginx:alpine
     container_name: netsendo-webserver
     restart: unless-stopped
     ports:
-      - "${HTTP_PORT:-8080}:80"
+      - "127.0.0.1:${HTTP_PORT:-5029}:80"
     volumes:
-      - ./src:/var/www
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - app-data:/var/www:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - netsendo-network
     depends_on:
-      - app
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     image: mysql:8.0
     container_name: netsendo-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-netsendo}
+      MYSQL_DATABASE: ${DB_DATABASE:-netsendo_prod}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
       MYSQL_PASSWORD: ${DB_PASSWORD:-root}
-      MYSQL_USER: ${DB_USERNAME:-netsendo}
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      MYSQL_USER: ${DB_USERNAME:-netsendo_user}
+      MYSQL_ROOT_HOST: "%"
     volumes:
       - dbdata:/var/lib/mysql
+      - ./backups/db:/backups
     networks:
       - netsendo-network
     ports:
-      - "${DB_PORT:-33006}:3306"
+      - "127.0.0.1:${DB_PORT:-5030}:3306"
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}" ]
       timeout: 5s
       retries: 10
+      interval: 10s
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: netsendo-redis
     restart: unless-stopped
     networks:
       - netsendo-network
     volumes:
       - redisdata:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   mailpit:
     image: axllent/mailpit
     container_name: netsendo-mailpit
     restart: unless-stopped
     ports:
-      - "${MAILPIT_HTTP_PORT:-8025}:8025"
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_HTTP_PORT:-5031}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
     networks:
       - netsendo-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 networks:
   netsendo-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 10.58.0.0/16
 
 volumes:
   dbdata:
+    driver: local
   redisdata:
+    driver: local
+  app-data:
+    driver: local

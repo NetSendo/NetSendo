@@ -11,6 +11,14 @@ import { usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import Dropdown from '@/Components/Dropdown.vue';
 
+const props = defineProps({
+    variant: {
+        type: String,
+        default: 'light', // 'light' for light backgrounds (AuthenticatedLayout), 'dark' for dark backgrounds (GuestLayout)
+        validator: (value) => ['light', 'dark'].includes(value),
+    },
+});
+
 const page = usePage();
 const { locale } = useI18n({ useScope: 'global' });
 
@@ -42,14 +50,28 @@ const switchLocale = (localeCode) => {
         <template #trigger>
             <button
                 type="button"
-                class="flex items-center gap-2 rounded-xl px-3 py-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                class="flex items-center gap-2 rounded-xl px-3 py-2 transition-colors"
+                :class="variant === 'dark' 
+                    ? 'hover:bg-white/10' 
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800'"
                 :title="$t('language.select')"
             >
                 <span class="text-lg leading-none">{{ currentLocaleData?.flag }}</span>
-                <span class="hidden text-sm font-medium text-slate-700 dark:text-slate-200 sm:inline">
+                <span 
+                    class="hidden text-sm font-medium sm:inline"
+                    :class="variant === 'dark' 
+                        ? 'text-white/80 hover:text-white' 
+                        : 'text-slate-700 dark:text-slate-200'"
+                >
                     {{ currentLocaleData?.native }}
                 </span>
-                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg 
+                    class="h-4 w-4" 
+                    :class="variant === 'dark' ? 'text-white/60' : 'text-slate-400'"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>

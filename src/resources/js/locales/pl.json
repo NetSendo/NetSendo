@@ -1498,7 +1498,7 @@
             "title": "Informacje o dostawcach",
             "smtp": "Własny serwer SMTP lub usługa mailowa (Mailgun, Amazon SES, itp.)",
             "sendgrid": "SendGrid API - uzyskaj klucz API na sendgrid.com",
-            "gmail": "Gmail API (OAuth 2.0) - bezpieczna wysyłka bez 'via gmail.com'"
+            "gmail": "Gmail API (OAuth 2.0) - bezpieczna wysyłka bez via gmail.com"
         },
         "oauth": {
             "save_first": "Zapisz skrzynkę, aby móc połączyć ją z kontem Gmail.",

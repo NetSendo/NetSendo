@@ -8,7 +8,7 @@ import { Link } from '@inertiajs/vue3';
     <div class="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <!-- Language Switcher (top right corner) -->
         <div class="absolute top-4 right-4 z-20">
-            <LanguageSwitcher />
+            <LanguageSwitcher variant="dark" />
         </div>
 
         <!-- Animated background elements -->

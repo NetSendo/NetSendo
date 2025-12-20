@@ -901,9 +901,9 @@
             "unsubscribe_url": "Unsubscribe URL"
         },
         "standard_descriptions": {
-            "email": "Subscriber's email address",
-            "first_name": "Subscriber's first name",
-            "last_name": "Subscriber's last name",
+            "email": "Subscriber email address",
+            "first_name": "Subscriber first name",
+            "last_name": "Subscriber last name",
             "phone": "Phone number",
             "device": "Detected device",
             "ip_address": "IP address at subscription",
@@ -1116,7 +1116,7 @@
             "maintenance_hour": "Daily maintenance hour",
             "maintenance_help": "Log cleaning, bounce processing, etc.",
             "global_note_title": "Global CRON settings",
-            "global_note_text": "These settings are default for all lists. Each list can override these settings with its own in the 'Schedule (CRON)' tab."
+            "global_note_text": "These settings are default for all lists. Each list can override these settings with its own in the Schedule (CRON) tab."
         },
         "schedule": {
             "title": "Weekly schedule",
@@ -1418,7 +1418,7 @@
         "coming_soon": "Coming Soon",
         "soon": "Soon",
         "banner_title": "Powerful Integrations on the Way",
-        "banner_desc": "We're building a comprehensive marketplace of integrations to help you connect NetSendo with the tools you already use. Stay tuned for updates!",
+        "banner_desc": "We are building a comprehensive marketplace of integrations to help you connect NetSendo with the tools you already use. Stay tuned for updates!",
         "features": {
             "one_click": "One-click setup",
             "auto_sync": "Auto-sync data",
@@ -1451,7 +1451,7 @@
             }
         },
         "request_title": "Need a specific integration?",
-        "request_desc": "Let us know which tools you'd like to see in NetSendo Marketplace.",
+        "request_desc": "Let us know which tools you would like to see in NetSendo Marketplace.",
         "request_button": "Request Integration"
     },
     "license": {
@@ -1582,7 +1582,7 @@
         "news_title": "Laravel News",
         "news_desc": "Laravel News is a community driven portal and newsletter aggregating all of the latest and most important news in the Laravel ecosystem, including new package releases and tutorials.",
         "ecosystem_title": "Vibrant Ecosystem",
-        "ecosystem_desc": "Laravel's robust library of first-party tools and libraries, such as Forge, Vapor, Nova, Envoyer, and Herd help you take your projects to the next level."
+        "ecosystem_desc": "Laravel robust library of first-party tools and libraries, such as Forge, Vapor, Nova, Envoyer, and Herd help you take your projects to the next level."
     },
     "auth": {
         "login": "Login",
@@ -1598,7 +1598,7 @@
         "verify_code": "Verify Code",
         "welcome_back": "Welcome back",
         "login_to_account": "Sign in to your NetSendo account",
-        "no_account": "Don't have an account yet?",
+        "no_account": "Do not have an account yet?",
         "register": {
             "title": "Registration",
             "admin_title": "Create administrator account",
@@ -1634,7 +1634,7 @@
         },
         "verify_email": {
             "title": "Email Verification",
-            "intro": "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.",
+            "intro": "Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you did not receive the email, we will gladly send you another.",
             "link_sent": "A new verification link has been sent to the email address you provided during registration.",
             "submit": "Resend Verification Email",
             "logout": "Log Out"
@@ -1649,7 +1649,7 @@
         "title": "Profile",
         "information": {
             "title": "Profile Information",
-            "description": "Update your account's profile information and email address.",
+            "description": "Update your account profile information and email address.",
             "name": "Name",
             "email": "Email",
             "timezone": "Timezone",
@@ -1713,11 +1713,11 @@
         "community_forum": "Community Forum",
         "courses_training": "Courses & Training",
         "report_bug": "Report a Bug",
-        "whats_new": "What's New",
+        "whats_new": "What is New",
         "full_changelog": "Full Changelog",
         "about": "About NetSendo",
         "checking_updates": "Checking for updates...",
-        "up_to_date": "You're up to date",
+        "up_to_date": "You are up to date",
         "updates_available": "Updates Available ({count})",
         "download_latest": "Download Latest Version",
         "unable_to_check": "Unable to check for updates",
@@ -1798,7 +1798,7 @@
             "title": "Provider Information",
             "smtp": "Own SMTP server or mail service (Mailgun, Amazon SES, etc.)",
             "sendgrid": "SendGrid API - get API key at sendgrid.com",
-            "gmail": "Gmail API (OAuth 2.0) - secure sending without 'via gmail.com'"
+            "gmail": "Gmail API (OAuth 2.0) - secure sending without via gmail.com"
         },
         "oauth": {
             "save_first": "Save the mailbox to be able to connect it to a Gmail account.",
@@ -1938,7 +1938,7 @@
         "options": "Backup Options",
         "only_db": "Database only (faster backup)",
         "list_title": "Available Backups",
-        "no_backups": "You don't have any backups yet.",
+        "no_backups": "You do not have any backups yet.",
         "filename": "Filename",
         "size": "Size",
         "date": "Created Date",
@@ -2081,7 +2081,7 @@
         "subtitle": "Manage API keys for external integrations",
         "new_key": "Generate new key",
         "empty_title": "No API keys",
-        "empty_text": "You don't have any API keys yet",
+        "empty_text": "You do not have any API keys yet",
         "generate_first": "Generate first key",
         "generate_new": "Generate new key",
         "table": {
@@ -2155,8 +2155,8 @@
         "content_plain_hint": "Used in Plain Text messages",
         "type_insert": "Insert",
         "type_signature": "Signature",
-        "no_inserts": "You don't have any inserts yet",
-        "no_signatures": "You don't have any signatures yet",
+        "no_inserts": "You do not have any inserts yet",
+        "no_signatures": "You do not have any signatures yet",
         "create_first_insert": "Create your first insert",
         "create_first_signature": "Create your first signature",
         "confirm_delete": "Are you sure you want to delete this insert?",
@@ -2166,17 +2166,17 @@
         "variables": {
             "subscriber_data": "Subscriber Data",
             "first_name": "First Name",
-            "first_name_desc": "Subscriber's first name",
+            "first_name_desc": "Subscriber first name",
             "first_name_vocative": "First Name (Vocative)",
             "first_name_vocative_desc": "Polish vocative form (e.g. Jan → Janie)",
             "last_name": "Last Name",
-            "last_name_desc": "Subscriber's last name",
+            "last_name_desc": "Subscriber last name",
             "email": "Email",
-            "email_desc": "Subscriber's email address",
+            "email_desc": "Subscriber email address",
             "phone": "Phone",
-            "phone_desc": "Subscriber's phone number",
+            "phone_desc": "Subscriber phone number",
             "sex": "Gender",
-            "sex_desc": "Subscriber's gender (male/female/other)",
+            "sex_desc": "Subscriber gender (male/female/other)",
             "links": "Links",
             "unsubscribe_link": "Unsubscribe Link",
             "unsubscribe_link_desc": "URL to unsubscribe from the list",
