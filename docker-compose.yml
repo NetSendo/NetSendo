@@ -1,9 +1,22 @@
+# =============================================================================
+# NetSendo - Docker Compose
+# =============================================================================
+# Single configuration file for both production and development.
+#
+# PRODUCTION (pull pre-built images):
+#   docker compose up -d
+#   NETSENDO_VERSION=1.0.0 docker compose up -d
+#
+# DEVELOPMENT (build from source):
+#   docker compose up -d --build
+# =============================================================================
+
 services:
   app:
+    image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
     build:
       context: ./docker/php
       dockerfile: Dockerfile
-    image: netsendo-v2-app
     container_name: netsendo-app
     restart: unless-stopped
     working_dir: /var/www
@@ -11,15 +24,24 @@ services:
       - ./src:/var/www
     ports:
       - "5173:5173"
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - MAIL_HOST=mailpit
     networks:
       - netsendo-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   webserver:
     image: nginx:alpine
     container_name: netsendo-webserver
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "${HTTP_PORT:-8080}:80"
     volumes:
       - ./src:/var/www
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -44,7 +66,11 @@ services:
     networks:
       - netsendo-network
     ports:
-      - "33006:3306"
+      - "${DB_PORT:-33006}:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:alpine
@@ -60,8 +86,8 @@ services:
     container_name: netsendo-mailpit
     restart: unless-stopped
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
     networks:
       - netsendo-network
 

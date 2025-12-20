@@ -176,4 +176,79 @@ class VersionController extends Controller
 
         return substr($body, 0, 300) . '...';
     }
+
+    /**
+     * Get full changelog from GitHub releases for Updates page.
+     */
+    public function changelog()
+    {
+        $githubRepo = config('netsendo.github_repo');
+        $currentVersion = config('netsendo.version');
+        
+        if (empty($githubRepo)) {
+            return response()->json([
+                'releases' => [],
+                'current_version' => $currentVersion,
+            ]);
+        }
+
+        // Cache for 1 hour
+        $cacheKey = 'netsendo_changelog';
+        
+        $releases = Cache::remember($cacheKey, 3600, function () use ($githubRepo) {
+            return $this->fetchAllReleases($githubRepo);
+        });
+
+        return response()->json([
+            'releases' => $releases,
+            'current_version' => $currentVersion,
+        ]);
+    }
+
+    /**
+     * Fetch all releases from GitHub for changelog.
+     */
+    private function fetchAllReleases(string $githubRepo): array
+    {
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Accept' => 'application/vnd.github.v3+json',
+                    'User-Agent' => 'NetSendo-Version-Check',
+                ])
+                ->get("https://api.github.com/repos/{$githubRepo}/releases");
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            $releases = $response->json();
+            
+            if (!is_array($releases)) {
+                return [];
+            }
+
+            $result = [];
+            foreach ($releases as $release) {
+                $tagName = $release['tag_name'] ?? '';
+                $version = ltrim($tagName, 'v');
+                
+                $result[] = [
+                    'version' => $version,
+                    'tag' => $tagName,
+                    'name' => $release['name'] ?? $tagName,
+                    'published_at' => $release['published_at'] ?? null,
+                    'body' => $release['body'] ?? '',
+                    'url' => $release['html_url'] ?? '',
+                    'prerelease' => $release['prerelease'] ?? false,
+                ];
+            }
+
+            return $result;
+
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
 }
+

@@ -18,18 +18,18 @@ const close = () => {
 };
 
 const links = [
-    { label: 'Szybki start', href: 'https://docs.netsendo.com/quickstart', icon: 'rocket' },
-    { label: 'Dokumentacja', href: 'https://docs.netsendo.com', icon: 'book' },
-    { label: 'Dokumentacja API', href: '/docs/api', icon: 'code' },
-    { label: 'Forum społeczności', href: 'https://forum.netsendo.com', icon: 'users' },
-    { label: 'Kursy i szkolenia', href: 'https://netsendo.com/kursy', icon: 'academic' },
-    { label: 'Zgłoś błąd', href: 'https://support.netsendo.com/bug', icon: 'bug' },
+    { label: 'Quick Start', href: 'https://docs.netsendo.com/quickstart', icon: 'rocket' },
+    { label: 'Documentation', href: 'https://docs.netsendo.com', icon: 'book' },
+    { label: 'API Reference', href: '/docs/api', icon: 'code' },
+    { label: 'Community Forum', href: 'https://forum.netsendo.com', icon: 'users' },
+    { label: 'Courses & Training', href: 'https://netsendo.com/courses', icon: 'academic' },
+    { label: 'Report a Bug', href: 'https://support.netsendo.com/bug', icon: 'bug' },
 ];
 
 const whatsNew = [
-    'Nowy system licencjonowania',
-    'Sprawdzanie aktualizacji',
-    'Ulepszone szablony email',
+    'New licensing system',
+    'Update checking',
+    'Improved email templates',
 ];
 
 // Check for updates from GitHub
@@ -60,10 +60,10 @@ const checkForUpdates = async () => {
     } catch (error) {
         versionError.value = 'Nie można sprawdzić aktualizacji';
         // Fallback to static version
-        versionData.value = {
-            current_version: 'v2.0.0',
-            updates_available: false,
-        };
+            versionData.value = {
+                current_version: '1.0.0',
+                updates_available: false,
+            };
     } finally {
         isLoadingUpdates.value = false;
     }
@@ -85,7 +85,7 @@ const refreshUpdates = async () => {
             versionData.value = await response.json();
         }
     } catch (error) {
-        versionError.value = 'Nie można sprawdzić aktualizacji';
+        versionError.value = 'Unable to check for updates';
     } finally {
         isLoadingUpdates.value = false;
     }
@@ -131,7 +131,7 @@ onMounted(() => {
                     {{ versionData.update_count > 9 ? '9+' : versionData.update_count }}
                 </span>
             </span>
-            <span>Pomoc</span>
+            <span>Help</span>
             <svg 
                 class="ml-auto h-4 w-4 text-slate-500 transition-transform duration-200"
                 :class="{ 'rotate-180': isOpen }"
@@ -158,7 +158,7 @@ onMounted(() => {
             >
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                    <span class="text-sm font-semibold text-white">Pomoc & Zasoby</span>
+                    <span class="text-sm font-semibold text-white">Help & Resources</span>
                     <button 
                         @click="close"
                         class="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
@@ -177,14 +177,14 @@ onMounted(() => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                             <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">
-                                Dostępne aktualizacje ({{ versionData.update_count }})
+                                Updates Available ({{ versionData.update_count }})
                             </span>
                         </div>
                         <button 
                             @click="refreshUpdates"
                             :disabled="isLoadingUpdates"
                             class="rounded p-1 text-slate-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
-                            title="Odśwież"
+                            title="Refresh"
                         >
                             <svg :class="['h-3.5 w-3.5', isLoadingUpdates ? 'animate-spin' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -218,7 +218,7 @@ onMounted(() => {
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Pobierz najnowszą wersję
+                            Download Latest Version
                         </a>
                     </div>
                 </div>
@@ -230,7 +230,7 @@ onMounted(() => {
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span class="text-xs">Sprawdzanie aktualizacji...</span>
+                        <span class="text-xs">Checking for updates...</span>
                     </div>
                 </div>
 
@@ -240,7 +240,7 @@ onMounted(() => {
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        <span class="text-xs font-medium">Masz najnowszą wersję</span>
+                        <span class="text-xs font-medium">You're up to date</span>
                     </div>
                 </div>
 
@@ -289,7 +289,7 @@ onMounted(() => {
                 <!-- What's New -->
                 <div class="border-t border-white/10 p-3">
                     <div class="mb-2 flex items-center gap-2">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Co nowego</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">What's New</span>
                         <span class="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">NEW</span>
                     </div>
                     <div class="space-y-1">
@@ -307,7 +307,7 @@ onMounted(() => {
                         target="_blank"
                         class="mt-2 inline-block text-xs text-indigo-400 hover:text-indigo-300"
                     >
-                        Pełny changelog →
+                        Full Changelog →
                     </a>
                 </div>
 
@@ -315,14 +315,14 @@ onMounted(() => {
                 <div class="border-t border-white/10 px-4 py-3">
                     <div class="flex items-center justify-between text-xs">
                         <span class="text-slate-500">
-                            NetSendo v{{ versionData?.current_version || '2.0.0' }}
+                        NetSendo v{{ versionData?.current_version || '1.0.0' }}
                         </span>
                         <a 
                             href="https://netsendo.com" 
                             target="_blank"
                             class="text-slate-400 hover:text-white"
                         >
-                            O NetSendo
+                            About NetSendo
                         </a>
                     </div>
                 </div>

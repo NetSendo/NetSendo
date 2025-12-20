@@ -61,7 +61,7 @@ To install a specific version:
 VERSION=1.0.0 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-### Option 2: Using Pre-built Images
+### Option 2: Manual Installation
 
 ```bash
 # Clone repository
@@ -69,10 +69,10 @@ git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
 
 # Pull and start (latest version)
-docker compose -f docker-compose.prod.yml up -d
+docker compose up -d
 
 # Or specify a version
-NETSENDO_VERSION=1.0.0 docker compose -f docker-compose.prod.yml up -d
+NETSENDO_VERSION=1.0.0 docker compose up -d
 ```
 
 ### Option 3: Build from Source (Development)

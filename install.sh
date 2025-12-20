@@ -67,8 +67,8 @@ cd "$INSTALL_DIR"
 
 echo -e "${BLUE}📥 Downloading configuration files...${NC}"
 
-# Download docker-compose.prod.yml
-curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPO}/main/docker-compose.prod.yml" -o docker-compose.yml
+# Download docker-compose.yml
+curl -fsSL "https://raw.githubusercontent.com/${GITHUB_REPO}/main/docker-compose.yml" -o docker-compose.yml
 
 # Download nginx config
 mkdir -p docker/nginx

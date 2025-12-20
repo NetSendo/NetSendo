@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/version/check', [VersionController::class, 'check'])->name('api.version.check');
     Route::get('/api/version/refresh', [VersionController::class, 'refresh'])->name('api.version.refresh');
     Route::get('/api/version/current', [VersionController::class, 'current'])->name('api.version.current');
+    Route::get('/api/version/changelog', [VersionController::class, 'changelog'])->name('api.version.changelog');
     
     // Two-Factor Authentication routes
     Route::get('/profile/2fa', [\App\Http\Controllers\TwoFactorController::class, 'index'])->name('profile.2fa.index');
