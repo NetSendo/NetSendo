@@ -2053,7 +2053,8 @@
             "paused": "Versand pausiert",
             "running": "In Bearbeitung",
             "success": "Erfolg",
-            "failed": "Fehlgeschlagen"
+            "failed": "Fehlgeschlagen",
+            "not_configured": "Nicht konfiguriert"
         },
         "settings": {
             "title": "Versandeinstellungen",

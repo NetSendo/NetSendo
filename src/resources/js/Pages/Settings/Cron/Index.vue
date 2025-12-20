@@ -13,6 +13,7 @@ const props = defineProps({
     recentLogs: Array,
     listsAllowedNow: Array,
     isDispatchAllowed: Boolean,
+    isCronConfigured: Boolean,
 });
 
 const days = [
@@ -175,11 +176,13 @@ const statusColors = {
                     <!-- Status indicator -->
                     <span :class="[
                         'px-3 py-1 rounded-full text-sm font-medium',
-                        isDispatchAllowed 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                        !isCronConfigured
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            : isDispatchAllowed 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                     ]">
-                        {{ isDispatchAllowed ? '🟢 ' + t('cron.status.active') : '🟡 ' + t('cron.status.paused') }}
+                        {{ !isCronConfigured ? '🔴 ' + t('cron.status.not_configured') : (isDispatchAllowed ? '🟢 ' + t('cron.status.active') : '🟡 ' + t('cron.status.paused')) }}
                     </span>
                     <button @click="refreshStats" class="btn btn-outline btn-sm">
                         🔄 {{ t('cron.actions.refresh') }}

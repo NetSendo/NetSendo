@@ -26,6 +26,9 @@ class CronSettingsController extends Controller
         $stats = CronJobLog::getLast24HoursStats();
         $recentLogs = CronJobLog::getRecent(20);
         $listsAllowedNow = $this->cronService->getListsAllowedForDispatch();
+        
+        // Check if CRON has ever run
+        $isCronConfigured = CronJobLog::exists();
 
         return Inertia::render('Settings/Cron/Index', [
             'settings' => $settings,
@@ -33,6 +36,7 @@ class CronSettingsController extends Controller
             'recentLogs' => $recentLogs,
             'listsAllowedNow' => $listsAllowedNow,
             'isDispatchAllowed' => $this->cronService->isGlobalDispatchAllowed(),
+            'isCronConfigured' => $isCronConfigured,
         ]);
     }
 

@@ -289,6 +289,59 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_AI_API_KEY=...
 ```
 
+### Production Configuration
+
+> [!TIP]
+> **Auto-detected settings**: NetSendo automatically configures these from `APP_URL`:
+> - `SESSION_DOMAIN` - extracted from APP_URL hostname
+> - `SESSION_SECURE_COOKIE` - set to `true` if APP_URL uses `https://`
+
+```env
+# === REQUIRED ===
+APP_URL=https://your-domain.com    # Your production URL (with https://)
+APP_KEY=base64:...                 # Generate with: openssl rand -base64 32
+APP_ENV=production
+APP_DEBUG=false
+
+# Database
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_DATABASE=netsendo_prod
+DB_USERNAME=netsendo_user
+DB_PASSWORD=your_secure_password   # CHANGE THIS!
+
+# Redis (recommended for sessions/cache)
+REDIS_HOST=redis
+SESSION_DRIVER=redis
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+
+# Mail configuration
+MAIL_MAILER=smtp
+MAIL_HOST=your-smtp-server.com
+MAIL_PORT=587
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@your-domain.com
+MAIL_FROM_NAME="${APP_NAME}"
+
+# === OPTIONAL OVERRIDES ===
+# These are auto-detected from APP_URL, only set if you need custom values:
+
+# SESSION_DOMAIN=.your-domain.com       # Auto-detected from APP_URL
+# SESSION_SECURE_COOKIE=true            # Auto-detected (true for https://)
+# TRUSTED_PROXIES=*                     # Set if behind load balancer/CDN
+```
+
+> [!IMPORTANT]
+> **Reverse Proxy Configuration**: If using nginx/Caddy as reverse proxy, ensure your proxy passes the correct headers:
+> ```nginx
+> proxy_set_header X-Forwarded-Proto $scheme;
+> proxy_set_header X-Forwarded-Host $host;
+> proxy_set_header X-Real-IP $remote_addr;
+> ```
+
 ---
 
 ## 🌍 Internationalization

@@ -1109,6 +1109,23 @@
             "saving": "Saving...",
             "refresh": "Refresh"
         },
+        "status": {
+            "active": "Active",
+            "paused": "Paused",
+            "running": "Running",
+            "success": "Success",
+            "failed": "Failed",
+            "not_configured": "Not Configured"
+        },
+        "days": {
+            "monday": "Monday",
+            "tuesday": "Tuesday",
+            "wednesday": "Wednesday",
+            "thursday": "Thursday",
+            "friday": "Friday",
+            "saturday": "Saturday",
+            "sunday": "Sunday"
+        },
         "settings": {
             "title": "Dispatch Settings",
             "volume_per_minute": "Message limit / minute",
@@ -1125,7 +1142,8 @@
             "from": "From",
             "to": "To",
             "preset_24h": "24h",
-            "preset_business": "8-17"
+            "preset_business": "8-17",
+            "preset_office": "9-18"
         },
         "instructions": {
             "title": "Installation Instructions",

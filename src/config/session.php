@@ -154,9 +154,18 @@ return [
     | available to. By default, the cookie will be available to the root
     | domain without subdomains. Typically, this shouldn't be changed.
     |
+    | NetSendo: Auto-detect from APP_URL if SESSION_DOMAIN is not set
+    |
     */
 
-    'domain' => env('SESSION_DOMAIN'),
+    'domain' => env('SESSION_DOMAIN', (function () {
+        $appUrl = env('APP_URL');
+        if (!$appUrl) {
+            return null;
+        }
+        $host = parse_url($appUrl, PHP_URL_HOST);
+        return $host ?: null;
+    })()),
 
     /*
     |--------------------------------------------------------------------------
@@ -167,9 +176,17 @@ return [
     | to the server if the browser has a HTTPS connection. This will keep
     | the cookie from being sent to you when it can't be done securely.
     |
+    | NetSendo: Auto-detect from APP_URL protocol if not set
+    |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', (function () {
+        $appUrl = env('APP_URL');
+        if (!$appUrl) {
+            return null;
+        }
+        return str_starts_with($appUrl, 'https://');
+    })()),
 
     /*
     |--------------------------------------------------------------------------

@@ -1528,7 +1528,8 @@
             "paused": "Wysyłka wstrzymana",
             "running": "W trakcie",
             "success": "Sukces",
-            "failed": "Błąd"
+            "failed": "Błąd",
+            "not_configured": "Nie skonfigurowany"
         },
         "settings": {
             "title": "Ustawienia wysyłki",
