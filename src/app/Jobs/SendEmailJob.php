@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\Mailbox;
+use App\Models\Message;
+use App\Models\Subscriber;
+use App\Services\Mail\MailProviderService;
+use App\Services\PlaceholderService;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+
+class SendEmailJob implements ShouldQueue
+{
+    use Queueable;
+
+    public $tries = 3;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct(
+        public Message $message,
+        public Subscriber $subscriber,
+        public ?Mailbox $mailbox = null
+    ) {}
+
+    /**
+     * Execute the job.
+     */
+    public function handle(MailProviderService $providerService, PlaceholderService $placeholderService): void
+    {
+        try {
+            // Get the mailbox to use (explicit mailbox, message's mailbox, or user's default)
+            $mailbox = $this->resolveMailbox($providerService);
+            
+            // Validate mailbox can send this message type
+            if ($mailbox && !$providerService->validateMailboxForType($mailbox, $this->message->type ?? 'broadcast')) {
+                Log::warning("Mailbox {$mailbox->id} cannot send message type: {$this->message->type}");
+                // Fall back to default Laravel mailer
+                $mailbox = null;
+            }
+
+            $content = $this->message->content;
+            $subject = $this->message->subject;
+
+            // Generate HMAC Hash for security
+            $hash = hash_hmac('sha256', "{$this->message->id}.{$this->subscriber->id}", config('app.key'));
+
+            // 1. Variable Replacement using PlaceholderService (supports custom fields)
+            $processed = $placeholderService->processEmailContent($content, $subject, $this->subscriber);
+            $content = $processed['content'];
+            $subject = $processed['subject'];
+
+            // 3. Link Tracking Replacement
+            $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash) {
+                $url = $matches[1];
+                
+                // Skip special links
+                if (str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:') || str_starts_with($url, '#') || str_contains($url, 'unsubscribe')) {
+                    return 'href="' . $url . '"';
+                }
+
+                // Generate tracking URL
+                $trackingUrl = route('tracking.click', [
+                    'message' => $this->message->id,
+                    'subscriber' => $this->subscriber->id,
+                    'hash' => $hash,
+                    'url' => $url
+                ]);
+
+                return 'href="' . $trackingUrl . '"';
+            }, $content);
+
+            // 4. Open Tracking Pixel
+            $pixelUrl = route('tracking.open', [
+                'message' => $this->message->id,
+                'subscriber' => $this->subscriber->id,
+                'hash' => $hash,
+            ]);
+            
+            $pixelHtml = '<img src="' . $pixelUrl . '" alt="" width="1" height="1" border="0" style="height:1px !important;width:1px !important;border-width:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-right:0 !important;margin-left:0 !important;padding-top:0 !important;padding-bottom:0 !important;padding-right:0 !important;padding-left:0 !important;"/>';
+            
+            if (str_contains($content, '</body>')) {
+                $content = str_replace('</body>', $pixelHtml . '</body>', $content);
+            } else {
+                $content .= $pixelHtml;
+            }
+
+            // 5. Send Email using Mailbox Provider or Default Laravel Mailer
+            $recipientName = trim(($this->subscriber->first_name ?? '') . ' ' . ($this->subscriber->last_name ?? ''));
+            
+            if ($mailbox) {
+                // Use custom mailbox provider
+                $provider = $providerService->getProvider($mailbox);
+                $provider->send(
+                    $this->subscriber->email,
+                    $recipientName ?: $this->subscriber->email,
+                    $subject,
+                    $content
+                );
+
+                // Track sent count for rate limiting
+                $mailbox->incrementSentCount();
+                
+                Log::info("Email sent via {$mailbox->provider} ({$mailbox->name}) to {$this->subscriber->email}");
+            } else {
+                // Fall back to default Laravel mailer
+                Mail::html($content, function ($mail) use ($subject) {
+                    $mail->to($this->subscriber->email, ($this->subscriber->first_name . ' ' . $this->subscriber->last_name));
+                    $mail->subject($subject);
+                    $mail->from(config('mail.from.address'), config('mail.from.name'));
+                });
+                
+                Log::info("Email sent via default mailer to {$this->subscriber->email}");
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Failed to send email to {$this->subscriber->email}: " . $e->getMessage());
+            $this->fail($e);
+        }
+    }
+
+    /**
+     * Resolve which mailbox to use for this email
+     */
+    private function resolveMailbox(MailProviderService $providerService): ?Mailbox
+    {
+        // Priority 1: Explicitly passed mailbox
+        if ($this->mailbox && $this->mailbox->is_active) {
+            return $this->mailbox;
+        }
+
+        // Priority 2: Message's assigned mailbox
+        if ($this->message->mailbox_id && $this->message->mailbox?->is_active) {
+            return $this->message->mailbox;
+        }
+
+        // Priority 3: User's best available mailbox for this message type
+        if ($this->message->user_id) {
+            return $providerService->getBestMailbox(
+                $this->message->user_id,
+                $this->message->type ?? 'broadcast'
+            );
+        }
+
+        return null;
+    }
+}

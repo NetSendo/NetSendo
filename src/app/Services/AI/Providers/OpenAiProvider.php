@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Services\AI\Providers;
+
+use App\Services\AI\BaseProvider;
+
+class OpenAiProvider extends BaseProvider
+{
+    protected function getDefaultModel(): string
+    {
+        return 'gpt-4o-mini';
+    }
+
+    public function supportsFetchModels(): bool
+    {
+        return true;
+    }
+
+    public function testConnection(): array
+    {
+        $response = $this->makeRequest('get', 'models');
+
+        if ($response['success']) {
+            return [
+                'success' => true,
+                'message' => 'Połączenie z OpenAI działa poprawnie.',
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Błąd połączenia: ' . ($response['error'] ?? 'Nieznany błąd'),
+        ];
+    }
+
+    public function fetchAvailableModels(): array
+    {
+        $response = $this->makeRequest('get', 'models');
+
+        if (!$response['success']) {
+            return [];
+        }
+
+        $models = [];
+        $data = $response['data']['data'] ?? [];
+
+        // Filter to only chat models
+        $chatModels = array_filter($data, function ($model) {
+            $id = $model['id'] ?? '';
+            return str_starts_with($id, 'gpt-') || str_starts_with($id, 'o1');
+        });
+
+        foreach ($chatModels as $model) {
+            $id = $model['id'];
+            $models[] = [
+                'model_id' => $id,
+                'display_name' => $this->formatModelName($id),
+            ];
+        }
+
+        // Sort by model name
+        usort($models, fn($a, $b) => strcmp($a['model_id'], $b['model_id']));
+
+        return $models;
+    }
+
+    public function generateText(string $prompt, ?string $model = null, array $options = []): string
+    {
+        $response = $this->makeRequest('post', 'chat/completions', [
+            'model' => $this->getModel($model),
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'max_tokens' => $options['max_tokens'] ?? 1024,
+            'temperature' => $options['temperature'] ?? 0.7,
+        ]);
+
+        if (!$response['success']) {
+            throw new \Exception('OpenAI Error: ' . ($response['error'] ?? 'Unknown error'));
+        }
+
+        return $response['data']['choices'][0]['message']['content'] ?? '';
+    }
+
+    private function formatModelName(string $modelId): string
+    {
+        $names = [
+            'gpt-4o' => 'GPT-4o',
+            'gpt-4o-mini' => 'GPT-4o Mini',
+            'gpt-4-turbo' => 'GPT-4 Turbo',
+            'gpt-4' => 'GPT-4',
+            'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
+            'o1-preview' => 'o1 Preview',
+            'o1-mini' => 'o1 Mini',
+        ];
+
+        return $names[$modelId] ?? strtoupper(str_replace('-', ' ', $modelId));
+    }
+}

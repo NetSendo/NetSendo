@@ -1,0 +1,772 @@
+<script setup>
+import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import axios from 'axios';
+
+const { t } = useI18n();
+
+const props = defineProps({
+    block: Object,
+    aiAvailable: Boolean,
+});
+
+const emit = defineEmits(['update', 'delete', 'duplicate', 'ai-content']);
+
+// Local copy of block content
+const localContent = ref({ ...props.block?.content });
+const localSettings = ref({ ...props.block?.settings });
+
+// Track current block ID to prevent focus loss
+const currentBlockId = ref(props.block?.id);
+
+// Local text content for textarea (extracted from HTML to prevent focus loss)
+const localTextContent = ref(props.block?.content?.html?.replace(/<[^>]*>/g, '') || '');
+
+// Watch for block change - only update text when switching to DIFFERENT block
+watch(() => props.block, (newBlock) => {
+    if (newBlock) {
+        localContent.value = { ...newBlock.content };
+        localSettings.value = { ...newBlock.settings };
+        
+        // Only update localTextContent when the selected block CHANGES (not on content updates)
+        if (newBlock.id !== currentBlockId.value) {
+            currentBlockId.value = newBlock.id;
+            localTextContent.value = newBlock.content?.html?.replace(/<[^>]*>/g, '') || '';
+        }
+    }
+}, { deep: true });
+
+// AI state
+const isGenerating = ref(false);
+const aiPrompt = ref('');
+const aiTone = ref('casual');
+
+// Update block content
+const updateContent = (key, value) => {
+    localContent.value[key] = value;
+    emit('update', { content: { ...localContent.value } });
+};
+
+// Update block settings
+const updateSettings = (key, value) => {
+    localSettings.value[key] = value;
+    emit('update', { settings: { ...localSettings.value } });
+};
+
+// Generate AI content for text block
+const generateAiContent = async () => {
+    if (!aiPrompt.value || isGenerating.value) return;
+
+    isGenerating.value = true;
+    try {
+        const response = await axios.post(route('api.templates.ai.content'), {
+            prompt: aiPrompt.value,
+            block_type: props.block.type,
+            tone: aiTone.value,
+        });
+
+        if (response.data.success) {
+            updateContent('html', response.data.content);
+            aiPrompt.value = '';
+        }
+    } catch (error) {
+        console.error('AI generation failed:', error);
+    } finally {
+        isGenerating.value = false;
+    }
+};
+
+// Improve existing text
+const improveText = async (action = 'improve') => {
+    if (!localContent.value.html || isGenerating.value) return;
+
+    isGenerating.value = true;
+    try {
+        const response = await axios.post(route('api.templates.ai.improve'), {
+            text: localContent.value.html,
+            tone: aiTone.value,
+            action: action,
+        });
+
+        if (response.data.success) {
+            updateContent('html', response.data.content);
+        }
+    } catch (error) {
+        console.error('AI improvement failed:', error);
+    } finally {
+        isGenerating.value = false;
+    }
+};
+
+// File upload for images
+const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const response = await axios.post(route('api.templates.upload-image'), formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        if (response.data.success) {
+            if (props.block.type === 'header') {
+                updateContent('logo', response.data.url);
+            } else {
+                updateContent('src', response.data.url);
+            }
+        }
+    } catch (error) {
+        console.error('Image upload failed:', error);
+    }
+};
+
+// Alignment options
+const alignmentOptions = [
+    { value: 'left', icon: 'M4 6h16M4 12h10M4 18h16' },
+    { value: 'center', icon: 'M4 6h16M7 12h10M4 18h16' },
+    { value: 'right', icon: 'M4 6h16M10 12h10M4 18h16' },
+];
+
+// Social icons options
+const socialOptions = [
+    { type: 'facebook', label: 'Facebook' },
+    { type: 'twitter', label: 'Twitter / X' },
+    { type: 'instagram', label: 'Instagram' },
+    { type: 'linkedin', label: 'LinkedIn' },
+    { type: 'youtube', label: 'YouTube' },
+];
+
+// Toggle social icon
+const toggleSocialIcon = (type, checked) => {
+    const icons = [...(localContent.value.icons || [])];
+    if (checked) {
+        if (!icons.some(i => i.type === type)) {
+            icons.push({ type, url: '' });
+        }
+    } else {
+        const index = icons.findIndex(i => i.type === type);
+        if (index > -1) icons.splice(index, 1);
+    }
+    updateContent('icons', icons);
+};
+
+// Update social icon URL
+const updateSocialUrl = (type, url) => {
+    const icons = [...(localContent.value.icons || [])];
+    const icon = icons.find(i => i.type === type);
+    if (icon) {
+        icon.url = url;
+        updateContent('icons', icons);
+    }
+};
+
+// Update products count for product grid
+const updateProductsCount = (count) => {
+    const products = [];
+    for (let i = 0; i < count; i++) {
+        products.push({ id: i + 1 });
+    }
+    updateContent('products', products);
+};
+</script>
+
+<template>
+    <div class="space-y-6">
+        <!-- Block header -->
+        <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
+                {{ $t(`template_builder.blocks.${block.type}`) }}
+            </h4>
+            <div class="flex gap-1">
+                <button 
+                    @click="$emit('duplicate')"
+                    class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    :title="$t('template_builder.duplicate')"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </button>
+                <button 
+                    @click="$emit('delete')"
+                    class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                    :title="$t('template_builder.delete')"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- HEADER BLOCK -->
+        <template v-if="block.type === 'header'">
+            <div class="space-y-4">
+                <!-- Logo upload -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.logo') }}</label>
+                    <div v-if="localContent.logo" class="relative mb-2 rounded bg-slate-100 p-2 dark:bg-slate-800">
+                        <img :src="localContent.logo" class="mx-auto max-h-16" />
+                        <button @click="updateContent('logo', null)" class="absolute right-1 top-1 rounded bg-red-500 p-1 text-white hover:bg-red-600">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {{ $t('template_builder.upload_logo') }}
+                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+                    </label>
+                </div>
+
+                <!-- Logo width -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.logo_width') }}</label>
+                    <input 
+                        type="range" 
+                        :value="localContent.logoWidth" 
+                        @input="updateContent('logoWidth', parseInt($event.target.value))"
+                        min="50" 
+                        max="300"
+                        class="w-full"
+                    />
+                    <div class="text-right text-xs text-slate-400">{{ localContent.logoWidth }}px</div>
+                </div>
+
+                <!-- Background color -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="color" 
+                            :value="localContent.backgroundColor" 
+                            @input="updateContent('backgroundColor', $event.target.value)"
+                            class="h-10 w-14 cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                        <input 
+                            type="text" 
+                            :value="localContent.backgroundColor" 
+                            @input="updateContent('backgroundColor', $event.target.value)"
+                            class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- TEXT BLOCK -->
+        <template v-else-if="block.type === 'text'">
+            <div class="space-y-4">
+                <!-- Rich text editor (simplified) -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.content') }}</label>
+                    <textarea 
+                        v-model="localTextContent"
+                        @blur="updateContent('html', '<p>' + localTextContent + '</p>')"
+                        rows="6"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        :placeholder="$t('template_builder.text_placeholder')"
+                    ></textarea>
+                </div>
+
+                <!-- Alignment -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
+                    <div class="flex gap-1">
+                        <button 
+                            v-for="opt in alignmentOptions" 
+                            :key="opt.value"
+                            @click="updateContent('alignment', opt.value)"
+                            :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                            class="rounded-lg p-2"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="opt.icon" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- AI Assistant -->
+                <div v-if="aiAvailable" class="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-800 dark:bg-indigo-900/20">
+                    <label class="mb-2 flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        {{ $t('template_builder.ai_assistant') }}
+                    </label>
+                    <textarea 
+                        v-model="aiPrompt"
+                        rows="2"
+                        class="mb-2 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm dark:border-indigo-700 dark:bg-slate-800 dark:text-white"
+                        :placeholder="$t('template_builder.ai_prompt_placeholder')"
+                    ></textarea>
+                    <select v-model="aiTone" class="mb-2 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm dark:border-indigo-700 dark:bg-slate-800 dark:text-white">
+                        <option value="casual">{{ $t('template_builder.tone_casual') }}</option>
+                        <option value="formal">{{ $t('template_builder.tone_formal') }}</option>
+                        <option value="persuasive">{{ $t('template_builder.tone_persuasive') }}</option>
+                    </select>
+                    <div class="flex gap-2">
+                        <button 
+                            @click="generateAiContent"
+                            :disabled="isGenerating"
+                            class="flex-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                        >
+                            {{ isGenerating ? $t('template_builder.generating') : $t('template_builder.generate') }}
+                        </button>
+                        <button 
+                            @click="improveText('improve')"
+                            :disabled="isGenerating || !localContent.html"
+                            class="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:text-indigo-300"
+                        >
+                            {{ $t('template_builder.improve') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- IMAGE BLOCK -->
+        <template v-else-if="block.type === 'image'">
+            <div class="space-y-4">
+                <!-- Image upload -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.image') }}</label>
+                    <div v-if="localContent.src" class="relative mb-2 rounded bg-slate-100 p-2 dark:bg-slate-800">
+                        <img :src="localContent.src" class="mx-auto max-h-32" />
+                        <button @click="updateContent('src', null)" class="absolute right-1 top-1 rounded bg-red-500 p-1 text-white hover:bg-red-600">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {{ $t('template_builder.upload_image') }}
+                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+                    </label>
+                </div>
+
+                <!-- Alt text -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alt_text') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.alt" 
+                        @input="updateContent('alt', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        :placeholder="$t('template_builder.alt_placeholder')"
+                    />
+                </div>
+
+                <!-- Link URL -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.link_url') }}</label>
+                    <input 
+                        type="url" 
+                        :value="localContent.href" 
+                        @input="updateContent('href', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        placeholder="https://"
+                    />
+                </div>
+
+                <!-- Alignment -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
+                    <div class="flex gap-1">
+                        <button 
+                            v-for="opt in alignmentOptions" 
+                            :key="opt.value"
+                            @click="updateContent('alignment', opt.value)"
+                            :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                            class="rounded-lg p-2"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="opt.icon" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- BUTTON BLOCK -->
+        <template v-else-if="block.type === 'button'">
+            <div class="space-y-4">
+                <!-- Button text -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.text" 
+                        @input="updateContent('text', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <!-- Button URL -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.url') }}</label>
+                    <input 
+                        type="url" 
+                        :value="localContent.href" 
+                        @input="updateContent('href', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        placeholder="https://"
+                    />
+                </div>
+
+                <!-- Button colors -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
+                        <input 
+                            type="color" 
+                            :value="localContent.backgroundColor" 
+                            @input="updateContent('backgroundColor', $event.target.value)"
+                            class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.text_color') }}</label>
+                        <input 
+                            type="color" 
+                            :value="localContent.textColor" 
+                            @input="updateContent('textColor', $event.target.value)"
+                            class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                    </div>
+                </div>
+
+                <!-- Border radius -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.border_radius') }}</label>
+                    <select 
+                        :value="localContent.borderRadius" 
+                        @change="updateContent('borderRadius', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="0">{{ $t('template_builder.none') }}</option>
+                        <option value="4px">{{ $t('template_builder.small') }}</option>
+                        <option value="8px">{{ $t('template_builder.medium') }}</option>
+                        <option value="16px">{{ $t('template_builder.large') }}</option>
+                        <option value="9999px">{{ $t('template_builder.pill') }}</option>
+                    </select>
+                </div>
+
+                <!-- Alignment -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
+                    <div class="flex gap-1">
+                        <button 
+                            v-for="opt in alignmentOptions" 
+                            :key="opt.value"
+                            @click="updateContent('alignment', opt.value)"
+                            :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
+                            class="rounded-lg p-2"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="opt.icon" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- DIVIDER BLOCK -->
+        <template v-else-if="block.type === 'divider'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.line_color') }}</label>
+                    <div class="flex gap-2">
+                        <input 
+                            type="color" 
+                            :value="localContent.color" 
+                            @input="updateContent('color', $event.target.value)"
+                            class="h-10 w-14 cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                        <input 
+                            type="text" 
+                            :value="localContent.color" 
+                            @input="updateContent('color', $event.target.value)"
+                            class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- SPACER BLOCK -->
+        <template v-else-if="block.type === 'spacer'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.height') }}</label>
+                    <select 
+                        :value="localContent.height" 
+                        @change="updateContent('height', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="10px">10px</option>
+                        <option value="20px">20px</option>
+                        <option value="30px">30px</option>
+                        <option value="40px">40px</option>
+                        <option value="50px">50px</option>
+                        <option value="60px">60px</option>
+                    </select>
+                </div>
+            </div>
+        </template>
+
+        <!-- COLUMNS BLOCK -->
+        <template v-else-if="block.type === 'columns'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') || 'Liczba kolumn' }}</label>
+                    <div class="flex gap-2">
+                        <button 
+                            v-for="n in [2, 3, 4]" 
+                            :key="n"
+                            @click="updateContent('columns', n)"
+                            :class="localContent.columns === n ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'"
+                            class="flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
+                        >
+                            {{ n }}
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.gap') || 'Odstęp' }}</label>
+                    <select 
+                        :value="localContent.gap" 
+                        @change="updateContent('gap', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="10px">10px</option>
+                        <option value="20px">20px</option>
+                        <option value="30px">30px</option>
+                        <option value="40px">40px</option>
+                    </select>
+                </div>
+                <div class="rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                    <strong>{{ $t('template_builder.note') || 'Uwaga' }}:</strong> {{ $t('template_builder.columns_note') || 'Bloki zagnieżdżone w kolumnach będą dostępne w przyszłej wersji.' }}
+                </div>
+            </div>
+        </template>
+
+        <!-- PRODUCT BLOCK -->
+        <template v-else-if="block.type === 'product'">
+            <div class="space-y-4">
+                <!-- Product image -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_image') }}</label>
+                    <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {{ $t('template_builder.upload_image') }}
+                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+                    </label>
+                </div>
+
+                <!-- Product title -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_title') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.title" 
+                        @input="updateContent('title', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <!-- Product description -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.description') }}</label>
+                    <textarea 
+                        :value="localContent.description" 
+                        @input="updateContent('description', $event.target.value)"
+                        rows="2"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    ></textarea>
+                </div>
+
+                <!-- Prices -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.price') }}</label>
+                        <input 
+                            type="text" 
+                            :value="localContent.price" 
+                            @input="updateContent('price', $event.target.value)"
+                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.old_price') }}</label>
+                        <input 
+                            type="text" 
+                            :value="localContent.oldPrice" 
+                            @input="updateContent('oldPrice', $event.target.value)"
+                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            :placeholder="$t('template_builder.optional')"
+                        />
+                    </div>
+                </div>
+
+                <!-- Button -->
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.buttonText" 
+                        @input="updateContent('buttonText', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_url') }}</label>
+                    <input 
+                        type="url" 
+                        :value="localContent.buttonUrl" 
+                        @input="updateContent('buttonUrl', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        placeholder="https://"
+                    />
+                </div>
+            </div>
+        </template>
+
+        <!-- SOCIAL BLOCK -->
+        <template v-else-if="block.type === 'social'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.social_icons') || 'Ikony social media' }}</label>
+                    <div class="space-y-2">
+                        <div v-for="option in socialOptions" :key="option.type" class="flex items-center gap-3">
+                            <input 
+                                type="checkbox" 
+                                :id="`social-${option.type}`"
+                                :checked="(localContent.icons || []).some(i => i.type === option.type)"
+                                @change="toggleSocialIcon(option.type, $event.target.checked)"
+                                class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <label :for="`social-${option.type}`" class="text-sm text-slate-700 dark:text-slate-300">
+                                {{ option.label }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="(localContent.icons || []).length > 0" class="space-y-3">
+                    <div v-for="icon in (localContent.icons || [])" :key="icon.type" class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{{ icon.type }} URL</label>
+                        <input 
+                            type="url" 
+                            :value="icon.url"
+                            @input="updateSocialUrl(icon.type, $event.target.value)"
+                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                            placeholder="https://"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- PRODUCT GRID BLOCK -->
+        <template v-else-if="block.type === 'product_grid'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') || 'Liczba kolumn' }}</label>
+                    <div class="flex gap-2">
+                        <button 
+                            v-for="n in [2, 3, 4]" 
+                            :key="n"
+                            @click="updateContent('columns', n)"
+                            :class="localContent.columns === n ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'"
+                            class="flex-1 rounded-lg py-2 text-sm font-medium transition-colors"
+                        >
+                            {{ n }}
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.products_count') || 'Liczba produktów' }}</label>
+                    <select 
+                        :value="(localContent.products || []).length" 
+                        @change="updateProductsCount(parseInt($event.target.value))"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    >
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="6">6</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+            </div>
+        </template>
+
+        <!-- FOOTER BLOCK -->
+        <template v-else-if="block.type === 'footer'">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.company_name') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.companyName" 
+                        @input="updateContent('companyName', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.address') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.address" 
+                        @input="updateContent('address', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.unsubscribe_text') }}</label>
+                    <input 
+                        type="text" 
+                        :value="localContent.unsubscribeText" 
+                        @input="updateContent('unsubscribeText', $event.target.value)"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
+                        <input 
+                            type="color" 
+                            :value="localContent.backgroundColor" 
+                            @input="updateContent('backgroundColor', $event.target.value)"
+                            class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.text_color') }}</label>
+                        <input 
+                            type="color" 
+                            :value="localContent.textColor" 
+                            @input="updateContent('textColor', $event.target.value)"
+                            class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
+                        />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- Default for other blocks -->
+        <template v-else>
+            <div class="py-8 text-center text-slate-400">
+                <p class="text-sm">{{ $t('template_builder.no_settings') }}</p>
+            </div>
+        </template>
+    </div>
+</template>
