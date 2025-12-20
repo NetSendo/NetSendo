@@ -96,6 +96,7 @@ async function generateToken() {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
             },
         });
         if (response.ok) {
@@ -678,10 +679,10 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                     </p>
                                     <button 
                                         @click="generateToken" 
-                                        :disabled="generating"
-                                        class="btn btn-primary btn-sm"
+                                        :disabled="webhookLoading"
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors font-medium"
                                     >
-                                        {{ generating ? t('cron.webhook.generating') : t('cron.webhook.generate') }}
+                                        {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate') }}
                                     </button>
                                 </div>
                             
@@ -694,10 +695,10 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                         <div class="flex gap-2">
                                             <input 
                                                 readonly 
-                                                :value="webhookUrl"
+                                                :value="webhookSettings.webhook_url"
                                                 class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
                                             />
-                                            <button @click="copy(webhookUrl)" class="btn btn-outline btn-sm">📋</button>
+                                            <button @click="copyToClipboard(webhookSettings.webhook_url)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
                                         </div>
                                     </div>
                                     <div>
@@ -710,17 +711,17 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                                 :value="settings.webhook_token"
                                                 class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
                                             />
-                                            <button @click="copy(settings.webhook_token)" class="btn btn-outline btn-sm">📋</button>
+                                            <button @click="copyToClipboard(settings.webhook_token)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
                                         </div>
                                     </div>
                                     
                                     <div class="flex items-center gap-4 pt-2">
                                         <button 
                                             @click="generateToken" 
-                                            :disabled="generating"
+                                            :disabled="webhookLoading"
                                             class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                                         >
-                                            {{ generating ? t('cron.webhook.generating') : t('cron.webhook.generate_new') }}
+                                            {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate_new') }}
                                         </button>
                                         <span class="text-xs text-gray-400 italic">
                                             {{ t('cron.webhook.token_warning') }}
