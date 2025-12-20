@@ -48,16 +48,38 @@ NetSendo is a modern email marketing and automation platform that enables:
 
 ## 🐳 Installation (Docker)
 
-### 1. Clone the repository
+### Option 1: Quick Install (Recommended)
+
+One-line installation using pre-built Docker images:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
+```
+
+To install a specific version:
+```bash
+VERSION=1.0.0 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
+```
+
+### Option 2: Using Pre-built Images
+
+```bash
+# Clone repository
+git clone https://github.com/NetSendo/NetSendo.git
+cd NetSendo
+
+# Pull and start (latest version)
+docker compose -f docker-compose.prod.yml up -d
+
+# Or specify a version
+NETSENDO_VERSION=1.0.0 docker compose -f docker-compose.prod.yml up -d
+```
+
+### Option 3: Build from Source (Development)
 
 ```bash
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
-```
-
-### 2. Start the application
-
-```bash
 docker compose up -d --build
 ```
 
@@ -67,7 +89,7 @@ On first run, the container will automatically:
 - ✅ Run database migrations
 - ✅ Build frontend assets
 
-### 3. Access the application
+### Access the application
 
 | Service | URL | Description |
 |---------|-----|-------------|
