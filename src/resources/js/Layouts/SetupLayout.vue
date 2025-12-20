@@ -38,7 +38,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo.vue';
             <!-- Footer -->
             <div class="mt-8 text-center">
                 <p class="text-white/40 text-sm">
-                    NetSendo v2 &copy; {{ new Date().getFullYear() }}
+                    NetSendo v{{ $page.props.appVersion || '1.0.0' }} &copy; {{ new Date().getFullYear() }}
                 </p>
             </div>
         </div>

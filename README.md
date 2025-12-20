@@ -322,6 +322,49 @@ git pull
 # Rebuild and start
 docker compose up -d --build
 ```
+---
+
+## 🔧 Troubleshooting
+
+### Changes Not Visible on Production
+
+If you've deployed a new version but some changes (translations, UI elements, version number) are not visible:
+
+**1. Clear Laravel caches:**
+```bash
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan view:clear
+docker compose exec app php artisan route:clear
+```
+
+**2. Rebuild frontend assets:**
+```bash
+docker compose exec -u dev app bash -c "cd /var/www && npm run build"
+```
+
+**3. Force pull new Docker image and restart:**
+```bash
+docker compose pull
+docker compose down
+docker compose up -d
+```
+
+**4. Full rebuild (if above doesn't work):**
+```bash
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+> [!TIP]
+> The Docker entrypoint skips asset rebuilding if `public/build/manifest.json` already exists. Force rebuild with option #2 above.
+
+### Browser Cache Issues
+
+If changes still don't appear:
+- Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
+- Clear browser cache or use incognito mode
 
 ---
 
