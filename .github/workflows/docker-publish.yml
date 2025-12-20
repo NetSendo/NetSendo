@@ -80,7 +80,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./docker/php
           file: ./docker/php/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
