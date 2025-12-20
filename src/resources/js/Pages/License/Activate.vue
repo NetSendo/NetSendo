@@ -76,12 +76,23 @@ const requestSilverLicense = async () => {
     successMessage.value = '';
 
     try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) {
+            errorMessage.value = t('license.request_error');
+            showManualInput.value = true;
+            isLoading.value = false;
+            return;
+        }
+
         const response = await fetch(route('license.request-silver'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
             },
+            credentials: 'same-origin',
             body: JSON.stringify({
                 email: page.props.auth.user?.email || '',
             }),
