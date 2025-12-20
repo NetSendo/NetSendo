@@ -1,5 +1,6 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
+import FirstRunModal from '@/Components/FirstRunModal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 
@@ -11,6 +12,10 @@ defineProps({
     },
     status: {
         type: String,
+    },
+    isFirstUser: {
+        type: Boolean,
+        default: false,
     },
 });
 
@@ -162,6 +167,8 @@ const submit = () => {
                 </Link>
             </p>
         </div>
+        <!-- First Run Modal -->
+        <FirstRunModal :show="isFirstUser" />
     </GuestLayout>
 </template>
 

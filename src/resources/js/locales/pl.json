@@ -98,6 +98,16 @@
             "december": "Grudzień"
         }
     },
+    "first_run": {
+        "modal_title": "Witaj w NetSendo! 🚀",
+        "modal_subtitle": "Twoje narzędzie do email marketingu jest gotowe do konfiguracji",
+        "modal_description": "To jest pierwsze uruchomienie systemu. Aby rozpocząć, utwórz konto administratora, które będzie zarządzać wszystkimi funkcjami NetSendo.",
+        "create_admin_button": "Utwórz konto administratora",
+        "features_heading": "Zaraz będziesz mógł:",
+        "feature_1": "Zarządzać listami mailingowymi",
+        "feature_2": "Tworzyć kampanie email",
+        "feature_3": "Analizować statystyki"
+    },
     "editor": {
         "mode_visual": "Edytor",
         "mode_source": "Kod HTML",
