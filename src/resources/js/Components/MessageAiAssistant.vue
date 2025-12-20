@@ -96,44 +96,44 @@ watch(selectedIntegrationId, (newId) => {
     }
 });
 
-// Tone options
-const toneOptions = [
-    { value: 'casual', label: 'Luźny', icon: '😊' },
-    { value: 'formal', label: 'Formalny', icon: '👔' },
-    { value: 'persuasive', label: 'Perswazyjny', icon: '🎯' },
-];
+// Tone options (computed for reactivity to language changes)
+const toneOptions = computed(() => [
+    { value: 'casual', label: t('messages.ai_assistant.tones.casual'), icon: '😊' },
+    { value: 'formal', label: t('messages.ai_assistant.tones.formal'), icon: '👔' },
+    { value: 'persuasive', label: t('messages.ai_assistant.tones.persuasive'), icon: '🎯' },
+]);
 
-// Mode options
-const modeOptions = [
+// Mode options (computed for reactivity to language changes)
+const modeOptions = computed(() => [
     { 
         value: 'text', 
-        label: 'Generuj tekst',
-        description: 'Wygeneruj fragment tekstu do wstawienia',
+        label: t('messages.ai_assistant.modes.text'),
+        description: t('messages.ai_assistant.modes.text_desc'),
         icon: '📝'
     },
     { 
         value: 'template', 
-        label: 'Generuj/Modyfikuj szablon',
-        description: 'Stwórz lub zmodyfikuj cały szablon',
+        label: t('messages.ai_assistant.modes.template'),
+        description: t('messages.ai_assistant.modes.template_desc'),
         icon: '🎨'
     },
-];
+]);
 
 // Quick prompts based on mode
 const quickPrompts = computed(() => {
     if (activeMode.value === 'text') {
         return [
-            'Napisz powitanie dla nowego subskrybenta',
-            'Stwórz sekcję o korzyściach produktu',
-            'Napisz podziękowanie za zakup',
-            'Dodaj zachętę do kontaktu',
+            t('messages.ai_assistant.prompts.quick.welcome_sub'),
+            t('messages.ai_assistant.prompts.quick.benefits'),
+            t('messages.ai_assistant.prompts.quick.thanks_purchase'),
+            t('messages.ai_assistant.prompts.quick.cta_contact'),
         ];
     } else {
         return [
-            'Stwórz profesjonalny newsletter z nagłówkiem, treścią i przyciskiem CTA',
-            'Wygeneruj email powitalny dla nowego klienta',
-            'Stwórz email promocyjny z listą produktów',
-            'Dodaj sekcję z przyciskiem CTA na końcu obecnej wiadomości',
+            t('messages.ai_assistant.prompts.quick.professional_newsletter'),
+            t('messages.ai_assistant.prompts.quick.welcome_client'),
+            t('messages.ai_assistant.prompts.quick.promo_list'),
+            t('messages.ai_assistant.prompts.quick.cta_end'),
         ];
     }
 });
@@ -181,7 +181,7 @@ const generateContent = async () => {
         console.error('AI generation failed:', error);
         generatedContent.value = {
             type: 'error',
-            message: error.response?.data?.error || 'Wystąpił błąd podczas generowania treści.',
+            message: error.response?.data?.error || t('messages.ai_assistant.error_generating'),
         };
     } finally {
         isGenerating.value = false;
@@ -253,8 +253,8 @@ const acceptComparison = () => {
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="text-lg font-semibold">{{ $t('messages.ai.title') }}</h2>
-                                <p class="text-sm text-indigo-100">{{ $t('messages.ai.subtitle') || 'Generuj treść z pomocą AI' }}</p>
+                                <h2 class="text-lg font-semibold">{{ $t('messages.ai_assistant.title') }}</h2>
+                                <p class="text-sm text-indigo-100">{{ $t('messages.ai_assistant.subtitle') }}</p>
                             </div>
                         </div>
                         <button @click="$emit('close')" class="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white">
@@ -267,7 +267,7 @@ const acceptComparison = () => {
                     <!-- Mode Selection -->
                     <div class="border-b border-slate-200 p-4 dark:border-slate-700">
                         <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {{ $t('messages.ai.select_mode') || 'Tryb generowania' }}
+                            {{ $t('messages.ai_assistant.select_mode') }}
                         </label>
                         <div class="grid grid-cols-2 gap-2">
                             <button 
@@ -291,7 +291,7 @@ const acceptComparison = () => {
                     <!-- Model Selection -->
                     <div class="border-b border-slate-200 p-4 dark:border-slate-700">
                         <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {{ $t('messages.ai.select_model') || 'Model AI' }}
+                            {{ $t('messages.ai_assistant.select_model') }}
                         </label>
                         
                         <!-- Loading state -->
@@ -300,7 +300,7 @@ const acceptComparison = () => {
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            {{ $t('common.loading') || 'Ładowanie...' }}
+                            {{ $t('common.loading') }}
                         </div>
                         
                         <!-- No integrations -->
@@ -309,7 +309,7 @@ const acceptComparison = () => {
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
-                                {{ $t('messages.ai.no_models_available') || 'Brak skonfigurowanych integracji AI. Skonfiguruj je w Ustawieniach.' }}
+                                {{ $t('messages.ai_assistant.no_models_available') }}
                             </div>
                         </div>
                         
@@ -342,22 +342,22 @@ const acceptComparison = () => {
                         <!-- Prompt input -->
                         <div class="mb-4">
                             <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ $t('messages.ai.describe_content') || 'Opisz, co chcesz wygenerować' }}
+                                {{ $t('messages.ai_assistant.describe_content') }}
                             </label>
                             <textarea 
                                 v-model="prompt"
                                 rows="4"
                                 class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                 :placeholder="activeMode === 'text' 
-                                    ? 'np. Napisz krótki wstęp zachęcający do przeczytania newslettera...' 
-                                    : 'np. Stwórz profesjonalny email z nagłówkiem, treścią i przyciskiem CTA...'"
+                                    ? $t('messages.ai_assistant.prompts.text_placeholder') 
+                                    : $t('messages.ai_assistant.prompts.template_placeholder')"
                             ></textarea>
                         </div>
 
                         <!-- Quick prompts -->
                         <div class="mb-4">
                             <label class="mb-2 block text-xs font-medium text-slate-500 dark:text-slate-400">
-                                {{ $t('messages.ai.quick_prompts') || 'Szybkie propozycje' }}
+                                {{ $t('messages.ai_assistant.quick_prompts') }}
                             </label>
                             <div class="flex flex-wrap gap-2">
                                 <button 
@@ -374,7 +374,7 @@ const acceptComparison = () => {
                         <!-- Tone selector -->
                         <div class="mb-4">
                             <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ $t('messages.ai.select_tone') || 'Wybierz ton' }}
+                                {{ $t('messages.ai_assistant.select_tone') }}
                             </label>
                             <div class="grid grid-cols-3 gap-2">
                                 <button 
@@ -400,7 +400,7 @@ const acceptComparison = () => {
                                     <span class="text-lg">🧩</span>
                                     <div>
                                         <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                            Wstawki do personalizacji
+                                            {{ $t('messages.ai_assistant.placeholders.section_title') }}
                                         </span>
                                         <span v-if="selectedCustomPlaceholders.length > 0" class="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
                                             +{{ selectedCustomPlaceholders.length }}
@@ -424,14 +424,14 @@ const acceptComparison = () => {
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                     </svg>
-                                    Ładowanie wstawek...
+                                    {{ $t('messages.ai_assistant.placeholders.loading') }}
                                 </div>
                                 
                                 <template v-else>
                                     <!-- Standard placeholders (always active) -->
                                     <div>
                                         <h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Pola standardowe (zawsze aktywne)
+                                            {{ $t('messages.ai_assistant.placeholders.standard_title') }}
                                         </h4>
                                         <div class="space-y-1">
                                             <div 
@@ -449,7 +449,7 @@ const acceptComparison = () => {
                                     <!-- Custom placeholders (selectable) -->
                                     <div v-if="customPlaceholders.length > 0">
                                         <h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                            Pola niestandardowe (wybierz)
+                                            {{ $t('messages.ai_assistant.placeholders.custom_title') }}
                                         </h4>
                                         <div class="space-y-1">
                                             <label 
@@ -471,8 +471,8 @@ const acceptComparison = () => {
                                     
                                     <!-- Empty state for custom placeholders -->
                                     <div v-else class="text-center text-xs text-slate-400">
-                                        Brak pól niestandardowych. 
-                                        <a href="/settings/fields" class="text-indigo-500 hover:underline">Dodaj pola</a>
+                                        {{ $t('messages.ai_assistant.placeholders.empty_custom') }} 
+                                        <a href="/settings/fields" class="text-indigo-500 hover:underline">{{ $t('messages.ai_assistant.placeholders.add_fields') }}</a>
                                     </div>
                                 </template>
                             </div>
@@ -488,10 +488,10 @@ const acceptComparison = () => {
                                 />
                                 <div>
                                     <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Z formatowaniem HTML
+                                        {{ $t('messages.ai_assistant.formatting.label') }}
                                     </span>
                                     <p class="text-xs text-slate-500 dark:text-slate-400">
-                                        {{ withFormatting ? 'Tekst będzie zawierał znaczniki HTML (nagłówki, listy, pogrubienia)' : 'Czysty tekst bez formatowania' }}
+                                        {{ withFormatting ? $t('messages.ai_assistant.formatting.with_html') : $t('messages.ai_assistant.formatting.plain_text') }}
                                     </p>
                                 </div>
                             </label>
@@ -504,10 +504,10 @@ const acceptComparison = () => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span v-if="currentContent && currentContent.length > 50">
-                                    AI zmodyfikuje obecną treść wiadomości ({{ currentContent.length.toLocaleString() }} znaków)
+                                    {{ $t('messages.ai_assistant.context.modify_existing', { count: currentContent.length.toLocaleString() }) }}
                                 </span>
                                 <span v-else>
-                                    AI wygeneruje nowy szablon od podstaw
+                                    {{ $t('messages.ai_assistant.context.create_new') }}
                                 </span>
                             </div>
                         </div>
@@ -525,20 +525,20 @@ const acceptComparison = () => {
                             <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            {{ isGenerating ? ($t('messages.ai.generating') || 'Generowanie...') : ($t('messages.ai.generate') || 'Generuj') }}
+                            {{ isGenerating ? $t('messages.ai_assistant.generating') : $t('messages.ai_assistant.generate') }}
                         </button>
 
                         <!-- Generated content preview -->
                         <div v-if="generatedContent" class="mt-6">
                             <div class="mb-2 flex items-center justify-between">
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {{ $t('messages.ai.generated_content') || 'Wygenerowana treść' }}
+                                    {{ $t('messages.ai_assistant.generated_content') }}
                                 </label>
                                 <button 
                                     @click="generatedContent = null"
                                     class="text-xs text-slate-400 hover:text-slate-600"
                                 >
-                                    {{ $t('common.clear') || 'Wyczyść' }}
+                                    {{ $t('common.clear') }}
                                 </button>
                             </div>
 
@@ -563,7 +563,7 @@ const acceptComparison = () => {
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Wstaw treść
+                                    {{ $t('messages.ai_assistant.actions.insert') }}
                                 </button>
                                 <button 
                                     @click="copyToClipboard"
@@ -575,7 +575,7 @@ const acceptComparison = () => {
                                     <svg v-else class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    {{ copySuccess ? 'Skopiowano!' : 'Kopiuj' }}
+                                    {{ copySuccess ? $t('messages.ai_assistant.actions.copied') : $t('messages.ai_assistant.actions.copy') }}
                                 </button>
                             </div>
 
@@ -588,7 +588,7 @@ const acceptComparison = () => {
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
-                                    Porównaj i zastąp
+                                    {{ $t('messages.ai_assistant.actions.compare_replace') }}
                                 </button>
                             </div>
                         </div>
@@ -612,8 +612,8 @@ const acceptComparison = () => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                         <div>
-                            <h2 class="text-lg font-semibold">Porównanie szablonów</h2>
-                            <p class="text-sm text-indigo-100">Sprawdź zmiany przed zastąpieniem</p>
+                            <h2 class="text-lg font-semibold">{{ $t('messages.ai_assistant.comparison.title') }}</h2>
+                            <p class="text-sm text-indigo-100">{{ $t('messages.ai_assistant.comparison.subtitle') }}</p>
                         </div>
                     </div>
                     <button @click="rejectComparison" class="rounded-lg p-2 text-white/80 hover:bg-white/10 hover:text-white">
@@ -630,13 +630,13 @@ const acceptComparison = () => {
                         <div class="border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                             <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
                                 <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs dark:bg-slate-700">1</span>
-                                Obecna treść
+                                {{ $t('messages.ai_assistant.comparison.original_title') }}
                             </h3>
                         </div>
                         <div class="flex-1 overflow-y-auto p-4">
                             <div v-if="currentContent && currentContent.length > 0" class="prose prose-sm max-w-none dark:prose-invert" v-html="currentContent"></div>
                             <div v-else class="flex h-full items-center justify-center">
-                                <p class="text-sm text-slate-400">Brak obecnej treści</p>
+                                <p class="text-sm text-slate-400">{{ $t('messages.ai_assistant.comparison.original_empty') }}</p>
                             </div>
                         </div>
                     </div>
@@ -646,7 +646,7 @@ const acceptComparison = () => {
                         <div class="border-b border-slate-200 bg-emerald-50 px-4 py-3 dark:border-slate-700 dark:bg-emerald-900/20">
                             <h3 class="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                                 <span class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-200 text-xs dark:bg-emerald-800">2</span>
-                                Nowa treść (AI)
+                                {{ $t('messages.ai_assistant.comparison.new_title') }}
                             </h3>
                         </div>
                         <div class="flex-1 overflow-y-auto p-4">
@@ -664,7 +664,7 @@ const acceptComparison = () => {
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        Odrzuć
+                        {{ $t('messages.ai_assistant.comparison.reject') }}
                     </button>
                     <div class="flex gap-3">
                         <button 
@@ -677,7 +677,7 @@ const acceptComparison = () => {
                             <svg v-else class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            {{ copySuccess ? 'Skopiowano!' : 'Kopiuj nową' }}
+                            {{ copySuccess ? $t('messages.ai_assistant.actions.copied') : $t('messages.ai_assistant.comparison.copy_new') }}
                         </button>
                         <button 
                             @click="acceptComparison"
@@ -686,7 +686,7 @@ const acceptComparison = () => {
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            Akceptuj i zastąp
+                            {{ $t('messages.ai_assistant.comparison.accept_replace') }}
                         </button>
                     </div>
                 </div>

@@ -93,16 +93,16 @@ const cloneBlock = (block) => {
 const getDefaultContent = (type) => {
     const defaults = {
         header: { logo: null, logoWidth: 150, backgroundColor: '#6366f1', padding: '20px', alignment: 'center' },
-        text: { html: '<p>Kliknij, aby edytować tekst...</p>', alignment: 'left' },
+        text: { html: '<p>' + t('template_builder.default_text') + '</p>', alignment: 'left' },
         image: { src: null, alt: '', href: '', alignment: 'center' },
-        button: { text: 'Kliknij tutaj', href: '#', backgroundColor: '#6366f1', textColor: '#ffffff', borderRadius: '8px', alignment: 'center' },
+        button: { text: t('template_builder.default_button'), href: '#', backgroundColor: '#6366f1', textColor: '#ffffff', borderRadius: '8px', alignment: 'center' },
         divider: { color: '#e2e8f0' },
         spacer: { height: '30px' },
         columns: { columns: 2, gap: '20px' },
-        product: { title: '', description: '', price: '', oldPrice: '', image: null, buttonText: 'Kup teraz', buttonUrl: '#' },
+        product: { title: '', description: '', price: t('template_builder.default_price'), oldPrice: '', image: null, buttonText: t('template_builder.buy_now'), buttonUrl: '#' },
         product_grid: { products: [{}, {}, {}, {}], columns: 2 },
         social: { icons: [] },
-        footer: { companyName: '', address: '', unsubscribeText: 'Wypisz się', backgroundColor: '#1e293b', textColor: '#94a3b8' },
+        footer: { companyName: '', address: '', unsubscribeText: t('template_builder.unsubscribe'), backgroundColor: '#1e293b', textColor: '#94a3b8' },
     };
     return defaults[type] || {};
 };
@@ -156,7 +156,7 @@ const handleAddBlock = (type) => {
                 <svg class="mr-1 inline h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                 </svg>
-                {{ $t('template_builder.drag_instruction') || 'Przeciągnij blok na szablon lub kliknij' }}
+                {{ $t('template_builder.drag_instruction') }}
             </p>
         </div>
 

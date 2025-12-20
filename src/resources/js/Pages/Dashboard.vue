@@ -218,13 +218,13 @@ onMounted(() => {
             <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                        ⏰ Status CRON
+                        {{ $t('dashboard.cron.status_title') }}
                     </h3>
                     <Link 
                         :href="route('settings.cron.index')"
                         class="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
                     >
-                        Ustawienia →
+                        {{ $t('dashboard.cron.settings_link') }}
                     </Link>
                 </div>
 
@@ -243,7 +243,7 @@ onMounted(() => {
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
-                        <span class="text-lg font-medium text-green-600 dark:text-green-400">CRON aktywny</span>
+                        <span class="text-lg font-medium text-green-600 dark:text-green-400">{{ $t('dashboard.cron.active') }}</span>
                     </div>
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -251,25 +251,25 @@ onMounted(() => {
                             <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                                 {{ cronStatus.stats_24h?.total_runs || 0 }}
                             </div>
-                            <div class="text-slate-500 dark:text-slate-400">Uruchomień (24h)</div>
+                            <div class="text-slate-500 dark:text-slate-400">{{ $t('dashboard.cron.stats.runs_24h') }}</div>
                         </div>
                         <div class="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 text-center">
                             <div class="text-2xl font-bold text-green-600 dark:text-green-400">
                                 {{ cronStatus.stats_24h?.emails_sent || 0 }}
                             </div>
-                            <div class="text-slate-500 dark:text-slate-400">Wysłanych emaili</div>
+                            <div class="text-slate-500 dark:text-slate-400">{{ $t('dashboard.cron.stats.sent_emails') }}</div>
                         </div>
                         <div class="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 text-center">
                             <div class="text-2xl font-bold text-red-600 dark:text-red-400">
                                 {{ cronStatus.stats_24h?.failed || 0 }}
                             </div>
-                            <div class="text-slate-500 dark:text-slate-400">Błędów</div>
+                            <div class="text-slate-500 dark:text-slate-400">{{ $t('dashboard.cron.stats.errors') }}</div>
                         </div>
                         <div class="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 text-center">
                             <div class="text-xs font-medium text-slate-700 dark:text-slate-300">
                                 {{ formatDateTime(cronStatus.last_run) }}
                             </div>
-                            <div class="text-slate-500 dark:text-slate-400">Ostatnie uruchomienie</div>
+                            <div class="text-slate-500 dark:text-slate-400">{{ $t('dashboard.cron.stats.last_run') }}</div>
                         </div>
                     </div>
                 </div>
@@ -282,16 +282,16 @@ onMounted(() => {
                         </svg>
                     </div>
                     <h4 class="text-lg font-medium text-slate-900 dark:text-white mb-2">
-                        CRON nie jest skonfigurowany
+                        {{ $t('dashboard.cron.not_configured') }}
                     </h4>
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 max-w-md">
-                        Bez konfiguracji CRON zaplanowane wiadomości nie będą wysyłane automatycznie.
+                        {{ $t('dashboard.cron.not_configured_desc') }}
                     </p>
                     <Link 
                         :href="route('settings.cron.index') + '?tab=instructions'"
                         class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
                     >
-                        📖 Zobacz instrukcje konfiguracji
+                        {{ $t('dashboard.cron.view_instructions') }}
                     </Link>
                 </div>
             </div>

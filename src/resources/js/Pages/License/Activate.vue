@@ -2,6 +2,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 const props = defineProps({
     licenseActive: Boolean,
@@ -31,37 +34,37 @@ const activateForm = useForm({
 const planCards = computed(() => [
     {
         key: 'SILVER',
-        name: 'SILVER',
-        price: 'DARMOWA',
-        priceSuffix: 'DOŻYWOTNIA',
+        name: t('license.plans.silver.name'),
+        price: t('license.plans.silver.price'),
+        priceSuffix: t('license.plans.silver.suffix'),
         color: 'from-slate-400 to-slate-600',
         badgeColor: 'bg-slate-500',
         features: props.plans?.SILVER?.features || [
-            'Wszystkie podstawowe funkcje',
-            'Nieograniczone kontakty',
-            'Szablony email',
-            'Wsparcie społeczności',
+            t('license.plans.silver.features.basic'),
+            t('license.plans.silver.features.unlimited'),
+            t('license.plans.silver.features.templates'),
+            t('license.plans.silver.features.support'),
         ],
-        buttonText: 'Wybieram SILVER',
+        buttonText: t('license.plans.silver.select'),
         buttonAction: 'request',
     },
     {
         key: 'GOLD',
-        name: 'GOLD',
-        price: '$97',
-        priceSuffix: '/miesiąc',
+        name: t('license.plans.gold.name'),
+        price: t('license.plans.gold.price'),
+        priceSuffix: t('license.plans.gold.suffix'),
         color: 'from-yellow-400 to-amber-600',
         badgeColor: 'bg-gradient-to-r from-yellow-400 to-amber-500',
         popular: true,
-        comingSoon: !props.stripeGoldPaymentLink,
+        coming_soon: !props.stripeGoldPaymentLink,
         features: props.plans?.GOLD?.features || [
-            'Wszystko z SILVER',
-            'Zaawansowane automatyzacje',
-            'Priorytetowe wsparcie',
-            'Dostęp API',
-            'White-label',
+            t('license.plans.gold.features.everything'),
+            t('license.plans.gold.features.automations'),
+            t('license.plans.gold.features.priority'),
+            t('license.plans.gold.features.api'),
+            t('license.plans.gold.features.white_label'),
         ],
-        buttonText: props.stripeGoldPaymentLink ? 'Kup GOLD' : 'Wkrótce dostępne',
+        buttonText: props.stripeGoldPaymentLink ? t('license.plans.gold.select') : t('license.coming_soon'),
         buttonAction: 'stripe',
     },
 ]);
@@ -99,11 +102,11 @@ const requestSilverLicense = async () => {
                 successMessage.value = data.message;
             }
         } else {
-            errorMessage.value = data.message || 'Wystąpił błąd. Spróbuj ponownie.';
+            errorMessage.value = data.message || t('license.generic_error');
             showManualInput.value = true;
         }
     } catch (error) {
-        errorMessage.value = 'Błąd połączenia. Wpisz klucz licencji ręcznie poniżej.';
+        errorMessage.value = t('license.request_error');
         showManualInput.value = true;
     } finally {
         isLoading.value = false;
@@ -121,7 +124,7 @@ const handlePlanAction = (plan) => {
             showManualInput.value = true;
         } else {
             // Coming soon - show message
-            successMessage.value = 'Plan GOLD będzie dostępny wkrótce! Na razie możesz korzystać z planu SILVER.';
+            successMessage.value = t('license.gold_coming_soon_msg');
         }
     }
 };
@@ -143,7 +146,7 @@ const submitActivation = () => {
 const formattedExpiresAt = computed(() => {
     if (!props.licenseExpiresAt) return null;
     try {
-        return new Date(props.licenseExpiresAt).toLocaleDateString('pl-PL', {
+        return new Date(props.licenseExpiresAt).toLocaleDateString(locale.value === 'pl' ? 'pl-PL' : 'en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -161,12 +164,10 @@ const isGoldExpired = computed(() => {
 </script>
 
 <template>
-    <Head title="Licencja NetSendo" />
-
     <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
-                Licencja
+                {{ $t('license.title') }}
             </h2>
         </template>
 
@@ -189,13 +190,13 @@ const isGoldExpired = computed(() => {
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-2xl font-bold">Licencja {{ licensePlan }} aktywna</h3>
+                                <h3 class="text-2xl font-bold">{{ $t('license.active_status', { plan: licensePlan }) }}</h3>
                                 <p class="mt-1 text-white/80">
                                     <template v-if="licensePlan === 'SILVER'">
-                                        Dożywotnia licencja — bez limitu czasowego
+                                        {{ $t('license.lifetime_license') }}
                                     </template>
                                     <template v-else>
-                                        Ważna do: {{ formattedExpiresAt || 'bezterminowo' }}
+                                        {{ $t('license.expires_at', { date: formattedExpiresAt || $t('license.expires_never') }) }}
                                     </template>
                                 </p>
                             </div>
@@ -205,16 +206,16 @@ const isGoldExpired = computed(() => {
                     <!-- License details -->
                     <div class="p-6">
                         <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                            Wersja aplikacji: {{ appVersion }}
+                            {{ $t('license.app_version', { version: appVersion }) }}
                         </div>
                         
                         <!-- Upgrade to GOLD option for SILVER users -->
                         <div v-if="licensePlan === 'SILVER'" class="mt-6 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 p-5 dark:from-yellow-900/20 dark:to-amber-900/20">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h4 class="font-semibold text-gray-900 dark:text-white">Uaktualnij do GOLD</h4>
+                                    <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('license.upgrade_to_gold') }}</h4>
                                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                        Odblokuj zaawansowane automatyzacje i priorytetowe wsparcie
+                                        {{ $t('license.upgrade_desc') }}
                                     </p>
                                 </div>
                                 <button
@@ -222,7 +223,7 @@ const isGoldExpired = computed(() => {
                                     @click="window.open(stripeGoldPaymentLink, '_blank')"
                                     class="rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl"
                                 >
-                                    Kup GOLD — $97/mc
+                                    {{ $t('license.buy_gold') }}
                                 </button>
                             </div>
                         </div>
@@ -238,9 +239,9 @@ const isGoldExpired = computed(() => {
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200">Licencja GOLD wygasła</h3>
+                            <h3 class="text-lg font-semibold text-red-800 dark:text-red-200">{{ $t('license.gold_expired') }}</h3>
                             <p class="text-red-600 dark:text-red-400">
-                                Wygasła: {{ formattedExpiresAt }}. Odnów subskrypcję, aby przywrócić dostęp do funkcji premium.
+                                {{ $t('license.gold_expired_desc', { date: formattedExpiresAt }) }}
                             </p>
                         </div>
                     </div>
@@ -249,7 +250,7 @@ const isGoldExpired = computed(() => {
                         @click="window.open(stripeGoldPaymentLink, '_blank')"
                         class="mt-4 rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
                     >
-                        Odnów GOLD — $97/mc
+                        {{ $t('license.renew_gold') }}
                     </button>
                 </div>
 
@@ -258,10 +259,10 @@ const isGoldExpired = computed(() => {
                     <!-- Header -->
                     <div class="mb-10 text-center">
                         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-                            Wybierz swoją licencję
+                            {{ $t('license.choose_plan') }}
                         </h1>
                         <p class="mt-3 text-lg text-gray-600 dark:text-gray-400">
-                            NetSendo oferuje dwa plany — wybierz ten, który odpowiada Twoim potrzebom
+                            {{ $t('license.choose_plan_desc') }}
                         </p>
                     </div>
 
@@ -293,7 +294,7 @@ const isGoldExpired = computed(() => {
                         >
                             <!-- Popular badge -->
                             <div v-if="plan.popular" class="absolute -right-10 top-6 rotate-45 bg-gradient-to-r from-yellow-400 to-amber-500 px-12 py-1.5 text-xs font-bold text-white shadow">
-                                POPULARNE
+                                {{ $t('license.popular') }}
                             </div>
 
                             <!-- Card header -->
@@ -335,7 +336,7 @@ const isGoldExpired = computed(() => {
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Przetwarzanie...
+                                        {{ $t('license.processing') }}
                                     </span>
                                     <span v-else>{{ plan.buttonText }}</span>
                                 </button>
@@ -348,24 +349,24 @@ const isGoldExpired = computed(() => {
                         <div class="overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-800">
                             <div class="border-b border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-700">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                    Aktywuj licencję ręcznie
+                                    {{ $t('license.manual_activation_title') }}
                                 </h3>
                                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                    Wpisz klucz licencji otrzymany emailem lub po zakupie
+                                    {{ $t('license.manual_activation_desc') }}
                                 </p>
                             </div>
                             
                             <form @submit.prevent="submitActivation" class="p-6">
                                 <div class="mb-4">
                                     <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        Klucz licencji
+                                        {{ $t('license.license_key_label') }}
                                     </label>
                                     <textarea
                                         v-model="activateForm.license_key"
                                         required
                                         rows="3"
                                         class="w-full rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        placeholder="Wklej swój klucz licencji tutaj..."
+                                        :placeholder="$t('license.license_key_placeholder')"
                                     ></textarea>
                                     <p v-if="activateForm.errors.license_key" class="mt-2 text-sm text-red-500">
                                         {{ activateForm.errors.license_key }}
@@ -381,9 +382,9 @@ const isGoldExpired = computed(() => {
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        Aktywowanie...
+                                        {{ $t('license.activating') }}
                                     </span>
-                                    <span v-else>Aktywuj licencję</span>
+                                    <span v-else>{{ $t('license.activate_button') }}</span>
                                 </button>
                             </form>
                         </div>
@@ -393,7 +394,7 @@ const isGoldExpired = computed(() => {
                                 @click="showManualInput = false; requestSent = false; errorMessage = ''"
                                 class="text-sm text-gray-500 hover:text-gray-700 hover:underline dark:text-gray-400 dark:hover:text-gray-300"
                             >
-                                ← Wróć do wyboru planów
+                                ← {{ $t('license.back_to_plans') }}
                             </button>
                         </div>
                     </div>
@@ -404,7 +405,7 @@ const isGoldExpired = computed(() => {
                             @click="showManualInput = true"
                             class="text-base text-indigo-600 hover:text-indigo-500 hover:underline dark:text-indigo-400"
                         >
-                            Mam już klucz licencji
+                            {{ $t('license.already_have_key') }}
                         </button>
                     </div>
                 </div>

@@ -282,7 +282,7 @@ const isFullDocument = computed(() => {
 // Wrap content in a basic HTML document for preview
 const wrapInDocument = (content) => {
     return `<!DOCTYPE html>
-<html lang="pl">
+<html lang="${useI18n().locale.value || 'en'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -711,7 +711,7 @@ const btnClass = (isActive = false) => {
                     <select
                         v-model="contentWidth"
                         class="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                        title="Szerokość treści"
+                        :title="$t('editor.content_width')"
                     >
                         <option :value="400">400px</option>
                         <option :value="500">500px</option>
@@ -732,7 +732,7 @@ const btnClass = (isActive = false) => {
                                 ? 'bg-indigo-600 text-white' 
                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                         ]"
-                        title="Wyrównaj do lewej"
+                        :title="$t('editor.align_left')"
                     >
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" />
@@ -747,7 +747,7 @@ const btnClass = (isActive = false) => {
                                 ? 'bg-indigo-600 text-white' 
                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                         ]"
-                        title="Wyśrodkuj"
+                        :title="$t('editor.align_center')"
                     >
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" />
@@ -786,7 +786,7 @@ const btnClass = (isActive = false) => {
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        {{ $t('editor.visual_edit_notice') || 'Kliknij na tekst, aby go edytować. Zmiany będą zapisane automatycznie.' }}
+                        {{ $t('editor.visual_edit_notice') }}
                     </p>
                 </div>
                 <div class="p-4 flex justify-center bg-slate-50 dark:bg-slate-900/50">
@@ -920,7 +920,7 @@ const btnClass = (isActive = false) => {
                 
                 <!-- Image URL Input -->
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">URL obrazu</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ $t('editor.image_properties.url') }}</label>
                     <input
                         v-model="imageUrl"
                         type="url"
@@ -932,7 +932,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Image Preview -->
                 <div v-if="imageUrl" class="mb-4">
-                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Podgląd</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_properties.preview') }}</label>
                     <div class="relative bg-slate-100 dark:bg-slate-700 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
                         <!-- Loading state -->
                         <div v-if="!imagePreviewLoaded && !imagePreviewError" class="text-slate-400 flex items-center gap-2">
@@ -940,14 +940,14 @@ const btnClass = (isActive = false) => {
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            Ładowanie...
+                            {{ $t('common.loading') }}
                         </div>
                         <!-- Error state -->
                         <div v-if="imagePreviewError" class="text-red-500 flex items-center gap-2">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Nie można załadować obrazu
+                            {{ $t('editor.image_properties.load_error') }}
                         </div>
                         <!-- Image preview with alignment -->
                         <img 
@@ -970,7 +970,7 @@ const btnClass = (isActive = false) => {
                 <div v-if="imagePreviewLoaded" class="space-y-4">
                     <!-- Alignment -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Wyrównanie</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_properties.alignment') }}</label>
                         <div class="flex gap-2">
                             <button
                                 type="button"
@@ -983,7 +983,7 @@ const btnClass = (isActive = false) => {
                                 ]"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" /></svg>
-                                Lewo
+                                {{ $t('editor.image_properties.left') }}
                             </button>
                             <button
                                 type="button"
@@ -996,7 +996,7 @@ const btnClass = (isActive = false) => {
                                 ]"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" /></svg>
-                                Środek
+                                {{ $t('editor.image_properties.center') }}
                             </button>
                             <button
                                 type="button"
@@ -1009,7 +1009,7 @@ const btnClass = (isActive = false) => {
                                 ]"
                             >
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14" /></svg>
-                                Prawo
+                                {{ $t('editor.image_properties.right') }}
                             </button>
                         </div>
                     </div>
@@ -1017,7 +1017,7 @@ const btnClass = (isActive = false) => {
                     <!-- Width -->
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Szerokość: {{ imageWidth }}%
+                            {{ $t('editor.image_properties.width') }}: {{ imageWidth }}%
                         </label>
                         <input
                             v-model="imageWidth"
@@ -1036,7 +1036,7 @@ const btnClass = (isActive = false) => {
 
                     <!-- Link -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Link (opcjonalnie)</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ $t('editor.image_properties.link') }}</label>
                         <input
                             v-model="imageLink"
                             type="url"

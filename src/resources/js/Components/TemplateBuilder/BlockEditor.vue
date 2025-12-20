@@ -523,7 +523,7 @@ const updateProductsCount = (count) => {
         <template v-else-if="block.type === 'columns'">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') || 'Liczba kolumn' }}</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') }}</label>
                     <div class="flex gap-2">
                         <button 
                             v-for="n in [2, 3, 4]" 
@@ -537,7 +537,7 @@ const updateProductsCount = (count) => {
                     </div>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.gap') || 'Odstęp' }}</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.gap') }}</label>
                     <select 
                         :value="localContent.gap" 
                         @change="updateContent('gap', $event.target.value)"
@@ -550,7 +550,7 @@ const updateProductsCount = (count) => {
                     </select>
                 </div>
                 <div class="rounded-lg bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                    <strong>{{ $t('template_builder.note') || 'Uwaga' }}:</strong> {{ $t('template_builder.columns_note') || 'Bloki zagnieżdżone w kolumnach będą dostępne w przyszłej wersji.' }}
+                    <strong>{{ $t('template_builder.note') }}:</strong> {{ $t('template_builder.columns_note') }}
                 </div>
             </div>
         </template>
@@ -641,7 +641,7 @@ const updateProductsCount = (count) => {
         <template v-else-if="block.type === 'social'">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.social_icons') || 'Ikony social media' }}</label>
+                    <label class="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.social_icons') }}</label>
                     <div class="space-y-2">
                         <div v-for="option in socialOptions" :key="option.type" class="flex items-center gap-3">
                             <input 
@@ -676,7 +676,7 @@ const updateProductsCount = (count) => {
         <template v-else-if="block.type === 'product_grid'">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') || 'Liczba kolumn' }}</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') }}</label>
                     <div class="flex gap-2">
                         <button 
                             v-for="n in [2, 3, 4]" 
@@ -690,7 +690,7 @@ const updateProductsCount = (count) => {
                     </div>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.products_count') || 'Liczba produktów' }}</label>
+                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.products_count') }}</label>
                     <select 
                         :value="(localContent.products || []).length" 
                         @change="updateProductsCount(parseInt($event.target.value))"

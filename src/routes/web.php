@@ -257,6 +257,9 @@ Route::middleware('auth')->group(function () {
 
     // Updates/Changelog
     Route::get('/update', [\App\Http\Controllers\UpdatesController::class, 'index'])->name('update.index');
+    
+    // Marketplace (Coming Soon)
+    Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
 });
 
 

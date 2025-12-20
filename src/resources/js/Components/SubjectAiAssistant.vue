@@ -85,7 +85,7 @@ const fetchModels = async () => {
 // Generate subject suggestions
 const generateSubjects = async () => {
     if (!props.currentContent || props.currentContent.length < 20) {
-        error.value = 'Najpierw dodaj treść wiadomości, aby wygenerować propozycje tytułu.';
+        error.value = t('messages.ai_assistant.error_missing_content');
         return;
     }
 
@@ -107,7 +107,7 @@ const generateSubjects = async () => {
         }
     } catch (err) {
         console.error('Subject generation failed:', err);
-        error.value = err.response?.data?.error || 'Wystąpił błąd podczas generowania tytułów.';
+        error.value = err.response?.data?.error || t('messages.ai_assistant.error_generic');
     } finally {
         isGenerating.value = false;
     }
@@ -141,7 +141,7 @@ const toggle = () => {
             type="button"
             @click="toggle"
             class="flex items-center justify-center p-1.5 text-purple-500 transition-colors rounded-md hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
-            title="Generuj tytuł z AI"
+            :title="$t('messages.ai_assistant.subject_assistant')"
         >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -155,7 +155,7 @@ const toggle = () => {
         >
             <div class="mb-3 flex items-center justify-between">
                 <h4 class="text-sm font-medium text-slate-900 dark:text-white">
-                    ✨ {{ $t('messages.ai.subject_assistant') || 'Asystent AI dla tytułu' }}
+                    ✨ {{ $t('messages.ai_assistant.subject_assistant') }}
                 </h4>
                 <button @click="isOpen = false" class="text-slate-400 hover:text-slate-600">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,11 +171,11 @@ const toggle = () => {
                     type="text"
                     maxlength="500"
                     class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                    :placeholder="$t('messages.ai.subject_hint_placeholder') || 'Opcjonalnie: np. promocja świąteczna, pilne...'"
+                    :placeholder="$t('messages.ai_assistant.subject_hint_placeholder')"
                     @keyup.enter="generateSubjects"
                 />
                 <div class="mt-1 flex justify-between text-xs text-slate-400">
-                    <span>{{ hint.length }}/500 znaków</span>
+                    <span>{{ $t('messages.ai_assistant.characters_limit', { count: hint.length }) }}</span>
                 </div>
             </div>
             
@@ -185,13 +185,13 @@ const toggle = () => {
                     <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
-                    Treść wiadomości: {{ currentContent.length.toLocaleString() }} znaków ✓
+                    {{ $t('messages.ai_assistant.content_status_ok', { count: currentContent.length.toLocaleString() }) }}
                 </div>
                 <div v-else class="flex items-center gap-1 text-amber-500">
                     <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                     </svg>
-                    Wymagane min. 20 znaków treści (obecnie: {{ currentContent ? currentContent.length : 0 }})
+                    {{ $t('messages.ai_assistant.content_status_error', { count: currentContent ? currentContent.length : 0 }) }}
                 </div>
             </div>
             
@@ -206,7 +206,7 @@ const toggle = () => {
                         {{ model.label }}
                     </option>
                 </select>
-                <div v-else-if="loadingModels" class="text-xs text-slate-400">Ładowanie modeli...</div>
+                <div v-else-if="loadingModels" class="text-xs text-slate-400">{{ $t('messages.ai_assistant.loading_models') }}</div>
             </div>
 
             <!-- Generate button -->
@@ -222,7 +222,7 @@ const toggle = () => {
                 <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                {{ isGenerating ? 'Generowanie...' : 'Generuj propozycje' }}
+                {{ isGenerating ? $t('messages.ai_assistant.generating') : $t('messages.ai_assistant.generate_button') }}
             </button>
 
             <!-- Error -->
@@ -232,7 +232,7 @@ const toggle = () => {
 
             <!-- Suggestions -->
             <div v-if="suggestions.length > 0" class="space-y-2">
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Kliknij, aby użyć:</p>
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('messages.ai_assistant.click_to_use') }}</p>
                 <button
                     v-for="(subject, index) in suggestions"
                     :key="index"
@@ -246,7 +246,7 @@ const toggle = () => {
 
             <!-- Empty state info -->
             <p v-if="!isGenerating && suggestions.length === 0 && !error" class="text-center text-xs text-slate-400 dark:text-slate-500">
-                AI wygeneruje 3 propozycje tytułu na podstawie treści Twojego maila
+                {{ $t('messages.ai_assistant.empty_info') }}
             </p>
         </div>
     </div>

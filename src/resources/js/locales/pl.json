@@ -132,7 +132,20 @@
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "full_html_notice": "To jest pełny szablon HTML. Użyj trybu \"Kod HTML\" aby edytować.",
         "full_html_edit_notice": "Edytujesz pełny szablon HTML. Użyj zakładki \"Podgląd\" aby zobaczyć wygląd.",
-        "visual_edit_notice": "Kliknij na tekst w podglądzie, aby go edytować bezpośrednio."
+        "visual_edit_notice": "Kliknij na tekst w podglądzie, aby go edytować bezpośrednio.",
+        "emoji": "Emoji",
+        "content_width": "Szerokość treści",
+        "image_properties": {
+            "url": "URL obrazu",
+            "preview": "Podgląd",
+            "load_error": "Nie można załadować obrazu",
+            "alignment": "Wyrównanie",
+            "left": "Lewo",
+            "center": "Środek",
+            "right": "Prawo",
+            "width": "Szerokość",
+            "link": "Link (opcjonalnie)"
+        }
     },
     "navigation": {
         "dashboard": "Pulpit",
@@ -229,10 +242,30 @@
             "view_all": "Zobacz wszystkie",
             "opens": "otwarć",
             "clicks": "kliknięć",
+            "sample_1": "Newsletter Tygodniowy #45",
+            "sample_2": "Promocja Świąteczna",
+            "sample_3": "Podsumowanie Roku",
+            "sample_4": "Nowy Produkt - Zapowiedź",
             "status": {
                 "sent": "Wysłano",
                 "scheduled": "Zaplanowano",
                 "draft": "Szkic"
+            }
+        },
+        "cron": {
+            "status_title": "⏰ Status CRON",
+            "settings_link": "Ustawienia →",
+            "active": "CRON aktywny",
+            "not_configured": "CRON nie jest skonfigurowany",
+            "not_configured_desc": "Bez konfiguracji CRON zaplanowane wiadomości nie będą wysyłane automatycznie.",
+            "not_configured_warning": "⚠️ CRON nie jest skonfigurowany! Zaplanowane wiadomości nie będą wysyłane automatycznie.",
+            "see_instructions": "Zobacz instrukcje →",
+            "view_instructions": "📖 Zobacz instrukcje konfiguracji",
+            "stats": {
+                "runs_24h": "Uruchomień (24h)",
+                "sent_emails": "Wysłanych emaili",
+                "errors": "Błędów",
+                "last_run": "Ostatnie uruchomienie"
             }
         }
     },
@@ -371,7 +404,15 @@
             "company_address": "Adres",
             "company_city": "Miasto",
             "company_zip": "Kod pocztowy",
-            "company_country": "Kraj"
+            "company_country": "Kraj",
+            "advanced": {
+                "bounce_title": "Analiza Odbić (Bounce Management)",
+                "bounce_desc": "Automatycznie oznaczaj adresy jako nieaktywne po miękkim lub twardym odbiciu.",
+                "facebook_label": "Facebook Integration (Pixel ID)",
+                "facebook_placeholder": "np. 1234567890",
+                "queue_days_label": "Dni wysyłki kolejki",
+                "queue_days_help": "Zaznacz dni, w które wiadomości autorespondera mogą być wysyłane."
+            }
         }
     },
     "sms_lists": {
@@ -515,12 +556,22 @@
             "audience": "Lista odbiorców",
             "status": "Status",
             "created_at": "Data utworzenia",
-            "actions": "Akcje"
+            "actions": "Akcje",
+            "stats": "Statystyki"
         },
         "empty_title": "Brak wiadomości spełniających kryteria.",
         "delete_confirm_title": "Czy na pewno chcesz usunąć tę wiadomość?",
         "delete_confirm_description": "Tej operacji nie można cofnąć. Wiadomość zostanie trwale usunięta.",
         "delete_button": "Usuń wiadomość",
+        "duplicate_confirm_title": "Duplikuj wiadomość",
+        "duplicate_confirm_description": "Utworzy kopię jako szkic",
+        "duplicate_button": "Duplikuj",
+        "duplicating": "Duplikowanie...",
+        "duplicate_success_title": "Duplikat utworzony!",
+        "duplicate_success_description": "Nowa wiadomość \"{prefix} {subject}\" została zapisana jako szkic.",
+        "go_to_edit_duplicate": "Przejdź do edycji duplikatu",
+        "stay_on_list": "Zostań na liście",
+        "copy_prefix": "[KOPIA]",
         "create_title": "Nowa wiadomość",
         "edit_title": "Edytuj wiadomość",
         "create_subtitle": "Przygotuj nową kampanię email",
@@ -542,7 +593,29 @@
             "modal_subtitle": "Wybierz gotowy szablon lub stwórz od zera",
             "your_templates": "Twoje szablony",
             "starter_templates": "Szablony startowe",
-            "no_templates": "Nie znaleziono szablonów"
+            "no_templates": "Nie znaleziono szablonów",
+            "compilation_error": "Szablon wymaga kompilacji MJML"
+        },
+        "triggers": {
+            "title": "Triggery i automatyzacje",
+            "coming_soon": "Ta funkcja będzie dostępna wkrótce. Będziesz mógł uruchamiać wiadomości na podstawie akcji takich jak kliknięcie w link, odwiedziny strony lub konkretne daty.",
+            "select_type": "Wybierz typ triggera",
+            "types": {
+                "signup": "Zapis na listę",
+                "anniversary": "Rocznica",
+                "inactivity": "Brak aktywności",
+                "custom": "Własna akcja"
+            }
+        },
+        "ab_testing": {
+            "title": "Testy A/B",
+            "coming_soon": "Testuj różne tematy i treści, aby sprawdzić, co najlepiej działa na Twoich odbiorców.",
+            "enable": "Włącz testy A/B",
+            "variant_a": "Wariant A",
+            "variant_a_desc": "Oryginalny temat i treść",
+            "variant_b": "Wariant B",
+            "variant_b_placeholder": "Alternatywny temat...",
+            "split": "Podział odbiorców"
         },
         "mailbox": {
             "label": "Skrzynka nadawcza",
@@ -554,7 +627,7 @@
             "change_in_settings": "Zmień w ustawieniach",
             "help": "Wybierz skrzynkę nadawczą lub użyj domyślnej konfiguracji"
         },
-        "ai": {
+        "ai_assistant": {
             "title": "Asystent AI",
             "subtitle": "Generuj treść z pomocą AI",
             "generate": "Generuj treść z AI",
@@ -569,46 +642,96 @@
             "replace": "Zastąp",
             "insert": "Wstaw",
             "subject_assistant": "Asystent AI dla tytułu",
-            "subject_hint_placeholder": "Opcjonalnie: np. promocja świąteczna, pilne..."
-        },
-        "triggers": {
-            "title": "Triggery automatyczne",
-            "coming_soon": "Ta funkcja będzie dostępna wkrótce. Planujemy dodanie automatycznych wyzwalaczy opartych na wydarzeniach.",
-            "select_type": "Wybierz typ triggera",
-            "types": {
-                "signup": "Po zapisie na listę",
-                "anniversary": "Rocznica (np. urodziny)",
-                "inactivity": "Brak aktywności",
-                "custom": "Własny trigger"
+            "subject_hint_placeholder": "Opcjonalnie: np. promocja świąteczna, pilne...",
+            "characters_limit": "{count}/500 znaków",
+            "content_status_ok": "Treść wiadomości: {count} znaków ✓",
+            "content_status_error": "Wymagane min. 20 znaków treści (obecnie: {count})",
+            "generate_button": "Generuj propozycje",
+            "loading_models": "Ładowanie modeli...",
+            "click_to_use": "Kliknij, aby użyć:",
+            "empty_info": "AI wygeneruje 3 propozycje tytułu na podstawie treści Twojego maila",
+            "error_missing_content": "Najpierw dodaj treść wiadomości, aby wygenerować propozycje tytułu.",
+            "error_generating": "Wystąpił błąd podczas generowania treści.",
+            "error_generic": "Wystąpił błąd podczas generowania tytułów.",
+            "modes": {
+                "text": "Generuj tekst",
+                "text_desc": "Wygeneruj fragment tekstu do wstawienia",
+                "template": "Generuj/Modyfikuj szablon",
+                "template_desc": "Stwórz lub zmodyfikuj cały szablon"
+            },
+            "tones": {
+                "casual": "Luźny",
+                "formal": "Formalny",
+                "persuasive": "Perswazyjny"
+            },
+            "placeholders": {
+                "section_title": "Wstawki do personalizacji",
+                "loading": "Ładowanie wstawek...",
+                "standard_title": "Pola standardowe (zawsze aktywne)",
+                "custom_title": "Pola niestandardowe (wybierz)",
+                "empty_custom": "Brak pól niestandardowych.",
+                "add_fields": "Dodaj pola"
+            },
+            "formatting": {
+                "label": "Z formatowaniem HTML",
+                "with_html": "Tekst będzie zawierał znaczniki HTML (nagłówki, listy, pogrubienia)",
+                "plain_text": "Czysty tekst bez formatowania"
+            },
+            "context": {
+                "modify_existing": "AI zmodyfikuje obecną treść wiadomości ({count} znaków)",
+                "create_new": "AI wygeneruje nowy szablon od podstaw"
+            },
+            "comparison": {
+                "title": "Porównanie szablonów",
+                "subtitle": "Sprawdź zmiany przed zastąpieniem",
+                "original_title": "Obecna treść",
+                "original_empty": "Brak obecnej treści",
+                "new_title": "Nowa treść (AI)",
+                "reject": "Odrzuć",
+                "accept_replace": "Akceptuj i zastąp",
+                "copy_new": "Kopiuj nową"
+            },
+            "actions": {
+                "insert": "Wstaw treść",
+                "compare_replace": "Porównaj i zastąp",
+                "copied": "Skopiowano!",
+                "copy": "Kopiuj"
+            },
+            "prompts": {
+                "text_placeholder": "np. Napisz krótki wstęp zachęcający do przeczytania newslettera...",
+                "template_placeholder": "np. Stwórz profesjonalny email z nagłówkiem, treścią i przyciskiem CTA...",
+                "quick": {
+                    "welcome_sub": "Napisz powitanie dla nowego subskrybenta",
+                    "benefits": "Stwórz sekcję o korzyściach produktu",
+                    "thanks_purchase": "Napisz podziękowanie za zakup",
+                    "cta_contact": "Dodaj zachętę do kontaktu",
+                    "professional_newsletter": "Stwórz profesjonalny newsletter z nagłówkiem, treścią i przyciskiem CTA",
+                    "welcome_client": "Wygeneruj email powitalny dla nowego klienta",
+                    "promo_list": "Stwórz email promocyjny z listą produktów",
+                    "cta_end": "Dodaj sekcję z przyciskiem CTA na końcu obecnej wiadomości"
+                }
             }
-        },
-        "ab_testing": {
-            "title": "Testy A/B",
-            "coming_soon": "Ta funkcja będzie dostępna wkrótce. Planujemy dodanie testów A/B dla tematów i treści wiadomości.",
-            "enable": "Włącz test A/B",
-            "variant_b": "Wariant B",
-            "split": "Podział odbiorców"
         },
         "fields": {
             "type": "Typ wiadomości",
             "subject": "Temat wiadomości",
             "subject_placeholder": "Wpisz chwytliwy temat...",
-            "audience": "Lista odbiorców",
+            "audience": "Odbiorcy",
             "select_list": "-- Wybierz listę --",
-            "select_all": "Zaznacz wszystkie",
+            "select_all": "Zaznacz wszystko",
             "type_broadcast": "Jednorazowa",
-            "type_broadcast_desc": "Wysłana w konkretnym terminie",
+            "type_broadcast_desc": "Wysyłana w określonym czasie",
             "type_autoresponder": "Kolejka (Autoresponder)",
-            "type_autoresponder_desc": "Wysłana automatycznie po X dniach",
+            "type_autoresponder_desc": "Wysyłana automatycznie po X dniach",
             "day": "Dzień wysyłki (od zapisu)",
             "day_placeholder": "0 = natychmiast",
-            "day_help": "0 = W dzień zapisu, 1 = Dzień po zapisie, itd.",
+            "day_help": "0 = Dzień zapisu, 1 = Dzień po zapisie itd.",
             "time": "Godzina wysyłki",
-            "time_signup": "W momencie zapisu (godzina)",
+            "time_signup": "W godzinie zapisu",
             "time_custom": "Wybierz godzinę",
-            "time_help": "Wiadomość z kolejki musi być przypisana do konkretnej listy.",
+            "time_help": "Wiadomości autorespondera muszą być przypisane do konkretnej listy.",
             "broadcast_help": "Możesz wybrać wiele list. Wiadomość zostanie wysłana do wszystkich unikalnych subskrybentów.",
-            "scheduling": "Planowanie wysyłki",
+            "scheduling": "Harmonogram wysyłki",
             "schedule_now": "Wyślij teraz (lub zapisz jako szkic)",
             "schedule_later": "Zaplanuj na później",
             "datetime": "Data i godzina wysyłki",
@@ -616,28 +739,65 @@
             "timezone_default": "Domyślna (wg ustawień listy/grupy/konta)",
             "timezone_help": "Priorytet: Wiadomość > Lista > Grupa > Konto użytkownika.",
             "content": "Treść wiadomości",
-            "no_lists": "Brak list mailingowych.",
+            "no_lists": "Brak dostępnych list mailingowych.",
             "preheader": "Preheader",
-            "preheader_placeholder": "Krótki tekst widoczny w podglądzie skrzynki mailowej...",
-            "preheader_help": "Tekst wyświetlany obok tematu w skrzynce odbiorczej"
+            "preheader_placeholder": "Krótki tekst widoczny w podglądzie skrzynki...",
+            "preheader_help": "Tekst wyświetlany obok tematu w skrzynce odbiorczej",
+            "select_by_tag": "Zaznacz wg tagu:",
+            "no_group": "Bez grupy"
         },
         "actions": {
             "save_draft": "Zapisz jako szkic",
-            "send_now": "Wyślij od razu",
+            "send_now": "Wyślij natychmiast",
             "schedule": "Zaplanuj",
             "schedule_send": "Zaplanuj wysyłkę",
             "activate": "Aktywuj (Zapisz)",
             "test": "Test"
         },
         "test": {
-            "title": "Wyślij testowy email",
-            "subtitle": "Sprawdź jak wygląda wiadomość przed wysyłką",
+            "title": "Wyślij test",
+            "subtitle": "Sprawdź jak wiadomość wygląda przed wysyłką",
             "email_label": "Adres email",
-            "email_placeholder": "twoj{'@'}email.pl",
+            "email_placeholder": "twoj@email.com",
             "preview_subject": "Temat",
             "preview_mailbox": "Skrzynka",
             "send": "Wyślij test",
-            "sending": "Wysyłanie..."
+            "sending": "Wysyłanie...",
+            "no_subject_preview": "(brak tematu)",
+            "no_mailbox_preview": "Brak skrzynki"
+        },
+        "stats": {
+            "title": "Statystyki Kampanii",
+            "header_title": "Statystyki: {subject}",
+            "back_to_list": "Wróć do listy",
+            "kpi": {
+                "sent": "Wysłano",
+                "open_rate": "Open Rate",
+                "click_rate": "Click Rate",
+                "ctor": "CTOR",
+                "unique": "{count} unikalnych",
+                "clicks_opens": "Kliknięcia / Otwarcia"
+            },
+            "charts": {
+                "effectiveness": "Skuteczność",
+                "conversion_funnel": "Lejek Konwersji",
+                "labels": {
+                    "opened": "Otwarte",
+                    "sent_no_open": "Wysłane (bez otwarcia)",
+                    "sent": "Wysłano",
+                    "unique_opens": "Unikalne Otwarcia",
+                    "unique_clicks": "Unikalne Kliknięcia",
+                    "counters": "Liczniki"
+                }
+            },
+            "activity": {
+                "recent_opens": "Ostatnie Otwarcia",
+                "recent_clicks": "Ostatnie Kliknięcia",
+                "no_data": "Brak danych",
+                "email": "Email",
+                "time": "Czas",
+                "url": "URL"
+            }
         }
     },
     "subscribers": {
@@ -762,7 +922,16 @@
             "title": "Szablony startowe",
             "subtitle": "Gotowe szablony premium - kliknij aby użyć",
             "use_template": "Użyj szablonu",
-            "show_templates": "Pokaż szablony startowe"
+            "show_templates": "Pokaż szablony startowe",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Powitalny",
+                "newsletter": "Newsletter",
+                "promotional": "Promocja",
+                "ecommerce": "E-commerce",
+                "transactional": "Transakcyjny",
+                "notification": "Powiadomienie"
+            }
         }
     },
     "setup": {
@@ -781,27 +950,104 @@
             "stats": "Statystyki"
         }
     },
-    "license": {
-        "title": "Aktywacja Licencji",
-        "active_title": "Licencja Aktywna",
-        "plan_label": "Plan: {plan}",
-        "choose_plan": "Wybierz Plan NetSendo",
-        "inactive_intro": "Twoje NetSendo jest nieaktywne. Wybierz plan, aby odblokować wszystkie funkcje.",
-        "plans": {
-            "popular": "POPULARNY",
-            "selected": "Wybrany"
+    "marketplace": {
+        "title": "Marketplace",
+        "subtitle": "Połącz NetSendo ze swoimi ulubionymi narzędziami i platformami. Rozszerzone integracje już wkrótce!",
+        "coming_soon": "Wkrótce",
+        "soon": "Wkrótce",
+        "banner_title": "Potężne integracje w drodze",
+        "banner_desc": "Budujemy kompleksowy marketplace integracji, który pomoże Ci połączyć NetSendo z narzędziami, których już używasz. Bądź na bieżąco!",
+        "features": {
+            "one_click": "Konfiguracja jednym kliknięciem",
+            "auto_sync": "Automatyczna synchronizacja",
+            "no_code": "Bez kodowania"
         },
-        "order_title": "Zamów licencję {plan}",
-        "order_email": "Twój email",
-        "order_button": "Zamów Licencję {plan}",
-        "order_sending": "Wysyłanie...",
-        "have_key": "Mam już klucz licencji",
-        "activate_title": "Aktywuj licencję",
-        "check_inbox": "Sprawdź swoją skrzynkę email! Klucz licencji został wysłany.",
-        "key_label": "Klucz licencji",
-        "key_placeholder": "Wklej tutaj klucz licencji...",
-        "activating": "Aktywacja...",
-        "back_to_plans": "← Wróć do wyboru planu"
+        "categories": {
+            "ecommerce": {
+                "title": "E-commerce",
+                "desc": "Synchronizuj klientów i zamówienia"
+            },
+            "crm": {
+                "title": "CRM",
+                "desc": "Zarządzaj kontaktami"
+            },
+            "forms": {
+                "title": "Formularze",
+                "desc": "Zbieraj leady"
+            },
+            "automation": {
+                "title": "Automatyzacja",
+                "desc": "Łącz przepływy pracy"
+            },
+            "payments": {
+                "title": "Płatności",
+                "desc": "Śledź transakcje"
+            },
+            "analytics": {
+                "title": "Analityka",
+                "desc": "Mierz wyniki"
+            }
+        },
+        "request_title": "Potrzebujesz konkretnej integracji?",
+        "request_desc": "Daj nam znać, które narzędzia chciałbyś zobaczyć w NetSendo Marketplace.",
+        "request_button": "Poproś o integrację"
+    },
+    "license": {
+        "title": "Licencja",
+        "active_status": "Licencja {plan} aktywna",
+        "expires_at": "Ważna do: {date}",
+        "expires_never": "bezterminowo",
+        "lifetime_license": "Dożywotnia licencja — bez limitu czasowego",
+        "app_version": "Wersja aplikacji: {version}",
+        "upgrade_to_gold": "Uaktualnij do GOLD",
+        "upgrade_desc": "Odblokuj zaawansowane automatyzacje i priorytetowe wsparcie",
+        "buy_gold": "Kup GOLD — $97/mc",
+        "gold_expired": "Licencja GOLD wygasła",
+        "gold_expired_desc": "Wygasła: {date}. Odnów subskrypcję, aby przywrócić dostęp do funkcji premium.",
+        "renew_gold": "Odnów GOLD — $97/mc",
+        "choose_plan": "Wybierz swoją licencję",
+        "choose_plan_desc": "NetSendo oferuje dwa plany — wybierz ten, który odpowiada Twoim potrzebom",
+        "popular": "POPULARNE",
+        "coming_soon": "Wkrótce dostępne",
+        "gold_coming_soon_msg": "Plan GOLD będzie dostępny wkrótce! Na razie możesz korzystać z planu SILVER.",
+        "request_error": "Błąd połączenia. Wpisz klucz licencji ręcznie poniżej.",
+        "processing": "Przetwarzanie...",
+        "manual_activation_title": "Aktywuj licencję ręcznie",
+        "manual_activation_desc": "Wpisz klucz licencji otrzymany emailem lub po zakupie",
+        "license_key_label": "Klucz licencji",
+        "license_key_placeholder": "Wklej swój klucz licencji tutaj...",
+        "activate_button": "Aktywuj licencję",
+        "activating": "Aktywowanie...",
+        "back_to_plans": "Wróć do wyboru planów",
+        "already_have_key": "Mam już klucz licencji",
+        "generic_error": "Wystąpił błąd. Spróbuj ponownie.",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "DARMOWA",
+                "suffix": "DOŻYWOTNIA",
+                "select": "Wybieram SILVER",
+                "features": {
+                    "basic": "Wszystkie podstawowe funkcje",
+                    "unlimited": "Nieograniczone kontakty",
+                    "templates": "Szablony email",
+                    "support": "Wsparcie społeczności"
+                }
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/miesiąc",
+                "select": "Kup GOLD",
+                "features": {
+                    "everything": "Wszystko z SILVER",
+                    "automations": "Zaawansowane automatyzacje",
+                    "priority": "Priorytetowe wsparcie",
+                    "api": "Dostęp API",
+                    "white_label": "White-label"
+                }
+            }
+        }
     },
     "ai": {
         "title": "Integracje AI",
@@ -992,6 +1238,30 @@
         "select": "Wybierz język",
         "current": "Obecny język"
     },
+    "help_menu": {
+        "title": "Pomoc i zasoby",
+        "quick_start": "Szybki start",
+        "documentation": "Dokumentacja",
+        "api_reference": "Dokumentacja API",
+        "community_forum": "Forum społeczności",
+        "courses_training": "Kursy i szkolenia",
+        "report_bug": "Zgłoś błąd",
+        "whats_new": "Co nowego",
+        "full_changelog": "Pełna lista zmian",
+        "about": "O NetSendo",
+        "checking_updates": "Sprawdzanie aktualizacji...",
+        "up_to_date": "Twoja wersja jest aktualna",
+        "updates_available": "Dostępne aktualizacje ({count})",
+        "download_latest": "Pobierz najnowszą wersję",
+        "unable_to_check": "Nie można sprawdzić aktualizacji",
+        "new_tag": "NOWOŚĆ",
+        "update": "Aktualizuj",
+        "whats_new_list": [
+            "Nowy system licencjonowania",
+            "Sprawdzanie aktualizacji",
+            "Ulepszone szablony email"
+        ]
+    },
     "template_builder": {
         "untitled": "Bez nazwy",
         "saved_at": "Zapisano o",
@@ -1041,6 +1311,8 @@
         "all_rights": "Wszelkie prawa zastrzeżone",
         "default_text": "Kliknij, aby edytować tekst. Możesz dodać dowolną treść.",
         "default_button": "Kliknij tutaj",
+        "default_price": "99,00",
+        "default_currency": "PLN",
         "buy_now": "Kup teraz",
         "logo": "Logo",
         "upload_logo": "Prześlij logo",
@@ -1075,6 +1347,9 @@
         "no_settings": "Ten blok nie ma ustawień do konfiguracji",
         "ai_assistant": "Asystent AI",
         "ai_prompt_placeholder": "Opisz, co chcesz wygenerować...",
+        "ai_error": "Wystąpił błąd podczas generowania.",
+        "ai_no_integrations": "Brak skonfigurowanych integracji AI",
+        "ai_loading": "Ładowanie...",
         "tone_casual": "Luźny",
         "tone_formal": "Formalny",
         "tone_persuasive": "Perswazyjny",
@@ -1089,6 +1364,14 @@
         "email_width": "Szerokość emaila",
         "font_family": "Czcionka",
         "color_presets": "Zestawy kolorów",
+        "color_presets_list": {
+            "indigo": "Indygo",
+            "blue": "Niebieski",
+            "green": "Zielony",
+            "rose": "Różowy",
+            "orange": "Pomarańczowy",
+            "purple": "Fioletowy"
+        },
         "primary_color": "Kolor główny",
         "secondary_color": "Kolor drugorzędny",
         "page_background": "Tło strony",
@@ -1100,18 +1383,41 @@
         "generate_section": "Generuj sekcję",
         "describe_what_you_need": "Opisz, czego potrzebujesz",
         "quick_prompts": "Szybkie podpowiedzi",
+        "quick_prompts_list": [
+            "Napisz wstęp do newslettera o nowej kolekcji produktów",
+            "Stwórz zaproszenie na webinar o marketingu",
+            "Napisz podziękowanie za dokonany zakup",
+            "Przypomnij o porzuconym koszyku"
+        ],
         "select_tone": "Wybierz ton",
         "section_type": "Typ sekcji",
+        "section_types": {
+            "promotional": "Promocyjny",
+            "welcome": "Powitalny",
+            "newsletter": "Newsletter",
+            "product": "Produktowy"
+        },
         "generated_content": "Wygenerowana treść",
         "insert_content": "Wstaw treść",
         "note": "Uwaga",
-        "columns_note": "Przeciągnij bloki z biblioteki do kolumn. Obsługiwane: tekst, obrazy, przyciski.",
+        "columns_note": "Bloki zagnieżdżone w kolumnach będą dostępne w przyszłej wersji.",
         "columns_count": "Liczba kolumn",
         "gap": "Odstęp między kolumnami",
         "drop_here": "Upuść blok tutaj",
         "drag_instruction": "Przeciągnij blok na szablon lub kliknij",
         "social_icons": "Ikony social media",
-        "products_count": "Liczba produktów"
+        "products_count": "Liczba produktów",
+        "headline_label": "Nagłówek:",
+        "content_label": "Treść:",
+        "button_label": "Przycisk:",
+        "preview_panel": {
+            "product_grid_empty": "Siatka produktów (brak produktów)",
+            "product_name_fallback": "Nazwa produktu",
+            "buy_now": "Kup teraz",
+            "buy": "Kup",
+            "currency_fallback": "PLN",
+            "drop_block_here": "Upuść blok tutaj"
+        }
     },
     "mailboxes": {
         "title": "Skrzynki pocztowe",
@@ -1211,10 +1517,13 @@
             "failed": "Błąd"
         },
         "settings": {
+            "title": "Ustawienia wysyłki",
             "volume_per_minute": "Limit wiadomości / minutę",
             "volume_help": "Maksymalna liczba emaili wysyłanych w ciągu minuty",
             "maintenance_hour": "Godzina operacji dziennych",
-            "maintenance_help": "Czyszczenie logów, przetwarzanie odbitych wiadomości, itp."
+            "maintenance_help": "Czyszczenie logów, przetwarzanie odbitych wiadomości, itp.",
+            "global_note_title": "Ustawienia globalne CRON",
+            "global_note_text": "Te ustawienia są domyślne dla wszystkich list. Każda lista może nadpisać te ustawienia własnymi w zakładce \"Harmonogram (CRON)\"."
         },
         "schedule": {
             "title": "Harmonogram tygodniowy",
@@ -1236,6 +1545,8 @@
             "sunday": "Niedziela"
         },
         "stats": {
+            "title": "Statystyki wykonania",
+            "info_title": "Informacje",
             "total_runs": "Uruchomień",
             "successful": "Sukces",
             "failed": "Błędy",
@@ -1292,7 +1603,10 @@
             "automation_text": "Możesz uruchamiać CRON z zewnętrznych narzędzi automatyzacji poprzez {bold}. Wystarczy wywołać endpoint co minutę.",
             "forge_title": "Laravel Forge / Vapor",
             "forge_text": "Laravel Forge: Scheduler jest konfigurowany automatycznie dla każdej aplikacji Laravel. Wystarczy włączyć opcję \"Schedule\" w panelu serwera.",
-            "vapor_text": "Laravel Vapor: Scheduler jest wbudowany w środowisko serverless i działa automatycznie."
+            "vapor_text": "Laravel Vapor: Scheduler jest wbudowany w środowisko serverless i działa automatycznie.",
+            "n8n_note": "Użyj node {node} z triggerem {trigger} co 1 minutę.",
+            "make_note": "Użyj modułu {module} z scheduling co 1 minutę.",
+            "zapier_note": "Użyj triggera {trigger} i akcji {action}."
         },
         "webhook": {
             "title": "Konfiguracja Webhook",

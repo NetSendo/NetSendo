@@ -14,13 +14,13 @@ const currentSettingsTab = ref('subscription');
 
 // CRON helpers
 const days = [
-    { key: 'monday', label: 'Poniedziałek' },
-    { key: 'tuesday', label: 'Wtorek' },
-    { key: 'wednesday', label: 'Środa' },
-    { key: 'thursday', label: 'Czwartek' },
-    { key: 'friday', label: 'Piątek' },
-    { key: 'saturday', label: 'Sobota' },
-    { key: 'sunday', label: 'Niedziela' },
+    { key: 'monday' },
+    { key: 'tuesday' },
+    { key: 'wednesday' },
+    { key: 'thursday' },
+    { key: 'friday' },
+    { key: 'saturday' },
+    { key: 'sunday' },
 ];
 
 const getDefaultSchedule = () => {
@@ -109,7 +109,7 @@ const form = useForm({
         },
         advanced: {
             facebook_integration: getSetting('advanced.facebook_integration', ''),
-            queue_days: getSetting('advanced.queue_days', ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'niedz']),
+            queue_days: getSetting('advanced.queue_days', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
             bounce_analysis: getSetting('advanced.bounce_analysis', true),
         },
     },
@@ -186,7 +186,7 @@ const submit = () => {
                                     <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                         <div>
                                             <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.delete_unconfirmed') }}</span>
-                                            <span class="block text-xs text-slate-500 dark:text-slate-400">Automatycznie usuwaj niepotwierdzone adresy</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.delete_unconfirmed_desc') }}</span>
                                         </div>
                                         <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900" 
                                                 :class="form.settings.subscription.delete_unconfirmed ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
@@ -227,7 +227,7 @@ const submit = () => {
                                             v-model="form.settings.sending.mailbox_id"
                                             class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-400"
                                         >
-                                            <option :value="null">-- Domyślne globalne ustawienia --</option>
+                                            <option :value="null">{{ $t('mailing_lists.settings.mailbox_defaults_none') }}</option>
                                             <option v-for="mailbox in mailboxes" :key="mailbox.id" :value="mailbox.id">
                                                 {{ mailbox.name }} ({{ mailbox.from_email }})
                                             </option>
@@ -342,7 +342,7 @@ const submit = () => {
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
                                                 :class="page.type === 'system' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30' : 'text-slate-500 hover:text-slate-700'"
                                             >
-                                                Systemowa
+                                                {{ $t('mailing_lists.settings.pages.types.system') }}
                                             </button>
                                             <button 
                                                 @click="page.type = 'custom'"
@@ -350,7 +350,7 @@ const submit = () => {
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
                                                 :class="page.type === 'custom' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30' : 'text-slate-500 hover:text-slate-700'"
                                             >
-                                                Własny URL
+                                                {{ $t('mailing_lists.settings.pages.types.custom') }}
                                             </button>
                                             <button 
                                                 @click="page.type = 'external'"
@@ -358,7 +358,7 @@ const submit = () => {
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
                                                 :class="page.type === 'external' ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30' : 'text-slate-500 hover:text-slate-700'"
                                             >
-                                                Strona Zewnętrzna
+                                                {{ $t('mailing_lists.settings.pages.types.external') }}
                                             </button>
                                         </div>
                                     </div>
@@ -377,7 +377,7 @@ const submit = () => {
                                             v-model="page.external_page_id"
                                             class="block w-full rounded-lg border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
                                         >
-                                            <option :value="null" disabled>Wybierz stronę...</option>
+                                            <option :value="null" disabled>{{ $t('mailing_lists.settings.pages.select_page') }}</option>
                                             <option v-for="ep in externalPages" :key="ep.id" :value="ep.id">
                                                 {{ ep.name }}
                                             </option>
@@ -398,18 +398,17 @@ const submit = () => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <div>
-                                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Ustawienia globalne CRON</p>
+                                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">{{ $t('cron.settings.global_note_title') }}</p>
                                             <p class="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                                                Te ustawienia są domyślne dla wszystkich list. Każda lista może nadpisać te ustawienia własnymi w zakładce "Harmonogram (CRON)".
+                                                {{ $t('cron.settings.global_note_text') }}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Volume per minute -->
                                 <div>
                                     <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                        Limit wiadomości / minutę (globalny)
+                                        {{ $t('cron.settings.volume_per_minute') }} (globalny)
                                     </label>
                                     <input
                                         v-model.number="form.settings.cron.volume_per_minute"
@@ -419,13 +418,12 @@ const submit = () => {
                                         class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                         placeholder="np. 100"
                                     >
-                                    <p class="mt-1 text-xs text-slate-500">Ile wiadomości maksymalnie może być wysłanych w ciągu minuty.</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $t('cron.settings.volume_help') }}</p>
                                 </div>
 
-                                <!-- Daily maintenance hour -->
                                 <div>
                                     <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                        Godzina codziennej konserwacji
+                                        {{ $t('cron.settings.maintenance_hour') }}
                                     </label>
                                     <select
                                         v-model.number="form.settings.cron.daily_maintenance_hour"
@@ -433,13 +431,13 @@ const submit = () => {
                                     >
                                         <option v-for="h in 24" :key="h-1" :value="h-1">{{ String(h-1).padStart(2, '0') }}:00</option>
                                     </select>
-                                    <p class="mt-1 text-xs text-slate-500">O której godzinie wykonywać codzienne zadania konserwacyjne (czyszczenie logów itp.).</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $t('cron.settings.maintenance_help') }}</p>
                                 </div>
 
                                 <!-- Weekly schedule -->
                                 <div>
                                     <label class="mb-3 block text-sm font-medium text-slate-900 dark:text-white">
-                                        Globalny harmonogram tygodniowy
+                                        {{ $t('cron.schedule.title') }}
                                     </label>
                                     <div class="space-y-3">
                                         <div 
@@ -455,7 +453,7 @@ const submit = () => {
                                                         class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                                                     />
                                                     <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                        {{ day.label }}
+                                                        {{ $t('common.days.' + day.key) }}
                                                     </span>
                                                 </label>
                                             </div>
@@ -465,7 +463,7 @@ const submit = () => {
                                                 class="flex items-center gap-3 flex-1"
                                             >
                                                 <div class="flex items-center gap-2">
-                                                    <label class="text-xs text-slate-500">Od:</label>
+                                                    <label class="text-xs text-slate-500">{{ $t('cron.schedule.from') }}:</label>
                                                     <input 
                                                         type="time" 
                                                         :value="minutesToTime(form.settings.cron.schedule[day.key].start)"
@@ -474,7 +472,7 @@ const submit = () => {
                                                     />
                                                 </div>
                                                 <div class="flex items-center gap-2">
-                                                    <label class="text-xs text-slate-500">Do:</label>
+                                                    <label class="text-xs text-slate-500">{{ $t('cron.schedule.to') }}:</label>
                                                     <input 
                                                         type="time" 
                                                         :value="minutesToTime(form.settings.cron.schedule[day.key].end)"
@@ -490,14 +488,14 @@ const submit = () => {
                                                         @click="form.settings.cron.schedule[day.key] = { enabled: true, start: 0, end: 1440 }"
                                                         class="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-600 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
                                                     >
-                                                        24h
+                                                        {{ $t('cron.schedule.preset_24h') }}
                                                     </button>
                                                     <button 
                                                         type="button"
                                                         @click="form.settings.cron.schedule[day.key] = { enabled: true, start: 480, end: 1020 }"
                                                         class="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-600 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
                                                     >
-                                                        8-17
+                                                        {{ $t('cron.schedule.preset_business') }}
                                                     </button>
                                                 </div>
                                             </div>
@@ -506,11 +504,11 @@ const submit = () => {
                                                 v-else
                                                 class="flex-1 text-sm text-slate-400 dark:text-slate-500 italic"
                                             >
-                                                Wysyłka wyłączona
+                                                {{ $t('cron.schedule.day_disabled') }}
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="mt-2 text-xs text-slate-500">Określ w jakie dni i w jakich godzinach system może wysyłać wiadomości.</p>
+                                    <p class="mt-2 text-xs text-slate-500">{{ $t('cron.schedule.description') }}</p>
                                 </div>
                             </div>
 
@@ -524,8 +522,8 @@ const submit = () => {
                                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                     <div class="flex items-center justify-between">
                                         <div>
-                                            <span class="block text-sm font-medium text-slate-900 dark:text-white">Analiza Odbić (Bounce Management)</span>
-                                            <span class="block text-xs text-slate-500 dark:text-slate-400">Automatycznie oznaczaj adresy jako nieaktywne po miękkim lub twardym odbiciu.</span>
+                                            <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.advanced.bounce_title') }}</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.bounce_desc') }}</span>
                                         </div>
                                         <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900" 
                                                 :class="form.settings.advanced.bounce_analysis ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
@@ -538,22 +536,22 @@ const submit = () => {
 
                                 <div>
                                     <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                        Facebook Integration (Pixel ID)
+                                        {{ $t('mailing_lists.settings.advanced.facebook_label') }}
                                     </label>
                                     <input
                                         v-model="form.settings.advanced.facebook_integration"
                                         type="text"
                                         class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
-                                        placeholder="np. 1234567890"
+                                        :placeholder="$t('mailing_lists.settings.advanced.facebook_placeholder')"
                                     >
                                 </div>
 
                                 <div>
                                     <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                        Dni wysyłki kolejki
+                                        {{ $t('mailing_lists.settings.advanced.queue_days_label') }}
                                     </label>
                                     <div class="flex flex-wrap gap-2">
-                                        <div v-for="day in ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'niedz']" :key="day" 
+                                        <div v-for="day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']" :key="day" 
                                             class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
                                             :class="form.settings.advanced.queue_days.includes(day) 
                                                 ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
@@ -564,10 +562,10 @@ const submit = () => {
                                                 else form.settings.advanced.queue_days.splice(idx, 1);
                                             }"
                                         >
-                                            {{ day }}
+                                            {{ $t('common.shorthand_days.' + day.substring(0, 3)) }}
                                         </div>
                                     </div>
-                                    <p class="mt-1 text-xs text-slate-500">Zaznacz dni, w które wiadomości autorespondera mogą być wysyłane.</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.advanced.queue_days_help') }}</p>
                                 </div>
                             </div>
                             

@@ -212,7 +212,7 @@ const handleTemplateSelect = async (template) => {
                 } catch (mjmlError) {
                     console.warn('MJML compilation failed:', mjmlError);
                     // Fallback: show raw MJML info
-                    htmlContent = '<p>Template wymaga kompilacji MJML</p>';
+                    htmlContent = `<p>${t('messages.template.compilation_error')}</p>`;
                 }
             }
             
@@ -317,7 +317,7 @@ const groupedLists = computed(() => {
     }
     
     // "Bez grupy" for lists without a group
-    const ungrouped = { id: null, name: 'Bez grupy', lists: [] };
+    const ungrouped = { id: null, name: t('messages.fields.no_group'), lists: [] };
     
     // Assign lists to their groups
     for (const list of props.lists) {
@@ -637,18 +637,18 @@ const triggerTypes = [
                             <!-- Preheader (optional) -->
                             <div>
                                 <InputLabel for="preheader">
-                                    {{ $t('messages.fields.preheader') || 'Preheader' }}
-                                    <span class="text-slate-400 font-normal ml-1">({{ $t('common.optional') || 'opcjonalne' }})</span>
+                                    {{ $t('messages.fields.preheader') }}
+                                    <span class="text-slate-400 font-normal ml-1">({{ $t('common.optional') }})</span>
                                 </InputLabel>
                                 <TextInput
                                     id="preheader"
                                     type="text"
                                     class="mt-1 block w-full"
                                     v-model="form.preheader"
-                                    :placeholder="$t('messages.fields.preheader_placeholder') || 'Krótki tekst widoczny w podglądzie skrzynki mailowej...'"
+                                    :placeholder="$t('messages.fields.preheader_placeholder')"
                                 />
                                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {{ $t('messages.fields.preheader_help') || 'Tekst wyświetlany obok tematu w skrzynce odbiorczej' }}
+                                    {{ $t('messages.fields.preheader_help') }}
                                 </p>
                                 <InputError class="mt-2" :message="form.errors.preheader" />
                             </div>
@@ -710,7 +710,7 @@ const triggerTypes = [
                                     <svg class="h-4 w-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
-                                    {{ $t('messages.ai.title') }}
+                                    {{ $t('messages.ai_assistant.title') }}
                                 </h3>
                                 <button
                                     type="button"
@@ -720,7 +720,7 @@ const triggerTypes = [
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
-                                    {{ $t('messages.ai.generate') }}
+                                    {{ $t('messages.ai_assistant.generate') }}
                                 </button>
                             </div>
 
@@ -816,7 +816,7 @@ const triggerTypes = [
                                 <!-- Tags quick select -->
                                 <div v-if="tags.length > 0" class="mb-3">
                                     <div class="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                        {{ $t('messages.fields.select_by_tag') || 'Zaznacz wg tagu:' }}
+                                        {{ $t('messages.fields.select_by_tag') }}
                                     </div>
                                     <div class="flex flex-wrap gap-1.5">
                                         <button 
@@ -1074,12 +1074,12 @@ const triggerTypes = [
 
                         <div class="grid gap-4 lg:grid-cols-2">
                             <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                                <h4 class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Wariant A</h4>
-                                <p class="text-sm text-slate-500">Oryginalny temat i treść</p>
+                                <h4 class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">{{ $t('messages.ab_testing.variant_a') }}</h4>
+                                <p class="text-sm text-slate-500">{{ $t('messages.ab_testing.variant_a_desc') }}</p>
                             </div>
                             <div class="rounded-lg border border-slate-200 p-4 dark:border-slate-700">
-                                <h4 class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Wariant B</h4>
-                                <TextInput type="text" class="w-full" placeholder="Alternatywny temat..." disabled />
+                                <h4 class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">{{ $t('messages.ab_testing.variant_b') }}</h4>
+                                <TextInput type="text" class="w-full" :placeholder="$t('messages.ab_testing.variant_b_placeholder')" disabled />
                             </div>
                         </div>
 
@@ -1231,10 +1231,10 @@ const triggerTypes = [
 
                     <div class="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50">
                         <p class="text-sm text-slate-600 dark:text-slate-300">
-                            <span class="font-medium">{{ $t('messages.test.preview_subject') }}:</span> {{ form.subject || '(brak tematu)' }}
+                            <span class="font-medium">{{ $t('messages.test.preview_subject') }}:</span> {{ form.subject || $t('messages.test.no_subject_preview') }}
                         </p>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {{ $t('messages.test.preview_mailbox') }}: {{ effectiveMailboxInfo.mailbox?.name || 'Brak skrzynki' }}
+                            {{ $t('messages.test.preview_mailbox') }}: {{ effectiveMailboxInfo.mailbox?.name || $t('messages.test.no_mailbox_preview') }}
                         </p>
                     </div>
                 </div>

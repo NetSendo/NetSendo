@@ -309,7 +309,7 @@ const stripHtml = (html) => {
                                                         </div>
                                                         <div v-else-if="nestedBlock.type === 'button'" class="mt-1">
                                                             <span class="inline-block rounded px-2 py-0.5 text-white" :style="{ backgroundColor: nestedBlock.content?.backgroundColor || '#6366f1' }">
-                                                                {{ nestedBlock.content?.text || 'Button' }}
+                                                                {{ nestedBlock.content?.text || $t('template_builder.default_button') }}
                                                             </span>
                                                         </div>
                                                         <div v-else-if="nestedBlock.type === 'image' && nestedBlock.content?.src" class="mt-1">
@@ -319,7 +319,7 @@ const stripHtml = (html) => {
                                                 </template>
                                                 <template #footer>
                                                     <div v-if="colBlocks.length === 0" class="py-4 text-center text-xs text-slate-400">
-                                                        {{ $t('template_builder.drop_here') || 'Upuść blok tutaj' }}
+                                                        {{ $t('template_builder.drop_here') }}
                                                     </div>
                                                 </template>
                                             </draggable>
@@ -337,8 +337,8 @@ const stripHtml = (html) => {
                                             <h4 class="font-bold text-slate-900 dark:text-white">{{ block.content?.title || $t('template_builder.product_title') }}</h4>
                                             <p class="mt-1 text-sm text-slate-500 line-clamp-2">{{ block.content?.description }}</p>
                                             <p class="mt-2 font-bold text-indigo-600">
-                                                <span v-if="block.content?.oldPrice" class="mr-2 text-sm text-slate-400 line-through">{{ block.content.oldPrice }} {{ block.content?.currency || 'PLN' }}</span>
-                                                {{ block.content?.price || '99.00' }} {{ block.content?.currency || 'PLN' }}
+                                                <span v-if="block.content?.oldPrice" class="mr-2 text-sm text-slate-400 line-through">{{ block.content.oldPrice }} {{ block.content?.currency || $t('template_builder.default_currency') }}</span>
+                                                {{ block.content?.price || $t('template_builder.default_price') }} {{ block.content?.currency || $t('template_builder.default_currency') }}
                                             </p>
                                         </div>
                                     </div>
@@ -365,7 +365,7 @@ const stripHtml = (html) => {
                                     <p class="font-medium">{{ block.content?.companyName || $t('template_builder.company_name') }}</p>
                                     <p class="mt-1 text-xs opacity-75">{{ block.content?.address }}</p>
                                     <p class="mt-3 text-xs underline">{{ block.content?.unsubscribeText || $t('template_builder.unsubscribe') }}</p>
-                                    <p class="mt-2 text-xs opacity-50">{{ block.content?.copyright }}</p>
+                                    <p class="mt-2 text-xs opacity-50">{{ block.content?.copyright || (new Date().getFullYear() + ' ' + $t('template_builder.all_rights')) }}</p>
                                 </div>
 
                                 <!-- Fallback -->

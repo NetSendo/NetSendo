@@ -245,7 +245,7 @@ const statusColors = {
                         <!-- Podstawowe ustawienia -->
                         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                📧 {{ t('cron.settings.title', 'Ustawienia wysyłki') }}
+                                📧 {{ t('cron.settings.title') }}
                             </h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -445,7 +445,7 @@ const statusColors = {
                     <!-- Informacje o konfiguracji -->
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            ℹ️ {{ t('cron.stats.info_title', 'Informacje') }}
+                            ℹ️ {{ t('cron.stats.info_title') }}
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
@@ -734,24 +734,33 @@ sudo supervisorctl start netsendo-scheduler</pre>
                         <div class="space-y-3 text-sm">
                             <div class="border-l-4 border-indigo-500 pl-3">
                                 <strong class="text-gray-900 dark:text-white">n8n:</strong>
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    Użyj node <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP Request</code> 
-                                    z triggerem <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Cron</code> co 1 minutę.
-                                </p>
+                                <i18n-t keypath="cron.instructions.n8n_note" tag="p" class="text-gray-600 dark:text-gray-400">
+                                    <template #node>
+                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP Request</code>
+                                    </template>
+                                    <template #trigger>
+                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Cron</code>
+                                    </template>
+                                </i18n-t>
                             </div>
                             <div class="border-l-4 border-purple-500 pl-3">
                                 <strong class="text-gray-900 dark:text-white">Make (Integromat):</strong>
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    Użyj modułu <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP > Make a request</code> 
-                                    z scheduling co 1 minutę.
-                                </p>
+                                <i18n-t keypath="cron.instructions.make_note" tag="p" class="text-gray-600 dark:text-gray-400">
+                                    <template #module>
+                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP > Make a request</code>
+                                    </template>
+                                </i18n-t>
                             </div>
                             <div class="border-l-4 border-orange-500 pl-3">
                                 <strong class="text-gray-900 dark:text-white">Zapier:</strong>
-                                <p class="text-gray-600 dark:text-gray-400">
-                                    Użyj triggera <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Schedule</code> 
-                                    i akcji <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Webhooks by Zapier</code>.
-                                </p>
+                                <i18n-t keypath="cron.instructions.zapier_note" tag="p" class="text-gray-600 dark:text-gray-400">
+                                    <template #trigger>
+                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Schedule</code>
+                                    </template>
+                                    <template #action>
+                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Webhooks by Zapier</code>
+                                    </template>
+                                </i18n-t>
                             </div>
                         </div>
                         

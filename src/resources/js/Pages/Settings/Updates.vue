@@ -17,6 +17,19 @@ const currentVersion = computed(() => page.props.appVersion || '1.0.0');
 // Fallback changelog for when GitHub is not available
 const fallbackChangelog = [
     {
+        version: '1.0.1',
+        date: '2024-12-20',
+        type: 'patch',
+        title: 'Bug Fixes & Improvements',
+        changes: [
+            'Fixed hardcoded Polish translations in CRON warning',
+            'Fixed AI Assistant translations conflict',
+            'Improved Help menu - What\'s New section display',
+            'Added CRON warning translation keys',
+            'Fixed changelog link to /update',
+        ],
+    },
+    {
         version: '1.0.0',
         date: '2024-12-20',
         type: 'major',

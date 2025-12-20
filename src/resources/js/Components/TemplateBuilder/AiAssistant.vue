@@ -67,17 +67,17 @@ watch(selectedIntegrationId, (newId) => {
 
 // Tone options
 const toneOptions = [
-    { value: 'casual', label: 'Luźny', icon: '😊' },
-    { value: 'formal', label: 'Formalny', icon: '👔' },
-    { value: 'persuasive', label: 'Perswazyjny', icon: '🎯' },
+    { value: 'casual', icon: '😊' },
+    { value: 'formal', icon: '👔' },
+    { value: 'persuasive', icon: '🎯' },
 ];
 
 // Section type options
 const sectionTypes = [
-    { value: 'promotional', label: 'Promocyjny' },
-    { value: 'welcome', label: 'Powitalny' },
-    { value: 'newsletter', label: 'Newsletter' },
-    { value: 'product', label: 'Produktowy' },
+    { value: 'promotional' },
+    { value: 'welcome' },
+    { value: 'newsletter' },
+    { value: 'product' },
 ];
 
 // Generate content
@@ -106,7 +106,7 @@ const generateContent = async () => {
         console.error('AI generation failed:', error);
         generatedContent.value = {
             type: 'error',
-            message: error.response?.data?.error || 'Wystąpił błąd podczas generowania.',
+            message: error.response?.data?.error || t('template_builder.ai_error'),
         };
     } finally {
         isGenerating.value = false;
@@ -138,7 +138,7 @@ const generateSection = async () => {
         console.error('AI generation failed:', error);
         generatedContent.value = {
             type: 'error',
-            message: error.response?.data?.error || 'Wystąpił błąd podczas generowania.',
+            message: error.response?.data?.error || t('template_builder.ai_error'),
         };
     } finally {
         isGenerating.value = false;
@@ -172,12 +172,9 @@ const insertContent = () => {
 };
 
 // Quick prompts
-const quickPrompts = [
-    'Napisz wstęp do newslettera o nowej kolekcji produktów',
-    'Stwórz zaproszenie na webinar o marketingu',
-    'Napisz podziękowanie za dokonany zakup',
-    'Przypomnij o porzuconym koszyku',
-];
+const quickPrompts = computed(() => {
+    return t('template_builder.quick_prompts_list', { returnObjects: true }) || [];
+});
 </script>
 
 <template>
@@ -231,7 +228,7 @@ const quickPrompts = [
                     <!-- Model Selection -->
                     <div class="border-b border-slate-200 p-4 dark:border-slate-700">
                         <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            {{ $t('messages.ai.select_model') || 'Model AI' }}
+                            {{ $t('messages.ai_assistant.select_model') || 'Model AI' }}
                         </label>
                         
                         <!-- Loading state -->
@@ -240,12 +237,12 @@ const quickPrompts = [
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            Ładowanie...
+                            {{ $t('template_builder.ai_loading') }}
                         </div>
                         
                         <!-- No integrations -->
                         <div v-else-if="integrations.length === 0" class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                            Brak skonfigurowanych integracji AI
+                            {{ $t('template_builder.ai_no_integrations') }}
                         </div>
                         
                         <!-- Integration & Model selectors -->
@@ -316,7 +313,7 @@ const quickPrompts = [
                                     class="flex flex-col items-center gap-1 rounded-lg border p-3 transition-all"
                                 >
                                     <span class="text-xl">{{ opt.icon }}</span>
-                                    <span class="text-xs font-medium">{{ opt.label }}</span>
+                                    <span class="text-xs font-medium">{{ $t(`template_builder.tone_${opt.value}`) }}</span>
                                 </button>
                             </div>
                         </div>
@@ -331,7 +328,7 @@ const quickPrompts = [
                                 class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                             >
                                 <option v-for="st in sectionTypes" :key="st.value" :value="st.value">
-                                    {{ st.label }}
+                                    {{ $t(`template_builder.section_types.${st.value}`) }}
                                 </option>
                             </select>
                         </div>
@@ -379,15 +376,15 @@ const quickPrompts = [
                             <!-- Section preview -->
                             <div v-else-if="generatedContent.type === 'section'" class="space-y-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
                                 <div>
-                                    <label class="text-xs text-slate-500">Nagłówek:</label>
+                                    <label class="text-xs text-slate-500">{{ $t('template_builder.headline_label') }}</label>
                                     <p class="font-bold text-slate-900 dark:text-white">{{ generatedContent.data.headline }}</p>
                                 </div>
                                 <div>
-                                    <label class="text-xs text-slate-500">Treść:</label>
+                                    <label class="text-xs text-slate-500">{{ $t('template_builder.content_label') }}</label>
                                     <div class="prose prose-sm max-w-none dark:prose-invert" v-html="generatedContent.data.text"></div>
                                 </div>
                                 <div v-if="generatedContent.data.buttonText">
-                                    <label class="text-xs text-slate-500">Przycisk:</label>
+                                    <label class="text-xs text-slate-500">{{ $t('template_builder.button_label') }}</label>
                                     <p class="text-indigo-600 dark:text-indigo-400">{{ generatedContent.data.buttonText }}</p>
                                 </div>
                             </div>

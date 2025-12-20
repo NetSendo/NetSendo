@@ -115,7 +115,7 @@ const blockToMjml = (block, options) => {
     <mj-section padding="10px 0">
       <mj-column>
         <mj-button href="${c.href || '#'}" background-color="${c.backgroundColor || primaryColor}" color="${c.textColor || '#ffffff'}" border-radius="${c.borderRadius || '8px'}" inner-padding="${c.padding || '12px 24px'}" align="${c.alignment || 'center'}">
-          ${c.text || 'Button'}
+          ${c.text || t('template_builder.default_button')}
         </mj-button>
       </mj-column>
     </mj-section>`;
@@ -142,14 +142,14 @@ const blockToMjml = (block, options) => {
         case 'product':
             const productImage = c.image ? `<mj-image src="${c.image}" padding="0 0 10px 0" />` : '';
             const priceHtml = c.oldPrice 
-                ? `<span style="text-decoration: line-through; color: #94a3b8;">${c.oldPrice} ${c.currency || 'PLN'}</span> <strong style="color: #ef4444;">${c.price || '99.00'} ${c.currency || 'PLN'}</strong>`
-                : `<strong>${c.price || '99.00'} ${c.currency || 'PLN'}</strong>`;
+                ? `<span style="text-decoration: line-through; color: #94a3b8;">${c.oldPrice} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</span> <strong style="color: #ef4444;">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`
+                : `<strong>${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`;
             return `
     <mj-section background-color="#ffffff" padding="20px" border-radius="8px">
       <mj-column>
         ${productImage}
         <mj-text font-size="18px" font-weight="bold" padding="10px 0 5px 0">
-          ${c.title || 'Nazwa produktu'}
+          ${c.title || t('template_builder.preview_panel.product_name_fallback')}
         </mj-text>
         <mj-text padding="0 0 10px 0">
           ${c.description || ''}
@@ -158,7 +158,7 @@ const blockToMjml = (block, options) => {
           ${priceHtml}
         </mj-text>
         <mj-button href="${c.buttonUrl || '#'}" background-color="${primaryColor}" border-radius="8px">
-          ${c.buttonText || 'Kup teraz'}
+          ${c.buttonText || t('template_builder.preview_panel.buy_now')}
         </mj-button>
       </mj-column>
     </mj-section>`;
@@ -185,20 +185,20 @@ const blockToMjml = (block, options) => {
                 return `
     <mj-section padding="20px">
       <mj-column>
-        <mj-text align="center" color="#94a3b8">Siatka produktów (brak produktów)</mj-text>
+        <mj-text align="center" color="#94a3b8">${t('template_builder.preview_panel.product_grid_empty')}</mj-text>
       </mj-column>
     </mj-section>`;
             }
             const colWidth = gridColumns === 2 ? '50%' : '33.33%';
             let gridProductsHtml = '';
             for (const product of products) {
-                const prodImage = product.image ? `<mj-image src="${product.image}" padding="0 0 10px 0" />` : '<mj-image src="https://via.placeholder.com/150x150?text=Produkt" padding="0 0 10px 0" />';
+                const prodImage = product.image ? `<mj-image src="${product.image}" padding="0 0 10px 0" />` : `<mj-image src="https://via.placeholder.com/150x150?text=${t('template_builder.blocks.product')}" padding="0 0 10px 0" />`;
                 gridProductsHtml += `
       <mj-column width="${colWidth}" padding="10px">
         ${prodImage}
-        <mj-text font-weight="bold" align="center">${product.title || 'Produkt'}</mj-text>
-        <mj-text align="center">${product.price || '99.00'} ${product.currency || 'PLN'}</mj-text>
-        <mj-button href="${product.buttonUrl || '#'}" background-color="${primaryColor}" font-size="14px">Kup</mj-button>
+        <mj-text font-weight="bold" align="center">${product.title || t('template_builder.blocks.product')}</mj-text>
+        <mj-text align="center">${product.price || t('template_builder.default_price')} ${product.currency || t('template_builder.preview_panel.currency_fallback')}</mj-text>
+        <mj-button href="${product.buttonUrl || '#'}" background-color="${primaryColor}" font-size="14px">${t('template_builder.preview_panel.buy')}</mj-button>
       </mj-column>`;
             }
             return `
@@ -215,7 +215,7 @@ const blockToMjml = (block, options) => {
           ${c.address || ''}
         </mj-text>
         <mj-text color="${c.textColor || '#94a3b8'}" align="center" font-size="12px" padding-top="15px">
-          <a href="${c.unsubscribeUrl || '#'}" style="color: ${c.textColor || '#94a3b8'};">${c.unsubscribeText || 'Wypisz się'}</a>
+          <a href="${c.unsubscribeUrl || '#'}" style="color: ${c.textColor || '#94a3b8'};">${c.unsubscribeText || t('messages.unsubscribe_link')}</a>
         </mj-text>
         <mj-text color="${c.textColor || '#94a3b8'}" align="center" font-size="12px" padding-top="10px">
           ${c.copyright || ''}
@@ -283,7 +283,7 @@ const nestedBlockToMjml = (block, options) => {
             if (!c.src) return '';
             return `<mj-image src="${c.src}" alt="${c.alt || ''}" />`;
         case 'button':
-            return `<mj-button href="${c.href || '#'}" background-color="${c.backgroundColor || primaryColor}">${c.text || 'Button'}</mj-button>`;
+            return `<mj-button href="${c.href || '#'}" background-color="${c.backgroundColor || primaryColor}">${c.text || t('template_builder.default_button')}</mj-button>`;
         default:
             return '';
     }
@@ -360,20 +360,20 @@ const blockToHtml = (block, textColor) => {
         case 'header':
             const logoHtml = c.logo 
                 ? `<img src="${c.logo}" style="width: ${c.logoWidth || 150}px; margin: 0 auto; display: block;" />`
-                : '<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">Logo</div>';
+                : `<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">${t('template_builder.logo')}</div>`;
             return `<div style="background-color: ${c.backgroundColor || '#6366f1'}; padding: ${c.padding || '20px'}; text-align: ${c.alignment || 'center'};">${logoHtml}</div>`;
         
         case 'text':
             return `<div style="padding: ${c.padding || '20px'}; text-align: ${c.alignment || 'left'}; color: ${textColor};">${c.html || ''}</div>`;
         
         case 'image':
-            if (!c.src) return '<div style="background: #f1f5f9; height: 150px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">Image placeholder</div>';
+            if (!c.src) return `<div style="background: #f1f5f9; height: 150px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">${t('template_builder.blocks.image')}</div>`;
             const imgHtml = `<img src="${c.src}" alt="${c.alt || ''}" style="display: block; margin: 0 auto; max-width: 100%;" />`;
             return c.href ? `<a href="${c.href}">${imgHtml}</a>` : imgHtml;
         
         case 'button':
             return `<div style="padding: 10px 0; text-align: ${c.alignment || 'center'};">
-                <a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: ${c.padding || '12px 24px'}; border-radius: ${c.borderRadius || '8px'}; text-decoration: none; font-weight: 500;">${c.text || 'Button'}</a>
+                <a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: ${c.padding || '12px 24px'}; border-radius: ${c.borderRadius || '8px'}; text-decoration: none; font-weight: 500;">${c.text || t('template_builder.default_button')}</a>
             </div>`;
         
         case 'divider':
@@ -389,17 +389,17 @@ const blockToHtml = (block, textColor) => {
             return `<div style="padding: 20px; display: flex; gap: 16px;">
                 <div style="width: 100px; height: 100px; background: #f1f5f9; flex-shrink: 0;"></div>
                 <div style="flex: 1;">
-                    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; color: ${textColor};">${c.title || 'Product'}</h3>
+                    <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; color: ${textColor};">${c.title || t('template_builder.preview_panel.product_name_fallback')}</h3>
                     <p style="font-size: 14px; color: #64748b; margin-bottom: 8px;">${c.description || ''}</p>
-                    <p style="font-size: 18px; font-weight: bold; color: ${s?.primary_color || '#6366f1'};">${c.price || '99.00'} ${c.currency || 'PLN'}</p>
+                    <p style="font-size: 18px; font-weight: bold; color: ${s?.primary_color || '#6366f1'};">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</p>
                 </div>
             </div>`;
         
         case 'footer':
             return `<div style="background-color: ${c.backgroundColor || '#1e293b'}; color: ${c.textColor || '#94a3b8'}; padding: ${c.padding || '30px 20px'}; text-align: center;">
-                <p style="font-weight: 600;">${c.companyName || 'Company'}</p>
+                <p style="font-weight: 600;">${c.companyName || t('template_builder.company_name')}</p>
                 <p style="font-size: 12px; margin-top: 5px;">${c.address || ''}</p>
-                <p style="font-size: 12px; margin-top: 15px;"><a href="${c.unsubscribeUrl || '#'}" style="color: ${c.textColor || '#94a3b8'};">${c.unsubscribeText || 'Unsubscribe'}</a></p>
+                <p style="font-size: 12px; margin-top: 15px;"><a href="${c.unsubscribeUrl || '#'}" style="color: ${c.textColor || '#94a3b8'};">${c.unsubscribeText || t('messages.unsubscribe_link')}</a></p>
                 <p style="font-size: 12px; margin-top: 10px; opacity: 0.5;">${c.copyright || ''}</p>
             </div>`;
         
@@ -424,7 +424,7 @@ const columnsToHtml = (content, textColor) => {
         }
         
         if (!columnContent) {
-            columnContent = '<div style="padding: 10px; color: #94a3b8; font-size: 12px;">Upuść blok tutaj</div>';
+            columnContent = `<div style="padding: 10px; color: #94a3b8; font-size: 12px;">${t('template_builder.preview_panel.drop_block_here')}</div>`;
         }
         
         columnsHtml += `<div style="flex: 1; min-width: 0;">${columnContent}</div>`;
@@ -444,7 +444,7 @@ const nestedBlockToHtml = (block, textColor) => {
             if (!c.src) return '';
             return `<img src="${c.src}" alt="${c.alt || ''}" style="max-width: 100%;" />`;
         case 'button':
-            return `<a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;">${c.text || 'Button'}</a>`;
+            return `<a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;">${c.text || t('template_builder.default_button')}</a>`;
         default:
             return '';
     }

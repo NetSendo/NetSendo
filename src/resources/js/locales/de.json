@@ -95,11 +95,56 @@
             "october": "Oktober",
             "november": "November",
             "december": "Dezember"
-        },
+        }
+    },
+    "editor": {
+        "mode_visual": "Editor",
+        "mode_source": "HTML-Code",
+        "mode_preview": "Vorschau",
+        "format": "Formatieren",
+        "bold": "Fett",
+        "italic": "Kursiv",
+        "underline": "Unterstrichen",
+        "strikethrough": "Durchgestrichen",
+        "heading1": "Überschrift 1",
+        "heading2": "Überschrift 2",
+        "heading3": "Überschrift 3",
+        "align_left": "Linksbündig",
+        "align_center": "Zentriert",
+        "align_right": "Rechtsbündig",
+        "bullet_list": "Aufzählungsliste",
+        "ordered_list": "Nummerierte Liste",
+        "blockquote": "Zitat",
+        "code_block": "Code-Block",
+        "link": "Link",
+        "image": "Bild",
+        "horizontal_rule": "Horizontale Linie",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen",
+        "insert_link": "Link einfügen",
+        "link_placeholder": "https://beispiel.de",
+        "update_link": "Link aktualisieren",
+        "remove_link": "Link entfernen",
+        "insert_image": "Bild einfügen",
+        "image_placeholder": "https://beispiel.de/bild.jpg",
+        "insert": "Einfügen",
         "source_placeholder": "HTML-Code eingeben oder einfügen...",
         "full_html_notice": "Dies ist eine vollständige HTML-Vorlage. Verwenden Sie den Modus \"HTML-Code\", um zu bearbeiten.",
         "full_html_edit_notice": "Sie bearbeiten eine vollständige HTML-Vorlage. Verwenden Sie den Tab \"Vorschau\", um das Aussehen zu prüfen.",
-        "visual_edit_notice": "Klicken Sie auf den Text in der Vorschau, um ihn direkt zu bearbeiten."
+        "visual_edit_notice": "Klicken Sie auf den Text in der Vorschau, um ihn direkt zu bearbeiten.",
+        "emoji": "Emoji",
+        "content_width": "Inhaltsbreite",
+        "image_properties": {
+            "url": "Bild-URL",
+            "preview": "Vorschau",
+            "load_error": "Bild konnte nicht geladen werden",
+            "alignment": "Ausrichtung",
+            "left": "Links",
+            "center": "Mitte",
+            "right": "Rechts",
+            "width": "Breite",
+            "link": "Link (optional)"
+        }
     },
     "navigation": {
         "dashboard": "Dashboard",
@@ -196,10 +241,28 @@
             "view_all": "Alle ansehen",
             "opens": "Öffnungen",
             "clicks": "Klicks",
+            "sample_1": "Wöchentlicher Newsletter #45",
+            "sample_2": "Weihnachtsaktion",
+            "sample_3": "Jahresrückblick",
+            "sample_4": "Neues Produkt - Teaser",
             "status": {
                 "sent": "Gesendet",
                 "scheduled": "Geplant",
                 "draft": "Entwurf"
+            }
+        },
+        "cron": {
+            "status_title": "⏰ CRON-Status",
+            "settings_link": "Einstellungen →",
+            "active": "CRON Aktiv",
+            "not_configured": "CRON nicht konfiguriert",
+            "not_configured_desc": "Ohne CRON-Konfiguration werden geplante Nachrichten nicht automatisch gesendet.",
+            "view_instructions": "📖 Konfigurationsanweisungen ansehen",
+            "stats": {
+                "runs_24h": "Ausführungen (24h)",
+                "sent_emails": "Gesendete E-Mails",
+                "errors": "Fehler",
+                "last_run": "Letzte Ausführung"
             }
         }
     },
@@ -336,7 +399,15 @@
             "company_address": "Adresse",
             "company_city": "Stadt",
             "company_zip": "PLZ / Postleitzahl",
-            "company_country": "Land"
+            "company_country": "Land",
+            "advanced": {
+                "bounce_title": "Bouncemanagement (Bounce Management)",
+                "bounce_desc": "E-Mail-Adressen nach einem Soft- oder Hard-Bounce automatisch als inaktiv markieren.",
+                "facebook_label": "Facebook-Integration (Pixel-ID)",
+                "facebook_placeholder": "z.B. 1234567890",
+                "queue_days_label": "Versandtage der Warteschlange",
+                "queue_days_help": "Wählen Sie die Tage aus, an denen Autoresponder-Nachrichten versendet werden dürfen."
+            }
         }
     },
     "sms_lists": {
@@ -480,17 +551,162 @@
             "audience": "Zielgruppe",
             "status": "Status",
             "created_at": "Erstellt am",
-            "actions": "Aktionen"
+            "actions": "Aktionen",
+            "stats": "Statistiken"
         },
         "empty_title": "Keine Nachrichten gefunden, die den Kriterien entsprechen.",
         "delete_confirm_title": "Sind Sie sicher, dass Sie diese Nachricht löschen möchten?",
         "delete_confirm_description": "Diese Aktion kann nicht rückgängig gemacht werden. Die Nachricht wird dauerhaft gelöscht.",
         "delete_button": "Nachricht löschen",
+        "duplicate_confirm_title": "Nachricht duplizieren",
+        "duplicate_confirm_description": "Es wird eine Kopie als Entwurf erstellt",
+        "duplicate_button": "Duplizieren",
+        "duplicating": "Duplizieren...",
+        "duplicate_success_title": "Duplikat erstellt!",
+        "duplicate_success_description": "Neue Nachricht \"{prefix} {subject}\" wurde als Entwurf gespeichert.",
+        "go_to_edit_duplicate": "Kopie bearbeiten",
+        "stay_on_list": "Auf der Liste bleiben",
+        "copy_prefix": "[KOPIE]",
         "create_title": "Neue Nachricht",
         "edit_title": "Nachricht bearbeiten",
         "create_subtitle": "Bereiten Sie eine neue E-Mail-Kampagne vor",
         "edit_subtitle": "Aktualisieren Sie Inhalt und Einstellungen der Kampagne",
         "back_to_list": "Zurück zur Liste",
+        "tabs": {
+            "content": "Inhalt",
+            "settings": "Einstellungen",
+            "triggers": "Trigger",
+            "ab_testing": "A/B-Test"
+        },
+        "template": {
+            "title": "Vorlage",
+            "select": "Vorlage wählen",
+            "change": "Vorlage ändern",
+            "selected": "Ausgewählte Vorlage",
+            "clear": "Vorlage entfernen",
+            "modal_title": "Nachrichtenvorlage wählen",
+            "modal_subtitle": "Wählen Sie eine fertige Vorlage oder starten Sie bei Null",
+            "your_templates": "Ihre Vorlagen",
+            "starter_templates": "Starter-Vorlagen",
+            "no_templates": "Keine Vorlagen gefunden",
+            "compilation_error": "Vorlage erfordert MJML-Kompilierung"
+        },
+        "triggers": {
+            "title": "Trigger und Automatisierungen",
+            "coming_soon": "Diese Funktion wird bald verfügbar sein. Sie können Nachrichten basierend auf Aktionen wie Link-Klicks, Seitenbesuchen oder bestimmten Daten auslösen.",
+            "select_type": "Trigger-Typ auswählen",
+            "types": {
+                "signup": "Anmeldung",
+                "anniversary": "Jahrestag",
+                "inactivity": "Inaktivität",
+                "custom": "Benutzerdefinierte Aktion"
+            }
+        },
+        "ab_testing": {
+            "title": "A/B-Tests",
+            "coming_soon": "Testen Sie verschiedene Betreffzeilen und Inhalte, um zu sehen, was am besten für Ihr Publikum funktioniert.",
+            "enable": "A/B-Testing aktivieren",
+            "variant_a": "Variante A",
+            "variant_a_desc": "Originalinhalt und Betreff",
+            "variant_b": "Variante B",
+            "variant_b_placeholder": "Alternativer Betreff...",
+            "split": "Publikumsaufteilung"
+        },
+        "mailbox": {
+            "label": "Absender-Postfach",
+            "use_default": "Standard verwenden",
+            "inherited_from_list": "Von Liste übernommen: {name}",
+            "inherited_global": "Globaler Standard",
+            "selected_for_message": "Für diese Nachricht ausgewählt",
+            "none_configured": "Kein Postfach konfiguriert",
+            "change_in_settings": "In den Einstellungen ändern",
+            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die Standardkonfiguration"
+        },
+        "ai_assistant": {
+            "title": "KI-Assistent",
+            "subtitle": "Inhalte mit dem KI-Assistenten generieren",
+            "generate": "Inhalt mit KI generieren",
+            "generating": "Generierung...",
+            "select_mode": "Generierungsmodus",
+            "select_model": "KI-Modell",
+            "no_models_available": "Keine KI-Integrationen konfiguriert. Konfigurieren Sie diese in den Einstellungen.",
+            "describe_content": "Beschreiben Sie, was Sie generieren möchten",
+            "select_tone": "Tonfall wählen",
+            "quick_prompts": "Schnell-Prompts",
+            "generated_content": "Generierter Inhalt",
+            "replace": "Ersetzen",
+            "insert": "Einfügen",
+            "subject_assistant": "KI-Betreff-Assistent",
+            "subject_hint_placeholder": "Optional: z.B. Urlaubsaktion, dringend...",
+            "characters_limit": "{count}/500 Zeichen",
+            "content_status_ok": "Nachrichteninhalt: {count} Zeichen ✓",
+            "content_status_error": "Mindestens 20 Zeichen erforderlich (aktuell: {count})",
+            "generate_button": "Vorschläge generieren",
+            "loading_models": "Modelle laden...",
+            "click_to_use": "Klicken zum Verwenden:",
+            "empty_info": "AI generiert 3 Betreffvorschläge basierend auf Ihrem E-Mail-Inhalt",
+            "error_missing_content": "Bitte fügen Sie zuerst Nachrichteninhalt hinzu, um Betreffvorschläge zu generieren.",
+            "error_generating": "Ein Fehler ist bei der Generierung des Inhalts aufgetreten.",
+            "error_generic": "Ein Fehler ist bei der Generierung der Titel aufgetreten.",
+            "modes": {
+                "text": "Text generieren",
+                "text_desc": "Generieren Sie ein Text-Snippet zum Einfügen",
+                "template": "Vorlage generieren/ändern",
+                "template_desc": "Erstellen oder ändern Sie die gesamte Vorlage"
+            },
+            "tones": {
+                "casual": "Locker",
+                "formal": "Formal",
+                "persuasive": "Überzeugend"
+            },
+            "placeholders": {
+                "section_title": "Personalisierungs-Snippets",
+                "loading": "Lade Snippets...",
+                "standard_title": "Standardfelder (immer aktiv)",
+                "custom_title": "Benutzerdefinierte Felder (auswählen)",
+                "empty_custom": "Keine benutzerdefinierten Felder.",
+                "add_fields": "Felder hinzufügen"
+            },
+            "formatting": {
+                "label": "Mit HTML-Formatierung",
+                "with_html": "Text wird HTML-Tags enthalten (Überschriften, Listen, Fettdruck)",
+                "plain_text": "Nur-Text ohne Formatierung"
+            },
+            "context": {
+                "modify_existing": "KI wird den aktuellen Nachrichteninhalt ändern ({count} Zeichen)",
+                "create_new": "KI wird eine neue Vorlage von Grund auf generieren"
+            },
+            "comparison": {
+                "title": "Vorlagenvergleich",
+                "subtitle": "Änderungen vor dem Ersetzen prüfen",
+                "original_title": "Aktueller Inhalt",
+                "original_empty": "Kein aktueller Inhalt",
+                "new_title": "Neuer Inhalt (KI)",
+                "reject": "Ablehnen",
+                "accept_replace": "Akzeptieren und Ersetzen",
+                "copy_new": "Neue kopieren"
+            },
+            "actions": {
+                "insert": "Inhalt einfügen",
+                "compare_replace": "Vergleichen und Ersetzen",
+                "copied": "Kopiert!",
+                "copy": "Kopieren"
+            },
+            "prompts": {
+                "text_placeholder": "z.B. Schreiben Sie eine kurze Einleitung, die zur Anmeldung zum Newsletter anregt...",
+                "template_placeholder": "z.B. Erstellen Sie eine professionelle E-Mail mit Kopfzeile, Inhalt und CTA-Button...",
+                "quick": {
+                    "welcome_sub": "Schreiben Sie eine Begrüßung für einen neuen Abonnenten",
+                    "benefits": "Erstellen Sie einen Abschnitt über Produktvorteile",
+                    "thanks_purchase": "Schreiben Sie ein Dankeschön für den Kauf",
+                    "cta_contact": "Fügen Sie eine Aufforderung zur Kontaktaufnahme hinzu",
+                    "professional_newsletter": "Erstellen Sie einen professionellen Newsletter mit Kopfzeile, Inhalt und CTA-Button",
+                    "welcome_client": "Generieren Sie eine Begrüßungs-E-Mail für einen neuen Kunden",
+                    "promo_list": "Erstellen Sie eine Werbe-E-Mail mit einer Produktliste",
+                    "cta_end": "Fügen Sie am Ende der aktuellen Nachricht einen Abschnitt mit einem CTA-Button hinzu"
+                }
+            }
+        },
         "fields": {
             "type": "Nachrichtentyp",
             "subject": "Betreff",
@@ -519,19 +735,11 @@
             "timezone_help": "Priorität: Nachricht > Liste > Gruppe > Benutzerkonto.",
             "content": "Nachrichteninhalt",
             "no_lists": "Keine Mailing-Listen",
-            "stats_for": "Systemstatistiken für",
-            "opens_count": "Öffnungen",
-            "clicks_count": "Klicks",
-            "active": "Aktiv",
-            "new": "Neu",
-            "table": {
-                "list": "Liste",
-                "active": "Aktiv",
-                "new": "Neu",
-                "unsubscribed": "Abgemeldet",
-                "opens": "Öffnungen",
-                "clicks": "Klicks"
-            }
+            "preheader": "Preheader",
+            "preheader_placeholder": "Kurzer Text, der in der Posteingangsvorschau sichtbar ist...",
+            "preheader_help": "Text, der im Posteingang neben dem Betreff angezeigt wird",
+            "select_by_tag": "Nach Tag auswählen:",
+            "no_group": "Keine Gruppe"
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",
@@ -541,80 +749,50 @@
             "activate": "Aktivieren (Speichern)",
             "test": "Testen"
         },
-        "tabs": {
-            "content": "Inhalt",
-            "settings": "Einstellungen",
-            "triggers": "Trigger",
-            "ab_testing": "A/B-Test"
-        },
-        "template": {
-            "title": "Vorlage",
-            "select": "Vorlage wählen",
-            "change": "Vorlage ändern",
-            "selected": "Ausgewählte Vorlage",
-            "clear": "Vorlage entfernen",
-            "modal_title": "Nachrichtenvorlage wählen",
-            "modal_subtitle": "Wählen Sie eine fertige Vorlage oder starten Sie bei Null",
-            "your_templates": "Ihre Vorlagen",
-            "starter_templates": "Starter-Vorlagen",
-            "no_templates": "Keine Vorlagen gefunden"
-        },
-        "mailbox": {
-            "label": "Absender-Postfach",
-            "use_default": "Standard verwenden",
-            "inherited_from_list": "Von Liste übernommen: {name}",
-            "inherited_global": "Globaler Standard",
-            "selected_for_message": "Für diese Nachricht ausgewählt",
-            "none_configured": "Kein Postfach konfiguriert",
-            "change_in_settings": "In den Einstellungen ändern",
-            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die Standardkonfiguration"
-        },
-        "ai": {
-            "title": "KI-Assistent",
-            "subtitle": "Inhalte mit dem KI-Assistenten generieren",
-            "generate": "Inhalt mit KI generieren",
-            "generating": "Generierung...",
-            "select_mode": "Generierungsmodus",
-            "select_model": "KI-Modell",
-            "no_models_available": "Keine KI-Integrationen konfiguriert. Konfigurieren Sie diese in den Einstellungen.",
-            "describe_content": "Beschreiben Sie, was Sie generieren möchten",
-            "select_tone": "Tonfall wählen",
-            "quick_prompts": "Schnell-Prompts",
-            "generated_content": "Generierter Inhalt",
-            "replace": "Ersetzen",
-            "insert": "Einfügen",
-            "subject_assistant": "KI-Betreff-Assistent",
-            "subject_hint_placeholder": "Optional: z.B. Urlaubsaktion, dringend..."
-        },
-        "triggers": {
-            "title": "Automatische Trigger",
-            "coming_soon": "Diese Funktion wird bald verfügbar sein. Wir planen automatische Trigger basierend auf Ereignissen.",
-            "select_type": "Trigger-Typ wählen",
-            "types": {
-                "signup": "Nach der Anmeldung",
-                "anniversary": "Jahrestag (z.B. Geburtstag)",
-                "inactivity": "Inaktivität",
-                "custom": "Benutzerdefinierter Trigger"
-            }
-        },
-        "ab_testing": {
-            "title": "A/B-Testing",
-            "coming_soon": "Diese Funktion wird bald verfügbar sein. Wir planen A/B-Tests für Betreffzeilen und Inhalte.",
-            "enable": "A/B-Test aktivieren",
-            "variant_b": "Variante B",
-            "split": "Zielgruppen-Split"
-        },
-        "preheader_placeholder": "Kurzer Text, der in der Mailbox-Vorschau sichtbar ist...",
-        "preheader_help": "Text, der neben dem Betreff im Posteingang angezeigt wird",
         "test": {
             "title": "Test-E-Mail senden",
-            "subtitle": "Sehen Sie sich Ihre Nachricht vor dem Versenden an",
+            "subtitle": "Sehen Sie sich an, wie Ihre Nachricht vor dem Versenden aussieht",
             "email_label": "E-Mail-Adresse",
             "email_placeholder": "ihre@email.de",
             "preview_subject": "Betreff",
             "preview_mailbox": "Postfach",
             "send": "Test senden",
-            "sending": "Wird gesendet..."
+            "sending": "Senden...",
+            "no_subject_preview": "(kein Betreff)",
+            "no_mailbox_preview": "Kein Postfach konfiguriert"
+        },
+        "stats": {
+            "title": "Kampagnenstatistiken",
+            "header_title": "Statistiken: {subject}",
+            "back_to_list": "Zurück zur Liste",
+            "kpi": {
+                "sent": "Gesendet",
+                "open_rate": "Öffnungsrate",
+                "click_rate": "Klickrate",
+                "ctor": "CTOR",
+                "unique": "{count} eindeutige",
+                "clicks_opens": "Klicks / Öffnungen"
+            },
+            "charts": {
+                "effectiveness": "Effektivität",
+                "conversion_funnel": "Conversion-Trichter",
+                "labels": {
+                    "opened": "Geöffnet",
+                    "sent_no_open": "Gesendet (nicht geöffnet)",
+                    "sent": "Gesendet",
+                    "unique_opens": "Eindeutige Öffnungen",
+                    "unique_clicks": "Eindeutige Klicks",
+                    "counters": "Zähler"
+                }
+            },
+            "activity": {
+                "recent_opens": "Neueste Öffnungen",
+                "recent_clicks": "Neueste Klicks",
+                "no_data": "Keine Daten",
+                "email": "E-Mail",
+                "time": "Zeit",
+                "url": "URL"
+            }
         }
     },
     "subscribers": {
@@ -809,7 +987,22 @@
             "create": "Vorlage erstellen",
             "update": "Vorlage aktualisieren"
         },
-        "default_content": "<p>Hallo, [name]!</p><p>Beispielinhalt...</p>"
+        "default_content": "<p>Hallo, [name]!</p><p>Beispielinhalt...</p>",
+        "starter": {
+            "title": "Starter-Vorlagen",
+            "subtitle": "Gebrauchsfertige Premium-Vorlagen - zum Verwenden anklicken",
+            "use_template": "Vorlage verwenden",
+            "show_templates": "Starter-Vorlagen anzeigen",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Willkommen",
+                "newsletter": "Newsletter",
+                "promotional": "Werbung",
+                "ecommerce": "E-Commerce",
+                "transactional": "Transaktional",
+                "notification": "Benachrichtigung"
+            }
+        }
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -828,26 +1021,61 @@
         }
     },
     "license": {
-        "title": "Lizenzaktivierung",
-        "active_title": "Lizenz aktiv",
-        "plan_label": "Plan: {plan}",
-        "choose_plan": "NetSendo-Plan wählen",
-        "inactive_intro": "Ihr NetSendo ist inaktiv. Wählen Sie einen Plan, um alle Funktionen freizuschalten.",
-        "plans": {
-            "popular": "BELIEBT",
-            "selected": "Ausgewählt"
-        },
-        "order_title": "Lizenz {plan} bestellen",
-        "order_email": "Ihre E-Mail",
-        "order_button": "Lizenz {plan} bestellen",
-        "order_sending": "Wird gesendet...",
-        "have_key": "Ich habe bereits einen Lizenzschlüssel",
-        "activate_title": "Lizenz aktivieren",
-        "check_inbox": "Überprüfen Sie Ihren Posteingang! Der Lizenzschlüssel wurde gesendet.",
-        "key_label": "Lizenzschlüssel",
-        "key_placeholder": "Fügen Sie hier Ihren Lizenzschlüssel ein...",
+        "title": "Lizenz",
+        "active_status": "Lizenz {plan} aktiv",
+        "expires_at": "Gültig bis: {date}",
+        "expires_never": "unbegrenzt",
+        "lifetime_license": "Lebenslange Lizenz — zeitlich unbegrenzt",
+        "app_version": "App-Version: {version}",
+        "upgrade_to_gold": "Upgrade auf GOLD",
+        "upgrade_desc": "Schalten Sie fortgeschrittene Automatisierungen und Prioritäts-Support frei",
+        "buy_gold": "GOLD kaufen — $97/Monat",
+        "gold_expired": "GOLD-Lizenz abgelaufen",
+        "gold_expired_desc": "Abgelaufen am: {date}. Erneuern Sie Ihr Abonnement, um Premium-Funktionen wiederherzustellen.",
+        "renew_gold": "GOLD erneuern — $97/Monat",
+        "choose_plan": "Wählen Sie Ihre Lizenz",
+        "choose_plan_desc": "NetSendo bietet zwei Tarife an — wählen Sie den, der Ihren Bedürfnissen entspricht",
+        "popular": "BELIEBT",
+        "coming_soon": "Demnächst verfügbar",
+        "gold_coming_soon_msg": "Der GOLD-Tarif wird in Kürze verfügbar sein! Vorerst können Sie den SILVER-Tarif nutzen.",
+        "request_error": "Verbindungsfehler. Geben Sie den Lizenzschlüssel unten manuell ein.",
+        "processing": "Verarbeitung...",
+        "manual_activation_title": "Lizenz manuell aktivieren",
+        "manual_activation_desc": "Geben Sie den per E-Mail oder nach dem Kauf erhaltenen Lizenzschlüssel ein",
+        "license_key_label": "Lizenzschlüssel",
+        "license_key_placeholder": "Fügen Sie Ihren Lizenzschlüssel hier ein...",
+        "activate_button": "Lizenz aktivieren",
         "activating": "Aktivierung...",
-        "back_to_plans": "← Zurück zur Planauswahl"
+        "back_to_plans": "Zurück zur Tarifauswahl",
+        "already_have_key": "Ich habe bereits einen Lizenzschlüssel",
+        "generic_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "KOSTENLOS",
+                "suffix": "LEBENSLANG",
+                "select": "SILVER wählen",
+                "features": {
+                    "basic": "Alle Basisfunktionen",
+                    "unlimited": "Unbegrenzte Kontakte",
+                    "templates": "E-Mail-Vorlagen",
+                    "support": "Community-Support"
+                }
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/Monat",
+                "select": "GOLD kaufen",
+                "features": {
+                    "everything": "Alles aus SILVER",
+                    "automations": "Erweiterte Automatisierungen",
+                    "priority": "Prioritäts-Support",
+                    "api": "API-Zugriff",
+                    "white_label": "White-Label"
+                }
+            }
+        }
     },
     "ai": {
         "title": "KI-Integrationen",
@@ -1087,6 +1315,8 @@
         "all_rights": "Alle Rechte vorbehalten",
         "default_text": "Klicken Sie hier, um den Text zu bearbeiten. Sie können beliebigen Inhalt hinzufügen.",
         "default_button": "Hier klicken",
+        "default_price": "99,00",
+        "default_currency": "EUR",
         "buy_now": "Jetzt kaufen",
         "logo": "Logo",
         "upload_logo": "Logo hochladen",
@@ -1120,6 +1350,9 @@
         "no_settings": "Dieser Block hat keine konfigurierbaren Einstellungen",
         "ai_assistant": "KI-Assistent",
         "ai_prompt_placeholder": "Beschreiben Sie, was Sie generieren möchten...",
+        "ai_error": "KI-Generierung fehlgeschlagen.",
+        "ai_no_integrations": "Keine KI-Integrationen konfiguriert.",
+        "ai_loading": "Wird geladen...",
         "tone_casual": "Locker",
         "tone_formal": "Formal",
         "tone_persuasive": "Überzeugend",
@@ -1134,6 +1367,14 @@
         "email_width": "E-Mail Breite",
         "font_family": "Schriftart",
         "color_presets": "Farb-Voreinstellungen",
+        "color_presets_list": {
+            "indigo": "Indigo",
+            "blue": "Blau",
+            "green": "Grün",
+            "rose": "Rosa",
+            "orange": "Orange",
+            "purple": "Lila"
+        },
         "primary_color": "Primärfarbe",
         "secondary_color": "Sekundärfarbe",
         "page_background": "Seitenhintergrund",
@@ -1145,18 +1386,41 @@
         "generate_section": "Sektion generieren",
         "describe_what_you_need": "Beschreiben Sie Ihren Bedarf",
         "quick_prompts": "Schnell-Prompts",
+        "quick_prompts_list": [
+            "Schreiben Sie eine Newsletter-Einleitung über eine neue Produktkollektion",
+            "Erstellen Sie eine Webinar-Einladung zum Thema Marketing",
+            "Schreiben Sie ein Dankeschön für den Kauf",
+            "Erinnern Sie an einen abgebrochenen Warenkorb"
+        ],
         "select_tone": "Tonfall wählen",
         "section_type": "Sektionstyp",
+        "section_types": {
+            "promotional": "Werbung",
+            "welcome": "Willkommen",
+            "newsletter": "Newsletter",
+            "product": "Produkt"
+        },
         "generated_content": "Generierter Inhalt",
         "insert_content": "Inhalt einfügen",
         "note": "Hinweis",
-        "columns_note": "Ziehen Sie Blöcke aus der Bibliothek in die Spalten. Unterstützt: Text, Bilder, Buttons.",
+        "columns_note": "Verschachtelte Blöcke in Spalten folgen in Kürze.",
         "columns_count": "Spaltenanzahl",
         "gap": "Abstand zwischen Spalten",
         "drop_here": "Hier ablegen",
         "drag_instruction": "Ziehen oder klicken zum Hinzufügen",
         "social_icons": "Social Icons",
-        "products_count": "Produktanzahl"
+        "products_count": "Produktanzahl",
+        "headline_label": "Überschrift:",
+        "content_label": "Inhalt:",
+        "button_label": "Button:",
+        "preview_panel": {
+            "product_grid_empty": "Produktgitter (keine Produkte)",
+            "product_name_fallback": "Produktname",
+            "buy_now": "Jetzt kaufen",
+            "buy": "Kaufen",
+            "currency_fallback": "EUR",
+            "drop_block_here": "Block hier ablegen"
+        }
     },
     "fields": {
         "title": "Feldverwaltung",
@@ -1778,10 +2042,13 @@
             "failed": "Fehlgeschlagen"
         },
         "settings": {
+            "title": "Versandeinstellungen",
             "volume_per_minute": "Nachrichtenlimit / Minute",
             "volume_help": "Maximale Anzahl der pro Minute versendeten E-Mails",
             "maintenance_hour": "Stunde der täglichen Operationen",
-            "maintenance_help": "Protokolle löschen, Verarbeitung von Unzustellbarkeitsnachrichten usw."
+            "maintenance_help": "Protokolle löschen, Verarbeitung von Unzustellbarkeitsnachrichten usw.",
+            "global_note_title": "Globale CRON-Einstellungen",
+            "global_note_text": "Diese Einstellungen sind standardmäßig für alle Listen gültig. Jede Liste kann diese Einstellungen in der Registerkarte \"Zeitplan (CRON)\" durch eigene überschreiben."
         },
         "schedule": {
             "title": "Wöchentlicher Zeitplan",
@@ -1803,6 +2070,8 @@
             "sunday": "Sonntag"
         },
         "stats": {
+            "title": "Ausführungsstatistiken",
+            "info_title": "Informationen",
             "total_runs": "Ausführungen",
             "successful": "Erfolg",
             "failed": "Fehler",
@@ -1859,7 +2128,10 @@
             "automation_text": "Sie können CRON über externe Automatisierungstools via {bold} ausführen. Rufen Sie einfach jede Minute den Endpunkt auf.",
             "forge_title": "Laravel Forge / Vapor",
             "forge_text": "Laravel Forge: Der Scheduler wird automatisch für jede Laravel-Anwendung konfiguriert. Aktivieren Sie einfach die Option \"Schedule\" im Server-Panel.",
-            "vapor_text": "Laravel Vapor: Der Scheduler ist in die Serverless-Umgebung integriert und funktioniert automatisch."
+            "vapor_text": "Laravel Vapor: Der Scheduler ist in die Serverless-Umgebung integriert und funktioniert automatisch.",
+            "n8n_note": "Verwenden Sie den {node}-Knoten mit einem {trigger}-Trigger jede Minute.",
+            "make_note": "Verwenden Sie das {module}-Modul mit der Einstellung jede Minute.",
+            "zapier_note": "Verwenden Sie den {trigger}-Trigger und die {action}-Aktion."
         },
         "webhook": {
             "title": "Webhook-Konfiguration",
@@ -1882,5 +2154,29 @@
     "language": {
         "select": "Sprache auswählen",
         "current": "Aktuelle Sprache"
+    },
+    "help_menu": {
+        "title": "Hilfe & Ressourcen",
+        "quick_start": "Schnellstart",
+        "documentation": "Dokumentation",
+        "api_reference": "API-Referenz",
+        "community_forum": "Community-Forum",
+        "courses_training": "Kurse & Training",
+        "report_bug": "Fehler melden",
+        "whats_new": "Was gibt's Neues",
+        "full_changelog": "Vollständiges Changelog",
+        "about": "Über NetSendo",
+        "checking_updates": "Suche nach Updates...",
+        "up_to_date": "Ihre Version ist aktuell",
+        "updates_available": "Updates verfügbar ({count})",
+        "download_latest": "Neueste Version herunterladen",
+        "unable_to_check": "Updates konnten nicht geprüft werden",
+        "new_tag": "NEU",
+        "update": "Update",
+        "whats_new_list": [
+            "Neues Lizenzierungssystem",
+            "Update-Prüfung",
+            "Verbesserte E-Mail-Vorlagen"
+        ]
     }
 }

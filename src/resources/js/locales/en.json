@@ -132,7 +132,20 @@
         "source_placeholder": "Type or paste HTML code...",
         "full_html_notice": "This is a full HTML template. Use \"HTML Code\" mode to edit.",
         "full_html_edit_notice": "You are editing a full HTML template. Use the \"Preview\" tab to see how it looks.",
-        "visual_edit_notice": "Click on text in the preview to edit it directly."
+        "visual_edit_notice": "Click on text in the preview to edit it directly.",
+        "emoji": "Emoji",
+        "content_width": "Content width",
+        "image_properties": {
+            "url": "Image URL",
+            "preview": "Preview",
+            "load_error": "Unable to load image",
+            "alignment": "Alignment",
+            "left": "Left",
+            "center": "Center",
+            "right": "Right",
+            "width": "Width",
+            "link": "Link (optional)"
+        }
     },
     "navigation": {
         "dashboard": "Dashboard",
@@ -229,10 +242,30 @@
             "view_all": "View All",
             "opens": "opens",
             "clicks": "clicks",
+            "sample_1": "Weekly Newsletter #45",
+            "sample_2": "Christmas Promotion",
+            "sample_3": "Year Summary",
+            "sample_4": "New Product - Teaser",
             "status": {
                 "sent": "Sent",
                 "scheduled": "Scheduled",
                 "draft": "Draft"
+            }
+        },
+        "cron": {
+            "status_title": "⏰ CRON Status",
+            "settings_link": "Settings →",
+            "active": "CRON Active",
+            "not_configured": "CRON not configured",
+            "not_configured_desc": "Without CRON configuration, scheduled messages will not be sent automatically.",
+            "not_configured_warning": "⚠️ CRON is not configured! Scheduled messages will not be sent automatically.",
+            "see_instructions": "See instructions →",
+            "view_instructions": "📖 View configuration instructions",
+            "stats": {
+                "runs_24h": "Runs (24h)",
+                "sent_emails": "Sent emails",
+                "errors": "Errors",
+                "last_run": "Last run"
             }
         }
     },
@@ -370,7 +403,15 @@
             "company_address": "Address",
             "company_city": "City",
             "company_zip": "Zip / Postal Code",
-            "company_country": "Country"
+            "company_country": "Country",
+            "advanced": {
+                "bounce_title": "Bounce Management",
+                "bounce_desc": "Automatically mark addresses as inactive after soft or hard bounce.",
+                "facebook_label": "Facebook Integration (Pixel ID)",
+                "facebook_placeholder": "e.g. 1234567890",
+                "queue_days_label": "Queue Dispatch Days",
+                "queue_days_help": "Select days on which autoresponder messages can be sent."
+            }
         }
     },
     "sms_lists": {
@@ -514,12 +555,22 @@
             "audience": "Audience",
             "status": "Status",
             "created_at": "Created",
-            "actions": "Actions"
+            "actions": "Actions",
+            "stats": "Statistics"
         },
         "empty_title": "No messages matching criteria.",
         "delete_confirm_title": "Are you sure you want to delete this message?",
         "delete_confirm_description": "This action cannot be undone. The message will be permanently deleted.",
         "delete_button": "Delete message",
+        "duplicate_confirm_title": "Duplicate message",
+        "duplicate_confirm_description": "It will create a copy as a draft",
+        "duplicate_button": "Duplicate",
+        "duplicating": "Duplicating...",
+        "duplicate_success_title": "Duplicate created!",
+        "duplicate_success_description": "New message \"{prefix} {subject}\" has been saved as a draft.",
+        "go_to_edit_duplicate": "Go to edit duplicate",
+        "stay_on_list": "Stay on list",
+        "copy_prefix": "[COPY]",
         "create_title": "New Message",
         "edit_title": "Edit Message",
         "create_subtitle": "Prepare a new email campaign",
@@ -541,7 +592,29 @@
             "modal_subtitle": "Choose a ready template or start from scratch",
             "your_templates": "Your templates",
             "starter_templates": "Starter templates",
-            "no_templates": "No templates found"
+            "no_templates": "No templates found",
+            "compilation_error": "Template requires MJML compilation"
+        },
+        "triggers": {
+            "title": "Triggers and Automations",
+            "coming_soon": "This feature is coming soon. You will be able to trigger messages by actions like link clicks, page visits, or specific dates.",
+            "select_type": "Select trigger type",
+            "types": {
+                "signup": "Signup",
+                "anniversary": "Anniversary",
+                "inactivity": "Inactivity",
+                "custom": "Custom action"
+            }
+        },
+        "ab_testing": {
+            "title": "A/B Testing",
+            "coming_soon": "Test different subjects and content to see what works best for your audience.",
+            "enable": "Enable A/B testing",
+            "variant_a": "Variant A",
+            "variant_a_desc": "Original subject and content",
+            "variant_b": "Variant B",
+            "variant_b_placeholder": "Alternative subject...",
+            "split": "Audience split"
         },
         "mailbox": {
             "label": "Sending mailbox",
@@ -553,7 +626,7 @@
             "change_in_settings": "Change in settings",
             "help": "Select a sending mailbox or use the default configuration"
         },
-        "ai": {
+        "ai_assistant": {
             "title": "AI Assistant",
             "subtitle": "Generate content with AI assistant",
             "generate": "Generate content with AI",
@@ -568,25 +641,75 @@
             "replace": "Replace",
             "insert": "Insert",
             "subject_assistant": "AI Subject Assistant",
-            "subject_hint_placeholder": "Optional: e.g. holiday promo, urgent..."
-        },
-        "triggers": {
-            "title": "Automatic triggers",
-            "coming_soon": "This feature will be available soon. We plan to add automatic triggers based on events.",
-            "select_type": "Select trigger type",
-            "types": {
-                "signup": "After list signup",
-                "anniversary": "Anniversary (e.g. birthday)",
-                "inactivity": "Inactivity",
-                "custom": "Custom trigger"
+            "subject_hint_placeholder": "Optional: e.g. holiday promo, urgent...",
+            "characters_limit": "{count}/500 characters",
+            "content_status_ok": "Message content: {count} characters ✓",
+            "content_status_error": "Minimum 20 characters required (currently: {count})",
+            "generate_button": "Generate suggestions",
+            "loading_models": "Loading models...",
+            "click_to_use": "Click to use:",
+            "empty_info": "AI houses 3 subject suggestions based on your email content",
+            "error_missing_content": "Please add message content first to generate subject suggestions.",
+            "error_generating": "An error occurred while generating content.",
+            "error_generic": "An error occurred while generating titles.",
+            "modes": {
+                "text": "Generate text",
+                "text_desc": "Generate a text snippet to insert",
+                "template": "Generate/Modify template",
+                "template_desc": "Create or modify the entire template"
+            },
+            "tones": {
+                "casual": "Casual",
+                "formal": "Formal",
+                "persuasive": "Persuasive"
+            },
+            "placeholders": {
+                "section_title": "Personalization snippets",
+                "loading": "Loading snippets...",
+                "standard_title": "Standard fields (always active)",
+                "custom_title": "Custom fields (select)",
+                "empty_custom": "No custom fields.",
+                "add_fields": "Add fields"
+            },
+            "formatting": {
+                "label": "With HTML formatting",
+                "with_html": "Text will contain HTML tags (headers, lists, bold)",
+                "plain_text": "Plain text without formatting"
+            },
+            "context": {
+                "modify_existing": "AI will modify the current message content ({count} characters)",
+                "create_new": "AI will generate a new template from scratch"
+            },
+            "comparison": {
+                "title": "Template Comparison",
+                "subtitle": "Check changes before replacing",
+                "original_title": "Current content",
+                "original_empty": "No current content",
+                "new_title": "New content (AI)",
+                "reject": "Reject",
+                "accept_replace": "Accept and replace",
+                "copy_new": "Copy new"
+            },
+            "actions": {
+                "insert": "Insert content",
+                "compare_replace": "Compare and replace",
+                "copied": "Copied!",
+                "copy": "Copy"
+            },
+            "prompts": {
+                "text_placeholder": "e.g. Write a short intro encouraging newsletter signups...",
+                "template_placeholder": "e.g. Create a professional email with header, content, and CTA button...",
+                "quick": {
+                    "welcome_sub": "Write a welcome for a new subscriber",
+                    "benefits": "Create a section about product benefits",
+                    "thanks_purchase": "Write a thank you for purchase",
+                    "cta_contact": "Add a contact encouragement",
+                    "professional_newsletter": "Create a professional newsletter with header, content and CTA button",
+                    "welcome_client": "Generate a welcome email for a new client",
+                    "promo_list": "Create a promotional email with a product list",
+                    "cta_end": "Add a section with a CTA button at the end of current message"
+                }
             }
-        },
-        "ab_testing": {
-            "title": "A/B Testing",
-            "coming_soon": "This feature will be available soon. We plan to add A/B testing for message subjects and content.",
-            "enable": "Enable A/B test",
-            "variant_b": "Variant B",
-            "split": "Audience split"
         },
         "fields": {
             "type": "Message Type",
@@ -618,7 +741,9 @@
             "no_lists": "No mailing lists available.",
             "preheader": "Preheader",
             "preheader_placeholder": "Short text visible in mailbox preview...",
-            "preheader_help": "Text displayed next to subject in inbox"
+            "preheader_help": "Text displayed next to subject in inbox",
+            "select_by_tag": "Select by tag:",
+            "no_group": "No group"
         },
         "actions": {
             "save_draft": "Save as draft",
@@ -636,7 +761,42 @@
             "preview_subject": "Subject",
             "preview_mailbox": "Mailbox",
             "send": "Send test",
-            "sending": "Sending..."
+            "sending": "Sending...",
+            "no_subject_preview": "(no subject)",
+            "no_mailbox_preview": "No mailbox configured"
+        },
+        "stats": {
+            "title": "Campaign Statistics",
+            "header_title": "Statistics: {subject}",
+            "back_to_list": "Back to list",
+            "kpi": {
+                "sent": "Sent",
+                "open_rate": "Open Rate",
+                "click_rate": "Click Rate",
+                "ctor": "CTOR",
+                "unique": "{count} unique",
+                "clicks_opens": "Clicks / Opens"
+            },
+            "charts": {
+                "effectiveness": "Effectiveness",
+                "conversion_funnel": "Conversion Funnel",
+                "labels": {
+                    "opened": "Opened",
+                    "sent_no_open": "Sent (not opened)",
+                    "sent": "Sent",
+                    "unique_opens": "Unique Opens",
+                    "unique_clicks": "Unique Clicks",
+                    "counters": "Counters"
+                }
+            },
+            "activity": {
+                "recent_opens": "Recent Opens",
+                "recent_clicks": "Recent Clicks",
+                "no_data": "No data",
+                "email": "Email",
+                "time": "Time",
+                "url": "URL"
+            }
         }
     },
     "subscribers": {
@@ -939,6 +1099,24 @@
             "saving": "Saving...",
             "refresh": "Refresh"
         },
+        "settings": {
+            "title": "Dispatch Settings",
+            "volume_per_minute": "Message limit / minute",
+            "volume_help": "Maximum number of emails sent per minute",
+            "maintenance_hour": "Daily maintenance hour",
+            "maintenance_help": "Log cleaning, bounce processing, etc.",
+            "global_note_title": "Global CRON settings",
+            "global_note_text": "These settings are default for all lists. Each list can override these settings with its own in the 'Schedule (CRON)' tab."
+        },
+        "schedule": {
+            "title": "Weekly schedule",
+            "description": "Set time windows in which message dispatch is allowed.",
+            "day_disabled": "Dispatch disabled",
+            "from": "From",
+            "to": "To",
+            "preset_24h": "24h",
+            "preset_business": "8-17"
+        },
         "instructions": {
             "title": "Installation Instructions",
             "importance_title": "Why is CRON important?",
@@ -966,7 +1144,10 @@
             "automation_text": "You can run CRON from external automation tools via {bold}. Simply call the endpoint every minute.",
             "forge_title": "Laravel Forge / Vapor",
             "forge_text": "Laravel Forge: The scheduler is automatically configured for every Laravel application. Simply enable the \"Schedule\" option in the server panel.",
-            "vapor_text": "Laravel Vapor: The scheduler is built into the serverless environment and works automatically."
+            "vapor_text": "Laravel Vapor: The scheduler is built into the serverless environment and works automatically.",
+            "n8n_note": "Use the {node} node with a {trigger} trigger every minute.",
+            "make_note": "Use the {module} module with scheduling set to every minute.",
+            "zapier_note": "Use the {trigger} trigger and {action} action."
         },
         "webhook": {
             "title": "Webhook Configuration",
@@ -977,6 +1158,10 @@
             "token_label": "API Token:",
             "generate_new": "Generate New Token",
             "token_warning": "(previous one will stop working)"
+        },
+        "stats": {
+            "title": "Execution Statistics",
+            "info_title": "Information"
         },
         "verification": {
             "title": "How to verify?",
@@ -1034,7 +1219,16 @@
             "title": "Starter Templates",
             "subtitle": "Ready-to-use premium templates - click to use",
             "use_template": "Use Template",
-            "show_templates": "Show starter templates"
+            "show_templates": "Show starter templates",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Welcome",
+                "newsletter": "Newsletter",
+                "promotional": "Promotional",
+                "ecommerce": "E-commerce",
+                "transactional": "Transactional",
+                "notification": "Notification"
+            }
         }
     },
     "template_builder": {
@@ -1085,6 +1279,8 @@
         "all_rights": "All rights reserved",
         "default_text": "Click to edit text. You can add any content here.",
         "default_button": "Click here",
+        "default_price": "99.00",
+        "default_currency": "USD",
         "buy_now": "Buy now",
         "logo": "Logo",
         "upload_logo": "Upload logo",
@@ -1118,6 +1314,9 @@
         "no_settings": "This block has no settings to configure",
         "ai_assistant": "AI Assistant",
         "ai_prompt_placeholder": "Describe what you want to generate...",
+        "ai_error": "AI generation failed.",
+        "ai_no_integrations": "No AI integrations configured.",
+        "ai_loading": "Loading...",
         "tone_casual": "Casual",
         "tone_formal": "Formal",
         "tone_persuasive": "Persuasive",
@@ -1132,6 +1331,14 @@
         "email_width": "Email width",
         "font_family": "Font family",
         "color_presets": "Color presets",
+        "color_presets_list": {
+            "indigo": "Indigo",
+            "blue": "Blue",
+            "green": "Green",
+            "rose": "Rose",
+            "orange": "Orange",
+            "purple": "Purple"
+        },
         "primary_color": "Primary color",
         "secondary_color": "Secondary color",
         "page_background": "Page background",
@@ -1143,18 +1350,41 @@
         "generate_section": "Generate section",
         "describe_what_you_need": "Describe what you need",
         "quick_prompts": "Quick prompts",
+        "quick_prompts_list": [
+            "Write a newsletter introduction about a new product collection",
+            "Create a webinar invitation about marketing",
+            "Write a thank you note for a purchase",
+            "Remind about an abandoned cart"
+        ],
         "select_tone": "Select tone",
         "section_type": "Section type",
+        "section_types": {
+            "promotional": "Promotional",
+            "welcome": "Welcome",
+            "newsletter": "Newsletter",
+            "product": "Product"
+        },
         "generated_content": "Generated content",
         "insert_content": "Insert content",
         "note": "Note",
-        "columns_note": "Drag blocks from library to columns. Supported: text, images, buttons.",
+        "columns_note": "Nested blocks in columns are arriving soon.",
         "columns_count": "Columns count",
         "gap": "Gap between columns",
         "drop_here": "Drop here",
         "drag_instruction": "Drag/click to add",
         "social_icons": "Social icons",
-        "products_count": "Products count"
+        "products_count": "Products count",
+        "headline_label": "Headline:",
+        "content_label": "Content:",
+        "button_label": "Button:",
+        "preview_panel": {
+            "product_grid_empty": "Product grid (no products)",
+            "product_name_fallback": "Product Name",
+            "buy_now": "Buy now",
+            "buy": "Buy",
+            "currency_fallback": "USD",
+            "drop_block_here": "Drop block here"
+        }
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -1172,27 +1402,104 @@
             "stats": "Statistics"
         }
     },
-    "license": {
-        "title": "License Activation",
-        "active_title": "License Active",
-        "plan_label": "Plan: {plan}",
-        "choose_plan": "Choose NetSendo Plan",
-        "inactive_intro": "Your NetSendo is inactive. Choose a plan to unlock all features.",
-        "plans": {
-            "popular": "POPULAR",
-            "selected": "Selected"
+    "marketplace": {
+        "title": "Marketplace",
+        "subtitle": "Connect NetSendo with your favorite tools and platforms. Extended integrations coming soon!",
+        "coming_soon": "Coming Soon",
+        "soon": "Soon",
+        "banner_title": "Powerful Integrations on the Way",
+        "banner_desc": "We're building a comprehensive marketplace of integrations to help you connect NetSendo with the tools you already use. Stay tuned for updates!",
+        "features": {
+            "one_click": "One-click setup",
+            "auto_sync": "Auto-sync data",
+            "no_code": "No code required"
         },
-        "order_title": "Order {plan} license",
-        "order_email": "Your email",
-        "order_button": "Order {plan} License",
-        "order_sending": "Sending...",
-        "have_key": "I already have a license key",
-        "activate_title": "Activate license",
-        "check_inbox": "Check your email inbox! The license key has been sent.",
-        "key_label": "License key",
-        "key_placeholder": "Paste your license key here...",
-        "activating": "Activating...",
-        "back_to_plans": "← Back to plans selection"
+        "categories": {
+            "ecommerce": {
+                "title": "E-commerce",
+                "desc": "Sync customers & orders"
+            },
+            "crm": {
+                "title": "CRM",
+                "desc": "Manage contacts"
+            },
+            "forms": {
+                "title": "Forms",
+                "desc": "Capture leads"
+            },
+            "automation": {
+                "title": "Automation",
+                "desc": "Connect workflows"
+            },
+            "payments": {
+                "title": "Payments",
+                "desc": "Track transactions"
+            },
+            "analytics": {
+                "title": "Analytics",
+                "desc": "Measure performance"
+            }
+        },
+        "request_title": "Need a specific integration?",
+        "request_desc": "Let us know which tools you'd like to see in NetSendo Marketplace.",
+        "request_button": "Request Integration"
+    },
+    "license": {
+        "title": "License",
+        "active_status": "License {plan} active",
+        "expires_at": "Valid until: {date}",
+        "expires_never": "never",
+        "lifetime_license": "Lifetime license — no time limit",
+        "app_version": "App version: {version}",
+        "upgrade_to_gold": "Upgrade to GOLD",
+        "upgrade_desc": "Unlock advanced automations and priority support",
+        "buy_gold": "Buy GOLD — $97/mo",
+        "gold_expired": "GOLD License expired",
+        "gold_expired_desc": "Expired: {date}. Renew your subscription to restore premium features.",
+        "renew_gold": "Renew GOLD — $97/mo",
+        "choose_plan": "Choose your license",
+        "choose_plan_desc": "NetSendo offers two plans — choose the one that fits your needs",
+        "popular": "POPULAR",
+        "coming_soon": "Coming soon",
+        "gold_coming_soon_msg": "GOLD plan will be available soon! For now, you can use the SILVER plan.",
+        "request_error": "Connection error. Enter license key manually below.",
+        "processing": "Processing...",
+        "manual_activation_title": "Activate license manually",
+        "manual_activation_desc": "Enter the license key received via email or after purchase",
+        "license_key_label": "License Key",
+        "license_key_placeholder": "Paste your license key here...",
+        "activate_button": "Activate License",
+        "activating": "activating...",
+        "back_to_plans": "Back to plans selection",
+        "already_have_key": "I already have a license key",
+        "generic_error": "An error occurred. Please try again.",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "FREE",
+                "suffix": "LIFETIME",
+                "select": "Choose SILVER",
+                "features": {
+                    "basic": "All basic features",
+                    "unlimited": "Unlimited contacts",
+                    "templates": "Email templates",
+                    "support": "Community support"
+                }
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/month",
+                "select": "Buy GOLD",
+                "features": {
+                    "everything": "Everything from SILVER",
+                    "automations": "Advanced automations",
+                    "priority": "Priority support",
+                    "api": "API access",
+                    "white_label": "White-label"
+                }
+            }
+        }
     },
     "ai": {
         "title": "AI Integrations",
@@ -1387,6 +1694,30 @@
     "language": {
         "select": "Select Language",
         "current": "Current Language"
+    },
+    "help_menu": {
+        "title": "Help & Resources",
+        "quick_start": "Quick Start",
+        "documentation": "Documentation",
+        "api_reference": "API Reference",
+        "community_forum": "Community Forum",
+        "courses_training": "Courses & Training",
+        "report_bug": "Report a Bug",
+        "whats_new": "What's New",
+        "full_changelog": "Full Changelog",
+        "about": "About NetSendo",
+        "checking_updates": "Checking for updates...",
+        "up_to_date": "You're up to date",
+        "updates_available": "Updates Available ({count})",
+        "download_latest": "Download Latest Version",
+        "unable_to_check": "Unable to check for updates",
+        "new_tag": "NEW",
+        "update": "Update",
+        "whats_new_list": [
+            "New licensing system",
+            "Update checking",
+            "Improved email templates"
+        ]
     },
     "mailboxes": {
         "title": "Mailboxes",

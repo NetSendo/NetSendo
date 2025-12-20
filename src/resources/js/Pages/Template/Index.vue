@@ -71,12 +71,12 @@ const getCategoryColor = (categorySlug) => {
 
 // Category labels for starter templates
 const categoryLabels = {
-    'welcome': { label: 'Powitalny', color: '#22c55e' },
-    'newsletter': { label: 'Newsletter', color: '#0ea5e9' },
-    'promotional': { label: 'Promocja', color: '#ef4444' },
-    'ecommerce': { label: 'E-commerce', color: '#f59e0b' },
-    'transactional': { label: 'Transakcyjny', color: '#8b5cf6' },
-    'notification': { label: 'Powiadomienie', color: '#6366f1' },
+    'welcome': { label: t('templates.starter.categories.welcome'), color: '#22c55e' },
+    'newsletter': { label: t('templates.starter.categories.newsletter'), color: '#0ea5e9' },
+    'promotional': { label: t('templates.starter.categories.promotional'), color: '#ef4444' },
+    'ecommerce': { label: t('templates.starter.categories.ecommerce'), color: '#f59e0b' },
+    'transactional': { label: t('templates.starter.categories.transactional'), color: '#8b5cf6' },
+    'notification': { label: t('templates.starter.categories.notification'), color: '#6366f1' },
 };
 
 // Filter starter templates by selected category
@@ -212,7 +212,7 @@ const filteredStarterTemplates = computed(() => {
                                 <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                 </svg>
-                                Premium
+                                {{ $t('templates.starter.premium') }}
                             </span>
                         </div>
                     </div>

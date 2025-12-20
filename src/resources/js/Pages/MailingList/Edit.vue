@@ -117,7 +117,7 @@ const form = useForm({
         })(),
         advanced: {
             facebook_integration: getSetting('advanced', 'facebook_integration', null),
-            queue_days: getSetting('advanced', 'queue_days', ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'niedz']),
+            queue_days: getSetting('advanced', 'queue_days', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
             bounce_analysis: getSetting('advanced', 'bounce_analysis', true),
         },
         cron: {
@@ -591,7 +591,7 @@ const submit = () => {
                                                                 class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                                                             />
                                                             <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                                {{ day.label }}
+                                                                {{ $t('common.days.' + day.label) }}
                                                             </span>
                                                         </label>
                                                     </div>
@@ -673,13 +673,13 @@ const submit = () => {
 
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                            Facebook Integration (Pixel ID)
+                                            {{ $t('mailing_lists.settings.advanced.facebook_label') }}
                                         </label>
                                         <input
                                             v-model="form.settings.advanced.facebook_integration"
                                             type="text"
                                             class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
-                                            placeholder="np. 1234567890"
+                                            :placeholder="$t('mailing_lists.settings.advanced.facebook_placeholder')"
                                         >
                                     </div>
 
@@ -688,7 +688,7 @@ const submit = () => {
                                             {{ $t('mailing_lists.settings.queue_days_label') }}
                                         </label>
                                         <div class="flex flex-wrap gap-2">
-                                            <div v-for="day in ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']" :key="day" 
+                                            <div v-for="day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']" :key="day" 
                                                 class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
                                                 :class="form.settings.advanced.queue_days.includes(day) 
                                                     ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
@@ -699,7 +699,7 @@ const submit = () => {
                                                     else form.settings.advanced.queue_days.splice(idx, 1);
                                                 }"
                                             >
-                                                {{ $t('common.shorthand_days.' + day) }}
+                                                {{ $t('common.shorthand_days.' + day.substring(0, 3)) }}
                                             </div>
                                         </div>
                                         <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.queue_days_help') }}</p>

@@ -126,7 +126,7 @@ const applyPreset = (preset) => {
                         <div class="h-full w-1/2" :style="{ backgroundColor: preset.primary }"></div>
                         <div class="h-full w-1/2" :style="{ backgroundColor: preset.secondary }"></div>
                     </div>
-                    <span class="text-slate-600 dark:text-slate-300">{{ preset.name }}</span>
+                    <span class="text-slate-600 dark:text-slate-300">{{ $t(`template_builder.color_presets_list.${preset.name.toLowerCase()}`) }}</span>
                 </button>
             </div>
         </div>

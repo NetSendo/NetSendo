@@ -133,7 +133,20 @@
         "source_placeholder": "Escriba o pegue el código HTML...",
         "full_html_notice": "Esta es una plantilla HTML completa. Utilice el modo \"Código HTML\" para editar.",
         "full_html_edit_notice": "Está editando una plantilla HTML completa. Utilice la pestaña \"Vista previa\" para comprobar el diseño.",
-        "visual_edit_notice": "Haga clic en el texto en la vista previa para editarlo directamente."
+        "visual_edit_notice": "Haga clic en el texto en la vista previa para editarlo directamente.",
+        "emoji": "Emoji",
+        "content_width": "Ancho del contenido",
+        "image_properties": {
+            "url": "URL de la imagen",
+            "preview": "Vista previa",
+            "load_error": "No se pudo cargar la imagen",
+            "alignment": "Alineación",
+            "left": "Izquierda",
+            "center": "Centro",
+            "right": "Derecha",
+            "width": "Ancho",
+            "link": "Enlace (opcional)"
+        }
     },
     "navigation": {
         "dashboard": "Tablero",
@@ -230,10 +243,28 @@
             "view_all": "Ver todo",
             "opens": "aperturas",
             "clicks": "clics",
+            "sample_1": "Boletín Semanal #45",
+            "sample_2": "Promoción de Navidad",
+            "sample_3": "Resumen del Año",
+            "sample_4": "Nuevo Producto - Adelanto",
             "status": {
                 "sent": "Enviado",
                 "scheduled": "Programado",
                 "draft": "Borrador"
+            }
+        },
+        "cron": {
+            "status_title": "⏰ Estado de CRON",
+            "settings_link": "Configuración →",
+            "active": "CRON Activo",
+            "not_configured": "CRON no configurado",
+            "not_configured_desc": "Sin la configuración de CRON, los mensajes programados no se enviarán automáticamente.",
+            "view_instructions": "📖 Ver instrucciones de configuración",
+            "stats": {
+                "runs_24h": "Ejecuciones (24h)",
+                "sent_emails": "Correos enviados",
+                "errors": "Errores",
+                "last_run": "Última ejecución"
             }
         }
     },
@@ -370,7 +401,15 @@
             "company_address": "Dirección",
             "company_city": "Ciudad",
             "company_zip": "Código Postal",
-            "company_country": "País"
+            "company_country": "País",
+            "advanced": {
+                "bounce_title": "Gestión de Rebotes (Bounce Management)",
+                "bounce_desc": "Marcar automáticamente las direcciones como inactivas después de un rebote suave o duro.",
+                "facebook_label": "Integración con Facebook (Pixel ID)",
+                "facebook_placeholder": "ej. 1234567890",
+                "queue_days_label": "Días de envío de la cola",
+                "queue_days_help": "Seleccione los días en los que se pueden enviar mensajes de autorrespuesta."
+            }
         }
     },
     "sms_lists": {
@@ -500,17 +539,162 @@
             "audience": "Audiencia",
             "status": "Estado",
             "created_at": "Creado el",
-            "actions": "Acciones"
+            "actions": "Acciones",
+            "stats": "Estadísticas"
         },
         "empty_title": "No hay mensajes que coincidan con los criterios.",
         "delete_confirm_title": "¿Está seguro de que desea eliminar este mensaje?",
         "delete_confirm_description": "Esta action no se puede deshacer. El mensaje se eliminará permanentemente.",
         "delete_button": "Eliminar mensaje",
+        "duplicate_confirm_title": "Duplicar mensaje",
+        "duplicate_confirm_description": "Creará una copia como borrador",
+        "duplicate_button": "Duplicar",
+        "duplicating": "Duplicando...",
+        "duplicate_success_title": "¡Duplicado creado!",
+        "duplicate_success_description": "El nuevo mensaje \"{prefix} {subject}\" se ha guardado como borrador.",
+        "go_to_edit_duplicate": "Ir a editar duplicado",
+        "stay_on_list": "Permanecer en la lista",
+        "copy_prefix": "[COPIA]",
         "create_title": "Nuevo Mensaje",
         "edit_title": "Editar Mensaje",
         "create_subtitle": "Preparar una nueva campaña de correo electrónico",
         "edit_subtitle": "Actualizar contenido y configuración de la campaña",
         "back_to_list": "Volver a la lista",
+        "tabs": {
+            "content": "Contenido",
+            "settings": "Configuración",
+            "triggers": "Disparadores",
+            "ab_testing": "Pruebas A/B"
+        },
+        "template": {
+            "title": "Plantilla",
+            "select": "Seleccionar plantilla",
+            "change": "Cambiar plantilla",
+            "selected": "Plantilla seleccionada",
+            "clear": "Eliminar plantilla",
+            "modal_title": "Elegir plantilla de mensaje",
+            "modal_subtitle": "Elija una plantilla lista o comience desde cero",
+            "your_templates": "Sus plantillas",
+            "starter_templates": "Plantillas iniciales",
+            "no_templates": "No se encontraron plantillas",
+            "compilation_error": "La plantilla requiere compilación MJML"
+        },
+        "triggers": {
+            "title": "Disparadores y automatizaciones",
+            "coming_soon": "Esta función estará disponible pronto. Podrá lanzar mensajes basados en acciones como clics en enlaces, visitas a páginas o fechas específicas.",
+            "select_type": "Seleccionar tipo de disparador",
+            "types": {
+                "signup": "Registro en la lista",
+                "anniversary": "Aniversario",
+                "inactivity": "Inactividad",
+                "custom": "Acción personalizada"
+            }
+        },
+        "ab_testing": {
+            "title": "Pruebas A/B",
+            "coming_soon": "Pruebe diferentes asuntos y contenidos para ver qué funciona mejor para su audiencia.",
+            "enable": "Activar pruebas A/B",
+            "variant_a": "Variante A",
+            "variant_a_desc": "Asunto y contenido original",
+            "variant_b": "Variante B",
+            "variant_b_placeholder": "Asunto alternativo...",
+            "split": "División de audiencia"
+        },
+        "mailbox": {
+            "label": "Buzón de envío",
+            "use_default": "Usar predeterminado",
+            "inherited_from_list": "Heredado de la lista: {name}",
+            "inherited_global": "Predeterminado global",
+            "selected_for_message": "Seleccionado para este mensaje",
+            "none_configured": "Ningún buzón configurado",
+            "change_in_settings": "Cambiar en configuración",
+            "help": "Elija un buzón remitente o use la configuración predeterminada"
+        },
+        "ai_assistant": {
+            "title": "Asistente de IA",
+            "subtitle": "Generar contenido con el asistente de IA",
+            "generate": "Generar contenido con IA",
+            "generating": "Generando...",
+            "select_mode": "Modo de generación",
+            "select_model": "Modelo de IA",
+            "no_models_available": "No hay integraciones de IA configuradas. Configúrelas en los ajustes.",
+            "describe_content": "Describa lo que desea generar",
+            "select_tone": "Seleccionar tono",
+            "quick_prompts": "Prompts rápidos",
+            "generated_content": "Contenido generado",
+            "replace": "Reemplazar",
+            "insert": "Insertar",
+            "subject_assistant": "Asistente de asunto IA",
+            "subject_hint_placeholder": "Opcional: ej. oferta de vacaciones, urgente...",
+            "characters_limit": "{count}/500 caracteres",
+            "content_status_ok": "Contenido del mensaje: {count} caracteres ✓",
+            "content_status_error": "Se requieren mínimo 20 caracteres (actualmente: {count})",
+            "generate_button": "Generar sugerencias",
+            "loading_models": "Cargando modelos...",
+            "click_to_use": "Haga clic para usar:",
+            "empty_info": "La IA generará 3 sugerencias de asunto basadas en el contenido de su correo electrónico",
+            "error_missing_content": "Primero agregue el contenido del mensaje para generar sugerencias de asunto.",
+            "error_generating": "Ocurrió un error al generar el contenido.",
+            "error_generic": "Ocurrió un error al generar los títulos.",
+            "modes": {
+                "text": "Generar texto",
+                "text_desc": "Generar un fragmento de texto para insertar",
+                "template": "Generar/Modificar plantilla",
+                "template_desc": "Crear o modificar la plantilla completa"
+            },
+            "tones": {
+                "casual": "Informal",
+                "formal": "Formal",
+                "persuasive": "Persuasivo"
+            },
+            "placeholders": {
+                "section_title": "Fragmentos de personalización",
+                "loading": "Cargando fragmentos...",
+                "standard_title": "Campos estándar (siempre activos)",
+                "custom_title": "Campos personalizados (seleccionar)",
+                "empty_custom": "No hay campos personalizados.",
+                "add_fields": "Añadir campos"
+            },
+            "formatting": {
+                "label": "Con formato HTML",
+                "with_html": "El texto contendrá etiquetas HTML (encabezados, listas, negrita)",
+                "plain_text": "Texto plano sin formato"
+            },
+            "context": {
+                "modify_existing": "La IA modificará el contenido del mensaje actual ({count} caracteres)",
+                "create_new": "La IA generará una nueva plantilla desde cero"
+            },
+            "comparison": {
+                "title": "Comparación de Plantillas",
+                "subtitle": "Revise los cambios antes de reemplazar",
+                "original_title": "Contenido actual",
+                "original_empty": "No hay contenido actual",
+                "new_title": "Contenido nuevo (IA)",
+                "reject": "Rechazar",
+                "accept_replace": "Aceptar y reemplazar",
+                "copy_new": "Copiar nuevo"
+            },
+            "actions": {
+                "insert": "Insertar contenido",
+                "compare_replace": "Comparar y reemplazar",
+                "copied": "¡Copiado!",
+                "copy": "Copiar"
+            },
+            "prompts": {
+                "text_placeholder": "ej. Escriba una breve introducción que anime a suscribirse al boletín...",
+                "template_placeholder": "ej. Cree un email profesional con encabezado, contenido y botón de CTA...",
+                "quick": {
+                    "welcome_sub": "Escriba una bienvenida para un nuevo suscriptor",
+                    "benefits": "Cree una sección sobre los beneficios del producto",
+                    "thanks_purchase": "Escriba un agradecimiento por la compra",
+                    "cta_contact": "Añada un incentivo al contacto",
+                    "professional_newsletter": "Cree un boletín profesional con encabezado, contenido y botón de CTA",
+                    "welcome_client": "Genere un email de bienvenida para un nuevo cliente",
+                    "promo_list": "Cree un email promocional con una lista de productos",
+                    "cta_end": "Añada una sección con un botón de CTA al final del mensaje actual"
+                }
+            }
+        },
         "fields": {
             "type": "Tipo de mensaje",
             "subject": "Asunto del mensaje",
@@ -538,7 +722,12 @@
             "timezone_default": "Predeterminado (según la configuración de lista/grupo/cuenta)",
             "timezone_help": "Prioridad: Mensaje > Lista > Grupo > Cuenta de usuario.",
             "content": "Contenido del mensaje",
-            "no_lists": "No hay listas de correo disponibles."
+            "no_lists": "No hay listas de correo disponibles.",
+            "preheader": "Preheader",
+            "preheader_placeholder": "Texto corto visible en la vista previa del buzón...",
+            "preheader_help": "Texto que aparece junto al asunto en la bandeja de entrada",
+            "select_by_tag": "Seleccionar por etiqueta:",
+            "no_group": "Sin grupo"
         },
         "actions": {
             "save_draft": "Guardar como borrador",
@@ -548,71 +737,6 @@
             "activate": "Activar (Guardar)",
             "test": "Probar"
         },
-        "tabs": {
-            "content": "Contenido",
-            "settings": "Configuración",
-            "triggers": "Disparadores",
-            "ab_testing": "Pruebas A/B"
-        },
-        "template": {
-            "title": "Plantilla",
-            "select": "Seleccionar plantilla",
-            "change": "Cambiar plantilla",
-            "selected": "Plantilla seleccionada",
-            "clear": "Eliminar plantilla",
-            "modal_title": "Elegir plantilla de mensaje",
-            "modal_subtitle": "Elija una plantilla lista o comience desde cero",
-            "your_templates": "Sus plantillas",
-            "starter_templates": "Plantillas iniciales",
-            "no_templates": "No se encontraron plantillas"
-        },
-        "mailbox": {
-            "label": "Buzón de envío",
-            "use_default": "Usar predeterminado",
-            "inherited_from_list": "Heredado de la lista: {name}",
-            "inherited_global": "Predeterminado global",
-            "selected_for_message": "Seleccionado para este mensaje",
-            "none_configured": "Ningún buzón configurado",
-            "change_in_settings": "Cambiar en configuración",
-            "help": "Elija un buzón remitente o use la configuración predeterminada"
-        },
-        "ai": {
-            "title": "Asistente de IA",
-            "subtitle": "Generar contenido con el asistente de IA",
-            "generate": "Generar contenido con IA",
-            "generating": "Generando...",
-            "select_mode": "Modo de generación",
-            "select_model": "Modelo de IA",
-            "no_models_available": "No hay integraciones de IA configuradas. Configúrelas en los ajustes.",
-            "describe_content": "Describa lo que desea generar",
-            "select_tone": "Seleccionar tono",
-            "quick_prompts": "Prompts rápidos",
-            "generated_content": "Contenido generado",
-            "replace": "Reemplazar",
-            "insert": "Insertar",
-            "subject_assistant": "Asistente de asunto IA",
-            "subject_hint_placeholder": "Opcional: ej. oferta de vacaciones, urgente..."
-        },
-        "triggers": {
-            "title": "Disparadores automáticos",
-            "coming_soon": "Esta función estará disponible pronto. Planeamos disparadores automáticos basados en eventos.",
-            "select_type": "Seleccionar tipo de disparador",
-            "types": {
-                "signup": "Tras el registro",
-                "anniversary": "Aniversario (ej. cumpleaños)",
-                "inactivity": "Inactividad",
-                "custom": "Disparador personalizado"
-            }
-        },
-        "ab_testing": {
-            "title": "Pruebas A/B",
-            "coming_soon": "Esta función estará disponible pronto. Planeamos pruebas A/B para asuntos y contenidos.",
-            "enable": "Activar prueba A/B",
-            "variant_b": "Variante B",
-            "split": "División de audiencia"
-        },
-        "preheader_placeholder": "Texto corto visible en la vista previa de la bandeja de entrada...",
-        "preheader_help": "Texto que aparece junto al asunto en la bandeja de entrada",
         "test": {
             "title": "Enviar correo de prueba",
             "subtitle": "Vea cómo se ve su mensaje antes de enviarlo",
@@ -621,7 +745,42 @@
             "preview_subject": "Asunto",
             "preview_mailbox": "Buzón",
             "send": "Enviar prueba",
-            "sending": "Enviando..."
+            "sending": "Enviando...",
+            "no_subject_preview": "(sin asunto)",
+            "no_mailbox_preview": "Ningún buzón configurado"
+        },
+        "stats": {
+            "title": "Estadísticas de campaña",
+            "header_title": "Estadísticas: {subject}",
+            "back_to_list": "Volver a la lista",
+            "kpi": {
+                "sent": "Enviado",
+                "open_rate": "Tasa de apertura",
+                "click_rate": "Tasa de clics",
+                "ctor": "CTOR",
+                "unique": "{count} únicos",
+                "clicks_opens": "Clics / Aperturas"
+            },
+            "charts": {
+                "effectiveness": "Efectividad",
+                "conversion_funnel": "Embudo de conversión",
+                "labels": {
+                    "opened": "Abierto",
+                    "sent_no_open": "Enviado (no abierto)",
+                    "sent": "Enviado",
+                    "unique_opens": "Aperturas únicas",
+                    "unique_clicks": "Clics únicos",
+                    "counters": "Contadores"
+                }
+            },
+            "activity": {
+                "recent_opens": "Aperturas recientes",
+                "recent_clicks": "Clics recientes",
+                "no_data": "Sin datos",
+                "email": "Correo electrónico",
+                "time": "Tiempo",
+                "url": "URL"
+            }
         }
     },
     "subscribers": {
@@ -738,7 +897,22 @@
             "create": "Crear plantilla",
             "update": "Actualizar plantilla"
         },
-        "default_content": "<p>¡Hola, [name]!</p><p>Contenido de ejemplo...</p>"
+        "default_content": "<p>¡Hola, [name]!</p><p>Contenido de ejemplo...</p>",
+        "starter": {
+            "title": "Plantillas de inicio",
+            "subtitle": "Plantillas premium listas para usar - haga clic para usar",
+            "use_template": "Usar plantilla",
+            "show_templates": "Mostrar plantillas de inicio",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Bienvenida",
+                "newsletter": "Boletín",
+                "promotional": "Promoción",
+                "ecommerce": "E-commerce",
+                "transactional": "Transaccional",
+                "notification": "Notificación"
+            }
+        }
     },
     "setup": {
         "title": "Instalación de NetSendo",
@@ -757,26 +931,61 @@
         }
     },
     "license": {
-        "title": "Activación de Licencia",
-        "active_title": "Licencia Activa",
-        "plan_label": "Plan: {plan}",
-        "choose_plan": "Elegir plan de NetSendo",
-        "inactive_intro": "Su NetSendo está inactivo. Elija un plan para desbloquear todas las funciones.",
-        "plans": {
-            "popular": "POPULAR",
-            "selected": "Seleccionado"
-        },
-        "order_title": "Pedir licencia {plan}",
-        "order_email": "Tu correo electrónico",
-        "order_button": "Pedir Licencia {plan}",
-        "order_sending": "Enviando...",
-        "have_key": "Ya tengo una clave de licencia",
-        "activate_title": "Activar licencia",
-        "check_inbox": "¡Revise su bandeja de entrada! Se ha enviado la clave de licencia.",
-        "key_label": "Clave de licencia",
-        "key_placeholder": "Pegue su clave de licencia aquí...",
+        "title": "Licencia",
+        "active_status": "Licencia {plan} activa",
+        "expires_at": "Válida hasta: {date}",
+        "expires_never": "indefinidamente",
+        "lifetime_license": "Licencia de por vida — sin límite de tiempo",
+        "app_version": "Versión de la aplicación: {version}",
+        "upgrade_to_gold": "Actualizar a GOLD",
+        "upgrade_desc": "Desbloquea automatizaciones avanzadas y soporte prioritario",
+        "buy_gold": "Comprar GOLD — $97/mes",
+        "gold_expired": "La licencia GOLD ha caducado",
+        "gold_expired_desc": "Caducó el: {date}. Renueve su suscripción para restaurar las funciones premium.",
+        "renew_gold": "Renovar GOLD — $97/mes",
+        "choose_plan": "Elija su licencia",
+        "choose_plan_desc": "NetSendo ofrece dos planes — elija el que mejor se adapte a sus necesidades",
+        "popular": "POPULAR",
+        "coming_soon": "Próximamente",
+        "gold_coming_soon_msg": "¡El plan GOLD estará disponible pronto! Por ahora, puede usar el plan SILVER.",
+        "request_error": "Error de conexión. Introduzca el código de licencia manualmente a continuación.",
+        "processing": "Procesando...",
+        "manual_activation_title": "Activar licencia manualmente",
+        "manual_activation_desc": "Introduzca el código de licencia recibido por correo electrónico o después de la compra",
+        "license_key_label": "Código de licencia",
+        "license_key_placeholder": "Pegue su código de licencia aquí...",
+        "activate_button": "Activar licencia",
         "activating": "Activando...",
-        "back_to_plans": "← Volver a la selección de planes"
+        "back_to_plans": "Volver a la selección de planes",
+        "already_have_key": "Ya tengo un código de licencia",
+        "generic_error": "Ha ocurrido un error. Por favor, inténtelo de nuevo.",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "GRATIS",
+                "suffix": "DE POR VIDA",
+                "select": "Elegir SILVER",
+                "features": {
+                    "basic": "Todas las funciones básicas",
+                    "unlimited": "Contactos ilimitados",
+                    "templates": "Plantillas de email",
+                    "support": "Soporte de la comunidad"
+                }
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/mes",
+                "select": "Comprar GOLD",
+                "features": {
+                    "everything": "Todo lo de SILVER",
+                    "automations": "Automatizaciones avanzadas",
+                    "priority": "Soporte prioritario",
+                    "api": "Acceso API",
+                    "white_label": "White-label"
+                }
+            }
+        }
     },
     "ai": {
         "title": "Integraciones de IA",
@@ -1049,6 +1258,9 @@
         "no_settings": "Este bloque no tiene ajustes configurables",
         "ai_assistant": "Asistente IA",
         "ai_prompt_placeholder": "Describa lo que desea generar...",
+        "ai_error": "Fallo en la generación de IA.",
+        "ai_no_integrations": "No hay integraciones de IA configuradas.",
+        "ai_loading": "Cargando...",
         "tone_casual": "Informal",
         "tone_formal": "Formal",
         "tone_persuasive": "Persuasivo",
@@ -1063,6 +1275,14 @@
         "email_width": "Ancho del correo",
         "font_family": "Fuente",
         "color_presets": "Ajustes de color",
+        "color_presets_list": {
+            "indigo": "Índigo",
+            "blue": "Azul",
+            "green": "Verde",
+            "rose": "Rosa",
+            "orange": "Naranja",
+            "purple": "Púrpura"
+        },
         "primary_color": "Color primario",
         "secondary_color": "Color secundario",
         "page_background": "Fondo de página",
@@ -1074,18 +1294,41 @@
         "generate_section": "Generar sección",
         "describe_what_you_need": "Describa su necesidad",
         "quick_prompts": "Prompts rápidos",
+        "quick_prompts_list": [
+            "Escribir una introducción al boletín sobre una nueva colección de productos",
+            "Crear una invitación a un seminario web sobre marketing",
+            "Escribir una nota de agradecimiento por una compra",
+            "Recordar sobre un carrito abandonado"
+        ],
         "select_tone": "Seleccionar tono",
         "section_type": "Tipo de sección",
+        "section_types": {
+            "promotional": "Promocional",
+            "welcome": "Bienvenida",
+            "newsletter": "Boletín",
+            "product": "Producto"
+        },
         "generated_content": "Contenido generado",
         "insert_content": "Insertar contenido",
         "note": "Nota",
-        "columns_note": "Arrastre bloques de la biblioteca a las columnas. Soportado: Texto, Imágenes, Botones.",
+        "columns_note": "Los bloques anidados en columnas llegarán pronto.",
         "columns_count": "Número de columnas",
         "gap": "Espacio entre columnas",
         "drop_here": "Soltar aquí",
         "drag_instruction": "Arrastre o haga clic para añadir",
         "social_icons": "Iconos sociales",
-        "products_count": "Número de productos"
+        "products_count": "Número de productos",
+        "headline_label": "Titular:",
+        "content_label": "Contenido:",
+        "button_label": "Botón:",
+        "preview_panel": {
+            "product_grid_empty": "Cuadrícula de productos (sin productos)",
+            "product_name_fallback": "Nombre del producto",
+            "buy_now": "Comprar ahora",
+            "buy": "Comprar",
+            "currency_fallback": "EUR",
+            "drop_block_here": "Suelta el bloque aquí"
+        }
     },
     "fields": {
         "title": "Gestión de campos",
@@ -1793,10 +2036,13 @@
             "failed": "Error"
         },
         "settings": {
+            "title": "Ajustes de envío",
             "volume_per_minute": "Límite de mensajes / minuto",
             "volume_help": "Número máximo de emails enviados por minuto",
             "maintenance_hour": "Hora de operaciones diarias",
-            "maintenance_help": "Limpieza de logs, procesamiento de correos rebotados, etc."
+            "maintenance_help": "Limpieza de logs, procesamiento de correos rebotados, etc.",
+            "global_note_title": "Ajustes globales de CRON",
+            "global_note_text": "Estos ajustes son por defecto para todas las listas. Cada lista puede sobrescribir estos ajustes con los suyos propios en la pestaña \"Horario (CRON)\"."
         },
         "schedule": {
             "title": "Horario semanal",
@@ -1818,6 +2064,8 @@
             "sunday": "Domingo"
         },
         "stats": {
+            "title": "Estadísticas de ejecución",
+            "info_title": "Información",
             "total_runs": "Ejecuciones",
             "successful": "Éxito",
             "failed": "Errores",
@@ -1874,7 +2122,10 @@
             "automation_text": "Puede ejecutar CRON desde herramientas de automatización externas a través de {bold}. Simplemente llame al endpoint cada minuto.",
             "forge_title": "Laravel Forge / Vapor",
             "forge_text": "El programador se configura automáticamente para cada aplicación Laravel. Simplemente active la opción \"Schedule\" en el panel del servidor.",
-            "vapor_text": "Laravel Vapor: El programador está integrado en el entorno serverless y funciona automáticamente."
+            "vapor_text": "Laravel Vapor: El programador está integrado en el entorno serverless y funciona automáticamente.",
+            "n8n_note": "Use el nodo {node} con un disparador {trigger} cada minuto.",
+            "make_note": "Use el módulo {module} con programación cada minuto.",
+            "zapier_note": "Use el disparador {trigger} y la acción {action}."
         },
         "webhook": {
             "title": "Configuración de Webhook",
@@ -1897,5 +2148,29 @@
     "language": {
         "select": "Seleccionar idioma",
         "current": "Idioma actual"
+    },
+    "help_menu": {
+        "title": "Ayuda y recursos",
+        "quick_start": "Inicio rápido",
+        "documentation": "Documentación",
+        "api_reference": "Referencia de API",
+        "community_forum": "Foro de la comunidad",
+        "courses_training": "Cursos y formación",
+        "report_bug": "Reportar un error",
+        "whats_new": "Novedades",
+        "full_changelog": "Registro de cambios completo",
+        "about": "Acerca de NetSendo",
+        "checking_updates": "Buscando actualizaciones...",
+        "up_to_date": "Su versión está actualizada",
+        "updates_available": "Actualizaciones disponibles ({count})",
+        "download_latest": "Descargar última versión",
+        "unable_to_check": "No se pudo buscar actualizaciones",
+        "new_tag": "NUEVO",
+        "update": "Actualizar",
+        "whats_new_list": [
+            "Nuevo sistema de licencias",
+            "Comprobación de actualizaciones",
+            "Plantillas de correo mejoradas"
+        ]
     }
 }

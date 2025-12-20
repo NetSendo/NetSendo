@@ -288,7 +288,7 @@ const stayOnList = () => {
                                         v-if="message.status === 'sent' || message.status === 'scheduled'"
                                         :href="route('messages.stats', message.id)"
                                         class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                        title="Statystyki"
+                                        :title="$t('messages.table.stats')"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -297,7 +297,7 @@ const stayOnList = () => {
                                     <button 
                                         @click="confirmDuplicateMessage(message)"
                                         class="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-                                        title="Duplikuj"
+                                        :title="$t('messages.duplicate_button')"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -372,10 +372,10 @@ const stayOnList = () => {
                         </div>
                         <div>
                             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
-                                Duplikuj wiadomość
+                                {{ $t('messages.duplicate_confirm_title') }}
                             </h2>
                             <p class="text-sm text-slate-500 dark:text-slate-400">
-                                Utworzy kopię jako szkic
+                                {{ $t('messages.duplicate_confirm_description') }}
                             </p>
                         </div>
                     </div>
@@ -388,7 +388,7 @@ const stayOnList = () => {
                     
                     <div class="mt-6 flex justify-end gap-3">
                         <SecondaryButton @click="closeDuplicateModal">
-                            Anuluj
+                            {{ $t('common.cancel') }}
                         </SecondaryButton>
                         <PrimaryButton 
                             @click="duplicateMessage" 
@@ -399,7 +399,7 @@ const stayOnList = () => {
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            {{ isDuplicating ? 'Duplikowanie...' : 'Duplikuj' }}
+                            {{ isDuplicating ? $t('messages.duplicating') : $t('messages.duplicate_button') }}
                         </PrimaryButton>
                     </div>
                 </template>
@@ -413,10 +413,10 @@ const stayOnList = () => {
                             </svg>
                         </div>
                         <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
-                            Duplikat utworzony!
+                            {{ $t('messages.duplicate_success_title') }}
                         </h2>
                         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Nowa wiadomość "[KOPIA] {{ messageToDuplicate?.subject }}" została zapisana jako szkic.
+                            {{ $t('messages.duplicate_success_description', { prefix: $t('messages.copy_prefix'), subject: messageToDuplicate?.subject }) }}
                         </p>
                     </div>
                     
@@ -428,13 +428,13 @@ const stayOnList = () => {
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Przejdź do edycji duplikatu
+                            {{ $t('messages.go_to_edit_duplicate') }}
                         </button>
                         <button 
                             @click="stayOnList"
                             class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
-                            Zostań na liście
+                            {{ $t('messages.stay_on_list') }}
                         </button>
                     </div>
                 </template>

@@ -13,10 +13,10 @@ const props = defineProps({
 
 // Sample data if not provided
 const displayCampaigns = props.campaigns.length > 0 ? props.campaigns : [
-    { id: 1, name: 'Newsletter Tygodniowy #45', date: '2024-12-15', status: 'sent', opens: 1234, clicks: 456 },
-    { id: 2, name: 'Promocja Świąteczna', date: '2024-12-14', status: 'sent', opens: 2341, clicks: 789 },
-    { id: 3, name: 'Podsumowanie Roku', date: '2024-12-20', status: 'scheduled', opens: 0, clicks: 0 },
-    { id: 4, name: 'Nowy Produkt - Zapowiedź', date: '2024-12-18', status: 'draft', opens: 0, clicks: 0 },
+    { id: 1, name: t('dashboard.recent_campaigns.sample_1'), date: '2024-12-15', status: 'sent', opens: 1234, clicks: 456 },
+    { id: 2, name: t('dashboard.recent_campaigns.sample_2'), date: '2024-12-14', status: 'sent', opens: 2341, clicks: 789 },
+    { id: 3, name: t('dashboard.recent_campaigns.sample_3'), date: '2024-12-20', status: 'scheduled', opens: 0, clicks: 0 },
+    { id: 4, name: t('dashboard.recent_campaigns.sample_4'), date: '2024-12-18', status: 'draft', opens: 0, clicks: 0 },
 ];
 
 const statusClasses = {
