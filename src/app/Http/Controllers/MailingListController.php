@@ -11,7 +11,8 @@ class MailingListController extends Controller
 {
     public function index(Request $request)
     {
-        $query = auth()->user()->contactLists()
+        // Use accessibleLists() to include shared lists for team members
+        $query = auth()->user()->accessibleLists()
             ->with(['group', 'tags']);
 
         if ($request->filled('search')) {
@@ -36,6 +37,12 @@ class MailingListController extends Controller
             }
         }
 
+        // For filters, we generally want to show options from the admin account if we are a team member
+        // or just the user's own stuff. For simplicity, let's keep it scoped to auth user for now,
+        // but ideally this should fetch from the admin's scope if we are a team member.
+        // Let's use getAdminUser() helper to support team members seeing admin's groups/tags.
+        $scopeUser = auth()->user()->getAdminUser();
+
         return Inertia::render('MailingList/Index', [
             'lists' => $query->latest()
                 ->paginate(12)
@@ -45,32 +52,44 @@ class MailingListController extends Controller
                     'description' => $list->description,
                     'group' => $list->group,
                     'tags' => $list->tags,
-                    'tags' => $list->tags,
                     'created_at' => $list->created_at->format('Y-m-d'),
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
+                    'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
             'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
         ]);
     }
 
     public function create()
     {
         $user = auth()->user();
+        $scopeUser = $user->getAdminUser();
         
         return Inertia::render('MailingList/Create', [
-            'defaultSettings' => $user->settings ?? [],
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
-            'mailboxes' => \App\Models\Mailbox::where('user_id', auth()->id())->active()->get(['id', 'name', 'from_email']),
-            'externalPages' => \App\Models\ExternalPage::where('user_id', auth()->id())->get(['id', 'name']),
+            'defaultSettings' => $scopeUser->settings ?? [],
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
+            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
         ]);
     }
 
     public function store(Request $request)
     {
+        // Team members create lists owned by their Admin (or themselves? usually admin account owns data)
+        // But for simpler MVP, let's say they own it, OR we assign it to admin_user_id if present.
+        // Let's create it on the authenticated user for now to avoid complexity with accessibleLists logic.
+        // Or better: everything belongs to the admin.
+        
+        $user = auth()->user();
+        if (!$user->isAdmin()) {
+            // If team member, we might want to prevent creation OR assign to admin.
+            // Let's assume for now they CAN create lists and they own them.
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
@@ -121,7 +140,7 @@ class MailingListController extends Controller
 
     public function show(ContactList $mailingList)
     {
-        if ($mailingList->user_id !== auth()->id()) {
+        if (!auth()->user()->canAccessList($mailingList)) {
             abort(403);
         }
 
@@ -137,18 +156,19 @@ class MailingListController extends Controller
                 'created_at' => $mailingList->created_at->format('Y-m-d'),
                 'is_public' => $mailingList->is_public,
                 'subscribers_count' => $mailingList->subscribers->count(),
-                // Add recent subscribers or stats later
+                'permission' => auth()->user()->canEditList($mailingList) ? 'edit' : 'view',
             ]
         ]);
     }
 
     public function edit(ContactList $mailingList)
     {
-        if ($mailingList->user_id !== auth()->id()) {
-            abort(403);
+        if (!auth()->user()->canEditList($mailingList)) {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
         }
 
         $user = auth()->user();
+        $scopeUser = $user->getAdminUser();
 
         return Inertia::render('MailingList/Edit', [
             'list' => [
@@ -162,19 +182,19 @@ class MailingListController extends Controller
                 'default_mailbox_id' => $mailingList->default_mailbox_id,
                 'cron_settings' => $mailingList->cronSettings ?? null,
             ],
-            'defaultSettings' => $user->settings ?? [],
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
-            'mailboxes' => \App\Models\Mailbox::where('user_id', auth()->id())->active()->get(['id', 'name', 'from_email']),
-            'externalPages' => \App\Models\ExternalPage::where('user_id', auth()->id())->get(['id', 'name']),
+            'defaultSettings' => $scopeUser->settings ?? [],
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
+            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
         ]);
     }
 
     public function update(Request $request, ContactList $mailingList)
     {
-        if ($mailingList->user_id !== auth()->id()) {
-            abort(403);
+        if (!auth()->user()->canEditList($mailingList)) {
+             abort(403, 'Brak uprawnień do edycji tej listy.');
         }
 
         $validated = $request->validate([
@@ -204,8 +224,6 @@ class MailingListController extends Controller
             'settings.sending.company_country' => 'nullable|string|max:255',
             
             // Pages (Redirects)
-            // Storing as array of objects or direct keys. Let's use direct keys with nested structure for each page type
-            // Pages (Redirects)
             'settings.pages' => 'nullable|array',
             'settings.pages.*.type' => 'nullable|string',
             'settings.pages.*.url' => 'nullable|string',
@@ -234,15 +252,18 @@ class MailingListController extends Controller
 
     public function destroy(Request $request, ContactList $mailingList)
     {
+        // Only owner can delete list
         if ($mailingList->user_id !== auth()->id()) {
-            abort(403);
+            abort(403, 'Tylko właściciel listy może ją usunąć.');
         }
 
         $subscribersCount = $mailingList->subscribers()->count();
 
         if ($subscribersCount > 0) {
             if ($request->has('transfer_to_id')) {
-                // Validate target list
+                // Validate target list - must also be editable/owned by user
+                // Using accessibleLists to allow transfer to any list they have access to might be risky if they don't own it.
+                // Safest to restrict to lists they own.
                 $targetList = auth()->user()->contactLists()->findOrFail($request->transfer_to_id);
 
                 if ($targetList->id === $mailingList->id) {
@@ -253,7 +274,7 @@ class MailingListController extends Controller
                 $mailingList->subscribers()->update(['contact_list_id' => $targetList->id]);
                 
             } elseif ($request->boolean('force_delete')) {
-                // Delete subscribers (cascade handles this usually, but explicitly here for clarity if no cascade)
+                // Delete subscribers
                 $mailingList->subscribers()->delete();
             } else {
                 return back()->withErrors(['general' => 'Ta lista zawiera subskrybentów. Wybierz opcję przeniesienia lub usunięcia ich.']);
@@ -265,4 +286,5 @@ class MailingListController extends Controller
         return redirect()->route('mailing-lists.index')
             ->with('success', 'Lista adresowa została usunięta.');
     }
+
 }

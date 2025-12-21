@@ -9,9 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- AI: Add your changes here using: Added, Changed, Fixed, Removed, Deprecated, Security -->
 
+
 ---
 
-## [1.0.4] - 2025-12-21
+## [1.0.5] – User Management System - 2025-12-21
+
+### Added
+- **User Management System:**
+  - **Team Invitations:** Admins can invite new team members via email
+  - **Role Management:** Admin (owner) vs Team Member
+  - **Granular Permissions:**
+    - Per-list access control (View Only / View & Edit)
+    - Team members only see lists explicitly shared with them
+  - **New Interface:** `Settings > Users` for managing invitations and permissions
+  - **Acceptance Flow:** Public page for invited users to set password
+
+### Changed
+- **Contact Lists:**
+  - Lists now support `view` and `edit` permissions for team members
+  - Sidebar navigation updated to correctly handle Settings sub-pages
+
+### Database
+- New `team_invitations` table
+- New `contact_list_user` pivot table with permission field
+- Updated `users` table with `admin_user_id` to link team members to owners
+
+---
+
+## [1.0.4] – Subscriber Exclusion & PHP 8.5 - 2025-12-21
 
 ### Added
 - **Subscriber Exclusion Lists:**
@@ -43,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.3] - 2025-12-21
+## [1.0.3] – Dashboard Data & UX Improvements - 2025-12-21
 
 ### Improved
 - **Dashboard - Real Data Integration:**
@@ -79,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.2] - 2025-12-19
+## [1.0.2] – Global Stats & Activity Logger - 2025-12-19
 
 ### Added
 - Global Stats - monthly statistics with CSV export
@@ -88,7 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.1] - 2025-12-19
+## [1.0.1] – Licensing & Template Inserts - 2025-12-19
 
 ### Added
 - Licensing system (SILVER/GOLD)
@@ -96,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [1.0.0] - 2025-12-18
+## [1.0.0] – Initial Release - 2025-12-18
 
 ### Initial Release
 - Full NetSendo migration to Laravel 11 + Vue.js 3 + Inertia.js

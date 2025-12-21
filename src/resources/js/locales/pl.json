@@ -2265,5 +2265,46 @@
         "first_click": "Pierwsze kliknięcie",
         "last_click": "Ostatnie kliknięcie",
         "no_links": "Brak śledzonych linków"
+    },
+    "users": {
+        "title": "Zarządzanie Użytkownikami",
+        "add_user": "Dodaj użytkownika",
+        "info_title": "Zarządzaj zespołem",
+        "info_text": "Jako administrator możesz zapraszać użytkowników do pomocy w zarządzaniu NetSendo. Nadaj im uprawnienia do wybranych list mailingowych.",
+        "team_members": "Członkowie zespołu",
+        "team_members_subtitle": "Użytkownicy mający dostęp do Twojego konta NetSendo",
+        "no_members": "Nie masz jeszcze żadnych użytkowników w zespole",
+        "add_first_user": "Dodaj pierwszego użytkownika",
+        "no_lists_assigned": "Brak przypisanych list",
+        "manage_permissions": "Zarządzaj uprawnieniami",
+        "delete_user": "Usuń użytkownika",
+        "delete_confirm": "Czy na pewno chcesz usunąć tego użytkownika z zespołu? Użytkownik straci dostęp do wszystkich list.",
+        "pending_invitations": "Oczekujące zaproszenia",
+        "sent": "Wysłano",
+        "cancel": "Anuluj",
+        "cancel_invitation_confirm": "Czy na pewno chcesz anulować to zaproszenie?",
+        "permission_view": "Tylko podgląd",
+        "permission_edit": "Podgląd i edycja",
+        "table": {
+            "user": "Użytkownik",
+            "email": "Email",
+            "lists_access": "Dostęp do list",
+            "added": "Dodany",
+            "actions": "Akcje"
+        },
+        "modal": {
+            "add_title": "Dodaj użytkownika do zespołu",
+            "name": "Imię i nazwisko",
+            "email": "Adres email",
+            "password": "Hasło",
+            "password_confirm": "Potwierdź hasło",
+            "list_permissions": "Uprawnienia do list (opcjonalne)",
+            "create": "Dodaj użytkownika"
+        },
+        "permissions_modal": {
+            "title": "Uprawnienia użytkownika",
+            "description": "Wybierz listy, do których użytkownik będzie miał dostęp i ustaw poziom uprawnień.",
+            "save": "Zapisz uprawnienia"
+        }
     }
 }

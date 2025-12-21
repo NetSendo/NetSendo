@@ -25,6 +25,7 @@ class User extends Authenticatable
         'timezone',
         'locale',
         'settings',
+        'admin_user_id',
     ];
 
     /**
@@ -60,6 +61,128 @@ class User extends Authenticatable
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_enabled && $this->two_factor_secret;
+    }
+
+    /**
+     * Get the admin who invited this user (null if user is admin).
+     */
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_user_id');
+    }
+
+    /**
+     * Get team members invited by this admin.
+     */
+    public function teamMembers()
+    {
+        return $this->hasMany(User::class, 'admin_user_id');
+    }
+
+    /**
+     * Get pending invitations sent by this admin.
+     */
+    public function invitations()
+    {
+        return $this->hasMany(TeamInvitation::class, 'admin_user_id');
+    }
+
+    /**
+     * Get lists shared with this user by admin.
+     */
+    public function sharedLists()
+    {
+        return $this->belongsToMany(ContactList::class, 'contact_list_user')
+            ->withPivot(['permission', 'granted_by'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if this user is an admin (not invited by anyone).
+     */
+    public function isAdmin(): bool
+    {
+        return is_null($this->admin_user_id);
+    }
+
+    /**
+     * Get the admin user ID for this account.
+     * Returns own ID if admin, or admin_user_id if team member.
+     */
+    public function getAdminUserId(): int
+    {
+        return $this->admin_user_id ?? $this->id;
+    }
+
+    /**
+     * Get the admin user for this account.
+     */
+    public function getAdminUser(): User
+    {
+        return $this->isAdmin() ? $this : $this->admin;
+    }
+
+    /**
+     * Get all contact lists accessible by this user.
+     * Admin sees all lists, team members see their own + shared lists.
+     */
+    public function accessibleLists()
+    {
+        if ($this->isAdmin()) {
+            // Admin sees all lists created by them or their team members
+            $teamMemberIds = $this->teamMembers()->pluck('id')->toArray();
+            $allUserIds = array_merge([$this->id], $teamMemberIds);
+            
+            return ContactList::whereIn('user_id', $allUserIds);
+        }
+
+        // Team member sees their own lists + shared lists
+        $ownListIds = $this->contactLists()->pluck('id');
+        $sharedListIds = $this->sharedLists()->pluck('contact_lists.id');
+        $allListIds = $ownListIds->merge($sharedListIds)->unique();
+
+        return ContactList::whereIn('id', $allListIds);
+    }
+
+    /**
+     * Check if user can access a specific list.
+     */
+    public function canAccessList(ContactList $list): bool
+    {
+        if ($this->isAdmin()) {
+            // Admin can access lists owned by self or team members
+            $teamMemberIds = $this->teamMembers()->pluck('id')->toArray();
+            $allUserIds = array_merge([$this->id], $teamMemberIds);
+            return in_array($list->user_id, $allUserIds);
+        }
+
+        // Team member can access own lists or shared lists
+        if ($list->user_id === $this->id) {
+            return true;
+        }
+
+        return $this->sharedLists()->where('contact_lists.id', $list->id)->exists();
+    }
+
+    /**
+     * Check if user can edit a specific list.
+     */
+    public function canEditList(ContactList $list): bool
+    {
+        if ($this->isAdmin()) {
+            return $this->canAccessList($list);
+        }
+
+        // Own list
+        if ($list->user_id === $this->id) {
+            return true;
+        }
+
+        // Shared list with edit permission
+        return $this->sharedLists()
+            ->where('contact_lists.id', $list->id)
+            ->wherePivot('permission', 'edit')
+            ->exists();
     }
 
     /**

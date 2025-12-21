@@ -2242,5 +2242,46 @@
             "gender_form": "Gender-based Form",
             "gender_form_desc": "Inserts male or female word form"
         }
+    },
+    "users": {
+        "title": "User Management",
+        "add_user": "Add User",
+        "info_title": "Manage Team",
+        "info_text": "As an administrator, you can invite users to help manage NetSendo. Grant them permissions to specific mailing lists.",
+        "team_members": "Team Members",
+        "team_members_subtitle": "Users with access to your NetSendo account",
+        "no_members": "You don't have any team members yet",
+        "add_first_user": "Add First User",
+        "no_lists_assigned": "No lists assigned",
+        "manage_permissions": "Manage Permissions",
+        "delete_user": "Delete User",
+        "delete_confirm": "Are you sure you want to remove this user from the team? They will lose access to all lists.",
+        "pending_invitations": "Pending Invitations",
+        "sent": "Sent",
+        "cancel": "Cancel",
+        "cancel_invitation_confirm": "Are you sure you want to cancel this invitation?",
+        "permission_view": "View Only",
+        "permission_edit": "View & Edit",
+        "table": {
+            "user": "User",
+            "email": "Email",
+            "lists_access": "List Access",
+            "added": "Added",
+            "actions": "Actions"
+        },
+        "modal": {
+            "add_title": "Add User to Team",
+            "name": "Full Name",
+            "email": "Email Address",
+            "password": "Password",
+            "password_confirm": "Confirm Password",
+            "list_permissions": "List Permissions (optional)",
+            "create": "Add User"
+        },
+        "permissions_modal": {
+            "title": "User Permissions",
+            "description": "Select lists the user will have access to and set permission levels.",
+            "save": "Save Permissions"
+        }
     }
 }

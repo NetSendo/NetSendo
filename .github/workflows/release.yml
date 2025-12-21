@@ -59,12 +59,33 @@ jobs:
           git tag "v${{ steps.ver.outputs.version }}"
           git push origin "v${{ steps.ver.outputs.version }}"
 
-      # 4) Extract release notes from CHANGELOG.md for this version
-      - name: Extract release notes from CHANGELOG
+      # 4) Extract release title and notes from CHANGELOG.md for this version
+      - name: Extract release title and notes from CHANGELOG
         if: steps.tagcheck.outputs.exists != 'true'
         id: notes
         run: |
           VERSION="${{ steps.ver.outputs.version }}"
+          
+          # Extract the full header line to get the title
+          # Format: ## [1.0.4] – Short Title - 2025-12-21
+          HEADER=$(grep -E "^## \[$VERSION\]" CHANGELOG.md | head -1)
+          
+          # Extract title between version and date (between "–" and "- YYYY")
+          # Example: "## [1.0.4] – Subscriber Exclusion & PHP 8.5 - 2025-12-21"
+          # We want: "Subscriber Exclusion & PHP 8.5"
+          TITLE=$(echo "$HEADER" | sed -E 's/^## \[[0-9.]+\] – (.+) - [0-9]{4}-[0-9]{2}-[0-9]{2}$/\1/')
+          
+          # If title extraction failed or is empty, use default
+          if [ -z "$TITLE" ] || [ "$TITLE" = "$HEADER" ]; then
+            RELEASE_NAME="v$VERSION"
+          else
+            RELEASE_NAME="v$VERSION – $TITLE"
+          fi
+          
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "::notice::Release name: $RELEASE_NAME"
+          
+          # Extract release notes (content between this version header and next version header)
           awk -v ver="$VERSION" '
             $0 ~ "^## \\["ver"\\]" {flag=1; next}
             flag && $0 ~ "^## \\[" {exit}
@@ -84,7 +105,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}
-          name: v${{ steps.ver.outputs.version }}
+          name: ${{ steps.notes.outputs.release_name }}
           body_path: ${{ steps.notes.outputs.path }}
           draft: false
           prerelease: false

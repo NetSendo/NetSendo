@@ -85,7 +85,7 @@ const updateOpenGroup = () => {
     }
 
     // Ustawienia
-    if (isActive('defaults.*') || isActive('smtp.*') || isActive('names.*') || isActive('users.*') || isActive('update.*') || isActive('backup.*') || isActive('profile.*') || isActive('settings.ai-integrations.*') || isActive('settings.integrations.*') || isActive('settings.mailboxes.*') || isActive('settings.cron.*') || isActive('settings.api-keys.*') || isActive('settings.backup.*')) {
+    if (isActive('defaults.*') || isActive('smtp.*') || isActive('names.*') || isActive('settings.users.*') || isActive('update.*') || isActive('backup.*') || isActive('profile.*') || isActive('settings.ai-integrations.*') || isActive('settings.integrations.*') || isActive('settings.mailboxes.*') || isActive('settings.cron.*') || isActive('settings.api-keys.*') || isActive('settings.backup.*')) {
         openGroup.value = 'settings';
         return;
     }
@@ -506,7 +506,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     {{ $t('navigation.name_database') }}
                 </SidebarItem>
 
-                <SidebarItem href="/users" :active="isActive('users.*')" :collapsed="collapsed">
+                <SidebarItem :href="route('settings.users.index')" :active="isActive('settings.users.*')" :collapsed="collapsed">
                     <template #icon>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />

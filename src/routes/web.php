@@ -260,7 +260,18 @@ Route::middleware('auth')->group(function () {
     
     // Marketplace (Coming Soon)
     Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
+
+    // User Management (Team Members)
+    Route::prefix('settings/users')->name('settings.users.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\UserManagementController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\UserManagementController::class, 'store'])->name('store');
+        Route::post('/create-user', [\App\Http\Controllers\UserManagementController::class, 'createUser'])->name('create-user');
+        Route::put('/{user}/permissions', [\App\Http\Controllers\UserManagementController::class, 'updatePermissions'])->name('permissions');
+        Route::delete('/{user}', [\App\Http\Controllers\UserManagementController::class, 'destroy'])->name('destroy');
+        Route::delete('/invitation/{invitation}', [\App\Http\Controllers\UserManagementController::class, 'cancelInvitation'])->name('cancel-invitation');
+    });
 });
+
 
 
 // API route for license status (no auth required for setup checks)
@@ -271,6 +282,10 @@ Route::post('/api/license/webhook', [LicenseController::class, 'webhookActivate'
 
 // Locale switching (works for guests and authenticated users)
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
+
+// Team Invitation Acceptance (public, no auth required)
+Route::get('/invitation/{token}', [\App\Http\Controllers\UserManagementController::class, 'acceptInvitation'])->name('invitation.accept');
+Route::post('/invitation/{token}', [\App\Http\Controllers\UserManagementController::class, 'completeInvitation'])->name('invitation.complete');
 
 
 // Tracking Routes
