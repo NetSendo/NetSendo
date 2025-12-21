@@ -204,7 +204,7 @@ onMounted(() => {
         <div class="grid gap-6 lg:grid-cols-3">
             <!-- Activity Chart (spans 2 columns) -->
             <div class="lg:col-span-2">
-                <ActivityChart />
+                <ActivityChart :data="dashboardStats?.activity_chart || []" :loading="loadingStats" />
             </div>
             
             <!-- Quick Actions -->
@@ -299,7 +299,7 @@ onMounted(() => {
 
         <!-- Recent Campaigns -->
         <div class="mt-6">
-            <RecentCampaigns />
+            <RecentCampaigns :campaigns="dashboardStats?.recent_campaigns || []" :loading="loadingStats" />
         </div>
     </AuthenticatedLayout>
 </template>

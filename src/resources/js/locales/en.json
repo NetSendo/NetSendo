@@ -167,6 +167,7 @@
         "settings": "Settings",
         "profile": "Profile",
         "security": "Security",
+        "license": "License",
         "logout": "Logout",
         "ai_integrations": "AI Integrations",
         "mailboxes": "Mailboxes",
@@ -237,7 +238,9 @@
             "last_7_days": "Last 7 days",
             "sent": "Sent",
             "subscribers": "Subscribers",
-            "opens": "Opens"
+            "opens": "Opens",
+            "empty_title": "No data yet",
+            "empty_description": "Activity data will appear after the first email send."
         },
         "quick_actions": {
             "title": "Quick Actions",
@@ -252,6 +255,9 @@
             "view_all": "View All",
             "opens": "opens",
             "clicks": "clicks",
+            "empty_title": "No campaigns yet",
+            "empty_description": "Create your first message to see it here.",
+            "create_first": "Create message",
             "sample_1": "Weekly Newsletter #45",
             "sample_2": "Christmas Promotion",
             "sample_3": "Year Summary",
@@ -1505,6 +1511,13 @@
         "email": "Contact Email",
         "show": "Show",
         "hide": "Hide",
+        "request_sent_polling": "Request sent! Waiting for license generation...",
+        "waiting_for_activation": "License key generation may take up to 1 minute",
+        "activating_license": "Activating License",
+        "polling_hint": "License will be automatically activated once received from server",
+        "polling_timeout": "Waiting time expired. Enter license key manually or try again.",
+        "enter_manually": "I prefer to enter key manually",
+        "auto_activated_success": "License has been automatically activated!",
         "plans": {
             "silver": {
                 "name": "SILVER",

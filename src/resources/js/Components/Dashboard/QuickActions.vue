@@ -7,25 +7,25 @@ const { t } = useI18n();
 const actions = [
     {
         label: t('dashboard.quick_actions.new_message'),
-        href: '/messages/add',
+        route: 'messages.create',
         icon: 'email',
         color: 'indigo'
     },
     {
         label: t('dashboard.quick_actions.add_subscriber'),
-        href: '/subscribers/add',
+        route: 'subscribers.create',
         icon: 'user',
         color: 'emerald'
     },
     {
         label: t('dashboard.quick_actions.import_contacts'),
-        href: '/subscribers/import',
+        route: 'subscribers.import',
         icon: 'upload',
         color: 'amber'
     },
     {
         label: t('dashboard.quick_actions.new_form'),
-        href: '/forms/add',
+        route: 'forms.create',
         icon: 'form',
         color: 'purple'
     }
@@ -48,8 +48,8 @@ const colorClasses = {
         <div class="grid grid-cols-2 gap-3">
             <Link
                 v-for="action in actions"
-                :key="action.href"
-                :href="action.href"
+                :key="action.route"
+                :href="route(action.route)"
                 class="group flex flex-col items-center gap-3 rounded-xl bg-slate-50 p-4 transition-all duration-200 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-700/50"
             >
                 <div 

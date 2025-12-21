@@ -168,6 +168,7 @@
         "settings": "Configuración",
         "profile": "Perfil",
         "security": "Seguridad",
+        "license": "Licencia",
         "logout": "Cerrar sesión",
         "ai_integrations": "Integraciones de IA",
         "mailboxes": "Buzones de envío",
@@ -973,6 +974,13 @@
         "email": "Correo de contacto",
         "show": "Mostrar",
         "hide": "Ocultar",
+        "request_sent_polling": "¡Solicitud enviada! Esperando la generación de licencia...",
+        "waiting_for_activation": "La generación de la clave de licencia puede tardar hasta 1 minuto",
+        "activating_license": "Activando licencia",
+        "polling_hint": "La licencia se activará automáticamente cuando se reciba del servidor",
+        "polling_timeout": "Tiempo de espera agotado. Introduzca la clave de licencia manualmente o inténtelo de nuevo.",
+        "enter_manually": "Prefiero introducir la clave manualmente",
+        "auto_activated_success": "¡La licencia se ha activado automáticamente!",
         "plans": {
             "silver": {
                 "name": "SILVER",

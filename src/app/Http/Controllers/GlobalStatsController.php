@@ -86,6 +86,44 @@ class GlobalStatsController extends Controller
             ? round((($emailsSentThisMonth - $emailsSentLastMonth) / $emailsSentLastMonth) * 100, 1)
             : ($emailsSentThisMonth > 0 ? 100 : 0);
 
+        // Recent campaigns (last 4 messages)
+        $recentCampaigns = Message::with('lists')
+            ->orderByDesc('created_at')
+            ->limit(4)
+            ->get()
+            ->map(function ($message) {
+                $opens = EmailOpen::where('message_id', $message->id)->count();
+                $clicks = EmailClick::where('message_id', $message->id)->count();
+                
+                return [
+                    'id' => $message->id,
+                    'name' => $message->subject,
+                    'date' => $message->scheduled_at ?? $message->created_at->format('Y-m-d'),
+                    'status' => $message->status,
+                    'opens' => $opens,
+                    'clicks' => $clicks,
+                ];
+            });
+
+        // Activity chart data (last 7 days)
+        $activityChart = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = $now->copy()->subDays($i);
+            $dayStart = $date->copy()->startOfDay();
+            $dayEnd = $date->copy()->endOfDay();
+
+            $emailsSent = DB::table('cron_job_logs')
+                ->whereBetween('started_at', [$dayStart, $dayEnd])
+                ->sum('emails_sent') ?? 0;
+
+            $activityChart[] = [
+                'label' => $date->isoFormat('ddd'),
+                'emails' => (int) $emailsSent,
+                'subscribers' => Subscriber::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+                'opens' => EmailOpen::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
+            ];
+        }
+
         return response()->json([
             'subscribers' => [
                 'total' => $subscribersCount,
@@ -107,6 +145,8 @@ class GlobalStatsController extends Controller
                 'formatted' => $clickRate . '%',
                 'trend' => 0,
             ],
+            'recent_campaigns' => $recentCampaigns,
+            'activity_chart' => $activityChart,
         ]);
     }
 

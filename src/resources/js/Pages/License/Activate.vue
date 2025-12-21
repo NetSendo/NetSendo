@@ -28,6 +28,88 @@ const errorMessage = ref('');
 const successMessage = ref('');
 const showLicenseKey = ref(false);
 
+// Polling state
+const isPolling = ref(false);
+const pollingProgress = ref(0);
+const pollingMessage = ref('');
+let pollingInterval = null;
+let pollingTimeout = null;
+
+// Poll for license activation (called after requesting SILVER)
+const pollForLicense = () => {
+    const maxDuration = 90000; // 90 seconds
+    const pollInterval = 5000; // 5 seconds
+    const startTime = Date.now();
+    
+    isPolling.value = true;
+    pollingMessage.value = t('license.waiting_for_activation');
+    
+    const checkLicenseStatus = async () => {
+        try {
+            const elapsed = Date.now() - startTime;
+            pollingProgress.value = Math.min(100, (elapsed / maxDuration) * 100);
+            
+            const response = await fetch(route('license.status'), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.active) {
+                    // License activated! Stop polling and redirect
+                    stopPolling();
+                    successMessage.value = t('license.auto_activated_success');
+                    setTimeout(() => {
+                        router.visit(route('dashboard'));
+                    }, 1500);
+                    return;
+                }
+            }
+            
+            // Check if we've exceeded max duration
+            if (Date.now() - startTime >= maxDuration) {
+                stopPolling();
+                pollingMessage.value = '';
+                showManualInput.value = true;
+                errorMessage.value = t('license.polling_timeout');
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    };
+    
+    // Start polling
+    pollingInterval = setInterval(checkLicenseStatus, pollInterval);
+    
+    // Set timeout to stop polling after max duration
+    pollingTimeout = setTimeout(() => {
+        stopPolling();
+        showManualInput.value = true;
+        errorMessage.value = t('license.polling_timeout');
+    }, maxDuration);
+    
+    // Initial check
+    checkLicenseStatus();
+};
+
+const stopPolling = () => {
+    isPolling.value = false;
+    pollingProgress.value = 0;
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+    if (pollingTimeout) {
+        clearTimeout(pollingTimeout);
+        pollingTimeout = null;
+    }
+};
+
 // Masked license key for display
 const maskedLicenseKey = computed(() => {
     if (!props.licenseKey) return '';
@@ -121,9 +203,10 @@ const requestSilverLicense = async () => {
                     router.visit(route('dashboard'));
                 }, 1500);
             } else {
+                // License will be sent via webhook - start polling
                 requestSent.value = true;
-                showManualInput.value = true;
-                successMessage.value = data.message;
+                successMessage.value = t('license.request_sent_polling');
+                pollForLicense();
             }
         } else {
             errorMessage.value = data.message || t('license.generic_error');
@@ -341,6 +424,47 @@ const isGoldExpired = computed(() => {
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                             {{ errorMessage }}
+                        </div>
+                    </div>
+
+                    <!-- Polling Progress -->
+                    <div v-if="isPolling" class="mb-8 mx-auto max-w-lg">
+                        <div class="overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-gray-800 p-6">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+                                    <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        {{ $t('license.activating_license') }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ pollingMessage || $t('license.waiting_for_activation') }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                <div 
+                                    class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full transition-all duration-500"
+                                    :style="{ width: pollingProgress + '%' }"
+                                ></div>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                {{ $t('license.polling_hint') }}
+                            </p>
+                            
+                            <!-- Cancel button -->
+                            <button 
+                                @click="stopPolling(); showManualInput = true;"
+                                class="mt-4 w-full text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                            >
+                                {{ $t('license.enter_manually') }}
+                            </button>
                         </div>
                     </div>
 

@@ -1,4 +1,4 @@
-## 📅 Ostatnia aktualizacja: 2025-12-19 (Phase 28b: Tracked Links Dashboard)
+## 📅 Ostatnia aktualizacja: 2025-12-21 (v1.0.3: Dashboard Improvements)
 
 Projekt został rozbudowany o **Statystyki Globalne**, **Dziennik Aktywności** oraz **Dashboard Śledzonych Linków** - PRZEBUDOWA ZAKOŃCZONA! ✅
 
@@ -48,19 +48,23 @@ docker compose exec -u dev app bash
 - CRUD wstawek/podpisów, zmienne systemowe, pola niestandardowe
 
 ### Faza 28: Global Stats, Activity Logger & Tracked Links ✅ (19.12.2025)
-- **Global Stats** (`/settings/stats`):
-  - Statystyki miesięczne, trend dzienny, per lista
-  - Dashboard z prawdziwymi danymi (nie hardcoded)
-  - Eksport CSV
-- **Activity Logger** (`/settings/activity-logs`):
-  - Automatyczne logowanie CRUD (Subscriber, Message, ContactList)
-  - Filtry, paginacja, eksport CSV, cleanup
-- **Tracked Links** (`/settings/tracked-links`):
-  - Dashboard kliknięć w linki z emaili
-  - Karty: wszystkie kliknięcia, unikalne linki, unikalni klikający, dzisiaj
-  - Wykres trendu 30-dniowego
-  - Filtry: URL, wiadomość, zakres dat
-  - Eksport CSV
+- **Global Stats** (`/settings/stats`)
+- **Activity Logger** (`/settings/activity-logs`)
+- **Tracked Links** (`/settings/tracked-links`)
+
+### Wersja 1.0.3 ✅ (21.12.2025)
+- **Dashboard - usunięcie danych demo:**
+  - Sekcja "Ostatnie kampanie" pobiera teraz rzeczywiste wiadomości z bazy
+  - Wykres aktywności pokazuje rzeczywiste dane z ostatnich 7 dni
+  - Dodano stany puste (empty states) zamiast danych demo
+  - Dodano stany ładowania (loading states) z animacją skeleton
+- **Dashboard - poprawka linków:**
+  - "Zobacz wszystkie →" w kampaniach: `/messages` → `route('messages.index')`
+  - Quick Actions: wszystkie hardcoded ścieżki zamienione na `route()`
+- **Backend API:**
+  - Rozszerzono `getDashboardStats()` o `recent_campaigns` i `activity_chart`
+- **Tłumaczenia:**
+  - Dodano klucze dla empty states (PL/EN)
 
 ---
 

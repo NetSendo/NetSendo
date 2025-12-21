@@ -1,41 +1,33 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const props = defineProps({
     data: {
         type: Array,
         default: () => []
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 });
 
-// Sample data if not provided
-const chartData = computed(() => {
-    if (props.data.length > 0) return props.data;
-    
-    // Generate sample data for last 7 days
-    const days = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(now.getDate() - i);
-        days.push({
-            label: date.toLocaleDateString(locale.value, { weekday: 'short' }),
-            emails: Math.floor(Math.random() * 300) + 100,
-            subscribers: Math.floor(Math.random() * 80) + 10,
-            opens: Math.floor(Math.random() * 200) + 50
-        });
-    }
-    return days;
+const chartData = computed(() => props.data);
+
+const hasData = computed(() => {
+    return chartData.value.some(d => d.emails > 0 || d.subscribers > 0 || d.opens > 0);
 });
 
 const maxValue = computed(() => {
-    return Math.max(...chartData.value.map(d => Math.max(d.emails, d.subscribers, d.opens)));
+    if (!hasData.value) return 1;
+    return Math.max(...chartData.value.map(d => Math.max(d.emails || 0, d.subscribers || 0, d.opens || 0)));
 });
 
 const getHeight = (value) => {
+    if (!value || maxValue.value === 0) return 0;
     return (value / maxValue.value) * 100;
 };
 
@@ -67,7 +59,7 @@ const colorClasses = {
             </div>
             
             <!-- Metric selector -->
-            <div class="flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-700/50">
+            <div v-if="hasData" class="flex gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-700/50">
                 <button
                     v-for="metric in metrics"
                     :key="metric.key"
@@ -82,8 +74,34 @@ const colorClasses = {
             </div>
         </div>
         
+        <!-- Loading State -->
+        <div v-if="loading" class="flex h-48 items-end justify-between gap-2">
+            <div v-for="i in 7" :key="i" class="flex flex-1 flex-col items-center">
+                <div 
+                    class="w-full max-w-8 rounded-t-lg bg-slate-200 dark:bg-slate-700 animate-pulse"
+                    :style="{ height: (30 + Math.random() * 50) + '%' }"
+                ></div>
+                <div class="mt-2 h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"></div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!hasData" class="flex flex-col items-center py-8 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/50 mb-4">
+                <svg class="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <h4 class="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                {{ $t('dashboard.activity.empty_title') }}
+            </h4>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+                {{ $t('dashboard.activity.empty_description') }}
+            </p>
+        </div>
+        
         <!-- Chart -->
-        <div class="flex h-48 items-end justify-between gap-2">
+        <div v-else class="flex h-48 items-end justify-between gap-2">
             <div 
                 v-for="(day, index) in chartData" 
                 :key="index"
@@ -93,11 +111,11 @@ const colorClasses = {
                 <div 
                     class="relative w-full max-w-8 overflow-hidden rounded-t-lg transition-all duration-500"
                     :class="colorClasses[activeMetric]"
-                    :style="{ height: getHeight(day[activeMetric]) + '%' }"
+                    :style="{ height: getHeight(day[activeMetric]) + '%', minHeight: day[activeMetric] > 0 ? '4px' : '0' }"
                 >
                     <!-- Tooltip -->
                     <div class="pointer-events-none absolute -top-10 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-800 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-                        {{ day[activeMetric] }}
+                        {{ day[activeMetric] || 0 }}
                     </div>
                     
                     <!-- Shine effect -->
@@ -112,7 +130,7 @@ const colorClasses = {
         </div>
         
         <!-- Legend -->
-        <div class="mt-6 flex items-center justify-center gap-6">
+        <div v-if="hasData" class="mt-6 flex items-center justify-center gap-6">
             <div 
                 v-for="metric in metrics" 
                 :key="metric.key"
@@ -133,3 +151,4 @@ const colorClasses = {
         </div>
     </div>
 </template>
+

@@ -616,17 +616,19 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 
                 <div v-if="!collapsed" class="text-right">
                     <div class="text-xs text-slate-400">NetSendo v{{ $page.props.appVersion || '1.0.0' }}</div>
-                    <div 
+                    <Link 
                         v-if="license?.active" 
-                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                        :href="route('license.index')"
+                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-all hover:ring-2 hover:ring-white/20"
                         :class="{
-                            'bg-amber-500/20 text-amber-400': license?.plan === 'GOLD',
-                            'bg-slate-500/20 text-slate-400': license?.plan === 'SILVER'
+                            'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30': license?.plan === 'GOLD',
+                            'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30': license?.plan === 'SILVER'
                         }"
+                        :title="$t('navigation.license')"
                     >
                         <span class="h-1.5 w-1.5 rounded-full" :class="license?.plan === 'GOLD' ? 'bg-amber-500' : 'bg-slate-400'"></span>
                         {{ license?.plan }}
-                    </div>
+                    </Link>
                 </div>
             </div>
         </div>

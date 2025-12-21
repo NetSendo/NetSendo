@@ -8,16 +8,12 @@ const props = defineProps({
     campaigns: {
         type: Array,
         default: () => []
+    },
+    loading: {
+        type: Boolean,
+        default: false
     }
 });
-
-// Sample data if not provided
-const displayCampaigns = props.campaigns.length > 0 ? props.campaigns : [
-    { id: 1, name: t('dashboard.recent_campaigns.sample_1'), date: '2024-12-15', status: 'sent', opens: 1234, clicks: 456 },
-    { id: 2, name: t('dashboard.recent_campaigns.sample_2'), date: '2024-12-14', status: 'sent', opens: 2341, clicks: 789 },
-    { id: 3, name: t('dashboard.recent_campaigns.sample_3'), date: '2024-12-20', status: 'scheduled', opens: 0, clicks: 0 },
-    { id: 4, name: t('dashboard.recent_campaigns.sample_4'), date: '2024-12-18', status: 'draft', opens: 0, clicks: 0 },
-];
 
 const statusClasses = {
     sent: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -51,16 +47,52 @@ const formatNumber = (num) => {
             </div>
             
             <Link 
-                href="/messages"
+                :href="route('messages.index')"
                 class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
                 {{ $t('dashboard.recent_campaigns.view_all') }} →
             </Link>
         </div>
         
-        <div class="space-y-3">
+        <!-- Loading State -->
+        <div v-if="loading" class="space-y-3">
+            <div v-for="i in 4" :key="i" class="animate-pulse flex items-center gap-4 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                <div class="h-10 w-10 rounded-lg bg-slate-200 dark:bg-slate-700"></div>
+                <div class="flex-1 space-y-2">
+                    <div class="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="campaigns.length === 0" class="flex flex-col items-center py-8 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700/50 mb-4">
+                <svg class="h-8 w-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h4 class="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                {{ $t('dashboard.recent_campaigns.empty_title') }}
+            </h4>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                {{ $t('dashboard.recent_campaigns.empty_description') }}
+            </p>
+            <Link 
+                :href="route('messages.create')"
+                class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                {{ $t('dashboard.recent_campaigns.create_first') }}
+            </Link>
+        </div>
+
+        <!-- Campaigns List -->
+        <div v-else class="space-y-3">
             <div 
-                v-for="campaign in displayCampaigns" 
+                v-for="campaign in campaigns" 
                 :key="campaign.id"
                 class="group flex items-center justify-between rounded-xl bg-slate-50 p-4 transition-all duration-200 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-700/50"
             >
@@ -135,3 +167,4 @@ const formatNumber = (num) => {
         </div>
     </div>
 </template>
+

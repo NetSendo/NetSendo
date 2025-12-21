@@ -166,6 +166,7 @@
         "settings": "Einstellungen",
         "profile": "Profil",
         "security": "Sicherheit",
+        "license": "Lizenz",
         "logout": "Abmelden",
         "ai_integrations": "KI-Integrationen",
         "mailboxes": "Postfächer",
@@ -1063,6 +1064,13 @@
         "email": "Kontakt-E-Mail",
         "show": "Anzeigen",
         "hide": "Verbergen",
+        "request_sent_polling": "Anfrage gesendet! Warten auf Lizenzgenerierung...",
+        "waiting_for_activation": "Die Generierung des Lizenzschlüssels kann bis zu 1 Minute dauern",
+        "activating_license": "Lizenz wird aktiviert",
+        "polling_hint": "Die Lizenz wird automatisch aktiviert, sobald sie vom Server empfangen wird",
+        "polling_timeout": "Wartezeit abgelaufen. Geben Sie den Lizenzschlüssel manuell ein oder versuchen Sie es erneut.",
+        "enter_manually": "Ich möchte den Schlüssel lieber manuell eingeben",
+        "auto_activated_success": "Lizenz wurde automatisch aktiviert!",
         "plans": {
             "silver": {
                 "name": "SILVER",

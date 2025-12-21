@@ -167,6 +167,7 @@
         "settings": "Ustawienia",
         "profile": "Profil",
         "security": "Bezpieczeństwo",
+        "license": "Licencja",
         "logout": "Wyloguj",
         "ai_integrations": "Integracje AI",
         "mailboxes": "Skrzynki pocztowe",
@@ -237,7 +238,9 @@
             "last_7_days": "Ostatnie 7 dni",
             "sent": "Wysłane",
             "subscribers": "Subskrybenci",
-            "opens": "Otwarcia"
+            "opens": "Otwarcia",
+            "empty_title": "Brak danych",
+            "empty_description": "Dane aktywności pojawią się po pierwszej wysyłce."
         },
         "quick_actions": {
             "title": "Szybkie akcje",
@@ -252,6 +255,9 @@
             "view_all": "Zobacz wszystkie",
             "opens": "otwarć",
             "clicks": "kliknięć",
+            "empty_title": "Brak kampanii",
+            "empty_description": "Utwórz swoją pierwszą wiadomość, aby zobaczyć ją tutaj.",
+            "create_first": "Utwórz wiadomość",
             "sample_1": "Newsletter Tygodniowy #45",
             "sample_2": "Promocja Świąteczna",
             "sample_3": "Podsumowanie Roku",
@@ -1035,6 +1041,13 @@
         "email": "Email kontaktowy",
         "show": "Pokaż",
         "hide": "Ukryj",
+        "request_sent_polling": "Żądanie wysłane! Oczekiwanie na wygenerowanie licencji...",
+        "waiting_for_activation": "Generowanie klucza licencji może potrwać do 1 minuty",
+        "activating_license": "Aktywacja licencji",
+        "polling_hint": "Licencja zostanie automatycznie aktywowana po otrzymaniu z serwera",
+        "polling_timeout": "Upłynął czas oczekiwania. Wpisz klucz licencji ręcznie lub spróbuj ponownie.",
+        "enter_manually": "Wolę wpisać klucz ręcznie",
+        "auto_activated_success": "Licencja została automatycznie aktywowana!",
         "plans": {
             "silver": {
                 "name": "SILVER",
