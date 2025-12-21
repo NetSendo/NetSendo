@@ -38,12 +38,12 @@ RUN useradd -G www-data,root -u 1000 -d /home/dev dev
 RUN mkdir -p /home/dev/.composer && \
     chown -R dev:dev /home/dev
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Copy entrypoint script (path relative to build context, which is repo root)
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Copy application source code
-COPY --chown=dev:www-data ../../src/ /var/www/
+# Copy application source code (path relative to build context)
+COPY --chown=dev:www-data src/ /var/www/
 
 # Install Composer dependencies (as root for proper permissions, then fix ownership)
 USER root
