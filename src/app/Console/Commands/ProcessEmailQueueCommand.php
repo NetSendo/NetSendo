@@ -62,6 +62,7 @@ class ProcessEmailQueueCommand extends Command
             $stats = $cronService->processQueue();
 
             $this->info('✅ Przetwarzanie zakończone:');
+            $this->line("   🔄 Zsynchronizowano: {$stats['synced']}");
             $this->line("   📧 Wysłano: {$stats['dispatched']}");
             $this->line("   ⏭️  Pominięto: {$stats['skipped']}");
             

@@ -21,6 +21,7 @@ const { t } = useI18n();
 const props = defineProps({
     message: Object,
     stats: Object,
+    queue_stats: Object,
     recent_activity: Object,
 });
 
@@ -89,6 +90,76 @@ const chartOptions = {
                         <div class="text-3xl font-bold text-purple-600">{{ stats.click_to_open_rate }}%</div>
                         <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.kpi.ctor') }}</div>
                         <div class="text-xs text-gray-400 mt-1">{{ $t('messages.stats.kpi.clicks_opens') }}</div>
+                    </div>
+                </div>
+
+                <!-- Queue Progress (for autoresponder/queue messages) -->
+                <div v-if="queue_stats && queue_stats.total > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                {{ $t('messages.stats.queue.title') }}
+                            </h3>
+                            <span v-if="message.recipients_calculated_at" class="text-xs text-gray-400">
+                                {{ $t('messages.stats.queue.last_sync') }}: {{ message.recipients_calculated_at }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="flex h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+                                <div 
+                                    class="bg-green-500 transition-all duration-300" 
+                                    :style="{ width: queue_stats.total > 0 ? (queue_stats.sent / queue_stats.total * 100) + '%' : '0%' }"
+                                    :title="$t('messages.stats.queue.sent') + ': ' + queue_stats.sent"
+                                ></div>
+                                <div 
+                                    class="bg-yellow-500 transition-all duration-300" 
+                                    :style="{ width: queue_stats.total > 0 ? (queue_stats.queued / queue_stats.total * 100) + '%' : '0%' }"
+                                    :title="$t('messages.stats.queue.queued') + ': ' + queue_stats.queued"
+                                ></div>
+                                <div 
+                                    class="bg-blue-500 transition-all duration-300" 
+                                    :style="{ width: queue_stats.total > 0 ? (queue_stats.planned / queue_stats.total * 100) + '%' : '0%' }"
+                                    :title="$t('messages.stats.queue.planned') + ': ' + queue_stats.planned"
+                                ></div>
+                                <div 
+                                    class="bg-red-500 transition-all duration-300" 
+                                    :style="{ width: queue_stats.total > 0 ? (queue_stats.failed / queue_stats.total * 100) + '%' : '0%' }"
+                                    :title="$t('messages.stats.queue.failed') + ': ' + queue_stats.failed"
+                                ></div>
+                                <div 
+                                    class="bg-gray-400 transition-all duration-300" 
+                                    :style="{ width: queue_stats.total > 0 ? (queue_stats.skipped / queue_stats.total * 100) + '%' : '0%' }"
+                                    :title="$t('messages.stats.queue.skipped') + ': ' + queue_stats.skipped"
+                                ></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                            <div class="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ queue_stats.planned }}</div>
+                                <div class="text-xs text-blue-500 dark:text-blue-300 uppercase">{{ $t('messages.stats.queue.planned') }}</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                                <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ queue_stats.queued }}</div>
+                                <div class="text-xs text-yellow-500 dark:text-yellow-300 uppercase">{{ $t('messages.stats.queue.queued') }}</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ queue_stats.sent }}</div>
+                                <div class="text-xs text-green-500 dark:text-green-300 uppercase">{{ $t('messages.stats.queue.sent') }}</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-red-50 dark:bg-red-900/20">
+                                <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ queue_stats.failed }}</div>
+                                <div class="text-xs text-red-500 dark:text-red-300 uppercase">{{ $t('messages.stats.queue.failed') }}</div>
+                            </div>
+                            <div class="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ queue_stats.skipped }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-300 uppercase">{{ $t('messages.stats.queue.skipped') }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\ContactList;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -34,7 +35,7 @@ class UserManagementController extends Controller
                 'id' => $member->id,
                 'name' => $member->name,
                 'email' => $member->email,
-                'created_at' => $member->created_at->format('Y-m-d H:i'),
+                'created_at' => DateHelper::formatForUser($member->created_at),
                 'shared_lists_count' => $member->sharedLists->count(),
                 'shared_lists' => $member->sharedLists->map(fn($list) => [
                     'id' => $list->id,
@@ -51,7 +52,7 @@ class UserManagementController extends Controller
                 'id' => $inv->id,
                 'email' => $inv->email,
                 'name' => $inv->name,
-                'created_at' => $inv->created_at->format('Y-m-d H:i'),
+                'created_at' => DateHelper::formatForUser($inv->created_at),
             ]);
 
         // Get all lists available for sharing

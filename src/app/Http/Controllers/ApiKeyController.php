@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\ApiKey;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,9 +24,9 @@ class ApiKeyController extends Controller
                     'name' => $key->name,
                     'key_prefix' => $key->key_prefix,
                     'permissions' => $key->permissions,
-                    'last_used_at' => $key->last_used_at?->format('Y-m-d H:i:s'),
-                    'expires_at' => $key->expires_at?->format('Y-m-d H:i:s'),
-                    'created_at' => $key->created_at->format('Y-m-d H:i:s'),
+                    'last_used_at' => DateHelper::formatFullForUser($key->last_used_at),
+                    'expires_at' => DateHelper::formatFullForUser($key->expires_at),
+                    'created_at' => DateHelper::formatFullForUser($key->created_at),
                     'is_expired' => $key->isExpired(),
                 ];
             });
@@ -67,7 +68,7 @@ class ApiKeyController extends Controller
                 'name' => $result['model']->name,
                 'key_prefix' => $result['model']->key_prefix,
                 'permissions' => $result['model']->permissions,
-                'created_at' => $result['model']->created_at->format('Y-m-d H:i:s'),
+                'created_at' => DateHelper::formatFullForUser($result['model']->created_at),
             ],
         ]);
     }

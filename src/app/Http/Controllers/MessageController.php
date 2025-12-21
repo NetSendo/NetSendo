@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\Template;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Http\Controllers\InsertController;
 
 class MessageController extends Controller
 {
@@ -72,11 +74,12 @@ class MessageController extends Controller
                     'status' => $msg->status,
                     'type' => $msg->type,
                     'day' => $msg->day,
+                    'is_active' => $msg->is_active ?? true,
                     'lists_count' => $msg->contactLists->count(),
                     'list_name' => $msg->contactLists->count() > 0 
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)
                         : '-',
-                    'created_at' => $msg->created_at->format('Y-m-d H:i'),
+                    'created_at' => DateHelper::formatForUser($msg->created_at),
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction']),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
@@ -88,6 +91,7 @@ class MessageController extends Controller
     public function create()
     {
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
+        $insertController = new InsertController();
 
         return Inertia::render('Message/Create', [
             'lists' => auth()->user()->contactLists()
@@ -112,6 +116,10 @@ class MessageController extends Controller
                 'provider' => $defaultMailbox->provider,
                 'from_email' => $defaultMailbox->from_email,
             ] : null,
+            // Insert snippets data
+            'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
+            'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
+            'systemVariables' => $insertController->getSystemVariables(),
         ]);
     }
 
@@ -166,6 +174,13 @@ class MessageController extends Controller
             }
         }
 
+        // Determine scheduled_at for CRON processing
+        $scheduledAt = null;
+        if ($validated['status'] === 'scheduled') {
+            // If send_at is set, use it; otherwise schedule for now (immediate send)
+            $scheduledAt = $validated['send_at'] ?? now();
+        }
+
         $message = auth()->user()->messages()->create([
             'subject' => $validated['subject'],
             'type' => $validated['type'],
@@ -174,16 +189,19 @@ class MessageController extends Controller
             'preheader' => $validated['preheader'] ?? null,
             'status' => $validated['status'],
             'send_at' => $validated['send_at'] ?? null,
+            'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
             'mailbox_id' => $validated['mailbox_id'] ?? null,
+            'channel' => 'email',
             'ab_enabled' => $validated['ab_enabled'] ?? false,
             'ab_variant_subject' => $validated['ab_variant_subject'] ?? null,
             'ab_variant_content' => $validated['ab_variant_content'] ?? null,
             'ab_split_percentage' => $validated['ab_split_percentage'] ?? 50,
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
+            'is_active' => true, // Queue messages start as active
         ]);
 
         if (!empty($validated['contact_list_ids'])) {
@@ -207,6 +225,7 @@ class MessageController extends Controller
 
         $message->load(['contactLists', 'excludedLists', 'template', 'mailbox']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
+        $insertController = new InsertController();
 
         return Inertia::render('Message/Create', [
             'message' => [
@@ -253,6 +272,10 @@ class MessageController extends Controller
                 'provider' => $defaultMailbox->provider,
                 'from_email' => $defaultMailbox->from_email,
             ] : null,
+            // Insert snippets data
+            'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
+            'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
+            'systemVariables' => $insertController->getSystemVariables(),
         ]);
     }
 
@@ -311,6 +334,13 @@ class MessageController extends Controller
             }
         }
 
+        // Determine scheduled_at for CRON processing
+        $scheduledAt = null;
+        if ($validated['status'] === 'scheduled') {
+            // If send_at is set, use it; otherwise schedule for now (immediate send)
+            $scheduledAt = $validated['send_at'] ?? now();
+        }
+
         $message->update([
             'subject' => $validated['subject'],
             'type' => $validated['type'],
@@ -319,6 +349,7 @@ class MessageController extends Controller
             'preheader' => $validated['preheader'] ?? null,
             'status' => $validated['status'],
             'send_at' => $validated['send_at'] ?? null,
+            'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
@@ -393,12 +424,30 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $totalSent = 100; // Placeholder until we have a real 'sent' counter or table
-        // For accurate 'sent' count, we use getUniqueRecipients() which applies exclusions and deduplication
         $message->load(['contactLists', 'excludedLists']);
-        $totalSent = $message->getUniqueRecipients()->count();
-            
-        if ($totalSent === 0) $totalSent = 1; // Avoid division by zero
+
+        // Get queue statistics from message_queue_entries
+        $queueStats = $message->getQueueStats();
+        
+        // For queue/autoresponder: use queue entry statistics
+        // For broadcast: if already sent, use sent_count; otherwise calculate recipients
+        if ($message->isQueueType()) {
+            // Kolejka (autoresponder) - używamy statystyk z queue entries
+            $totalSent = $queueStats['sent'];
+            $plannedRecipients = $message->planned_recipients_count ?? $message->getUniqueRecipients()->count();
+        } else {
+            // Broadcast - jeśli wysłano, używamy queueStats; w przeciwnym razie przeliczamy
+            if ($queueStats['total'] > 0) {
+                $totalSent = $queueStats['sent'];
+                $plannedRecipients = $queueStats['total'];
+            } else {
+                $totalSent = $message->getUniqueRecipients()->count();
+                $plannedRecipients = $totalSent;
+            }
+        }
+        
+        // Unikaj dzielenia przez zero w obliczeniach procentowych
+        $denominator = $totalSent > 0 ? $totalSent : 1;
 
         // TODO: Implement tracking when MessageOpen and MessageClick models are ready
         // For now, use placeholder values
@@ -411,19 +460,26 @@ class MessageController extends Controller
             'message' => [
                 'id' => $message->id,
                 'subject' => $message->subject,
-                'sent_at' => $message->send_at?->format('Y-m-d H:i') ?? $message->created_at->format('Y-m-d H:i'),
+                'sent_at' => DateHelper::formatForUser($message->send_at ?? $message->created_at),
                 'status' => $message->status,
+                'type' => $message->type,
+                'is_active' => $message->is_active ?? true,
+                'recipients_calculated_at' => $message->recipients_calculated_at 
+                    ? DateHelper::formatForUser($message->recipients_calculated_at) 
+                    : null,
             ],
             'stats' => [
                 'sent' => $totalSent,
+                'planned_recipients' => $plannedRecipients,
                 'opens' => $opens,
                 'unique_opens' => $uniqueOpens,
-                'open_rate' => round(($uniqueOpens / $totalSent) * 100, 1),
+                'open_rate' => round(($uniqueOpens / $denominator) * 100, 1),
                 'clicks' => $clicks,
                 'unique_clicks' => $uniqueClicks,
-                'click_rate' => round(($uniqueClicks / $totalSent) * 100, 1),
+                'click_rate' => round(($uniqueClicks / $denominator) * 100, 1),
                 'click_to_open_rate' => $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 1) : 0,
             ],
+            'queue_stats' => $queueStats,
             'recent_activity' => [
                 'opens' => [], // TODO: Implement when MessageOpen model is ready
                 'clicks' => [], // TODO: Implement when MessageClick model is ready
@@ -484,5 +540,32 @@ class MessageController extends Controller
             \Log::error('Test email failed: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Toggle the active status of a queue message
+     */
+    public function toggleActive(Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only allow toggling for autoresponder/queue type messages
+        if (!$message->isQueueType()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tylko wiadomości typu Kolejka mogą mieć status aktywności.'
+            ], 422);
+        }
+
+        $message->is_active = !($message->is_active ?? true);
+        $message->save();
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $message->is_active,
+            'message' => $message->is_active ? 'Wiadomość została aktywowana.' : 'Wiadomość została dezaktywowana.'
+        ]);
     }
 }

@@ -38,6 +38,11 @@ class Message extends Model
         // Triggers
         'trigger_type',
         'trigger_config',
+        // Queue status
+        'is_active',
+        'sent_count',
+        'planned_recipients_count',
+        'recipients_calculated_at',
     ];
 
     protected $casts = [
@@ -45,6 +50,10 @@ class Message extends Model
         'ab_enabled' => 'boolean',
         'ab_split_percentage' => 'integer',
         'trigger_config' => 'array',
+        'is_active' => 'boolean',
+        'sent_count' => 'integer',
+        'planned_recipients_count' => 'integer',
+        'recipients_calculated_at' => 'datetime',
     ];
 
     public function scopeEmail($query)
@@ -55,6 +64,23 @@ class Message extends Model
     public function scopeSms($query)
     {
         return $query->where('channel', 'sms');
+    }
+
+    /**
+     * Check if this message is a queue/autoresponder type.
+     */
+    public function isQueueType(): bool
+    {
+        return $this->type === 'autoresponder';
+    }
+
+    /**
+     * Scope for active queue messages.
+     */
+    public function scopeActiveQueue($query)
+    {
+        return $query->where('type', 'autoresponder')
+            ->where('is_active', true);
     }
 
     public function user()
@@ -83,6 +109,89 @@ class Message extends Model
     public function excludedLists()
     {
         return $this->belongsToMany(ContactList::class, 'excluded_contact_list_message');
+    }
+
+    /**
+     * Get all queue entries for tracking per-subscriber sending status.
+     */
+    public function queueEntries()
+    {
+        return $this->hasMany(MessageQueueEntry::class);
+    }
+
+    /**
+     * Get aggregated queue statistics.
+     *
+     * @return array{planned: int, queued: int, sent: int, failed: int, skipped: int, total: int}
+     */
+    public function getQueueStats(): array
+    {
+        $stats = $this->queueEntries()
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        return [
+            'planned' => $stats[MessageQueueEntry::STATUS_PLANNED] ?? 0,
+            'queued' => $stats[MessageQueueEntry::STATUS_QUEUED] ?? 0,
+            'sent' => $stats[MessageQueueEntry::STATUS_SENT] ?? 0,
+            'failed' => $stats[MessageQueueEntry::STATUS_FAILED] ?? 0,
+            'skipped' => $stats[MessageQueueEntry::STATUS_SKIPPED] ?? 0,
+            'total' => array_sum($stats),
+        ];
+    }
+
+    /**
+     * Synchronize planned recipients with current active subscribers.
+     * This adds new subscribers and marks unsubscribed ones as skipped.
+     *
+     * @return array{added: int, skipped: int}
+     */
+    public function syncPlannedRecipients(): array
+    {
+        $result = ['added' => 0, 'skipped' => 0];
+        
+        // Get current active subscribers
+        $currentRecipients = $this->getUniqueRecipients();
+        $currentSubscriberIds = $currentRecipients->pluck('id')->toArray();
+        
+        // Get existing queue entries
+        $existingEntryIds = $this->queueEntries()
+            ->pluck('subscriber_id')
+            ->toArray();
+        
+        // Add new subscribers as planned
+        $newSubscriberIds = array_diff($currentSubscriberIds, $existingEntryIds);
+        foreach ($newSubscriberIds as $subscriberId) {
+            $this->queueEntries()->create([
+                'subscriber_id' => $subscriberId,
+                'status' => MessageQueueEntry::STATUS_PLANNED,
+                'planned_at' => now(),
+            ]);
+            $result['added']++;
+        }
+        
+        // Mark removed/unsubscribed subscribers as skipped (only if still pending)
+        $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
+        if (!empty($removedSubscriberIds)) {
+            $skipped = $this->queueEntries()
+                ->whereIn('subscriber_id', $removedSubscriberIds)
+                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                ->update([
+                    'status' => MessageQueueEntry::STATUS_SKIPPED,
+                    'error_message' => 'Subscriber removed from list or unsubscribed',
+                ]);
+            $result['skipped'] = $skipped;
+        }
+        
+        // Update message stats
+        $this->update([
+            'planned_recipients_count' => count($currentSubscriberIds),
+            'recipients_calculated_at' => now(),
+        ]);
+        
+        return $result;
     }
 
     /**

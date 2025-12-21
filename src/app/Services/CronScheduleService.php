@@ -7,6 +7,7 @@ use App\Models\ContactListCronSetting;
 use App\Models\CronJobLog;
 use App\Models\CronSetting;
 use App\Models\Message;
+use App\Models\MessageQueueEntry;
 use App\Jobs\SendEmailJob;
 use Illuminate\Support\Facades\Log;
 
@@ -151,24 +152,64 @@ class CronScheduleService
             'dispatched' => 0,
             'skipped' => 0,
             'errors' => 0,
+            'synced' => 0,
         ];
 
         try {
             $globalVolume = (int) CronSetting::getValue('volume_per_minute', 100);
             $listVolumes = []; // Tracker zużycia limitu per lista
 
-            // Pobierz wiadomości do wysłania
-            $messages = Message::where('status', 'scheduled')
-                ->where('scheduled_at', '<=', now())
-                ->orderBy('scheduled_at')
-                ->orderBy('priority', 'desc')
-                ->limit($globalVolume)
+            // 1. Pobierz aktywne wiadomości i zsynchronizuj odbiorców
+            $activeMessages = Message::where('status', 'scheduled')
+                ->where(function($query) {
+                    $query->where('type', 'broadcast')
+                        ->orWhere(function($q) {
+                            $q->where('type', 'autoresponder')
+                                ->where('is_active', true);
+                        });
+                })
                 ->with('contactLists')
                 ->get();
 
-            foreach ($messages as $message) {
+            foreach ($activeMessages as $message) {
+                $syncResult = $message->syncPlannedRecipients();
+                $stats['synced'] += $syncResult['added'];
+            }
+
+            // 2. Pobierz wpisy kolejki do przetworzenia
+            $entries = MessageQueueEntry::where('status', MessageQueueEntry::STATUS_PLANNED)
+                ->whereHas('message', function($query) {
+                    $query->where('status', 'scheduled')
+                        ->where(function($q) {
+                            $q->where('type', 'broadcast')
+                                ->orWhere(function($sub) {
+                                    $sub->where('type', 'autoresponder')
+                                        ->where('is_active', true);
+                                });
+                        })
+                        ->where(function($q) {
+                            $q->whereNull('scheduled_at')
+                                ->orWhere('scheduled_at', '<=', now());
+                        });
+                })
+                ->with(['message.contactLists', 'subscriber'])
+                ->orderBy('created_at')
+                ->limit($globalVolume)
+                ->get();
+
+            foreach ($entries as $entry) {
                 // Sprawdź limit globalny
                 if ($stats['dispatched'] >= $globalVolume) {
+                    $stats['skipped']++;
+                    continue;
+                }
+
+                $message = $entry->message;
+                $subscriber = $entry->subscriber;
+
+                // Sprawdź czy subskrybent jest nadal aktywny
+                if (!$subscriber || $subscriber->status !== 'active') {
+                    $entry->markAsSkipped('Subscriber is no longer active');
                     $stats['skipped']++;
                     continue;
                 }
@@ -196,16 +237,42 @@ class CronScheduleService
                     $listVolumes[$listId]++;
                 }
 
-                // Dispatch job
+                // Oznacz jako w kolejce i wyślij
                 try {
-                    SendEmailJob::dispatch($message);
+                    $entry->markAsQueued();
+                    
+                    // Dispatch job dla konkretnego subskrybenta
+                    SendEmailJob::dispatch($message, $subscriber);
+                    
+                    // Oznacz jako wysłane
+                    $entry->markAsSent();
+                    
                     $stats['dispatched']++;
                     $log->incrementSent();
+                    
+                    // Inkrementuj sent_count w bazie wiadomości
+                    $message->increment('sent_count');
+                    
+                    // Dla broadcast: sprawdź czy wszystkie wpisy są przetworzone
+                    if ($message->type === 'broadcast') {
+                        $pendingCount = $message->queueEntries()
+                            ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                            ->count();
+                        
+                        if ($pendingCount === 0) {
+                            $message->update(['status' => 'sent']);
+                        }
+                    }
                 } catch (\Exception $e) {
+                    $entry->markAsFailed($e->getMessage());
                     $stats['errors']++;
                     $log->incrementFailed();
-                    $log->appendError("Message {$message->id}: " . $e->getMessage());
-                    Log::error("CRON dispatch error: " . $e->getMessage(), ['message_id' => $message->id]);
+                    $log->appendError("Entry {$entry->id} (Message {$message->id}, Subscriber {$subscriber->id}): " . $e->getMessage());
+                    Log::error("CRON dispatch error: " . $e->getMessage(), [
+                        'entry_id' => $entry->id,
+                        'message_id' => $message->id,
+                        'subscriber_id' => $subscriber->id,
+                    ]);
                 }
             }
 

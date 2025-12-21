@@ -132,13 +132,55 @@ const planCards = computed(() => [
         name: t('license.plans.silver.name'),
         price: t('license.plans.silver.price'),
         priceSuffix: t('license.plans.silver.suffix'),
+        description: t('license.plans.silver.description'),
         color: 'from-slate-400 to-slate-600',
         badgeColor: 'bg-slate-500',
-        features: props.plans?.SILVER?.features || [
-            t('license.plans.silver.features.basic'),
-            t('license.plans.silver.features.unlimited'),
-            t('license.plans.silver.features.templates'),
-            t('license.plans.silver.features.support'),
+        sections: [
+            {
+                title: t('license.plans.silver.sections.core'),
+                items: [
+                    t('license.plans.silver.features.unlimited_lists'),
+                    t('license.plans.silver.features.multimailing'),
+                    t('license.plans.silver.features.queue'),
+                    t('license.plans.silver.features.system_msgs'),
+                    t('license.plans.silver.features.cron'),
+                    t('license.plans.silver.features.triggers'),
+                ]
+            },
+            {
+                title: t('license.plans.silver.sections.ai'),
+                items: [
+                    t('license.plans.silver.features.ai_titles'),
+                    t('license.plans.silver.features.ai_content'),
+                    t('license.plans.silver.features.dynamic_fields'),
+                ]
+            },
+            {
+                title: t('license.plans.silver.sections.forms'),
+                items: [
+                    t('license.plans.silver.features.forms_gen'),
+                    t('license.plans.silver.features.templates_gen'),
+                    t('license.plans.silver.features.segmentation'),
+                    t('license.plans.silver.features.stats'),
+                    t('license.plans.silver.features.import'),
+                ]
+            },
+            {
+                title: t('license.plans.silver.sections.integrations'),
+                items: [
+                    t('license.plans.silver.features.smtp'),
+                    t('license.plans.silver.features.gmail'),
+                    t('license.plans.silver.features.sendgrid'),
+                    t('license.plans.silver.features.openai'),
+                    t('license.plans.silver.features.anthropic'),
+                    t('license.plans.silver.features.grok'),
+                    t('license.plans.silver.features.gemini'),
+                ]
+            }
+        ],
+        summary: [
+            t('license.plans.silver.summary_1'),
+            t('license.plans.silver.summary_2')
         ],
         buttonText: t('license.plans.silver.select'),
         buttonAction: 'request',
@@ -148,16 +190,42 @@ const planCards = computed(() => [
         name: t('license.plans.gold.name'),
         price: t('license.plans.gold.price'),
         priceSuffix: t('license.plans.gold.suffix'),
+        description: t('license.plans.gold.description'),
         color: 'from-yellow-400 to-amber-600',
         badgeColor: 'bg-gradient-to-r from-yellow-400 to-amber-500',
         popular: true,
         coming_soon: !props.stripeGoldPaymentLink,
-        features: props.plans?.GOLD?.features || [
-            t('license.plans.gold.features.everything'),
-            t('license.plans.gold.features.automations'),
-            t('license.plans.gold.features.priority'),
-            t('license.plans.gold.features.api'),
-            t('license.plans.gold.features.white_label'),
+        sections: [
+            {
+                title: t('license.plans.gold.sections.everything'),
+                items: [
+                    t('license.plans.gold.features.core_access'),
+                ]
+            },
+            {
+                title: t('license.plans.gold.sections.automation'),
+                items: [
+                    t('license.plans.gold.features.funnels'),
+                    t('license.plans.gold.features.advanced_auto'),
+                ]
+            },
+            {
+                title: t('license.plans.gold.sections.integrations'),
+                items: [
+                    t('license.plans.gold.features.public_api'),
+                    t('license.plans.gold.features.openrouter'),
+                    t('license.plans.gold.features.ollama'),
+                ]
+            },
+            {
+                title: t('license.plans.gold.sections.users'),
+                items: [
+                    t('license.plans.gold.features.team'),
+                ]
+            }
+        ],
+        summary: [
+            t('license.plans.gold.summary')
         ],
         buttonText: props.stripeGoldPaymentLink ? t('license.plans.gold.select') : t('license.coming_soon'),
         buttonAction: 'stripe',
@@ -352,21 +420,71 @@ const isGoldExpired = computed(() => {
                         </div>
                         
                         <!-- Upgrade to GOLD option for SILVER users -->
-                        <div v-if="licensePlan === 'SILVER'" class="mt-6 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 p-5 dark:from-yellow-900/20 dark:to-amber-900/20">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-semibold text-gray-900 dark:text-white">{{ $t('license.upgrade_to_gold') }}</h4>
-                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                        {{ $t('license.upgrade_desc') }}
+                        <!-- Upgrade to GOLD option for SILVER users -->
+                        <div v-if="licensePlan === 'SILVER'" class="mt-8 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-b from-yellow-50 to-white shadow-lg dark:border-amber-900/30 dark:from-yellow-900/10 dark:to-gray-800">
+                            <div class="relative bg-gradient-to-r from-yellow-400 to-amber-600 px-6 py-4 text-white">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="rounded-full bg-white/20 p-2 backdrop-blur-sm">
+                                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        </div>
+                                        <h4 class="text-xl font-bold">{{ $t('license.upgrade_to_gold') }}</h4>
+                                    </div>
+                                    <div class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                                        Premium
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 md:p-8">
+                                <div class="mb-6">
+                                    <p class="text-lg font-medium text-gray-900 dark:text-white">
+                                        {{ $t('license.plans.gold.summary') }}
+                                    </p>
+                                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                                        {{ $t('license.plans.gold.description') }}
                                     </p>
                                 </div>
-                                <button
-                                    v-if="stripeGoldPaymentLink"
-                                    @click="window.open(stripeGoldPaymentLink, '_blank')"
-                                    class="rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-xl"
-                                >
-                                    {{ $t('license.buy_gold') }}
-                                </button>
+
+                                <div class="grid gap-6 md:grid-cols-2">
+                                    <div v-for="(section, idx) in planCards.find(p => p.key === 'GOLD')?.sections || []" :key="idx" class="rounded-xl bg-amber-50/50 p-4 dark:bg-amber-900/10">
+                                        <h5 class="mb-3 font-bold text-amber-700 dark:text-amber-500 uppercase text-xs tracking-wider">
+                                            {{ section.title }}
+                                        </h5>
+                                        <ul class="space-y-2">
+                                            <li v-for="item in section.items" :key="item" class="flex items-start gap-2">
+                                                <div class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-amber-500">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300">{{ item }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 flex flex-col items-center justify-between gap-4 rounded-xl border border-amber-100 bg-white p-6 shadow-sm dark:border-amber-900/20 dark:bg-gray-800/50 md:flex-row">
+                                    <div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('license.plans.gold.price') }}</span>
+                                            <span class="text-gray-500 dark:text-gray-400">{{ $t('license.plans.gold.suffix') }}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('license.upgrade_desc') }}</p>
+                                    </div>
+                                    <button
+                                        v-if="stripeGoldPaymentLink"
+                                        @click="window.open(stripeGoldPaymentLink, '_blank')"
+                                        class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl md:w-auto"
+                                    >
+                                        {{ $t('license.buy_gold') }}
+                                        <svg class="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -492,17 +610,37 @@ const isGoldExpired = computed(() => {
                             </div>
 
                             <!-- Features list -->
-                            <div class="p-6">
-                                <ul class="mb-8 space-y-4">
-                                    <li v-for="feature in plan.features" :key="feature" class="flex items-center gap-3">
-                                        <div class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                                            <svg class="h-4 w-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <span class="text-gray-700 dark:text-gray-300">{{ feature }}</span>
-                                    </li>
-                                </ul>
+                            <div class="p-6 flex flex-col h-full">
+                                <div class="mb-5 text-sm font-medium text-gray-600 dark:text-gray-400 italic">
+                                    {{ plan.description }}
+                                </div>
+
+                                <div class="flex-grow space-y-6 mb-8">
+                                    <div v-for="(section, idx) in plan.sections" :key="idx">
+                                        <h4 class="font-bold text-gray-900 dark:text-white mb-3 text-xs uppercase tracking-wider" 
+                                            :class="{'text-indigo-600 dark:text-indigo-400': plan.key === 'SILVER', 'text-amber-600 dark:text-amber-400': plan.key === 'GOLD'}">
+                                            {{ section.title }}
+                                        </h4>
+                                        <ul class="space-y-3">
+                                            <li v-for="item in section.items" :key="item" class="flex items-start gap-3">
+                                                <div class="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full" 
+                                                     :class="plan.key === 'GOLD' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'">
+                                                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <span class="text-sm text-gray-700 dark:text-gray-300 leading-tight">{{ item }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="mt-auto mb-6 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-700">
+                                    <p v-for="(line, i) in plan.summary" :key="i" class="text-sm font-medium text-center" 
+                                       :class="{'mb-1': i < plan.summary.length - 1, 'text-green-600 dark:text-green-400': plan.key === 'SILVER', 'text-amber-600 dark:text-amber-400': plan.key === 'GOLD'}">
+                                        {{ line }}
+                                    </p>
+                                </div>
 
                                 <button
                                     @click="handlePlanAction(plan)"

@@ -17,6 +17,7 @@ use App\Events\TagRemoved;
 
 // Listeners
 use App\Listeners\TriggerAutomationsListener;
+use App\Listeners\SendNewSubscriberNotification;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,7 @@ class EventServiceProvider extends ServiceProvider
         // Automation trigger events
         SubscriberSignedUp::class => [
             TriggerAutomationsListener::class,
+            SendNewSubscriberNotification::class,
         ],
         EmailOpened::class => [
             TriggerAutomationsListener::class,

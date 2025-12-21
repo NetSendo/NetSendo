@@ -421,6 +421,29 @@ defineExpose({
     // Layout settings
     contentWidth,
     contentAlign,
+    // Insert content at cursor position
+    insertAtCursor: (content) => {
+        if (editorMode.value === 'visual' && !isFullHtmlDocument.value && editor.value) {
+            // For Tiptap editor, insert at cursor and maintain focus
+            editor.value.chain().focus().insertContent(content).run()
+        } else if (editorMode.value === 'source') {
+            // For source mode, insert into textarea
+            const textarea = document.querySelector('textarea')
+            if (textarea) {
+                const start = textarea.selectionStart
+                const end = textarea.selectionEnd
+                const text = sourceCode.value
+                sourceCode.value = text.substring(0, start) + content + text.substring(end)
+                emit('update:modelValue', sourceCode.value)
+                // Restore cursor position after inserted content
+                nextTick(() => {
+                    textarea.focus()
+                    const newPos = start + content.length
+                    textarea.setSelectionRange(newPos, newPos)
+                })
+            }
+        }
+    },
     // Get content wrapped with layout container for email sending
     getWrappedContent: () => {
         const content = sourceCode.value || ''

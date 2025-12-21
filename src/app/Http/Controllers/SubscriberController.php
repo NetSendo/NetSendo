@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 
 use App\Models\ContactList;
@@ -43,7 +44,7 @@ class SubscriberController extends Controller
                     'last_name' => $sub->last_name,
                     'status' => $sub->status,
                     'list_name' => $sub->contactList->name,
-                    'created_at' => $sub->created_at->format('Y-m-d H:i'),
+                    'created_at' => DateHelper::formatForUser($sub->created_at),
                 ]),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
             'filters' => $request->only(['search', 'list_id']),

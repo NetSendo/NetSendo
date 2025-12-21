@@ -7,6 +7,7 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
 import throttle from 'lodash/throttle';
 import pickBy from 'lodash/pickBy';
+import axios from 'axios';
 
 const props = defineProps({
     messages: Object,
@@ -25,6 +26,18 @@ const form = reactive({
 });
 
 const messageToDelete = ref(null);
+const togglingMessages = ref(new Set()); // Track which messages are being toggled
+
+// Reactive local state for is_active (to update UI immediately)
+const localActiveStates = reactive({});
+
+// Get active state (use local if set, otherwise from prop)
+const getIsActive = (message) => {
+    if (localActiveStates[message.id] !== undefined) {
+        return localActiveStates[message.id];
+    }
+    return message.is_active ?? true;
+};
 
 watch(form, throttle(() => {
     router.get(route('sms.index'), pickBy(form), {
@@ -61,6 +74,23 @@ const resetFilters = () => {
 
 const closeModal = () => {
     messageToDelete.value = null;
+};
+
+// Toggle active status
+const toggleActive = async (message) => {
+    if (togglingMessages.value.has(message.id)) return;
+    
+    togglingMessages.value.add(message.id);
+    try {
+        const response = await axios.post(route('sms.toggle-active', message.id));
+        if (response.data.success) {
+            localActiveStates[message.id] = response.data.is_active;
+        }
+    } catch (error) {
+        console.error('Toggle failed:', error);
+    } finally {
+        togglingMessages.value.delete(message.id);
+    }
 };
 </script>
 
@@ -203,7 +233,20 @@ const closeModal = () => {
                                 {{ message.list_name }}
                             </td>
                             <td class="px-6 py-4">
+                                <!-- Queue/Autoresponder: show active/inactive status -->
                                 <span 
+                                    v-if="message.type === 'autoresponder'"
+                                    class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                    :class="{
+                                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': getIsActive(message),
+                                        'bg-slate-100 text-slate-800 dark:bg-slate-700/50 dark:text-slate-300': !getIsActive(message)
+                                    }"
+                                >
+                                    {{ getIsActive(message) ? $t('messages.status_active') : $t('messages.status_inactive') }}
+                                </span>
+                                <!-- Broadcast: show sent/scheduled/draft -->
+                                <span 
+                                    v-else
                                     class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                     :class="{
                                         'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': message.status === 'sent',
@@ -219,6 +262,28 @@ const closeModal = () => {
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
+                                    <!-- Toggle Active (only for autoresponder/queue type) -->
+                                    <button 
+                                        v-if="message.type === 'autoresponder'"
+                                        @click="toggleActive(message)"
+                                        class="relative"
+                                        :class="[
+                                            getIsActive(message) 
+                                                ? 'text-emerald-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300' 
+                                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                                        ]"
+                                        :title="getIsActive(message) ? $t('messages.toggle_deactivate') : $t('messages.toggle_activate')"
+                                        :disabled="togglingMessages.has(message.id)"
+                                    >
+                                        <svg v-if="togglingMessages.has(message.id)" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path v-if="getIsActive(message)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
                                     <Link 
                                         :href="route('sms.edit', message.id)"
                                         class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"

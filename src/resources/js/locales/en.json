@@ -283,6 +283,10 @@
                 "errors": "Errors",
                 "last_run": "Last run"
             }
+        },
+        "clock": {
+            "title": "Current Time",
+            "timezone_label": "Timezone"
         }
     },
     "mailing_lists": {
@@ -587,6 +591,10 @@
         "go_to_edit_duplicate": "Go to edit duplicate",
         "stay_on_list": "Stay on list",
         "copy_prefix": "[COPY]",
+        "toggle_activate": "Activate queue",
+        "toggle_deactivate": "Deactivate queue",
+        "status_active": "Active",
+        "status_inactive": "Inactive",
         "create_title": "New Message",
         "edit_title": "Edit Message",
         "create_subtitle": "Prepare a new email campaign",
@@ -815,6 +823,15 @@
                 "email": "Email",
                 "time": "Time",
                 "url": "URL"
+            },
+            "queue": {
+                "title": "Queue Progress",
+                "last_sync": "Last sync",
+                "planned": "Planned",
+                "queued": "Queued",
+                "sent": "Sent",
+                "failed": "Failed",
+                "skipped": "Skipped"
             }
         }
     },
@@ -1481,74 +1498,6 @@
         "request_desc": "Let us know which tools you would like to see in NetSendo Marketplace.",
         "request_button": "Request Integration"
     },
-    "license": {
-        "title": "License",
-        "active_status": "License {plan} active",
-        "expires_at": "Valid until: {date}",
-        "expires_never": "never",
-        "lifetime_license": "Lifetime license — no time limit",
-        "app_version": "App version: {version}",
-        "upgrade_to_gold": "Upgrade to GOLD",
-        "upgrade_desc": "Unlock advanced automations and priority support",
-        "buy_gold": "Buy GOLD — $97/mo",
-        "gold_expired": "GOLD License expired",
-        "gold_expired_desc": "Expired: {date}. Renew your subscription to restore premium features.",
-        "renew_gold": "Renew GOLD — $97/mo",
-        "choose_plan": "Choose your license",
-        "choose_plan_desc": "NetSendo offers two plans — choose the one that fits your needs",
-        "popular": "POPULAR",
-        "coming_soon": "Coming soon",
-        "gold_coming_soon_msg": "GOLD plan will be available soon! For now, you can use the SILVER plan.",
-        "request_error": "Connection error. Enter license key manually below.",
-        "processing": "Processing...",
-        "manual_activation_title": "Activate license manually",
-        "manual_activation_desc": "Enter the license key received via email or after purchase",
-        "license_key_label": "License Key",
-        "license_key_placeholder": "Paste your license key here...",
-        "activate_button": "Activate License",
-        "activating": "activating...",
-        "back_to_plans": "Back to plans selection",
-        "already_have_key": "I already have a license key",
-        "generic_error": "An error occurred. Please try again.",
-        "domain": "Domain",
-        "email": "Contact Email",
-        "show": "Show",
-        "hide": "Hide",
-        "request_sent_polling": "Request sent! Waiting for license generation...",
-        "waiting_for_activation": "License key generation may take up to 1 minute",
-        "activating_license": "Activating License",
-        "polling_hint": "License will be automatically activated once received from server",
-        "polling_timeout": "Waiting time expired. Enter license key manually or try again.",
-        "enter_manually": "I prefer to enter key manually",
-        "auto_activated_success": "License has been automatically activated!",
-        "plans": {
-            "silver": {
-                "name": "SILVER",
-                "price": "FREE",
-                "suffix": "LIFETIME",
-                "select": "Choose SILVER",
-                "features": {
-                    "basic": "All basic features",
-                    "unlimited": "Unlimited contacts",
-                    "templates": "Email templates",
-                    "support": "Community support"
-                }
-            },
-            "gold": {
-                "name": "GOLD",
-                "price": "$97",
-                "suffix": "/month",
-                "select": "Buy GOLD",
-                "features": {
-                    "everything": "Everything from SILVER",
-                    "automations": "Advanced automations",
-                    "priority": "Priority support",
-                    "api": "API access",
-                    "white_label": "White-label"
-                }
-            }
-        }
-    },
     "ai": {
         "title": "AI Integrations",
         "subtitle": "Configure AI provider integrations to use content generation features.",
@@ -2201,6 +2150,16 @@
         "created": "Insert has been created",
         "updated": "Insert has been updated",
         "deleted": "Insert has been deleted",
+        "picker_title": "Select Insert or Variable",
+        "button_title": "Inserts & Variables",
+        "insert_variable": "Insert Variable",
+        "tabs": {
+            "variables": "Variables",
+            "inserts": "Inserts",
+            "signatures": "Signatures"
+        },
+        "search": "Search...",
+        "no_results": "No results found",
         "variables": {
             "subscriber_data": "Subscriber Data",
             "first_name": "First Name",
@@ -2283,5 +2242,185 @@
             "description": "Select lists the user will have access to and set permission levels.",
             "save": "Save Permissions"
         }
+    },
+    "license": {
+        "title": "License",
+        "active_status": "License {plan} active",
+        "expires_at": "Expires at: {date}",
+        "expires_never": "lifetime",
+        "lifetime_license": "Lifetime license — time unlimited",
+        "app_version": "App version: {version}",
+        "upgrade_to_gold": "Upgrade to GOLD",
+        "upgrade_desc": "Unlock advanced automations and priority support",
+        "buy_gold": "Buy GOLD — $97/mo",
+        "gold_expired": "GOLD license expired",
+        "gold_expired_desc": "Expired: {date}. Renew subscription to restore access to premium features.",
+        "renew_gold": "Renew GOLD — $97/mo",
+        "choose_plan": "Choose your license",
+        "choose_plan_desc": "NetSendo offers two plans — choose the one that fits your needs",
+        "popular": "POPULAR",
+        "coming_soon": "Coming soon",
+        "gold_coming_soon_msg": "GOLD plan will be available soon! For now you can enjoy the SILVER plan.",
+        "request_error": "Connection error. Enter license key manually below.",
+        "processing": "Processing...",
+        "manual_activation_title": "Activate license manually",
+        "manual_activation_desc": "Enter license key received by email or after purchase",
+        "license_key_label": "License Key",
+        "license_key_placeholder": "Paste your license key here...",
+        "activate_button": "Activate License",
+        "activating": "Activating...",
+        "back_to_plans": "Back to plans",
+        "already_have_key": "I have a license key",
+        "generic_error": "An error occurred. Please try again.",
+        "domain": "Domain",
+        "email": "Contact Email",
+        "show": "Show",
+        "hide": "Hide",
+        "request_sent_polling": "Request sent! Waiting for license generation...",
+        "waiting_for_activation": "License key generation may take up to 1 minute",
+        "activating_license": "Activating license",
+        "polling_hint": "License will be automatically activated once received from server",
+        "polling_timeout": "Timeout. Enter license key manually or try again.",
+        "enter_manually": "Enter key manually",
+        "auto_activated_success": "License activated successfully!",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "Free",
+                "suffix": "Lifetime",
+                "description": "Ideal for: creators, startups, e-commerce, marketers who want to build lists and send campaigns without limits, without costs.",
+                "select": "Select SILVER",
+                "sections": {
+                    "core": "Email & SMS Core",
+                    "ai": "AI Content Assistants",
+                    "forms": "Forms, Templates, Data",
+                    "integrations": "Integrations (Core)"
+                },
+                "features": {
+                    "unlimited_lists": "Unlimited subscriber lists (Email & SMS)",
+                    "multimailing": "Multi-mailing – send to multiple lists at once",
+                    "queue": "Message queue",
+                    "system_msgs": "System messages",
+                    "cron": "Individual CRON settings for lists",
+                    "triggers": "Email triggers",
+                    "ai_titles": "AI – subject line generator",
+                    "ai_content": "AI – message content generator",
+                    "dynamic_fields": "Custom fields and dynamic inserts",
+                    "forms_gen": "Form generator",
+                    "templates_gen": "Email template generator",
+                    "segmentation": "List segmentation",
+                    "stats": "Advanced statistics",
+                    "import": "Import subscribers from CSV",
+                    "smtp": "SMTP",
+                    "gmail": "Gmail",
+                    "sendgrid": "SendGrid",
+                    "openai": "OpenAI",
+                    "anthropic": "Anthropic",
+                    "grok": "Grok (xAI)",
+                    "gemini": "Google Gemini"
+                },
+                "summary_1": "SILVER = full-fledged mailing system + AI, no limits and no fees",
+                "summary_2": "Ideal as an entry point and a tool 'forever'"
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/ month",
+                "description": "Ideal for: companies, SaaS, e-commerce, agencies, AI power-users who want to automate, scale and integrate NetSendo with their own systems",
+                "select": "Buy GOLD",
+                "sections": {
+                    "everything": "Everything in SILVER",
+                    "automation": "Automation & Scaling",
+                    "integrations": "Integrations PRO / DEV",
+                    "users": "User Management"
+                },
+                "features": {
+                    "core_access": "(+ full access to core)",
+                    "funnels": "Email Funnels",
+                    "advanced_auto": "Advanced automations (workflow / logic / event-based)",
+                    "public_api": "Public API",
+                    "openrouter": "OpenRouter Integration",
+                    "ollama": "Ollama Integration (local LLM / self-hosted)",
+                    "team": "Team members option"
+                },
+                "summary": "GOLD = automation engine + developer layer + AI without architectural limits"
+            }
+        }
+    },
+    "system_pages": {
+        "title": "System Pages",
+        "subtitle": "Manage HTML pages displayed to users after actions",
+        "all_lists": "Global Templates",
+        "select_list": "Select list",
+        "search_list": "Search list...",
+        "no_lists_found": "No lists found",
+        "global_default": "Global Template (Default)",
+        "edit_for_list": "Editing pages for list: {name}",
+        "table": {
+            "name": "Name",
+            "title": "Page Title",
+            "slug": "Slug (URI)",
+            "access": "Access",
+            "status": "Status"
+        },
+        "customized": "Customized",
+        "default": "Default",
+        "customize": "Customize",
+        "access": {
+            "public": "Public",
+            "private": "Private"
+        },
+        "edit_title": "Edit Page: {name}",
+        "context": "Context:",
+        "back_to_list": "← Back to list",
+        "page_title_label": "Page Title",
+        "slug_label": "Page Slug",
+        "slug_readonly_global": "Slug can only be changed for list-specific custom pages",
+        "access_label": "Visibility",
+        "access_help": "Public pages are accessible to everyone. Private ones require authentication.",
+        "content_label": "HTML Page Content",
+        "current_url": "Current URL",
+        "updated": "Page has been updated.",
+        "custom_created": "Created custom page version for this list.",
+        "reset_to_default": "Reset to default page version.",
+        "cannot_delete_global": "Cannot delete global page template.",
+        "global_defaults": "Global Templates"
+    },
+    "system_emails": {
+        "title": "System Emails",
+        "subtitle": "Manage automatically sent system emails",
+        "all_lists": "Global Templates",
+        "select_list": "Select list",
+        "search_list": "Search list...",
+        "no_lists_found": "No lists found",
+        "global_default": "Global Template (Default)",
+        "edit_for_list": "Editing emails for list: {name}",
+        "table": {
+            "name": "Name",
+            "subject": "Subject",
+            "slug": "Identifier",
+            "active": "Active",
+            "status": "Status"
+        },
+        "customized": "Customized",
+        "default": "Default",
+        "customize": "Customize",
+        "edit_title": "Edit Email: {name}",
+        "context": "Context:",
+        "back_to_list": "← Back to list",
+        "subject_label": "Email Subject",
+        "content_label": "Email HTML Content",
+        "is_active": "Sending Enabled",
+        "is_active_desc": "If disabled, this message will not be sent",
+        "available_placeholders": "Available placeholders",
+        "updated": "Email has been updated.",
+        "custom_created": "Created custom email version for this list.",
+        "reset_to_default": "Reset to default email version.",
+        "toggled": "Email status has been changed.",
+        "cannot_toggle_global": "Cannot toggle status of global emails.",
+        "click_to_enable": "Click to enable",
+        "click_to_disable": "Click to disable",
+        "cannot_delete_global": "Cannot delete global email template.",
+        "global_defaults": "Global Templates"
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 use App\Models\ContactList;
 use Inertia\Inertia;
@@ -37,7 +38,7 @@ class SmsListController extends Controller
                     'description' => $list->description,
                     'group' => $list->group,
                     'tags' => $list->tags,
-                    'created_at' => $list->created_at->format('Y-m-d'),
+                    'created_at' => DateHelper::formatDateForUser($list->created_at),
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
                 ])->withQueryString(),

@@ -121,7 +121,7 @@ class InsertController extends Controller
     /**
      * Get system variables definition.
      */
-    private function getSystemVariables(): array
+    public function getSystemVariables(): array
     {
         return [
             // Subscriber data

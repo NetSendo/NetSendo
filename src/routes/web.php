@@ -107,8 +107,10 @@ Route::middleware('auth')->group(function () {
     Route::get('messages/{message}/stats', [\App\Http\Controllers\MessageController::class, 'stats'])->name('messages.stats');
     Route::post('messages/test', [\App\Http\Controllers\MessageController::class, 'test'])->name('messages.test');
     Route::post('messages/{message}/duplicate', [\App\Http\Controllers\MessageController::class, 'duplicate'])->name('messages.duplicate');
+    Route::post('messages/{message}/toggle-active', [\App\Http\Controllers\MessageController::class, 'toggleActive'])->name('messages.toggle-active');
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
+    Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');
     Route::resource('sms', \App\Http\Controllers\SmsController::class);
     Route::resource('external-pages', \App\Http\Controllers\Automation\ExternalPageController::class);
 
@@ -164,11 +166,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/{integration}/verify', [\App\Http\Controllers\IntegrationSettingsController::class, 'verify'])->name('verify');
     });
 
-    // System Messages
-    Route::prefix('settings/system-messages')->name('settings.system-messages.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\SystemMessageController::class, 'index'])->name('index');
-        Route::get('/{system_message}/edit', [\App\Http\Controllers\SystemMessageController::class, 'edit'])->name('edit');
-        Route::put('/{system_message}', [\App\Http\Controllers\SystemMessageController::class, 'update'])->name('update');
+    // System Pages (HTML pages shown after actions)
+    Route::prefix('settings/system-pages')->name('settings.system-pages.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SystemPageController::class, 'index'])->name('index');
+        Route::get('/{systemPage}/edit', [\App\Http\Controllers\SystemPageController::class, 'edit'])->name('edit');
+        Route::put('/{systemPage}', [\App\Http\Controllers\SystemPageController::class, 'update'])->name('update');
+        Route::delete('/{systemPage}', [\App\Http\Controllers\SystemPageController::class, 'destroy'])->name('destroy');
+    });
+
+    // System Emails (email templates)
+    Route::prefix('settings/system-emails')->name('settings.system-emails.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SystemEmailController::class, 'index'])->name('index');
+        Route::get('/{systemEmail}/edit', [\App\Http\Controllers\SystemEmailController::class, 'edit'])->name('edit');
+        Route::put('/{systemEmail}', [\App\Http\Controllers\SystemEmailController::class, 'update'])->name('update');
+        Route::post('/{systemEmail}/toggle', [\App\Http\Controllers\SystemEmailController::class, 'toggle'])->name('toggle');
+        Route::delete('/{systemEmail}', [\App\Http\Controllers\SystemEmailController::class, 'destroy'])->name('destroy');
     });
 
     // Mailboxes (Email Providers)

@@ -10,6 +10,7 @@ import AdvancedEditor from '@/Components/AdvancedEditor.vue';
 import TemplateSelectModal from '@/Components/TemplateSelectModal.vue';
 import MessageAiAssistant from '@/Components/MessageAiAssistant.vue';
 import SubjectAiAssistant from '@/Components/SubjectAiAssistant.vue';
+import InsertPickerModal from '@/Components/InsertPickerModal.vue';
 import { computed, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import mjml2html from 'mjml-browser';
@@ -49,6 +50,18 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    inserts: {
+        type: Array,
+        default: () => [],
+    },
+    signatures: {
+        type: Array,
+        default: () => [],
+    },
+    systemVariables: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const isEditing = computed(() => !!props.message);
@@ -59,6 +72,7 @@ const activeTab = ref('content'); // content, settings, triggers, ab_testing
 // Template modal
 const showTemplateModal = ref(false);
 const showAiPanel = ref(false);
+const showInsertPickerModal = ref(false);
 
 // Reference to advanced editor for mode control
 const advancedEditorRef = ref(null);
@@ -258,6 +272,14 @@ const handleAiReplaceContent = (content) => {
 // Handle AI subject selection
 const handleSubjectSelect = (subject) => {
     form.subject = subject;
+};
+
+// Handle insert content at cursor position
+const handleInsert = (content) => {
+    if (advancedEditorRef.value?.insertAtCursor) {
+        advancedEditorRef.value.insertAtCursor(content);
+    }
+    showInsertPickerModal.value = false;
 };
 
 const submit = (targetStatus = null) => {
@@ -722,6 +744,26 @@ const triggerTypes = [
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                     {{ $t('messages.ai_assistant.generate') }}
+                                </button>
+                            </div>
+
+                            <!-- Insert Snippets & Variables -->
+                            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                                    <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                    </svg>
+                                    {{ $t('inserts.button_title') }}
+                                </h3>
+                                <button
+                                    type="button"
+                                    @click="showInsertPickerModal = true"
+                                    class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                >
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    {{ $t('inserts.insert_variable') }}
                                 </button>
                             </div>
 
@@ -1314,4 +1356,14 @@ const triggerTypes = [
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Insert Picker Modal -->
+    <InsertPickerModal
+        :show="showInsertPickerModal"
+        :system-variables="systemVariables"
+        :inserts="inserts"
+        :signatures="signatures"
+        @close="showInsertPickerModal = false"
+        @insert="handleInsert"
+    />
 </template>

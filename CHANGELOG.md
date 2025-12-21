@@ -7,9 +7,122 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-<!-- AI: Add your changes here using: Added, Changed, Fixed, Removed, Deprecated, Security -->
+---
 
+## [1.0.6] – System Messages & Pages Separation - 2025-12-21
 
+### Added
+- **System Pages & System Emails Separation:**
+  - Split `system_messages` table into `system_pages` (HTML pages) and `system_emails` (email templates)
+  - New `SystemPage` model for HTML pages shown after subscriber actions (signup, activation, unsubscribe)
+  - New `SystemEmail` model for email templates (8 templates total)
+  - New `SystemPageController` and `SystemEmailController` with CRUD operations
+  - Two separate navigation links: "Wiadomości Systemowe" and "Strony Systemowe"
+  - Copy-on-write logic for list-specific customizations
+
+- **8 System Email Templates:**
+  - `activation_confirmation` - Sent after user confirms email
+  - `data_edit_access` - Sent when user requests to edit profile
+  - `new_subscriber_notification` - Sent to admin when new subscriber joins
+  - `already_active_resubscribe` - Sent when active user tries to subscribe again
+  - `inactive_resubscribe` - Sent when inactive user re-subscribes
+  - `unsubscribe_request` - Confirmation request before unsubscribe
+  - `unsubscribed_confirmation` - Sent after successful unsubscribe
+  - `signup_confirmation` - Double opt-in email to confirm subscription
+
+- **10 System Pages (HTML):**
+  - Signup success/error pages
+  - Email already exists (active/inactive variants)
+  - Activation success/error pages
+  - Unsubscribe success/error/confirm pages
+
+- **Quick Email Toggle:**
+  - Toggle switch in email list view to enable/disable emails per list
+  - Global emails cannot be toggled (always active)
+  - Toggling global email for specific list creates list-specific copy
+
+- **Per-Subscriber Queue Tracking System:**
+  - New `message_queue_entries` table for tracking send status per subscriber (planned/queued/sent/failed/skipped)
+  - New `MessageQueueEntry` model with status management methods
+  - `Message::syncPlannedRecipients()` dynamically adds new subscribers and marks unsubscribed ones
+  - `Message::getQueueStats()` returns aggregated queue statistics
+  - Queue progress section in Stats.vue with visual progress bar and status cards
+
+- **Queue Message Active/Inactive Status:**
+  - New `is_active` column for autoresponder/queue messages
+  - Toggle button in message list actions to activate/deactivate queue messages
+  - Queue messages display "Active"/"Inactive" status instead of "Sent"/"Scheduled"
+  - Inactive queue messages are skipped by CRON processor
+
+- **Message Statistics Improvements:**
+  - New `sent_count` column to track actual sent messages
+  - New `planned_recipients_count` column for planned recipient tracking
+  - Stats page now shows actual sent count vs planned recipients for queue messages
+  - New `queue_stats` object with planned/queued/sent/failed/skipped breakdown
+
+- **Dashboard Clock Widget:**
+  - Modern live clock showing current time in user's timezone
+  - Gradient design (indigo → purple → pink) with glassmorphism
+  - Displays timezone name and formatted date
+
+- **Timezone-Aware Date Formatting:**
+  - New `DateHelper` PHP class for centralized timezone-aware date formatting
+  - New `useDateTime` Vue composable for frontend date formatting
+
+### Changed
+- **CRON Queue Processing Refactored:**
+  - `CronScheduleService::processQueue()` now syncs recipients before processing
+  - Processing now iterates over `MessageQueueEntry` records instead of messages
+  - Each subscriber is tracked individually through planned → queued → sent stages
+  - New subscribers added to lists are automatically included in next CRON run
+
+- **Dashboard Layout:**
+  - "License Active" and "Current Time" sections now share a single row (2 columns) to save vertical space
+  - Improved responsive behavior for dashboard widgets
+
+- **Default Content Language:**
+  - All system emails and pages now have English default content
+  - Users can customize content in any language per list
+
+### Fixed
+- **Timezone Display Issues:**
+  - Dates now display in the user's configured timezone instead of server UTC
+  - Affected controllers: MessageController, SubscriberController, ApiKeyController, SmsController, UserManagementController, MailingListController, SmsListController
+
+- **CRON Queue Processing:**
+  - Fixed "Send Now" not working - now properly sets `scheduled_at` for immediate dispatch
+  - CRON now increments `sent_count` after successful message dispatch
+  - CRON now marks broadcast messages as "sent" after dispatching
+  - CRON skips inactive queue messages (`is_active = false`)
+
+### Database
+- New migration: `2025_12_21_210000_separate_system_pages_and_emails`
+  - Renamed `system_messages` to `system_pages`
+  - Added `access` column (public/private) to `system_pages`
+  - Created `system_emails` table with slug, subject, content, is_active
+
+- New migration: `2025_12_21_220000_update_system_emails_to_8_with_english`
+  - Seeded 8 system email templates with English content
+  - Updated 10 system pages with English content
+
+- New migration: `2025_12_21_220000_create_message_queue_entries_table`
+  - Table `message_queue_entries` with columns: `message_id`, `subscriber_id`, `status`, `planned_at`, `queued_at`, `sent_at`, `error_message`
+
+- New migration: `2025_12_21_200000_add_queue_status_columns_to_messages`
+  - Added `is_active`, `sent_count`, `planned_recipients_count`, `recipients_calculated_at`
+
+### Translations
+- Added system_pages translations (PL, EN, DE, ES):
+  - Full CRUD labels, access levels, slug editing
+
+- Added system_emails translations (PL, EN, DE, ES):
+  - Full CRUD labels, toggle messages, placeholders info
+
+- Added queue progress translations (PL, EN):
+  - `messages.stats.queue.*` keys
+
+- Added clock widget translations (PL, EN):
+  - `dashboard.clock.*` keys
 ---
 
 ## [1.0.5] – User Management System - 2025-12-21

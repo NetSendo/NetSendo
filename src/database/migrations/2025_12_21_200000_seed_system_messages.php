@@ -1,0 +1,100 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     * Seeds default system messages to ensure they exist on fresh install.
+     */
+    public function up(): void
+    {
+        $messages = [
+            [
+                'slug' => 'signup_success',
+                'name' => 'Signup Confirmation',
+                'title' => 'Subscription Successful',
+                'content' => '<h1>Thank you for subscribing!</h1><p>Your email address has been successfully added to our mailing list.</p>'
+            ],
+            [
+                'slug' => 'signup_error',
+                'name' => 'Signup Error',
+                'title' => 'Subscription Failed',
+                'content' => '<h1>An error occurred</h1><p>Sorry, we could not add your email address. Please try again later.</p>'
+            ],
+            [
+                'slug' => 'activation_success',
+                'name' => 'Activation Confirmation',
+                'title' => 'Activation Successful',
+                'content' => '<h1>Account Activated!</h1><p>Your email address has been successfully verified.</p>'
+            ],
+            [
+                'slug' => 'activation_error',
+                'name' => 'Activation Error',
+                'title' => 'Activation Failed',
+                'content' => '<h1>Activation Error</h1><p>The activation link is invalid or has expired.</p>'
+            ],
+            [
+                'slug' => 'unsubscribe_success',
+                'name' => 'Unsubscribe Confirmation',
+                'title' => 'Unsubscribed Successfully',
+                'content' => '<h1>You have been unsubscribed</h1><p>Your email address has been removed from our mailing list.</p>'
+            ],
+            [
+                'slug' => 'unsubscribe_error',
+                'name' => 'Unsubscribe Error',
+                'title' => 'Unsubscribe Failed',
+                'content' => '<h1>An error occurred</h1><p>We could not remove your email from the list. Please contact the administrator.</p>'
+            ],
+            [
+                'slug' => 'signup_exists',
+                'name' => 'Email Already Exists',
+                'title' => 'Email Already Subscribed',
+                'content' => '<h1>Already Subscribed</h1><p>This email address is already in our database.</p>'
+            ],
+            [
+                'slug' => 'unsubscribe_confirm',
+                'name' => 'Unsubscribe Confirmation Request',
+                'title' => 'Confirm Unsubscription',
+                'content' => '<h1>Confirmation Required</h1><p>Are you sure you want to unsubscribe from this list?</p><p><a href="{unwrap_link}">Yes, unsubscribe me</a></p>'
+            ],
+            [
+                'slug' => 'new_subscriber_notification',
+                'name' => 'New Subscriber Notification',
+                'title' => 'Nowy subskrybent na liście',
+                'content' => '<h2>Nowy subskrybent!</h2><p>Na listę <strong>[[list-name]]</strong> zapisał się nowy subskrybent:</p><p><strong>Email:</strong> [[email]]</p><p><strong>Data:</strong> [[date]]</p>'
+            ],
+        ];
+
+        foreach ($messages as $msg) {
+            // Only insert if not exists (for idempotency)
+            $exists = DB::table('system_messages')
+                ->where('slug', $msg['slug'])
+                ->whereNull('contact_list_id')
+                ->exists();
+                
+            if (!$exists) {
+                DB::table('system_messages')->insert([
+                    'slug' => $msg['slug'],
+                    'contact_list_id' => null,
+                    'name' => $msg['name'],
+                    'title' => $msg['title'],
+                    'content' => $msg['content'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Remove only the global (contact_list_id = null) system messages
+        DB::table('system_messages')->whereNull('contact_list_id')->delete();
+    }
+};

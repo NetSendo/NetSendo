@@ -283,6 +283,10 @@
                 "errors": "Błędów",
                 "last_run": "Ostatnie uruchomienie"
             }
+        },
+        "clock": {
+            "title": "Aktualny czas",
+            "timezone_label": "Strefa czasowa"
         }
     },
     "mailing_lists": {
@@ -588,6 +592,10 @@
         "go_to_edit_duplicate": "Przejdź do edycji duplikatu",
         "stay_on_list": "Zostań na liście",
         "copy_prefix": "[KOPIA]",
+        "toggle_activate": "Aktywuj kolejkę",
+        "toggle_deactivate": "Dezaktywuj kolejkę",
+        "status_active": "Aktywna",
+        "status_inactive": "Nieaktywna",
         "create_title": "Nowa wiadomość",
         "edit_title": "Edytuj wiadomość",
         "create_subtitle": "Przygotuj nową kampanię email",
@@ -816,6 +824,15 @@
                 "email": "Email",
                 "time": "Czas",
                 "url": "URL"
+            },
+            "queue": {
+                "title": "Postęp kolejki",
+                "last_sync": "Ostatnia synchronizacja",
+                "planned": "Zaplanowano",
+                "queued": "W kolejce",
+                "sent": "Wysłano",
+                "failed": "Błędy",
+                "skipped": "Pominięto"
             }
         }
     },
@@ -1054,28 +1071,64 @@
         "plans": {
             "silver": {
                 "name": "SILVER",
-                "price": "DARMOWA",
-                "suffix": "DOŻYWOTNIA",
+                "price": "Free",
+                "suffix": "Lifetime",
+                "description": "Idealny dla: twórców, startupów, e-commerce, marketerów, którzy chcą budować listy i wysyłać kampanie bez limitów, bez kosztów.",
                 "select": "Wybieram SILVER",
+                "sections": {
+                    "core": "Email & SMS Core",
+                    "ai": "AI Content Assistants",
+                    "forms": "Formularze, Szablony, Dane",
+                    "integrations": "Integracje (Core)"
+                },
                 "features": {
-                    "basic": "Wszystkie podstawowe funkcje",
-                    "unlimited": "Nieograniczone kontakty",
-                    "templates": "Szablony email",
-                    "support": "Wsparcie społeczności"
-                }
+                    "unlimited_lists": "Nielimitowane listy subskrybentów (Email & SMS)",
+                    "multimailing": "Wielomailing – wysyłka do wielu list jednocześnie",
+                    "queue": "Kolejka wiadomości",
+                    "system_msgs": "Wiadomości systemowe",
+                    "cron": "Indywidualne ustawienia CRON dla list",
+                    "triggers": "Triggery email",
+                    "ai_titles": "AI – generator tytułów",
+                    "ai_content": "AI – generator treści wiadomości",
+                    "dynamic_fields": "Dodawanie własnych pól i dynamicznych wstawek",
+                    "forms_gen": "Generator formularzy",
+                    "templates_gen": "Generator szablonów email",
+                    "segmentation": "Segmentacja list",
+                    "stats": "Zaawansowane statystyki",
+                    "import": "Import subskrybentów z CSV",
+                    "smtp": "SMTP",
+                    "gmail": "Gmail",
+                    "sendgrid": "SendGrid",
+                    "openai": "OpenAI",
+                    "anthropic": "Anthropic",
+                    "grok": "Grok (xAI)",
+                    "gemini": "Google Gemini"
+                },
+                "summary_1": "SILVER = pełnoprawny system mailingowy + AI, bez limitów i bez opłat",
+                "summary_2": "Idealny jako entry point i narzędzie „na zawsze”"
             },
             "gold": {
                 "name": "GOLD",
-                "price": "$97",
-                "suffix": "/miesiąc",
+                "price": "97 USD",
+                "suffix": "/ month",
+                "description": "Idealny dla: firm, SaaS, e-commerce, agencji, power-userów AI którzy chcą automatyzować, skalować i integrować NetSendo z własnymi systemami",
                 "select": "Kup GOLD",
-                "features": {
+                "sections": {
                     "everything": "Wszystko z SILVER",
-                    "automations": "Zaawansowane automatyzacje",
-                    "priority": "Priorytetowe wsparcie",
-                    "api": "Dostęp API",
-                    "white_label": "White-label"
-                }
+                    "automation": "Automatyzacja & Skalowanie",
+                    "integrations": "Integracje PRO / DEV",
+                    "users": "Zarządzanie użytkownikami"
+                },
+                "features": {
+                    "core_access": "(+ pełen dostęp do całego core)",
+                    "funnels": "Lejki email (Email Funnels)",
+                    "advanced_auto": "Zaawansowane automatyzacje (workflow / logic / event-based)",
+                    "public_api": "Publiczne API",
+                    "openrouter": "Integracja OpenRouter",
+                    "ollama": "Integracja Ollama (lokalne LLM / self-hosted)",
+                    "team": "Opcja dodawania pracowników"
+                },
+                "summary": "GOLD = silnik automatyzacji + warstwa developerska + AI bez ograniczeń architektury"
             }
         }
     },
@@ -2097,6 +2150,16 @@
         "created": "Wstawka została utworzona",
         "updated": "Wstawka została zaktualizowana",
         "deleted": "Wstawka została usunięta",
+        "picker_title": "Wybierz wstawkę lub zmienną",
+        "button_title": "Wstawki i zmienne",
+        "insert_variable": "Wstaw wstawkę",
+        "tabs": {
+            "variables": "Zmienne",
+            "inserts": "Wstawki",
+            "signatures": "Podpisy"
+        },
+        "search": "Szukaj...",
+        "no_results": "Brak wyników wyszukiwania",
         "variables": {
             "subscriber_data": "Dane subskrybenta",
             "first_name": "Imię",
@@ -2306,5 +2369,81 @@
             "description": "Wybierz listy, do których użytkownik będzie miał dostęp i ustaw poziom uprawnień.",
             "save": "Zapisz uprawnienia"
         }
+    },
+    "system_pages": {
+        "title": "Strony systemowe",
+        "subtitle": "Zarządzaj stronami HTML wyświetlanymi użytkownikom po akcjach",
+        "all_lists": "Szablony globalne",
+        "select_list": "Wybierz listę",
+        "search_list": "Szukaj listy...",
+        "no_lists_found": "Nie znaleziono list",
+        "global_default": "Szablon globalny (domyślny)",
+        "edit_for_list": "Edytujesz strony dla listy: {name}",
+        "table": {
+            "name": "Nazwa",
+            "title": "Tytuł strony",
+            "slug": "Adres (URI)",
+            "access": "Dostęp",
+            "status": "Status"
+        },
+        "customized": "Dostosowany",
+        "default": "Domyślny",
+        "customize": "Dostosuj",
+        "access": {
+            "public": "Publiczny",
+            "private": "Prywatny"
+        },
+        "edit_title": "Edytuj stronę: {name}",
+        "context": "Kontekst:",
+        "back_to_list": "← Powrót do listy",
+        "page_title_label": "Tytuł strony",
+        "slug_label": "Adres strony (slug)",
+        "slug_readonly_global": "Adres można zmienić tylko dla stron dostosowanych do konkretnej listy",
+        "access_label": "Widoczność",
+        "access_help": "Publiczne strony są dostępne dla wszystkich. Prywatne wymagają autoryzacji.",
+        "content_label": "Treść HTML strony",
+        "current_url": "Aktualny adres",
+        "updated": "Strona została zaktualizowana.",
+        "custom_created": "Utworzono dostosowaną wersję strony dla tej listy.",
+        "reset_to_default": "Przywrócono domyślną wersję strony.",
+        "cannot_delete_global": "Nie można usunąć globalnego szablonu strony.",
+        "global_defaults": "Szablony globalne"
+    },
+    "system_emails": {
+        "title": "Wiadomości systemowe",
+        "subtitle": "Zarządzaj szablonami emaili wysyłanymi automatycznie",
+        "all_lists": "Szablony globalne",
+        "select_list": "Wybierz listę",
+        "search_list": "Szukaj listy...",
+        "no_lists_found": "Nie znaleziono list",
+        "global_default": "Szablon globalny (domyślny)",
+        "edit_for_list": "Edytujesz emaile dla listy: {name}",
+        "table": {
+            "name": "Nazwa",
+            "subject": "Temat",
+            "slug": "Identyfikator",
+            "active": "Aktywny",
+            "status": "Status"
+        },
+        "customized": "Dostosowany",
+        "default": "Domyślny",
+        "customize": "Dostosuj",
+        "edit_title": "Edytuj email: {name}",
+        "context": "Kontekst:",
+        "back_to_list": "← Powrót do listy",
+        "subject_label": "Temat wiadomości",
+        "content_label": "Treść HTML emaila",
+        "is_active": "Wysyłanie włączone",
+        "is_active_desc": "Gdy wyłączone, ta wiadomość nie będzie wysyłana",
+        "available_placeholders": "Dostępne zmienne",
+        "updated": "Email został zaktualizowany.",
+        "custom_created": "Utworzono dostosowaną wersję emaila dla tej listy.",
+        "reset_to_default": "Przywrócono domyślną wersję emaila.",
+        "toggled": "Status emaila został zmieniony.",
+        "cannot_toggle_global": "Nie można zmieniać statusu globalnych emaili.",
+        "click_to_enable": "Kliknij, aby włączyć",
+        "click_to_disable": "Kliknij, aby wyłączyć",
+        "cannot_delete_global": "Nie można usunąć globalnego szablonu emaila.",
+        "global_defaults": "Szablony globalne"
     }
 }

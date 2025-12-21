@@ -1,13 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import StatsCard from '@/Components/Dashboard/StatsCard.vue';
 import ActivityChart from '@/Components/Dashboard/ActivityChart.vue';
 import RecentCampaigns from '@/Components/Dashboard/RecentCampaigns.vue';
 import QuickActions from '@/Components/Dashboard/QuickActions.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
 const page = usePage();
+const { userTimezone, getCurrentTimeFormatted, getCurrentDateFormatted, startClock, formatDateTime } = useDateTime();
 
 // CRON Status
 const cronStatus = ref(null);
@@ -16,6 +18,15 @@ const loadingCronStatus = ref(true);
 // Dashboard Stats
 const dashboardStats = ref(null);
 const loadingStats = ref(true);
+
+// Clock display
+const currentTimeDisplay = ref('');
+const currentDateDisplay = ref('');
+
+const updateClockDisplay = () => {
+    currentTimeDisplay.value = getCurrentTimeFormatted();
+    currentDateDisplay.value = getCurrentDateFormatted();
+};
 
 const fetchDashboardStats = async () => {
     try {
@@ -49,14 +60,16 @@ const fetchCronStatus = async () => {
     }
 };
 
-const formatDateTime = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('pl-PL');
-};
-
 onMounted(() => {
     fetchDashboardStats();
     fetchCronStatus();
+    
+    // Start clock updates
+    startClock();
+    updateClockDisplay();
+    
+    // Update display every second
+    setInterval(updateClockDisplay, 1000);
 });
 </script>
 
@@ -107,26 +120,59 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- License active badge -->
-        <div v-else class="mb-6 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-900/20">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                <svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+        <!-- License active badge + Clock Widget Row -->
+        <div v-else class="mb-6 grid gap-4 lg:grid-cols-2">
+            <!-- License active badge -->
+            <div class="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-900/20 h-full">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                    <svg class="h-5 w-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="font-medium text-emerald-700 dark:text-emerald-300">
+                        {{ $t('dashboard.license_active') }}
+                    </span>
+                    <span 
+                        class="ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold"
+                        :class="{
+                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $page.props.license?.plan === 'GOLD',
+                            'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300': $page.props.license?.plan === 'SILVER'
+                        }"
+                    >
+                        {{ $page.props.license?.plan }}
+                    </span>
+                </div>
             </div>
-            <div>
-                <span class="font-medium text-emerald-700 dark:text-emerald-300">
-                    {{ $t('dashboard.license_active') }}
-                </span>
-                <span 
-                    class="ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold"
-                    :class="{
-                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400': $page.props.license?.plan === 'GOLD',
-                        'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300': $page.props.license?.plan === 'SILVER'
-                    }"
-                >
-                    {{ $page.props.license?.plan }}
-                </span>
+
+            <!-- Clock Widget -->
+            <div class="overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-lg">
+                <div class="rounded-xl bg-white/95 backdrop-blur-sm p-5 dark:bg-slate-900/95 h-full">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+                                <svg class="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">{{ $t('dashboard.clock.title') }}</p>
+                                <p class="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent dark:from-indigo-400 dark:to-purple-400">
+                                    {{ currentTimeDisplay }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="sm:text-right">
+                            <p class="text-sm text-slate-600 dark:text-slate-300">{{ currentDateDisplay }}</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center sm:justify-end gap-1">
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {{ $t('dashboard.clock.timezone_label') }}: <span class="font-medium">{{ userTimezone }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

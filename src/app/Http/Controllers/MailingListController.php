@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 
 use App\Models\ContactList;
@@ -52,7 +53,7 @@ class MailingListController extends Controller
                     'description' => $list->description,
                     'group' => $list->group,
                     'tags' => $list->tags,
-                    'created_at' => $list->created_at->format('Y-m-d'),
+                    'created_at' => DateHelper::formatDateForUser($list->created_at),
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
@@ -153,7 +154,7 @@ class MailingListController extends Controller
                 'description' => $mailingList->description,
                 'group' => $mailingList->group,
                 'tags' => $mailingList->tags,
-                'created_at' => $mailingList->created_at->format('Y-m-d'),
+                'created_at' => DateHelper::formatDateForUser($mailingList->created_at),
                 'is_public' => $mailingList->is_public,
                 'subscribers_count' => $mailingList->subscribers->count(),
                 'permission' => auth()->user()->canEditList($mailingList) ? 'edit' : 'view',

@@ -61,6 +61,12 @@ class SystemMessageSeeder extends Seeder
                 'title' => 'Confirm Unsubscription',
                 'content' => '<h1>Confirmation Required</h1><p>Are you sure you want to unsubscribe from this list?</p><p><a href="{unwrap_link}">Yes, unsubscribe me</a></p>'
             ],
+            [
+                'slug' => 'new_subscriber_notification',
+                'name' => 'New Subscriber Notification',
+                'title' => 'Nowy subskrybent na liście',
+                'content' => '<h2>Nowy subskrybent!</h2><p>Na listę <strong>[[list-name]]</strong> zapisał się nowy subskrybent:</p><p><strong>Email:</strong> [[email]]</p><p><strong>Data:</strong> [[date]]</p>'
+            ],
         ];
 
         foreach ($messages as $msg) {

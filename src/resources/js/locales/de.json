@@ -1034,74 +1034,6 @@
             "stats": "Statistiken"
         }
     },
-    "license": {
-        "title": "Lizenz",
-        "active_status": "Lizenz {plan} aktiv",
-        "expires_at": "Gültig bis: {date}",
-        "expires_never": "unbegrenzt",
-        "lifetime_license": "Lebenslange Lizenz — zeitlich unbegrenzt",
-        "app_version": "App-Version: {version}",
-        "upgrade_to_gold": "Upgrade auf GOLD",
-        "upgrade_desc": "Schalten Sie fortgeschrittene Automatisierungen und Prioritäts-Support frei",
-        "buy_gold": "GOLD kaufen — $97/Monat",
-        "gold_expired": "GOLD-Lizenz abgelaufen",
-        "gold_expired_desc": "Abgelaufen am: {date}. Erneuern Sie Ihr Abonnement, um Premium-Funktionen wiederherzustellen.",
-        "renew_gold": "GOLD erneuern — $97/Monat",
-        "choose_plan": "Wählen Sie Ihre Lizenz",
-        "choose_plan_desc": "NetSendo bietet zwei Tarife an — wählen Sie den, der Ihren Bedürfnissen entspricht",
-        "popular": "BELIEBT",
-        "coming_soon": "Demnächst verfügbar",
-        "gold_coming_soon_msg": "Der GOLD-Tarif wird in Kürze verfügbar sein! Vorerst können Sie den SILVER-Tarif nutzen.",
-        "request_error": "Verbindungsfehler. Geben Sie den Lizenzschlüssel unten manuell ein.",
-        "processing": "Verarbeitung...",
-        "manual_activation_title": "Lizenz manuell aktivieren",
-        "manual_activation_desc": "Geben Sie den per E-Mail oder nach dem Kauf erhaltenen Lizenzschlüssel ein",
-        "license_key_label": "Lizenzschlüssel",
-        "license_key_placeholder": "Fügen Sie Ihren Lizenzschlüssel hier ein...",
-        "activate_button": "Lizenz aktivieren",
-        "activating": "Aktivierung...",
-        "back_to_plans": "Zurück zur Tarifauswahl",
-        "already_have_key": "Ich habe bereits einen Lizenzschlüssel",
-        "generic_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-        "domain": "Domain",
-        "email": "Kontakt-E-Mail",
-        "show": "Anzeigen",
-        "hide": "Verbergen",
-        "request_sent_polling": "Anfrage gesendet! Warten auf Lizenzgenerierung...",
-        "waiting_for_activation": "Die Generierung des Lizenzschlüssels kann bis zu 1 Minute dauern",
-        "activating_license": "Lizenz wird aktiviert",
-        "polling_hint": "Die Lizenz wird automatisch aktiviert, sobald sie vom Server empfangen wird",
-        "polling_timeout": "Wartezeit abgelaufen. Geben Sie den Lizenzschlüssel manuell ein oder versuchen Sie es erneut.",
-        "enter_manually": "Ich möchte den Schlüssel lieber manuell eingeben",
-        "auto_activated_success": "Lizenz wurde automatisch aktiviert!",
-        "plans": {
-            "silver": {
-                "name": "SILVER",
-                "price": "KOSTENLOS",
-                "suffix": "LEBENSLANG",
-                "select": "SILVER wählen",
-                "features": {
-                    "basic": "Alle Basisfunktionen",
-                    "unlimited": "Unbegrenzte Kontakte",
-                    "templates": "E-Mail-Vorlagen",
-                    "support": "Community-Support"
-                }
-            },
-            "gold": {
-                "name": "GOLD",
-                "price": "$97",
-                "suffix": "/Monat",
-                "select": "GOLD kaufen",
-                "features": {
-                    "everything": "Alles aus SILVER",
-                    "automations": "Erweiterte Automatisierungen",
-                    "priority": "Prioritäts-Support",
-                    "api": "API-Zugriff",
-                    "white_label": "White-Label"
-                }
-            }
-        }
-    },
     "ai": {
         "title": "KI-Integrationen",
         "subtitle": "Konfigurieren Sie KI-Integrationen, um Funktionen zur Inhaltsgenerierung zu nutzen.",
@@ -2204,5 +2136,109 @@
             "Update-Prüfung",
             "Verbesserte E-Mail-Vorlagen"
         ]
+    },
+    "license": {
+        "title": "Lizenz",
+        "active_status": "Lizenz {plan} aktiv",
+        "expires_at": "Gültig bis: {date}",
+        "expires_never": "lebenslang",
+        "lifetime_license": "Lebenslange Lizenz — ohne Zeitlimit",
+        "app_version": "App-Version: {version}",
+        "upgrade_to_gold": "Upgrade auf GOLD",
+        "upgrade_desc": "Schalten Sie erweiterte Automatisierungen und priorisierten Support frei",
+        "buy_gold": "GOLD kaufen — $97/Monat",
+        "gold_expired": "GOLD-Lizenz abgelaufen",
+        "gold_expired_desc": "Abgelaufen: {date}. Erneuern Sie das Abonnement, um den Zugriff auf Premium-Funktionen wiederherzustellen.",
+        "renew_gold": "GOLD erneuern — $97/Monat",
+        "choose_plan": "Wählen Sie Ihre Lizenz",
+        "choose_plan_desc": "NetSendo bietet zwei Pläne — wählen Sie den, der Ihren Bedürfnissen entspricht",
+        "popular": "BELIEBT",
+        "coming_soon": "Demnächst",
+        "gold_coming_soon_msg": "Der GOLD-Plan ist bald verfügbar! Bis dahin können Sie den SILVER-Plan nutzen.",
+        "request_error": "Verbindungsfehler. Geben Sie den Lizenzschlüssel unten manuell ein.",
+        "processing": "Verarbeitung...",
+        "manual_activation_title": "Lizenz manuell aktivieren",
+        "manual_activation_desc": "Geben Sie den Lizenzschlüssel ein, den Sie per E-Mail oder nach dem Kauf erhalten haben",
+        "license_key_label": "Lizenzschlüssel",
+        "license_key_placeholder": "Fügen Sie Ihren Lizenzschlüssel hier ein...",
+        "activate_button": "Lizenz aktivieren",
+        "activating": "Aktivierung...",
+        "back_to_plans": "Zurück zu den Plänen",
+        "already_have_key": "Ich habe einen Lizenzschlüssel",
+        "generic_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        "domain": "Domain",
+        "email": "Kontakt-E-Mail",
+        "show": "Anzeigen",
+        "hide": "Verbergen",
+        "request_sent_polling": "Anfrage gesendet! Warte auf Lizenzgenerierung...",
+        "waiting_for_activation": "Die Generierung des Lizenzschlüssels kann bis zu 1 Minute dauern",
+        "activating_license": "Lizenz wird aktiviert",
+        "polling_hint": "Die Lizenz wird automatisch aktiviert, sobald sie vom Server empfangen wurde",
+        "polling_timeout": "Zeitüberschreitung. Geben Sie den Lizenzschlüssel manuell ein oder versuchen Sie es erneut.",
+        "enter_manually": "Schlüssel manuell eingeben",
+        "auto_activated_success": "Lizenz erfolgreich aktiviert!",
+        "plans": {
+            "silver": {
+                "name": "SILVER",
+                "price": "Kostenlos",
+                "suffix": "Lebenslang",
+                "description": "Ideal für: Ersteller, Startups, E-Commerce, Vermarkter, die Listen ohne Limits und ohne Kosten erstellen und Kampagnen versenden möchten.",
+                "select": "SILVER wählen",
+                "sections": {
+                    "core": "E-Mail & SMS Core",
+                    "ai": "KI-Content-Assistenten",
+                    "forms": "Formulare, Vorlagen, Daten",
+                    "integrations": "Integrationen (Core)"
+                },
+                "features": {
+                    "unlimited_lists": "Unbegrenzte Abonnentenlisten (E-Mail & SMS)",
+                    "multimailing": "Multi-Mailing – an mehrere Listen gleichzeitig senden",
+                    "queue": "Nachrichtenwarteschlange",
+                    "system_msgs": "Systemnachrichten",
+                    "cron": "Individuelle CRON-Einstellungen für Listen",
+                    "triggers": "E-Mail-Trigger",
+                    "ai_titles": "KI – Betreffzeilen-Generator",
+                    "ai_content": "KI – Nachrichteninhalts-Generator",
+                    "dynamic_fields": "Benutzerdefinierte Felder und dynamische Einfügungen",
+                    "forms_gen": "Formular-Generator",
+                    "templates_gen": "E-Mail-Vorlagen-Generator",
+                    "segmentation": "Listensegmentierung",
+                    "stats": "Erweiterte Statistiken",
+                    "import": "Abonnenten-Import aus CSV",
+                    "smtp": "SMTP",
+                    "gmail": "Gmail",
+                    "sendgrid": "SendGrid",
+                    "openai": "OpenAI",
+                    "anthropic": "Anthropic",
+                    "grok": "Grok (xAI)",
+                    "gemini": "Google Gemini"
+                },
+                "summary_1": "SILVER = vollwertiges Mailing-System + KI, ohne Limits und ohne Gebühren",
+                "summary_2": "Ideal als Einstiegspunkt und Werkzeug 'für immer'"
+            },
+            "gold": {
+                "name": "GOLD",
+                "price": "$97",
+                "suffix": "/ Monat",
+                "description": "Ideal für: Unternehmen, SaaS, E-Commerce, Agenturen, KI-Power-User, die NetSendo automatisieren, skalieren und in ihre eigenen Systeme integrieren möchten",
+                "select": "GOLD kaufen",
+                "sections": {
+                    "everything": "Alles in SILVER",
+                    "automation": "Automatisierung & Skalierung",
+                    "integrations": "Integrationen PRO / DEV",
+                    "users": "Benutzerverwaltung"
+                },
+                "features": {
+                    "core_access": "(+ voller Zugriff auf Core)",
+                    "funnels": "E-Mail-Trichter (Email Funnels)",
+                    "advanced_auto": "Erweiterte Automatisierungen (Workflow / Logik / Ereignisbasiert)",
+                    "public_api": "Öffentliche API",
+                    "openrouter": "OpenRouter-Integration",
+                    "ollama": "Ollama-Integration (lokales LLM / selbst gehostet)",
+                    "team": "Teammitglieder-Option"
+                },
+                "summary": "GOLD = Automatisierungs-Engine + Entwicklerschicht + KI ohne Architekturbeschränkungen"
+            }
+        }
     }
 }

@@ -67,7 +67,7 @@ const updateOpenGroup = () => {
     }
 
     // Lista adresowa (Includes specific subscriber route and other modules)
-    if (isActive('messages.*') || isActive('multimail.*') || isActive('sms.*') || isActive('subscribers.subscribed') || isActive('stats.*') || isActive('mailinglist.*') || isActive('forms.*') || isActive('settings.fields.*') || isActive('api.*') || isActive('settings.system-messages.*')) {
+    if (isActive('messages.*') || isActive('multimail.*') || isActive('sms.*') || isActive('subscribers.subscribed') || isActive('stats.*') || isActive('mailinglist.*') || isActive('forms.*') || isActive('settings.fields.*') || isActive('api.*') || isActive('settings.system-emails.*') || isActive('settings.system-pages.*')) {
         openGroup.value = 'address_list';
         return;
     }
@@ -211,13 +211,22 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 </SidebarItem>
 
 
-                <SidebarItem :href="route('settings.system-messages.index')" :active="isActive('settings.system-messages.*')" :collapsed="collapsed">
+                <SidebarItem :href="route('settings.system-emails.index')" :active="isActive('settings.system-emails.*')" :collapsed="collapsed">
                      <template #icon>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </template>
-                    Wiadomości Systemowe
+                    {{ $t('system_emails.title', 'Wiadomości Systemowe') }}
+                </SidebarItem>
+
+                <SidebarItem :href="route('settings.system-pages.index')" :active="isActive('settings.system-pages.*')" :collapsed="collapsed">
+                     <template #icon>
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </template>
+                    {{ $t('system_pages.title', 'Strony Systemowe') }}
                 </SidebarItem>
 
 

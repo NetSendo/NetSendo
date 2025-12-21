@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\Message;
 use App\Models\ContactList;
 use Illuminate\Http\Request;
@@ -37,8 +38,9 @@ class SmsController extends Controller
                 'content' => $message->content, // SMS content usually short enough to show? Or maybe truncate
                 'type' => $message->type, // broadcast, autoresponder
                 'day' => $message->day,
+                'is_active' => $message->is_active ?? true,
                 'status' => $message->status, // draft, scheduled, sent
-                'created_at' => $message->created_at->format('Y-m-d H:i'),
+                'created_at' => DateHelper::formatForUser($message->created_at),
                 'list_name' => $message->contactLists->first()->name ?? '-',
             ]);
 
@@ -203,5 +205,34 @@ class SmsController extends Controller
         $message->delete();
 
         return Redirect::route('sms.index')->with('success', 'SMS Campaign deleted.');
+    }
+
+    /**
+     * Toggle the active status of a queue SMS message
+     */
+    public function toggleActive(string $id)
+    {
+        $message = Message::sms()->findOrFail($id);
+
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only allow toggling for autoresponder/queue type messages
+        if (!$message->isQueueType()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tylko wiadomości typu Kolejka mogą mieć status aktywności.'
+            ], 422);
+        }
+
+        $message->is_active = !($message->is_active ?? true);
+        $message->save();
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $message->is_active,
+            'message' => $message->is_active ? 'SMS została aktywowana.' : 'SMS została dezaktywowana.'
+        ]);
     }
 }
