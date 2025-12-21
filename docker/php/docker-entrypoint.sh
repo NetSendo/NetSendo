@@ -3,25 +3,40 @@ set -e
 
 cd /var/www
 
-echo "🚀 Starting NetSendo v2 initialization..."
+# Get image version for tracking
+IMAGE_VERSION="${NETSENDO_VERSION:-unknown}"
+VERSION_FILE="/var/www/storage/.image_version"
 
-# Copy .env.docker to .env if .env doesn't exist
-if [ ! -f .env ]; then
-    if [ -f .env.docker ]; then
-        echo "📋 Creating .env from .env.docker..."
-        cp .env.docker .env
-    else
-        echo "⚠️ No .env.docker found, skipping .env creation"
-    fi
+echo "🚀 Starting NetSendo initialization..."
+echo "📦 Image version: ${IMAGE_VERSION}"
+
+# =============================================================================
+# SYNC PUBLIC ASSETS TO SHARED VOLUME
+# =============================================================================
+# This ensures nginx can serve static files from the shared volume.
+# We always sync to ensure new deployments have the latest assets.
+
+echo "📁 Syncing public assets to shared volume..."
+
+# Create backup directory for any user uploads in public (if they exist)
+if [ -d "/var/www/public/storage" ] && [ "$(ls -A /var/www/public/storage 2>/dev/null)" ]; then
+    echo "   Preserving existing public/storage symlink content..."
 fi
 
-# Install Composer dependencies if vendor directory doesn't exist
-if [ ! -d "vendor" ]; then
-    echo "📦 Installing Composer dependencies..."
-    composer install --no-interaction --optimize-autoloader
+# Sync public directory from image to volume
+# Using rsync if available, otherwise cp
+if command -v rsync &> /dev/null; then
+    rsync -a --delete --exclude='storage' /var/www/public.dist/ /var/www/public/
 else
-    echo "✅ Composer dependencies already installed"
+    # Fallback: copy files (less efficient but works)
+    cp -rf /var/www/public.dist/* /var/www/public/ 2>/dev/null || true
 fi
+
+echo "✅ Public assets synced"
+
+# =============================================================================
+# ENVIRONMENT CONFIGURATION
+# =============================================================================
 
 # Generate app key if not set
 if [ -f .env ] && grep -q "^APP_KEY=$" .env; then
@@ -29,23 +44,10 @@ if [ -f .env ] && grep -q "^APP_KEY=$" .env; then
     php artisan key:generate --force
 fi
 
-# Install NPM dependencies if node_modules doesn't exist
-if [ ! -d "node_modules" ]; then
-    echo "📦 Installing NPM dependencies..."
-    npm install
-else
-    echo "✅ NPM dependencies already installed"
-fi
+# =============================================================================
+# DATABASE INITIALIZATION
+# =============================================================================
 
-# Build frontend assets if manifest doesn't exist
-if [ ! -f "public/build/manifest.json" ]; then
-    echo "🔨 Building frontend assets..."
-    npm run build
-else
-    echo "✅ Frontend assets already built"
-fi
-
-# Wait for database to be ready
 echo "⏳ Waiting for database connection..."
 max_attempts=30
 attempt=0
@@ -71,9 +73,20 @@ if [ $attempt -lt $max_attempts ]; then
     fi
 fi
 
+# =============================================================================
+# CACHE OPTIMIZATION
+# =============================================================================
+
+echo "🔧 Optimizing application cache..."
+php artisan config:cache 2>/dev/null || true
+php artisan route:cache 2>/dev/null || true
+php artisan view:cache 2>/dev/null || true
+
+# Save version for tracking
+echo "$IMAGE_VERSION" > "$VERSION_FILE" 2>/dev/null || true
+
 echo "✅ Application initialized successfully!"
-echo "📍 Access the app at: http://localhost:8080"
-echo "📧 Mailpit available at: http://localhost:8025"
+echo "📍 NetSendo is ready to serve requests"
 
 # Execute the main command (php-fpm)
 exec php-fpm

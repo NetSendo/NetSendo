@@ -363,61 +363,57 @@ Check for available updates:
 1. In the app: **Settings → Updates**
 2. On GitHub: [Releases](https://github.com/NetSendo/NetSendo/releases)
 
-### Update Process
+### Update Process (Standard Docker Workflow)
 
 ```bash
 # Stop containers
 docker compose down
 
-# Pull latest version
-git pull
-
-# Rebuild and start
-docker compose up -d --build
-```
----
-
-## 🔧 Troubleshooting
-
-### Changes Not Visible on Production
-
-If you've deployed a new version but some changes (translations, UI elements, version number) are not visible:
-
-**1. Clear Laravel caches:**
-```bash
-docker compose exec app php artisan cache:clear
-docker compose exec app php artisan config:clear
-docker compose exec app php artisan view:clear
-docker compose exec app php artisan route:clear
-```
-
-**2. Rebuild frontend assets:**
-```bash
-docker compose exec -u dev app bash -c "cd /var/www && npm run build"
-```
-
-**3. Force pull new Docker image and restart:**
-```bash
+# Pull latest images
 docker compose pull
-docker compose down
-docker compose up -d
-```
 
-**4. Full rebuild (if above doesn't work):**
-```bash
-docker compose down
-docker compose build --no-cache
+# Start with new version
 docker compose up -d
 ```
 
 > [!TIP]
-> The Docker entrypoint skips asset rebuilding if `public/build/manifest.json` already exists. Force rebuild with option #2 above.
+> That's it! No rebuilding or cache clearing required. Works just like n8n and other Docker apps.
+
+**Update to specific version:**
+```bash
+NETSENDO_VERSION=1.1.0 docker compose up -d
+```
+
+📖 For detailed instructions, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)
+---
+
+## 🔧 Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check logs
+docker compose logs app
+
+# Verify database is healthy
+docker compose exec db mysqladmin ping -h localhost
+```
+
+### Clear Caches
+
+```bash
+docker compose exec app php artisan cache:clear
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan view:clear
+```
 
 ### Browser Cache Issues
 
-If changes still don't appear:
+If changes don't appear after update:
 - Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
 - Clear browser cache or use incognito mode
+
+📖 For more troubleshooting, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md#-troubleshooting)
 
 ---
 

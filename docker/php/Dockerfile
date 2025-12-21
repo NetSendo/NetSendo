@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libicu-dev \
-    default-mysql-client
+    default-mysql-client \
+    rsync
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -38,11 +39,11 @@ RUN mkdir -p /home/dev/.composer && \
     chown -R dev:dev /home/dev
 
 # Copy entrypoint script
-COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Copy application source code
-COPY --chown=dev:www-data src/ /var/www/
+COPY --chown=dev:www-data ../../src/ /var/www/
 
 # Install Composer dependencies (as root for proper permissions, then fix ownership)
 USER root
@@ -50,6 +51,13 @@ RUN cd /var/www && composer install --no-dev --optimize-autoloader --no-interact
 
 # Build frontend assets
 RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
+
+# =============================================================================
+# CREATE BACKUP OF PUBLIC DIRECTORY FOR PRODUCTION SYNC
+# =============================================================================
+# This backup is used by docker-entrypoint.sh to sync files to the shared volume.
+# This ensures that `docker compose pull && up` correctly updates static files.
+RUN cp -r /var/www/public /var/www/public.dist
 
 # Set proper permissions
 RUN chown -R dev:www-data /var/www \
