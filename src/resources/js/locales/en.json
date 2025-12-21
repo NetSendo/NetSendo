@@ -759,7 +759,10 @@
             "preheader_placeholder": "Short text visible in mailbox preview...",
             "preheader_help": "Text displayed next to subject in inbox",
             "select_by_tag": "Select by tag:",
-            "no_group": "No group"
+            "no_group": "No group",
+            "excluded_lists": "Don't send to subscribers from lists",
+            "excluded_lists_help": "Subscribers on excluded lists will not receive the message, even if they are on the sending lists.",
+            "excluded_count": "Excluded {count} list(s)"
         },
         "actions": {
             "save_draft": "Save as draft",

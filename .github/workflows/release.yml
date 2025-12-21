@@ -1,0 +1,101 @@
+# =============================================================================
+# NetSendo - Auto Release on Version Change
+# =============================================================================
+# This workflow creates GitHub Releases automatically when the VERSION file
+# changes on push to main branch.
+#
+# How it works:
+#   1. Reads version from VERSION file
+#   2. Checks if git tag already exists (idempotency)
+#   3. If new version: creates tag + GitHub Release with CHANGELOG notes
+#
+# To trigger a release:
+#   1. Update VERSION file (e.g., 1.0.5)
+#   2. Update CHANGELOG.md with ## [1.0.5] section
+#   3. Merge to main
+# =============================================================================
+
+name: Create GitHub Release
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 1) Read version from VERSION file
+      - name: Read version
+        id: ver
+        run: echo "version=$(cat VERSION | tr -d ' \n\r')" >> $GITHUB_OUTPUT
+
+      # 2) Check if tag already exists (idempotency - skip if already released)
+      - name: Check tag exists
+        id: tagcheck
+        run: |
+          if git rev-parse "v${{ steps.ver.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "::notice::Tag v${{ steps.ver.outputs.version }} already exists. Skipping release."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::notice::New version detected: v${{ steps.ver.outputs.version }}"
+          fi
+
+      # 3) Create and push git tag
+      - name: Create tag
+        if: steps.tagcheck.outputs.exists != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.ver.outputs.version }}"
+          git push origin "v${{ steps.ver.outputs.version }}"
+
+      # 4) Extract release notes from CHANGELOG.md for this version
+      - name: Extract release notes from CHANGELOG
+        if: steps.tagcheck.outputs.exists != 'true'
+        id: notes
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\["ver"\\]" {flag=1; next}
+            flag && $0 ~ "^## \\[" {exit}
+            flag {print}
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          
+          # If no notes found, create default message
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "Release v$VERSION" > RELEASE_NOTES.md
+          fi
+          
+          echo "path=RELEASE_NOTES.md" >> $GITHUB_OUTPUT
+
+      # 5) Create GitHub Release
+      - name: Create GitHub Release
+        if: steps.tagcheck.outputs.exists != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: v${{ steps.ver.outputs.version }}
+          body_path: ${{ steps.notes.outputs.path }}
+          draft: false
+          prerelease: false
+
+      # 6) Summary
+      - name: Generate summary
+        if: steps.tagcheck.outputs.exists != 'true'
+        run: |
+          echo "## 🚀 Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.ver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Release Notes:" >> $GITHUB_STEP_SUMMARY
+          cat RELEASE_NOTES.md >> $GITHUB_STEP_SUMMARY

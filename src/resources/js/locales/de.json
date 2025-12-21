@@ -750,7 +750,10 @@
             "preheader_placeholder": "Kurzer Text, der in der Posteingangsvorschau sichtbar ist...",
             "preheader_help": "Text, der im Posteingang neben dem Betreff angezeigt wird",
             "select_by_tag": "Nach Tag auswählen:",
-            "no_group": "Keine Gruppe"
+            "no_group": "Keine Gruppe",
+            "excluded_lists": "Nicht an Abonnenten dieser Listen senden",
+            "excluded_lists_help": "Abonnenten auf ausgeschlossenen Listen erhalten die Nachricht nicht, auch wenn sie auf den Versandlisten stehen.",
+            "excluded_count": "{count} Liste(n) ausgeschlossen"
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",

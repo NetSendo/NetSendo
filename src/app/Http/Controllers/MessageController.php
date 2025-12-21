@@ -126,6 +126,8 @@ class MessageController extends Controller
             'status' => 'required|in:draft,scheduled,sent',
             'contact_list_ids' => 'nullable|array',
             'contact_list_ids.*' => 'exists:contact_lists,id',
+            'excluded_list_ids' => 'nullable|array',
+            'excluded_list_ids.*' => 'exists:contact_lists,id',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
@@ -145,6 +147,14 @@ class MessageController extends Controller
             $count = auth()->user()->contactLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
                 return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
+            }
+        }
+
+        // Verify ownership of excluded lists
+        if (!empty($validated['excluded_list_ids'])) {
+            $count = auth()->user()->contactLists()->whereIn('id', $validated['excluded_list_ids'])->count();
+            if ($count !== count($validated['excluded_list_ids'])) {
+                return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
             }
         }
 
@@ -180,6 +190,11 @@ class MessageController extends Controller
             $message->contactLists()->sync($validated['contact_list_ids']);
         }
 
+        // Sync excluded lists
+        if (!empty($validated['excluded_list_ids'])) {
+            $message->excludedLists()->sync($validated['excluded_list_ids']);
+        }
+
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zapisana.');
     }
@@ -190,7 +205,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'template', 'mailbox']);
+        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
 
         return Inertia::render('Message/Create', [
@@ -203,6 +218,7 @@ class MessageController extends Controller
                 'preheader' => $message->preheader,
                 'status' => $message->status,
                 'contact_list_ids' => $message->contactLists->pluck('id'),
+                'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 'send_at' => $message->send_at?->format('Y-m-d H:i:s'),
                 'time_of_day' => $message->time_of_day ? substr($message->time_of_day, 0, 5) : null,
                 'timezone' => $message->timezone,
@@ -255,6 +271,8 @@ class MessageController extends Controller
             'status' => 'required|in:draft,scheduled,sent',
             'contact_list_ids' => 'nullable|array',
             'contact_list_ids.*' => 'exists:contact_lists,id',
+            'excluded_list_ids' => 'nullable|array',
+            'excluded_list_ids.*' => 'exists:contact_lists,id',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
@@ -274,6 +292,14 @@ class MessageController extends Controller
             $count = auth()->user()->contactLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
                 return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
+            }
+        }
+
+        // Verify ownership of excluded lists
+        if (!empty($validated['excluded_list_ids'])) {
+            $count = auth()->user()->contactLists()->whereIn('id', $validated['excluded_list_ids'])->count();
+            if ($count !== count($validated['excluded_list_ids'])) {
+                return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
             }
         }
 
@@ -309,6 +335,11 @@ class MessageController extends Controller
             $message->contactLists()->sync($validated['contact_list_ids'] ?? []);
         }
 
+        // Sync excluded lists
+        if (array_key_exists('excluded_list_ids', $validated)) {
+            $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
+        }
+
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zaktualizowana.');
     }
@@ -333,6 +364,9 @@ class MessageController extends Controller
 
         // Copy contact list associations
         $newMessage->contactLists()->sync($message->contactLists->pluck('id'));
+
+        // Copy excluded list associations
+        $newMessage->excludedLists()->sync($message->excludedLists->pluck('id'));
 
         return response()->json([
             'success' => true,
@@ -360,16 +394,9 @@ class MessageController extends Controller
         }
 
         $totalSent = 100; // Placeholder until we have a real 'sent' counter or table
-        // For accurate 'sent' count, we should probably check how many subscribers this message was targeted to
-        // and if it's sent, we can count rows in a 'sent_messages' table if we had one,
-        // or just count targeted subscribers for now.
-        
-        // Let's count targeted subscribers for approximation
-        // This logic mimics what we'd do to send it
-        $listIds = $message->contactLists->pluck('id');
-        $totalSent = \App\Models\Subscriber::whereIn('contact_list_id', $listIds)
-            ->where('status', 'active')
-            ->count();
+        // For accurate 'sent' count, we use getUniqueRecipients() which applies exclusions and deduplication
+        $message->load(['contactLists', 'excludedLists']);
+        $totalSent = $message->getUniqueRecipients()->count();
             
         if ($totalSent === 0) $totalSent = 1; // Avoid division by zero
 

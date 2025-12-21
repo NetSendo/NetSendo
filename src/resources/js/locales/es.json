@@ -738,7 +738,10 @@
             "preheader_placeholder": "Texto corto visible en la vista previa del buzón...",
             "preheader_help": "Texto que aparece junto al asunto en la bandeja de entrada",
             "select_by_tag": "Seleccionar por etiqueta:",
-            "no_group": "Sin grupo"
+            "no_group": "Sin grupo",
+            "excluded_lists": "No enviar a suscriptores de estas listas",
+            "excluded_lists_help": "Los suscriptores en las listas excluidas no recibirán el mensaje, aunque estén en las listas de envío.",
+            "excluded_count": "{count} lista(s) excluida(s)"
         },
         "actions": {
             "save_draft": "Guardar como borrador",

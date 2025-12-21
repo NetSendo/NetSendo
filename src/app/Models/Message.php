@@ -77,6 +77,42 @@ class Message extends Model
         return $this->belongsToMany(ContactList::class, 'contact_list_message');
     }
 
+    /**
+     * Lists excluded from receiving this message.
+     */
+    public function excludedLists()
+    {
+        return $this->belongsToMany(ContactList::class, 'excluded_contact_list_message');
+    }
+
+    /**
+     * Get unique active subscribers for this message with exclusions applied.
+     * Ensures each email is only included once (deduplication).
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getUniqueRecipients()
+    {
+        $includedListIds = $this->contactLists->pluck('id')->toArray();
+        $excludedListIds = $this->excludedLists->pluck('id')->toArray();
+
+        if (empty($includedListIds)) {
+            return collect();
+        }
+
+        return Subscriber::whereIn('contact_list_id', $includedListIds)
+            ->where('status', 'active')
+            ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
+                // Exclude subscribers that are on any of the excluded lists
+                $excludedEmails = Subscriber::whereIn('contact_list_id', $excludedListIds)
+                    ->pluck('email')
+                    ->toArray();
+                $query->whereNotIn('email', $excludedEmails);
+            })
+            ->get()
+            ->unique('email'); // Final deduplication by email
+    }
+
     // TODO: Implement tracking models when stats feature is ready
     // public function opens()
     // {

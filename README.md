@@ -6,8 +6,8 @@
 
 **Professional Email Marketing & Automation Platform**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
-[![PHP](https://img.shields.io/badge/PHP-8.3-purple.svg)](https://php.net)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
+[![PHP](https://img.shields.io/badge/PHP-8.5-purple.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](LICENSE)
@@ -50,10 +50,10 @@ NetSendo is a modern email marketing and automation platform that enables:
 ## 📋 Requirements
 
 - **Docker Desktop** (recommended) or:
-  - PHP 8.3+
+  - PHP 8.5+
   - MySQL 8.0+
   - Redis
-  - Node.js 20+
+  - Node.js 25+
   - Composer
 
 ---

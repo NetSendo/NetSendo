@@ -102,6 +102,7 @@ const form = useForm({
     type: props.message?.type || 'broadcast',
     day: props.message?.day || 0,
     contact_list_ids: props.message?.contact_list_ids || [],
+    excluded_list_ids: props.message?.excluded_list_ids || [],
     status: props.message?.status || 'draft',
     content: props.message?.content || '',
     send_at: props.message?.send_at || null,
@@ -904,6 +905,61 @@ const triggerTypes = [
                                 <p class="mt-1 text-xs text-slate-500">{{ $t('messages.fields.broadcast_help') }}</p>
                             </div>
                             <InputError class="mt-2" :message="form.errors.contact_list_ids" />
+                        </div>
+
+                        <!-- Excluded Lists (for broadcast only) -->
+                        <div v-if="form.type === 'broadcast'" class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                            <div class="mb-3 flex items-center gap-2">
+                                <svg class="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <InputLabel :value="$t('messages.fields.excluded_lists')" />
+                            </div>
+                            <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                                {{ $t('messages.fields.excluded_lists_help') }}
+                            </p>
+
+                            <!-- Exclusion list checkboxes -->
+                            <div class="max-h-48 overflow-y-auto rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-900">
+                                <div v-for="group in groupedLists" :key="group.id ?? group.name" class="border-b border-slate-200 last:border-b-0 dark:border-slate-700">
+                                    <!-- Group Header -->
+                                    <div class="flex items-center gap-2 bg-slate-50 px-3 py-2 dark:bg-slate-800">
+                                        <svg v-if="group.id" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg>
+                                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            {{ group.name }}
+                                        </span>
+                                    </div>
+                                    <!-- Group Lists -->
+                                    <div class="bg-white dark:bg-slate-900">
+                                        <label 
+                                            v-for="list in group.lists" 
+                                            :key="'excl-' + list.id" 
+                                            class="flex cursor-pointer items-center gap-2 py-1.5 pl-6 pr-3 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        >
+                                            <input 
+                                                type="checkbox" 
+                                                :value="list.id" 
+                                                v-model="form.excluded_list_ids"
+                                                class="rounded border-slate-300 text-red-600 focus:ring-red-500 dark:border-slate-600 dark:bg-slate-800"
+                                            >
+                                            <span class="flex-1 text-sm text-slate-700 dark:text-slate-300">
+                                                {{ list.name }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div v-if="lists.length === 0" class="p-3 text-sm text-slate-400 italic">
+                                    {{ $t('messages.fields.no_lists') }}
+                                </div>
+                            </div>
+                            
+                            <!-- Count of excluded lists -->
+                            <p v-if="form.excluded_list_ids.length > 0" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                                {{ $t('messages.fields.excluded_count', { count: form.excluded_list_ids.length }) }}
+                            </p>
+                            <InputError class="mt-2" :message="form.errors.excluded_list_ids" />
                         </div>
 
                         <!-- Mailbox Selection -->
