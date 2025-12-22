@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
 use App\Models\AutomationRule;
+use App\Models\EmailClick;
+use App\Models\EmailOpen;
 use App\Models\EmailReadSession;
 use App\Models\Mailbox;
 use App\Models\Message;
@@ -216,9 +218,21 @@ class MessageController extends Controller
 
         // Determine scheduled_at for CRON processing
         $scheduledAt = null;
+        $sendAt = null;
+
         if ($validated['status'] === 'scheduled') {
-            // If send_at is set, use it; otherwise schedule for now (immediate send)
-            $scheduledAt = $validated['send_at'] ?? now();
+            // Determine timezone for parsing the input date
+            // Priority: Form timezone -> User timezone -> App timezone (UTC)
+            $timezone = $validated['timezone'] ?? DateHelper::getUserTimezone();
+
+            if (!empty($validated['send_at'])) {
+                // Parse the input date in the user's/selected timezone, then convert to UTC for storage
+                $sendAt = \Carbon\Carbon::parse($validated['send_at'], $timezone)->setTimezone('UTC');
+                $scheduledAt = $sendAt;
+            } else {
+                // Immediate send
+                $scheduledAt = now();
+            }
         }
 
         $message = auth()->user()->messages()->create([
@@ -228,7 +242,8 @@ class MessageController extends Controller
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
             'status' => $validated['status'],
-            'send_at' => $validated['send_at'] ?? null,
+            'status' => $validated['status'],
+            'send_at' => $sendAt,
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
@@ -299,7 +314,11 @@ class MessageController extends Controller
                 'status' => $message->status,
                 'contact_list_ids' => $message->contactLists->pluck('id'),
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
-                'send_at' => $message->send_at?->format('Y-m-d H:i:s'),
+                'excluded_list_ids' => $message->excludedLists->pluck('id'),
+                // Convert stored UTC time back to user's timezone for display
+                'send_at' => $message->send_at 
+                    ? $message->send_at->setTimezone($message->timezone ?? DateHelper::getUserTimezone())->format('Y-m-d H:i:s')
+                    : null,
                 'time_of_day' => $message->time_of_day ? substr($message->time_of_day, 0, 5) : null,
                 'timezone' => $message->timezone,
                 'template_id' => $message->template_id,
@@ -397,9 +416,21 @@ class MessageController extends Controller
 
         // Determine scheduled_at for CRON processing
         $scheduledAt = null;
+        $sendAt = null;
+
         if ($validated['status'] === 'scheduled') {
-            // If send_at is set, use it; otherwise schedule for now (immediate send)
-            $scheduledAt = $validated['send_at'] ?? now();
+            // Determine timezone for parsing the input date
+            // Priority: Form timezone -> User timezone -> App timezone (UTC)
+            $timezone = $validated['timezone'] ?? DateHelper::getUserTimezone();
+            
+            if (!empty($validated['send_at'])) {
+                // Parse the input date in the user's/selected timezone, then convert to UTC for storage
+                $sendAt = \Carbon\Carbon::parse($validated['send_at'], $timezone)->setTimezone('UTC');
+                $scheduledAt = $sendAt;
+            } else {
+                // Immediate send
+                $scheduledAt = now();
+            }
         }
 
         $message->update([
@@ -409,7 +440,7 @@ class MessageController extends Controller
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
             'status' => $validated['status'],
-            'send_at' => $validated['send_at'] ?? null,
+            'send_at' => $sendAt,
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
@@ -432,6 +463,9 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
         }
 
+        // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
+        // sync recipients immediately so stats are available right away.
+        // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
         // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
         // sync recipients immediately so stats are available right away.
         // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
@@ -618,12 +652,13 @@ class MessageController extends Controller
         // Unikaj dzielenia przez zero w obliczeniach procentowych
         $denominator = $totalSent > 0 ? $totalSent : 1;
 
-        // TODO: Implement tracking when MessageOpen and MessageClick models are ready
-        // For now, use placeholder values
-        $opens = 0;
-        $uniqueOpens = 0;
-        $clicks = 0;
-        $uniqueClicks = 0;
+        // Pobieranie statystyk otwarć
+        $opens = EmailOpen::where('message_id', $message->id)->count();
+        $uniqueOpens = EmailOpen::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
+        
+        // Pobieranie statystyk kliknięć
+        $clicks = EmailClick::where('message_id', $message->id)->count();
+        $uniqueClicks = EmailClick::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
 
         // Read time statistics
         $readTimeStats = EmailReadSession::getReadTimeStats($message->id);
@@ -699,8 +734,31 @@ class MessageController extends Controller
                     'error' => $entry->error_message,
                 ]),
             'recent_activity' => [
-                'opens' => [], // TODO: Implement when MessageOpen model is ready
-                'clicks' => [], // TODO: Implement when MessageClick model is ready
+                'opens' => EmailOpen::where('message_id', $message->id)
+                    ->with('subscriber:id,email,first_name,last_name')
+                    ->latest('opened_at')
+                    ->limit(20)
+                    ->get()
+                    ->map(fn($open) => [
+                        'id' => $open->id,
+                        'email' => $open->subscriber?->email ?? 'Nieznany',
+                        'name' => trim(($open->subscriber?->first_name ?? '') . ' ' . ($open->subscriber?->last_name ?? '')),
+                        'ip' => $open->ip_address,
+                        'occurred_at' => DateHelper::formatForUser($open->opened_at),
+                    ]),
+                'clicks' => EmailClick::where('message_id', $message->id)
+                    ->with('subscriber:id,email,first_name,last_name')
+                    ->latest('clicked_at')
+                    ->limit(20)
+                    ->get()
+                    ->map(fn($click) => [
+                        'id' => $click->id,
+                        'email' => $click->subscriber?->email ?? 'Nieznany',
+                        'name' => trim(($click->subscriber?->first_name ?? '') . ' ' . ($click->subscriber?->last_name ?? '')),
+                        'url' => $click->url,
+                        'ip' => $click->ip_address,
+                        'occurred_at' => DateHelper::formatForUser($click->clicked_at),
+                    ]),
             ]
         ]);
     }

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.12] – Short Description
+
+**Release date:** 2025-12-22
+
+### Fixed
+- **Message Scheduling Timezone:**
+  - Fixed a critical issue where scheduled messages were saved as UTC directly without accounting for user's timezone, causing a time shift in display.
+  - Implemented correct timezone conversion: User Input (User TZ) -> Storage (UTC) -> Display (User TZ).
+  - Ensures "What You See Is What You Get" for message scheduling regardless of user's timezone settings.
+
+- **Message Statistics:**
+  - Fixed issue where email opens and clicks were always displaying as zero in message statistics dashboard.
+  - Implemented missing queries to `EmailOpen` and `EmailClick` in `MessageController::stats`.
+  - Added recent activity feed for opens and clicks on the stats page.
+
+
+- **Broadcast Snapshot Behavior:**
+  - Fixed issue where new subscribers joining a list while a broadcast was sending (or paused) were automatically added to the queue.
+  - Implemented "Snapshot" behavior for Broadcasts: once sending starts (sent_count > 0), the recipient list is locked.
+  - Late-joining subscribers are excluded unless explicitly targeted via "Resend".
+
 ## [1.0.11] – Critical Queue Fixes & UX Improvements
 
 **Release date:** 2025-12-22

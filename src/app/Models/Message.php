@@ -152,6 +152,13 @@ class Message extends Model
      */
     public function syncPlannedRecipients(): array
     {
+        // For broadcasts, if sending has already started (sent_count > 0),
+        // we lock the recipient list (Snapshot behavior).
+        // New subscribers joining after this point should NOT receive this message.
+        if ($this->type === 'broadcast' && $this->sent_count > 0) {
+            return ['added' => 0, 'skipped' => 0];
+        }
+
         $result = ['added' => 0, 'skipped' => 0];
         
         // Get current active subscribers
