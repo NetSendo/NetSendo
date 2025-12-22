@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.9] – Short Description - 2025-12-22
+
+### Added
+- **OpenRouter Free Models:**
+  - Added support for free models in OpenRouter integration (Gemini 2.0 Flash, Phi-3, Llama 3 8B, Mistral 7B, OpenChat 7B, Mythomax L2)
+
 ### Fixed
 - **Mailbox Connection UI:**
   - Fixed issue where error notifications (toasts) were obscured by the integration modal (z-index fix)
 - **Gmail Integration:**
   - Fixed "silent failure" when saving Gmail mailbox caused by missing optional credentials handling in controller
+- **Email Queue Processing:**
+  - Fixed critical "head-of-line blocking" issue where restricted tasks (e.g., due to schedule) prevented valid backlog tasks from being processed.
+  - Refactored `CronScheduleService::processQueue` to use chunk-based processing to bypass blocked items.
+
 
 ## [1.0.8] – Short Description - 2025-12-22
 

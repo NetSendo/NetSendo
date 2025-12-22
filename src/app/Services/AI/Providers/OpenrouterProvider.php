@@ -65,6 +65,13 @@ class OpenrouterProvider extends BaseProvider
             'meta-llama/llama-3.1-405b-instruct',
             'meta-llama/llama-3.1-70b-instruct',
             'mistralai/mistral-large',
+            // Free Models
+            'google/gemini-2.0-flash-exp:free',
+            'microsoft/phi-3-mini-128k-instruct:free',
+            'meta-llama/llama-3-8b-instruct:free',
+            'mistralai/mistral-7b-instruct:free',
+            'openchat/openchat-7b:free',
+            'gryphe/mythomax-l2-13b:free',
         ];
 
         foreach ($data as $model) {
