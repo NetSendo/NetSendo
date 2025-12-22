@@ -215,8 +215,15 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids']);
         }
 
-        // Sync trigger with automation rule
-        $this->syncMessageTrigger($message, $validated);
+        // Sync trigger with automation rule (non-blocking - log errors but don't fail)
+        try {
+            $this->syncMessageTrigger($message, $validated);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to sync message trigger: ' . $e->getMessage(), [
+                'message_id' => $message->id,
+                'trigger_type' => $validated['trigger_type'] ?? null,
+            ]);
+        }
 
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zapisana.');
@@ -376,8 +383,15 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
         }
 
-        // Sync trigger with automation rule
-        $this->syncMessageTrigger($message, $validated);
+        // Sync trigger with automation rule (non-blocking - log errors but don't fail)
+        try {
+            $this->syncMessageTrigger($message, $validated);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to sync message trigger: ' . $e->getMessage(), [
+                'message_id' => $message->id,
+                'trigger_type' => $validated['trigger_type'] ?? null,
+            ]);
+        }
 
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zaktualizowana.');

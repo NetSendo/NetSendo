@@ -13,10 +13,22 @@ return new class extends Migration
     {
         Schema::table('automation_rules', function (Blueprint $table) {
             // Track where this automation was created from
-            $table->string('trigger_source')->nullable()->after('user_id'); // 'message', 'funnel', 'manual'
-            $table->unsignedBigInteger('trigger_source_id')->nullable()->after('trigger_source');
-            $table->index(['trigger_source', 'trigger_source_id'], 'automation_rules_source_index');
+            if (!Schema::hasColumn('automation_rules', 'trigger_source')) {
+                $table->string('trigger_source')->nullable()->after('user_id'); // 'message', 'funnel', 'manual'
+            }
+            if (!Schema::hasColumn('automation_rules', 'trigger_source_id')) {
+                $table->unsignedBigInteger('trigger_source_id')->nullable()->after('trigger_source');
+            }
         });
+        
+        // Add index separately to handle case where it may already exist
+        try {
+            Schema::table('automation_rules', function (Blueprint $table) {
+                $table->index(['trigger_source', 'trigger_source_id'], 'automation_rules_source_index');
+            });
+        } catch (\Exception $e) {
+            // Index may already exist
+        }
     }
 
     /**
