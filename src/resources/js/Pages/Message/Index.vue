@@ -33,6 +33,9 @@ const messageToDuplicate = ref(null);
 const duplicatedMessage = ref(null);
 const isDuplicating = ref(false);
 const togglingMessages = ref(new Set()); // Track which messages are being toggled
+const resendingMessages = ref(new Set()); // Track which messages are being resent
+const messageToResend = ref(null);
+const resendResult = ref(null);
 
 // Reactive local state for is_active (to update UI immediately)
 const localActiveStates = reactive({});
@@ -135,6 +138,43 @@ const toggleActive = async (message) => {
     } finally {
         togglingMessages.value.delete(message.id);
     }
+};
+
+// Resend functionality
+const confirmResendMessage = (message) => {
+    messageToResend.value = message;
+    resendResult.value = null;
+};
+
+const resendMessage = async () => {
+    if (!messageToResend.value || resendingMessages.value.has(messageToResend.value.id)) return;
+    
+    resendingMessages.value.add(messageToResend.value.id);
+    try {
+        const response = await axios.post(route('messages.resend', messageToResend.value.id));
+        resendResult.value = response.data;
+    } catch (error) {
+        resendResult.value = {
+            success: false,
+            message: error.response?.data?.message || 'Wystąpił błąd podczas ponownego wysyłania.'
+        };
+    } finally {
+        resendingMessages.value.delete(messageToResend.value.id);
+    }
+};
+
+const closeResendModal = () => {
+    messageToResend.value = null;
+    resendResult.value = null;
+    if (resendResult.value?.success) {
+        router.reload();
+    }
+};
+
+const closeResendAndReload = () => {
+    messageToResend.value = null;
+    resendResult.value = null;
+    router.reload();
 };
 </script>
 
@@ -285,7 +325,12 @@ const toggleActive = async (message) => {
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                {{ message.list_name }}
+                                <div class="flex flex-col">
+                                    <span class="font-medium text-slate-900 dark:text-white">{{ message.list_name }}</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">
+                                        {{ message.recipients_count?.toLocaleString() || 0 }} {{ $t('messages.recipients') }}
+                                    </span>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <!-- Queue/Autoresponder: show active/inactive status -->
@@ -365,6 +410,22 @@ const toggleActive = async (message) => {
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                    <!-- Resend button (only for broadcast messages) -->
+                                    <button 
+                                        v-if="message.type === 'broadcast' && (message.status === 'sent' || message.status === 'scheduled')"
+                                        @click="confirmResendMessage(message)"
+                                        class="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                        :title="$t('messages.resend_button')"
+                                        :disabled="resendingMessages.has(message.id)"
+                                    >
+                                        <svg v-if="resendingMessages.has(message.id)" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
                                     </button>
                                     <button 
@@ -499,6 +560,91 @@ const toggleActive = async (message) => {
                             class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             {{ $t('messages.stay_on_list') }}
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </Modal>
+
+        <!-- Resend Confirmation Modal -->
+        <Modal :show="!!messageToResend" @close="closeResendModal" max-width="md">
+            <div class="p-6">
+                <!-- Initial state: confirm resend -->
+                <template v-if="!resendResult">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                            <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                                {{ $t('messages.resend_confirm_title') }}
+                            </h2>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">
+                                {{ $t('messages.resend_confirm_description') }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="rounded-lg bg-slate-50 p-4 dark:bg-slate-800">
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ messageToResend?.subject }}
+                        </p>
+                    </div>
+
+                    <div class="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 dark:bg-amber-900/20 dark:border-amber-800">
+                        <p class="text-sm text-amber-800 dark:text-amber-200">
+                            <strong>{{ $t('messages.resend_note_title') }}:</strong> {{ $t('messages.resend_note_description') }}
+                        </p>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end gap-3">
+                        <SecondaryButton @click="closeResendModal">
+                            {{ $t('common.cancel') }}
+                        </SecondaryButton>
+                        <PrimaryButton 
+                            @click="resendMessage" 
+                            :disabled="resendingMessages.has(messageToResend?.id)"
+                            class="bg-blue-600 hover:bg-blue-500"
+                        >
+                            <svg v-if="resendingMessages.has(messageToResend?.id)" class="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            {{ resendingMessages.has(messageToResend?.id) ? $t('messages.resending') : $t('messages.resend_button') }}
+                        </PrimaryButton>
+                    </div>
+                </template>
+
+                <!-- Result state -->
+                <template v-else>
+                    <div class="text-center">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full" :class="resendResult.success ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'">
+                            <svg v-if="resendResult.success" class="h-8 w-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <svg v-else class="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">
+                            {{ resendResult.success ? $t('messages.resend_success_title') : $t('messages.resend_error_title') }}
+                        </h2>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {{ resendResult.message }}
+                        </p>
+                        <p v-if="resendResult.success && resendResult.new_recipients" class="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                            {{ $t('messages.resend_new_recipients', { count: resendResult.new_recipients }) }}
+                        </p>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <button 
+                            @click="closeResendAndReload"
+                            class="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                        >
+                            {{ $t('common.ok') }}
                         </button>
                     </div>
                 </template>

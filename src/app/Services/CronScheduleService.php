@@ -162,6 +162,7 @@ class CronScheduleService
             // 1. Pobierz aktywne wiadomości i zsynchronizuj odbiorców
             // Optymalizacja: pobieramy tylko schedulowane wiadomości, które "powinny" być już wysłane
             $activeMessages = Message::where('status', 'scheduled')
+                ->where('channel', 'email') // Filter only email messages
                 ->where(function($query) {
                     $query->where('type', 'broadcast')
                         ->orWhere(function($q) {
@@ -197,6 +198,7 @@ class CronScheduleService
                     ->where('id', '>', $lastId)
                     ->whereHas('message', function($query) {
                         $query->where('status', 'scheduled')
+                            ->where('channel', 'email') // Filter only email messages
                             ->where(function($q) {
                                 $q->where('type', 'broadcast')
                                     ->orWhere(function($sub) {
@@ -268,27 +270,19 @@ class CronScheduleService
                         $entry->markAsQueued();
                         
                         // Dispatch job dla konkretnego subskrybenta
-                        SendEmailJob::dispatch($message, $subscriber);
+                        // Pass entry ID so the job can update status upon completion
+                        SendEmailJob::dispatch($message, $subscriber, null, $entry->id);
                         
-                        // Oznacz jako wysłane
-                        $entry->markAsSent();
+                        // Note: markAsSent() is now called by SendEmailJob after successful delivery
+                        // This ensures accurate status tracking
                         
                         $stats['dispatched']++;
                         $log->incrementSent();
                         
-                        // Inkrementuj sent_count w bazie wiadomości
-                        $message->increment('sent_count');
+                        // Note: sent_count increment is now done by SendEmailJob
                         
-                        // Dla broadcast: sprawdź czy wszystkie wpisy są przetworzone
-                        if ($message->type === 'broadcast') {
-                            $pendingCount = $message->queueEntries()
-                                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
-                                ->count();
-                            
-                            if ($pendingCount === 0) {
-                                $message->update(['status' => 'sent']);
-                            }
-                        }
+                        // Dla broadcast: sprawdzanie statusu zostaje, ale używamy 'queued' zamiast 'sent'
+                        // Broadcast zostanie oznaczony jako 'sent' gdy wszystkie wpisy będą 'sent' (sprawdzane w SendEmailJob)
                     } catch (\Exception $e) {
                         $entry->markAsFailed($e->getMessage());
                         $stats['errors']++;

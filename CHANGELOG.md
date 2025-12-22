@@ -7,19 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.0.10] – Docker Scheduler Fix - 2025-12-22
+*No unreleased changes*
+
+## [1.0.10] – Docker Queue Worker & Email Improvements
+
+**Release date:** 2025-12-22
 
 > [!IMPORTANT]
 > **Breaking Change for Docker Users:**
-> This release introduces a new `scheduler` service in `docker-compose.yml` required for background tasks (sending emails, automation).
+> This release introduces `scheduler` and `queue` services in `docker-compose.yml` required for background tasks (sending emails, automation).
 > If you are upgrading an existing installation, you MUST update your `docker-compose.yml` file manually or pull the latest version from the repository.
-> Running `docker compose pull` is NOT enough if your local `docker-compose.yml` is missing the `scheduler` service.
+> Running `docker compose pull` is NOT enough if your local `docker-compose.yml` is missing these services.
+
+### Added
+- **Message List Recipient Count:**
+  - Audience column now shows real recipient count (after exclusions and deduplication) alongside list name
+  - Count is calculated live for draft/scheduled messages
+  - For sent messages, uses frozen `planned_recipients_count` to preserve historical data
+
+- **Resend Message Feature:**
+  - New "Resend" button in message actions for broadcast messages
+  - Smart recipient filtering: only sends to new subscribers who haven't received the message
+  - Resets failed/skipped entries for retry
+  - Shows confirmation modal with warning about skipping previous recipients
 
 ### Fixed
+- **Docker Queue Worker (Critical):**
+  - Added missing `queue` service to `docker-compose.yml` running `php artisan queue:work`
+  - This fixes the issue where messages appeared as "sent" but were never actually delivered
+  - Jobs were being dispatched to queue but no worker was processing them
+
 - **Docker Background Tasks:**
-- Added missing `scheduler` service to `docker-compose.yml`
-- Fixed issue where "Cron not configured" warning appeared despite correct app configuration
-- Scheduled messages and automations now process correctly in Docker environment
+  - Added missing `scheduler` service to `docker-compose.yml`
+  - Fixed issue where "Cron not configured" warning appeared despite correct app configuration
+  - Scheduled messages and automations now process correctly in Docker environment
+
+- **Email Queue Processing:**
+  - Added `channel` filter to `CronScheduleService::processQueue()` to prevent SMS messages from being incorrectly processed
+  - Queue entries are now marked as `sent` only after successful delivery (moved to `SendEmailJob`)
+  - Improved accuracy of `sent_count` statistics by incrementing on actual delivery
+
+### Changed
+- **SendEmailJob Refactored:**
+  - Now accepts optional `queueEntryId` parameter for tracking
+  - Handles `markAsSent()` and `markAsFailed()` after delivery attempt
+  - Automatically marks broadcast messages as `sent` when all entries are processed
 
 ## [1.0.9] – Short Description - 2025-12-22
 

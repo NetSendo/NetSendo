@@ -7,6 +7,7 @@ use App\Models\AutomationRule;
 use App\Models\EmailReadSession;
 use App\Models\Mailbox;
 use App\Models\Message;
+use App\Models\MessageQueueEntry;
 use App\Models\Template;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -81,6 +82,11 @@ class MessageController extends Controller
                     'list_name' => $msg->contactLists->count() > 0 
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)
                         : '-',
+                    // For sent messages, use frozen planned_recipients_count
+                    // For draft/scheduled, calculate live count
+                    'recipients_count' => $msg->status === 'sent'
+                        ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
+                        : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
                     'created_at' => DateHelper::formatForUser($msg->created_at),
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction']),
@@ -425,6 +431,93 @@ class MessageController extends Controller
             'success' => true,
             'message' => $newMessage,
             'redirect_url' => route('messages.edit', $newMessage->id),
+        ]);
+    }
+
+    /**
+     * Resend a message to new subscribers only
+     * Skips subscribers who already received the message (have 'sent' status in queue)
+     */
+    public function resend(Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Only allow resend for sent or scheduled broadcast messages
+        if ($message->type !== 'broadcast') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tylko wiadomości jednorazowe (broadcast) mogą być ponownie wysłane.'
+            ], 422);
+        }
+
+        // Get subscribers who already received this message
+        $alreadySentSubscriberIds = $message->queueEntries()
+            ->where('status', MessageQueueEntry::STATUS_SENT)
+            ->pluck('subscriber_id')
+            ->toArray();
+
+        // Get current unique recipients
+        $currentRecipients = $message->getUniqueRecipients();
+        
+        // Filter out subscribers who already received the message
+        $newRecipients = $currentRecipients->filter(function($subscriber) use ($alreadySentSubscriberIds) {
+            return !in_array($subscriber->id, $alreadySentSubscriberIds);
+        });
+
+        $newCount = $newRecipients->count();
+
+        if ($newCount === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak nowych odbiorców do wysłania. Wszyscy subskrybenci już otrzymali tę wiadomość.'
+            ], 422);
+        }
+
+        // Reset message status to scheduled
+        $message->update([
+            'status' => 'scheduled',
+            'scheduled_at' => now(),
+        ]);
+
+        // Create queue entries only for new recipients
+        foreach ($newRecipients as $subscriber) {
+            // Check if entry already exists (might be planned or failed)
+            $existingEntry = $message->queueEntries()
+                ->where('subscriber_id', $subscriber->id)
+                ->first();
+
+            if ($existingEntry) {
+                // Reset failed/skipped entries to planned
+                if (in_array($existingEntry->status, [MessageQueueEntry::STATUS_FAILED, MessageQueueEntry::STATUS_SKIPPED])) {
+                    $existingEntry->update([
+                        'status' => MessageQueueEntry::STATUS_PLANNED,
+                        'planned_at' => now(),
+                        'error_message' => null,
+                    ]);
+                }
+            } else {
+                // Create new entry
+                $message->queueEntries()->create([
+                    'subscriber_id' => $subscriber->id,
+                    'status' => MessageQueueEntry::STATUS_PLANNED,
+                    'planned_at' => now(),
+                ]);
+            }
+        }
+
+        // Update planned recipients count
+        $message->update([
+            'planned_recipients_count' => $message->queueEntries()
+                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                ->count() + $message->sent_count,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'new_recipients' => $newCount,
+            'message' => "Wiadomość została zaplanowana do wysłania. Nowych odbiorców: {$newCount}."
         ]);
     }
 

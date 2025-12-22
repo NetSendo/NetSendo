@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Mailbox;
 use App\Models\Message;
+use App\Models\MessageQueueEntry;
 use App\Models\Subscriber;
 use App\Services\Mail\MailProviderService;
 use App\Services\PlaceholderService;
@@ -25,7 +26,8 @@ class SendEmailJob implements ShouldQueue
     public function __construct(
         public Message $message,
         public Subscriber $subscriber,
-        public ?Mailbox $mailbox = null
+        public ?Mailbox $mailbox = null,
+        public ?int $queueEntryId = null
     ) {}
 
     /**
@@ -118,9 +120,63 @@ class SendEmailJob implements ShouldQueue
                 Log::info("Email sent via default mailer to {$this->subscriber->email}");
             }
 
+            // 6. Update queue entry status on successful delivery
+            $this->markQueueEntryAsSent();
+
         } catch (\Exception $e) {
             Log::error("Failed to send email to {$this->subscriber->email}: " . $e->getMessage());
+            
+            // Mark queue entry as failed
+            $this->markQueueEntryAsFailed($e->getMessage());
+            
             $this->fail($e);
+        }
+    }
+
+    /**
+     * Mark the queue entry as sent and update message statistics
+     */
+    private function markQueueEntryAsSent(): void
+    {
+        if (!$this->queueEntryId) {
+            return;
+        }
+
+        $entry = MessageQueueEntry::find($this->queueEntryId);
+        if (!$entry) {
+            return;
+        }
+
+        $entry->markAsSent();
+        
+        // Increment sent_count on the message
+        $this->message->increment('sent_count');
+        
+        // For broadcast messages: check if all entries are processed
+        if ($this->message->type === 'broadcast') {
+            $pendingCount = $this->message->queueEntries()
+                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                ->count();
+            
+            if ($pendingCount === 0) {
+                $this->message->update(['status' => 'sent']);
+                Log::info("Broadcast message {$this->message->id} marked as sent - all entries processed");
+            }
+        }
+    }
+
+    /**
+     * Mark the queue entry as failed
+     */
+    private function markQueueEntryAsFailed(string $errorMessage): void
+    {
+        if (!$this->queueEntryId) {
+            return;
+        }
+
+        $entry = MessageQueueEntry::find($this->queueEntryId);
+        if ($entry) {
+            $entry->markAsFailed($errorMessage);
         }
     }
 

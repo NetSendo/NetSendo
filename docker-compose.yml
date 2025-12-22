@@ -88,6 +88,37 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  queue:
+    image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
+    container_name: netsendo-queue
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    working_dir: /var/www
+    volumes:
+      - ./.env:/var/www/.env:ro
+      - netsendo-storage:/var/www/storage/app
+      - netsendo-logs:/var/www/storage/logs
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - MAIL_HOST=${MAIL_HOST:-mailpit}
+      - APP_ENV=production
+      - APP_DEBUG=false
+    networks:
+      - netsendo-network
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   webserver:
     image: nginx:alpine
     container_name: netsendo-webserver
