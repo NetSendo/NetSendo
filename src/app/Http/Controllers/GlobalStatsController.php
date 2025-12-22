@@ -87,7 +87,7 @@ class GlobalStatsController extends Controller
             : ($emailsSentThisMonth > 0 ? 100 : 0);
 
         // Recent campaigns (last 4 messages)
-        $recentCampaigns = Message::with('lists')
+        $recentCampaigns = Message::with('contactLists')
             ->orderByDesc('created_at')
             ->limit(4)
             ->get()

@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.11] – Critical Queue Fixes & UX Improvements
+
+**Release date:** 2025-12-22
+
 ### Added
 - **Message Statistics Enhancements:**
   - Added "Recipients List" section to message statistics
   - detailed table showing every recipient with their status (queued, sent, failed, skipped)
   - Color-coded status badges and error messages for failed deliveries
   - Pagination for the recipient list
+
+- **Message Preheader Display:**
+  - Added display of message preheader in the message list view (under subject)
+  - Added missing "Optional" label translation for preheader input field
 
 - **Real-time Status Updates:**
   - Implemented dynamic status polling for message list
@@ -40,6 +48,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Optimized "Scheduling" and "Timezone" sections to be side-by-side on large screens for better space utilization
 
 ### Fixed
+- **Docker Queue Worker (Critical Fix):**
+  - Fixed regression where `queue` container was starting `php-fpm` instead of the queue worker command.
+  - Patched `docker/php/docker-entrypoint.sh` to correctly handle command-line arguments.
+  - Updated `docker-compose.yml` to mount the patched entrypoint, ensuring the fix works without rebuilding images.
+  - This resolves the issue where messages remained in "Queued" status indefinitely.
+
+- **Database Migrations:**
+  - Fixed `2025_12_22_000002_create_page_visits_table` migration to check if table exists before creating, preventing startup crashes on restart.
+
 - **Version Check Cache Invalidation:**
   - Implemented smart cache invalidation for update checks
   - Automatically clears version cache when application version changes
@@ -47,6 +64,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Dark Mode Visibility:**
   - Fixed invisible calendar icon in date picker inputs on dark backgrounds by enforcing dark color scheme
+  
+- **Dashboard - Missing Recent Campaigns:**
+  - Fixed an issue in `GlobalStatsController` where "Recent Campaigns" were not loading due to incorrect relationship name (`lists` vs `contactLists`)
+  - Dashboard now correctly displays the last 4 messages and their stats
 
 ## [1.0.10] – Docker Queue Worker & Email Improvements
 

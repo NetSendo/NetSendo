@@ -86,7 +86,17 @@ php artisan view:cache 2>/dev/null || true
 echo "$IMAGE_VERSION" > "$VERSION_FILE" 2>/dev/null || true
 
 echo "✅ Application initialized successfully!"
-echo "📍 NetSendo is ready to serve requests"
 
-# Execute the main command (php-fpm)
-exec php-fpm
+# =============================================================================
+# EXECUTE MAIN COMMAND
+# =============================================================================
+# If arguments are passed (e.g., from docker-compose command), execute them.
+# Otherwise, run php-fpm as default.
+
+if [ $# -gt 0 ]; then
+    echo "📍 Executing custom command: $@"
+    exec "$@"
+else
+    echo "📍 NetSendo is ready to serve requests"
+    exec php-fpm
+fi

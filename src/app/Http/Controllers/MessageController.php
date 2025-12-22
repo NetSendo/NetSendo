@@ -76,6 +76,7 @@ class MessageController extends Controller
                 ->through(fn ($msg) => [
                     'id' => $msg->id,
                     'subject' => $msg->subject,
+                    'preheader' => $msg->preheader,
                     'status' => $msg->status,
                     'type' => $msg->type,
                     'day' => $msg->day,

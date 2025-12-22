@@ -50,6 +50,7 @@
         "download": "Download",
         "upload": "Upload",
         "soon": "Soon",
+        "optional": "Optional",
         "notifications": {
             "saved": "Saved successfully.",
             "created": "Created successfully.",

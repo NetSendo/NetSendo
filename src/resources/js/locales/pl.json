@@ -50,6 +50,7 @@
         "download": "Pobierz",
         "upload": "Prześlij",
         "soon": "Wkrótce",
+        "optional": "opcjonalne",
         "notifications": {
             "saved": "Zapisano pomyślnie.",
             "created": "Utworzono pomyślnie.",

@@ -377,6 +377,9 @@ const closeResendAndReload = () => {
                         <tr v-for="message in messages.data" :key="message.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                             <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
                                 {{ message.subject }}
+                                <div v-if="message.preheader" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate max-w-xs">
+                                    {{ message.preheader }}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <span 
