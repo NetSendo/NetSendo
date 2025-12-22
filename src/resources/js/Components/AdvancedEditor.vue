@@ -5,6 +5,11 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+import { FontFamily } from '@tiptap/extension-font-family'
+import { TextStyle } from '@tiptap/extension-text-style'
+import { Color } from '@tiptap/extension-color'
+import { Highlight } from '@tiptap/extension-highlight'
+import { FontSize } from 'tiptap-extension-font-size'
 import { watch, ref, onBeforeUnmount, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -22,6 +27,10 @@ const props = defineProps({
     minHeight: {
         type: String,
         default: '300px',
+    },
+    externalPreviewContent: {
+        type: String,
+        default: null,
     },
 })
 
@@ -56,13 +65,80 @@ const previewDevice = ref('desktop')
 
 // Emoji picker state
 const showEmojiPicker = ref(false)
+const activeEmojiCategory = ref('faces')
+const emojiPickerRef = ref(null)
+const emojiButtonRef = ref(null)
 
-// Common emojis for quick access
-const commonEmojis = [
-    '😀', '😊', '🎉', '🔥', '💡', '✨', '🚀', '💪', '👍', '❤️',
-    '📧', '📬', '💌', '🎯', '💰', '🏆', '⭐', '🌟', '💎', '🎁',
-    '📢', '🔔', '⚡', '🌈', '☀️', '🌙', '🎊', '🎈', '🎀', '💝'
+// Font/Color picker states
+const showFontPicker = ref(false)
+const showSizePicker = ref(false)
+const showColorPicker = ref(false)
+const showHighlightPicker = ref(false)
+
+// Available fonts
+const fontOptions = [
+    { name: 'Arial', value: 'Arial, sans-serif' },
+    { name: 'Georgia', value: 'Georgia, serif' },
+    { name: 'Times New Roman', value: 'Times New Roman, serif' },
+    { name: 'Verdana', value: 'Verdana, sans-serif' },
+    { name: 'Courier New', value: 'Courier New, monospace' },
+    { name: 'Roboto', value: 'Roboto, sans-serif' },
+    { name: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
 ]
+
+// Available font sizes
+const fontSizeOptions = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px']
+
+// Color palette for text and highlight
+const colorPalette = [
+    '#000000', '#434343', '#666666', '#999999', '#CCCCCC', '#FFFFFF',
+    '#FF0000', '#FF6600', '#FFCC00', '#00FF00', '#00CCFF', '#0066FF',
+    '#9900FF', '#FF00FF', '#FF6699', '#996633', '#003366', '#339966',
+]
+
+// Emojis organized by categories
+const emojiCategories = {
+    faces: {
+        icon: '😀',
+        emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😊', '😇', '🥰', '😍', '😘', '😗', '😋', '😛', '😜', '🤪', '😎', '🤩', '🥳', '😏', '😌', '😴']
+    },
+    symbols: {
+        icon: '🎉',
+        emojis: ['🎉', '🎊', '🎁', '🎀', '🎈', '🎗️', '✨', '🌟', '⭐', '💫', '🔥', '💥', '💢', '💯', '🏆', '🥇', '🥈', '🥉', '🎯', '🚀', '⚡', '💎', '🔔', '📣', '📢']
+    },
+    gestures: {
+        icon: '👍',
+        emojis: ['👍', '👎', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘', '👌', '👈', '👉', '👆', '👇', '✋', '🖐️', '💪']
+    },
+    business: {
+        icon: '💼',
+        emojis: ['💼', '📧', '📬', '💌', '📝', '📊', '📈', '📉', '💰', '💵', '💳', '🏦', '🏢', '📅', '⏰', '🔒', '🔓', '📱', '💻', '🖥️']
+    },
+    hearts: {
+        icon: '❤️',
+        emojis: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💝', '💖', '💗', '💓', '💕', '💞', '💘', '💔', '❣️', '💟', '♥️']
+    },
+    nature: {
+        icon: '🌟',
+        emojis: ['☀️', '🌙', '🌈', '⛅', '🌤️', '🌧️', '❄️', '🌸', '🌺', '🌻', '🌷', '🌹', '🌲', '🌴', '🍀', '🍁', '🍂', '🌊', '💧', '🌍']
+    }
+}
+
+// Flat list for backward compatibility
+const commonEmojis = Object.values(emojiCategories).flatMap(cat => cat.emojis.slice(0, 5))
+
+// Computed style for emoji picker positioning (avoids window access in template)
+const emojiPickerStyle = computed(() => {
+    if (!emojiButtonRef.value) {
+        return { top: '100px', left: '100px' }
+    }
+    const rect = emojiButtonRef.value.getBoundingClientRect()
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
+    return {
+        top: (rect.bottom + 8) + 'px',
+        left: Math.min(rect.left, viewportWidth - 336) + 'px'
+    }
+})
 
 // Check if content is a full HTML document (email template with tables, doctype, etc.)
 const isFullHtmlDocument = computed(() => {
@@ -95,6 +171,17 @@ const editor = useEditor({
         TextAlign.configure({
             types: ['heading', 'paragraph'],
         }),
+        TextStyle,
+        FontFamily.configure({
+            types: ['textStyle'],
+        }),
+        Color.configure({
+            types: ['textStyle'],
+        }),
+        Highlight.configure({
+            multicolor: true,
+        }),
+        FontSize,
     ],
     editorProps: {
         attributes: {
@@ -267,6 +354,9 @@ const insertImage = () => {
 
 // Computed for preview content
 const previewContent = computed(() => {
+    if (props.externalPreviewContent) {
+        return props.externalPreviewContent
+    }
     if (editorMode.value === 'source') {
         return sourceCode.value
     }
@@ -296,7 +386,9 @@ ${content || ''}
 
 // Generate preview content with optional mobile scaling
 const getPreviewSrcdoc = computed(() => {
-    const content = isFullHtmlDocument.value ? sourceCode.value : wrapInDocument(sourceCode.value)
+    // Use externalPreviewContent if available (e.g., from live preview with substituted placeholders)
+    const baseContent = props.externalPreviewContent || sourceCode.value
+    const content = isFullHtmlDocument.value ? baseContent : wrapInDocument(baseContent)
     
     if (previewDevice.value === 'mobile' && isFullHtmlDocument.value) {
         // Inject CSS to scale content for mobile preview
@@ -549,6 +641,7 @@ const btnClass = (isActive = false) => {
             <div v-if="editorMode === 'visual' && editor && !isFullHtmlDocument" class="flex flex-wrap items-center gap-1 p-2">
                 <!-- Text formatting -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleBold().run()"
                     :disabled="!editor.can().chain().focus().toggleBold().run()"
                     :class="btnClass(editor.isActive('bold'))"
@@ -557,6 +650,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleItalic().run()"
                     :disabled="!editor.can().chain().focus().toggleItalic().run()"
                     :class="btnClass(editor.isActive('italic'))"
@@ -565,6 +659,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4m-2 0v16m-6-4h12" transform="skewX(-12)" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
                     :class="btnClass(editor.isActive('underline'))"
                     :title="$t('editor.underline')"
@@ -572,6 +667,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8v4a5 5 0 0010 0V8M5 20h14" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleStrike().run()"
                     :disabled="!editor.can().chain().focus().toggleStrike().run()"
                     :class="btnClass(editor.isActive('strike'))"
@@ -582,8 +678,150 @@ const btnClass = (isActive = false) => {
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
+                <!-- Font Family Picker -->
+                <div class="relative">
+                    <button 
+                        type="button"
+                        @click="showFontPicker = !showFontPicker; showSizePicker = false; showColorPicker = false; showHighlightPicker = false"
+                        :class="btnClass(showFontPicker)"
+                        :title="$t('editor.font_family') || 'Czcionka'"
+                    >
+                        <span class="text-xs font-medium">Aa</span>
+                    </button>
+                    <div 
+                        v-if="showFontPicker" 
+                        class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[140px]"
+                    >
+                        <button
+                            v-for="font in fontOptions"
+                            :key="font.value"
+                            type="button"
+                            @click="editor.chain().focus().setFontFamily(font.value).run(); showFontPicker = false"
+                            :style="{ fontFamily: font.value }"
+                            class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                        >
+                            {{ font.name }}
+                        </button>
+                        <hr class="my-1 border-slate-200 dark:border-slate-700" />
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().unsetFontFamily().run(); showFontPicker = false"
+                            class="w-full text-left px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                            {{ $t('editor.clear_font') || 'Domyślna' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Font Size Picker -->
+                <div class="relative">
+                    <button 
+                        type="button"
+                        @click="showSizePicker = !showSizePicker; showFontPicker = false; showColorPicker = false; showHighlightPicker = false"
+                        :class="btnClass(showSizePicker)"
+                        :title="$t('editor.font_size') || 'Rozmiar'"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+                        </svg>
+                    </button>
+                    <div 
+                        v-if="showSizePicker" 
+                        class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[80px]"
+                    >
+                        <button
+                            v-for="size in fontSizeOptions"
+                            :key="size"
+                            type="button"
+                            @click="editor.chain().focus().setFontSize(size).run(); showSizePicker = false"
+                            class="w-full text-center px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                        >
+                            {{ size }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Text Color Picker -->
+                <div class="relative">
+                    <button 
+                        type="button"
+                        @click="showColorPicker = !showColorPicker; showFontPicker = false; showSizePicker = false; showHighlightPicker = false"
+                        :class="btnClass(showColorPicker)"
+                        :title="$t('editor.text_color') || 'Kolor tekstu'"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                        <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded" :style="{ backgroundColor: editor.getAttributes('textStyle')?.color || '#000' }"></span>
+                    </button>
+                    <div 
+                        v-if="showColorPicker" 
+                        class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[156px]"
+                    >
+                        <div class="grid grid-cols-6 gap-1">
+                            <button
+                                v-for="color in colorPalette"
+                                :key="color"
+                                type="button"
+                                @click="editor.chain().focus().setColor(color).run(); showColorPicker = false"
+                                class="w-5 h-5 rounded border border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform"
+                                :style="{ backgroundColor: color }"
+                                :title="color"
+                            ></button>
+                        </div>
+                        <hr class="my-2 border-slate-200 dark:border-slate-700" />
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().unsetColor().run(); showColorPicker = false"
+                            class="w-full text-center px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                        >
+                            {{ $t('editor.clear_color') || 'Usuń kolor' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Highlight Color Picker -->
+                <div class="relative">
+                    <button 
+                        type="button"
+                        @click="showHighlightPicker = !showHighlightPicker; showFontPicker = false; showSizePicker = false; showColorPicker = false"
+                        :class="btnClass(showHighlightPicker || editor.isActive('highlight'))"
+                        :title="$t('editor.highlight') || 'Podświetlenie'"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 rounded" :style="{ backgroundColor: editor.getAttributes('highlight')?.color || '#FFCC00' }"></span>
+                    </button>
+                    <div 
+                        v-if="showHighlightPicker" 
+                        class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[156px]"
+                    >
+                        <div class="grid grid-cols-6 gap-1">
+                            <button
+                                v-for="color in colorPalette"
+                                :key="color"
+                                type="button"
+                                @click="editor.chain().focus().toggleHighlight({ color }).run(); showHighlightPicker = false"
+                                class="w-5 h-5 rounded border border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform"
+                                :style="{ backgroundColor: color }"
+                                :title="color"
+                            ></button>
+                        </div>
+                        <hr class="my-2 border-slate-200 dark:border-slate-700" />
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().unsetHighlight().run(); showHighlightPicker = false"
+                            class="w-full text-center px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                        >
+                            {{ $t('editor.clear_highlight') || 'Usuń podświetlenie' }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Headings -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 1 }))"
                     :title="$t('editor.heading1')"
@@ -591,6 +829,7 @@ const btnClass = (isActive = false) => {
                     <span class="font-bold text-xs">H1</span>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 2 }))"
                     :title="$t('editor.heading2')"
@@ -598,6 +837,7 @@ const btnClass = (isActive = false) => {
                     <span class="font-bold text-xs">H2</span>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 3 }))"
                     :title="$t('editor.heading3')"
@@ -609,6 +849,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Text alignment -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().setTextAlign('left').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'left' }))"
                     :title="$t('editor.align_left')"
@@ -616,6 +857,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().setTextAlign('center').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'center' }))"
                     :title="$t('editor.align_center')"
@@ -623,6 +865,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().setTextAlign('right').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'right' }))"
                     :title="$t('editor.align_right')"
@@ -634,6 +877,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Lists -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleBulletList().run()"
                     :class="btnClass(editor.isActive('bulletList'))"
                     :title="$t('editor.bullet_list')"
@@ -641,6 +885,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleOrderedList().run()"
                     :class="btnClass(editor.isActive('orderedList'))"
                     :title="$t('editor.ordered_list')"
@@ -652,6 +897,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Blockquote & Code -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleBlockquote().run()"
                     :class="btnClass(editor.isActive('blockquote'))"
                     :title="$t('editor.blockquote')"
@@ -659,6 +905,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().toggleCodeBlock().run()"
                     :class="btnClass(editor.isActive('codeBlock'))"
                     :title="$t('editor.code_block')"
@@ -670,6 +917,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Link & Image -->
                 <button 
+                    type="button"
                     @click="openLinkModal"
                     :class="btnClass(editor.isActive('link'))"
                     :title="$t('editor.link')"
@@ -677,6 +925,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="openImageModal"
                     :class="btnClass()"
                     :title="$t('editor.image')"
@@ -687,6 +936,7 @@ const btnClass = (isActive = false) => {
                 <!-- Emoji Picker -->
                 <div class="relative">
                     <button 
+                        ref="emojiButtonRef"
                         type="button"
                         @click="showEmojiPicker = !showEmojiPicker"
                         :class="btnClass(showEmojiPicker)"
@@ -694,29 +944,59 @@ const btnClass = (isActive = false) => {
                     >
                         <span class="text-lg">😀</span>
                     </button>
-                    <!-- Emoji Dropdown -->
+                </div>
+                
+                <Teleport to="body">
                     <div 
                         v-if="showEmojiPicker" 
-                        class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[280px]"
+                        ref="emojiPickerRef"
+                        class="fixed p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-[9999] w-[320px]"
+                        :style="emojiPickerStyle"
                     >
-                        <div class="grid grid-cols-10 gap-1">
+                        <!-- Category tabs -->
+                        <div class="flex gap-1 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
                             <button
-                                v-for="emoji in commonEmojis"
+                                v-for="(category, key) in emojiCategories"
+                                :key="key"
+                                type="button"
+                                @click="activeEmojiCategory = key"
+                                :class="[
+                                    'p-1.5 rounded transition-colors text-lg',
+                                    activeEmojiCategory === key 
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/50' 
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                                ]"
+                                :title="$t('editor.emoji_categories.' + key) || key"
+                            >
+                                {{ category.icon }}
+                            </button>
+                        </div>
+                        <!-- Emoji grid -->
+                        <div class="grid grid-cols-10 gap-0.5 max-h-[200px] overflow-y-auto">
+                            <button
+                                v-for="emoji in emojiCategories[activeEmojiCategory]?.emojis || []"
                                 :key="emoji"
                                 type="button"
                                 @click="insertEmoji(emoji)"
-                                class="p-1 text-lg hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                                class="p-1 text-xl hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
                             >
                                 {{ emoji }}
                             </button>
                         </div>
                     </div>
-                </div>
+                    <!-- Backdrop to close emoji picker -->
+                    <div 
+                        v-if="showEmojiPicker" 
+                        class="fixed inset-0 z-[9998]" 
+                        @click="showEmojiPicker = false"
+                    ></div>
+                </Teleport>
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Horizontal rule -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().setHorizontalRule().run()"
                     :class="btnClass()"
                     :title="$t('editor.horizontal_rule')"
@@ -782,6 +1062,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Undo/Redo -->
                 <button 
+                    type="button"
                     @click="editor.chain().focus().undo().run()"
                     :disabled="!editor.can().chain().focus().undo().run()"
                     :class="btnClass()"
@@ -790,6 +1071,7 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
                 </button>
                 <button 
+                    type="button"
                     @click="editor.chain().focus().redo().run()"
                     :disabled="!editor.can().chain().focus().redo().run()"
                     :class="btnClass()"

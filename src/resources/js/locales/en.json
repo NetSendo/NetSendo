@@ -146,6 +146,21 @@
         "visual_edit_notice": "Click on text in the preview to edit it directly.",
         "emoji": "Emoji",
         "content_width": "Content width",
+        "font_family": "Font",
+        "font_size": "Size",
+        "text_color": "Text color",
+        "highlight": "Highlight",
+        "clear_font": "Default",
+        "clear_color": "Clear color",
+        "clear_highlight": "Clear highlight",
+        "emoji_categories": {
+            "faces": "Faces",
+            "symbols": "Symbols",
+            "gestures": "Gestures",
+            "business": "Business",
+            "hearts": "Hearts",
+            "nature": "Nature"
+        },
         "image_properties": {
             "url": "Image URL",
             "preview": "Preview",
@@ -804,6 +819,14 @@
             "no_subject_preview": "(no subject)",
             "no_mailbox_preview": "No mailbox configured"
         },
+        "preview": {
+            "title": "Live Preview with Data",
+            "select_subscriber": "Select subscriber for preview",
+            "no_subscriber": "None (raw placeholders)",
+            "info": "Preview uses selected subscriber's data.",
+            "refresh": "Refresh preview",
+            "no_results": "No results. Try searching."
+        },
         "stats": {
             "title": "Campaign Statistics",
             "header_title": "Statistics: {subject}",
@@ -859,7 +882,7 @@
             "subtitle": "Import contacts from CSV file",
             "instructions": {
                 "title": "File Format Instructions",
-                "line1": "File should be in CSV format. The first row (header) is ignored or matched automatically.",
+                "line1": "File should be in CSV format. The system automatically detects headers. If missing, it assumes: Email, First Name, Last Name.",
                 "required_columns": "Required columns (in any order):",
                 "email": "Email (required)",
                 "first_name": "First Name (optional)",

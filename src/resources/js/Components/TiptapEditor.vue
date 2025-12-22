@@ -56,6 +56,7 @@ onBeforeUnmount(() => {
         <!-- Toolbar -->
         <div class="flex flex-wrap items-center gap-1 border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2">
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleBold().run()"
                 :disabled="!editor.can().chain().focus().toggleBold().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('bold') }"
@@ -65,6 +66,7 @@ onBeforeUnmount(() => {
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z" /></svg>
             </button>
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleItalic().run()"
                 :disabled="!editor.can().chain().focus().toggleItalic().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('italic') }"
@@ -74,6 +76,7 @@ onBeforeUnmount(() => {
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /><path d="M19 4h-9l-4 16h9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" /></svg>
             </button>
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleStrike().run()"
                 :disabled="!editor.can().chain().focus().toggleStrike().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('strike') }"
@@ -86,6 +89,7 @@ onBeforeUnmount(() => {
             <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('heading', { level: 1 }) }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -94,6 +98,7 @@ onBeforeUnmount(() => {
                 <span class="font-bold text-xs">H1</span>
             </button>
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('heading', { level: 2 }) }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -105,6 +110,7 @@ onBeforeUnmount(() => {
             <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
              <button 
+                type="button"
                 @click="editor.chain().focus().toggleBulletList().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('bulletList') }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -113,6 +119,7 @@ onBeforeUnmount(() => {
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <button 
+                type="button"
                 @click="editor.chain().focus().toggleOrderedList().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('orderedList') }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -124,6 +131,7 @@ onBeforeUnmount(() => {
              <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
              <button 
+                type="button"
                 @click="editor.chain().focus().toggleBlockquote().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('blockquote') }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -135,6 +143,7 @@ onBeforeUnmount(() => {
              <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
              <button 
+                type="button"
                 @click="editor.chain().focus().undo().run()"
                 :disabled="!editor.can().chain().focus().undo().run()"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
@@ -143,6 +152,7 @@ onBeforeUnmount(() => {
                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
             </button>
             <button 
+                type="button"
                 @click="editor.chain().focus().redo().run()"
                 :disabled="!editor.can().chain().focus().redo().run()"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"

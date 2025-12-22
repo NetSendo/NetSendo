@@ -459,7 +459,9 @@ const sendTestEmail = async () => {
             email: testEmail.value,
             subject: form.subject,
             content: contentToSend,
+            preheader: form.preheader,
             mailbox_id: form.mailbox_id || effectiveMailboxInfo.value.mailbox?.id,
+            contact_list_ids: form.contact_list_ids,
         });
         showTestModal.value = false;
         testEmail.value = '';
@@ -492,6 +494,74 @@ const triggerTypes = [
     { value: 'page_visit', label: t('messages.triggers.types.page_visit'), icon: '🌐', description: t('messages.triggers.desc.page_visit') },
     { value: 'custom', label: t('messages.triggers.types.custom'), icon: '⚙️', description: t('messages.triggers.desc.custom') },
 ];
+
+// Preview Logic
+const previewSubscriber = ref(null);
+const previewSubscribers = ref([]);
+const previewSearch = ref('');
+const isPreviewLoading = ref(false);
+const previewHtml = ref(null);
+
+// Fetch random subscribers for preview
+const fetchPreviewSubscribers = async () => {
+    try {
+        const response = await axios.post(route('messages.preview-subscribers'), {
+            contact_list_ids: form.contact_list_ids,
+            search: previewSearch.value
+        });
+        previewSubscribers.value = response.data.subscribers;
+        
+        // If we have subscribers but none selected, select first one? 
+        // No, let user choose, default is raw placeholders.
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+// Fetch preview content
+const fetchPreviewContent = async () => {
+    if (!previewSubscriber.value) {
+        previewHtml.value = null;
+        return;
+    }
+    
+    // Only fetch if we have content
+    const content = advancedEditorRef.value?.getSourceCode() || form.content;
+    if (!content) return;
+    
+    isPreviewLoading.value = true;
+    try {
+        const response = await axios.post(route('messages.preview'), {
+            subject: form.subject,
+            content: content,
+            preheader: form.preheader,
+            subscriber_id: previewSubscriber.value.id
+        });
+        previewHtml.value = response.data.content;
+    } catch (e) {
+        console.error(e);
+        previewHtml.value = null;
+    } finally {
+        isPreviewLoading.value = false;
+    }
+};
+
+// Watchers
+watch(previewSubscriber, () => {
+    fetchPreviewContent();
+});
+
+// Watch contact lists to refresh subscribers list
+watch(() => form.contact_list_ids, () => {
+    if (form.contact_list_ids.length > 0) {
+        fetchPreviewSubscribers();
+    }
+}, { deep: true });
+
+// Initial fetch if lists pre-selected
+if (form.contact_list_ids.length > 0) {
+    fetchPreviewSubscribers();
+}
 </script>
 
 <template>
@@ -688,7 +758,7 @@ const triggerTypes = [
                             <!-- Content Editor -->
                             <div>
                                 <InputLabel for="content" :value="$t('messages.fields.content')" class="mb-2" />
-                                <AdvancedEditor ref="advancedEditorRef" v-model="form.content" min-height="400px" />
+                                <AdvancedEditor ref="advancedEditorRef" v-model="form.content" min-height="400px" :external-preview-content="previewHtml" />
                                 <InputError class="mt-2" :message="form.errors.content" />
                             </div>
                         </div>
@@ -774,6 +844,79 @@ const triggerTypes = [
                                     </svg>
                                     {{ $t('inserts.insert_variable') }}
                                 </button>
+                            </div>
+
+                            <!-- Preview with Data -->
+                            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                                <h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+                                    <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    {{ $t('messages.preview.title') || 'Podgląd z danymi' }}
+                                </h3>
+                                
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                                            {{ $t('messages.preview.select_subscriber') || 'Wybierz odbiorcę do podglądu' }}
+                                        </label>
+                                        
+                                        <!-- Search input -->
+                                        <div class="mb-2 flex gap-2">
+                                            <input 
+                                                v-model="previewSearch"
+                                                type="text"
+                                                :placeholder="$t('common.search') || 'Szukaj...'"
+                                                class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                                @keyup.enter="fetchPreviewSubscribers"
+                                            />
+                                            <button 
+                                                type="button"
+                                                @click="fetchPreviewSubscribers"
+                                                class="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                                            >
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- Select dropdown -->
+                                        <select 
+                                            v-model="previewSubscriber"
+                                            class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                        >
+                                            <option :value="null">{{ $t('messages.preview.no_subscriber') || 'Brak (surowe placeholdery)' }}</option>
+                                            <option v-for="sub in previewSubscribers" :key="sub.id" :value="sub">
+                                                {{ sub.email }} ({{ sub.first_name }} {{ sub.last_name }})
+                                            </option>
+                                        </select>
+                                        <p v-if="previewSubscribers.length === 0 && form.contact_list_ids.length > 0" class="mt-1 text-xs text-slate-400">
+                                            {{ $t('messages.preview.no_results') || 'Brak wyników. Spróbuj wyszukać.' }}
+                                        </p>
+                                    </div>
+                                    
+                                    <p v-if="previewSubscriber" class="text-xs text-slate-500">
+                                        {{ $t('messages.preview.info') || 'Podgląd uwzględnia dane wybranego odbiorcy.' }}
+                                    </p>
+                                    
+                                    <button 
+                                        v-if="previewSubscriber"
+                                        type="button" 
+                                        @click="fetchPreviewContent"
+                                        class="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                                    >
+                                        <svg v-if="isPreviewLoading" class="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <svg v-else class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        {{ $t('messages.preview.refresh') || 'Odśwież podgląd' }}
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Mailbox Preview -->

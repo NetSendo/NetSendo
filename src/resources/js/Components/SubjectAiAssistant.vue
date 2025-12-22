@@ -129,23 +129,70 @@ const selectSubject = (suggestion) => {
     hint.value = '';
 };
 
-// Toggle dropdown
+
+
+const triggerRef = ref(null);
+const dropdownRef = ref(null);
+const dropdownStyle = ref({});
+
+const updateDropdownPosition = () => {
+    if (!triggerRef.value) return;
+    
+    const rect = triggerRef.value.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    
+    // Default position (right aligned to trigger)
+    let left = rect.right - 320; // 320px is width (w-80)
+    let top = rect.bottom + 8;
+    
+    // Check if goes off screen left
+    if (left < 10) left = 10;
+    
+    // Check if goes off screen right
+    if (left + 320 > windowWidth) left = windowWidth - 330;
+
+    dropdownStyle.value = {
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        zIndex: 9999
+    };
+};
+
 const toggle = () => {
     isOpen.value = !isOpen.value;
     if (isOpen.value) {
-        fetchModels(); // Fetch models when opening
-    }
-    if (!isOpen.value) {
+        hint.value = '';
         suggestions.value = [];
-        error.value = '';
+        fetchModels();
+        updateDropdownPosition();
+        
+        // Add scroll listener to close dropdown on scroll
+        window.addEventListener('scroll', close, { capture: true });
+        window.addEventListener('resize', close);
+    } else {
+        window.removeEventListener('scroll', close, { capture: true });
+        window.removeEventListener('resize', close);
     }
+};
+
+const close = (e) => {
+    // If scrolling inside the dropdown, ignore
+    if (e && e.type === 'scroll' && dropdownRef.value && dropdownRef.value.contains(e.target)) {
+        return;
+    }
+    
+    isOpen.value = false;
+    window.removeEventListener('scroll', close, { capture: true });
+    window.removeEventListener('resize', close);
 };
 </script>
 
 <template>
-    <div class="relative">
-        <!-- AI Button -->
+    <div class="relative inline-block">
+        <!-- Trigger Button -->
         <button
+            ref="triggerRef"
             type="button"
             @click="toggle"
             class="flex items-center justify-center p-1.5 text-purple-500 transition-colors rounded-md hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
@@ -157,10 +204,13 @@ const toggle = () => {
         </button>
 
         <!-- Dropdown -->
-        <div 
-            v-if="isOpen" 
-            class="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-800"
-        >
+        <Teleport to="body">
+            <div 
+                v-if="isOpen"
+                ref="dropdownRef"
+                :style="dropdownStyle"
+                class="w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-700 dark:bg-slate-800"
+            >
             <div class="mb-3 flex items-center justify-between">
                 <h4 class="text-sm font-medium text-slate-900 dark:text-white">
                     ✨ {{ $t('messages.ai_assistant.subject_assistant') }}
@@ -267,5 +317,6 @@ const toggle = () => {
                 {{ $t('messages.ai_assistant.empty_info') }}
             </p>
         </div>
+        </Teleport>
     </div>
 </template>

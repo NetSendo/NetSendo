@@ -505,6 +505,10 @@ class MessageController extends Controller
         $newMessage->subject = '[KOPIA] ' . $message->subject;
         $newMessage->status = 'draft';
         $newMessage->send_at = null;
+        $newMessage->scheduled_at = null; // Reset - new message needs fresh scheduling
+        $newMessage->sent_count = 0; // Critical: reset sent counter so queue can be populated
+        $newMessage->planned_recipients_count = null; // Reset - will be calculated when activated
+        $newMessage->recipients_calculated_at = null; // Reset - needs fresh calculation
         $newMessage->created_at = now();
         $newMessage->updated_at = now();
         $newMessage->save();
@@ -778,13 +782,20 @@ class MessageController extends Controller
     /**
      * Send a test email
      */
-    public function test(Request $request, \App\Services\Mail\MailProviderService $providerService)
+    /**
+     * Send a test email
+     */
+    public function test(Request $request, \App\Services\Mail\MailProviderService $providerService, \App\Services\PlaceholderService $placeholderService)
     {
+        // ... (existing test method implementation) ...
         $validated = $request->validate([
             'email' => 'required|email',
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
+            'preheader' => 'nullable|string|max:500',
             'mailbox_id' => 'nullable|exists:mailboxes,id',
+            'subscriber_id' => 'nullable|exists:subscribers,id',
+            'contact_list_ids' => 'nullable|array',
         ]);
 
         $mailbox = null;
@@ -801,14 +812,77 @@ class MessageController extends Controller
         }
 
         try {
+            $content = $validated['content'];
+            $subject = $validated['subject'];
+            
+            // Get subscriber for placeholder substitution
+            $subscriber = null;
+            if (!empty($validated['subscriber_id'])) {
+                // Use selected subscriber
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())->find($validated['subscriber_id']);
+            } elseif (!empty($validated['contact_list_ids'])) {
+                // Use first subscriber from selected lists
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
+                    ->whereHas('contactLists', function ($q) use ($validated) {
+                        $q->whereIn('contact_lists.id', $validated['contact_list_ids']);
+                    })
+                    ->first();
+            }
+            
+            // If we have a real subscriber, use PlaceholderService
+            if ($subscriber) {
+                $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
+                $content = $processed['content'];
+                $subject = $processed['subject'];
+            } else {
+                // Use sample data for placeholders
+                $sampleData = [
+                    'email' => $validated['email'],
+                    'first_name' => 'Jan',
+                    'last_name' => 'Kowalski',
+                    'phone' => '+48 123 456 789',
+                    'device' => 'Desktop',
+                    'ip_address' => '127.0.0.1',
+                    'subscribed_at' => now()->format('Y-m-d H:i:s'),
+                    'confirmed_at' => now()->format('Y-m-d H:i:s'),
+                    'source' => 'test',
+                    'unsubscribe_link' => '#',
+                    'unsubscribe_url' => '#',
+                ];
+                
+                // Replace placeholders with sample data
+                $content = preg_replace_callback(
+                    '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
+                    function ($matches) use ($sampleData) {
+                        $key = $matches[1];
+                        return $sampleData[$key] ?? $matches[0];
+                    },
+                    $content
+                );
+                $subject = preg_replace_callback(
+                    '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
+                    function ($matches) use ($sampleData) {
+                        $key = $matches[1];
+                        return $sampleData[$key] ?? $matches[0];
+                    },
+                    $subject
+                );
+            }
+            
+            // Inject preheader if provided
+            $preheader = $validated['preheader'] ?? null;
+            if (!empty($preheader)) {
+                $content = $this->injectPreheader($content, $preheader);
+            }
+            
             // Use the proper mail provider service to send HTML email
             $provider = $providerService->getProvider($mailbox);
             
             $provider->send(
                 to: $validated['email'],
                 toName: $validated['email'], // Use email as name for test
-                subject: '[TEST] ' . $validated['subject'],
-                htmlContent: $validated['content'] // Send as HTML, not plain text
+                subject: '[TEST] ' . $subject,
+                htmlContent: $content
             );
 
             return response()->json(['success' => true, 'message' => 'Test email sent']);
@@ -816,6 +890,129 @@ class MessageController extends Controller
             \Log::error('Test email failed: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Generate preview content with placeholders substituted
+     */
+    public function preview(Request $request, \App\Services\PlaceholderService $placeholderService)
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'content' => 'required|string',
+            'preheader' => 'nullable|string|max:500',
+            'subscriber_id' => 'nullable|exists:subscribers,id',
+        ]);
+
+        try {
+            $content = $validated['content'];
+            $subject = $validated['subject'];
+            $subscriberId = $validated['subscriber_id'] ?? null;
+
+            if ($subscriberId) {
+                $subscriber = \App\Models\Subscriber::find($subscriberId);
+                
+                // Security: verify subscriber belongs to user's list
+                if ($subscriber && $subscriber->contactList?->user_id === auth()->id()) {
+                    $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
+                    $content = $processed['content'];
+                    $subject = $processed['subject'];
+                }
+            }
+
+            // Inject preheader if provided
+            $preheader = $validated['preheader'] ?? null;
+            if (!empty($preheader)) {
+                $content = $this->injectPreheader($content, $preheader);
+            }
+
+            return response()->json([
+                'success' => true,
+                'content' => $content,
+                'subject' => $subject,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get subscribers list for preview dropdown
+     */
+    public function previewSubscribers(Request $request) 
+    {
+        $validated = $request->validate([
+            'contact_list_ids' => 'nullable|array',
+            'search' => 'nullable|string|min:2',
+        ]);
+
+        // Get user's contact list IDs for security filtering
+        $userListIds = auth()->user()->contactLists()->pluck('id')->toArray();
+        
+        // Filter by specific lists if provided, otherwise use all user's lists
+        $filterListIds = !empty($validated['contact_list_ids']) 
+            ? array_intersect($validated['contact_list_ids'], $userListIds)
+            : $userListIds;
+
+        $query = \App\Models\Subscriber::whereIn('contact_list_id', $filterListIds)
+            ->select('id', 'email', 'first_name', 'last_name')
+            ->active(); // Only active subscribers
+
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
+            $query->where(function($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        $subscribers = $query->limit(10)->get();
+
+        return response()->json([
+            'subscribers' => $subscribers
+        ]);
+    }
+
+    /**
+     * Inject preheader into HTML content
+     */
+    private function injectPreheader(string $content, string $preheader): string
+    {
+        // Remove existing preheader div from HTML content (if present)
+        $content = preg_replace(
+            '/<!--\s*Preheader\s+text\s*-->\s*<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none[^"\']*["\'][^>]*>.*?<\/div>/is',
+            '',
+            $content
+        );
+        
+        // Also remove any hidden preheader divs without comment
+        $content = preg_replace(
+            '/<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none;\s*max-height:\s*0[^"\']*["\'][^>]*>.*?<\/div>/is',
+            '',
+            $content
+        );
+
+        // Create new preheader HTML
+        $preheaderHtml = '<!-- Preheader text -->' . "\n" .
+            '<div style="display: none; max-height: 0; overflow: hidden;">' . "\n" .
+            '    ' . htmlspecialchars($preheader, ENT_QUOTES, 'UTF-8') . "\n" .
+            '</div>' . "\n";
+
+        // Insert preheader after <body> tag
+        if (preg_match('/<body[^>]*>/i', $content, $matches)) {
+            $content = preg_replace(
+                '/(<body[^>]*>)/i',
+                '$1' . "\n" . $preheaderHtml,
+                $content,
+                1
+            );
+        } else {
+            // If no body tag, prepend to content
+            $content = $preheaderHtml . $content;
+        }
+
+        return $content;
     }
 
     /**

@@ -61,6 +61,8 @@ class AiIntegrationController extends Controller
             'api_key' => ['nullable', 'string'],
             'base_url' => ['nullable', 'url', 'max:500'],
             'default_model' => ['nullable', 'string', 'max:255'],
+            'max_tokens_small' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'max_tokens_large' => ['nullable', 'integer', 'min:1', 'max:1000000'],
         ]);
 
         // Check if integration for this provider already exists
@@ -77,6 +79,8 @@ class AiIntegrationController extends Controller
             'api_key' => $validated['api_key'] ?? null,
             'base_url' => $validated['base_url'] ?? null,
             'default_model' => $validated['default_model'] ?? null,
+            'max_tokens_small' => $validated['max_tokens_small'] ?? 2000,
+            'max_tokens_large' => $validated['max_tokens_large'] ?? 50000,
             'is_active' => true,
         ]);
 
@@ -103,6 +107,8 @@ class AiIntegrationController extends Controller
             'api_key' => ['nullable', 'string'],
             'base_url' => ['nullable', 'url', 'max:500'],
             'default_model' => ['nullable', 'string', 'max:255'],
+            'max_tokens_small' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'max_tokens_large' => ['nullable', 'integer', 'min:1', 'max:1000000'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
 

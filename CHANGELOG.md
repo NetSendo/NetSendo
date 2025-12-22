@@ -7,11 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.13] – Short Description
+
+**Release date:** 2025-12-22
+
+### Fixed
+- **Advanced Editor Rendering:**
+  - Fixed a critical rendering issue caused by incorrect TipTap extension imports (default vs named exports).
+  - Fixed `SyntaxError` with `@tiptap/extension-text-style` in Vite build.
+  - Fixed Vue runtime error (`Property "window" was accessed during render`) in Emoji Picker positioning by creating a safe computed property.
+
+- **Message Duplication Queue Bug:**
+  - Fixed critical issue where duplicated messages (both broadcast and autoresponder) would not receive new subscribers in their queue.
+  - When duplicating a message, queue-related fields (`sent_count`, `scheduled_at`, `planned_recipients_count`, `recipients_calculated_at`) were copied from the original, causing `syncPlannedRecipients()` to skip adding new recipients.
+  - Now all queue counters are properly reset to zero/null when duplicating a message.
+
+### Added
+- **Editor Features:**
+  - Added new formatting options to the WYSIWYG editor:
+    - **Font Family Picker:** specific font selection (Arial, Georgia, etc.).
+    - **Font Size Picker:** custom text size support.
+    - **Text Color & Highlight:** color pickers for text and background.
+    - **Enhanced Emoji Picker:** new categorized emoji picker with tabs (Faces, Symbols, Gestures, etc.), properly positioned using Teleport to avoid clipping.
+
 ### Fixed
 - **Email Preheader Bug:**
   - Fixed issue where preheader text from HTML template was used instead of the preheader field set by user in message form.
   - `SendEmailJob` now removes existing preheader from HTML content and injects the `Message->preheader` value after `<body>` tag.
   - User-defined preheader now takes priority over template preheader.
+
+- **Test Email Placeholder and Preheader Support:**
+  - Fixed issue where test emails did not substitute placeholders (e.g., `[[first_name]]`) with actual values.
+  - Fixed issue where test emails did not include the preheader text.
+  - `MessageController::test()` now uses `PlaceholderService` for variable substitution.
+  - Test emails use real subscriber data from selected contact lists, or sample data ("Jan Kowalski") if no lists are selected.
+  - Preheader is now injected into HTML content after `<body>` tag (same logic as `SendEmailJob`).
+  - Updated frontend to send `preheader` and `contact_list_ids` in test email request.
+
+- **Message Preview & Logic:**
+  - Fixed `500 Internal Server Error` on preview endpoints caused by incorrect database queries (non-existent `user_id` column on subscribers table).
+  - Fixed missing `scopeActive()` method in `Subscriber` model.
+  - Fixed relationship usage in `MessageController` (changed `contactLists` to `contactList`).
+  - Fixed `AdvancedEditor.vue` to correctly display live preview with data substitution.
+  - Added missing translations for preview section in all supported languages.
+  - **Subscriber CSV Import:**
+    - Fixed issue with UTF-8 BOM causing first column (email) failure.
+    - Added auto-detection for files without headers (if first row contains email).
+    - Fixed validation bug preventing comma separator from being selected.
+    - Updated import page instructions to clarify that files without headers are supported and auto-detected.
+  - **Database Migrations:**
+    - Fixed `2025_12_22_000003` migration compatibility with SQLite to allow running tests in `sqlite` environment.
+
+
+### Improved
+- **Message Editor UI:**
+  - Enhanced Subscriber Picker for preview: added search functionality and optimized performance (limit 10 items).
+
+### Added
+- **Live Preview with Subscriber Data:**
+  - Added new "Preview" sidebar widget in Message Editor.
+  - Allows selecting a subscriber from the target audience to see how placeholders (e.g., `[[first_name]]`) will be rendered.
+  - Updates the preview in real-time when switching subscribers.
+  - Supports both subject line and content body substitution.
 
 ### Added
 - **AI Subject Assistant - Preheader Generation:**
@@ -31,6 +88,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **AI Assistant UI:**
   - Added auto-scrolling to generated content so users immediately see the result.
   - Fixed dark mode readability issues by adjusting text and background contrast in content preview.
+
+- **AI Integration Settings:**
+  - Fixed issue where `max_tokens_small` and `max_tokens_large` settings were not persisting after save.
+  - Added proper validation for token fields in `AiIntegrationController`.
+
+- **Subject AI Assistant Dropdown:**
+  - Fixed issue where the suggestions dropdown was clipped or hidden by surrounding elements.
+  - Implemented smart positioning (Teleport to body) to ensure the dropdown is always fully visible on top of other content.
+  - Fixed issue where scrolling the suggestions list would close the dropdown.
+
+- **WYSIWYG Editor:**
+  - Fixed issue where clicking toolbar buttons (Bold, Italic, etc.) would unexpectedly save and close the message form.
+  - Added proper button type attributes to prevent form submission on toolbar interactions.
 
 ## [1.0.12] – Short Description
 

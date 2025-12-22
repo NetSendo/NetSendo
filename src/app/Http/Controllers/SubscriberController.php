@@ -170,19 +170,15 @@ class SubscriberController extends Controller
             ->firstOrFail();
 
         $path = $file->getRealPath();
-        $handle = fopen($path, 'r');
         
-        // Headers mapping
-        $headers = [];
-        $row = 0;
+        // Read file content and remove UTF-8 BOM if present
+        $content = file_get_contents($path);
+        $bom = pack('H*', 'EFBBBF'); // UTF-8 BOM
+        $content = preg_replace("/^$bom/", '', $content);
+        
+        // Convert to array of lines and parse CSV
+        $lines = explode("\n", $content);
         $imported = 0;
-        
-        if (($data = fgetcsv($handle, 1000, $separator)) !== FALSE) {
-            // Normalize headers
-            $headers = array_map(function($h) {
-                return strtolower(trim($h)); // email, "first name" -> firstname
-            }, $data);
-        }
         
         // Map header names to DB columns
         $map = [
@@ -191,26 +187,69 @@ class SubscriberController extends Controller
             'last_name' => ['last_name', 'lastname', 'nazwisko', 'surname'],
         ];
 
-        $colIndices = [];
-        foreach ($map as $dbCol => $possibleNames) {
-            $colIndices[$dbCol] = -1;
-            foreach ($headers as $index => $header) {
-                if (in_array($header, $possibleNames)) {
-                    $colIndices[$dbCol] = $index;
-                    break;
+        $colIndices = [
+            'email' => -1,
+            'first_name' => -1,
+            'last_name' => -1,
+        ];
+        
+        $hasHeaders = false;
+        $startRow = 0;
+        
+        // Parse first row to determine if it's headers or data
+        if (count($lines) > 0) {
+            $firstRow = str_getcsv(trim($lines[0]), $separator);
+            
+            if (!empty($firstRow)) {
+                $firstCellLower = strtolower(trim($firstRow[0]));
+                
+                // Check if first cell looks like a header (not an email)
+                // Headers would be "email", "e-mail", "mail", etc.
+                // Data would contain "@" character
+                if (strpos($firstRow[0], '@') !== false) {
+                    // First row is DATA, not headers - use positional mapping
+                    // Standard format: email, first_name, last_name
+                    $colIndices['email'] = 0;
+                    $colIndices['first_name'] = count($firstRow) > 1 ? 1 : -1;
+                    $colIndices['last_name'] = count($firstRow) > 2 ? 2 : -1;
+                    $hasHeaders = false;
+                    $startRow = 0;
+                } else {
+                    // First row is HEADERS - parse them
+                    $headers = array_map(function($h) {
+                        return strtolower(trim($h));
+                    }, $firstRow);
+                    
+                    foreach ($map as $dbCol => $possibleNames) {
+                        foreach ($headers as $index => $header) {
+                            if (in_array($header, $possibleNames)) {
+                                $colIndices[$dbCol] = $index;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Fallback: if email column not found, assume column 0
+                    if ($colIndices['email'] === -1) {
+                        $colIndices['email'] = 0;
+                        $colIndices['first_name'] = count($headers) > 1 ? 1 : -1;
+                        $colIndices['last_name'] = count($headers) > 2 ? 2 : -1;
+                    }
+                    
+                    $hasHeaders = true;
+                    $startRow = 1;
                 }
             }
         }
-        
-        // If email column not found by header, assume first column is email if it looks like one
-        // For simplicity, strict requirement on header for now or index 0
-        if ($colIndices['email'] === -1) {
-             // Fallback: assume column 0 is email
-             $colIndices['email'] = 0;
-        }
 
-        while (($data = fgetcsv($handle, 1000, $separator)) !== FALSE) {
-            $row++;
+        // Process data rows
+        for ($i = $startRow; $i < count($lines); $i++) {
+            $line = trim($lines[$i]);
+            if (empty($line)) {
+                continue;
+            }
+            
+            $data = str_getcsv($line, $separator);
             
             // Get values based on indices
             $email = isset($data[$colIndices['email']]) ? trim($data[$colIndices['email']]) : null;
@@ -223,7 +262,6 @@ class SubscriberController extends Controller
             $lastName = $colIndices['last_name'] !== -1 && isset($data[$colIndices['last_name']]) ? trim($data[$colIndices['last_name']]) : null;
             
             // Upsert or Create (ignore duplicates for this list)
-            // Using updateOrCreate might be slow for huge files, but safe for now
             $list->subscribers()->updateOrCreate(
                 ['email' => $email],
                 [
@@ -235,8 +273,6 @@ class SubscriberController extends Controller
             
             $imported++;
         }
-        
-        fclose($handle);
 
         return redirect()->route('subscribers.index')
             ->with('success', "Zaimportowano {$imported} subskrybentów.");

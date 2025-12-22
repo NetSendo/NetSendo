@@ -146,6 +146,21 @@
         "visual_edit_notice": "Kliknij na tekst w podglądzie, aby go edytować bezpośrednio.",
         "emoji": "Emoji",
         "content_width": "Szerokość treści",
+        "font_family": "Czcionka",
+        "font_size": "Rozmiar",
+        "text_color": "Kolor tekstu",
+        "highlight": "Podświetlenie",
+        "clear_font": "Domyślna",
+        "clear_color": "Usuń kolor",
+        "clear_highlight": "Usuń podświetlenie",
+        "emoji_categories": {
+            "faces": "Twarze",
+            "symbols": "Symbole",
+            "gestures": "Gesty",
+            "business": "Biznes",
+            "hearts": "Serca",
+            "nature": "Natura"
+        },
         "image_properties": {
             "url": "URL obrazu",
             "preview": "Podgląd",
@@ -830,6 +845,14 @@
             "no_subject_preview": "(brak tematu)",
             "no_mailbox_preview": "Brak skrzynki"
         },
+        "preview": {
+            "title": "Podgląd z danymi",
+            "select_subscriber": "Wybierz odbiorcę do podglądu",
+            "no_subscriber": "Brak (surowe placeholdery)",
+            "info": "Podgląd uwzględnia dane wybranego odbiorcy.",
+            "refresh": "Odśwież podgląd",
+            "no_results": "Brak wyników. Spróbuj wyszukać."
+        },
         "stats": {
             "title": "Statystyki Kampanii",
             "header_title": "Statystyki: {subject}",
@@ -910,7 +933,7 @@
             "subtitle": "Zaimportuj kontakty z pliku CSV",
             "instructions": {
                 "title": "Instrukcja formatu pliku",
-                "line1": "Plik powinien być w formacie CSV. Pierwszy wiersz (nagłówek) jest ignorowany lub dopasowywany automatycznie.",
+                "line1": "Plik powinien być w formacie CSV. System automatycznie wykrywa nagłówki. Jeśli ich brak, przyjmuje kolejność: Email, Imię, Nazwisko.",
                 "required_columns": "Wymagane kolumny (w dowolnej kolejności):",
                 "email": "Email (wymagane)",
                 "first_name": "Imię (opcjonalne)",

@@ -775,6 +775,14 @@
             "no_subject_preview": "(kein Betreff)",
             "no_mailbox_preview": "Kein Postfach konfiguriert"
         },
+        "preview": {
+            "title": "Live-Vorschau mit Daten",
+            "select_subscriber": "Abonnenten für Vorschau auswählen",
+            "no_subscriber": "Keine (rohe Platzhalter)",
+            "info": "Vorschau verwendet die Daten des ausgewählten Abonnenten.",
+            "refresh": "Vorschau aktualisieren",
+            "no_results": "Keine Ergebnisse. Versuchen Sie zu suchen."
+        },
         "stats": {
             "title": "Kampagnenstatistiken",
             "header_title": "Statistiken: {subject}",

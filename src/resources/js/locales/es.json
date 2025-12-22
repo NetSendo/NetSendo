@@ -763,6 +763,14 @@
             "no_subject_preview": "(sin asunto)",
             "no_mailbox_preview": "Ningún buzón configurado"
         },
+        "preview": {
+            "title": "Vista previa con datos",
+            "select_subscriber": "Seleccionar suscriptor para vista previa",
+            "no_subscriber": "Ninguno (marcadores sin procesar)",
+            "info": "La vista previa utiliza los datos del suscriptor seleccionado.",
+            "refresh": "Actualizar vista previa",
+            "no_results": "Sin resultados. Intenta buscar."
+        },
         "stats": {
             "title": "Estadísticas de campaña",
             "header_title": "Estadísticas: {subject}",

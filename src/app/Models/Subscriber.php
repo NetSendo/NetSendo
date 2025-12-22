@@ -54,6 +54,14 @@ class Subscriber extends Model
     ];
 
     /**
+     * Scope a query to only include active subscribers.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
      * Get the contact list this subscriber belongs to
      */
     public function contactList(): BelongsTo

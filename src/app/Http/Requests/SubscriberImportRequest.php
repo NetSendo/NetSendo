@@ -24,7 +24,7 @@ class SubscriberImportRequest extends FormRequest
         return [
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'], // 10MB max
             'contact_list_id' => ['required', 'exists:contact_lists,id'],
-            'separator' => ['required', 'in:,;,tab'], // comma, semicolon, or tab
+            'separator' => ['required', \Illuminate\Validation\Rule::in([',', ';', 'tab'])], // comma, semicolon, or tab
         ];
     }
 }
