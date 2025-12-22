@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.8] – Short Description - 2025-12-22
+
 ### Fixed
 - **License Activation Buttons:**
   - Fixed issue where activation buttons were cut off in license plan cards due to incorrect layout height calculation
