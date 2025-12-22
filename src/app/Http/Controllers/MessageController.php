@@ -912,8 +912,8 @@ class MessageController extends Controller
             if ($subscriberId) {
                 $subscriber = \App\Models\Subscriber::find($subscriberId);
                 
-                // Security: verify subscriber belongs to user's list
-                if ($subscriber && $subscriber->contactList?->user_id === auth()->id()) {
+                // Security: verify subscriber belongs to user
+                if ($subscriber && $subscriber->user_id === auth()->id()) {
                     $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
                     $content = $processed['content'];
                     $subject = $processed['subject'];
@@ -954,7 +954,9 @@ class MessageController extends Controller
             ? array_intersect($validated['contact_list_ids'], $userListIds)
             : $userListIds;
 
-        $query = \App\Models\Subscriber::whereIn('contact_list_id', $filterListIds)
+        $query = \App\Models\Subscriber::whereHas('contactLists', function ($q) use ($filterListIds) {
+                $q->whereIn('contact_lists.id', $filterListIds);
+            })
             ->select('id', 'email', 'first_name', 'last_name')
             ->active(); // Only active subscribers
 

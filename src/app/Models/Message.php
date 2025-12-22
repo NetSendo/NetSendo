@@ -218,13 +218,15 @@ class Message extends Model
             return collect();
         }
 
-        return Subscriber::whereIn('contact_list_id', $includedListIds)
-            ->where('status', 'active')
+        return Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
+                $query->whereIn('contact_lists.id', $includedListIds)
+                    ->where('contact_list_subscriber.status', 'active');
+            })
             ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
                 // Exclude subscribers that are on any of the excluded lists
-                $excludedEmails = Subscriber::whereIn('contact_list_id', $excludedListIds)
-                    ->pluck('email')
-                    ->toArray();
+                $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
+                    $q->whereIn('contact_lists.id', $excludedListIds);
+                })->pluck('email')->toArray();
                 $query->whereNotIn('email', $excludedEmails);
             })
             ->get()

@@ -25,11 +25,17 @@ fi
 
 # Sync public directory from image to volume
 # Using rsync if available, otherwise cp
-if command -v rsync &> /dev/null; then
-    rsync -a --delete --exclude='storage' /var/www/public.dist/ /var/www/public/
+if [ -d "/var/www/public.dist" ]; then
+    # Sync public directory from image to volume
+    # Using rsync if available, otherwise cp
+    if command -v rsync &> /dev/null; then
+        rsync -a --delete --exclude='storage' /var/www/public.dist/ /var/www/public/
+    else
+        # Fallback: copy files (less efficient but works)
+        cp -rf /var/www/public.dist/* /var/www/public/ 2>/dev/null || true
+    fi
 else
-    # Fallback: copy files (less efficient but works)
-    cp -rf /var/www/public.dist/* /var/www/public/ 2>/dev/null || true
+    echo "⚠️ Public assets distribution directory not found, skipping sync (Dev Mode)"
 fi
 
 echo "✅ Public assets synced"

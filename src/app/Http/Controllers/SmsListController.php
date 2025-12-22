@@ -141,7 +141,10 @@ class SmsListController extends Controller
                     return back()->withErrors(['transfer_to_id' => 'Nie można przenieść subskrybentów do tej samej listy.']);
                 }
 
-                $smsList->subscribers()->update(['contact_list_id' => $targetList->id]);
+                // Transfer subscribers to target list (many-to-many: detach from source, attach to target)
+                $subscriberIds = $smsList->subscribers()->pluck('subscribers.id')->toArray();
+                $smsList->subscribers()->detach($subscriberIds);
+                $targetList->subscribers()->attach($subscriberIds, ['status' => 'active', 'subscribed_at' => now()]);
                 
             } elseif ($request->boolean('force_delete')) {
                 $smsList->subscribers()->delete();

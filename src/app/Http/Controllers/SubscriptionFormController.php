@@ -73,6 +73,7 @@ class SubscriptionFormController extends Controller
             'availableFields' => $availableFields,
             'defaultStyles' => SubscriptionForm::$defaultStyles,
             'defaultFields' => SubscriptionForm::$defaultFields,
+            'designPresets' => $this->formBuilder->getDesignPresets(),
         ]);
     }
 
@@ -84,26 +85,27 @@ class SubscriptionFormController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'contact_list_id' => 'required|exists:contact_lists,id',
-            'status' => 'in:active,draft,disabled',
-            'type' => 'in:inline,popup,embedded',
+            'status' => 'nullable|in:active,draft,disabled',
+            'type' => 'nullable|in:inline,popup,embedded',
             'fields' => 'required|array|min:1',
             'styles' => 'nullable|array',
-            'layout' => 'in:vertical,horizontal,grid',
-            'label_position' => 'in:above,left,hidden',
-            'show_placeholders' => 'boolean',
+            'layout' => 'nullable|in:vertical,horizontal,grid',
+            'label_position' => 'nullable|in:above,left,hidden',
+            'show_placeholders' => 'nullable|boolean',
             'double_optin' => 'nullable|boolean',
-            'require_policy' => 'boolean',
+            'require_policy' => 'nullable|boolean',
             'policy_url' => 'nullable|url|max:500',
             'redirect_url' => 'nullable|url|max:500',
             'success_message' => 'nullable|string',
             'error_message' => 'nullable|string',
             'coregister_lists' => 'nullable|array',
-            'coregister_optional' => 'boolean',
-            'captcha_enabled' => 'boolean',
+            'coregister_optional' => 'nullable|boolean',
+            'captcha_enabled' => 'nullable|boolean',
             'captcha_provider' => 'nullable|in:recaptcha_v2,recaptcha_v3,hcaptcha,turnstile',
             'captcha_site_key' => 'nullable|string',
             'captcha_secret_key' => 'nullable|string',
-            'honeypot_enabled' => 'boolean',
+            'honeypot_enabled' => 'nullable|boolean',
+            'use_list_redirect' => 'nullable|boolean',
         ]);
 
         // Validate structure
@@ -159,6 +161,7 @@ class SubscriptionFormController extends Controller
             'availableFields' => $availableFields,
             'defaultStyles' => SubscriptionForm::$defaultStyles,
             'defaultFields' => SubscriptionForm::$defaultFields,
+            'designPresets' => $this->formBuilder->getDesignPresets(),
         ]);
     }
 
@@ -172,26 +175,27 @@ class SubscriptionFormController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'contact_list_id' => 'required|exists:contact_lists,id',
-            'status' => 'in:active,draft,disabled',
-            'type' => 'in:inline,popup,embedded',
+            'status' => 'nullable|in:active,draft,disabled',
+            'type' => 'nullable|in:inline,popup,embedded',
             'fields' => 'required|array|min:1',
             'styles' => 'nullable|array',
-            'layout' => 'in:vertical,horizontal,grid',
-            'label_position' => 'in:above,left,hidden',
-            'show_placeholders' => 'boolean',
+            'layout' => 'nullable|in:vertical,horizontal,grid',
+            'label_position' => 'nullable|in:above,left,hidden',
+            'show_placeholders' => 'nullable|boolean',
             'double_optin' => 'nullable|boolean',
-            'require_policy' => 'boolean',
+            'require_policy' => 'nullable|boolean',
             'policy_url' => 'nullable|url|max:500',
             'redirect_url' => 'nullable|url|max:500',
             'success_message' => 'nullable|string',
             'error_message' => 'nullable|string',
             'coregister_lists' => 'nullable|array',
-            'coregister_optional' => 'boolean',
-            'captcha_enabled' => 'boolean',
+            'coregister_optional' => 'nullable|boolean',
+            'captcha_enabled' => 'nullable|boolean',
             'captcha_provider' => 'nullable|in:recaptcha_v2,recaptcha_v3,hcaptcha,turnstile',
             'captcha_site_key' => 'nullable|string',
             'captcha_secret_key' => 'nullable|string',
-            'honeypot_enabled' => 'boolean',
+            'honeypot_enabled' => 'nullable|boolean',
+            'use_list_redirect' => 'nullable|boolean',
         ]);
 
         // Don't overwrite captcha_secret_key if not provided

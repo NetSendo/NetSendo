@@ -15,6 +15,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Headers are now correctly passed to all mail providers (SMTP, SendGrid, Gmail).
   - Added "Insert Template" helper buttons to easily populate standard header values.
   - Implemented smart auto-fill: `List-Unsubscribe` headers are automatically populated based on the selected mailing list mailbox (sender email) to ensure valid `mailto:` links.
+- **Enhanced Subscription Form Builder:**
+  - Modernized design with "Glassmorphism", "Modern Dark", and "Gradient" presets.
+  - Transparent background support with RGBA color picker and opacity slider.
+  - Professional styling effects: customizable shadows (blur, opacity, offsets), linear gradients (8 directions), and entry animations (fadeIn, slideUp, pulse, bounce).
+  - Explicit placeholder customization for each form field.
+  - "Transparent container" toggle to quickly show only fields and buttons.
+  - Integration with contact list settings for dynamic post-submission redirects based on Double Opt-in status.
+  - Real-time preview improvements including border width, padding, and mobile/desktop toggle.
+- **Form Builder Error Handling:**
+  - Added console logging and user alerts for form validation errors to prevent silent save failures.
+  - Implemented automatic data transformation to convert empty URL and message strings to `null` before submission.
+
+### Fixed
+- **Form Save Failures:**
+  - Fixed issue where forms would not save by making all boolean styling and configuration fields `nullable` in `SubscriptionFormController` validation.
+  - Resolved URL validation errors caused by empty strings being sent instead of `null` for redirect and policy URLs.
+- **Placeholder Customization:** Fixed UI issue where field placeholders were difficult to edit; they are now clearly exposed in the field settings panel.
+
+### Fixed
+- **Subscriber Many-to-Many Relationship Alignment:**
+  - Resolved multiple `QueryException` errors by fixing outdated queries still referencing the removed `contact_list_id` column on the `subscribers` table.
+  - Updated `ContactList::subscribers()` relationship to `belongsToMany` to match the pivot table implementation.
+  - Refactored `Api/V1/SubscriberController` CRUD and search endpoints to properly use pivot table relationships and many-to-many filtering.
+  - Fixed subscriber transfer logic in `MailingListController` and `SmsListController` to use pivot table detach/attach operations.
+  - Updated `Message::getUniqueRecipients()` and `GlobalStatsController` to query subscribers across multiple lists through the relationship.
+  - Removed outdated singular `contactList` relationship references in `Subscriber` model and `MessageController`.
+
+### Changed
+- **Subscriber System Refactor:**
+  - **Many-to-Many Relationship:** Refactored database schema to allow subscribers to belong to multiple contact lists simultaneously without duplication.
+  - **Unique Email Constraint:** Subscribers are now unique by email per user account, resolving data redundancy issues.
+  - **Migration Fix:** Resolved `Duplicate column name 'phone'` error by implementing idempotent migration checks in `refactor_subscribers_relationship`.
+- **Subscriber Controller Bug:** Fixed an `ErrorException` (Undefined variable `$request`) in the `update` method of `SubscriberController` by passing the `$request` variable to the database transaction closure.
+
+### Added
+- **Phone Input with Country Picker:**
+  - Created a new `PhoneInput.vue` component featuring a country selector with emoji flags and international dial codes (50+ countries supported).
+  - Integrated the `PhoneInput` component into the "Add Subscriber" and "Edit Subscriber" forms to ensure consistent and correct phone number formatting.
+
+### Added
+- **Subscriber Fields & UI:**
+  - Added `Phone`, `Gender`, and `Global Status` fields to subscriber profiles.
+  - Updated "Add/Edit Subscriber" forms to support multi-select for contact lists.
+  - Added "Send Welcome Email" toggle to the subscriber creation form.
+  - Implemented dynamic rendering for Custom Fields in subscriber forms.
+- **Translations:**
+  - Added missing translations for subscriber features (gender, phone, welcome email, multi-list helper) in EN, PL, DE, ES.
 
 ## [1.0.13] – Short Description
 

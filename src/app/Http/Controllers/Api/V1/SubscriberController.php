@@ -22,13 +22,13 @@ class SubscriberController extends Controller
     {
         $user = $request->user();
 
-        $query = Subscriber::whereHas('contactList', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        })->with(['tags', 'fieldValues.customField']);
+        $query = Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->with(['tags', 'fieldValues.customField', 'contactLists']);
 
         // Filter by contact list
         if ($request->has('contact_list_id')) {
-            $query->where('contact_list_id', $request->contact_list_id);
+            $query->whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $request->contact_list_id));
         }
 
         // Filter by status
@@ -111,29 +111,42 @@ class SubscriberController extends Controller
             'custom_fields' => 'nullable|array',
         ]);
 
-        // Check if subscriber already exists in this list
+        // Check if subscriber already exists (by email for this user)
         $existing = Subscriber::where('email', $validated['email'])
-            ->where('contact_list_id', $validated['contact_list_id'])
+            ->where('user_id', $user->id)
             ->first();
 
         if ($existing) {
+            // Add the list to existing subscriber if not already attached
+            if (!$existing->contactLists()->where('contact_list_id', $validated['contact_list_id'])->exists()) {
+                $existing->contactLists()->attach($validated['contact_list_id'], [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]);
+            }
             return response()->json([
                 'error' => 'Conflict',
-                'message' => 'Subscriber with this email already exists in this list',
+                'message' => 'Subscriber with this email already exists',
                 'subscriber_id' => $existing->id,
             ], 409);
         }
 
         // Create subscriber
         $subscriber = Subscriber::create([
+            'user_id' => $user->id,
             'email' => $validated['email'],
-            'contact_list_id' => $validated['contact_list_id'],
             'first_name' => $validated['first_name'] ?? null,
             'last_name' => $validated['last_name'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'status' => $validated['status'] ?? 'active',
+            'is_active_global' => ($validated['status'] ?? 'active') === 'active',
             'source' => $validated['source'] ?? 'api',
             'ip_address' => $request->ip(),
+            'subscribed_at' => now(),
+        ]);
+
+        // Attach to contact list
+        $subscriber->contactLists()->attach($validated['contact_list_id'], [
+            'status' => $validated['status'] ?? 'active',
             'subscribed_at' => now(),
         ]);
 
@@ -149,10 +162,11 @@ class SubscriberController extends Controller
             }
         }
 
-        // Dispatch event for automations
-        event(new SubscriberSignedUp($subscriber, $subscriber->contactList, null, 'api'));
+        // Dispatch event for automations (use first list for the event)
+        $contactList = $subscriber->contactLists()->first();
+        event(new SubscriberSignedUp($subscriber, $contactList, null, 'api'));
 
-        $subscriber->load(['tags', 'fieldValues.customField']);
+        $subscriber->load(['tags', 'fieldValues.customField', 'contactLists']);
 
         return (new SubscriberResource($subscriber))
             ->response()
@@ -194,17 +208,17 @@ class SubscriberController extends Controller
             'custom_fields' => 'nullable|array',
         ]);
 
-        // Check email uniqueness if changing
+        // Check email uniqueness if changing (within user's subscribers)
         if (isset($validated['email']) && $validated['email'] !== $subscriber->email) {
             $existing = Subscriber::where('email', $validated['email'])
-                ->where('contact_list_id', $subscriber->contact_list_id)
+                ->where('user_id', $user->id)
                 ->where('id', '!=', $subscriber->id)
                 ->first();
 
             if ($existing) {
                 return response()->json([
                     'error' => 'Conflict',
-                    'message' => 'Another subscriber with this email already exists in this list',
+                    'message' => 'Another subscriber with this email already exists',
                 ], 409);
             }
         }
@@ -219,7 +233,7 @@ class SubscriberController extends Controller
             }
         }
 
-        $subscriber->load(['tags', 'fieldValues.customField']);
+        $subscriber->load(['tags', 'fieldValues.customField', 'contactLists']);
 
         return new SubscriberResource($subscriber);
     }
@@ -263,11 +277,11 @@ class SubscriberController extends Controller
     {
         $user = $request->user();
 
-        $subscriber = Subscriber::whereHas('contactList', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
+        $subscriber = Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
         })
             ->where('email', $email)
-            ->with(['tags', 'fieldValues.customField'])
+            ->with(['tags', 'fieldValues.customField', 'contactLists'])
             ->first();
 
         if (!$subscriber) {
@@ -324,7 +338,7 @@ class SubscriberController extends Controller
         }
 
         $subscriber->syncTagsWithEvents($requestedTagIds);
-        $subscriber->load(['tags', 'fieldValues.customField']);
+        $subscriber->load(['tags', 'fieldValues.customField', 'contactLists']);
 
         return new SubscriberResource($subscriber);
     }
@@ -334,8 +348,8 @@ class SubscriberController extends Controller
      */
     protected function findSubscriberForUser($user, int $id): ?Subscriber
     {
-        return Subscriber::whereHas('contactList', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
+        return Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
         })->find($id);
     }
 }

@@ -36,22 +36,8 @@ class CheckForUpdates extends Command
             return self::SUCCESS;
         }
 
-        $cacheKey = 'netsendo_version_check';
-        $forceRefresh = $this->option('force');
-
-        // Check if we should skip (cached result is fresh enough - 6 hours)
-        if (!$forceRefresh && Cache::has($cacheKey)) {
-            $cached = Cache::get($cacheKey);
-            
-            // If cached version differs from current version (app was updated), force refresh
-            if (isset($cached['current_version']) && $cached['current_version'] !== $currentVersion) {
-                $this->info("Version changed from {$cached['current_version']} to {$currentVersion}. Refreshing...");
-                Cache::forget($cacheKey);
-            } else {
-                $this->displayResult($cached, $currentVersion, true);
-                return self::SUCCESS;
-            }
-        }
+        // Always fetch fresh data from GitHub (no cache)
+        // Cache was causing delays in update detection and stale data after updates
 
         $this->info("Checking for updates... (current: v{$currentVersion})");
 
@@ -112,9 +98,6 @@ class CheckForUpdates extends Command
                 'new_versions' => array_slice($newVersions, 0, 5),
                 'checked_at' => now()->toIso8601String(),
             ];
-
-            // Cache for 6 hours
-            Cache::put($cacheKey, $result, 21600);
 
             $this->displayResult($result, $currentVersion, false);
 

@@ -30,6 +30,7 @@ class SubscriptionForm extends Model
         'require_policy',
         'policy_url',
         'redirect_url',
+        'use_list_redirect',
         'success_message',
         'error_message',
         'coregister_lists',
@@ -54,6 +55,7 @@ class SubscriptionForm extends Model
         'coregister_optional' => 'boolean',
         'captcha_enabled' => 'boolean',
         'honeypot_enabled' => 'boolean',
+        'use_list_redirect' => 'boolean',
         'submissions_count' => 'integer',
         'last_submission_at' => 'datetime',
     ];
@@ -101,6 +103,118 @@ class SubscriptionForm extends Model
         'label_font_size' => 14,
         'label_font_weight' => 500,
         'placeholder_color' => '#9CA3AF',
+        
+        // Transparency
+        'bgcolor_opacity' => 100,
+        
+        // Shadow
+        'shadow_enabled' => false,
+        'shadow_color' => '#000000',
+        'shadow_opacity' => 15,
+        'shadow_blur' => 20,
+        'shadow_x' => 0,
+        'shadow_y' => 10,
+        
+        // Gradient
+        'gradient_enabled' => false,
+        'gradient_direction' => 'to bottom right',
+        'gradient_from' => '#6366F1',
+        'gradient_to' => '#8B5CF6',
+        
+        // Animation
+        'animation_enabled' => false,
+        'animation_type' => 'fadeIn',
+    ];
+
+    /**
+     * Design presets for quick styling
+     */
+    public static array $designPresets = [
+        'default' => [
+            'name' => 'Domyślny',
+            'description' => 'Klasyczny, czysty design',
+            'styles' => [], // Uses default styles
+        ],
+        'modern_dark' => [
+            'name' => 'Nowoczesny Ciemny',
+            'description' => 'Elegancki ciemny motyw z subtelnymi cieniami',
+            'styles' => [
+                'bgcolor' => '#1F2937',
+                'border_color' => '#374151',
+                'text_color' => '#F9FAFB',
+                'field_bgcolor' => '#374151',
+                'field_text' => '#F9FAFB',
+                'field_bgcolor_active' => '#4B5563',
+                'field_text_active' => '#FFFFFF',
+                'field_border_color' => '#4B5563',
+                'field_border_color_active' => '#818CF8',
+                'placeholder_color' => '#9CA3AF',
+                'submit_color' => '#818CF8',
+                'submit_hover_color' => '#6366F1',
+                'submit_border_color' => '#818CF8',
+                'shadow_enabled' => true,
+                'shadow_color' => '#000000',
+                'shadow_opacity' => 40,
+                'shadow_blur' => 30,
+                'shadow_y' => 15,
+            ],
+        ],
+        'glassmorphism' => [
+            'name' => 'Glassmorphism',
+            'description' => 'Efekt szkła z rozmyciem i przezroczystością',
+            'styles' => [
+                'bgcolor' => '#FFFFFF',
+                'bgcolor_opacity' => 70,
+                'border_color' => '#FFFFFF',
+                'border_width' => 1,
+                'border_radius' => 16,
+                'field_bgcolor' => '#FFFFFF',
+                'field_border_color' => '#E5E7EB',
+                'field_border_radius' => 10,
+                'submit_color' => '#6366F1',
+                'submit_border_radius' => 10,
+                'shadow_enabled' => true,
+                'shadow_color' => '#6366F1',
+                'shadow_opacity' => 10,
+                'shadow_blur' => 40,
+            ],
+        ],
+        'minimal_light' => [
+            'name' => 'Minimalistyczny',
+            'description' => 'Czysty, prosty design z subtelnymi akcentami',
+            'styles' => [
+                'bgcolor' => '#FFFFFF',
+                'border_color' => '#F3F4F6',
+                'border_width' => 0,
+                'border_radius' => 0,
+                'padding' => 32,
+                'field_border_color' => '#E5E7EB',
+                'field_border_radius' => 0,
+                'submit_color' => '#111827',
+                'submit_hover_color' => '#1F2937',
+                'submit_border_color' => '#111827',
+                'submit_border_radius' => 0,
+            ],
+        ],
+        'gradient_style' => [
+            'name' => 'Gradient',
+            'description' => 'Żywy gradient z nowoczesnymi akcentami',
+            'styles' => [
+                'bgcolor' => '#EEF2FF',
+                'border_color' => '#C7D2FE',
+                'border_radius' => 20,
+                'field_border_radius' => 12,
+                'submit_color' => '#6366F1',
+                'submit_border_radius' => 12,
+                'gradient_enabled' => true,
+                'gradient_from' => '#6366F1',
+                'gradient_to' => '#A855F7',
+                'shadow_enabled' => true,
+                'shadow_color' => '#6366F1',
+                'shadow_opacity' => 20,
+                'shadow_blur' => 25,
+            ],
+        ],
     ];
 
     /**
@@ -279,5 +393,37 @@ class SubscriptionForm extends Model
         // Inherit from contact list settings
         $listSettings = $this->contactList->settings ?? [];
         return $listSettings['double_optin'] ?? true;
+    }
+
+    /**
+     * Get redirect settings based on form or list configuration
+     */
+    public function getRedirectSettings(): array
+    {
+        // If using custom form redirect
+        if (!$this->use_list_redirect && $this->redirect_url) {
+            return [
+                'url' => $this->redirect_url,
+                'message' => $this->success_message ?? 'Dziękujemy za zapisanie się!',
+            ];
+        }
+
+        // Try to get from list settings
+        $listSettings = $this->contactList->settings ?? [];
+        $useDoubleOptin = $this->shouldUseDoubleOptin();
+
+        if ($useDoubleOptin) {
+            // For double opt-in, use confirmation page settings
+            return [
+                'url' => $listSettings['confirmation_page_url'] ?? null,
+                'message' => $listSettings['confirmation_message'] ?? 'Sprawdź swoją skrzynkę email, aby potwierdzić subskrypcję.',
+            ];
+        } else {
+            // For single opt-in, use thank you page settings
+            return [
+                'url' => $listSettings['thank_you_page_url'] ?? null,
+                'message' => $listSettings['thank_you_message'] ?? $this->success_message ?? 'Dziękujemy za zapisanie się!',
+            ];
+        }
     }
 }

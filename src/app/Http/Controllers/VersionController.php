@@ -24,46 +24,20 @@ class VersionController extends Controller
             ]);
         }
 
-        // Cache the result for 6 hours (consistent with CRON check)
-        $cacheKey = 'netsendo_version_check';
-        
-        // Check if cached version differs from current version (app was updated)
-        // If so, invalidate cache to ensure fresh comparison
-        $cached = Cache::get($cacheKey);
-        if ($cached && isset($cached['current_version']) && $cached['current_version'] !== $currentVersion) {
-            Cache::forget($cacheKey);
-            $cached = null;
-        }
-        
-        $result = Cache::remember($cacheKey, 21600, function () use ($currentVersion, $githubRepo) {
-            return $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
-        });
+        // Always fetch fresh data - no cache to avoid showing stale update status
+        // This ensures users see correct status immediately after updating
+        $result = $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
 
         return response()->json($result);
     }
 
     /**
-     * Force refresh version check (bypass cache).
+     * Force refresh version check (same as check - no cache).
      */
     public function refresh()
     {
-        $currentVersion = config('netsendo.version');
-        $githubRepo = config('netsendo.github_repo');
-        
-        if (empty($githubRepo)) {
-            return response()->json([
-                'current_version' => $currentVersion,
-                'updates_available' => false,
-                'message' => 'Sprawdzanie aktualizacji jest wyłączone.',
-            ]);
-        }
-
-        // Clear cache and fetch fresh data
-        Cache::forget('netsendo_version_check');
-        $result = $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
-        Cache::put('netsendo_version_check', $result, 21600);
-
-        return response()->json($result);
+        // Same as check() - both always fetch fresh data now
+        return $this->check();
     }
 
     /**

@@ -95,6 +95,11 @@
             "october": "Oktober",
             "november": "November",
             "december": "Dezember"
+        },
+        "gender": {
+            "male": "Männlich",
+            "female": "Weiblich",
+            "other": "Andere"
         }
     },
     "first_run": {
@@ -931,12 +936,17 @@
             "disconnect": "Trennen",
             "disconnected": "Google-Konto getrennt."
         },
+        "all_lists": "Alle Listen",
+        "send_welcome_email": "Willkommens-E-Mail senden",
+        "hold_ctrl_to_select_multiple": "Halten Sie Strg/Cmd gedrückt, um mehrere auszuwählen",
         "fields": {
             "list": "E-Mail-Liste",
             "select_list": "Liste auswählen...",
             "email": "E-Mail-Adresse",
             "first_name": "Vorname",
             "last_name": "Nachname",
+            "phone": "Telefon",
+            "gender": "Geschlecht",
             "status": "Status"
         },
         "table": {
@@ -949,6 +959,7 @@
         },
         "statuses": {
             "active": "Aktiv",
+            "inactive": "Inaktiv",
             "unsubscribed": "Abgemeldet",
             "bounced": "Unzustellbar"
         },

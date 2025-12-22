@@ -96,6 +96,11 @@
             "november": "Noviembre",
             "december": "Diciembre"
         },
+        "gender": {
+            "male": "Masculino",
+            "female": "Femenino",
+            "other": "Otro"
+        },
         "soon": "Pronto",
         "source_placeholder": "Escriba o pegue el código HTML..."
     },
@@ -841,12 +846,16 @@
         "add_subscriber": "Añadir suscriptor",
         "search_placeholder": "Buscar por correo o apellido...",
         "all_lists": "Todas las listas",
+        "send_welcome_email": "Enviar correo de bienvenida",
+        "hold_ctrl_to_select_multiple": "Mantenga presionado Ctrl/Cmd para seleccionar varios",
         "fields": {
             "list": "Lista de correo",
             "select_list": "Seleccionar lista...",
             "email": "Correo electrónico",
             "first_name": "Nombre",
             "last_name": "Apellido",
+            "phone": "Teléfono",
+            "gender": "Género",
             "status": "Estado"
         },
         "table": {
@@ -859,6 +868,7 @@
         },
         "statuses": {
             "active": "Activo",
+            "inactive": "Inactivo",
             "unsubscribed": "Dado de baja",
             "bounced": "Rebotado"
         },

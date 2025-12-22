@@ -234,17 +234,17 @@ class GlobalStatsController extends Controller
 
         $listStats = [];
         foreach ($lists as $list) {
-            $listNewSubs = Subscriber::where('contact_list_id', $list->id)
+            $listNewSubs = Subscriber::whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $list->id))
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->count();
 
-            $listActiveSubs = Subscriber::where('contact_list_id', $list->id)
-                ->where('status', 'active')
+            $listActiveSubs = Subscriber::whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $list->id)
+                    ->where('contact_list_subscriber.status', 'active'))
                 ->count();
 
-            $listUnsubscribed = Subscriber::where('contact_list_id', $list->id)
-                ->whereBetween('updated_at', [$startDate, $endDate])
-                ->where('status', 'unsubscribed')
+            $listUnsubscribed = Subscriber::whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $list->id)
+                    ->where('contact_list_subscriber.status', 'unsubscribed'))
+                ->whereBetween('contact_list_subscriber.updated_at', [$startDate, $endDate])
                 ->count();
 
             // Get messages for this list (via pivot table)

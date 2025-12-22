@@ -97,6 +97,11 @@
             "october": "October",
             "november": "November",
             "december": "December"
+        },
+        "gender": {
+            "male": "Male",
+            "female": "Female",
+            "other": "Other"
         }
     },
     "first_run": {
@@ -910,12 +915,16 @@
         "add_subscriber": "Add Subscriber",
         "search_placeholder": "Search by email or last name...",
         "all_lists": "All Lists",
+        "send_welcome_email": "Send welcome email",
+        "hold_ctrl_to_select_multiple": "Hold Ctrl/Cmd to select multiple",
         "fields": {
             "list": "Mailing List",
             "select_list": "Select list...",
             "email": "Email Address",
             "first_name": "First Name",
             "last_name": "Last Name",
+            "phone": "Phone",
+            "gender": "Gender",
             "status": "Status"
         },
         "table": {
@@ -928,6 +937,7 @@
         },
         "statuses": {
             "active": "Active",
+            "inactive": "Inactive",
             "unsubscribed": "Unsubscribed",
             "bounced": "Bounced"
         },

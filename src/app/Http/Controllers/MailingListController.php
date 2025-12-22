@@ -277,8 +277,10 @@ class MailingListController extends Controller
                     return back()->withErrors(['transfer_to_id' => 'Nie można przenieść subskrybentów do tej samej listy.']);
                 }
 
-                // Transfer subscribers
-                $mailingList->subscribers()->update(['contact_list_id' => $targetList->id]);
+                // Transfer subscribers to target list (many-to-many: detach from source, attach to target)
+                $subscriberIds = $mailingList->subscribers()->pluck('subscribers.id')->toArray();
+                $mailingList->subscribers()->detach($subscriberIds);
+                $targetList->subscribers()->attach($subscriberIds, ['status' => 'active', 'subscribed_at' => now()]);
                 
             } elseif ($request->boolean('force_delete')) {
                 // Delete subscribers

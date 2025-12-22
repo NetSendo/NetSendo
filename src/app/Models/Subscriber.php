@@ -23,12 +23,15 @@ class Subscriber extends Model
 
 
     protected $fillable = [
+        'user_id',
         'email',
         'phone',
         'first_name',
         'last_name',
-        'status',
-        'contact_list_id',
+        'gender',
+        'status', // Global status or Keep for backward compatibility/global override
+        'is_active_global',
+        // 'contact_list_id', // Removing this
         // New standard fields
         'device',
         'ip_address',
@@ -50,6 +53,7 @@ class Subscriber extends Model
         'last_clicked_at' => 'datetime',
         'opens_count' => 'integer',
         'clicks_count' => 'integer',
+        'is_active_global' => 'boolean',
         // 'tags' => 'array',
     ];
 
@@ -58,16 +62,28 @@ class Subscriber extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('is_active_global', true);
     }
 
     /**
-     * Get the contact list this subscriber belongs to
+     * Get the user that owns the subscriber.
      */
-    public function contactList(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(ContactList::class);
+        return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the contact lists this subscriber belongs to
+     */
+    public function contactLists(): BelongsToMany
+    {
+        return $this->belongsToMany(ContactList::class, 'contact_list_subscriber')
+            ->withPivot('status', 'subscribed_at', 'unsubscribed_at')
+            ->withTimestamps();
+    } 
+    // Removed old contactList relationship to avoid confusion
+
 
     /**
      * Get all custom field values for this subscriber
@@ -143,7 +159,7 @@ class Subscriber extends Model
 
         // Also include global custom fields that have default values but no subscriber value yet
         $globalFields = CustomField::global()
-            ->where('user_id', $this->contactList?->user_id)
+            ->where('user_id', $this->user_id)
             ->get();
             
         foreach ($globalFields as $field) {

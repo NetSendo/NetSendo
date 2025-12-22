@@ -63,8 +63,8 @@ Schedule::command('automations:process-date-triggers')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));
 
-// Sprawdzanie dostępnych aktualizacji NetSendo - co minutę (DEBUG)
+// Sprawdzanie dostępnych aktualizacji NetSendo - co godzinę
 Schedule::command('netsendo:check-updates')
-    ->everyMinute()
+    ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cron-updates.log'));

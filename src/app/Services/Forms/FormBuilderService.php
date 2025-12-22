@@ -167,15 +167,53 @@ JS;
     {
         $s = array_merge(SubscriptionForm::$defaultStyles, $styles);
 
+        // Calculate RGBA background
+        $bgColor = $this->hexToRgba($s['bgcolor'], ($s['bgcolor_opacity'] ?? 100) / 100);
+        
+        // Calculate box shadow
+        $boxShadow = 'none';
+        if (!empty($s['shadow_enabled'])) {
+            $shadowColor = $this->hexToRgba($s['shadow_color'] ?? '#000000', ($s['shadow_opacity'] ?? 15) / 100);
+            $shadowX = $s['shadow_x'] ?? 0;
+            $shadowY = $s['shadow_y'] ?? 10;
+            $shadowBlur = $s['shadow_blur'] ?? 20;
+            $boxShadow = "{$shadowX}px {$shadowY}px {$shadowBlur}px {$shadowColor}";
+        }
+        
+        // Calculate background (solid or gradient)
+        $background = $bgColor;
+        if (!empty($s['gradient_enabled'])) {
+            $gradientDir = $s['gradient_direction'] ?? 'to bottom right';
+            $gradientFrom = $s['gradient_from'] ?? '#6366F1';
+            $gradientTo = $s['gradient_to'] ?? '#8B5CF6';
+            $background = "linear-gradient({$gradientDir}, {$gradientFrom}, {$gradientTo})";
+        }
+        
+        // Animation keyframes
+        $animationCss = '';
+        if (!empty($s['animation_enabled'])) {
+            $animationType = $s['animation_type'] ?? 'fadeIn';
+            $animationCss = $this->getAnimationCss($animationType);
+        }
+        
+        // Glassmorphism backdrop filter for transparency
+        $backdropFilter = '';
+        if (($s['bgcolor_opacity'] ?? 100) < 100) {
+            $backdropFilter = 'backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);';
+        }
+
         return <<<CSS
+{$animationCss}
 .netsendo-form {
     font-family: {$s['font_family']};
-    background-color: {$s['bgcolor']};
+    background: {$background};
     border: {$s['border_width']}px solid {$s['border_color']};
     border-radius: {$s['border_radius']}px;
     padding: {$s['padding']}px;
     color: {$s['text_color']};
     box-sizing: border-box;
+    box-shadow: {$boxShadow};
+    {$backdropFilter}
 }
 .netsendo-form * {
     box-sizing: border-box;
@@ -238,10 +276,12 @@ JS;
 }
 .netsendo-submit:hover {
     background-color: {$s['submit_hover_color']};
+    transform: translateY(-1px);
 }
 .netsendo-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 .netsendo-policy {
     display: flex;
@@ -502,5 +542,74 @@ HTML;
             'standard' => $standardFields,
             'custom' => $customFields,
         ];
+    }
+
+    /**
+     * Convert hex color to RGBA string
+     */
+    protected function hexToRgba(string $hex, float $alpha = 1): string
+    {
+        $hex = ltrim($hex, '#');
+        
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+        
+        if ($alpha >= 1) {
+            return "rgb({$r}, {$g}, {$b})";
+        }
+        
+        return "rgba({$r}, {$g}, {$b}, {$alpha})";
+    }
+
+    /**
+     * Get animation CSS keyframes and rules
+     */
+    protected function getAnimationCss(string $type): string
+    {
+        $animations = [
+            'fadeIn' => <<<CSS
+@keyframes netsendoFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.netsendo-form { animation: netsendoFadeIn 0.4s ease-out; }
+CSS,
+            'slideUp' => <<<CSS
+@keyframes netsendoSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.netsendo-form { animation: netsendoSlideUp 0.5s ease-out; }
+CSS,
+            'pulse' => <<<CSS
+@keyframes netsendoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+.netsendo-form:hover { animation: netsendoPulse 2s ease-in-out infinite; }
+CSS,
+            'bounce' => <<<CSS
+@keyframes netsendoBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+.netsendo-form { animation: netsendoBounce 0.6s ease-out; }
+CSS,
+        ];
+
+        return $animations[$type] ?? '';
+    }
+
+    /**
+     * Get design presets for frontend
+     */
+    public function getDesignPresets(): array
+    {
+        return SubscriptionForm::$designPresets;
     }
 }

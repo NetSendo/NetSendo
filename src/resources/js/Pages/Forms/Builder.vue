@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
@@ -13,6 +13,7 @@ const props = defineProps({
     availableFields: Object,
     defaultStyles: Object,
     defaultFields: Array,
+    designPresets: Object,
 });
 
 // Check if editing or creating
@@ -33,6 +34,7 @@ const formData = useForm({
     require_policy: props.form?.require_policy || false,
     policy_url: props.form?.policy_url || '',
     redirect_url: props.form?.redirect_url || '',
+    use_list_redirect: props.form?.use_list_redirect || false,
     success_message: props.form?.success_message || '',
     error_message: props.form?.error_message || '',
     coregister_lists: props.form?.coregister_lists || [],
@@ -50,6 +52,7 @@ const selectedField = ref(null);
 const previewMode = ref('desktop');
 const isSaving = ref(false);
 const showSuccess = ref(false);
+const activeStyleSection = ref('container');
 
 // Available fields for drag
 const availableStandardFields = computed(() => {
@@ -84,56 +87,103 @@ function removeField(index) {
 
 function selectField(index) {
     selectedField.value = selectedField.value === index ? null : index;
+    activeTab.value = 'fields';
 }
 
-function updateField(index, updates) {
-    formData.fields[index] = { ...formData.fields[index], ...updates };
-}
-
-// Style helpers
-function updateStyle(key, value) {
-    formData.styles[key] = value;
+// Apply design preset
+function applyPreset(presetKey) {
+    if (presetKey === 'default') {
+        formData.styles = { ...props.defaultStyles };
+    } else {
+        const preset = props.designPresets[presetKey];
+        if (preset) {
+            formData.styles = { ...props.defaultStyles, ...preset.styles };
+        }
+    }
 }
 
 // Save form
 async function saveForm() {
     isSaving.value = true;
     
+    // Transform empty strings to null for URL fields
+    const transformData = (data) => {
+        return {
+            ...data,
+            redirect_url: data.redirect_url || null,
+            policy_url: data.policy_url || null,
+            success_message: data.success_message || null,
+            error_message: data.error_message || null,
+        };
+    };
+    
+    // Debug log the form data
+    console.log('Saving form data:', JSON.parse(JSON.stringify(formData)));
+    
     if (isEditing.value) {
-        formData.put(route('forms.update', props.form.id), {
+        formData.transform(transformData).put(route('forms.update', props.form.id), {
             onSuccess: () => {
                 showSuccess.value = true;
                 setTimeout(() => showSuccess.value = false, 3000);
             },
+            onError: (errors) => {
+                console.error('Form update errors:', errors);
+                alert('Błąd walidacji: ' + Object.values(errors).flat().join(', '));
+            },
             onFinish: () => isSaving.value = false,
         });
     } else {
-        formData.post(route('forms.store'), {
+        formData.transform(transformData).post(route('forms.store'), {
+            onSuccess: () => {
+                console.log('Form created successfully');
+            },
+            onError: (errors) => {
+                console.error('Form create errors:', errors);
+                alert('Błąd walidacji: ' + Object.values(errors).flat().join(', '));
+            },
             onFinish: () => isSaving.value = false,
         });
     }
 }
 
+// Hex to RGBA for preview
+function hexToRgba(hex, opacity) {
+    if (!hex) return 'transparent';
+    hex = hex.replace('#', '');
+    if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${(opacity ?? 100) / 100})`;
+}
+
 // Preview styles computed
-const previewStyles = computed(() => {
+const previewContainerStyle = computed(() => {
     const s = formData.styles;
+    const bgOpacity = s.bgcolor_opacity ?? 100;
+    
+    let background = hexToRgba(s.bgcolor, bgOpacity);
+    if (s.gradient_enabled) {
+        background = `linear-gradient(${s.gradient_direction || 'to bottom right'}, ${s.gradient_from || '#6366F1'}, ${s.gradient_to || '#8B5CF6'})`;
+    }
+    
+    let boxShadow = 'none';
+    if (s.shadow_enabled) {
+        const shadowColor = hexToRgba(s.shadow_color || '#000000', s.shadow_opacity || 15);
+        boxShadow = `${s.shadow_x || 0}px ${s.shadow_y || 10}px ${s.shadow_blur || 20}px ${shadowColor}`;
+    }
+    
     return {
-        '--form-bg': s.bgcolor,
-        '--form-border': s.border_color,
-        '--form-text': s.text_color,
-        '--form-radius': `${s.border_radius}px`,
-        '--form-padding': `${s.padding}px`,
-        '--field-bg': s.field_bgcolor,
-        '--field-text': s.field_text,
-        '--field-border': s.field_border_color,
-        '--field-radius': `${s.field_border_radius}px`,
-        '--field-height': `${s.field_height}px`,
-        '--field-gap': `${s.fields_vertical_margin}px`,
-        '--btn-bg': s.submit_color,
-        '--btn-text': s.submit_text_color,
-        '--btn-border': s.submit_border_color,
-        '--btn-radius': `${s.submit_border_radius}px`,
-        '--btn-font-size': `${s.submit_font_size}px`,
+        background,
+        borderColor: s.border_color,
+        borderWidth: s.border_width + 'px',
+        borderStyle: 'solid',
+        borderRadius: s.border_radius + 'px',
+        padding: s.padding + 'px',
+        boxShadow,
+        backdropFilter: bgOpacity < 100 ? 'blur(10px)' : 'none',
     };
 });
 </script>
@@ -239,10 +289,30 @@ const previewStyles = computed(() => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Design Presets -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                        Presety designu
+                    </h3>
+                    <div class="space-y-2">
+                        <button
+                            v-for="(preset, key) in designPresets"
+                            :key="key"
+                            @click="applyPreset(key)"
+                            class="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all group"
+                        >
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                {{ preset.name }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ preset.description }}</p>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Center: Preview -->
-            <div class="flex-1 bg-gray-100 dark:bg-gray-900 overflow-y-auto p-8">
+            <div class="flex-1 overflow-y-auto p-8" :class="formData.styles.bgcolor_opacity < 100 ? 'bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900' : 'bg-gray-100 dark:bg-gray-900'">
                 <div class="max-w-lg mx-auto">
                     <!-- Preview mode toggle -->
                     <div class="flex justify-center mb-4">
@@ -265,16 +335,10 @@ const previewStyles = computed(() => {
                     <!-- Form preview -->
                     <div 
                         :class="['transition-all duration-300 mx-auto', previewMode === 'mobile' ? 'max-w-sm' : 'max-w-lg']"
-                        :style="previewStyles"
                     >
                         <div 
-                            class="form-preview rounded-xl border shadow-lg"
-                            :style="{
-                                backgroundColor: formData.styles.bgcolor,
-                                borderColor: formData.styles.border_color,
-                                borderRadius: formData.styles.border_radius + 'px',
-                                padding: formData.styles.padding + 'px',
-                            }"
+                            class="form-preview"
+                            :style="previewContainerStyle"
                         >
                             <!-- Draggable fields -->
                             <draggable 
@@ -348,7 +412,7 @@ const previewStyles = computed(() => {
                             <div class="mt-4" :style="{ textAlign: formData.styles.submit_align }">
                                 <button 
                                     disabled
-                                    class="transition-all"
+                                    class="transition-all hover:scale-[1.02]"
                                     :style="{
                                         backgroundColor: formData.styles.submit_color,
                                         color: formData.styles.submit_text_color,
@@ -416,6 +480,7 @@ const previewStyles = computed(() => {
                                     type="text"
                                     class="input w-full"
                                 />
+                                <p class="text-xs text-gray-500 mt-1">Ten tekst pojawi się w polu jako podpowiedź</p>
                             </div>
 
                             <div class="flex items-center gap-2">
@@ -440,67 +505,241 @@ const previewStyles = computed(() => {
 
                     <!-- Styles tab -->
                     <div v-if="activeTab === 'styles'" class="space-y-6">
-                        <!-- Form container -->
-                        <div>
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ t('forms.builder.form_container') }}</h4>
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.background_color') }}</label>
-                                    <input v-model="formData.styles.bgcolor" type="color" class="w-full h-8 rounded cursor-pointer">
+                        <!-- Style section selector -->
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <button 
+                                v-for="section in ['container', 'fields', 'button', 'effects']"
+                                :key="section"
+                                @click="activeStyleSection = section"
+                                :class="[
+                                    'px-3 py-1.5 text-xs font-medium rounded-full transition-colors',
+                                    activeStyleSection === section 
+                                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' 
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200'
+                                ]"
+                            >
+                                {{ section === 'container' ? 'Kontener' : section === 'fields' ? 'Pola' : section === 'button' ? 'Przycisk' : 'Efekty' }}
+                            </button>
+                        </div>
+
+                        <!-- Container styles -->
+                        <div v-if="activeStyleSection === 'container'" class="space-y-4">
+                            <!-- Transparent container toggle -->
+                            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-indigo-900 dark:text-indigo-100">Przezroczysty kontener</p>
+                                        <p class="text-xs text-indigo-600 dark:text-indigo-400">Tylko pola i przycisk</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            class="sr-only peer"
+                                            :checked="formData.styles.bgcolor_opacity === 0 && formData.styles.border_width === 0"
+                                            @change="(e) => {
+                                                if (e.target.checked) {
+                                                    formData.styles.bgcolor_opacity = 0;
+                                                    formData.styles.border_width = 0;
+                                                    formData.styles.padding = 0;
+                                                    formData.styles.shadow_enabled = false;
+                                                } else {
+                                                    formData.styles.bgcolor_opacity = 100;
+                                                    formData.styles.border_width = 1;
+                                                    formData.styles.padding = 24;
+                                                }
+                                            }"
+                                        >
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.border_color') }}</label>
-                                    <input v-model="formData.styles.border_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor tła</label>
+                                <div class="flex gap-2">
+                                    <input v-model="formData.styles.bgcolor" type="color" class="w-12 h-8 rounded cursor-pointer border-0">
+                                    <input v-model="formData.styles.bgcolor" type="text" class="input flex-1 text-xs font-mono">
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.border_radius') }}</label>
-                                    <input v-model.number="formData.styles.border_radius" type="range" min="0" max="24" class="w-full">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.padding') }}</label>
-                                    <input v-model.number="formData.styles.padding" type="range" min="8" max="48" class="w-full">
-                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Przezroczystość tła: {{ formData.styles.bgcolor_opacity ?? 100 }}%</label>
+                                <input v-model.number="formData.styles.bgcolor_opacity" type="range" min="0" max="100" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor tekstu</label>
+                                <input v-model="formData.styles.text_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor ramki</label>
+                                <input v-model="formData.styles.border_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Grubość ramki: {{ formData.styles.border_width }}px</label>
+                                <input v-model.number="formData.styles.border_width" type="range" min="0" max="4" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Zaokrąglenie: {{ formData.styles.border_radius }}px</label>
+                                <input v-model.number="formData.styles.border_radius" type="range" min="0" max="32" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Padding: {{ formData.styles.padding }}px</label>
+                                <input v-model.number="formData.styles.padding" type="range" min="0" max="48" class="w-full accent-indigo-500">
                             </div>
                         </div>
 
-                        <!-- Fields -->
-                        <div>
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ t('forms.builder.field_styles') }}</h4>
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.field_background') }}</label>
-                                    <input v-model="formData.styles.field_bgcolor" type="color" class="w-full h-8 rounded cursor-pointer">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.field_border') }}</label>
-                                    <input v-model="formData.styles.field_border_color" type="color" class="w-full h-8 rounded cursor-pointer">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.field_height') }}</label>
-                                    <input v-model.number="formData.styles.field_height" type="range" min="32" max="56" class="w-full">
-                                </div>
+                        <!-- Fields styles -->
+                        <div v-if="activeStyleSection === 'fields'" class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Tło pola</label>
+                                <input v-model="formData.styles.field_bgcolor" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor tekstu pola</label>
+                                <input v-model="formData.styles.field_text" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor placeholdera</label>
+                                <input v-model="formData.styles.placeholder_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Ramka pola</label>
+                                <input v-model="formData.styles.field_border_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Ramka pola (focus)</label>
+                                <input v-model="formData.styles.field_border_color_active" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Wysokość pola: {{ formData.styles.field_height }}px</label>
+                                <input v-model.number="formData.styles.field_height" type="range" min="32" max="56" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Zaokrąglenie pól: {{ formData.styles.field_border_radius }}px</label>
+                                <input v-model.number="formData.styles.field_border_radius" type="range" min="0" max="16" class="w-full accent-indigo-500">
                             </div>
                         </div>
 
-                        <!-- Submit button -->
-                        <div>
-                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">{{ t('forms.builder.button_styles') }}</h4>
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.button_text') }}</label>
-                                    <input v-model="formData.styles.submit_text" type="text" class="input w-full">
+                        <!-- Button styles -->
+                        <div v-if="activeStyleSection === 'button'" class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Tekst przycisku</label>
+                                <input v-model="formData.styles.submit_text" type="text" class="input w-full">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor przycisku</label>
+                                <input v-model="formData.styles.submit_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor tekstu przycisku</label>
+                                <input v-model="formData.styles.submit_text_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Kolor hover</label>
+                                <input v-model="formData.styles.submit_hover_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Zaokrąglenie: {{ formData.styles.submit_border_radius }}px</label>
+                                <input v-model.number="formData.styles.submit_border_radius" type="range" min="0" max="24" class="w-full accent-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Rozmiar czcionki: {{ formData.styles.submit_font_size }}px</label>
+                                <input v-model.number="formData.styles.submit_font_size" type="range" min="12" max="20" class="w-full accent-indigo-500">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input v-model="formData.styles.submit_full_width" type="checkbox" id="btn-full-width" class="checkbox">
+                                <label for="btn-full-width" class="text-sm text-gray-700 dark:text-gray-300">Pełna szerokość</label>
+                            </div>
+                        </div>
+
+                        <!-- Effects (shadow, gradient, animation) -->
+                        <div v-if="activeStyleSection === 'effects'" class="space-y-6">
+                            <!-- Shadow -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100">Cień</h5>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input v-model="formData.styles.shadow_enabled" type="checkbox" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.button_color') }}</label>
-                                    <input v-model="formData.styles.submit_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                                <div v-if="formData.styles.shadow_enabled" class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Kolor cienia</label>
+                                        <input v-model="formData.styles.shadow_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Przezroczystość: {{ formData.styles.shadow_opacity }}%</label>
+                                        <input v-model.number="formData.styles.shadow_opacity" type="range" min="0" max="100" class="w-full accent-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Rozmycie: {{ formData.styles.shadow_blur }}px</label>
+                                        <input v-model.number="formData.styles.shadow_blur" type="range" min="0" max="60" class="w-full accent-indigo-500">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Offset X: {{ formData.styles.shadow_x }}px</label>
+                                            <input v-model.number="formData.styles.shadow_x" type="range" min="-30" max="30" class="w-full accent-indigo-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Offset Y: {{ formData.styles.shadow_y }}px</label>
+                                            <input v-model.number="formData.styles.shadow_y" type="range" min="-30" max="30" class="w-full accent-indigo-500">
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-1">{{ t('forms.builder.button_text_color') }}</label>
-                                    <input v-model="formData.styles.submit_text_color" type="color" class="w-full h-8 rounded cursor-pointer">
+                            </div>
+
+                            <!-- Gradient -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100">Gradient</h5>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input v-model="formData.styles.gradient_enabled" type="checkbox" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <input v-model="formData.styles.submit_full_width" type="checkbox" id="btn-full-width" class="checkbox">
-                                    <label for="btn-full-width" class="text-sm text-gray-700 dark:text-gray-300">{{ t('forms.builder.full_width') }}</label>
+                                <div v-if="formData.styles.gradient_enabled" class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Kierunek</label>
+                                        <select v-model="formData.styles.gradient_direction" class="input w-full text-sm">
+                                            <option value="to right">Prawo →</option>
+                                            <option value="to left">Lewo ←</option>
+                                            <option value="to bottom">Dół ↓</option>
+                                            <option value="to top">Góra ↑</option>
+                                            <option value="to bottom right">Prawy dół ↘</option>
+                                            <option value="to bottom left">Lewy dół ↙</option>
+                                            <option value="to top right">Prawy górny ↗</option>
+                                            <option value="to top left">Lewy górny ↖</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Kolor od</label>
+                                            <input v-model="formData.styles.gradient_from" type="color" class="w-full h-8 rounded cursor-pointer">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-500 mb-1">Kolor do</label>
+                                            <input v-model="formData.styles.gradient_to" type="color" class="w-full h-8 rounded cursor-pointer">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Animation -->
+                            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100">Animacja</h5>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input v-model="formData.styles.animation_enabled" type="checkbox" class="sr-only peer">
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+                                <div v-if="formData.styles.animation_enabled">
+                                    <select v-model="formData.styles.animation_type" class="input w-full text-sm">
+                                        <option value="fadeIn">Fade In</option>
+                                        <option value="slideUp">Slide Up</option>
+                                        <option value="bounce">Bounce</option>
+                                        <option value="pulse">Pulse (hover)</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -539,19 +778,38 @@ const previewStyles = computed(() => {
                             </label>
                         </div>
 
+                        <!-- Redirect settings -->
+                        <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100">Przekierowanie po zapisie</h4>
+                            
+                            <div class="flex items-center gap-2">
+                                <input v-model="formData.use_list_redirect" type="checkbox" id="use-list-redirect" class="checkbox">
+                                <label for="use-list-redirect" class="text-sm text-gray-700 dark:text-gray-300">
+                                    Użyj ustawień listy
+                                </label>
+                            </div>
+                            
+                            <div v-if="!formData.use_list_redirect">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('forms.builder.redirect_url') }}
+                                </label>
+                                <input v-model="formData.redirect_url" type="url" class="input w-full" placeholder="https://...">
+                            </div>
+                            
+                            <p class="text-xs text-gray-500">
+                                {{ formData.use_list_redirect 
+                                    ? 'Przekierowanie będzie zależeć od ustawień Double Opt-in listy' 
+                                    : 'Własny adres URL przekierowania po zapisie' 
+                                }}
+                            </p>
+                        </div>
+
                         <!-- Messages -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 {{ t('forms.builder.success_message') }}
                             </label>
                             <textarea v-model="formData.success_message" rows="2" class="input w-full" :placeholder="t('forms.builder.success_default')"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                {{ t('forms.builder.redirect_url') }}
-                            </label>
-                            <input v-model="formData.redirect_url" type="url" class="input w-full" placeholder="https://...">
                         </div>
 
                         <!-- Anti-spam -->

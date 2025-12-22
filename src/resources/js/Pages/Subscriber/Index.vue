@@ -117,14 +117,15 @@ const deleteSubscriber = (subscriber) => {
                                     :class="{
                                         'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': subscriber.status === 'active',
                                         'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': subscriber.status === 'unsubscribed',
+                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': subscriber.status === 'inactive',
                                         'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400': subscriber.status === 'bounced'
                                     }"
                                 >
-                                    {{ $t(`subscribers.statuses.${subscriber.status}`) }}
+                                    {{ $t(`subscribers.statuses.${subscriber.status}`) || subscriber.status }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                {{ subscriber.list_name }}
+                                {{ subscriber.lists && subscriber.lists.length ? subscriber.lists.join(', ') : '-' }}
                             </td>
                             <td class="px-6 py-4">
                                 {{ subscriber.created_at }}

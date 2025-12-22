@@ -97,6 +97,11 @@
             "october": "Październik",
             "november": "Listopad",
             "december": "Grudzień"
+        },
+        "gender": {
+            "male": "Mężczyzna",
+            "female": "Kobieta",
+            "other": "Inna"
         }
     },
     "first_run": {
@@ -961,12 +966,16 @@
         "add_subscriber": "Dodaj subskrybenta",
         "search_placeholder": "Szukaj po emailu lub nazwisku...",
         "all_lists": "Wszystkie listy",
+        "send_welcome_email": "Wyślij wiadomość powitalną",
+        "hold_ctrl_to_select_multiple": "Przytrzymaj Ctrl/Cmd aby wybrać wiele",
         "fields": {
             "list": "Lista adresowa",
             "select_list": "Wybierz listę...",
             "email": "Adres Email",
             "first_name": "Imię",
             "last_name": "Nazwisko",
+            "phone": "Telefon",
+            "gender": "Płeć",
             "status": "Status"
         },
         "table": {
@@ -979,6 +988,7 @@
         },
         "statuses": {
             "active": "Aktywny",
+            "inactive": "Nieaktywny",
             "unsubscribed": "Wypisany",
             "bounced": "Odbity"
         },

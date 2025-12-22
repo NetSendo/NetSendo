@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import PhoneInput from '@/Components/PhoneInput.vue';
 
 const props = defineProps({
     subscriber: {
@@ -8,14 +9,18 @@ const props = defineProps({
         required: true,
     },
     lists: Array,
+    customFields: Array,
 });
 
 const form = useForm({
     email: props.subscriber.email,
     first_name: props.subscriber.first_name || '',
     last_name: props.subscriber.last_name || '',
-    contact_list_id: props.subscriber.contact_list_id,
-    status: props.subscriber.status,
+    phone: props.subscriber.phone || '',
+    gender: props.subscriber.gender || '',
+    contact_list_ids: props.subscriber.contact_list_ids || [],
+    status: props.subscriber.status || 'active',
+    custom_fields: props.subscriber.custom_fields || {},
 });
 
 const submit = () => {
@@ -52,22 +57,25 @@ const submit = () => {
             <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900 lg:p-8">
                 <form @submit.prevent="submit" class="space-y-6">
                     <div>
-                        <label for="contact_list_id" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                        <label for="contact_list_ids" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
                             {{ $t('subscribers.fields.list') }} <span class="text-red-500">*</span>
                         </label>
                         <select
-                            id="contact_list_id"
-                            v-model="form.contact_list_id"
-                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                            id="contact_list_ids"
+                            v-model="form.contact_list_ids"
+                            multiple
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800 min-h-[120px]"
                             required
                         >
-                            <option value="" disabled>{{ $t('subscribers.fields.select_list') }}</option>
                             <option v-for="list in lists" :key="list.id" :value="list.id">
                                 {{ list.name }}
                             </option>
                         </select>
-                        <p v-if="form.errors.contact_list_id" class="mt-2 text-sm text-red-600 dark:text-red-400">
-                            {{ form.errors.contact_list_id }}
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {{ $t('subscribers.hold_ctrl_to_select_multiple') || 'Hold Ctrl/Cmd to select multiple lists' }}
+                        </p>
+                        <p v-if="form.errors.contact_list_ids" class="mt-2 text-sm text-red-600 dark:text-red-400">
+                            {{ form.errors.contact_list_ids }}
                         </p>
                     </div>
 
@@ -113,6 +121,72 @@ const submit = () => {
                         </div>
                     </div>
 
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label for="phone" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                {{ $t('subscribers.fields.phone') || 'Phone' }}
+                            </label>
+                            <PhoneInput
+                                id="phone"
+                                v-model="form.phone"
+                            />
+                        </div>
+                        <div>
+                            <label for="gender" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                {{ $t('subscribers.fields.gender') || 'Gender' }}
+                            </label>
+                            <select
+                                id="gender"
+                                v-model="form.gender"
+                                class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                            >
+                                <option value="">{{ $t('common.select') || 'Select...' }}</option>
+                                <option value="male">{{ $t('common.gender.male') || 'Male' }}</option>
+                                <option value="female">{{ $t('common.gender.female') || 'Female' }}</option>
+                                <option value="other">{{ $t('common.gender.other') || 'Other' }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom Fields -->
+                    <div v-for="field in customFields" :key="field.id">
+                        <label :for="'field_' + field.id" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                            {{ field.label }} <span v-if="field.is_required" class="text-red-500">*</span>
+                        </label>
+                        
+                        <!-- Text/Number/Url -->
+                        <input
+                            v-if="['text', 'number', 'url', 'email'].includes(field.type)"
+                            :id="'field_' + field.id"
+                            v-model="form.custom_fields[field.id]"
+                            :type="field.type"
+                            :required="field.is_required"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                        >
+
+                        <!-- Select -->
+                        <select
+                            v-else-if="field.type === 'select'"
+                            :id="'field_' + field.id"
+                            v-model="form.custom_fields[field.id]"
+                            :required="field.is_required"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                        >
+                            <option value="">{{ $t('common.select') }}</option>
+                            <option v-for="opt in (field.options || [])" :key="opt" :value="opt">{{ opt }}</option>
+                        </select>
+                        
+                        <!-- Date -->
+                        <input
+                            v-else-if="field.type === 'date'"
+                            :id="'field_' + field.id"
+                            v-model="form.custom_fields[field.id]"
+                            type="date"
+                            :required="field.is_required"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                        >
+                    </div>
+
                     <div>
                         <label for="status" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
                             {{ $t('subscribers.fields.status') }}
@@ -123,8 +197,7 @@ const submit = () => {
                             class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                         >
                             <option value="active">{{ $t('subscribers.statuses.active') }}</option>
-                            <option value="unsubscribed">{{ $t('subscribers.statuses.unsubscribed') }}</option>
-                            <option value="bounced">{{ $t('subscribers.statuses.bounced') }}</option>
+                            <option value="inactive">{{ $t('subscribers.statuses.inactive') || 'Inactive' }}</option>
                         </select>
                     </div>
 
