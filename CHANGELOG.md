@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Fixed issue where activation buttons were cut off in license plan cards due to incorrect layout height calculation
 
 ### Added
+- **Automatic Version Check:**
+  - New CRON task `netsendo:check-updates` running daily at 9:00 AM
+  - Automatically checks GitHub for new releases and caches results for 6 hours
+  - Shared cache with frontend checks ensures consistent update status
+
+
 - **Password Reset with Smart Mail Fallback:**
   - New `SystemMailService` for sending system emails (password reset, notifications)
   - Intelligent fallback: uses ENV mail configuration if available, otherwise falls back to first active SMTP Mailbox with 'system' type
