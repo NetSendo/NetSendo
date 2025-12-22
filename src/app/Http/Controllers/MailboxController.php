@@ -118,7 +118,7 @@ class MailboxController extends Controller
             'reply_to' => $validated['reply_to'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'allowed_types' => array_values($validated['allowed_types']),
-            'credentials' => $validated['credentials'],
+            'credentials' => $validated['credentials'] ?? [],
             'daily_limit' => $validated['daily_limit'] ?? null,
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,

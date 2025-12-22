@@ -343,7 +343,7 @@ const isBroadcastDisabled = computed(() => {
             >
                 <div 
                     v-if="toast"
-                    class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
+                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
                     :class="toast.success ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'"
                 >
                     <svg v-if="toast.success" class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
