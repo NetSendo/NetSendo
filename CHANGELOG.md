@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Email Preheader Bug:**
+  - Fixed issue where preheader text from HTML template was used instead of the preheader field set by user in message form.
+  - `SendEmailJob` now removes existing preheader from HTML content and injects the `Message->preheader` value after `<body>` tag.
+  - User-defined preheader now takes priority over template preheader.
+
+### Added
+- **AI Subject Assistant - Preheader Generation:**
+  - AI assistant now generates a preheader alongside each subject line suggestion.
+  - Preheaders are generated without emojis (per user requirement).
+  - Each suggestion in the dropdown now displays both subject (with emojis) and preheader (italic, below subject).
+  - Clicking a suggestion auto-fills both the subject field and preheader field (if empty).
+  - Updated `TemplateAiService::generateSubjectLine()` to return objects with `subject` and `preheader` fields.
+  - Updated `SubjectAiAssistant.vue` to display preheaders and emit new `@select` event with both values.
+  - Updated `Message/Create.vue` to handle new format and auto-populate preheader field.
+
+- **AI Token Limits:**
+  - Increased default token limit for AI text generation from 2000 to 8000 tokens to prevent truncated responses.
+  - Improved handling of `max_tokens_small` setting from integration configuration.
+
+### Improved
+- **AI Assistant UI:**
+  - Added auto-scrolling to generated content so users immediately see the result.
+  - Fixed dark mode readability issues by adjusting text and background contrast in content preview.
+
 ## [1.0.12] – Short Description
 
 **Release date:** 2025-12-22

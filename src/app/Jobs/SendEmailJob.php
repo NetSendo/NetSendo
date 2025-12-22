@@ -57,6 +57,44 @@ class SendEmailJob implements ShouldQueue
             $content = $processed['content'];
             $subject = $processed['subject'];
 
+            // 2. Preheader Processing - use preheader from Message field, not from HTML content
+            $preheader = $this->message->preheader;
+            if (!empty($preheader)) {
+                // Remove existing preheader div from HTML content (if present)
+                // Match pattern: <!-- Preheader text --> followed by hidden div
+                $content = preg_replace(
+                    '/<!--\s*Preheader\s+text\s*-->\s*<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none[^"\']*["\'][^>]*>.*?<\/div>/is',
+                    '',
+                    $content
+                );
+                
+                // Also remove any hidden preheader divs without comment
+                $content = preg_replace(
+                    '/<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none;\s*max-height:\s*0[^"\']*["\'][^>]*>.*?<\/div>/is',
+                    '',
+                    $content
+                );
+
+                // Create new preheader HTML
+                $preheaderHtml = '<!-- Preheader text -->' . "\n" .
+                    '<div style="display: none; max-height: 0; overflow: hidden;">' . "\n" .
+                    '    ' . htmlspecialchars($preheader, ENT_QUOTES, 'UTF-8') . "\n" .
+                    '</div>' . "\n";
+
+                // Insert preheader after <body> tag
+                if (preg_match('/<body[^>]*>/i', $content, $matches)) {
+                    $content = preg_replace(
+                        '/(<body[^>]*>)/i',
+                        '$1' . "\n" . $preheaderHtml,
+                        $content,
+                        1
+                    );
+                } else {
+                    // If no body tag, prepend to content
+                    $content = $preheaderHtml . $content;
+                }
+            }
+
             // 3. Link Tracking Replacement
             $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash) {
                 $url = $matches[1];

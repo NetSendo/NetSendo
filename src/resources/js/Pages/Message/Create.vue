@@ -269,9 +269,18 @@ const handleAiReplaceContent = (content) => {
     showAiPanel.value = false;
 };
 
-// Handle AI subject selection
-const handleSubjectSelect = (subject) => {
-    form.subject = subject;
+// Handle AI subject selection (supports both old string format and new object format)
+const handleSubjectSelect = (data) => {
+    if (typeof data === 'object' && data.subject) {
+        form.subject = data.subject;
+        // Auto-fill preheader if provided and preheader field is empty
+        if (data.preheader && !form.preheader) {
+            form.preheader = data.preheader;
+        }
+    } else {
+        // Backward compatibility for string format
+        form.subject = data;
+    }
 };
 
 // Handle insert content at cursor position
@@ -624,7 +633,7 @@ const triggerTypes = [
                                     <div class="absolute right-8 top-1/2 -translate-y-1/2">
                                         <SubjectAiAssistant
                                             :current-content="form.content"
-                                            @select-subject="handleSubjectSelect"
+                                            @select="handleSubjectSelect"
                                         />
                                     </div>
                                     <!-- Emoji Button for Subject -->

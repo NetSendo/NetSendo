@@ -138,6 +138,8 @@ const quickPrompts = computed(() => {
     }
 });
 
+const generatedContentRef = ref(null);
+
 // Generate content
 const generateContent = async () => {
     if (!prompt.value || isGenerating.value) return;
@@ -175,6 +177,11 @@ const generateContent = async () => {
             // For template mode, show comparison modal
             if (activeMode.value === 'template' && props.currentContent) {
                 showComparisonModal.value = true;
+            } else {
+                // Scroll to generated content
+                setTimeout(() => {
+                    generatedContentRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
             }
         }
     } catch (error) {
@@ -183,6 +190,10 @@ const generateContent = async () => {
             type: 'error',
             message: error.response?.data?.error || t('messages.ai_assistant.error_generating'),
         };
+        // Scroll to error
+        setTimeout(() => {
+            generatedContentRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     } finally {
         isGenerating.value = false;
     }
@@ -529,7 +540,7 @@ const acceptComparison = () => {
                         </button>
 
                         <!-- Generated content preview -->
-                        <div v-if="generatedContent" class="mt-6">
+                        <div v-if="generatedContent" class="mt-6" ref="generatedContentRef">
                             <div class="mb-2 flex items-center justify-between">
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {{ $t('messages.ai_assistant.generated_content') }}
@@ -548,9 +559,9 @@ const acceptComparison = () => {
                             </div>
 
                             <!-- Content preview -->
-                            <div v-else class="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-                                <div class="max-h-64 overflow-y-auto p-4">
-                                    <div class="prose prose-sm max-w-none dark:prose-invert" v-html="generatedContent.html"></div>
+                            <div v-else class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-slate-800">
+                                <div class="max-h-64 overflow-y-auto">
+                                    <div class="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-200" v-html="generatedContent.html"></div>
                                 </div>
                             </div>
 

@@ -87,7 +87,7 @@ PROMPT;
         $fullPrompt = $systemPrompt . "\n\nZadanie użytkownika: " . $prompt;
 
         return $this->aiService->generateContent($fullPrompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.7,
             'model' => $modelId,
         ]);
@@ -133,7 +133,7 @@ Odpowiedź TYLKO JSON, bez żadnych dodatkowych wyjaśnień.
 PROMPT;
 
         $response = $this->aiService->generateContent($prompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.7,
             'model' => $modelId,
         ]);
@@ -186,7 +186,7 @@ Tekst do przetworzenia:
 PROMPT;
 
         return $this->aiService->generateContent($prompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.6,
         ]);
     }
@@ -392,7 +392,7 @@ WAŻNE: Odpowiadaj TYLKO treścią HTML, bez żadnych komentarzy czy wyjaśnień
 {$contextInfo}
 PROMPT;
 
-            $maxTokens = $integration->max_tokens_small ?? 2000; // Small for text fragments
+            $maxTokens = $integration->max_tokens_small ?: 8000; // Small for text fragments
         }
 
         $fullPrompt = $systemPrompt . "\n\nZadanie użytkownika: " . $prompt;
@@ -405,14 +405,14 @@ PROMPT;
     }
 
     /**
-     * Generate email subject line based on content
+     * Generate email subject lines with preheaders based on content
      * 
      * @param string $emailContent Email HTML content
      * @param int $count Number of suggestions
      * @param string|null $userHint Optional user hint/requirements for the subject
      * @param int|null $integrationId Optional specific integration to use
      * @param string|null $modelId Optional specific model to use
-     * @return array Array of subject line suggestions
+     * @return array Array of objects with 'subject' and 'preheader' fields
      */
     public function generateSubjectLine(
         string $emailContent, 
@@ -438,27 +438,33 @@ PROMPT;
         }
 
         $prompt = <<<PROMPT
-Jesteś ekspertem od email marketingu. Tworzysz chwytliwe tematy wiadomości email.
+Jesteś ekspertem od email marketingu. Tworzysz chwytliwe tematy wiadomości email wraz z preheaderami.
 
 ZADANIE:
-Wygeneruj DOKŁADNIE {$count} RÓŻNYCH propozycji tematów email (subject line) na podstawie poniższej treści.
+Wygeneruj DOKŁADNIE {$count} RÓŻNYCH propozycji tematów email (subject line) wraz z preheaderem dla każdego tematu.
 
-WYMAGANIA DLA KAŻDEGO TEMATU:
+WYMAGANIA DLA KAŻDEGO TEMATU (subject):
 ✅ Maksymalnie 60 znaków
 ✅ Chwytliwy i zachęcający do otwarcia
 ✅ DODAJ 1-2 emotikony (emoji) na początku lub końcu - to zwiększa open rate!
 ✅ Bez clickbaitu i fałszywych obietnic
 ✅ Każdy temat MUSI się znacząco różnić od pozostałych
+
+WYMAGANIA DLA KAŻDEGO PREHEADERA:
+✅ Maksymalnie 100 znaków
+✅ BEZ EMOTIKONÓW (emoji) - preheader musi być tylko tekstem
+✅ Uzupełnia temat, dodaje kontekst lub zachętę
+✅ Krótkie zdanie lub fraza
 {$hintSection}
 
 TREŚĆ EMAILA DO ANALIZY:
 {$plainContent}
 
 FORMAT ODPOWIEDZI:
-Zwróć TYLKO i WYŁĄCZNIE tablicę JSON - bez żadnego dodatkowego tekstu, komentarzy ani formatowania markdown.
+Zwróć TYLKO i WYŁĄCZNIE tablicę JSON obiektów - bez żadnego dodatkowego tekstu, komentarzy ani formatowania markdown.
 
 Oczekiwany format (dokładnie tak):
-["🎁 Pierwszy temat z emoji", "Drugi temat z emoji ✨", "🚀 Trzeci temat"]
+[{"subject": "🎁 Temat z emoji", "preheader": "Preheader bez emoji tutaj"}, {"subject": "Drugi temat ✨", "preheader": "Drugi preheader"}]
 
 TWOJA ODPOWIEDŹ (tylko JSON array):
 PROMPT;
@@ -469,16 +475,43 @@ PROMPT;
         ]);
 
         $response = $this->aiService->generateContent($prompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.9,
             'model' => $modelId,
         ]);
 
         \Log::info('Subject generation response', ['response' => $response]);
 
-        $subjects = $this->extractJsonArray($response);
+        $results = $this->extractJsonArray($response);
 
-        return $subjects ?: ['Sprawdź naszą ofertę!'];
+        // Handle both old format (string array) and new format (object array)
+        if (!empty($results)) {
+            // Check if first element is a string (old format) or object (new format)
+            if (is_string($results[0])) {
+                // Convert old format to new format
+                return array_map(function($subject) {
+                    return [
+                        'subject' => $subject,
+                        'preheader' => '',
+                    ];
+                }, $results);
+            }
+            // New format - ensure proper structure
+            return array_map(function($item) {
+                if (is_array($item) && isset($item['subject'])) {
+                    return [
+                        'subject' => $item['subject'],
+                        'preheader' => $item['preheader'] ?? '',
+                    ];
+                }
+                return [
+                    'subject' => is_string($item) ? $item : 'Sprawdź naszą ofertę!',
+                    'preheader' => '',
+                ];
+            }, $results);
+        }
+
+        return [['subject' => 'Sprawdź naszą ofertę!', 'preheader' => '']];
     }
 
     /**
@@ -514,7 +547,7 @@ Odpowiedź TYLKO JSON.
 PROMPT;
 
         $response = $this->aiService->generateContent($prompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.7,
         ]);
 
@@ -562,7 +595,7 @@ Odpowiedź TYLKO JSON array.
 PROMPT;
 
         $response = $this->aiService->generateContent($prompt, $integration, [
-            'max_tokens' => $integration->max_tokens_small ?? 2000,
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
             'temperature' => 0.5,
         ]);
 

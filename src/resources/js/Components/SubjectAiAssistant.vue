@@ -13,7 +13,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['select-subject', 'close']);
+const emit = defineEmits(['select-subject', 'select', 'close']);
 
 // State
 const isOpen = ref(false);
@@ -114,8 +114,16 @@ const generateSubjects = async () => {
 };
 
 // Select a suggestion
-const selectSubject = (subject) => {
+const selectSubject = (suggestion) => {
+    // Handle both old format (string) and new format (object with subject and preheader)
+    const subject = typeof suggestion === 'string' ? suggestion : suggestion.subject;
+    const preheader = typeof suggestion === 'object' ? (suggestion.preheader || '') : '';
+    
+    // Emit for backward compatibility
     emit('select-subject', subject);
+    // Emit new format with both subject and preheader
+    emit('select', { subject, preheader });
+    
     isOpen.value = false;
     suggestions.value = [];
     hint.value = '';
@@ -234,13 +242,23 @@ const toggle = () => {
             <div v-if="suggestions.length > 0" class="space-y-2">
                 <p class="text-xs font-medium text-slate-500 dark:text-slate-400">{{ $t('messages.ai_assistant.click_to_use') }}</p>
                 <button
-                    v-for="(subject, index) in suggestions"
+                    v-for="(suggestion, index) in suggestions"
                     :key="index"
-                    @click="selectSubject(subject)"
-                    class="flex w-full items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-200 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/30"
+                    @click="selectSubject(suggestion)"
+                    class="flex w-full flex-col gap-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:border-indigo-600 dark:hover:bg-indigo-900/30"
                 >
-                    <span class="flex-shrink-0 text-indigo-500">{{ index + 1 }}.</span>
-                    <span class="flex-1">{{ subject }}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="flex-shrink-0 text-indigo-500">{{ index + 1 }}.</span>
+                        <span class="flex-1 text-sm text-slate-700 dark:text-slate-200">
+                            {{ typeof suggestion === 'string' ? suggestion : suggestion.subject }}
+                        </span>
+                    </div>
+                    <div 
+                        v-if="typeof suggestion === 'object' && suggestion.preheader"
+                        class="ml-5 text-xs text-slate-500 dark:text-slate-400 italic"
+                    >
+                        ↳ {{ suggestion.preheader }}
+                    </div>
                 </button>
             </div>
 
