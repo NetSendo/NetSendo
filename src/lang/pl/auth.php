@@ -46,4 +46,15 @@ return [
     'enable_2fa' => 'Włącz 2FA',
     'disable_2fa' => 'Wyłącz 2FA',
     'verify_code' => 'Zweryfikuj kod',
+    
+    // Password reset email
+    'reset_password' => [
+        'email_subject' => 'Resetowanie hasła - :app',
+        'greeting' => 'Witaj!',
+        'intro' => 'Otrzymujesz ten email, ponieważ otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta.',
+        'action' => 'Zresetuj hasło',
+        'expire' => 'Ten link do resetowania hasła wygaśnie za :count minut.',
+        'ignore' => 'Jeśli nie prosiłeś o zresetowanie hasła, zignoruj tę wiadomość.',
+        'salutation' => 'Pozdrawiamy, :app',
+    ],
 ];

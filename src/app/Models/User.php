@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
+use App\Services\Mail\SystemMailService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -221,6 +223,29 @@ class User extends Authenticatable
     public function mailboxes()
     {
         return $this->hasMany(Mailbox::class);
+    }
+
+    /**
+     * Send the password reset notification.
+     * Overrides default to use SystemMailService for ENV/Mailbox fallback.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        // Prepare system mail service (configures Laravel mailer)
+        $mailService = app(SystemMailService::class);
+        
+        if (!$mailService->prepare()) {
+            \Log::error('Cannot send password reset email: No mail configuration available', [
+                'user_id' => $this->id,
+                'email' => $this->email,
+            ]);
+            return;
+        }
+        
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
 

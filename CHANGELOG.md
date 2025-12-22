@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Password Reset with Smart Mail Fallback:**
+  - New `SystemMailService` for sending system emails (password reset, notifications)
+  - Intelligent fallback: uses ENV mail configuration if available, otherwise falls back to first active SMTP Mailbox with 'system' type
+  - Custom `ResetPasswordNotification` with localized messages (PL, EN)
+  - User model now uses `SystemMailService` for password reset emails
+
 ---
 
 ## [1.0.7] – Advanced Tracking, Triggers & Bug Fixes - 2025-12-22

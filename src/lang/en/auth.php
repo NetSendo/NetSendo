@@ -46,4 +46,15 @@ return [
     'enable_2fa' => 'Enable 2FA',
     'disable_2fa' => 'Disable 2FA',
     'verify_code' => 'Verify Code',
+    
+    // Password reset email
+    'reset_password' => [
+        'email_subject' => 'Reset Password - :app',
+        'greeting' => 'Hello!',
+        'intro' => 'You are receiving this email because we received a password reset request for your account.',
+        'action' => 'Reset Password',
+        'expire' => 'This password reset link will expire in :count minutes.',
+        'ignore' => 'If you did not request a password reset, no further action is required.',
+        'salutation' => 'Regards, :app',
+    ],
 ];
