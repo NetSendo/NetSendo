@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added Polish/English translations for 2FA screens
 
 ### Added
+- **UX Improvements:**
+  - Added visual 2FA status indicator in Profile settings
+  - Added 2FA lock icon in the top header when enabled
+
 - **Automatic Version Check:**
   - New CRON task `netsendo:check-updates` running daily at 9:00 AM
   - Automatically checks GitHub for new releases and caches results for 6 hours

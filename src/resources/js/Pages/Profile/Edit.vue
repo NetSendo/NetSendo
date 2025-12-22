@@ -55,9 +55,14 @@ defineProps({
                     class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
                 >
                     <div class="max-w-xl">
-                        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                            {{ $t('profile.two_factor.title') }}
-                        </h2>
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                {{ $t('profile.two_factor.title') }}
+                            </h2>
+                            <span v-if="$page.props.auth.user.two_factor_enabled" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400 dark:ring-green-500/20">
+                                {{ $t('auth.two_factor_active') }}
+                            </span>
+                        </div>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
                             {{ $t('profile.two_factor.description') }}
                         </p>

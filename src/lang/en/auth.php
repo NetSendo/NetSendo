@@ -53,6 +53,9 @@ return [
     'code' => 'Code',
     'verifying' => 'Verifying...',
     'confirm' => 'Confirm',
+    'two_factor_active' => '2FA Active',
+    'two_factor_inactive' => '2FA Inactive',
+
     
     // Password reset email
     'reset_password' => [
