@@ -103,9 +103,14 @@ const formatReadTime = (seconds) => {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {{ $t('messages.stats.header_title', { subject: message.subject }) }}
-                </h2>
+                <div>
+                    <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                        {{ $t('messages.stats.header_title', { subject: message.subject }) }}
+                    </h2>
+                    <div v-if="message.scheduled_at" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        📅 {{ $t('messages.scheduled_for') }}: {{ message.scheduled_at }}
+                    </div>
+                </div>
                 <Link :href="route('messages.index')" class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                     &larr; {{ $t('messages.stats.back_to_list') }}
                 </Link>

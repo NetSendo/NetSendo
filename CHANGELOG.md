@@ -7,11 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Message Statistics Enhancements:**
+  - Added "Recipients List" section to message statistics
+  - detailed table showing every recipient with their status (queued, sent, failed, skipped)
+  - Color-coded status badges and error messages for failed deliveries
+  - Pagination for the recipient list
+
+- **Real-time Status Updates:**
+  - Implemented dynamic status polling for message list
+  - "Scheduled" messages now automatically update their status to "Sent" without page refresh
+  - Optimized polling runs only when scheduled messages are present (every 15s)
+
+- **Message Scheduling Display:**
+  - Added `scheduled_at` field display in message list (below status badge for scheduled messages)
+  - Added `scheduled_at` display in message statistics header
+  - For "Send Immediately" broadcast messages, recipients are now synced to queue immediately for instant statistics access
+  - Future scheduled messages wait for CRON to sync recipients when scheduled time arrives
+
+- **Configurable Pagination:**
+  - Added "Per Page" dropdown to message list (10, 30, 50, 100 items)
+  - User preference is preserved via URL parameters
+  - Default pagination increased from 12 to 30 items for better overview
+
+### Changed
+- **Message Controller:**
+  - `stats()` method now returns paginated `queue_entries` with recipient data
+  - `index()` method now accepts `per_page` parameter
+  - Added `statuses()` endpoint for efficient batch status checking
+
+- **Message Form Layout:**
+  - Optimized "Scheduling" and "Timezone" sections to be side-by-side on large screens for better space utilization
+
 ### Fixed
 - **Version Check Cache Invalidation:**
   - Implemented smart cache invalidation for update checks
   - Automatically clears version cache when application version changes
   - Ensures users see correct update status immediately after upgrading
+
+- **Dark Mode Visibility:**
+  - Fixed invisible calendar icon in date picker inputs on dark backgrounds by enforcing dark color scheme
 
 ## [1.0.10] – Docker Queue Worker & Email Improvements
 

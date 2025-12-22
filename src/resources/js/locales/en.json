@@ -569,6 +569,7 @@
         "status_sent": "Sent",
         "status_scheduled": "Scheduled",
         "status_draft": "Draft",
+        "scheduled_for": "Scheduled for",
         "table": {
             "subject": "Subject",
             "type": "Type",

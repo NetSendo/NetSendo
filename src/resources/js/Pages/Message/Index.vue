@@ -422,6 +422,11 @@ const closeResendAndReload = () => {
                                 >
                                     {{ getStatus(message) === 'sent' ? $t('messages.status_sent') : (getStatus(message) === 'scheduled' ? $t('messages.status_scheduled') : $t('messages.status_draft')) }}
                                 </span>
+                                <!-- Show scheduled time for scheduled messages -->
+                                <div v-if="message.type !== 'autoresponder' && getStatus(message) === 'scheduled' && message.scheduled_at" 
+                                     class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    📅 {{ message.scheduled_at }}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 {{ message.created_at }}

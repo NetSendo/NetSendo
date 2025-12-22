@@ -570,6 +570,7 @@
         "status_sent": "Wysłana",
         "status_scheduled": "Zaplanowana",
         "status_draft": "Szkic",
+        "scheduled_for": "Zaplanowano na",
         "table": {
             "subject": "Temat",
             "type": "Typ",

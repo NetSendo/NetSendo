@@ -1074,7 +1074,7 @@ const triggerTypes = [
 
                         <!-- Broadcast Settings -->
                         <template v-if="form.type === 'broadcast'">
-                            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 lg:col-span-2">
+                            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                                 <InputLabel :value="$t('messages.fields.scheduling')" class="mb-3" />
                                 <div class="flex flex-wrap gap-4">
                                     <label class="flex cursor-pointer items-center gap-2">
@@ -1093,7 +1093,7 @@ const triggerTypes = [
                                         type="datetime-local" 
                                         id="send_at" 
                                         v-model="form.send_at"
-                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark]"
                                     />
                                     <InputError class="mt-2" :message="form.errors.send_at" />
                                 </div>
@@ -1101,7 +1101,7 @@ const triggerTypes = [
                         </template>
 
                         <!-- Timezone -->
-                        <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700" :class="form.type === 'autoresponder' ? '' : 'lg:col-span-2'">
+                        <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                             <InputLabel for="timezone" :value="$t('messages.fields.timezone')" class="mb-3" />
                             <select
                                 id="timezone"

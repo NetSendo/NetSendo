@@ -90,6 +90,9 @@ class MessageController extends Controller
                         ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
                         : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
                     'created_at' => DateHelper::formatForUser($msg->created_at),
+                    'scheduled_at' => $msg->scheduled_at 
+                        ? DateHelper::formatForUser($msg->scheduled_at) 
+                        : null,
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction', 'per_page']),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
@@ -247,6 +250,17 @@ class MessageController extends Controller
         // Sync excluded lists
         if (!empty($validated['excluded_list_ids'])) {
             $message->excludedLists()->sync($validated['excluded_list_ids']);
+        }
+
+        // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
+        // sync recipients immediately so stats are available right away.
+        // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
+        $isImmediateSend = $validated['status'] === 'scheduled' 
+            && $validated['type'] === 'broadcast' 
+            && empty($validated['send_at']);
+        
+        if ($isImmediateSend) {
+            $message->syncPlannedRecipients();
         }
 
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
@@ -415,6 +429,17 @@ class MessageController extends Controller
         // Sync excluded lists
         if (array_key_exists('excluded_list_ids', $validated)) {
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
+        }
+
+        // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
+        // sync recipients immediately so stats are available right away.
+        // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
+        $isImmediateSend = $validated['status'] === 'scheduled' 
+            && $validated['type'] === 'broadcast' 
+            && empty($validated['send_at']);
+        
+        if ($isImmediateSend) {
+            $message->syncPlannedRecipients();
         }
 
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
@@ -625,6 +650,9 @@ class MessageController extends Controller
                 'id' => $message->id,
                 'subject' => $message->subject,
                 'sent_at' => DateHelper::formatForUser($message->send_at ?? $message->created_at),
+                'scheduled_at' => $message->scheduled_at 
+                    ? DateHelper::formatForUser($message->scheduled_at) 
+                    : null,
                 'status' => $message->status,
                 'type' => $message->type,
                 'is_active' => $message->is_active ?? true,
