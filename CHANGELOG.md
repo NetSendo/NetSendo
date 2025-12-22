@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Mailbox Connection UI:**
+  - Fixed issue where error notifications (toasts) were obscured by the integration modal (z-index fix)
+- **Gmail Integration:**
+  - Fixed "silent failure" when saving Gmail mailbox caused by missing optional credentials handling in controller
+
 ## [1.0.8] – Short Description - 2025-12-22
 
 ### Fixed
