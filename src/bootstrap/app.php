@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register middleware aliases
         $middleware->alias([
             'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
+            '2fa' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
         ]);
 
         // Exclude routes from CSRF verification

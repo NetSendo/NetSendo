@@ -47,6 +47,13 @@ return [
     'disable_2fa' => 'Wyłącz 2FA',
     'verify_code' => 'Zweryfikuj kod',
     
+    // 2FA
+    'two_factor_verification' => 'Weryfikacja dwuetapowa',
+    'enter_code_from_app' => 'Wpisz kod z aplikacji autoryzacyjnej',
+    'code' => 'Kod',
+    'verifying' => 'Weryfikowanie...',
+    'confirm' => 'Potwierdź',
+    
     // Password reset email
     'reset_password' => [
         'email_subject' => 'Resetowanie hasła - :app',

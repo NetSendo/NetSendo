@@ -91,6 +91,8 @@ class TwoFactorController extends Controller
         $user->two_factor_confirmed_at = now();
         $user->save();
 
+        session(['2fa_verified' => true]);
+
         return redirect()->route('profile.2fa.index')
             ->with('success', 'Uwierzytelnianie dwuskładnikowe zostało włączone!');
     }

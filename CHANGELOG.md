@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - **License Activation Buttons:**
   - Fixed issue where activation buttons were cut off in license plan cards due to incorrect layout height calculation
+- **2FA Enforcement:**
+  - Added middleware to enforce 2FA verification on protected routes
+  - Added missing 2FA challenge routes and view
+  - Fixed login flow to redirect enabled users to 2FA challenge
+  - Added Polish/English translations for 2FA screens
 
 ### Added
 - **Automatic Version Check:**

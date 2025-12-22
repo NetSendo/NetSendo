@@ -47,6 +47,13 @@ return [
     'disable_2fa' => 'Disable 2FA',
     'verify_code' => 'Verify Code',
     
+    // 2FA
+    'two_factor_verification' => 'Two-Factor Verification',
+    'enter_code_from_app' => 'Enter the code from your authentication app',
+    'code' => 'Code',
+    'verifying' => 'Verifying...',
+    'confirm' => 'Confirm',
+    
     // Password reset email
     'reset_password' => [
         'email_subject' => 'Reset Password - :app',
