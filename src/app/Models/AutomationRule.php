@@ -26,6 +26,8 @@ class AutomationRule extends Model
         'limit_per_subscriber',
         'limit_count',
         'limit_period',
+        'trigger_source',      // 'message', 'funnel', 'manual'
+        'trigger_source_id',   // ID of the source (message_id, funnel_id)
     ];
 
     protected $casts = [
@@ -51,6 +53,14 @@ class AutomationRule extends Model
         'tag_added' => 'Dodanie taga',
         'tag_removed' => 'Usunięcie taga',
         'field_updated' => 'Zmiana pola',
+        // New triggers
+        'page_visited' => 'Odwiedziny strony',
+        'specific_link_clicked' => 'Kliknięcie w konkretny link',
+        'date_reached' => 'Osiągnięcie daty',
+        'read_time_threshold' => 'Próg czasu czytania',
+        'subscriber_birthday' => 'Urodziny subskrybenta',
+        'subscription_anniversary' => 'Rocznica zapisu',
+        'subscriber_inactive' => 'Brak aktywności',
     ];
 
     /**

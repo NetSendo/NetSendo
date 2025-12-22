@@ -9,6 +9,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.7] – Advanced Tracking, Triggers & Bug Fixes - 2025-12-22
+
+### Added
+- **Message Triggers Integration:**
+  - Triggers tab in message editor is now fully functional (removed "Coming Soon" badge)
+  - Trigger selection automatically creates `AutomationRule` behind the scenes
+  - Supported trigger types: signup, anniversary, birthday, inactivity, page visit, custom (tag)
+  - Each trigger has configuration options (e.g. `inactive_days`, `url_pattern`, `tag_id`)
+  - Green dot indicator shows when trigger is active on a message
+
+- **Email Read Time Tracking:**
+  - Track how long subscribers read emails using `EmailReadSession` model
+  - New endpoints: `/t/read-start`, `/t/heartbeat`, `/t/read-end`
+  - Integration with automations via `read_time_threshold` trigger
+
+- **Read Time Statistics on Stats Page:**
+  - KPI cards: Average read time, Median, Total sessions, Max time
+  - Read time distribution histogram chart (0-10s, 10-30s, 30-60s, 1-2min, 2min+)
+  - Top readers table showing subscribers with longest read times
+  - Data sourced from `EmailReadSession` model
+
+- **Page Visit Tracking:**
+  - Track subscriber visits to external pages with `PageVisit` model
+  - JS Tracking Script generator for external sites (`/t/page-script/{user}`)
+  - Visitor identification linking anonymous visitors to subscribers when they click email links
+  - New `page_visited` automation trigger supporting URL patterns (wildcards)
+
+- **Date-Based Automations:**
+  - `DateTriggerService` for processing time-based triggers
+  - New automation triggers: `date_reached`, `subscriber_birthday`, `subscription_anniversary`
+  - Integrated with main scheduler (runs daily at 8:00 AM)
+
+- **New Automation Triggers:**
+  - `subscriber_inactive` - trigger when subscriber is inactive for X days
+  - `specific_link_clicked` - trigger when specific URL is clicked
+  - `read_time_threshold` - trigger when email is read for X seconds
+  - `page_visited` - trigger on page visit matching URL pattern
+
+### Changed
+- `AutomationRule` model extended with `trigger_source` and `trigger_source_id` fields to track where automation was created from (message, funnel, or manual)
+- `MessageController` now syncs message triggers with the automation system via `syncMessageTrigger()` method
+- `MessageController@stats` now returns read time statistics, histogram, and top readers data
+- **Automation Builder:**
+  - Updated frontend interface to support configuration for new triggers
+  - Added specific fields for URL patterns, dates, and time thresholds
+- **Scheduler:**
+  - Added `automations:process-date-triggers` command to `routes/console.php`
+
+### Fixed
+- **Message Scheduling Bug:**
+  - Added `scheduled_at` to `$fillable` array in `Message` model - this was preventing "Send immediately" and scheduled messages from being processed by CRON
+  - Added `scheduled_at` to `$casts` as datetime for proper type handling
+
+- **Vue-i18n Parsing Errors (SyntaxError: Invalid linked format):**
+  - Fixed unescaped `@` characters in email placeholder translations
+  - In vue-i18n, `@` must be escaped as `{'@'}` to prevent parser confusion with linked messages syntax
+  - Fixed files: `en.json` (4 occurrences), `es.json` (3), `de.json` (2), `pl.json` (1)
+
+### Database
+- New migration: `2025_12_22_000001_create_email_read_sessions_table`
+- New migration: `2025_12_22_000002_create_page_visits_table`
+- New migration: `2025_12_22_000003_add_new_triggers_to_automation_rules`
+- New migration: `2025_12_22_000004_add_trigger_source_to_automation_rules`
+
+---
+
 ## [1.0.6] – System Messages & Pages Separation - 2025-12-21
 
 ### Added

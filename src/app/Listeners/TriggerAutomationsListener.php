@@ -10,6 +10,10 @@ use App\Events\EmailBounced;
 use App\Events\FormSubmitted;
 use App\Events\TagAdded;
 use App\Events\TagRemoved;
+use App\Events\PageVisited;
+use App\Events\ReadTimeThresholdReached;
+use App\Events\SubscriberBirthday;
+use App\Events\SubscriptionAnniversary;
 use App\Services\Automation\AutomationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -65,6 +69,11 @@ class TriggerAutomationsListener implements ShouldQueue
             FormSubmitted::class => 'form_submitted',
             TagAdded::class => 'tag_added',
             TagRemoved::class => 'tag_removed',
+            // New event mappings
+            PageVisited::class => 'page_visited',
+            ReadTimeThresholdReached::class => 'read_time_threshold',
+            SubscriberBirthday::class => 'subscriber_birthday',
+            SubscriptionAnniversary::class => 'subscription_anniversary',
             default => null,
         };
     }

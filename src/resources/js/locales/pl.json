@@ -623,12 +623,37 @@
         "triggers": {
             "title": "Triggery i automatyzacje",
             "coming_soon": "Ta funkcja będzie dostępna wkrótce. Będziesz mógł uruchamiać wiadomości na podstawie akcji takich jak kliknięcie w link, odwiedziny strony lub konkretne daty.",
+            "info": "Ustaw trigger, aby ta wiadomość była wysyłana automatycznie, gdy zajdzie określone zdarzenie. Wiadomość zostanie podpięta do systemu automatyzacji.",
             "select_type": "Wybierz typ triggera",
+            "config_title": "Konfiguracja triggera",
+            "advanced_link": "Potrzebujesz bardziej zaawansowanych warunków?",
+            "advanced_link_desc": "Skonfiguruj szczegółowe warunki i akcje w edytorze automatyzacji.",
+            "go_to_automations": "Przejdź do automatyzacji",
             "types": {
+                "none": "Brak triggera",
                 "signup": "Zapis na listę",
-                "anniversary": "Rocznica",
+                "anniversary": "Rocznica zapisu",
+                "birthday": "Urodziny subskrybenta",
                 "inactivity": "Brak aktywności",
-                "custom": "Własna akcja"
+                "page_visit": "Odwiedziny strony",
+                "custom": "Własna akcja (tag)"
+            },
+            "desc": {
+                "none": "Wiadomość nie będzie uruchamiana automatycznie",
+                "signup": "Wyślij gdy subskrybent zapisze się na listę",
+                "anniversary": "Wyślij w rocznicę zapisu subskrybenta",
+                "birthday": "Wyślij w dzień urodzin subskrybenta",
+                "inactivity": "Wyślij gdy subskrybent jest nieaktywny",
+                "page_visit": "Wyślij gdy subskrybent odwiedzi stronę",
+                "custom": "Wyślij gdy zostanie dodany konkretny tag"
+            },
+            "config": {
+                "inactive_days": "Liczba dni nieaktywności",
+                "url_pattern": "Wzorzec URL strony",
+                "url_pattern_help": "Użyj * jako wieloznacznika, np. */cennik lub https://strona.pl/oferta/*",
+                "tag": "Tag uruchamiający",
+                "select_tag": "-- Wybierz tag --",
+                "no_config_needed": "Ten trigger nie wymaga dodatkowej konfiguracji"
             }
         },
         "ab_testing": {
@@ -785,7 +810,7 @@
             "title": "Wyślij test",
             "subtitle": "Sprawdź jak wiadomość wygląda przed wysyłką",
             "email_label": "Adres email",
-            "email_placeholder": "twoj@email.com",
+            "email_placeholder": "twoj{'@'}email.com",
             "preview_subject": "Temat",
             "preview_mailbox": "Skrzynka",
             "send": "Wyślij test",
@@ -833,6 +858,15 @@
                 "sent": "Wysłano",
                 "failed": "Błędy",
                 "skipped": "Pominięto"
+            },
+            "read_time": {
+                "average": "Średni czas",
+                "median": "Mediana",
+                "sessions": "Sesji czytania",
+                "max": "Maks. czas",
+                "distribution": "Rozkład czasu czytania",
+                "top_readers": "Top czytelnicy",
+                "time": "Czas"
             }
         }
     },

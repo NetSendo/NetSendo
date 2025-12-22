@@ -29,6 +29,7 @@ class Message extends Model
         'status',
         'timezone',
         'send_at',
+        'scheduled_at', // For CRON processing
         'time_of_day',
         // A/B Testing
         'ab_enabled',
@@ -47,6 +48,7 @@ class Message extends Model
 
     protected $casts = [
         'send_at' => 'datetime',
+        'scheduled_at' => 'datetime',
         'ab_enabled' => 'boolean',
         'ab_split_percentage' => 'integer',
         'trigger_config' => 'array',

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Models\AutomationRule;
+use App\Models\EmailReadSession;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\Template;
@@ -213,6 +215,9 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids']);
         }
 
+        // Sync trigger with automation rule
+        $this->syncMessageTrigger($message, $validated);
+
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zapisana.');
     }
@@ -371,6 +376,9 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
         }
 
+        // Sync trigger with automation rule
+        $this->syncMessageTrigger($message, $validated);
+
         return redirect()->route('messages.index')
             ->with('success', 'Wiadomość została zaktualizowana.');
     }
@@ -456,6 +464,27 @@ class MessageController extends Controller
         $clicks = 0;
         $uniqueClicks = 0;
 
+        // Read time statistics
+        $readTimeStats = EmailReadSession::getReadTimeStats($message->id);
+        
+        // Read time histogram (distribution)
+        $readTimeHistogram = $this->getReadTimeHistogram($message->id);
+        
+        // Top readers (subscribers with longest read times)
+        $topReaders = EmailReadSession::completed()
+            ->forMessage($message->id)
+            ->with('subscriber:id,email,first_name,last_name')
+            ->orderByDesc('read_time_seconds')
+            ->limit(10)
+            ->get()
+            ->map(fn($session) => [
+                'email' => $session->subscriber?->email ?? 'Unknown',
+                'name' => trim(($session->subscriber?->first_name ?? '') . ' ' . ($session->subscriber?->last_name ?? '')),
+                'read_time' => $session->read_time_formatted,
+                'read_time_seconds' => $session->read_time_seconds,
+                'read_at' => DateHelper::formatForUser($session->started_at),
+            ]);
+
         return Inertia::render('Message/Stats', [
             'message' => [
                 'id' => $message->id,
@@ -479,6 +508,9 @@ class MessageController extends Controller
                 'click_rate' => round(($uniqueClicks / $denominator) * 100, 1),
                 'click_to_open_rate' => $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 1) : 0,
             ],
+            'read_time_stats' => $readTimeStats,
+            'read_time_histogram' => $readTimeHistogram,
+            'top_readers' => $topReaders,
             'queue_stats' => $queueStats,
             'recent_activity' => [
                 'opens' => [], // TODO: Implement when MessageOpen model is ready
@@ -567,5 +599,104 @@ class MessageController extends Controller
             'is_active' => $message->is_active,
             'message' => $message->is_active ? 'Wiadomość została aktywowana.' : 'Wiadomość została dezaktywowana.'
         ]);
+    }
+
+    /**
+     * Sync message trigger with AutomationRule
+     * Creates/updates an automation rule when message has a trigger configured
+     */
+    protected function syncMessageTrigger(Message $message, array $data): void
+    {
+        $triggerType = $data['trigger_type'] ?? null;
+        
+        if (empty($triggerType)) {
+            // Remove automation rule if trigger was removed
+            AutomationRule::where('trigger_source', 'message')
+                ->where('trigger_source_id', $message->id)
+                ->delete();
+            return;
+        }
+
+        // Map message trigger types to AutomationRule trigger events
+        $triggerEventMap = [
+            'signup' => 'subscriber_signup',
+            'anniversary' => 'subscription_anniversary',
+            'inactivity' => 'subscriber_inactive',
+            'birthday' => 'subscriber_birthday',
+            'page_visit' => 'page_visited',
+            'custom' => 'tag_added', // Custom allows any trigger
+        ];
+
+        $triggerEvent = $triggerEventMap[$triggerType] ?? $triggerType;
+
+        // Build trigger config
+        $triggerConfig = $data['trigger_config'] ?? [];
+        
+        // Add list_id from message if not set
+        if (empty($triggerConfig['list_id']) && $message->contactLists->isNotEmpty()) {
+            $triggerConfig['list_id'] = $message->contactLists->first()->id;
+        }
+
+        AutomationRule::updateOrCreate(
+            [
+                'trigger_source' => 'message',
+                'trigger_source_id' => $message->id,
+            ],
+            [
+                'user_id' => $message->user_id,
+                'name' => "Auto: {$message->subject}",
+                'description' => "Automatyzacja utworzona z wiadomości #{$message->id}",
+                'trigger_event' => $triggerEvent,
+                'trigger_config' => $triggerConfig,
+                'conditions' => [],
+                'condition_logic' => 'all',
+                'actions' => [
+                    [
+                        'type' => 'send_email',
+                        'config' => ['message_id' => $message->id]
+                    ]
+                ],
+                'is_active' => in_array($message->status, ['sent', 'scheduled']),
+            ]
+        );
+    }
+
+    /**
+     * Get read time histogram data for chart
+     */
+    protected function getReadTimeHistogram(int $messageId): array
+    {
+        $sessions = EmailReadSession::completed()
+            ->forMessage($messageId)
+            ->pluck('read_time_seconds');
+
+        // Define buckets: 0-10s, 10-30s, 30-60s, 60-120s, 120s+
+        $buckets = [
+            '0-10s' => 0,
+            '10-30s' => 0,
+            '30-60s' => 0,
+            '1-2min' => 0,
+            '2min+' => 0,
+        ];
+
+        foreach ($sessions as $seconds) {
+            if ($seconds <= 10) {
+                $buckets['0-10s']++;
+            } elseif ($seconds <= 30) {
+                $buckets['10-30s']++;
+            } elseif ($seconds <= 60) {
+                $buckets['30-60s']++;
+            } elseif ($seconds <= 120) {
+                $buckets['1-2min']++;
+            } else {
+                $buckets['2min+']++;
+            }
+        }
+
+        return [
+            'labels' => array_keys($buckets),
+            'data' => array_values($buckets),
+            'total' => $sessions->count(),
+        ];
     }
 }

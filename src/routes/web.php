@@ -303,6 +303,17 @@ Route::post('/invitation/{token}', [\App\Http\Controllers\UserManagementControll
 // Tracking Routes
 Route::get('/t/open/{message}/{subscriber}/{hash}', [\App\Http\Controllers\TrackingController::class, 'trackOpen'])->name('tracking.open');
 Route::get('/t/click/{message}/{subscriber}/{hash}', [\App\Http\Controllers\TrackingController::class, 'trackClick'])->name('tracking.click');
+
+// Read Session Tracking (for email read time)
+Route::get('/t/read-start/{message}/{subscriber}/{hash}', [\App\Http\Controllers\TrackingController::class, 'startReadSession'])->name('tracking.read-start');
+Route::post('/t/heartbeat', [\App\Http\Controllers\TrackingController::class, 'heartbeat'])->name('tracking.heartbeat');
+Route::post('/t/read-end', [\App\Http\Controllers\TrackingController::class, 'endReadSession'])->name('tracking.read-end');
+
+// Page Visit Tracking
+Route::post('/t/page', [\App\Http\Controllers\PageVisitController::class, 'track'])->name('tracking.page');
+Route::get('/t/page-script/{user}', [\App\Http\Controllers\PageVisitController::class, 'getTrackingScript'])->name('tracking.page-script');
+Route::post('/t/link-visitor', [\App\Http\Controllers\PageVisitController::class, 'linkVisitor'])->name('tracking.link-visitor');
+
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\SubscriberController::class, 'unsubscribe'])->name('unsubscribe')->middleware('signed');
 
 // External Pages (Public)

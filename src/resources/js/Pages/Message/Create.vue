@@ -476,10 +476,12 @@ const providerColors = {
 
 // Trigger types
 const triggerTypes = [
-    { value: 'signup', label: t('messages.triggers.types.signup'), icon: '📝' },
-    { value: 'anniversary', label: t('messages.triggers.types.anniversary'), icon: '🎂' },
-    { value: 'inactivity', label: t('messages.triggers.types.inactivity'), icon: '😴' },
-    { value: 'custom', label: t('messages.triggers.types.custom'), icon: '⚙️' },
+    { value: 'signup', label: t('messages.triggers.types.signup'), icon: '📝', description: t('messages.triggers.desc.signup') },
+    { value: 'anniversary', label: t('messages.triggers.types.anniversary'), icon: '🎉', description: t('messages.triggers.desc.anniversary') },
+    { value: 'birthday', label: t('messages.triggers.types.birthday'), icon: '🎂', description: t('messages.triggers.desc.birthday') },
+    { value: 'inactivity', label: t('messages.triggers.types.inactivity'), icon: '😴', description: t('messages.triggers.desc.inactivity') },
+    { value: 'page_visit', label: t('messages.triggers.types.page_visit'), icon: '🌐', description: t('messages.triggers.desc.page_visit') },
+    { value: 'custom', label: t('messages.triggers.types.custom'), icon: '⚙️', description: t('messages.triggers.desc.custom') },
 ];
 </script>
 
@@ -551,9 +553,7 @@ const triggerTypes = [
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                             {{ $t('messages.tabs.triggers') }}
-                            <span class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
-                                {{ $t('common.soon') }}
-                            </span>
+                            <span v-if="form.trigger_type" class="flex h-2 w-2 rounded-full bg-green-500"></span>
                         </span>
                     </button>
                     <button
@@ -1119,32 +1119,123 @@ const triggerTypes = [
 
                 <!-- TAB: Triggers -->
                 <div v-show="activeTab === 'triggers'" class="space-y-6">
-                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-900/20">
-                        <svg class="mx-auto h-12 w-12 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        <h3 class="mt-4 text-lg font-semibold text-amber-800 dark:text-amber-200">
-                            {{ $t('messages.triggers.title') }}
-                        </h3>
-                        <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">
-                            {{ $t('messages.triggers.coming_soon') }}
-                        </p>
+                    <!-- Info Banner -->
+                    <div class="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
+                        <div class="flex gap-3">
+                            <svg class="h-5 w-5 flex-shrink-0 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div>
+                                <p class="text-sm text-indigo-800 dark:text-indigo-200">
+                                    {{ $t('messages.triggers.info') }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Trigger Type Preview (disabled) -->
-                    <div class="opacity-50 pointer-events-none">
+                    <!-- Trigger Type Selection -->
+                    <div>
                         <InputLabel :value="$t('messages.triggers.select_type')" class="mb-3" />
-                        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <!-- No trigger option -->
+                            <div 
+                                @click="form.trigger_type = null; form.trigger_config = {}"
+                                :class="!form.trigger_type 
+                                    ? 'border-slate-400 bg-slate-50 ring-1 ring-slate-400 dark:border-slate-500 dark:bg-slate-800' 
+                                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'"
+                                class="cursor-pointer rounded-lg border p-4 transition-all"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">🚫</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-slate-900 dark:text-white">{{ $t('messages.triggers.types.none') }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ $t('messages.triggers.desc.none') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Trigger options -->
                             <div 
                                 v-for="trigger in triggerTypes" 
                                 :key="trigger.value"
-                                class="flex items-center gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                                @click="form.trigger_type = trigger.value"
+                                :class="form.trigger_type === trigger.value 
+                                    ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:border-indigo-500 dark:bg-indigo-900/20' 
+                                    : 'border-slate-200 hover:border-slate-300 dark:border-slate-700'"
+                                class="cursor-pointer rounded-lg border p-4 transition-all"
                             >
-                                <span class="text-2xl">{{ trigger.icon }}</span>
-                                <div>
-                                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ trigger.label }}</p>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">{{ trigger.icon }}</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-slate-900 dark:text-white">{{ trigger.label }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ trigger.description }}</p>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Configuration (shown when trigger is selected) -->
+                    <div v-if="form.trigger_type" class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+                        <h4 class="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
+                            ⚙️ {{ $t('messages.triggers.config_title') }}
+                        </h4>
+
+                        <!-- Inactivity config -->
+                        <div v-if="form.trigger_type === 'inactivity'" class="space-y-3">
+                            <div>
+                                <InputLabel :value="$t('messages.triggers.config.inactive_days')" />
+                                <select v-model="form.trigger_config.inactive_days" class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                                    <option :value="7">7 {{ $t('common.days') }}</option>
+                                    <option :value="14">14 {{ $t('common.days') }}</option>
+                                    <option :value="30">30 {{ $t('common.days') }}</option>
+                                    <option :value="60">60 {{ $t('common.days') }}</option>
+                                    <option :value="90">90 {{ $t('common.days') }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Page visit config -->
+                        <div v-if="form.trigger_type === 'page_visit'" class="space-y-3">
+                            <div>
+                                <InputLabel :value="$t('messages.triggers.config.url_pattern')" />
+                                <TextInput 
+                                    v-model="form.trigger_config.url_pattern" 
+                                    type="text"
+                                    class="mt-1 block w-full"
+                                    placeholder="https://example.com/pricing/*"
+                                />
+                                <p class="mt-1 text-xs text-slate-500">{{ $t('messages.triggers.config.url_pattern_help') }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Custom/tag config -->
+                        <div v-if="form.trigger_type === 'custom'" class="space-y-3">
+                            <div>
+                                <InputLabel :value="$t('messages.triggers.config.tag')" />
+                                <select v-model="form.trigger_config.tag_id" class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+                                    <option :value="null">{{ $t('messages.triggers.config.select_tag') }}</option>
+                                    <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Anniversary/Birthday - no additional config needed -->
+                        <div v-if="['anniversary', 'birthday', 'signup'].includes(form.trigger_type)" class="text-sm text-slate-500 dark:text-slate-400">
+                            <p>✅ {{ $t('messages.triggers.config.no_config_needed') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Link to Automations -->
+                    <div v-if="form.trigger_type" class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('messages.triggers.advanced_link') }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ $t('messages.triggers.advanced_link_desc') }}</p>
+                            </div>
+                            <Link :href="route('automations.index')" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                                {{ $t('messages.triggers.go_to_automations') }} →
+                            </Link>
                         </div>
                     </div>
                 </div>

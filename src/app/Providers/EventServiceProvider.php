@@ -14,6 +14,10 @@ use App\Events\EmailBounced;
 use App\Events\FormSubmitted;
 use App\Events\TagAdded;
 use App\Events\TagRemoved;
+use App\Events\PageVisited;
+use App\Events\ReadTimeThresholdReached;
+use App\Events\SubscriberBirthday;
+use App\Events\SubscriptionAnniversary;
 
 // Listeners
 use App\Listeners\TriggerAutomationsListener;
@@ -51,6 +55,19 @@ class EventServiceProvider extends ServiceProvider
             TriggerAutomationsListener::class,
         ],
         TagRemoved::class => [
+            TriggerAutomationsListener::class,
+        ],
+        // New automation events
+        PageVisited::class => [
+            TriggerAutomationsListener::class,
+        ],
+        ReadTimeThresholdReached::class => [
+            TriggerAutomationsListener::class,
+        ],
+        SubscriberBirthday::class => [
+            TriggerAutomationsListener::class,
+        ],
+        SubscriptionAnniversary::class => [
             TriggerAutomationsListener::class,
         ],
     ];

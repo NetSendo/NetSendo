@@ -21,7 +21,12 @@ const form = useForm({
 });
 
 const isEditing = computed(() => !!props.rule?.id);
-const icons = { subscriber_signup: '📝', email_opened: '👁️', email_clicked: '🖱️', form_submitted: '📋', tag_added: '🏷️' };
+const icons = { 
+    subscriber_signup: '📝', email_opened: '👁️', email_clicked: '🖱️', 
+    form_submitted: '📋', tag_added: '🏷️', tag_removed: '🏷️',
+    page_visited: '🌐', specific_link_clicked: '🔗', date_reached: '📅',
+    read_time_threshold: '⏱️', subscriber_birthday: '🎂', subscription_anniversary: '🎉'
+};
 
 const addAction = () => form.actions.push({ type: 'add_tag', config: {} });
 const removeAction = (i) => form.actions.splice(i, 1);
@@ -53,12 +58,39 @@ const submit = () => isEditing.value ? form.put(route('automations.update', prop
                     <select v-model="form.trigger_event" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
                         <option v-for="(label, key) in triggerEvents" :key="key" :value="key">{{ icons[key] || '⚡' }} {{ label }}</option>
                     </select>
+                    
+                    <!-- List Filter (Common) -->
                     <div v-if="['subscriber_signup','subscriber_unsubscribed','email_opened','email_clicked'].includes(form.trigger_event)" class="mt-3">
                         <label class="text-sm text-gray-600 dark:text-gray-400">{{ $t('automations.builder.filter_list') }}</label>
                         <select v-model="form.trigger_config.list_id" class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
                             <option :value="null">{{ $t('automations.builder.all_lists') }}</option>
                             <option v-for="l in lists" :key="l.id" :value="l.id">{{ l.name }}</option>
                         </select>
+                    </div>
+
+                    <!-- Page Visit Config -->
+                    <div v-if="form.trigger_event === 'page_visited'" class="mt-3">
+                        <label class="text-sm text-gray-600 dark:text-gray-400">Wzorzec URL (użyj * jako wieloznacznik)</label>
+                        <input v-model="form.trigger_config.url_pattern" type="text" placeholder="https://twojastrona.pl/oferta/*" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"/>
+                        <p class="text-xs text-gray-500 mt-1">Przykład: <code>*/cennik</code> lub <code>https://strona.pl/dziekujemy</code></p>
+                    </div>
+
+                    <!-- Specific Link Click Config -->
+                    <div v-if="form.trigger_event === 'specific_link_clicked'" class="mt-3">
+                        <label class="text-sm text-gray-600 dark:text-gray-400">Link URL</label>
+                        <input v-model="form.trigger_config.link_url" type="text" placeholder="https://..." class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"/>
+                    </div>
+
+                    <!-- Read Time Threshold Config -->
+                    <div v-if="form.trigger_event === 'read_time_threshold'" class="mt-3">
+                        <label class="text-sm text-gray-600 dark:text-gray-400">Wymagany czas czytania (sekundy)</label>
+                        <input v-model="form.trigger_config.read_time_threshold" type="number" min="5" placeholder="np. 30" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"/>
+                    </div>
+
+                    <!-- Date Reached Config -->
+                    <div v-if="form.trigger_event === 'date_reached'" class="mt-3">
+                        <label class="text-sm text-gray-600 dark:text-gray-400">Data uruchomienia</label>
+                        <input v-model="form.trigger_config.date" type="date" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"/>
                     </div>
                 </div>
                 <!-- Conditions -->

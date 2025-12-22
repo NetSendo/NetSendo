@@ -54,3 +54,10 @@ Schedule::command('backup:clean')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/backup.log'));
+
+// Automatyzacje oparte na datach (urodziny, rocznice, konkretne daty) - o 8:00
+Schedule::command('automations:process-date-triggers')
+    ->dailyAt('08:00')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/cron-automations.log'));

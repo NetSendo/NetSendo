@@ -97,7 +97,65 @@ class AutomationService
             }
         }
 
+        // Check page URL pattern for page_visited trigger
+        if (!empty($config['url_pattern'])) {
+            $pageUrl = $context['page_url'] ?? '';
+            if (!$this->matchesUrlPattern($pageUrl, $config['url_pattern'])) {
+                return false;
+            }
+        }
+
+        // Check specific link URL for specific_link_clicked trigger
+        if (!empty($config['link_url'])) {
+            $clickedUrl = $context['url'] ?? '';
+            if (!$this->matchesUrlPattern($clickedUrl, $config['link_url'])) {
+                return false;
+            }
+        }
+
+        // Check read time threshold
+        if (!empty($config['read_time_threshold'])) {
+            $readTimeSeconds = $context['read_time_seconds'] ?? 0;
+            $threshold = (int) $config['read_time_threshold'];
+            if ($readTimeSeconds < $threshold) {
+                return false;
+            }
+        }
+
+        // Check user_id ownership (security)
+        if (!empty($context['user_id']) && $rule->user_id !== (int) $context['user_id']) {
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * Match URL against a pattern (supports wildcards).
+     */
+    protected function matchesUrlPattern(string $url, string $pattern): bool
+    {
+        // Exact match
+        if ($url === $pattern) {
+            return true;
+        }
+
+        // Wildcard pattern matching
+        if (str_contains($pattern, '*')) {
+            $regex = '/^' . str_replace(
+                ['*', '/'],
+                ['.*', '\/'],
+                preg_quote($pattern, '/')
+            ) . '$/i';
+            return (bool) preg_match($regex, $url);
+        }
+
+        // Contains match (if pattern doesn't have protocol, check if URL contains it)
+        if (!str_starts_with($pattern, 'http')) {
+            return str_contains($url, $pattern);
+        }
+
+        return false;
     }
 
     /**

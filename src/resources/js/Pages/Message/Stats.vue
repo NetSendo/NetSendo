@@ -23,6 +23,9 @@ const props = defineProps({
     stats: Object,
     queue_stats: Object,
     recent_activity: Object,
+    read_time_stats: Object,
+    read_time_histogram: Object,
+    top_readers: Array,
 });
 
 const doughnutData = {
@@ -46,9 +49,30 @@ const barData = {
     ]
 };
 
+// Read time histogram chart
+const readTimeChartData = {
+    labels: props.read_time_histogram?.labels || [],
+    datasets: [
+        {
+            label: t('messages.stats.read_time.sessions'),
+            backgroundColor: '#8B5CF6',
+            data: props.read_time_histogram?.data || []
+        }
+    ]
+};
+
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false
+};
+
+// Format seconds to human readable
+const formatReadTime = (seconds) => {
+    if (!seconds) return '0s';
+    if (seconds < 60) return `${seconds}s`;
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    return sec > 0 ? `${min}m ${sec}s` : `${min}m`;
 };
 </script>
 
@@ -90,6 +114,26 @@ const chartOptions = {
                         <div class="text-3xl font-bold text-purple-600">{{ stats.click_to_open_rate }}%</div>
                         <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.kpi.ctor') }}</div>
                         <div class="text-xs text-gray-400 mt-1">{{ $t('messages.stats.kpi.clicks_opens') }}</div>
+                    </div>
+                </div>
+
+                <!-- Read Time KPIs -->
+                <div v-if="read_time_stats && read_time_stats.total_sessions > 0" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500">
+                        <div class="text-3xl font-bold text-violet-600">{{ formatReadTime(read_time_stats.average_seconds) }}</div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.read_time.average') }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500">
+                        <div class="text-3xl font-bold text-violet-600">{{ formatReadTime(read_time_stats.median_seconds) }}</div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.read_time.median') }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500">
+                        <div class="text-3xl font-bold text-violet-600">{{ read_time_stats.total_sessions }}</div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.read_time.sessions') }}</div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500">
+                        <div class="text-3xl font-bold text-violet-600">{{ formatReadTime(read_time_stats.max_seconds) }}</div>
+                        <div class="text-sm text-gray-500 uppercase tracking-wide">{{ $t('messages.stats.read_time.max') }}</div>
                     </div>
                 </div>
 
@@ -174,6 +218,49 @@ const chartOptions = {
                         <Bar :data="barData" :options="chartOptions" />
                     </div>
                 </div>
+
+                <!-- Read Time Charts & Top Readers -->
+                <div v-if="read_time_histogram && read_time_histogram.total > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Read Time Distribution -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-80">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+                            <span class="mr-2">⏱️</span>{{ $t('messages.stats.read_time.distribution') }}
+                        </h3>
+                        <Bar :data="readTimeChartData" :options="chartOptions" />
+                    </div>
+
+                    <!-- Top Readers -->
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
+                            <span class="mr-2">🏆</span>{{ $t('messages.stats.read_time.top_readers') }}
+                        </h3>
+                        <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                            <table class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                                    <tr>
+                                        <th class="px-3 py-2">{{ $t('messages.stats.activity.email') }}</th>
+                                        <th class="px-3 py-2 text-right">{{ $t('messages.stats.read_time.time') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(reader, i) in top_readers" :key="i" class="border-b dark:border-gray-700">
+                                        <td class="px-3 py-2">
+                                            <div>{{ reader.email }}</div>
+                                            <div v-if="reader.name" class="text-xs text-gray-400">{{ reader.name }}</div>
+                                        </td>
+                                        <td class="px-3 py-2 text-right font-medium text-violet-600">
+                                            {{ reader.read_time }}
+                                        </td>
+                                    </tr>
+                                    <tr v-if="!top_readers || top_readers.length === 0">
+                                        <td colspan="2" class="px-3 py-2 text-center">{{ $t('messages.stats.activity.no_data') }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
 
                 <!-- Recent Activity Logs -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
