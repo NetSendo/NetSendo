@@ -55,9 +55,10 @@ Schedule::command('backup:clean')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/backup.log'));
 
-// Automatyzacje oparte na datach (urodziny, rocznice, konkretne daty) - o 8:00
+// Automatyzacje oparte na datach (urodziny, rocznice, konkretne daty) - co minutę
+// Zabezpieczone wewnętrznym cachem przed wysłaniem duplikatów
 Schedule::command('automations:process-date-triggers')
-    ->dailyAt('08:00')
+    ->everyMinute()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));

@@ -12,7 +12,7 @@ class DateTriggerService
 {
     /**
      * Process all date-based triggers.
-     * Should be called daily via cron.
+     * Should be called via cron (safe to call frequently due to internal caching).
      */
     public function processAll(): array
     {
@@ -57,6 +57,11 @@ class DateTriggerService
             $subscribers = $this->getSubscribersWithBirthdayToday($userId);
 
             foreach ($subscribers as $subscriber) {
+                // Deduplication: Ensure we process this subscriber only once per day
+                if (!$this->shouldProcess('birthday', $subscriber->id)) {
+                    continue;
+                }
+
                 $age = $this->calculateAge($subscriber);
 
                 event(new SubscriberBirthday(
@@ -96,6 +101,11 @@ class DateTriggerService
             $subscribers = $this->getSubscribersWithAnniversaryToday($userId);
 
             foreach ($subscribers as $subscriber) {
+                // Deduplication: Ensure we process this subscriber only once per day
+                if (!$this->shouldProcess('anniversary', $subscriber->id)) {
+                    continue;
+                }
+
                 $yearsSubscribed = $subscriber->created_at->diffInYears(now());
 
                 // Only trigger for actual anniversaries (1+ years)
@@ -145,6 +155,11 @@ class DateTriggerService
             $subscribers = $this->getSubscribersForUser($rule->user_id);
 
             foreach ($subscribers as $subscriber) {
+                // Deduplication: Ensure we process this rule for this subscriber only once
+                if (!$this->shouldProcess('date_rule_' . $rule->id, $subscriber->id)) {
+                    continue;
+                }
+
                 // Process automation for this subscriber
                 app(AutomationService::class)->processEvent(
                     'date_reached',
@@ -160,6 +175,20 @@ class DateTriggerService
         }
 
         return $count;
+    }
+
+    /**
+     * Check if a trigger should be processed for a subscriber today.
+     * Uses Cache to prevent duplicate processing on the same day.
+     */
+    protected function shouldProcess(string $type, int $subscriberId): bool
+    {
+        $today = now()->format('Y-m-d');
+        $key = "automation_processed:{$type}:{$subscriberId}:{$today}";
+
+        // Try to add key to cache with 24h expiry
+        // Returns true if added (didn't exist), false if already exists
+        return \Illuminate\Support\Facades\Cache::add($key, true, now()->addHours(24));
     }
 
     /**
