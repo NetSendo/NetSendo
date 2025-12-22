@@ -136,11 +136,15 @@ class SendEmailJob implements ShouldQueue
             if ($mailbox) {
                 // Use custom mailbox provider
                 $provider = $providerService->getProvider($mailbox);
+                // Resolve custom headers
+                $headers = $this->resolveHeaders($placeholderService);
+
                 $provider->send(
                     $this->subscriber->email,
                     $recipientName ?: $this->subscriber->email,
                     $subject,
-                    $content
+                    $content,
+                    $headers
                 );
 
                 // Track sent count for rate limiting
@@ -216,6 +220,62 @@ class SendEmailJob implements ShouldQueue
         if ($entry) {
             $entry->markAsFailed($errorMessage);
         }
+    }
+
+    /**
+     * Resolve custom headers (Global < List)
+     */
+    private function resolveHeaders(PlaceholderService $placeholderService): array
+    {
+        $rawHeaders = [];
+
+        // 1. Global Defaults
+        // Access settings.sending.headers
+        $userSettings = $this->message->user->settings ?? [];
+        if (isset($userSettings['sending']['headers']) && is_array($userSettings['sending']['headers'])) {
+             // Filter empty strings
+             $globalHeaders = array_filter($userSettings['sending']['headers'], fn($v) => !empty($v));
+             $rawHeaders = array_merge($rawHeaders, $globalHeaders);
+        }
+
+        // 2. List Settings (Overrides)
+        $list = $this->subscriber->contactList;
+        if ($list && isset($list->settings['sending']['headers']) && is_array($list->settings['sending']['headers'])) {
+             // Filter empty strings
+             $listHeaders = array_filter($list->settings['sending']['headers'], fn($v) => !empty($v));
+             $rawHeaders = array_merge($rawHeaders, $listHeaders);
+        }
+
+        if (empty($rawHeaders)) {
+            return [];
+        }
+
+        // Generate placeholders
+        $additionalData = [
+            'unsubscribe_link' => $placeholderService->generateUnsubscribeLink($this->subscriber),
+            'unsubscribe_url' => $placeholderService->generateUnsubscribeLink($this->subscriber),
+        ];
+
+        // Process values
+        $finalHeaders = [];
+        
+        // List-Unsubscribe
+        if (!empty($rawHeaders['list_unsubscribe'])) {
+            $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe'], $this->subscriber, $additionalData);
+            if (!empty($value)) {
+                $finalHeaders['List-Unsubscribe'] = $value;
+            }
+        }
+        
+        // List-Unsubscribe-Post
+        if (!empty($rawHeaders['list_unsubscribe_post'])) {
+            $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe_post'], $this->subscriber, $additionalData);
+            if (!empty($value)) {
+                 $finalHeaders['List-Unsubscribe-Post'] = $value;
+            }
+        }
+
+        return $finalHeaders;
     }
 
     /**

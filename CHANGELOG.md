@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Anti-Spam Headers Configuration:**
+  - Implemented `List-Unsubscribe` and `List-Unsubscribe-Post` header support for improved email deliverability.
+  - Added "Sending Settings" UI for configuring these headers at both the global default level and individual mailing list level.
+  - List-specific header settings override global defaults.
+  - Headers are now correctly passed to all mail providers (SMTP, SendGrid, Gmail).
+  - Added "Insert Template" helper buttons to easily populate standard header values.
+  - Implemented smart auto-fill: `List-Unsubscribe` headers are automatically populated based on the selected mailing list mailbox (sender email) to ensure valid `mailto:` links.
+
 ## [1.0.13] – Short Description
 
 **Release date:** 2025-12-22
@@ -101,6 +110,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **WYSIWYG Editor:**
   - Fixed issue where clicking toolbar buttons (Bold, Italic, etc.) would unexpectedly save and close the message form.
   - Added proper button type attributes to prevent form submission on toolbar interactions.
+
+
+
 
 ## [1.0.12] – Short Description
 

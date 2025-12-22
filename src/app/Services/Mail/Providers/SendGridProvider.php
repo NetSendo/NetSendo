@@ -16,7 +16,7 @@ class SendGridProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
     {
         try {
             $payload = [
@@ -42,6 +42,10 @@ class SendGridProvider implements MailProviderInterface
                     ],
                 ],
             ];
+
+            if (!empty($headers)) {
+                $payload['headers'] = $headers;
+            }
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,

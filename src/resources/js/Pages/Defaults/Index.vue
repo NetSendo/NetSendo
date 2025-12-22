@@ -1,7 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     settings: Object,
@@ -87,7 +88,12 @@ const form = useForm({
             company_address: getSetting('sending.company_address', ''),
             company_city: getSetting('sending.company_city', ''),
             company_zip: getSetting('sending.company_zip', ''),
+
             company_country: getSetting('sending.company_country', ''),
+            headers: {
+                list_unsubscribe: getSetting('sending.headers.list_unsubscribe', ''),
+                list_unsubscribe_post: getSetting('sending.headers.list_unsubscribe_post', ''),
+            },
         },
         pages: {
             confirmation: props.settings?.pages?.confirmation || { type: 'system', url: '', external_page_id: null },
@@ -113,6 +119,34 @@ const form = useForm({
             bounce_analysis: getSetting('advanced.bounce_analysis', true),
         },
     },
+});
+
+const insertHeaderTemplate = (type) => {
+    let email = 'unsubscribe@example.com';
+    const selectedMailbox = props.mailboxes.find(m => m.id === form.settings.sending.mailbox_id);
+    if (selectedMailbox && selectedMailbox.from_email) {
+        email = selectedMailbox.from_email;
+    }
+
+    if (type === 'list_unsubscribe') {
+        form.settings.sending.headers.list_unsubscribe = `<mailto:${email}?subject=unsubscribe>, <[[unsubscribe_url]]>`;
+    } else if (type === 'list_unsubscribe_post') {
+        form.settings.sending.headers.list_unsubscribe_post = 'List-Unsubscribe=One-Click';
+    }
+};
+
+// Automate headers population when mailbox changes
+watch(() => form.settings.sending.mailbox_id, (newVal) => {
+    if (newVal) {
+        // Auto-fill List-Unsubscribe if empty or using default example
+        if (!form.settings.sending.headers.list_unsubscribe || form.settings.sending.headers.list_unsubscribe.includes('unsubscribe@example.com')) {
+             insertHeaderTemplate('list_unsubscribe');
+        }
+        // Auto-fill List-Unsubscribe-Post if empty
+        if (!form.settings.sending.headers.list_unsubscribe_post) {
+             insertHeaderTemplate('list_unsubscribe_post');
+        }
+    }
 });
 
 const submit = () => {
@@ -220,9 +254,9 @@ const submit = () => {
                                      <!-- Default Mailbox Select -->
                                     <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                         <label class="mb-1 block text-sm font-medium text-slate-900 dark:text-white">
-                                            {{ $t('mailing_lists.mailbox_defaults_label') }}
+                                            {{ $t('mailing_lists.settings.mailbox_defaults_label') }}
                                         </label>
-                                        <p class="mb-3 text-xs text-slate-500">{{ $t('mailing_lists.mailbox_defaults_desc') }}</p>
+                                        <p class="mb-3 text-xs text-slate-500">{{ $t('mailing_lists.settings.mailbox_defaults_desc') }}</p>
                                         <select
                                             v-model="form.settings.sending.mailbox_id"
                                             class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-400"
@@ -316,6 +350,48 @@ const submit = () => {
                                                     class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                 >
                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div>
+                                    <h3 class="mb-4 text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
+                                        {{ $t('mailing_lists.settings.headers_section') }}
+                                    </h3>
+                                    <div class="grid gap-6">
+                                        <div>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="block text-sm font-medium text-slate-900 dark:text-white">
+                                                    List-Unsubscribe
+                                                </label>
+                                                <button type="button" @click="insertHeaderTemplate('list_unsubscribe')" class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                                    {{ $t('mailing_lists.settings.insert_template') }}
+                                                </button>
+                                            </div>
+                                            <input
+                                                v-model="form.settings.sending.headers.list_unsubscribe"
+                                                type="text"
+                                                class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                                                placeholder="<mailto:...>, <https://...>"
+                                            >
+                                            <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.headers_help') }}</p>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <label class="block text-sm font-medium text-slate-900 dark:text-white">
+                                                    List-Unsubscribe-Post
+                                                </label>
+                                                <button type="button" @click="insertHeaderTemplate('list_unsubscribe_post')" class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                                    {{ $t('mailing_lists.settings.insert_template') }}
+                                                </button>
+                                            </div>
+                                            <input
+                                                v-model="form.settings.sending.headers.list_unsubscribe_post"
+                                                type="text"
+                                                class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                                                placeholder="List-Unsubscribe=One-Click"
+                                            >
                                         </div>
                                     </div>
                                 </div>

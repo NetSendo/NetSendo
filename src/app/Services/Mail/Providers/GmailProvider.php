@@ -22,7 +22,7 @@ class GmailProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
     {
         try {
             // Get valid access token
@@ -34,6 +34,11 @@ class GmailProvider implements MailProviderInterface
                 ->to(new Address($to, $toName))
                 ->subject($subject)
                 ->html($htmlContent);
+
+            // Add custom headers
+            foreach ($headers as $name => $value) {
+                $email->getHeaders()->addTextHeader($name, $value);
+            }
 
             // Get raw content headers + body
             $rawMessage = $email->toString();

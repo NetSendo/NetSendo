@@ -61,7 +61,7 @@ class SmtpProvider implements MailProviderInterface
         return $dsn;
     }
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
     {
         try {
             $email = (new Email())
@@ -69,6 +69,11 @@ class SmtpProvider implements MailProviderInterface
             
             if ($this->replyTo) {
                 $email->replyTo($this->replyTo);
+            }
+
+            // Add custom headers
+            foreach ($headers as $name => $value) {
+                $email->getHeaders()->addTextHeader($name, $value);
             }
 
             $email->to(new Address($to, $toName))

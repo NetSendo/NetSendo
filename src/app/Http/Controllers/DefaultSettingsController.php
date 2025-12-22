@@ -49,6 +49,9 @@ class DefaultSettingsController extends Controller
             'settings.sending.company_city' => 'nullable|string|max:255',
             'settings.sending.company_zip' => 'nullable|string|max:20',
             'settings.sending.company_country' => 'nullable|string|max:255',
+            'settings.sending.headers' => 'nullable|array',
+            'settings.sending.headers.list_unsubscribe' => 'nullable|string',
+            'settings.sending.headers.list_unsubscribe_post' => 'nullable|string',
 
             // Pages
             'settings.pages' => 'nullable|array',
