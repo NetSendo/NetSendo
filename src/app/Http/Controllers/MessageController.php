@@ -67,9 +67,11 @@ class MessageController extends Controller
              $query->latest();
         }
 
+        $perPage = min($request->input('per_page', 30), 100);
+
         return Inertia::render('Message/Index', [
             'messages' => $query
-                ->paginate(12)
+                ->paginate($perPage)
                 ->withQueryString()
                 ->through(fn ($msg) => [
                     'id' => $msg->id,
@@ -89,11 +91,37 @@ class MessageController extends Controller
                         : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
                     'created_at' => DateHelper::formatForUser($msg->created_at),
                 ]),
-            'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction']),
+            'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction', 'per_page']),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
             'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
             'tags' => auth()->user()->tags()->select('id', 'name')->orderBy('name')->get(),
         ]);
+    }
+
+    /**
+     * Get current statuses for messages (for AJAX polling)
+     */
+    public function statuses(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (!$ids) {
+            return response()->json([]);
+        }
+
+        $messageIds = is_array($ids) ? $ids : explode(',', $ids);
+        
+        $messages = Message::whereIn('id', $messageIds)
+            ->where('user_id', auth()->id())
+            ->select('id', 'status', 'sent_count', 'planned_recipients_count')
+            ->get()
+            ->map(fn($m) => [
+                'id' => $m->id,
+                'status' => $m->status,
+                'sent_count' => $m->sent_count,
+                'planned_recipients_count' => $m->planned_recipients_count,
+            ]);
+
+        return response()->json($messages);
     }
 
     public function create()
@@ -619,6 +647,28 @@ class MessageController extends Controller
             'read_time_histogram' => $readTimeHistogram,
             'top_readers' => $topReaders,
             'queue_stats' => $queueStats,
+            'recipients' => $message->queueEntries()
+                ->with('subscriber:id,email,first_name,last_name,status')
+                ->orderByRaw("CASE status 
+                    WHEN 'failed' THEN 1 
+                    WHEN 'queued' THEN 2 
+                    WHEN 'planned' THEN 3 
+                    WHEN 'sent' THEN 4 
+                    WHEN 'skipped' THEN 5 
+                    ELSE 6 END")
+                ->orderByDesc('sent_at')
+                ->orderByDesc('created_at')
+                ->paginate(20)
+                ->through(fn($entry) => [
+                    'id' => $entry->id,
+                    'email' => $entry->subscriber?->email ?? 'Nieznany',
+                    'name' => trim(($entry->subscriber?->first_name ?? '') . ' ' . ($entry->subscriber?->last_name ?? '')),
+                    'subscriber_status' => $entry->subscriber?->status ?? 'unknown',
+                    'queue_status' => $entry->status,
+                    'planned_at' => $entry->planned_at ? DateHelper::formatForUser($entry->planned_at) : null,
+                    'sent_at' => $entry->sent_at ? DateHelper::formatForUser($entry->sent_at) : null,
+                    'error' => $entry->error_message,
+                ]),
             'recent_activity' => [
                 'opens' => [], // TODO: Implement when MessageOpen model is ready
                 'clicks' => [], // TODO: Implement when MessageClick model is ready

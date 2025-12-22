@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch, reactive } from 'vue';
+import { ref, watch, reactive, onMounted, onBeforeUnmount, computed } from 'vue';
 import Modal from '@/Components/Modal.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import DangerButton from '@/Components/DangerButton.vue';
@@ -26,6 +26,7 @@ const form = reactive({
     tag_id: props.filters.tag_id || '',
     sort: props.filters.sort || 'created_at',
     direction: props.filters.direction || 'desc',
+    per_page: props.filters.per_page || '30',
 });
 
 const messageToDelete = ref(null);
@@ -40,6 +41,12 @@ const resendResult = ref(null);
 // Reactive local state for is_active (to update UI immediately)
 const localActiveStates = reactive({});
 
+// Reactive local state for statuses (for real-time updates)
+const localStatuses = reactive({});
+
+// Polling interval reference
+let statusPollingInterval = null;
+
 // Initialize local states from props
 const getIsActive = (message) => {
     if (localActiveStates[message.id] !== undefined) {
@@ -47,6 +54,54 @@ const getIsActive = (message) => {
     }
     return message.is_active ?? true;
 };
+
+// Get message status (with local override for real-time updates)
+const getStatus = (message) => {
+    return localStatuses[message.id] || message.status;
+};
+
+// Fetch updated statuses for scheduled messages
+const fetchStatuses = async () => {
+    const scheduledMessages = props.messages.data.filter(m => 
+        m.status === 'scheduled' && !localStatuses[m.id]
+    );
+    
+    if (scheduledMessages.length === 0) return;
+    
+    try {
+        const ids = scheduledMessages.map(m => m.id);
+        const response = await axios.get(route('messages.statuses'), {
+            params: { ids: ids.join(',') }
+        });
+        
+        if (response.data && Array.isArray(response.data)) {
+            response.data.forEach(msg => {
+                if (msg.status && msg.status !== 'scheduled') {
+                    localStatuses[msg.id] = msg.status;
+                }
+            });
+        }
+    } catch (error) {
+        // Silently fail - polling will retry
+    }
+};
+
+// Setup polling on mount
+onMounted(() => {
+    // Start polling if there are scheduled messages
+    const hasScheduled = props.messages.data.some(m => m.status === 'scheduled');
+    if (hasScheduled) {
+        statusPollingInterval = setInterval(fetchStatuses, 15000); // Every 15 seconds
+        fetchStatuses(); // Initial fetch
+    }
+});
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+    if (statusPollingInterval) {
+        clearInterval(statusPollingInterval);
+    }
+});
 
 watch(form, throttle(() => {
     router.get(route('messages.index'), pickBy(form), {
@@ -264,6 +319,17 @@ const closeResendAndReload = () => {
                 <option value="autoresponder">{{ $t('messages.type_autoresponder') }}</option>
             </select>
 
+            <!-- Per Page -->
+            <select
+                v-model="form.per_page"
+                class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+                <option value="10">10 {{ $t('common.per_page') }}</option>
+                <option value="30">30 {{ $t('common.per_page') }}</option>
+                <option value="50">50 {{ $t('common.per_page') }}</option>
+                <option value="100">100 {{ $t('common.per_page') }}</option>
+            </select>
+
              <!-- Reset -->
              <button 
                 v-if="form.search || form.list_id || form.type || form.group_id || form.tag_id"
@@ -349,12 +415,12 @@ const closeResendAndReload = () => {
                                     v-else
                                     class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                     :class="{
-                                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': message.status === 'sent',
-                                        'bg-slate-100 text-slate-800 dark:bg-slate-700/50 dark:text-slate-300': message.status === 'draft',
-                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': message.status === 'scheduled'
+                                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': getStatus(message) === 'sent',
+                                        'bg-slate-100 text-slate-800 dark:bg-slate-700/50 dark:text-slate-300': getStatus(message) === 'draft',
+                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': getStatus(message) === 'scheduled'
                                     }"
                                 >
-                                    {{ message.status === 'sent' ? $t('messages.status_sent') : (message.status === 'scheduled' ? $t('messages.status_scheduled') : $t('messages.status_draft')) }}
+                                    {{ getStatus(message) === 'sent' ? $t('messages.status_sent') : (getStatus(message) === 'scheduled' ? $t('messages.status_scheduled') : $t('messages.status_draft')) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4">

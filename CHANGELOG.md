@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Fixed
+- **Version Check Cache Invalidation:**
+  - Implemented smart cache invalidation for update checks
+  - Automatically clears version cache when application version changes
+  - Ensures users see correct update status immediately after upgrading
 
 ## [1.0.10] – Docker Queue Worker & Email Improvements
 

@@ -27,6 +27,14 @@ class VersionController extends Controller
         // Cache the result for 6 hours (consistent with CRON check)
         $cacheKey = 'netsendo_version_check';
         
+        // Check if cached version differs from current version (app was updated)
+        // If so, invalidate cache to ensure fresh comparison
+        $cached = Cache::get($cacheKey);
+        if ($cached && isset($cached['current_version']) && $cached['current_version'] !== $currentVersion) {
+            Cache::forget($cacheKey);
+            $cached = null;
+        }
+        
         $result = Cache::remember($cacheKey, 21600, function () use ($currentVersion, $githubRepo) {
             return $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
         });

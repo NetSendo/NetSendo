@@ -42,8 +42,15 @@ class CheckForUpdates extends Command
         // Check if we should skip (cached result is fresh enough - 6 hours)
         if (!$forceRefresh && Cache::has($cacheKey)) {
             $cached = Cache::get($cacheKey);
-            $this->displayResult($cached, $currentVersion, true);
-            return self::SUCCESS;
+            
+            // If cached version differs from current version (app was updated), force refresh
+            if (isset($cached['current_version']) && $cached['current_version'] !== $currentVersion) {
+                $this->info("Version changed from {$cached['current_version']} to {$currentVersion}. Refreshing...");
+                Cache::forget($cacheKey);
+            } else {
+                $this->displayResult($cached, $currentVersion, true);
+                return self::SUCCESS;
+            }
         }
 
         $this->info("Checking for updates... (current: v{$currentVersion})");

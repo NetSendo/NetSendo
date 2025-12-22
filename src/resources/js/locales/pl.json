@@ -877,6 +877,22 @@
                 "distribution": "Rozkład czasu czytania",
                 "top_readers": "Top czytelnicy",
                 "time": "Czas"
+            },
+            "recipients": {
+                "title": "Lista odbiorców",
+                "total": "Łącznie: {count} odbiorców",
+                "email": "Email",
+                "name": "Imię i nazwisko",
+                "queue_status": "Status wysyłki",
+                "sent_at": "Data wysłania",
+                "error": "Błąd",
+                "status": {
+                    "planned": "Zaplanowany",
+                    "queued": "W kolejce",
+                    "sent": "Wysłany",
+                    "failed": "Błąd",
+                    "skipped": "Pominięty"
+                }
             }
         }
     },

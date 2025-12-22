@@ -104,6 +104,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::resource('template-blocks', \App\Http\Controllers\TemplateBlockController::class)->except(['create', 'edit', 'show']);
     Route::get('api/template-blocks/defaults', [\App\Http\Controllers\TemplateBlockController::class, 'defaults'])->name('api.template-blocks.defaults');
 
+    Route::get('messages/statuses', [\App\Http\Controllers\MessageController::class, 'statuses'])->name('messages.statuses');
     Route::get('messages/{message}/stats', [\App\Http\Controllers\MessageController::class, 'stats'])->name('messages.stats');
     Route::post('messages/test', [\App\Http\Controllers\MessageController::class, 'test'])->name('messages.test');
     Route::post('messages/{message}/duplicate', [\App\Http\Controllers\MessageController::class, 'duplicate'])->name('messages.duplicate');

@@ -26,7 +26,28 @@ const props = defineProps({
     read_time_stats: Object,
     read_time_histogram: Object,
     top_readers: Array,
+    recipients: Object,
 });
+
+// Status badge configuration
+const statusConfig = {
+    planned: { color: 'blue', label: 'messages.stats.recipients.status.planned' },
+    queued: { color: 'yellow', label: 'messages.stats.recipients.status.queued' },
+    sent: { color: 'green', label: 'messages.stats.recipients.status.sent' },
+    failed: { color: 'red', label: 'messages.stats.recipients.status.failed' },
+    skipped: { color: 'gray', label: 'messages.stats.recipients.status.skipped' },
+};
+
+const getStatusClass = (status) => {
+    const colors = {
+        planned: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        queued: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+        sent: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+        failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+        skipped: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400',
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+};
 
 const doughnutData = {
     labels: [t('messages.stats.charts.labels.opened'), t('messages.stats.charts.labels.sent_no_open')],
@@ -203,6 +224,78 @@ const formatReadTime = (seconds) => {
                                 <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ queue_stats.skipped }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-300 uppercase">{{ $t('messages.stats.queue.skipped') }}</div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipients List -->
+                <div v-if="recipients && recipients.data && recipients.data.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                                📧 {{ $t('messages.stats.recipients.title') }}
+                            </h3>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ $t('messages.stats.recipients.total', { count: recipients.total || 0 }) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                <tr>
+                                    <th class="px-4 py-3">{{ $t('messages.stats.recipients.email') }}</th>
+                                    <th class="px-4 py-3">{{ $t('messages.stats.recipients.name') }}</th>
+                                    <th class="px-4 py-3">{{ $t('messages.stats.recipients.queue_status') }}</th>
+                                    <th class="px-4 py-3">{{ $t('messages.stats.recipients.sent_at') }}</th>
+                                    <th class="px-4 py-3">{{ $t('messages.stats.recipients.error') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="recipient in recipients.data" :key="recipient.id" class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                                        {{ recipient.email }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {{ recipient.name || '-' }}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span 
+                                            class="inline-flex px-2 py-1 rounded-full text-xs font-medium"
+                                            :class="getStatusClass(recipient.queue_status)"
+                                        >
+                                            {{ $t(`messages.stats.recipients.status.${recipient.queue_status}`) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {{ recipient.sent_at || recipient.planned_at || '-' }}
+                                    </td>
+                                    <td class="px-4 py-3 max-w-xs truncate" :title="recipient.error">
+                                        <span v-if="recipient.error" class="text-red-600 dark:text-red-400">
+                                            {{ recipient.error }}
+                                        </span>
+                                        <span v-else class="text-gray-400">-</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div v-if="recipients.links && recipients.links.length > 3" class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700">
+                        <div class="flex gap-1">
+                            <Link
+                                v-for="(link, i) in recipients.links"
+                                :key="i"
+                                :href="link.url || '#'"
+                                class="rounded-lg px-3 py-1 text-sm"
+                                :class="{
+                                    'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400': link.active,
+                                    'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800': !link.active && link.url,
+                                    'opacity-50 cursor-not-allowed': !link.url
+                                }"
+                                v-html="link.label"
+                                preserve-scroll
+                            />
                         </div>
                     </div>
                 </div>
