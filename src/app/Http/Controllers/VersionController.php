@@ -24,10 +24,10 @@ class VersionController extends Controller
             ]);
         }
 
-        // Cache the result for 1 hour to avoid hitting GitHub API limits
+        // Cache the result for 6 hours (consistent with CRON check)
         $cacheKey = 'netsendo_version_check';
         
-        $result = Cache::remember($cacheKey, 3600, function () use ($currentVersion, $githubRepo) {
+        $result = Cache::remember($cacheKey, 21600, function () use ($currentVersion, $githubRepo) {
             return $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
         });
 
@@ -53,7 +53,7 @@ class VersionController extends Controller
         // Clear cache and fetch fresh data
         Cache::forget('netsendo_version_check');
         $result = $this->fetchUpdatesFromGitHub($currentVersion, $githubRepo);
-        Cache::put('netsendo_version_check', $result, 3600);
+        Cache::put('netsendo_version_check', $result, 21600);
 
         return response()->json($result);
     }
