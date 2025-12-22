@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.10] – Docker Scheduler Fix - 2025-12-22
+
+> [!IMPORTANT]
+> **Breaking Change for Docker Users:**
+> This release introduces a new `scheduler` service in `docker-compose.yml` required for background tasks (sending emails, automation).
+> If you are upgrading an existing installation, you MUST update your `docker-compose.yml` file manually or pull the latest version from the repository.
+> Running `docker compose pull` is NOT enough if your local `docker-compose.yml` is missing the `scheduler` service.
+
+### Fixed
+- **Docker Background Tasks:**
+- Added missing `scheduler` service to `docker-compose.yml`
+- Fixed issue where "Cron not configured" warning appeared despite correct app configuration
+- Scheduled messages and automations now process correctly in Docker environment
+
 ## [1.0.9] – Short Description - 2025-12-22
 
 ### Added

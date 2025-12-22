@@ -61,6 +61,8 @@ docker compose up -d
 | **NetSendo** | http://localhost:5029 |
 | **Mailpit** | http://localhost:5031 |
 
+Note: A background worker (`netsendo-scheduler`) is also started to handle scheduled emails and automation.
+
 ---
 
 ## 🔄 Updates
