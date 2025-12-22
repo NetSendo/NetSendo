@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **License Activation Buttons:**
+  - Fixed issue where activation buttons were cut off in license plan cards due to incorrect layout height calculation
+
 ### Added
 - **Password Reset with Smart Mail Fallback:**
   - New `SystemMailService` for sending system emails (password reset, notifications)

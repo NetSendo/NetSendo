@@ -591,7 +591,7 @@ const isGoldExpired = computed(() => {
                         <div
                             v-for="plan in planCards"
                             :key="plan.key"
-                            class="relative overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl dark:bg-gray-800"
+                            class="relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:shadow-2xl dark:bg-gray-800"
                         >
                             <!-- Popular badge -->
                             <div v-if="plan.popular" class="absolute -right-10 top-6 rotate-45 bg-gradient-to-r from-yellow-400 to-amber-500 px-12 py-1.5 text-xs font-bold text-white shadow">
@@ -610,7 +610,7 @@ const isGoldExpired = computed(() => {
                             </div>
 
                             <!-- Features list -->
-                            <div class="p-6 flex flex-col h-full">
+                            <div class="p-6 flex flex-col flex-grow">
                                 <div class="mb-5 text-sm font-medium text-gray-600 dark:text-gray-400 italic">
                                     {{ plan.description }}
                                 </div>
