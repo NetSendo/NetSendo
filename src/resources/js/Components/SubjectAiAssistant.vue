@@ -2,8 +2,9 @@
 import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import { useSpeechRecognition, getSpeechLang } from '@/Composables/useSpeechRecognition';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps({
     // Current HTML content of the message
@@ -21,6 +22,18 @@ const hint = ref('');
 const isGenerating = ref(false);
 const suggestions = ref([]);
 const error = ref('');
+
+// Voice dictation
+const { isListening, isSupported, transcript, toggleListening } = useSpeechRecognition();
+
+// Append transcript to hint when voice recognition completes
+watch(transcript, (newTranscript) => {
+    if (newTranscript) {
+        hint.value = hint.value 
+            ? hint.value.trim() + ' ' + newTranscript 
+            : newTranscript;
+    }
+});
 
 // Model selection state
 const integrations = ref([]);
@@ -241,18 +254,45 @@ onBeforeUnmount(() => {
                 </button>
             </div>
 
-            <!-- Hint input -->
+            <!-- Hint input with voice dictation -->
             <div class="mb-3">
-                <input
-                    v-model="hint"
-                    type="text"
-                    maxlength="500"
-                    class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                    :placeholder="$t('messages.ai_assistant.subject_hint_placeholder')"
-                    @keyup.enter="generateSubjects"
-                />
+                <div class="relative flex items-center gap-2">
+                    <input
+                        v-model="hint"
+                        type="text"
+                        maxlength="500"
+                        class="flex-1 rounded-md border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white"
+                        :class="isListening 
+                            ? 'border-red-300 dark:border-red-600' 
+                            : 'border-slate-200 dark:border-slate-600'"
+                        :placeholder="$t('messages.ai_assistant.subject_hint_placeholder')"
+                        @keyup.enter="generateSubjects"
+                    />
+                    <!-- Compact mic button -->
+                    <button
+                        v-if="isSupported"
+                        type="button"
+                        @click="toggleListening(getSpeechLang(locale))"
+                        :title="isListening ? $t('messages.ai_assistant.voice.stop') : $t('messages.ai_assistant.voice.start')"
+                        class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md transition-all"
+                        :class="isListening 
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' 
+                            : 'bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400'"
+                    >
+                        <svg 
+                            class="h-4 w-4" 
+                            :class="{ 'animate-pulse': isListening }"
+                            fill="currentColor" 
+                            viewBox="0 0 24 24"
+                        >
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+                </div>
                 <div class="mt-1 flex justify-between text-xs text-slate-400">
                     <span>{{ $t('messages.ai_assistant.characters_limit', { count: hint.length }) }}</span>
+                    <span v-if="isListening" class="text-red-500 animate-pulse">{{ $t('messages.ai_assistant.voice.listening') }}</span>
                 </div>
             </div>
             

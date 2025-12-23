@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **AI Voice Dictation:**
+  - Added microphone support to AI Assistant input fields (`MessageAiAssistant`, `SubjectAiAssistant`, `TemplateBuilder/AiAssistant`).
+  - Implemented `useSpeechRecognition` composable for Web Speech API integration.
+  - Added real-time transcript preview and visual recording feedback.
+  - Added voice dictation support for multiple languages (PL, EN, DE, ES).
+
 ### Improved
 - **Dashboard Activity Chart:**
   - Redesigned the Activity chart using `vue-chartjs` (Chart.js) to fix blurriness issues on high-DPI screens.

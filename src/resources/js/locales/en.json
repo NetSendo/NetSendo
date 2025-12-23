@@ -806,6 +806,14 @@
                     "promo_list": "Create a promotional email with a product list",
                     "cta_end": "Add a section with a CTA button at the end of current message"
                 }
+            },
+            "voice": {
+                "start": "Dictate by voice",
+                "stop": "Stop recording",
+                "listening": "Listening...",
+                "not_supported": "Your browser does not support speech recognition. Use Chrome or Edge.",
+                "not_supported_short": "Unsupported",
+                "error": "Speech recognition error"
             }
         },
         "fields": {

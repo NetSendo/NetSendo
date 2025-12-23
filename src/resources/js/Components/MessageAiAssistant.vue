@@ -2,8 +2,21 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import { useSpeechRecognition, getSpeechLang } from '@/Composables/useSpeechRecognition';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+// Voice dictation
+const { isListening, isSupported, transcript, interimTranscript, toggleListening } = useSpeechRecognition();
+
+// Append transcript to prompt when voice recognition completes
+watch(transcript, (newTranscript) => {
+    if (newTranscript) {
+        prompt.value = prompt.value 
+            ? prompt.value.trim() + ' ' + newTranscript 
+            : newTranscript;
+    }
+});
 
 const props = defineProps({
     // Current HTML content of the message for context
@@ -350,19 +363,55 @@ const acceptComparison = () => {
 
                         <!-- Content -->
                     <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                        <!-- Prompt input -->
+                        <!-- Prompt input with voice dictation -->
                         <div class="mb-4">
-                            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ $t('messages.ai_assistant.describe_content') }}
-                            </label>
-                            <textarea 
-                                v-model="prompt"
-                                rows="4"
-                                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white custom-scrollbar"
-                                :placeholder="activeMode === 'text' 
-                                    ? $t('messages.ai_assistant.prompts.text_placeholder') 
-                                    : $t('messages.ai_assistant.prompts.template_placeholder')"
-                            ></textarea>
+                            <div class="mb-1 flex items-center justify-between">
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {{ $t('messages.ai_assistant.describe_content') }}
+                                </label>
+                                <!-- Voice dictation button -->
+                                <button
+                                    v-if="isSupported"
+                                    type="button"
+                                    @click="toggleListening(getSpeechLang(locale))"
+                                    :title="isListening ? $t('messages.ai_assistant.voice.stop') : $t('messages.ai_assistant.voice.start')"
+                                    class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium transition-all"
+                                    :class="isListening 
+                                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' 
+                                        : 'bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400'"
+                                >
+                                    <svg 
+                                        class="h-4 w-4" 
+                                        :class="{ 'animate-pulse': isListening }"
+                                        fill="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                                    </svg>
+                                    <span v-if="isListening">{{ $t('messages.ai_assistant.voice.listening') }}</span>
+                                </button>
+                                <span v-else class="text-xs text-slate-400" :title="$t('messages.ai_assistant.voice.not_supported')">
+                                    🎤 {{ $t('messages.ai_assistant.voice.not_supported_short') }}
+                                </span>
+                            </div>
+                            <div class="relative">
+                                <textarea 
+                                    v-model="prompt"
+                                    rows="4"
+                                    class="w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-800 dark:text-white custom-scrollbar"
+                                    :class="isListening 
+                                        ? 'border-red-300 dark:border-red-700' 
+                                        : 'border-slate-200 dark:border-slate-700'"
+                                    :placeholder="activeMode === 'text' 
+                                        ? $t('messages.ai_assistant.prompts.text_placeholder') 
+                                        : $t('messages.ai_assistant.prompts.template_placeholder')"
+                                ></textarea>
+                                <!-- Interim transcript indicator -->
+                                <div v-if="interimTranscript" class="absolute bottom-2 left-3 right-3 rounded bg-slate-100 px-2 py-1 text-xs text-slate-500 dark:bg-slate-700 dark:text-slate-400">
+                                    <span class="animate-pulse">🎤</span> {{ interimTranscript }}
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Quick prompts -->

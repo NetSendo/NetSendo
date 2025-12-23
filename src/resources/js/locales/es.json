@@ -743,6 +743,14 @@
                     "promo_list": "Cree un email promocional con una lista de productos",
                     "cta_end": "Añada una sección con un botón de CTA al final del mensaje actual"
                 }
+            },
+            "voice": {
+                "start": "Dictado de voz",
+                "stop": "Detener grabación",
+                "listening": "Escuchando...",
+                "not_supported": "Su navegador no admite el reconocimiento de voz. Utilice Chrome o Edge.",
+                "not_supported_short": "No soportado",
+                "error": "Error de reconocimiento de voz"
             }
         },
         "fields": {

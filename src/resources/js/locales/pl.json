@@ -832,6 +832,14 @@
                     "promo_list": "Stwórz email promocyjny z listą produktów",
                     "cta_end": "Dodaj sekcję z przyciskiem CTA na końcu obecnej wiadomości"
                 }
+            },
+            "voice": {
+                "start": "Dyktuj głosowo",
+                "stop": "Zatrzymaj nagrywanie",
+                "listening": "Słucham...",
+                "not_supported": "Twoja przeglądarka nie obsługuje rozpoznawania mowy. Użyj Chrome lub Edge.",
+                "not_supported_short": "Niewspierane",
+                "error": "Błąd rozpoznawania mowy"
             }
         },
         "fields": {

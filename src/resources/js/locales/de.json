@@ -755,6 +755,14 @@
                     "promo_list": "Erstellen Sie eine Werbe-E-Mail mit einer Produktliste",
                     "cta_end": "Fügen Sie am Ende der aktuellen Nachricht einen Abschnitt mit einem CTA-Button hinzu"
                 }
+            },
+            "voice": {
+                "start": "Spracheingabe",
+                "stop": "Aufnahme stoppen",
+                "listening": "Höre zu...",
+                "not_supported": "Ihr Browser unterstützt keine Spracherkennung. Verwenden Sie Chrome oder Edge.",
+                "not_supported_short": "Nicht unterstützt",
+                "error": "Spracherkennungsfehler"
             }
         },
         "fields": {
