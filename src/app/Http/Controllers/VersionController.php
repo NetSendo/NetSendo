@@ -57,7 +57,7 @@ class VersionController extends Controller
     private function fetchUpdatesFromGitHub(string $currentVersion, string $githubRepo): array
     {
         try {
-            $response = Http::timeout(10)
+            $response = Http::timeout(3)
                 ->withHeaders([
                     'Accept' => 'application/vnd.github.v3+json',
                     'User-Agent' => 'NetSendo-Version-Check',
@@ -174,10 +174,10 @@ class VersionController extends Controller
             ]);
         }
 
-        // Cache for 1 hour
+        // Cache for 10 minutes - fresh enough for updates, fast for users
         $cacheKey = 'netsendo_changelog';
         
-        $releases = Cache::remember($cacheKey, 3600, function () use ($githubRepo) {
+        $releases = Cache::remember($cacheKey, 600, function () use ($githubRepo) {
             return $this->fetchAllReleases($githubRepo);
         });
 
@@ -193,7 +193,7 @@ class VersionController extends Controller
     private function fetchAllReleases(string $githubRepo): array
     {
         try {
-            $response = Http::timeout(10)
+            $response = Http::timeout(3)
                 ->withHeaders([
                     'Accept' => 'application/vnd.github.v3+json',
                     'User-Agent' => 'NetSendo-Version-Check',

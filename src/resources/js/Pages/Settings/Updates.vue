@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const page = usePage();
 const isLoading = ref(true);
+const isLoadingChangelog = ref(true);
 const versionData = ref(null);
 const changelogData = ref(null);
 const error = ref(null);
@@ -69,6 +70,7 @@ const fetchVersionInfo = async () => {
 
 // Fetch changelog from GitHub
 const fetchChangelog = async () => {
+    isLoadingChangelog.value = true;
     try {
         const response = await fetch('/api/version/changelog', {
             headers: { 'Accept': 'application/json' },
@@ -80,6 +82,8 @@ const fetchChangelog = async () => {
     } catch (e) {
         // Use fallback changelog
         changelogData.value = null;
+    } finally {
+        isLoadingChangelog.value = false;
     }
 };
 
@@ -315,7 +319,28 @@ onMounted(() => {
 
                 <!-- Changelog Tab -->
                 <div v-if="activeTab === 'changelog'">
-                    <h2 class="mb-6 text-xl font-semibold text-white">Version History</h2>
+                    <div class="mb-6 flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-white">Version History</h2>
+                        <div class="flex items-center gap-3">
+                            <span v-if="isLoadingChangelog" class="flex items-center gap-2 text-sm text-slate-400">
+                                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading from GitHub...
+                            </span>
+                            <button 
+                                @click="fetchChangelog"
+                                :disabled="isLoadingChangelog"
+                                class="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+                            >
+                                <svg :class="['h-3.5 w-3.5', isLoadingChangelog ? 'animate-spin' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
                     
                     <div class="relative space-y-6">
                         <!-- Timeline line -->
