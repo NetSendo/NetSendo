@@ -6,6 +6,7 @@ import StatsCard from '@/Components/Dashboard/StatsCard.vue';
 import ActivityChart from '@/Components/Dashboard/ActivityChart.vue';
 import RecentCampaigns from '@/Components/Dashboard/RecentCampaigns.vue';
 import QuickActions from '@/Components/Dashboard/QuickActions.vue';
+import SetupTrackerBar from '@/Components/Dashboard/SetupTrackerBar.vue';
 import { useDateTime } from '@/Composables/useDateTime';
 
 const page = usePage();
@@ -87,6 +88,12 @@ onMounted(() => {
                 </p>
             </div>
         </template>
+
+        <!-- Setup Tracker Bar (Critical Logic) -->
+        <SetupTrackerBar 
+            :stats="dashboardStats" 
+            :cron-status="cronStatus" 
+        />
 
         <!-- License inactive alert -->
         <div v-if="!$page.props.license?.active" class="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 p-0.5 shadow-lg">

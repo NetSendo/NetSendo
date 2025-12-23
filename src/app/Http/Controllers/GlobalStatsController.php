@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ContactList;
 use App\Models\EmailClick;
 use App\Models\EmailOpen;
+use App\Models\AiIntegration;
+use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\Subscriber;
 use Carbon\Carbon;
@@ -54,6 +56,9 @@ class GlobalStatsController extends Controller
 
         // Current month stats
         $subscribersCount = Subscriber::count();
+        $contactListsCount = ContactList::count();
+        $aiIntegrationsCount = AiIntegration::count();
+        $mailboxesCount = Mailbox::count();
         $newSubscribersThisMonth = Subscriber::where('created_at', '>=', $startOfMonth)->count();
         $newSubscribersLastMonth = Subscriber::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
 
@@ -130,6 +135,9 @@ class GlobalStatsController extends Controller
                 'formatted' => number_format($subscribersCount, 0, ',', ' '),
                 'trend' => $subscribersTrend,
             ],
+            'contact_lists_count' => $contactListsCount,
+            'ai_integrations_count' => $aiIntegrationsCount,
+            'mailboxes_count' => $mailboxesCount,
             'emails_sent' => [
                 'total' => $emailsSentThisMonth,
                 'formatted' => number_format($emailsSentThisMonth, 0, ',', ' '),

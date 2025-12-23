@@ -20,8 +20,20 @@ const close = () => {
     isOpen.value = false;
 };
 
+const handleQuickStart = () => {
+    close();
+    // Dispatch global event for Dashboard to pick up
+    window.dispatchEvent(new CustomEvent('open-onboarding-modal'));
+};
+
 const links = computed(() => [
-    { label: t('help_menu.quick_start'), href: 'https://docs.netsendo.com/quickstart', icon: 'rocket' },
+    { 
+        label: t('help_menu.quick_start', 'Szybki start'), 
+        href: '#', 
+        icon: 'rocket',
+        onClick: handleQuickStart,
+        internal: true
+    },
     { label: t('help_menu.documentation'), href: 'https://docs.netsendo.com', icon: 'book' },
     { label: t('help_menu.api_reference'), href: '/docs/api', icon: 'code' },
     { label: t('help_menu.community_forum'), href: 'https://forum.netsendo.com', icon: 'users' },
@@ -254,6 +266,7 @@ onMounted(() => {
                         :href="link.href"
                         :target="link.internal ? '_self' : '_blank'"
                         :rel="link.internal ? '' : 'noopener noreferrer'"
+                        @click="link.onClick ? ($event.preventDefault(), link.onClick()) : null"
                         class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
                     >
                         <!-- Rocket -->

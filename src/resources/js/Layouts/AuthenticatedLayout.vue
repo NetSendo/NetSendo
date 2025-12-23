@@ -6,6 +6,7 @@ import Sidebar from '@/Components/Sidebar/Sidebar.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
+import OnboardingModal from '@/Components/Dashboard/OnboardingModal.vue';
 import { useTheme } from '@/Composables/useTheme';
 
 const page = usePage();
@@ -19,6 +20,8 @@ const mobileMenuOpen = ref(false);
 const cronStatus = ref(null);
 const showCronWarning = ref(false);
 const cronBannerDismissed = ref(false);
+
+const showOnboardingModal = ref(false);
 
 const checkCronStatus = async () => {
     try {
@@ -56,6 +59,11 @@ onMounted(() => {
     
     // Check CRON status
     checkCronStatus();
+
+    // Global listener for Quick Start
+    window.addEventListener('open-onboarding-modal', () => {
+        showOnboardingModal.value = true;
+    });
 });
 
 onUnmounted(() => {
@@ -272,5 +280,10 @@ const toggleMobileMenu = () => {
                 <slot />
             </main>
         </div>
+        
+        <OnboardingModal 
+            :show="showOnboardingModal" 
+            @close="showOnboardingModal = false" 
+        />
     </div>
 </template>
