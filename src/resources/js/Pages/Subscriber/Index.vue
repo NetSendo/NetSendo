@@ -1,35 +1,202 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import debounce from 'lodash/debounce';
 import { useI18n } from 'vue-i18n';
+import BulkActionToolbar from './Partials/BulkActionToolbar.vue';
+import MoveToListModal from './Partials/MoveToListModal.vue';
+import ColumnSettingsDropdown from './Partials/ColumnSettingsDropdown.vue';
 
 const { t } = useI18n();
 
 const props = defineProps({
     subscribers: Object,
     lists: Array,
+    customFields: Array,
     filters: Object,
 });
 
+// Search and filter state
 const search = ref(props.filters.search || '');
 const listId = ref(props.filters.list_id || '');
 
-watch([search, listId], debounce(([newSearch, newListId]) => {
+// Sorting state
+const sortBy = ref(props.filters.sort_by || 'created_at');
+const sortOrder = ref(props.filters.sort_order || 'desc');
+
+// Selection state
+const selectedIds = ref([]);
+const processing = ref(false);
+
+// Move modal state
+const showMoveModal = ref(false);
+
+// Column visibility state (persisted to localStorage)
+const defaultColumns = {
+    email: true,
+    name: true,
+    phone: false,
+    status: true,
+    list: true,
+    created_at: true,
+};
+
+const loadColumnSettings = () => {
+    const saved = localStorage.getItem('subscriberColumns');
+    if (saved) {
+        try {
+            return { ...defaultColumns, ...JSON.parse(saved) };
+        } catch (e) {
+            return { ...defaultColumns };
+        }
+    }
+    return { ...defaultColumns };
+};
+
+const visibleColumns = ref(loadColumnSettings());
+
+// Computed: check if all visible subscribers are selected
+const isAllSelected = computed(() => {
+    return props.subscribers.data.length > 0 && 
+           selectedIds.value.length === props.subscribers.data.length;
+});
+
+// Computed: check if some (but not all) are selected
+const isSomeSelected = computed(() => {
+    return selectedIds.value.length > 0 && 
+           selectedIds.value.length < props.subscribers.data.length;
+});
+
+// Toggle column visibility
+const toggleColumn = (column) => {
+    visibleColumns.value[column] = !visibleColumns.value[column];
+    localStorage.setItem('subscriberColumns', JSON.stringify(visibleColumns.value));
+};
+
+// Toggle all selection
+const toggleSelectAll = () => {
+    if (isAllSelected.value) {
+        selectedIds.value = [];
+    } else {
+        selectedIds.value = props.subscribers.data.map(s => s.id);
+    }
+};
+
+// Toggle single selection
+const toggleSelect = (id) => {
+    const index = selectedIds.value.indexOf(id);
+    if (index === -1) {
+        selectedIds.value.push(id);
+    } else {
+        selectedIds.value.splice(index, 1);
+    }
+};
+
+// Clear selection
+const clearSelection = () => {
+    selectedIds.value = [];
+};
+
+// Sort handler
+const handleSort = (column) => {
+    if (sortBy.value === column) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortBy.value = column;
+        sortOrder.value = 'desc';
+    }
+    applyFilters();
+};
+
+// Apply filters with debounce for search
+const applyFilters = () => {
     router.get(route('subscribers.index'), {
-        search: newSearch,
-        list_id: newListId,
+        search: search.value,
+        list_id: listId.value,
+        sort_by: sortBy.value,
+        sort_order: sortOrder.value,
     }, {
         preserveState: true,
         replace: true,
     });
+};
+
+// Watch for search/filter changes
+watch([search, listId], debounce(() => {
+    applyFilters();
 }, 300));
 
+// Clear selection when data changes (e.g., after bulk action)
+watch(() => props.subscribers.data, () => {
+    selectedIds.value = [];
+});
+
+// Bulk delete action
+const bulkDelete = () => {
+    if (selectedIds.value.length === 0) return;
+    
+    if (confirm(t('subscribers.bulk.delete_confirm', { count: selectedIds.value.length }))) {
+        processing.value = true;
+        router.post(route('subscribers.bulk-delete'), {
+            ids: selectedIds.value,
+        }, {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                selectedIds.value = [];
+            },
+        });
+    }
+};
+
+// Bulk move action
+const bulkMove = ({ source_list_id, target_list_id }) => {
+    if (selectedIds.value.length === 0) return;
+    
+    processing.value = true;
+    router.post(route('subscribers.bulk-move'), {
+        ids: selectedIds.value,
+        source_list_id,
+        target_list_id,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            processing.value = false;
+            selectedIds.value = [];
+            showMoveModal.value = false;
+        },
+    });
+};
+
+// Bulk status change action
+const bulkChangeStatus = (status) => {
+    if (selectedIds.value.length === 0 || !status) return;
+    
+    processing.value = true;
+    router.post(route('subscribers.bulk-status'), {
+        ids: selectedIds.value,
+        status,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            processing.value = false;
+            selectedIds.value = [];
+        },
+    });
+};
+
+// Single delete action
 const deleteSubscriber = (subscriber) => {
     if (confirm(t('subscribers.confirm_delete', { email: subscriber.email }))) {
         router.delete(route('subscribers.destroy', subscriber.id));
     }
+};
+
+// Get sort icon class
+const getSortIcon = (column) => {
+    if (sortBy.value !== column) return 'opacity-0 group-hover:opacity-50';
+    return sortOrder.value === 'asc' ? 'rotate-180' : '';
 };
 </script>
 
@@ -47,15 +214,26 @@ const deleteSubscriber = (subscriber) => {
                         {{ $t('subscribers.subtitle') }}
                     </p>
                 </div>
-                <Link
-                    :href="route('subscribers.create')"
-                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25"
-                >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    {{ $t('subscribers.add_subscriber') }}
-                </Link>
+                <div class="flex items-center gap-2">
+                    <Link
+                        :href="route('subscribers.import')"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        {{ $t('subscribers.import.import_button') }}
+                    </Link>
+                    <Link
+                        :href="route('subscribers.create')"
+                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        {{ $t('subscribers.add_subscriber') }}
+                    </Link>
+                </div>
             </div>
         </template>
 
@@ -87,7 +265,25 @@ const deleteSubscriber = (subscriber) => {
                     </option>
                 </select>
             </div>
+            <div class="flex items-center justify-end">
+                <ColumnSettingsDropdown 
+                    :columns="visibleColumns" 
+                    :custom-fields="customFields"
+                    @toggle="toggleColumn"
+                />
+            </div>
         </div>
+
+        <!-- Bulk Action Toolbar -->
+        <BulkActionToolbar
+            v-if="selectedIds.length > 0"
+            :selected-count="selectedIds.length"
+            :processing="processing"
+            @delete="bulkDelete"
+            @move="showMoveModal = true"
+            @change-status="bulkChangeStatus"
+            @clear-selection="clearSelection"
+        />
 
         <!-- Table -->
         <div class="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-900">
@@ -95,23 +291,132 @@ const deleteSubscriber = (subscriber) => {
                 <table class="w-full text-left text-sm text-slate-500 dark:text-slate-400">
                     <thead class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         <tr>
-                            <th scope="col" class="px-6 py-3">{{ $t('subscribers.table.email') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ $t('subscribers.table.name') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ $t('subscribers.table.status') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ $t('subscribers.table.list') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ $t('subscribers.table.added_at') }}</th>
+                            <!-- Checkbox column -->
+                            <th scope="col" class="w-12 px-4 py-3">
+                                <input 
+                                    type="checkbox"
+                                    :checked="isAllSelected"
+                                    :indeterminate="isSomeSelected"
+                                    @change="toggleSelectAll"
+                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                                />
+                            </th>
+                            <!-- Email -->
+                            <th v-if="visibleColumns.email" scope="col" class="px-6 py-3">
+                                <button 
+                                    @click="handleSort('email')"
+                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                >
+                                    {{ $t('subscribers.table.email') }}
+                                    <svg 
+                                        class="h-4 w-4 transition-all" 
+                                        :class="getSortIcon('email')"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </th>
+                            <!-- Name -->
+                            <th v-if="visibleColumns.name" scope="col" class="px-6 py-3">
+                                <button 
+                                    @click="handleSort('first_name')"
+                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                >
+                                    {{ $t('subscribers.table.name') }}
+                                    <svg 
+                                        class="h-4 w-4 transition-all" 
+                                        :class="getSortIcon('first_name')"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </th>
+                            <!-- Phone -->
+                            <th v-if="visibleColumns.phone" scope="col" class="px-6 py-3">
+                                <button 
+                                    @click="handleSort('phone')"
+                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                >
+                                    {{ $t('subscribers.table.phone') }}
+                                    <svg 
+                                        class="h-4 w-4 transition-all" 
+                                        :class="getSortIcon('phone')"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </th>
+                            <!-- Status -->
+                            <th v-if="visibleColumns.status" scope="col" class="px-6 py-3">
+                                {{ $t('subscribers.table.status') }}
+                            </th>
+                            <!-- List -->
+                            <th v-if="visibleColumns.list" scope="col" class="px-6 py-3">
+                                {{ $t('subscribers.table.list') }}
+                            </th>
+                            <!-- Custom field columns -->
+                            <template v-for="field in (customFields || [])" :key="'th-cf-' + field.id">
+                                <th 
+                                    v-if="visibleColumns['cf_' + field.id]"
+                                    scope="col" 
+                                    class="px-6 py-3"
+                                >
+                                    {{ field.label || field.name }}
+                                </th>
+                            </template>
+                            <!-- Created at -->
+                            <th v-if="visibleColumns.created_at" scope="col" class="px-6 py-3">
+                                <button 
+                                    @click="handleSort('created_at')"
+                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                >
+                                    {{ $t('subscribers.table.added_at') }}
+                                    <svg 
+                                        class="h-4 w-4 transition-all" 
+                                        :class="getSortIcon('created_at')"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </th>
+                            <!-- Actions -->
                             <th scope="col" class="px-6 py-3 text-right">{{ $t('subscribers.table.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                        <tr v-for="subscriber in subscribers.data" :key="subscriber.id" class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                        <tr 
+                            v-for="subscriber in subscribers.data" 
+                            :key="subscriber.id" 
+                            class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            :class="{ 'bg-indigo-50/50 dark:bg-indigo-900/20': selectedIds.includes(subscriber.id) }"
+                        >
+                            <!-- Checkbox -->
+                            <td class="w-12 px-4 py-4">
+                                <input 
+                                    type="checkbox"
+                                    :checked="selectedIds.includes(subscriber.id)"
+                                    @change="toggleSelect(subscriber.id)"
+                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                                />
+                            </td>
+                            <!-- Email -->
+                            <td v-if="visibleColumns.email" class="px-6 py-4 font-medium text-slate-900 dark:text-white">
                                 {{ subscriber.email }}
                             </td>
-                            <td class="px-6 py-4">
+                            <!-- Name -->
+                            <td v-if="visibleColumns.name" class="px-6 py-4">
                                 {{ subscriber.first_name }} {{ subscriber.last_name }}
                             </td>
-                            <td class="px-6 py-4">
+                            <!-- Phone -->
+                            <td v-if="visibleColumns.phone" class="px-6 py-4">
+                                {{ subscriber.phone || '-' }}
+                            </td>
+                            <!-- Status -->
+                            <td v-if="visibleColumns.status" class="px-6 py-4">
                                 <span 
                                     class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
                                     :class="{
@@ -124,12 +429,24 @@ const deleteSubscriber = (subscriber) => {
                                     {{ $t(`subscribers.statuses.${subscriber.status}`) || subscriber.status }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4">
+                            <!-- List -->
+                            <td v-if="visibleColumns.list" class="px-6 py-4">
                                 {{ subscriber.lists && subscriber.lists.length ? subscriber.lists.join(', ') : '-' }}
                             </td>
-                            <td class="px-6 py-4">
+                            <!-- Custom field values -->
+                            <template v-for="field in (customFields || [])" :key="'td-cf-' + field.id + '-' + subscriber.id">
+                                <td 
+                                    v-if="visibleColumns['cf_' + field.id]"
+                                    class="px-6 py-4"
+                                >
+                                    {{ subscriber.custom_fields?.['cf_' + field.id] || '-' }}
+                                </td>
+                            </template>
+                            <!-- Created at -->
+                            <td v-if="visibleColumns.created_at" class="px-6 py-4">
                                 {{ subscriber.created_at }}
                             </td>
+                            <!-- Actions -->
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <Link 
@@ -154,7 +471,7 @@ const deleteSubscriber = (subscriber) => {
                             </td>
                         </tr>
                         <tr v-if="subscribers.data.length === 0">
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                            <td :colspan="Object.values(visibleColumns).filter(v => v).length + 2" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                                 {{ $t('subscribers.empty_state') }}
                             </td>
                         </tr>
@@ -164,6 +481,9 @@ const deleteSubscriber = (subscriber) => {
             
             <!-- Pagination -->
             <div v-if="subscribers.links.length > 3" class="flex items-center justify-between border-t border-slate-100 px-6 py-4 dark:border-slate-800">
+                <div class="text-sm text-slate-500 dark:text-slate-400">
+                    {{ $t('common.showing') }} {{ subscribers.from }} - {{ subscribers.to }} {{ $t('common.of') }} {{ subscribers.total }}
+                </div>
                 <div class="flex gap-1">
                     <Link
                         v-for="(link, i) in subscribers.links"
@@ -180,6 +500,16 @@ const deleteSubscriber = (subscriber) => {
                 </div>
             </div>
         </div>
+
+        <!-- Move Modal -->
+        <MoveToListModal
+            :show="showMoveModal"
+            :selected-count="selectedIds.length"
+            :lists="lists"
+            :current-list-id="listId"
+            :processing="processing"
+            @close="showMoveModal = false"
+            @move="bulkMove"
+        />
     </AuthenticatedLayout>
 </template>
-

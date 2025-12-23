@@ -44,6 +44,9 @@
         "filter": "Filter",
         "sort": "Sort",
         "clear": "Clear",
+        "clear_selection": "Clear selection",
+        "processing": "Processing...",
+        "duplicate": "Duplicate",
         "refresh": "Refresh",
         "export": "Export",
         "import": "Import",
@@ -930,9 +933,11 @@
         "table": {
             "email": "Email",
             "name": "Name",
+            "phone": "Phone",
             "status": "Status",
             "list": "List",
             "added_at": "Date Added",
+            "subscribed_at": "Date Joined",
             "actions": "Actions"
         },
         "statuses": {
@@ -942,7 +947,33 @@
             "bounced": "Bounced"
         },
         "empty_state": "No subscribers found matching your criteria.",
-        "confirm_delete": "Are you sure you want to delete subscriber {email}?"
+        "confirm_delete": "Are you sure you want to delete subscriber {email}?",
+        "bulk": {
+            "selected": "Selected: {count}",
+            "delete": "Delete selected",
+            "delete_confirm": "Are you sure you want to delete {count} selected subscribers? This action cannot be undone.",
+            "move": "Move",
+            "move_modal_title": "Move Subscribers",
+            "move_modal_desc": "Moving {count} subscribers to another list",
+            "source_list": "From list",
+            "target_list": "To list",
+            "select_source": "Select source list...",
+            "select_target": "Select target list...",
+            "no_other_lists": "No other lists available",
+            "change_status": "Change status",
+            "success_deleted": "Deleted {count} subscribers",
+            "success_moved": "Moved {count} subscribers",
+            "success_status": "Updated status for {count} subscribers"
+        },
+        "columns": {
+            "title": "Visible columns",
+            "custom_fields": "Custom fields"
+        },
+        "column_settings": "Column settings",
+        "sort": {
+            "asc": "Ascending",
+            "desc": "Descending"
+        }
     },
     "fields": {
         "title": "Field Management",

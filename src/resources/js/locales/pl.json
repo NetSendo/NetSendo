@@ -44,6 +44,9 @@
         "filter": "Filtruj",
         "sort": "Sortuj",
         "clear": "Wyczyść",
+        "clear_selection": "Odznacz wszystko",
+        "processing": "Przetwarzanie...",
+        "duplicate": "Duplikuj",
         "refresh": "Odśwież",
         "export": "Eksportuj",
         "import": "Importuj",
@@ -981,9 +984,11 @@
         "table": {
             "email": "Email",
             "name": "Imię i Nazwisko",
+            "phone": "Telefon",
             "status": "Status",
             "list": "Lista",
             "added_at": "Data dodania",
+            "subscribed_at": "Data dołączenia",
             "actions": "Akcje"
         },
         "statuses": {
@@ -993,7 +998,33 @@
             "bounced": "Odbity"
         },
         "empty_state": "Brak subskrybentów spełniających kryteria.",
-        "confirm_delete": "Czy na pewno chcesz usunąć subskrybenta {email}?"
+        "confirm_delete": "Czy na pewno chcesz usunąć subskrybenta {email}?",
+        "bulk": {
+            "selected": "Zaznaczono: {count}",
+            "delete": "Usuń zaznaczone",
+            "delete_confirm": "Czy na pewno chcesz usunąć {count} zaznaczonych subskrybentów? Tej operacji nie można cofnąć.",
+            "move": "Przenieś",
+            "move_modal_title": "Przenieś subskrybentów",
+            "move_modal_desc": "Przenosisz {count} subskrybentów na inną listę",
+            "source_list": "Z listy",
+            "target_list": "Na listę",
+            "select_source": "Wybierz listę źródłową...",
+            "select_target": "Wybierz listę docelową...",
+            "no_other_lists": "Brak innych dostępnych list",
+            "change_status": "Zmień status",
+            "success_deleted": "Usunięto {count} subskrybentów",
+            "success_moved": "Przeniesiono {count} subskrybentów",
+            "success_status": "Zaktualizowano status {count} subskrybentów"
+        },
+        "columns": {
+            "title": "Widoczne kolumny",
+            "custom_fields": "Pola dodatkowe"
+        },
+        "column_settings": "Ustawienia kolumn",
+        "sort": {
+            "asc": "Rosnąco",
+            "desc": "Malejąco"
+        }
     },
     "groups": {
         "title": "Grupy list adresowych",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.14] – Short Description
+
+**Release date:** 2025-12-23
+
 ### Added
 - **Anti-Spam Headers Configuration:**
   - Implemented `List-Unsubscribe` and `List-Unsubscribe-Post` header support for improved email deliverability.
@@ -23,38 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - "Transparent container" toggle to quickly show only fields and buttons.
   - Integration with contact list settings for dynamic post-submission redirects based on Double Opt-in status.
   - Real-time preview improvements including border width, padding, and mobile/desktop toggle.
+- **Enhanced Subscriber Management:**
+  - Added bulk actions: delete multiple subscribers, move subscribers between mailing lists, and change status (active/inactive) in bulk.
+  - Implemented customizable column visibility for the subscriber list, including support for phone numbers and dynamic custom field columns.
+  - Added persistence for column visibility preferences using browser local storage.
+  - Added sorting functionality by email, name, phone, and date joined.
+  - Added new UI components: `BulkActionToolbar`, `MoveToListModal`, and `ColumnSettingsDropdown`.
+  - Added translation support for all new subscriber management features in English and Polish.
 - **Form Builder Error Handling:**
   - Added console logging and user alerts for form validation errors to prevent silent save failures.
   - Implemented automatic data transformation to convert empty URL and message strings to `null` before submission.
-
-### Fixed
-- **Form Save Failures:**
-  - Fixed issue where forms would not save by making all boolean styling and configuration fields `nullable` in `SubscriptionFormController` validation.
-  - Resolved URL validation errors caused by empty strings being sent instead of `null` for redirect and policy URLs.
-- **Placeholder Customization:** Fixed UI issue where field placeholders were difficult to edit; they are now clearly exposed in the field settings panel.
-
-### Fixed
-- **Subscriber Many-to-Many Relationship Alignment:**
-  - Resolved multiple `QueryException` errors by fixing outdated queries still referencing the removed `contact_list_id` column on the `subscribers` table.
-  - Updated `ContactList::subscribers()` relationship to `belongsToMany` to match the pivot table implementation.
-  - Refactored `Api/V1/SubscriberController` CRUD and search endpoints to properly use pivot table relationships and many-to-many filtering.
-  - Fixed subscriber transfer logic in `MailingListController` and `SmsListController` to use pivot table detach/attach operations.
-  - Updated `Message::getUniqueRecipients()` and `GlobalStatsController` to query subscribers across multiple lists through the relationship.
-  - Removed outdated singular `contactList` relationship references in `Subscriber` model and `MessageController`.
-
-### Changed
-- **Subscriber System Refactor:**
-  - **Many-to-Many Relationship:** Refactored database schema to allow subscribers to belong to multiple contact lists simultaneously without duplication.
-  - **Unique Email Constraint:** Subscribers are now unique by email per user account, resolving data redundancy issues.
-  - **Migration Fix:** Resolved `Duplicate column name 'phone'` error by implementing idempotent migration checks in `refactor_subscribers_relationship`.
-- **Subscriber Controller Bug:** Fixed an `ErrorException` (Undefined variable `$request`) in the `update` method of `SubscriberController` by passing the `$request` variable to the database transaction closure.
-
-### Added
 - **Phone Input with Country Picker:**
   - Created a new `PhoneInput.vue` component featuring a country selector with emoji flags and international dial codes (50+ countries supported).
   - Integrated the `PhoneInput` component into the "Add Subscriber" and "Edit Subscriber" forms to ensure consistent and correct phone number formatting.
-
-### Added
 - **Subscriber Fields & UI:**
   - Added `Phone`, `Gender`, and `Global Status` fields to subscriber profiles.
   - Updated "Add/Edit Subscriber" forms to support multi-select for contact lists.
@@ -62,6 +47,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented dynamic rendering for Custom Fields in subscriber forms.
 - **Translations:**
   - Added missing translations for subscriber features (gender, phone, welcome email, multi-list helper) in EN, PL, DE, ES.
+
+### Fixed
+- **Subject AI Assistant Scroll Behavior:**
+  - Fixed issue where the Subject AI Assistant dropdown would close when scrolling the page.
+  - The modal now updates its position on scroll and stays visible until explicitly closed by clicking outside or pressing the close button.
+  - Added proper click-outside detection and cleanup on component unmount.
+- **Subscriber List Routing:** Fixed a routing conflict where bulk action routes were being intercepted by the subscriber resource routes; moved bulk routes before resource routes to ensure correct matching.
+- **Vue 3 Template Conflicts:** Resolved a `TypeError` in the subscriber list by fixing a `v-if`/`v-for` conflict on the same element and adding proper null checks for custom fields.
+- **Ziggy Route Synchronization:** Ensured all new subscriber routes are correctly synchronized with the Ziggy route list for frontend usage.
+- **Form Save Failures:**
+  - Fixed issue where forms would not save by making all boolean styling and configuration fields `nullable` in `SubscriptionFormController` validation.
+  - Resolved URL validation errors caused by empty strings being sent instead of `null` for redirect and policy URLs.
+- **Placeholder Customization:** Fixed UI issue where field placeholders were difficult to edit; they are now clearly exposed in the field settings panel.
+- **Subscriber Many-to-Many Relationship Alignment:**
+  - Resolved multiple `QueryException` errors by fixing outdated queries still referencing the removed `contact_list_id` column on the `subscribers` table.
+  - Updated `ContactList::subscribers()` relationship to `belongsToMany` to match the pivot table implementation.
+  - Refactored `Api/V1/SubscriberController` CRUD and search endpoints to properly use pivot table relationships and many-to-many filtering.
+  - Fixed subscriber transfer logic in `MailingListController` and `SmsListController` to use pivot table detach/attach operations.
+  - Updated `Message::getUniqueRecipients()` and `GlobalStatsController` to query subscribers across multiple lists through the relationship.
+  - Removed outdated singular `contactList` relationship references in `Subscriber` model and `MessageController`.
+- **Subscriber Controller Bug:** Fixed an `ErrorException` (Undefined variable `$request`) in the `update` method of `SubscriberController` by passing the `$request` variable to the database transaction closure.
+
+### Changed
+- **Subscriber System Refactor:**
+  - **Many-to-Many Relationship:** Refactored database schema to allow subscribers to belong to multiple contact lists simultaneously without duplication.
+  - **Unique Email Constraint:** Subscribers are now unique by email per user account, resolving data redundancy issues.
+  - **Migration Fix:** Resolved `Duplicate column name 'phone'` error by implementing idempotent migration checks in `refactor_subscribers_relationship`.
 
 ## [1.0.13] – Short Description
 

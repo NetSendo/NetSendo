@@ -21,14 +21,15 @@ class SubscriberController extends Controller
             ->with(['contactLists' => function ($q) {
                 // Optimize loading lists
                 $q->select('contact_lists.id', 'contact_lists.name');
-            }])
+            }, 'fieldValues.customField'])
             ->where('user_id', auth()->id());
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('email', 'like', '%' . $request->search . '%')
                   ->orWhere('first_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('last_name', 'like', '%' . $request->search . '%');
+                  ->orWhere('last_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -38,8 +39,25 @@ class SubscriberController extends Controller
             });
         }
 
+        // Sorting
+        $sortBy = $request->sort_by ?? 'created_at';
+        $sortOrder = $request->sort_order ?? 'desc';
+        
+        // Validate sort column
+        $allowedSorts = ['created_at', 'email', 'first_name', 'last_name', 'phone'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+        
+        $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+
+        // Get custom fields for column visibility options
+        $customFields = \App\Models\CustomField::where('user_id', auth()->id())
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'label', 'type']);
+
         return Inertia::render('Subscriber/Index', [
-            'subscribers' => $query->latest()
+            'subscribers' => $query
                 ->paginate(15)
                 ->withQueryString()
                 ->through(fn ($sub) => [
@@ -47,12 +65,18 @@ class SubscriberController extends Controller
                     'email' => $sub->email,
                     'first_name' => $sub->first_name,
                     'last_name' => $sub->last_name,
-                    'status' => $sub->is_active_global ? 'active' : 'inactive', // or computed from lists
-                    'lists' => $sub->contactLists->pluck('name'), // Return array of names
+                    'phone' => $sub->phone,
+                    'status' => $sub->is_active_global ? 'active' : 'inactive',
+                    'lists' => $sub->contactLists->pluck('name'),
+                    'list_ids' => $sub->contactLists->pluck('id'),
                     'created_at' => DateHelper::formatForUser($sub->created_at),
+                    'custom_fields' => $sub->fieldValues->mapWithKeys(fn($fv) => [
+                        'cf_' . $fv->custom_field_id => $fv->value
+                    ]),
                 ]),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
-            'filters' => $request->only(['search', 'list_id']),
+            'customFields' => $customFields,
+            'filters' => $request->only(['search', 'list_id', 'sort_by', 'sort_order']),
         ]);
     }
 
@@ -422,6 +446,83 @@ class SubscriberController extends Controller
         $subscriber->removeTag($tag);
 
         return back()->with('success', 'Tag został usunięty.');
+    }
+
+    /**
+     * Bulk delete multiple subscribers
+     */
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+        ]);
+
+        $count = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->delete();
+
+        return back()->with('success', "Usunięto {$count} subskrybentów.");
+    }
+
+    /**
+     * Bulk move subscribers to another list
+     */
+    public function bulkMove(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'source_list_id' => 'required|integer|exists:contact_lists,id',
+            'target_list_id' => 'required|integer|exists:contact_lists,id|different:source_list_id',
+        ]);
+
+        // Verify ownership of both lists
+        $validLists = ContactList::whereIn('id', [$validated['source_list_id'], $validated['target_list_id']])
+            ->where('user_id', auth()->id())
+            ->count();
+
+        if ($validLists !== 2) {
+            abort(403, 'Brak dostępu do jednej z list.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Remove from source list
+            $subscriber->contactLists()->detach($validated['source_list_id']);
+            // Add to target list (without detaching other lists)
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $validated['target_list_id'] => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]
+            ]);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Przeniesiono {$count} subskrybentów.");
+    }
+
+    /**
+     * Bulk change status of multiple subscribers
+     */
+    public function bulkChangeStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        $count = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->update(['is_active_global' => $validated['status'] === 'active']);
+
+        $statusLabel = $validated['status'] === 'active' ? 'aktywnych' : 'nieaktywnych';
+        return back()->with('success', "Zmieniono status {$count} subskrybentów na {$statusLabel}.");
     }
 }
 

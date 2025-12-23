@@ -49,6 +49,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Subscribers
     Route::get('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'importForm'])->name('subscribers.import');
     Route::post('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'import'])->name('subscribers.import.store');
+    
+    // Subscriber Bulk Actions (must be before resource to avoid route conflict)
+    Route::post('subscribers/bulk-delete', [\App\Http\Controllers\SubscriberController::class, 'bulkDelete'])->name('subscribers.bulk-delete');
+    Route::post('subscribers/bulk-move', [\App\Http\Controllers\SubscriberController::class, 'bulkMove'])->name('subscribers.bulk-move');
+    Route::post('subscribers/bulk-status', [\App\Http\Controllers\SubscriberController::class, 'bulkChangeStatus'])->name('subscribers.bulk-status');
+    
     Route::resource('subscribers', \App\Http\Controllers\SubscriberController::class);
     
     // Subscriber Tags

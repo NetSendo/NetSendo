@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 
@@ -167,25 +167,44 @@ const toggle = () => {
         fetchModels();
         updateDropdownPosition();
         
-        // Add scroll listener to close dropdown on scroll
-        window.addEventListener('scroll', close, { capture: true });
-        window.addEventListener('resize', close);
+        // Add scroll listener to update position (not close)
+        window.addEventListener('scroll', updateDropdownPosition, { capture: true, passive: true });
+        window.addEventListener('resize', updateDropdownPosition);
+        
+        // Add click-outside listener after a small delay to prevent immediate close
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 0);
     } else {
-        window.removeEventListener('scroll', close, { capture: true });
-        window.removeEventListener('resize', close);
+        cleanup();
     }
 };
 
-const close = (e) => {
-    // If scrolling inside the dropdown, ignore
-    if (e && e.type === 'scroll' && dropdownRef.value && dropdownRef.value.contains(e.target)) {
-        return;
-    }
-    
-    isOpen.value = false;
-    window.removeEventListener('scroll', close, { capture: true });
-    window.removeEventListener('resize', close);
+const cleanup = () => {
+    window.removeEventListener('scroll', updateDropdownPosition, { capture: true });
+    window.removeEventListener('resize', updateDropdownPosition);
+    document.removeEventListener('click', handleClickOutside);
 };
+
+const handleClickOutside = (e) => {
+    // Check if click is outside both trigger and dropdown
+    const clickedTrigger = triggerRef.value && triggerRef.value.contains(e.target);
+    const clickedDropdown = dropdownRef.value && dropdownRef.value.contains(e.target);
+    
+    if (!clickedTrigger && !clickedDropdown) {
+        close();
+    }
+};
+
+const close = () => {
+    isOpen.value = false;
+    cleanup();
+};
+
+// Cleanup on unmount to prevent memory leaks
+onBeforeUnmount(() => {
+    cleanup();
+});
 </script>
 
 <template>
@@ -215,7 +234,7 @@ const close = (e) => {
                 <h4 class="text-sm font-medium text-slate-900 dark:text-white">
                     ✨ {{ $t('messages.ai_assistant.subject_assistant') }}
                 </h4>
-                <button @click="isOpen = false" class="text-slate-400 hover:text-slate-600">
+                <button @click="close" class="text-slate-400 hover:text-slate-600">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
