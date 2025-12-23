@@ -38,7 +38,7 @@ class SubscriberResource extends JsonResource
             'source' => $this->source,
             'opens_count' => $this->opens_count,
             'clicks_count' => $this->clicks_count,
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
+            'tags' => $this->whenLoaded('tags', fn () => TagResource::collection($this->tags)),
             'custom_fields' => $this->when(
                 $this->relationLoaded('fieldValues'),
                 fn () => $this->getAllPlaceholderValues()
