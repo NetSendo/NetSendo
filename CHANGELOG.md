@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Improved
+- **Dashboard Activity Chart:**
+  - Redesigned the Activity chart using `vue-chartjs` (Chart.js) to fix blurriness issues on high-DPI screens.
+  - Added interactive tooltips showing exact values when hovering over bars.
+  - Improved chart animations and visual styling to match the application theme (Indigo/Emerald/Amber).
+  - Standardized chart implementation for better maintainability and performance.
+
+
 ## [1.0.16] – Short Description
 
 **Release date:** 2025-12-23
