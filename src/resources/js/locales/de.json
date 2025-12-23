@@ -384,7 +384,8 @@
                 "subscription": "Anmeldung",
                 "sending": "Versand",
                 "pages": "Seiten",
-                "advanced": "Fortgeschritten"
+                "advanced": "Fortgeschritten",
+                "integration": "Integration"
             },
             "pages": {
                 "confirmation": "Anmeldebestätigungsseite (Bestätigung erforderlich)",
@@ -422,7 +423,40 @@
                 "facebook_label": "Facebook-Integration (Pixel-ID)",
                 "facebook_placeholder": "z.B. 1234567890",
                 "queue_days_label": "Versandtage der Warteschlange",
-                "queue_days_help": "Wählen Sie die Tage aus, an denen Autoresponder-Nachrichten versendet werden dürfen."
+                "queue_days_help": "Wählen Sie die Tage aus, an denen Autoresponder-Nachrichten versendet werden dürfen.",
+                "coregistration_section": "Co-Registrierung",
+                "parent_list": "Übergeordnete Liste",
+                "parent_list_desc": "Abonnenten dieser Liste werden automatisch in die übergeordnete Liste kopiert",
+                "no_parent": "-- Keine übergeordnete Liste --",
+                "sync_on_subscribe": "Bei Anmeldung synchronisieren",
+                "sync_on_unsubscribe": "Bei Abmeldung synchronisieren",
+                "limits_section": "Limits und Einschränkungen",
+                "max_subscribers": "Maximale Abonnentenzahl",
+                "max_subscribers_help": "0 für kein Limit",
+                "block_signups": "Neue Anmeldungen blockieren",
+                "block_signups_desc": "Neue Anmeldungen für diese Liste vorübergehend blockieren"
+            },
+            "integration": {
+                "title": "API-Integration",
+                "api_key_section": "Listen-API-Schlüssel",
+                "api_key_desc": "Verwenden Sie diesen Schlüssel zur Integration mit externen Systemen",
+                "list_id_label": "Listen-ID (MLID)",
+                "api_key_label": "API-Schlüssel",
+                "no_api_key": "Kein API-Schlüssel generiert",
+                "generate_key": "Neuen Schlüssel generieren",
+                "copy_key": "Kopieren",
+                "copied": "Kopiert!",
+                "webhook_section": "Webhooks",
+                "webhook_url": "Webhook-URL",
+                "webhook_url_placeholder": "https://ihre-webseite.de/webhook",
+                "webhook_events": "Zu sendende Ereignisse",
+                "event_subscribe": "Neue Anmeldung",
+                "event_unsubscribe": "Abmeldung",
+                "event_update": "Datenaktualisierung",
+                "event_bounce": "Bounce",
+                "test_webhook": "Test-Webhook senden",
+                "endpoint_section": "Anmelde-Endpoint",
+                "endpoint_desc": "Verwenden Sie diese URL, um Abonnenten aus externen Quellen hinzuzufügen"
             }
         }
     },

@@ -386,7 +386,8 @@
                 "subscription": "Suscripción",
                 "sending": "Envío",
                 "pages": "Páginas",
-                "advanced": "Avanzado"
+                "advanced": "Avanzado",
+                "integration": "Integración"
             },
             "pages": {
                 "confirmation": "Página de espera de confirmación",
@@ -424,7 +425,40 @@
                 "facebook_label": "Integración con Facebook (Pixel ID)",
                 "facebook_placeholder": "ej. 1234567890",
                 "queue_days_label": "Días de envío de la cola",
-                "queue_days_help": "Seleccione los días en los que se pueden enviar mensajes de autorrespuesta."
+                "queue_days_help": "Seleccione los días en los que se pueden enviar mensajes de autorrespuesta.",
+                "coregistration_section": "Co-registro",
+                "parent_list": "Lista principal",
+                "parent_list_desc": "Los suscriptores de esta lista se copiarán automáticamente a la lista principal",
+                "no_parent": "-- Sin lista principal --",
+                "sync_on_subscribe": "Sincronizar al suscribirse",
+                "sync_on_unsubscribe": "Sincronizar al darse de baja",
+                "limits_section": "Límites y restricciones",
+                "max_subscribers": "Máximo de suscriptores",
+                "max_subscribers_help": "Dejar 0 para sin límite",
+                "block_signups": "Bloquear nuevas suscripciones",
+                "block_signups_desc": "Bloquear temporalmente nuevas suscripciones a esta lista"
+            },
+            "integration": {
+                "title": "Integración API",
+                "api_key_section": "Clave API de la lista",
+                "api_key_desc": "Usa esta clave para integrar con sistemas externos",
+                "list_id_label": "ID de lista (MLID)",
+                "api_key_label": "Clave API",
+                "no_api_key": "Aún no se ha generado la clave API",
+                "generate_key": "Generar nueva clave",
+                "copy_key": "Copiar",
+                "copied": "¡Copiado!",
+                "webhook_section": "Webhooks",
+                "webhook_url": "URL del Webhook",
+                "webhook_url_placeholder": "https://tu-sitio.com/webhook",
+                "webhook_events": "Eventos a enviar",
+                "event_subscribe": "Nueva suscripción",
+                "event_unsubscribe": "Baja",
+                "event_update": "Actualización de datos",
+                "event_bounce": "Rebote (bounce)",
+                "test_webhook": "Enviar webhook de prueba",
+                "endpoint_section": "Endpoint de suscripción",
+                "endpoint_desc": "Usa esta URL para añadir suscriptores desde fuentes externas"
             }
         }
     },
