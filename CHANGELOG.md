@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.15] – List Integration & Advanced Settings
+
+**Release date:** 2025-12-23
+
+### Added
+- **List-Level API Integration:**
+  - New "Integracja" (Integration) sub-tab in mailing list settings.
+  - List-specific API key generation and management (format: `ml_{list_id}_{random_string}`).
+  - Webhook configuration with customizable events: subscribe, unsubscribe, update, bounce.
+  - Test webhook functionality to verify endpoint connectivity.
+  - API subscription endpoint: `POST /api/v1/lists/{id}/subscribe` for external integrations.
+  - API unsubscribe endpoint: `POST /api/v1/lists/{id}/unsubscribe`.
+  - Displays List ID (MLID) and API usage examples in the UI.
+
+- **Advanced List Settings (Co-registration & Limits):**
+  - Expanded "Zaawansowane" (Advanced) sub-tab with new features.
+  - Co-registration: select parent list for automatic subscriber synchronization.
+  - Sync settings: configurable sync on subscribe/unsubscribe events.
+  - Maximum subscribers limit per list (0 = unlimited).
+  - Block signups toggle to temporarily disable new subscriptions.
+
+- **New Backend Components:**
+  - `ListSubscriptionController` - API controller for external list subscriptions with API key authentication.
+  - `ContactList::generateApiKey()` - method to generate unique list API keys.
+  - `ContactList::triggerWebhook()` - method to dispatch webhooks to configured endpoints.
+  - `ContactList::canAcceptSignups()` - method to check signup eligibility (limits, blocks).
+  - `ContactList::syncToParentList()` - method for co-registration synchronization.
+
+### Fixed
+- **Sidebar Navigation Links:**
+  - Fixed broken links for "Zaawansowane" and "Integracja" menu items that were pointing to non-existent routes.
+  - "Zaawansowane" now links to Default Settings.
+  - "Integracja" now links to API Keys.
+
+### Database
+- New migration: `2025_12_23_010000_add_integration_settings_to_contact_lists`
+  - Added columns: `api_key`, `webhook_url`, `webhook_events`, `parent_list_id`, `sync_settings`, `max_subscribers`, `signups_blocked`, `required_fields`
+
+### Translations
+- Added new translation keys for Integration and Advanced settings in PL and EN.
+
 ## [1.0.14] – Short Description
 
 **Release date:** 2025-12-23

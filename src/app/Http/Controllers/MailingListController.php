@@ -174,6 +174,11 @@ class MailingListController extends Controller
         $user = auth()->user();
         $scopeUser = $user->getAdminUser();
 
+        // Get other lists for co-registration (exclude current list)
+        $otherLists = $user->accessibleLists()
+            ->where('id', '!=', $mailingList->id)
+            ->get(['id', 'name']);
+
         return Inertia::render('MailingList/Edit', [
             'list' => [
                 'id' => $mailingList->id,
@@ -185,6 +190,16 @@ class MailingListController extends Controller
                 'settings' => $mailingList->settings ?? [],
                 'default_mailbox_id' => $mailingList->default_mailbox_id,
                 'cron_settings' => $mailingList->cronSettings ?? null,
+                // Integration settings
+                'api_key' => $mailingList->api_key,
+                'webhook_url' => $mailingList->webhook_url,
+                'webhook_events' => $mailingList->webhook_events ?? [],
+                // Advanced settings
+                'parent_list_id' => $mailingList->parent_list_id,
+                'sync_settings' => $mailingList->sync_settings ?? [],
+                'max_subscribers' => $mailingList->max_subscribers ?? 0,
+                'signups_blocked' => $mailingList->signups_blocked ?? false,
+                'required_fields' => $mailingList->required_fields ?? [],
             ],
             'defaultSettings' => $scopeUser->settings ?? [],
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
@@ -192,6 +207,7 @@ class MailingListController extends Controller
             'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
+            'otherLists' => $otherLists,
         ]);
     }
 
@@ -240,6 +256,20 @@ class MailingListController extends Controller
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array', // e.g., ['Mon', 'Fri']
             'settings.advanced.bounce_analysis' => 'boolean',
+            
+            // Integration
+            'webhook_url' => 'nullable|url|max:500',
+            'webhook_events' => 'nullable|array',
+            'webhook_events.*' => 'string|in:subscribe,unsubscribe,update,bounce',
+            
+            // Co-registration / Advanced limits
+            'parent_list_id' => 'nullable|exists:contact_lists,id',
+            'sync_settings' => 'nullable|array',
+            'sync_settings.sync_on_subscribe' => 'boolean',
+            'sync_settings.sync_on_unsubscribe' => 'boolean',
+            'max_subscribers' => 'nullable|integer|min:0',
+            'signups_blocked' => 'boolean',
+            'required_fields' => 'nullable|array',
         ]);
 
         // Assign default_mailbox_id from settings if present
@@ -294,6 +324,55 @@ class MailingListController extends Controller
 
         return redirect()->route('mailing-lists.index')
             ->with('success', 'Lista adresowa została usunięta.');
+    }
+
+    /**
+     * Generate a new API key for the list
+     */
+    public function generateApiKey(ContactList $mailingList)
+    {
+        if (!auth()->user()->canEditList($mailingList)) {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        $newKey = $mailingList->generateApiKey();
+
+        return back()->with('success', 'Nowy klucz API został wygenerowany.');
+    }
+
+    /**
+     * Test webhook configuration
+     */
+    public function testWebhook(ContactList $mailingList)
+    {
+        if (!auth()->user()->canEditList($mailingList)) {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if (empty($mailingList->webhook_url)) {
+            return back()->with('error', 'Nie skonfigurowano URL webhooka.');
+        }
+
+        $testData = [
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+        ];
+
+        // Temporarily enable 'test' event
+        $originalEvents = $mailingList->webhook_events;
+        $mailingList->webhook_events = ['test'];
+        
+        $success = $mailingList->triggerWebhook('test', $testData);
+        
+        // Restore original events
+        $mailingList->webhook_events = $originalEvents;
+
+        if ($success) {
+            return back()->with('success', 'Testowy webhook został wysłany pomyślnie!');
+        } else {
+            return back()->with('error', 'Nie udało się wysłać testowego webhooka. Sprawdź URL i logi.');
+        }
     }
 
 }

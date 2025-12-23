@@ -267,7 +267,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     {{ $t('navigation.forms') }}
                 </SidebarItem>
 
-                <SidebarItem href="/mailinglist/details" :active="isActive('mailinglist.details')" :collapsed="collapsed">
+                <SidebarItem :href="route('defaults.index')" :active="isActive('defaults.*')" :collapsed="collapsed">
                     <template #icon>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -285,7 +285,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     {{ $t('navigation.field_management') }}
                 </SidebarItem>
 
-                <SidebarItem href="/api" :active="isActive('api.*')" :collapsed="collapsed">
+                <SidebarItem :href="route('settings.api-keys.index')" :active="isActive('settings.api-keys.*')" :collapsed="collapsed">
                     <template #icon>
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />

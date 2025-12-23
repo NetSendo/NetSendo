@@ -44,6 +44,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     // Mailing Lists
     Route::resource('mailing-lists', \App\Http\Controllers\MailingListController::class);
+    Route::post('mailing-lists/{mailing_list}/generate-api-key', [\App\Http\Controllers\MailingListController::class, 'generateApiKey'])->name('mailing-lists.generate-api-key');
+    Route::post('mailing-lists/{mailing_list}/test-webhook', [\App\Http\Controllers\MailingListController::class, 'testWebhook'])->name('mailing-lists.test-webhook');
     Route::resource('sms-lists', \App\Http\Controllers\SmsListController::class);
 
     // Subscribers

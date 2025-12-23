@@ -1,8 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
     list: {
@@ -15,6 +15,7 @@ const props = defineProps({
     mailboxes: Array,
     externalPages: Array,
     globalCronSettings: Object,
+    otherLists: Array,
 });
 
 const currentTab = ref('general');
@@ -132,6 +133,18 @@ const form = useForm({
             schedule: props.list.cron_settings?.weekly_schedule ?? getDefaultSchedule(),
         },
     },
+    // Integration fields
+    webhook_url: props.list.webhook_url || '',
+    webhook_events: props.list.webhook_events || [],
+    // Advanced co-registration fields
+    parent_list_id: props.list.parent_list_id || null,
+    sync_settings: {
+        sync_on_subscribe: props.list.sync_settings?.sync_on_subscribe ?? true,
+        sync_on_unsubscribe: props.list.sync_settings?.sync_on_unsubscribe ?? false,
+    },
+    max_subscribers: props.list.max_subscribers || 0,
+    signups_blocked: props.list.signups_blocked || false,
+    required_fields: props.list.required_fields || [],
 });
 
 const toggleTag = (tagId) => {
@@ -174,6 +187,50 @@ watch(() => form.settings.sending.mailbox_id, (newVal) => {
 const submit = () => {
     form.put(route('mailing-lists.update', props.list.id));
 };
+
+// Integration helpers
+const apiKeyCopied = ref(false);
+const webhookTesting = ref(false);
+const apiKeyGenerating = ref(false);
+
+const copyApiKey = () => {
+    if (props.list.api_key) {
+        navigator.clipboard.writeText(props.list.api_key);
+        apiKeyCopied.value = true;
+        setTimeout(() => apiKeyCopied.value = false, 2000);
+    }
+};
+
+const generateApiKey = () => {
+    if (confirm('Czy na pewno chcesz wygenerować nowy klucz API? Poprzedni klucz przestanie działać.')) {
+        apiKeyGenerating.value = true;
+        router.post(route('mailing-lists.generate-api-key', props.list.id), {}, {
+            preserveScroll: true,
+            onFinish: () => apiKeyGenerating.value = false,
+        });
+    }
+};
+
+const testWebhook = () => {
+    webhookTesting.value = true;
+    router.post(route('mailing-lists.test-webhook', props.list.id), {}, {
+        preserveScroll: true,
+        onFinish: () => webhookTesting.value = false,
+    });
+};
+
+const toggleWebhookEvent = (event) => {
+    const idx = form.webhook_events.indexOf(event);
+    if (idx === -1) {
+        form.webhook_events.push(event);
+    } else {
+        form.webhook_events.splice(idx, 1);
+    }
+};
+
+const subscribeEndpoint = computed(() => {
+    return `${window.location.origin}/api/v1/lists/${props.list.id}/subscribe`;
+});
 </script>
 
 <template>
@@ -310,7 +367,7 @@ const submit = () => {
                             <div class="w-full lg:w-1/4">
                                 <nav class="flex flex-col space-y-1">
                                     <button
-                                        v-for="tab in ['subscription', 'sending', 'pages', 'cron', 'advanced']"
+                                        v-for="tab in ['subscription', 'sending', 'pages', 'cron', 'advanced', 'integration']"
                                         :key="tab"
                                         @click="currentSettingsTab = tab"
                                         type="button"
@@ -730,6 +787,95 @@ const submit = () => {
                                         {{ $t('mailing_lists.settings.advanced_section') }}
                                     </h3>
 
+                                    <!-- Co-registration Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                            </svg>
+                                            {{ $t('mailing_lists.settings.advanced.coregistration_section') }}
+                                        </h4>
+                                        
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                            <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                                {{ $t('mailing_lists.settings.advanced.parent_list') }}
+                                            </label>
+                                            <select
+                                                v-model="form.parent_list_id"
+                                                class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-400"
+                                            >
+                                                <option :value="null">{{ $t('mailing_lists.settings.advanced.no_parent') }}</option>
+                                                <option v-for="otherList in otherLists" :key="otherList.id" :value="otherList.id">
+                                                    {{ otherList.name }}
+                                                </option>
+                                            </select>
+                                            <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.advanced.parent_list_desc') }}</p>
+                                        </div>
+
+                                        <div v-if="form.parent_list_id" class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.advanced.sync_on_subscribe') }}</span>
+                                                </div>
+                                                <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out" 
+                                                     :class="form.sync_settings.sync_on_subscribe ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                                     @click="form.sync_settings.sync_on_subscribe = !form.sync_settings.sync_on_subscribe">
+                                                    <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                                          :class="{ 'translate-x-5': form.sync_settings.sync_on_subscribe }"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.advanced.sync_on_unsubscribe') }}</span>
+                                                </div>
+                                                <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out" 
+                                                     :class="form.sync_settings.sync_on_unsubscribe ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                                     @click="form.sync_settings.sync_on_unsubscribe = !form.sync_settings.sync_on_unsubscribe">
+                                                    <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                                          :class="{ 'translate-x-5': form.sync_settings.sync_on_unsubscribe }"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Limits Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                            {{ $t('mailing_lists.settings.advanced.limits_section') }}
+                                        </h4>
+
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                            <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                                {{ $t('mailing_lists.settings.advanced.max_subscribers') }}
+                                            </label>
+                                            <input
+                                                v-model.number="form.max_subscribers"
+                                                type="number"
+                                                min="0"
+                                                class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                                                placeholder="0"
+                                            >
+                                            <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.advanced.max_subscribers_help') }}</p>
+                                        </div>
+
+                                        <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                            <div>
+                                                <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.advanced.block_signups') }}</span>
+                                                <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.block_signups_desc') }}</span>
+                                            </div>
+                                            <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out" 
+                                                 :class="form.signups_blocked ? 'bg-red-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                                 @click="form.signups_blocked = !form.signups_blocked">
+                                                <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                                      :class="{ 'translate-x-5': form.signups_blocked }"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Existing Advanced Settings -->
                                     <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                         <div class="flex items-center justify-between">
                                             <div>
@@ -777,6 +923,136 @@ const submit = () => {
                                             </div>
                                         </div>
                                         <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.queue_days_help') }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Integration Settings -->
+                                <div v-show="currentSettingsTab === 'integration'" class="space-y-6">
+                                    <h3 class="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
+                                        🔗 {{ $t('mailing_lists.settings.integration.title') }}
+                                    </h3>
+
+                                    <!-- API Key Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                                            </svg>
+                                            {{ $t('mailing_lists.settings.integration.api_key_section') }}
+                                        </h4>
+                                        <p class="text-xs text-slate-500">{{ $t('mailing_lists.settings.integration.api_key_desc') }}</p>
+
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 space-y-4">
+                                            <div class="flex items-center gap-4">
+                                                <div class="flex-1">
+                                                    <label class="text-xs text-slate-500 block mb-1">{{ $t('mailing_lists.settings.integration.list_id_label') }}</label>
+                                                    <div class="font-mono text-lg font-bold text-indigo-600 dark:text-indigo-400">{{ list.id }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div>
+                                                <label class="text-xs text-slate-500 block mb-1">{{ $t('mailing_lists.settings.integration.api_key_label') }}</label>
+                                                <div v-if="list.api_key" class="flex items-center gap-2">
+                                                    <code class="flex-1 bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-lg font-mono text-sm text-slate-700 dark:text-slate-300 truncate">
+                                                        {{ list.api_key }}
+                                                    </code>
+                                                    <button 
+                                                        type="button"
+                                                        @click="copyApiKey"
+                                                        class="px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                                                        :class="apiKeyCopied ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 hover:bg-indigo-200'"
+                                                    >
+                                                        {{ apiKeyCopied ? $t('mailing_lists.settings.integration.copied') : $t('mailing_lists.settings.integration.copy_key') }}
+                                                    </button>
+                                                </div>
+                                                <div v-else class="text-sm text-slate-500 italic">
+                                                    {{ $t('mailing_lists.settings.integration.no_api_key') }}
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                type="button"
+                                                @click="generateApiKey"
+                                                :disabled="apiKeyGenerating"
+                                                class="w-full px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+                                            >
+                                                {{ apiKeyGenerating ? $t('common.processing') : $t('mailing_lists.settings.integration.generate_key') }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Webhooks Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                            {{ $t('mailing_lists.settings.integration.webhook_section') }}
+                                        </h4>
+
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800 space-y-4">
+                                            <div>
+                                                <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                                    {{ $t('mailing_lists.settings.integration.webhook_url') }}
+                                                </label>
+                                                <input
+                                                    v-model="form.webhook_url"
+                                                    type="url"
+                                                    class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                                                    :placeholder="$t('mailing_lists.settings.integration.webhook_url_placeholder')"
+                                                >
+                                            </div>
+
+                                            <div>
+                                                <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                                    {{ $t('mailing_lists.settings.integration.webhook_events') }}
+                                                </label>
+                                                <div class="flex flex-wrap gap-2">
+                                                    <div 
+                                                        v-for="event in ['subscribe', 'unsubscribe', 'update', 'bounce']" 
+                                                        :key="event"
+                                                        @click="toggleWebhookEvent(event)"
+                                                        class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
+                                                        :class="form.webhook_events.includes(event) 
+                                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                                                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'"
+                                                    >
+                                                        {{ $t(`mailing_lists.settings.integration.event_${event}`) }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <button 
+                                                v-if="list.webhook_url"
+                                                type="button"
+                                                @click="testWebhook"
+                                                :disabled="webhookTesting"
+                                                class="w-full px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+                                            >
+                                                {{ webhookTesting ? $t('common.processing') : $t('mailing_lists.settings.integration.test_webhook') }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subscription Endpoint Section -->
+                                    <div class="space-y-4">
+                                        <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                            {{ $t('mailing_lists.settings.integration.endpoint_section') }}
+                                        </h4>
+                                        <p class="text-xs text-slate-500">{{ $t('mailing_lists.settings.integration.endpoint_desc') }}</p>
+
+                                        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                            <code class="block bg-slate-900 text-green-400 px-4 py-3 rounded-lg font-mono text-sm overflow-x-auto">
+POST {{ subscribeEndpoint }}<br>
+Content-Type: application/json<br>
+Authorization: Bearer {{ list.api_key || 'YOUR_API_KEY' }}<br>
+<br>
+{"email": "user@example.com", "first_name": "Jan"}
+                                            </code>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

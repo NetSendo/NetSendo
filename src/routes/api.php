@@ -57,3 +57,11 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::get('exports/download', [ExportController::class, 'download'])
         ->name('api.v1.exports.download');
 });
+
+// List-level subscription API (uses list-specific API key, not global)
+Route::prefix('v1/lists/{list}')->middleware('throttle:api')->group(function () {
+    Route::post('subscribe', [\App\Http\Controllers\Api\ListSubscriptionController::class, 'subscribe'])
+        ->name('api.v1.lists.subscribe');
+    Route::post('unsubscribe', [\App\Http\Controllers\Api\ListSubscriptionController::class, 'unsubscribe'])
+        ->name('api.v1.lists.unsubscribe');
+});

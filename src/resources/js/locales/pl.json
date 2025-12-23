@@ -421,7 +421,8 @@
                 "sending": "Wysyłka",
                 "pages": "Strony",
                 "cron": "Harmonogram (CRON)",
-                "advanced": "Zaawansowane"
+                "advanced": "Zaawansowane",
+                "integration": "Integracja"
             },
             "pages": {
                 "confirmation": "Strona potwierdzenia zapisu (wymagane potwierdzenie)",
@@ -459,7 +460,40 @@
                 "facebook_label": "Facebook Integration (Pixel ID)",
                 "facebook_placeholder": "np. 1234567890",
                 "queue_days_label": "Dni wysyłki kolejki",
-                "queue_days_help": "Zaznacz dni, w które wiadomości autorespondera mogą być wysyłane."
+                "queue_days_help": "Zaznacz dni, w które wiadomości autorespondera mogą być wysyłane.",
+                "coregistration_section": "Co-rejestracja",
+                "parent_list": "Lista nadrzędna",
+                "parent_list_desc": "Subskrybenci tej listy będą automatycznie kopiowani do listy nadrzędnej",
+                "no_parent": "-- Brak listy nadrzędnej --",
+                "sync_on_subscribe": "Synchronizuj przy zapisie",
+                "sync_on_unsubscribe": "Synchronizuj przy wypisie",
+                "limits_section": "Limity i ograniczenia",
+                "max_subscribers": "Maksymalna liczba subskrybentów",
+                "max_subscribers_help": "Pozostaw 0 dla braku limitu",
+                "block_signups": "Blokuj nowe zapisy",
+                "block_signups_desc": "Tymczasowo zablokuj możliwość zapisu na listę"
+            },
+            "integration": {
+                "title": "Integracja API",
+                "api_key_section": "Klucz API listy",
+                "api_key_desc": "Użyj tego klucza do integracji z zewnętrznymi systemami",
+                "list_id_label": "ID Listy (MLID)",
+                "api_key_label": "Klucz API",
+                "no_api_key": "Klucz API nie został jeszcze wygenerowany",
+                "generate_key": "Generuj nowy klucz",
+                "copy_key": "Kopiuj",
+                "copied": "Skopiowano!",
+                "webhook_section": "Webhooks",
+                "webhook_url": "URL Webhooka",
+                "webhook_url_placeholder": "https://twoja-strona.pl/webhook",
+                "webhook_events": "Wydarzenia do wysyłania",
+                "event_subscribe": "Nowy zapis",
+                "event_unsubscribe": "Wypisanie",
+                "event_update": "Aktualizacja danych",
+                "event_bounce": "Odbicie (bounce)",
+                "test_webhook": "Wyślij testowy webhook",
+                "endpoint_section": "Endpoint Subskrypcji",
+                "endpoint_desc": "Użyj tego URL aby dodawać subskrybentów z zewnętrznych źródeł"
             }
         }
     },

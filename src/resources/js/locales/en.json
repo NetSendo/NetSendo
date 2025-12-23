@@ -420,7 +420,8 @@
                 "subscription": "Subscription",
                 "sending": "Sending",
                 "pages": "Pages",
-                "advanced": "Advanced"
+                "advanced": "Advanced",
+                "integration": "Integration"
             },
             "pages": {
                 "confirmation": "Subscription Confirmation Page (confirmation required)",
@@ -458,7 +459,40 @@
                 "facebook_label": "Facebook Integration (Pixel ID)",
                 "facebook_placeholder": "e.g. 1234567890",
                 "queue_days_label": "Queue Dispatch Days",
-                "queue_days_help": "Select days on which autoresponder messages can be sent."
+                "queue_days_help": "Select days on which autoresponder messages can be sent.",
+                "coregistration_section": "Co-registration",
+                "parent_list": "Parent List",
+                "parent_list_desc": "Subscribers to this list will be automatically copied to the parent list",
+                "no_parent": "-- No parent list --",
+                "sync_on_subscribe": "Sync on subscribe",
+                "sync_on_unsubscribe": "Sync on unsubscribe",
+                "limits_section": "Limits and Restrictions",
+                "max_subscribers": "Maximum subscribers",
+                "max_subscribers_help": "Leave 0 for no limit",
+                "block_signups": "Block new signups",
+                "block_signups_desc": "Temporarily block new subscriptions to this list"
+            },
+            "integration": {
+                "title": "API Integration",
+                "api_key_section": "List API Key",
+                "api_key_desc": "Use this key to integrate with external systems",
+                "list_id_label": "List ID (MLID)",
+                "api_key_label": "API Key",
+                "no_api_key": "No API key generated yet",
+                "generate_key": "Generate new key",
+                "copy_key": "Copy",
+                "copied": "Copied!",
+                "webhook_section": "Webhooks",
+                "webhook_url": "Webhook URL",
+                "webhook_url_placeholder": "https://your-site.com/webhook",
+                "webhook_events": "Events to send",
+                "event_subscribe": "New subscription",
+                "event_unsubscribe": "Unsubscription",
+                "event_update": "Data update",
+                "event_bounce": "Bounce",
+                "test_webhook": "Send test webhook",
+                "endpoint_section": "Subscription Endpoint",
+                "endpoint_desc": "Use this URL to add subscribers from external sources"
             }
         }
     },
