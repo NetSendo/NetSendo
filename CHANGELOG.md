@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Added
+- **Global "Quick Start" Modal:**
+  - Implemented a "Quick Start" (Szybki start) link in the Help menu sidebar.
+  - Opens a global onboarding modal with a progress checklist (License, CRON, Profile, List, Subscribers, Campaign).
+  - Accessible from any page in the application.
+
+- **Dashboard Setup Tracker:**
+  - Added a slim "Setup Tracker Bar" to the top of the dashboard.
+  - Only appears when critical configuration is missing (License, AI Integration, Mailbox, CRON).
+  - Automatically hides when all critical steps are completed.
+
+### Changed
+- **Onboarding Experience:**
+  - Removed the large "Centrum Startu" card from the Dashboard to reduce clutter.
+  - Replaced it with the more subtle Tracker Bar and the on-demand Quick Start modal.
+
+### Backend
+- **Global Stats:**
+  - Updated `GlobalStatsController` to return counts for `ai_integrations_count` and `mailboxes_count` to support the tracking logic.
 
 ## [1.0.17] – Short Description
 
