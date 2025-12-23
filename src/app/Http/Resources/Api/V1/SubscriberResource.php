@@ -14,14 +14,25 @@ class SubscriberResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Get contact list IDs from the many-to-many relationship
+        $contactListIds = $this->whenLoaded('contactLists', function () {
+            return $this->contactLists->pluck('id')->toArray();
+        }, []);
+
+        // Get first contact list ID for backward compatibility
+        $firstContactListId = $this->whenLoaded('contactLists', function () {
+            return $this->contactLists->first()?->id;
+        });
+
         return [
             'id' => $this->id,
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'phone' => $this->phone,
-            'status' => $this->status,
-            'contact_list_id' => $this->contact_list_id,
+            'status' => $this->is_active_global ? 'active' : 'inactive',
+            'contact_list_id' => $firstContactListId,
+            'contact_list_ids' => $contactListIds,
             'device' => $this->device,
             'ip_address' => $this->ip_address,
             'source' => $this->source,
