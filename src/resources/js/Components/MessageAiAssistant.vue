@@ -253,8 +253,8 @@ const acceptComparison = () => {
 
         <!-- Panel -->
         <div class="absolute inset-y-0 right-0 flex max-w-full pl-10">
-            <div class="w-screen max-w-md">
-                <div class="flex h-full flex-col overflow-y-auto bg-white shadow-xl dark:bg-slate-900">
+            <div class="w-screen max-w-2xl lg:max-w-3xl">
+                <div class="flex h-full flex-col overflow-y-auto bg-white shadow-xl dark:bg-slate-900 custom-scrollbar">
                     <!-- Header -->
                     <div class="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-4 dark:border-slate-800">
                         <div class="flex items-center gap-3 text-white">
@@ -348,8 +348,8 @@ const acceptComparison = () => {
                         </div>
                     </div>
 
-                    <!-- Content -->
-                    <div class="flex-1 overflow-y-auto p-4">
+                        <!-- Content -->
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                         <!-- Prompt input -->
                         <div class="mb-4">
                             <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -358,7 +358,7 @@ const acceptComparison = () => {
                             <textarea 
                                 v-model="prompt"
                                 rows="4"
-                                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white custom-scrollbar"
                                 :placeholder="activeMode === 'text' 
                                     ? $t('messages.ai_assistant.prompts.text_placeholder') 
                                     : $t('messages.ai_assistant.prompts.template_placeholder')"
@@ -560,7 +560,7 @@ const acceptComparison = () => {
 
                             <!-- Content preview -->
                             <div v-else class="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-slate-800">
-                                <div class="max-h-64 overflow-y-auto">
+                                <div class="max-h-64 overflow-y-auto custom-scrollbar">
                                     <div class="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-200" v-html="generatedContent.html"></div>
                                 </div>
                             </div>
@@ -644,7 +644,7 @@ const acceptComparison = () => {
                                 {{ $t('messages.ai_assistant.comparison.original_title') }}
                             </h3>
                         </div>
-                        <div class="flex-1 overflow-y-auto p-4">
+                        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                             <div v-if="currentContent && currentContent.length > 0" class="prose prose-sm max-w-none dark:prose-invert" v-html="currentContent"></div>
                             <div v-else class="flex h-full items-center justify-center">
                                 <p class="text-sm text-slate-400">{{ $t('messages.ai_assistant.comparison.original_empty') }}</p>
@@ -660,7 +660,7 @@ const acceptComparison = () => {
                                 {{ $t('messages.ai_assistant.comparison.new_title') }}
                             </h3>
                         </div>
-                        <div class="flex-1 overflow-y-auto p-4">
+                        <div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
                             <div class="prose prose-sm max-w-none dark:prose-invert" v-html="generatedContent.html"></div>
                         </div>
                     </div>
@@ -705,3 +705,44 @@ const acceptComparison = () => {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+/* Always visible, styled scrollbars for the panel */
+.custom-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #cbd5e1 transparent; /* Firefox */
+}
+
+.dark .custom-scrollbar {
+    scrollbar-color: #475569 transparent;
+}
+
+/* Chrome, Edge, Safari */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #475569;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+}
+</style>

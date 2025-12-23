@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.16] – Short Description
+
+**Release date:** 2025-12-23
+
+### Improved
+- **Gmail Integration:**
+  - Added "Pending Authorization" status for Gmail mailboxes that are active but not connected.
+  - Implemented automatic modal re-opening after creation to prompt user for "Connect with Google".
+  - Fixed "active" status badge being misleadingly shown for unconnected Gmail mailboxes.
+
+### Fixed
+- **Mailbox Form Validation:**
+  - Fixed validation interference where browser autofill from hidden SMTP/SendGrid tabs caused errors when saving Gmail mailboxes.
+  - Implemented strict field clearing for `from_email` and `credentials` when submitting Gmail forms.
+- **Translations:**
+  - Added missing `pending_auth` translation key.
+
+### Improved
+- **AI Assistant Panel Redesign:**
+  - Significantly widened the AI Assistant side panel (from `max-w-md` to `max-w-2xl/3xl`) for better visibility and usage on larger screens.
+  - Added visible, custom-styled scrollbars to the panel, prompts, and preview areas to improve accessibility for users without touchpads.
+  - Optimized the internal layout and grid systems to adapt to the wider panel size.
+
 ## [1.0.15] – List Integration & Advanced Settings
 
 **Release date:** 2025-12-23

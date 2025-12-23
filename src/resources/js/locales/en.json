@@ -1851,7 +1851,8 @@
             "active": "Active",
             "inactive": "Inactive",
             "error": "Connection Error",
-            "not_tested": "Not Tested"
+            "not_tested": "Not Tested",
+            "pending_auth": "Pending Authorization"
         },
         "types": {
             "broadcast": "One-time (Broadcast)",

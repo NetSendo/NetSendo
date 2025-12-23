@@ -1687,7 +1687,8 @@
             "active": "Aktywna",
             "inactive": "Nieaktywna",
             "error": "Błąd połączenia",
-            "not_tested": "Nie testowana"
+            "not_tested": "Nie testowana",
+            "pending_auth": "Oczekuje na autoryzację"
         },
         "types": {
             "broadcast": "Jednorazowe (Broadcast)",

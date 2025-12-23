@@ -163,6 +163,16 @@ const closeModal = () => {
 
 // Submit form
 const submitForm = () => {
+    // PRE-SUBMISSION CLEANUP
+    // If we are submitting GMAIL, we must clear fields that might have been autofilled
+    // by the browser in the hidden SMTP/Sendgrid tabs. The backend validates these
+    // if we send them, even if we are in "gmail" mode, because they are just requests fields.
+    if (form.provider === 'gmail') {
+        form.from_email = ''; // Backend will set default
+        form.reply_to = null;
+        form.credentials = {}; // Ensure no garbage credentials are sent
+    }
+
     if (modalMode.value === 'edit') {
         form.put(route('settings.mailboxes.update', editingMailbox.value.id), {
             preserveScroll: true,
@@ -177,9 +187,23 @@ const submitForm = () => {
     } else {
         form.post(route('settings.mailboxes.store'), {
             preserveScroll: true,
-            onSuccess: () => {
-                closeModal();
+            onSuccess: (page) => {
                 showToast(t('mailboxes.notifications.created'));
+                
+                // UX IMPROVEMENT: If we just created a GMAIL mailbox, it is NOT connected yet.
+                // We should immediately re-open the modal in "edit" mode so the user sees the "Connect" button.
+                if (form.provider === 'gmail') {
+                    // Find the newly created mailbox. It should be the last one or we can find by name.
+                    // Since specific logic to find "the one we just made" can be tricky with lists,
+                    // we'll try to match by name or just find the one that is gmail and not connected.
+                    const newMailbox = props.mailboxes.find(m => m.name === form.name && m.provider === 'gmail');
+                    if (newMailbox) {
+                        openModal(newMailbox);
+                        return; // Don't close modal
+                    }
+                }
+                
+                closeModal();
             },
             onError: () => {
                 showToast(t('common.notifications.error'), false);
@@ -274,13 +298,20 @@ const getStatusClass = (mailbox) => {
     if (!mailbox.is_active) {
         return 'bg-slate-500/20 text-slate-400';
     }
+    // GMAIL Special Case: Active but not connected
+    if (mailbox.provider === 'gmail' && !mailbox.gmail_connected) {
+        return 'bg-amber-500/20 text-amber-500'; 
+    }
+    
     if (mailbox.last_test_success === true) {
         return 'bg-emerald-500/20 text-emerald-400';
     }
     if (mailbox.last_test_success === false) {
         return 'bg-rose-500/20 text-rose-400';
     }
-    return 'bg-amber-500/20 text-amber-400';
+    
+    // Default active but not tested
+    return 'bg-blue-500/20 text-blue-400';
 };
 
 // Get status text
@@ -288,6 +319,11 @@ const getStatusText = (mailbox) => {
     if (!mailbox.is_active) {
         return t('mailboxes.status.inactive');
     }
+    // GMAIL Special Case: Active but not connected
+    if (mailbox.provider === 'gmail' && !mailbox.gmail_connected) {
+        return t('mailboxes.status.pending_auth') || 'Pending Auth'; // Fallback if translation missing
+    }
+
     if (mailbox.last_test_success === true) {
         return t('mailboxes.status.active');
     }
