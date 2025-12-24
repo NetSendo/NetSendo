@@ -35,6 +35,8 @@
         "showing": "Showing",
         "of": "of",
         "results": "results",
+        "lists_lowercase": "lists",
+        "no_results": "No results",
         "per_page": "per page",
         "previous": "Previous",
         "next": "Next",
@@ -960,6 +962,9 @@
         "add_subscriber": "Add Subscriber",
         "search_placeholder": "Search by email or last name...",
         "all_lists": "All Lists",
+        "all_list_types": "All List Types",
+        "list_type_email": "Email Lists",
+        "list_type_sms": "SMS Lists",
         "send_welcome_email": "Send welcome email",
         "hold_ctrl_to_select_multiple": "Hold Ctrl/Cmd to select multiple",
         "fields": {

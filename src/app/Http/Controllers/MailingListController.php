@@ -13,7 +13,9 @@ class MailingListController extends Controller
     public function index(Request $request)
     {
         // Use accessibleLists() to include shared lists for team members
+        // Filter to only show email lists in mailing list view
         $query = auth()->user()->accessibleLists()
+            ->email()
             ->with(['group', 'tags']);
 
         if ($request->filled('search')) {
@@ -68,7 +70,7 @@ class MailingListController extends Controller
     {
         $user = auth()->user();
         $scopeUser = $user->getAdminUser();
-        
+
         return Inertia::render('MailingList/Create', [
             'defaultSettings' => $scopeUser->settings ?? [],
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
@@ -84,7 +86,7 @@ class MailingListController extends Controller
         // But for simpler MVP, let's say they own it, OR we assign it to admin_user_id if present.
         // Let's create it on the authenticated user for now to avoid complexity with accessibleLists logic.
         // Or better: everything belongs to the admin.
-        
+
         $user = auth()->user();
         if (!$user->isAdmin()) {
             // If team member, we might want to prevent creation OR assign to admin.
@@ -99,13 +101,13 @@ class MailingListController extends Controller
             'tags.*' => 'exists:tags,id',
             'is_public' => 'boolean',
             'settings' => 'nullable|array',
-            
+
             // Subscription
             'settings.subscription.double_optin' => 'boolean',
             'settings.subscription.notification_email' => 'nullable|email',
             'settings.subscription.delete_unconfirmed' => 'boolean',
             'settings.subscription.security_options' => 'nullable|array',
-            
+
             // Sending
             'settings.sending.mailbox_id' => 'nullable|integer',
             'settings.sending.sms_settings' => 'nullable|string',
@@ -119,13 +121,13 @@ class MailingListController extends Controller
             'settings.sending.headers' => 'nullable|array',
             'settings.sending.headers.list_unsubscribe' => 'nullable|string',
             'settings.sending.headers.list_unsubscribe_post' => 'nullable|string',
-            
+
             // Pages (Redirects)
             'settings.pages' => 'nullable|array',
             'settings.pages.*.type' => 'nullable|string',
             'settings.pages.*.url' => 'nullable|string',
             'settings.pages.*.external_page_id' => 'nullable|integer',
-            
+
             // Advanced
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array',
@@ -133,7 +135,7 @@ class MailingListController extends Controller
         ]);
 
         $list = auth()->user()->contactLists()->create($validated);
-        
+
         if (isset($validated['tags'])) {
             $list->tags()->sync($validated['tags']);
         }
@@ -225,13 +227,13 @@ class MailingListController extends Controller
             'tags.*' => 'exists:tags,id',
             'is_public' => 'boolean',
             'settings' => 'nullable|array',
-            
+
             // Subscription
             'settings.subscription.double_optin' => 'boolean',
             'settings.subscription.notification_email' => 'nullable|email',
             'settings.subscription.delete_unconfirmed' => 'boolean',
             'settings.subscription.security_options' => 'nullable|array',
-            
+
             // Sending
             'settings.sending.mailbox_id' => 'nullable|integer',
             'settings.sending.sms_settings' => 'nullable|string',
@@ -245,23 +247,23 @@ class MailingListController extends Controller
             'settings.sending.headers' => 'nullable|array',
             'settings.sending.headers.list_unsubscribe' => 'nullable|string',
             'settings.sending.headers.list_unsubscribe_post' => 'nullable|string',
-            
+
             // Pages (Redirects)
             'settings.pages' => 'nullable|array',
             'settings.pages.*.type' => 'nullable|string',
             'settings.pages.*.url' => 'nullable|string',
             'settings.pages.*.external_page_id' => 'nullable|integer',
-            
+
             // Advanced
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array', // e.g., ['Mon', 'Fri']
             'settings.advanced.bounce_analysis' => 'boolean',
-            
+
             // Integration
             'webhook_url' => 'nullable|url|max:500',
             'webhook_events' => 'nullable|array',
             'webhook_events.*' => 'string|in:subscribe,unsubscribe,update,bounce',
-            
+
             // Co-registration / Advanced limits
             'parent_list_id' => 'nullable|exists:contact_lists,id',
             'sync_settings' => 'nullable|array',
@@ -311,7 +313,7 @@ class MailingListController extends Controller
                 $subscriberIds = $mailingList->subscribers()->pluck('subscribers.id')->toArray();
                 $mailingList->subscribers()->detach($subscriberIds);
                 $targetList->subscribers()->attach($subscriberIds, ['status' => 'active', 'subscribed_at' => now()]);
-                
+
             } elseif ($request->boolean('force_delete')) {
                 // Delete subscribers
                 $mailingList->subscribers()->delete();
@@ -362,9 +364,9 @@ class MailingListController extends Controller
         // Temporarily enable 'test' event
         $originalEvents = $mailingList->webhook_events;
         $mailingList->webhook_events = ['test'];
-        
+
         $success = $mailingList->triggerWebhook('test', $testData);
-        
+
         // Restore original events
         $mailingList->webhook_events = $originalEvents;
 

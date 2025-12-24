@@ -35,7 +35,7 @@ class MessageController extends Controller
                 $q->where('contact_lists.id', $request->input('list_id'));
             });
         }
-        
+
         // Filter by Group
         if ($request->filled('group_id')) {
             $query->whereHas('contactLists', function ($q) use ($request) {
@@ -61,7 +61,7 @@ class MessageController extends Controller
         // Sorting
         $sortField = $request->input('sort', 'created_at');
         $sortDirection = $request->input('direction', 'desc');
-        
+
         // Allow sorting by valid fields
         if (in_array($sortField, ['subject', 'status', 'created_at', 'type', 'day'])) {
             $query->orderBy($sortField, $sortDirection);
@@ -84,7 +84,7 @@ class MessageController extends Controller
                     'day' => $msg->day,
                     'is_active' => $msg->is_active ?? true,
                     'lists_count' => $msg->contactLists->count(),
-                    'list_name' => $msg->contactLists->count() > 0 
+                    'list_name' => $msg->contactLists->count() > 0
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)
                         : '-',
                     // For sent messages, use frozen planned_recipients_count
@@ -93,8 +93,8 @@ class MessageController extends Controller
                         ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
                         : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
                     'created_at' => DateHelper::formatForUser($msg->created_at),
-                    'scheduled_at' => $msg->scheduled_at 
-                        ? DateHelper::formatForUser($msg->scheduled_at) 
+                    'scheduled_at' => $msg->scheduled_at
+                        ? DateHelper::formatForUser($msg->scheduled_at)
                         : null,
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction', 'per_page']),
@@ -115,7 +115,7 @@ class MessageController extends Controller
         }
 
         $messageIds = is_array($ids) ? $ids : explode(',', $ids);
-        
+
         $messages = Message::whereIn('id', $messageIds)
             ->where('user_id', auth()->id())
             ->select('id', 'status', 'sent_count', 'planned_recipients_count')
@@ -137,7 +137,7 @@ class MessageController extends Controller
 
         return Inertia::render('Message/Create', [
             'lists' => auth()->user()->contactLists()
-                ->select('id', 'name', 'default_mailbox_id', 'contact_list_group_id')
+                ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
@@ -271,10 +271,10 @@ class MessageController extends Controller
         // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
         // sync recipients immediately so stats are available right away.
         // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
-        $isImmediateSend = $validated['status'] === 'scheduled' 
-            && $validated['type'] === 'broadcast' 
+        $isImmediateSend = $validated['status'] === 'scheduled'
+            && $validated['type'] === 'broadcast'
             && empty($validated['send_at']);
-        
+
         if ($isImmediateSend) {
             $message->syncPlannedRecipients();
         }
@@ -316,7 +316,7 @@ class MessageController extends Controller
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 // Convert stored UTC time back to user's timezone for display
-                'send_at' => $message->send_at 
+                'send_at' => $message->send_at
                     ? $message->send_at->setTimezone($message->timezone ?? DateHelper::getUserTimezone())->format('Y-m-d H:i:s')
                     : null,
                 'time_of_day' => $message->time_of_day ? substr($message->time_of_day, 0, 5) : null,
@@ -331,7 +331,7 @@ class MessageController extends Controller
                 'trigger_config' => $message->trigger_config,
             ],
             'lists' => auth()->user()->contactLists()
-                ->select('id', 'name', 'default_mailbox_id', 'contact_list_group_id')
+                ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
@@ -422,7 +422,7 @@ class MessageController extends Controller
             // Determine timezone for parsing the input date
             // Priority: Form timezone -> User timezone -> App timezone (UTC)
             $timezone = $validated['timezone'] ?? DateHelper::getUserTimezone();
-            
+
             if (!empty($validated['send_at'])) {
                 // Parse the input date in the user's/selected timezone, then convert to UTC for storage
                 $sendAt = \Carbon\Carbon::parse($validated['send_at'], $timezone)->setTimezone('UTC');
@@ -469,10 +469,10 @@ class MessageController extends Controller
         // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
         // sync recipients immediately so stats are available right away.
         // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
-        $isImmediateSend = $validated['status'] === 'scheduled' 
-            && $validated['type'] === 'broadcast' 
+        $isImmediateSend = $validated['status'] === 'scheduled'
+            && $validated['type'] === 'broadcast'
             && empty($validated['send_at']);
-        
+
         if ($isImmediateSend) {
             $message->syncPlannedRecipients();
         }
@@ -552,7 +552,7 @@ class MessageController extends Controller
 
         // Get current unique recipients
         $currentRecipients = $message->getUniqueRecipients();
-        
+
         // Filter out subscribers who already received the message
         $newRecipients = $currentRecipients->filter(function($subscriber) use ($alreadySentSubscriberIds) {
             return !in_array($subscriber->id, $alreadySentSubscriberIds);
@@ -635,7 +635,7 @@ class MessageController extends Controller
 
         // Get queue statistics from message_queue_entries
         $queueStats = $message->getQueueStats();
-        
+
         // For queue/autoresponder: use queue entry statistics
         // For broadcast: if already sent, use sent_count; otherwise calculate recipients
         if ($message->isQueueType()) {
@@ -652,24 +652,24 @@ class MessageController extends Controller
                 $plannedRecipients = $totalSent;
             }
         }
-        
+
         // Unikaj dzielenia przez zero w obliczeniach procentowych
         $denominator = $totalSent > 0 ? $totalSent : 1;
 
         // Pobieranie statystyk otwarć
         $opens = EmailOpen::where('message_id', $message->id)->count();
         $uniqueOpens = EmailOpen::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
-        
+
         // Pobieranie statystyk kliknięć
         $clicks = EmailClick::where('message_id', $message->id)->count();
         $uniqueClicks = EmailClick::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
 
         // Read time statistics
         $readTimeStats = EmailReadSession::getReadTimeStats($message->id);
-        
+
         // Read time histogram (distribution)
         $readTimeHistogram = $this->getReadTimeHistogram($message->id);
-        
+
         // Top readers (subscribers with longest read times)
         $topReaders = EmailReadSession::completed()
             ->forMessage($message->id)
@@ -690,14 +690,14 @@ class MessageController extends Controller
                 'id' => $message->id,
                 'subject' => $message->subject,
                 'sent_at' => DateHelper::formatForUser($message->send_at ?? $message->created_at),
-                'scheduled_at' => $message->scheduled_at 
-                    ? DateHelper::formatForUser($message->scheduled_at) 
+                'scheduled_at' => $message->scheduled_at
+                    ? DateHelper::formatForUser($message->scheduled_at)
                     : null,
                 'status' => $message->status,
                 'type' => $message->type,
                 'is_active' => $message->is_active ?? true,
-                'recipients_calculated_at' => $message->recipients_calculated_at 
-                    ? DateHelper::formatForUser($message->recipients_calculated_at) 
+                'recipients_calculated_at' => $message->recipients_calculated_at
+                    ? DateHelper::formatForUser($message->recipients_calculated_at)
                     : null,
             ],
             'stats' => [
@@ -717,12 +717,12 @@ class MessageController extends Controller
             'queue_stats' => $queueStats,
             'recipients' => $message->queueEntries()
                 ->with('subscriber:id,email,first_name,last_name,status')
-                ->orderByRaw("CASE status 
-                    WHEN 'failed' THEN 1 
-                    WHEN 'queued' THEN 2 
-                    WHEN 'planned' THEN 3 
-                    WHEN 'sent' THEN 4 
-                    WHEN 'skipped' THEN 5 
+                ->orderByRaw("CASE status
+                    WHEN 'failed' THEN 1
+                    WHEN 'queued' THEN 2
+                    WHEN 'planned' THEN 3
+                    WHEN 'sent' THEN 4
+                    WHEN 'skipped' THEN 5
                     ELSE 6 END")
                 ->orderByDesc('sent_at')
                 ->orderByDesc('created_at')
@@ -799,7 +799,7 @@ class MessageController extends Controller
         ]);
 
         $mailbox = null;
-        
+
         // Get mailbox
         if ($validated['mailbox_id']) {
             $mailbox = Mailbox::where('user_id', auth()->id())->find($validated['mailbox_id']);
@@ -814,7 +814,7 @@ class MessageController extends Controller
         try {
             $content = $validated['content'];
             $subject = $validated['subject'];
-            
+
             // Get subscriber for placeholder substitution
             $subscriber = null;
             if (!empty($validated['subscriber_id'])) {
@@ -828,7 +828,7 @@ class MessageController extends Controller
                     })
                     ->first();
             }
-            
+
             // If we have a real subscriber, use PlaceholderService
             if ($subscriber) {
                 $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
@@ -849,7 +849,7 @@ class MessageController extends Controller
                     'unsubscribe_link' => '#',
                     'unsubscribe_url' => '#',
                 ];
-                
+
                 // Replace placeholders with sample data
                 $content = preg_replace_callback(
                     '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
@@ -868,16 +868,16 @@ class MessageController extends Controller
                     $subject
                 );
             }
-            
+
             // Inject preheader if provided
             $preheader = $validated['preheader'] ?? null;
             if (!empty($preheader)) {
                 $content = $this->injectPreheader($content, $preheader);
             }
-            
+
             // Use the proper mail provider service to send HTML email
             $provider = $providerService->getProvider($mailbox);
-            
+
             $provider->send(
                 to: $validated['email'],
                 toName: $validated['email'], // Use email as name for test
@@ -911,7 +911,7 @@ class MessageController extends Controller
 
             if ($subscriberId) {
                 $subscriber = \App\Models\Subscriber::find($subscriberId);
-                
+
                 // Security: verify subscriber belongs to user
                 if ($subscriber && $subscriber->user_id === auth()->id()) {
                     $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
@@ -939,7 +939,7 @@ class MessageController extends Controller
     /**
      * Get subscribers list for preview dropdown
      */
-    public function previewSubscribers(Request $request) 
+    public function previewSubscribers(Request $request)
     {
         $validated = $request->validate([
             'contact_list_ids' => 'nullable|array',
@@ -948,9 +948,9 @@ class MessageController extends Controller
 
         // Get user's contact list IDs for security filtering
         $userListIds = auth()->user()->contactLists()->pluck('id')->toArray();
-        
+
         // Filter by specific lists if provided, otherwise use all user's lists
-        $filterListIds = !empty($validated['contact_list_ids']) 
+        $filterListIds = !empty($validated['contact_list_ids'])
             ? array_intersect($validated['contact_list_ids'], $userListIds)
             : $userListIds;
 
@@ -987,7 +987,7 @@ class MessageController extends Controller
             '',
             $content
         );
-        
+
         // Also remove any hidden preheader divs without comment
         $content = preg_replace(
             '/<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none;\s*max-height:\s*0[^"\']*["\'][^>]*>.*?<\/div>/is',
@@ -1051,7 +1051,7 @@ class MessageController extends Controller
     protected function syncMessageTrigger(Message $message, array $data): void
     {
         $triggerType = $data['trigger_type'] ?? null;
-        
+
         if (empty($triggerType)) {
             // Remove automation rule if trigger was removed
             AutomationRule::where('trigger_source', 'message')
@@ -1074,7 +1074,7 @@ class MessageController extends Controller
 
         // Build trigger config
         $triggerConfig = $data['trigger_config'] ?? [];
-        
+
         // Add list_id from message if not set
         if (empty($triggerConfig['list_id']) && $message->contactLists->isNotEmpty()) {
             $triggerConfig['list_id'] = $message->contactLists->first()->id;

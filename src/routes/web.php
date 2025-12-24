@@ -46,7 +46,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::resource('mailing-lists', \App\Http\Controllers\MailingListController::class);
     Route::post('mailing-lists/{mailing_list}/generate-api-key', [\App\Http\Controllers\MailingListController::class, 'generateApiKey'])->name('mailing-lists.generate-api-key');
     Route::post('mailing-lists/{mailing_list}/test-webhook', [\App\Http\Controllers\MailingListController::class, 'testWebhook'])->name('mailing-lists.test-webhook');
-    Route::resource('sms-lists', \App\Http\Controllers\SmsListController::class);
+    Route::resource('sms-lists', \App\Http\Controllers\SmsListController::class)->except(['show']);
 
     // Subscribers
     Route::get('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'importForm'])->name('subscribers.import');

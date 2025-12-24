@@ -35,6 +35,8 @@
         "showing": "Pokazuje",
         "of": "z",
         "results": "wyników",
+        "lists_lowercase": "list",
+        "no_results": "Brak wyników",
         "per_page": "na stronę",
         "previous": "Poprzedni",
         "next": "Następny",
@@ -1012,6 +1014,9 @@
         "add_subscriber": "Dodaj subskrybenta",
         "search_placeholder": "Szukaj po emailu lub nazwisku...",
         "all_lists": "Wszystkie listy",
+        "all_list_types": "Wszystkie typy list",
+        "list_type_email": "Listy Email",
+        "list_type_sms": "Listy SMS",
         "send_welcome_email": "Wyślij wiadomość powitalną",
         "hold_ctrl_to_select_multiple": "Przytrzymaj Ctrl/Cmd aby wybrać wiele",
         "fields": {

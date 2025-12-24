@@ -44,13 +44,14 @@ class SmsController extends Controller
                 'list_name' => $message->contactLists->first()->name ?? '-',
             ]);
 
-        $lists = ContactList::sms()->get(['id', 'name']);
-        
-        // Assuming groups are not used for SMS yet or shared? 
+        // Get all lists (both email and SMS) for SMS campaigns
+        $lists = ContactList::query()->get(['id', 'name', 'type']);
+
+        // Assuming groups are not used for SMS yet or shared?
         // For now, only passing lists as per Create view. Index view had group_id filter but we can hide it or implement it similarly if needed.
-        // Let's pass empty groups or fetch if needed. Existing Message/Index uses groups. 
+        // Let's pass empty groups or fetch if needed. Existing Message/Index uses groups.
         // We'll stick to Lists for SMS for now as per plan.
-        
+
         return Inertia::render('Sms/Index', [
             'messages' => $messages,
             'filters' => $request->only(['search', 'type', 'list_id', 'sort', 'direction']),
@@ -64,7 +65,8 @@ class SmsController extends Controller
      */
     public function create()
     {
-        $lists = ContactList::sms()->get(['id', 'name']);
+        // Get all lists (both email and SMS) for SMS campaigns
+        $lists = ContactList::query()->get(['id', 'name', 'type']);
 
         return Inertia::render('Sms/Create', [
             'lists' => $lists,
@@ -90,7 +92,7 @@ class SmsController extends Controller
         $message = new Message($validated);
         $message->user_id = auth()->id();
         $message->channel = 'sms';
-        
+
         // Handle scheduling
         if ($request->time) {
             $message->time_of_day = $request->time;
@@ -130,7 +132,7 @@ class SmsController extends Controller
     public function edit(string $id)
     {
         $message = Message::sms()->with('contactLists')->findOrFail($id);
-        
+
         // Transform for view
         $smsData = [
             'id' => $message->id,
@@ -145,7 +147,8 @@ class SmsController extends Controller
             'status' => $message->status,
         ];
 
-        $lists = ContactList::sms()->get(['id', 'name']);
+        // Get all lists (both email and SMS) for SMS campaigns
+        $lists = ContactList::query()->get(['id', 'name', 'type']);
 
         return Inertia::render('Sms/Create', [
             'sms' => $smsData,
@@ -172,7 +175,7 @@ class SmsController extends Controller
         ]);
 
         $message->fill($validated);
-        
+
         // Map time to time_of_day if needed
          if ($request->has('time')) {
             $message->time_of_day = $request->time;

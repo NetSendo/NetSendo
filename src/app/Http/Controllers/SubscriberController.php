@@ -39,16 +39,22 @@ class SubscriberController extends Controller
             });
         }
 
+        if ($request->list_type) {
+            $query->whereHas('contactLists', function ($q) use ($request) {
+                $q->where('contact_lists.type', $request->list_type);
+            });
+        }
+
         // Sorting
         $sortBy = $request->sort_by ?? 'created_at';
         $sortOrder = $request->sort_order ?? 'desc';
-        
+
         // Validate sort column
         $allowedSorts = ['created_at', 'email', 'first_name', 'last_name', 'phone'];
         if (!in_array($sortBy, $allowedSorts)) {
             $sortBy = 'created_at';
         }
-        
+
         $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
 
         // Get custom fields for column visibility options
@@ -74,64 +80,97 @@ class SubscriberController extends Controller
                         'cf_' . $fv->custom_field_id => $fv->value
                     ]),
                 ]),
-            'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
+            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
             'customFields' => $customFields,
-            'filters' => $request->only(['search', 'list_id', 'sort_by', 'sort_order']),
+            'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Subscriber/Create', [
-            'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
+            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'email' => [
-                'required', 'email', 'max:255',
-                // Unique email per user check manually or complex rule
-            ],
-            'first_name' => 'nullable|string|max:255',
-            'last_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
-            'gender' => 'nullable|in:male,female,other',
+        // First validate contact_list_ids to determine required fields
+        $request->validate([
             'contact_list_ids' => 'required|array|min:1',
             'contact_list_ids.*' => 'exists:contact_lists,id',
-            'status' => 'required|in:active,inactive', // Helper for is_active_global
-            // Custom fields validation could be dynamic here
         ]);
 
-        // Verify ownership of lists
-        $count = ContactList::whereIn('id', $validated['contact_list_ids'])
+        // Check list types to determine validation rules
+        $lists = ContactList::whereIn('id', $request->contact_list_ids)
             ->where('user_id', auth()->id())
-            ->count();
-            
-        if ($count !== count($validated['contact_list_ids'])) {
+            ->get();
+
+        if ($lists->count() !== count($request->contact_list_ids)) {
             abort(403, 'Unauthorized access to one or more lists.');
         }
 
-        DB::transaction(function () use ($validated, $request) {
-            // Check if subscriber exists for this user
-            $subscriber = Subscriber::where('user_id', auth()->id())
-                ->where('email', $validated['email'])
-                ->first();
+        // Determine if we have SMS-only lists or email lists
+        $hasEmailList = $lists->where('type', 'email')->isNotEmpty();
+        $hasSmsOnlyList = $lists->where('type', 'sms')->isNotEmpty() && !$hasEmailList;
+
+        // Build validation rules based on list types
+        $emailRule = $hasEmailList ? 'required|email|max:255' : 'nullable|email|max:255';
+        $phoneRule = $hasSmsOnlyList ? 'required|string|max:50' : 'nullable|string|max:50';
+
+        // For SMS lists, phone is required; for email lists, email is required
+        // If mixed, both should be validated appropriately
+        if ($lists->where('type', 'sms')->isNotEmpty()) {
+            $phoneRule = 'required|string|max:50';
+        }
+        if ($lists->where('type', 'email')->isNotEmpty()) {
+            $emailRule = 'required|email|max:255';
+        }
+
+        $validated = $request->validate([
+            'email' => $emailRule,
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => $phoneRule,
+            'gender' => 'nullable|in:male,female,other',
+            'contact_list_ids' => 'required|array|min:1',
+            'contact_list_ids.*' => 'exists:contact_lists,id',
+            'status' => 'required|in:active,inactive',
+        ]);
+
+        DB::transaction(function () use ($validated, $request, $lists) {
+            // Find existing subscriber by email or phone depending on what was provided
+            $subscriber = null;
+
+            if (!empty($validated['email'])) {
+                $subscriber = Subscriber::where('user_id', auth()->id())
+                    ->where('email', $validated['email'])
+                    ->first();
+            }
+
+            // For SMS-only lists, also try to find by phone if no email match
+            if (!$subscriber && !empty($validated['phone']) && $lists->where('type', 'sms')->isNotEmpty()) {
+                $subscriber = Subscriber::where('user_id', auth()->id())
+                    ->where('phone', $validated['phone'])
+                    ->first();
+            }
 
             $data = [
                 'user_id' => auth()->id(),
-                'email' => $validated['email'],
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'phone' => $validated['phone'],
-                'gender' => $validated['gender'],
+                'email' => $validated['email'] ?? null,
+                'first_name' => $validated['first_name'] ?? null,
+                'last_name' => $validated['last_name'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+                'gender' => $validated['gender'] ?? null,
                 'is_active_global' => $validated['status'] === 'active',
             ];
 
             if ($subscriber) {
-                $subscriber->update($data);
+                // Update existing subscriber, but don't overwrite existing data with null
+                $updateData = array_filter($data, fn($v) => $v !== null);
+                unset($updateData['user_id']); // Don't update user_id
+                $subscriber->update($updateData);
             } else {
                 $subscriber = Subscriber::create($data);
             }
@@ -149,7 +188,7 @@ class SubscriberController extends Controller
             if ($request->has('custom_fields')) {
                 foreach ($request->input('custom_fields') as $fieldId => $value) {
                     if (blank($value)) continue; // Skip empty values if desired, or save null
-                    
+
                     $subscriber->fieldValues()->updateOrCreate(
                         ['custom_field_id' => $fieldId],
                         ['value' => $value]
@@ -163,9 +202,9 @@ class SubscriberController extends Controller
              $subscriber = Subscriber::where('user_id', auth()->id())
                 ->where('email', $validated['email'])
                 ->first();
-                
+
              $lists = ContactList::whereIn('id', $validated['contact_list_ids'])->get();
-             
+
              foreach ($lists as $list) {
                  // Dispatch event which should trigger automation/welcome email
                  event(new \App\Events\SubscriberSignedUp($subscriber, $list, 'manual'));
@@ -207,7 +246,7 @@ class SubscriberController extends Controller
                 'contact_list_ids' => $subscriber->contactLists->pluck('id'),
                 'custom_fields' => $subscriber->fieldValues->mapWithKeys(fn($val) => [$val->custom_field_id => $val->value]),
             ],
-            'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
+            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
         ]);
     }
@@ -241,7 +280,7 @@ class SubscriberController extends Controller
         $count = ContactList::whereIn('id', $validated['contact_list_ids'])
             ->where('user_id', auth()->id())
             ->count();
-            
+
         if ($count !== count($validated['contact_list_ids'])) {
             abort(403, 'Unauthorized access to one or more lists.');
         }
@@ -263,7 +302,7 @@ class SubscriberController extends Controller
             if ($request->has('custom_fields')) {
                 foreach ($request->input('custom_fields') as $fieldId => $value) {
                     if (blank($value)) continue;
-                    
+
                     $subscriber->fieldValues()->updateOrCreate(
                         ['custom_field_id' => $fieldId],
                         ['value' => $value]
@@ -294,53 +333,57 @@ class SubscriberController extends Controller
     public function importForm()
     {
         return Inertia::render('Subscriber/Import', [
-            'lists' => auth()->user()->contactLists()->select('id', 'name')->get(),
+            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
         ]);
     }
 
     public function import(\App\Http\Requests\SubscriberImportRequest $request)
     {
         $file = $request->file('file');
-        $listId = $request->contact_list_id; // Still importing to ONE primary list logic for now? Or allow multi? Usually import to one.
+        $listId = $request->contact_list_id;
         $separator = $request->separator === 'tab' ? "\t" : $request->separator;
-        
+
         $list = ContactList::where('id', $listId)
             ->where('user_id', auth()->id())
             ->firstOrFail();
 
         $path = $file->getRealPath();
         $content = file_get_contents($path);
-        $bom = pack('H*', 'EFBBBF'); 
+        $bom = pack('H*', 'EFBBBF');
         $content = preg_replace("/^$bom/", '', $content);
-        
+
         $lines = explode("\n", $content);
         $imported = 0;
-        
-        // Map, Headers logic same as before...
-        // ... (truncated for brevity, logic is finding/creating subscriber and attaching list)
-        
-        // SIMPLIFIED IMPORT LOGIC FOR REPLACEMENT (Full implementation would repeat parsing logic)
-        // I will retain the parsing logic but adapt the storage call.
-        
-        // Re-implementing minimal parsing for safety in this replacement block
+
+        // Extended map to include phone for SMS lists
         $map = [
             'email' => ['email', 'e-mail', 'mail'],
+            'phone' => ['phone', 'telefon', 'tel', 'mobile', 'phone_number', 'numer_telefonu', 'numer'],
             'first_name' => ['first_name', 'firstname', 'imie', 'imię', 'name'],
             'last_name' => ['last_name', 'lastname', 'nazwisko', 'surname'],
         ];
 
-        $colIndices = ['email' => -1, 'first_name' => -1, 'last_name' => -1];
+        $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1];
         $startRow = 0;
-        
+
         if (count($lines) > 0) {
             $firstRow = str_getcsv(trim($lines[0]), $separator);
             if (!empty($firstRow)) {
-                if (strpos($firstRow[0], '@') !== false) {
-                    $colIndices['email'] = 0;
+                // Check if first row contains data or headers
+                $isDataRow = strpos($firstRow[0], '@') !== false || preg_match('/^\+?[0-9]{9,15}$/', trim($firstRow[0]));
+
+                if ($isDataRow) {
+                    // First row is data, guess columns based on content
+                    if (strpos($firstRow[0], '@') !== false) {
+                        $colIndices['email'] = 0;
+                    } elseif (preg_match('/^\+?[0-9]{9,15}$/', trim($firstRow[0]))) {
+                        $colIndices['phone'] = 0;
+                    }
                     $colIndices['first_name'] = count($firstRow) > 1 ? 1 : -1;
                     $colIndices['last_name'] = count($firstRow) > 2 ? 2 : -1;
                     $startRow = 0;
                 } else {
+                    // First row is headers
                     $headers = array_map('strtolower', array_map('trim', $firstRow));
                     foreach ($map as $dbCol => $possibleNames) {
                         foreach ($headers as $index => $header) {
@@ -350,41 +393,86 @@ class SubscriberController extends Controller
                             }
                         }
                     }
-                     if ($colIndices['email'] === -1) {
+                    // Fallback if no email/phone found
+                    if ($colIndices['email'] === -1 && $colIndices['phone'] === -1) {
                         $colIndices['email'] = 0;
-                        $colIndices['first_name'] = count($headers) > 1 ? 1 : -1;
-                        $colIndices['last_name'] = count($headers) > 2 ? 2 : -1;
                     }
                     $startRow = 1;
                 }
             }
         }
 
+        // Determine which field is primary based on list type
+        $isSmsOnlyList = $list->type === 'sms';
+
         for ($i = $startRow; $i < count($lines); $i++) {
             $line = trim($lines[$i]);
             if (empty($line)) continue;
-            
+
             $data = str_getcsv($line, $separator);
-            $email = isset($data[$colIndices['email']]) ? trim($data[$colIndices['email']]) : null;
-            
-            if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
-            
+            $email = $colIndices['email'] !== -1 && isset($data[$colIndices['email']]) ? trim($data[$colIndices['email']]) : null;
+            $phone = $colIndices['phone'] !== -1 && isset($data[$colIndices['phone']]) ? trim($data[$colIndices['phone']]) : null;
             $firstName = $colIndices['first_name'] !== -1 && isset($data[$colIndices['first_name']]) ? trim($data[$colIndices['first_name']]) : null;
             $lastName = $colIndices['last_name'] !== -1 && isset($data[$colIndices['last_name']]) ? trim($data[$colIndices['last_name']]) : null;
-            
-            // Find or Create Subscriber
-            $subscriber = Subscriber::firstOrCreate(
-                ['user_id' => auth()->id(), 'email' => $email],
-                [
+
+            // Validate based on list type
+            if ($list->type === 'sms') {
+                // For SMS lists, phone is required
+                if (!$phone) continue;
+            } else {
+                // For email lists, email is required
+                if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+            }
+
+            // Find existing subscriber by email or phone
+            $subscriber = null;
+
+            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $subscriber = Subscriber::where('user_id', auth()->id())
+                    ->where('email', $email)
+                    ->first();
+            }
+
+            // For SMS lists, also try to find by phone
+            if (!$subscriber && $phone && $list->type === 'sms') {
+                $subscriber = Subscriber::where('user_id', auth()->id())
+                    ->where('phone', $phone)
+                    ->first();
+            }
+
+            if ($subscriber) {
+                // Update existing subscriber with new data (if provided)
+                $updateData = [];
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) && !$subscriber->email) {
+                    $updateData['email'] = $email;
+                }
+                if ($phone && !$subscriber->phone) {
+                    $updateData['phone'] = $phone;
+                }
+                if ($firstName && !$subscriber->first_name) {
+                    $updateData['first_name'] = $firstName;
+                }
+                if ($lastName && !$subscriber->last_name) {
+                    $updateData['last_name'] = $lastName;
+                }
+                if (!empty($updateData)) {
+                    $subscriber->update($updateData);
+                }
+            } else {
+                // Create new subscriber
+                $subscriber = Subscriber::create([
+                    'user_id' => auth()->id(),
+                    'email' => $email && filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null,
+                    'phone' => $phone,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
-                    'is_active_global' => true
-                ]
-            );
+                    'is_active_global' => true,
+                ]);
+            }
 
             // Attach to list
             $subscriber->contactLists()->syncWithoutDetaching([$list->id]);
-            
+
             $imported++;
         }
 
@@ -400,9 +488,9 @@ class SubscriberController extends Controller
         // But the route binding implies global action or we need to pass list_id.
         // For simplicity in this refactor, let's toggle global status or unsub from all?
         // Or if we have a context of "list_id".
-        
+
         $subscriber->update(['is_active_global' => false]);
-        
+
         // Also update pivot status?
         // $subscriber->contactLists()->updateExistingPivot($listId, ['status' => 'unsubscribed']);
 

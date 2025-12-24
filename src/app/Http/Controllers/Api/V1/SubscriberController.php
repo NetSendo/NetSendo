@@ -97,9 +97,25 @@ class SubscriberController extends Controller
             ], 403);
         }
 
-        // Validate request
+        // First validate contact_list_id to check list type
+        $request->validate([
+            'contact_list_id' => [
+                'required',
+                'integer',
+                Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
+            ],
+        ]);
+
+        // Get the list to determine validation rules
+        $list = ContactList::find($request->contact_list_id);
+
+        // Build validation rules based on list type
+        $emailRule = $list->type === 'email' ? 'required|email' : 'nullable|email';
+        $phoneRule = $list->type === 'sms' ? 'required|string|max:50' : 'nullable|string|max:50';
+
+        // Validate request with dynamic rules
         $validated = $request->validate([
-            'email' => 'required|email',
+            'email' => $emailRule,
             'contact_list_id' => [
                 'required',
                 'integer',
@@ -107,7 +123,7 @@ class SubscriberController extends Controller
             ],
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
+            'phone' => $phoneRule,
             'status' => 'nullable|in:active,inactive,unsubscribed,bounced',
             'source' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
@@ -115,10 +131,20 @@ class SubscriberController extends Controller
             'custom_fields' => 'nullable|array',
         ]);
 
-        // Check if subscriber already exists (by email for this user)
-        $existing = Subscriber::where('email', $validated['email'])
-            ->where('user_id', $user->id)
-            ->first();
+        // Check if subscriber already exists (by email OR phone for this user)
+        $existing = null;
+        if (!empty($validated['email'])) {
+            $existing = Subscriber::where('email', $validated['email'])
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
+        // For SMS lists, also check by phone
+        if (!$existing && !empty($validated['phone']) && $list->type === 'sms') {
+            $existing = Subscriber::where('phone', $validated['phone'])
+                ->where('user_id', $user->id)
+                ->first();
+        }
 
         if ($existing) {
             // Add the list to existing subscriber if not already attached

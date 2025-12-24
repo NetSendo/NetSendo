@@ -35,6 +35,8 @@
         "showing": "Zeige",
         "of": "von",
         "results": "Ergebnisse",
+        "lists_lowercase": "Listen",
+        "no_results": "Keine Ergebnisse",
         "per_page": "pro Seite",
         "previous": "Zurück",
         "next": "Weiter",
@@ -899,6 +901,9 @@
         "add_subscriber": "Abonnent hinzufügen",
         "search_placeholder": "Suche nach E-Mail oder Nachnamen...",
         "all_lists": "Alle Listen",
+        "all_list_types": "Alle Listentypen",
+        "list_type_email": "E-Mail-Listen",
+        "list_type_sms": "SMS-Listen",
         "api_keys": {
             "title": "API-Schlüssel",
             "subtitle": "Verwalten Sie API-Schlüssel für externe Integrationen",
@@ -978,7 +983,6 @@
             "disconnect": "Trennen",
             "disconnected": "Google-Konto getrennt."
         },
-        "all_lists": "Alle Listen",
         "send_welcome_email": "Willkommens-E-Mail senden",
         "hold_ctrl_to_select_multiple": "Halten Sie Strg/Cmd gedrückt, um mehrere auszuwählen",
         "fields": {

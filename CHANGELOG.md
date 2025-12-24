@@ -5,7 +5,59 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] – Short Description
+
+**Release date:** 2025-12-24
+
+### Changed
+
+- **Mailing List System Refactor:**
+
+  - Separated "Mailing Lists" and "SMS Lists" into distinct views for clearer management.
+  - "Mailing Lists" view now strictly shows only Email-type lists.
+  - "SMS Lists" view continues to show SMS-type lists.
+  - SMS Campaigns can now target both SMS and Email lists (filtering for subscribers with phone numbers).
+
+- **Conditional Validation:**
+  - Implemented smart validation for subscribers based on list type:
+    - **Email Lists:** Email address is required.
+    - **SMS Lists:** Phone number is required.
+    - **Mixed:** Both fields are required if adding to both list types simultaneously.
+    - Applies to Admin Panel, API, Public Subscription Forms, and CSV Import.
+
+### Added
+
+- **List Filters in Campaign Creation:**
+  - Added list type filter dropdown (All/Email/SMS) to both Email and SMS campaign creation forms.
+  - Added search input for filtering lists by name.
+  - Shows filtered list count (e.g., "3 of 10 lists").
+  - Improved usability for users with large numbers of contact lists.
+
+### Fixed
+
+- **Email Campaign List Selection:**
+
+  - Fixed missing list type data in Email campaign creation form.
+  - Added `type` field to contact lists query in `MessageController::create()` and `MessageController::edit()`.
+  - List type filtering now works correctly in both autoresponder and broadcast modes.
+
+- **SMS Lists Route Error:**
+  - Fixed `Call to undefined method SmsListController::show()` error when accessing SMS lists.
+  - Excluded unused `show` route from SMS lists resource routes in `web.php`.
+  - Updated `SmsList/Index.vue` to use `sms-lists.edit` route instead of non-existent `sms-lists.show`.
+  - Regenerated Ziggy routes to sync frontend route list with backend.
+
+### Improved
+
+- **Subscriber Management UX:**
+
+  - Updated "Add/Edit Subscriber" forms with list type filtering (All/Email/SMS).
+  - Added dynamic "Required" (`*`) indicators that update in real-time based on selected lists.
+  - Added informational alerts explaining which fields are required for the selected combination.
+
+- **CSV Import:**
+  - Extended import functionality to support phone numbers for SMS lists.
+  - Implemented validation logic during import to ensure SMS list imports have valid phone numbers.
 
 ## [1.0.21] – Short Description
 

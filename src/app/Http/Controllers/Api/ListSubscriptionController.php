@@ -12,14 +12,14 @@ class ListSubscriptionController extends Controller
 {
     /**
      * Subscribe to a list via API
-     * 
+     *
      * Requires valid list API key in Authorization header
      */
     public function subscribe(Request $request, $listId)
     {
         // Find the list
         $list = ContactList::find($listId);
-        
+
         if (!$list) {
             return response()->json([
                 'success' => false,
@@ -30,7 +30,7 @@ class ListSubscriptionController extends Controller
         // Validate API key
         $authHeader = $request->header('Authorization');
         $apiKey = null;
-        
+
         if ($authHeader && preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
             $apiKey = $matches[1];
         }
@@ -50,12 +50,16 @@ class ListSubscriptionController extends Controller
             ], 403);
         }
 
-        // Validate input
+        // Build validation rules based on list type
+        $emailRule = $list->type === 'email' ? 'required|email' : 'nullable|email';
+        $phoneRule = $list->type === 'sms' ? 'required|string|max:50' : 'nullable|string|max:50';
+
+        // Validate input with dynamic rules
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email' => $emailRule,
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:50',
+            'phone' => $phoneRule,
         ]);
 
         if ($validator->fails()) {
@@ -65,19 +69,31 @@ class ListSubscriptionController extends Controller
             ], 422);
         }
 
-        $email = strtolower(trim($request->email));
+        $email = $request->email ? strtolower(trim($request->email)) : null;
+        $phone = $request->phone ? trim($request->phone) : null;
 
-        // Find or create subscriber
-        $subscriber = Subscriber::where('email', $email)
-            ->where('user_id', $list->user_id)
-            ->first();
+        // Find subscriber by email or phone depending on list type
+        $subscriber = null;
+
+        if ($email) {
+            $subscriber = Subscriber::where('email', $email)
+                ->where('user_id', $list->user_id)
+                ->first();
+        }
+
+        // For SMS lists, also try to find by phone
+        if (!$subscriber && $phone && $list->type === 'sms') {
+            $subscriber = Subscriber::where('phone', $phone)
+                ->where('user_id', $list->user_id)
+                ->first();
+        }
 
         if (!$subscriber) {
             $subscriber = Subscriber::create([
                 'email' => $email,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'phone' => $request->phone,
+                'phone' => $phone,
                 'user_id' => $list->user_id,
             ]);
         } else {
@@ -101,7 +117,7 @@ class ListSubscriptionController extends Controller
 
         if ($existing) {
             $status = $existing->pivot->status;
-            
+
             if ($status === 'active') {
                 return response()->json([
                     'success' => true,
@@ -151,7 +167,7 @@ class ListSubscriptionController extends Controller
     {
         // Find the list
         $list = ContactList::find($listId);
-        
+
         if (!$list) {
             return response()->json([
                 'success' => false,
@@ -162,7 +178,7 @@ class ListSubscriptionController extends Controller
         // Validate API key
         $authHeader = $request->header('Authorization');
         $apiKey = null;
-        
+
         if ($authHeader && preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
             $apiKey = $matches[1];
         }
