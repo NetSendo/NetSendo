@@ -134,7 +134,7 @@ class User extends Authenticatable
             // Admin sees all lists created by them or their team members
             $teamMemberIds = $this->teamMembers()->pluck('id')->toArray();
             $allUserIds = array_merge([$this->id], $teamMemberIds);
-            
+
             return ContactList::whereIn('user_id', $allUserIds);
         }
 
@@ -225,6 +225,11 @@ class User extends Authenticatable
         return $this->hasMany(Mailbox::class);
     }
 
+    public function smsProviders()
+    {
+        return $this->hasMany(SmsProvider::class);
+    }
+
     /**
      * Send the password reset notification.
      * Overrides default to use SystemMailService for ENV/Mailbox fallback.
@@ -236,7 +241,7 @@ class User extends Authenticatable
     {
         // Prepare system mail service (configures Laravel mailer)
         $mailService = app(SystemMailService::class);
-        
+
         if (!$mailService->prepare()) {
             \Log::error('Cannot send password reset email: No mail configuration available', [
                 'user_id' => $this->id,
@@ -244,7 +249,7 @@ class User extends Authenticatable
             ]);
             return;
         }
-        
+
         $this->notify(new ResetPasswordNotification($token));
     }
 }

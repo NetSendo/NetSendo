@@ -7,7 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.21] – Short Description
+
+**Release date:** 2025-12-24
+
 ### Added
+
+- **SMS Queue System:**
+
+  - New `ProcessSmsQueueCommand` artisan command (`cron:process-sms-queue`) for processing SMS queue.
+  - New `processSmsQueue()` method in `CronScheduleService` handling SMS dispatch with schedule/volume limits.
+  - SMS queue scheduler entry running every minute (same as email queue).
+  - Dedicated log file: `storage/logs/cron-sms-queue.log`.
+  - Respects global and per-list CRON schedules and volume limits.
+  - Validates subscriber phone numbers before dispatch.
+  - Dry-run mode (`--dry-run`) for testing without sending.
+
+- **SMS Integration:**
+
+  - Implemented comprehensive SMS capability with multi-provider support.
+  - Supported Providers: **Twilio**, **SMS API** (PL/COM), **Vonage (Nexmo)**, **MessageBird**, **Plivo**.
+  - New "SMS Providers" settings page for credential management and connection testing.
+  - Configurable daily limits per provider.
+  - Secure credential storage (encryption).
+  - Background job system for asynchronous SMS sending (`SendSmsJob`).
+  - Added "Dostawcy SMS" link to the main sidebar.
 
 - **Google Analytics Integration:**
   - Integrated Google Analytics 4 (gtag.js) tracking for all NetSendo installations.

@@ -210,6 +210,17 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{mailbox}/default', [\App\Http\Controllers\MailboxController::class, 'setDefault'])->name('default');
     });
 
+    // SMS Providers
+    Route::prefix('settings/sms-providers')->name('settings.sms-providers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SmsProviderController::class, 'index'])->name('index');
+        Route::get('/fields/{provider}', [\App\Http\Controllers\SmsProviderController::class, 'fields'])->name('fields');
+        Route::post('/', [\App\Http\Controllers\SmsProviderController::class, 'store'])->name('store');
+        Route::put('/{smsProvider}', [\App\Http\Controllers\SmsProviderController::class, 'update'])->name('update');
+        Route::delete('/{smsProvider}', [\App\Http\Controllers\SmsProviderController::class, 'destroy'])->name('destroy');
+        Route::post('/{smsProvider}/test', [\App\Http\Controllers\SmsProviderController::class, 'test'])->name('test');
+        Route::post('/{smsProvider}/default', [\App\Http\Controllers\SmsProviderController::class, 'setDefault'])->name('default');
+    });
+
     // CRON Settings
     Route::prefix('settings/cron')->name('settings.cron.')->group(function () {
         Route::get('/', [\App\Http\Controllers\CronSettingsController::class, 'index'])->name('index');

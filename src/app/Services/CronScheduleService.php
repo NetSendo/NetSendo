@@ -9,6 +9,7 @@ use App\Models\CronSetting;
 use App\Models\Message;
 use App\Models\MessageQueueEntry;
 use App\Jobs\SendEmailJob;
+use App\Jobs\SendSmsJob;
 use Illuminate\Support\Facades\Log;
 
 class CronScheduleService
@@ -51,7 +52,7 @@ class CronScheduleService
     public function getListSettings(int $contactListId): array
     {
         $settings = ContactListCronSetting::getOrCreateForList($contactListId);
-        
+
         return [
             'use_defaults' => $settings->use_defaults,
             'volume_per_minute' => $settings->volume_per_minute,
@@ -67,7 +68,7 @@ class CronScheduleService
     public function saveListSettings(int $contactListId, array $settings): ContactListCronSetting
     {
         $cronSettings = ContactListCronSetting::getOrCreateForList($contactListId);
-        
+
         $cronSettings->update([
             'use_defaults' => $settings['use_defaults'] ?? true,
             'volume_per_minute' => $settings['use_defaults'] ? null : ($settings['volume_per_minute'] ?? null),
@@ -122,13 +123,13 @@ class CronScheduleService
     public function getListsAllowedForDispatch(): array
     {
         $allowedListIds = [];
-        
+
         // Pobierz wszystkie listy z ustawieniami
         $lists = ContactList::with('cronSettings')->get();
-        
+
         foreach ($lists as $list) {
             $settings = $list->cronSettings ?? ContactListCronSetting::getOrCreateForList($list->id);
-            
+
             if ($settings->isDispatchAllowedNow()) {
                 $allowedListIds[] = [
                     'id' => $list->id,
@@ -147,7 +148,7 @@ class CronScheduleService
     public function processQueue(): array
     {
         $log = CronJobLog::startJob('email_queue_processor');
-        
+
         $stats = [
             'dispatched' => 0,
             'skipped' => 0,
@@ -187,7 +188,7 @@ class CronScheduleService
 
             // 2. Przetwórz kolejkę używając chunków, aby ominąć zablokowane listy
             // (Zapobiega "Head-of-Line Blocking")
-            
+
             $lastId = 0;
             $batchSize = 200; // Mniejszy batch dla bezpieczeństwa pamięci
             $maxInspected = 2000; // Zabezpieczenie przed timeoutem (sprawdzamy max X wpisów w jednym przebiegu)
@@ -215,7 +216,7 @@ class CronScheduleService
                     ->orderBy('id', 'asc') // Sortowanie po ID dla kursora
                     ->limit($batchSize)
                     ->get();
-                
+
                 if ($entries->isEmpty()) {
                     break;
                 }
@@ -223,7 +224,7 @@ class CronScheduleService
                 foreach ($entries as $entry) {
                     $lastId = $entry->id;
                     $totalInspected++;
-                    
+
                     // Sprawdź limit globalny ponownie
                     if ($stats['dispatched'] >= $globalVolume) {
                         break 2;
@@ -241,7 +242,7 @@ class CronScheduleService
 
                     // Pobierz listę (pierwszą jeśli wiele)
                     $listId = $message->contactLists->first()?->id;
-                    
+
                     if ($listId) {
                         // Sprawdź harmonogram listy
                         if (!$this->isDispatchAllowed($listId)) {
@@ -268,19 +269,19 @@ class CronScheduleService
                     // Oznacz jako w kolejce i wyślij
                     try {
                         $entry->markAsQueued();
-                        
+
                         // Dispatch job dla konkretnego subskrybenta
                         // Pass entry ID so the job can update status upon completion
                         SendEmailJob::dispatch($message, $subscriber, null, $entry->id);
-                        
+
                         // Note: markAsSent() is now called by SendEmailJob after successful delivery
                         // This ensures accurate status tracking
-                        
+
                         $stats['dispatched']++;
                         $log->incrementSent();
-                        
+
                         // Note: sent_count increment is now done by SendEmailJob
-                        
+
                         // Dla broadcast: sprawdzanie statusu zostaje, ale używamy 'queued' zamiast 'sent'
                         // Broadcast zostanie oznaczony jako 'sent' gdy wszystkie wpisy będą 'sent' (sprawdzane w SendEmailJob)
                     } catch (\Exception $e) {
@@ -304,6 +305,150 @@ class CronScheduleService
         } catch (\Exception $e) {
             $log->completeFailed($e->getMessage(), $stats['dispatched'], $stats['errors']);
             Log::error("CRON queue processor failed: " . $e->getMessage());
+            throw $e;
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Przetwórz kolejkę wiadomości SMS zgodnie z harmonogramami
+     */
+    public function processSmsQueue(): array
+    {
+        $log = CronJobLog::startJob('sms_queue_processor');
+
+        $stats = [
+            'dispatched' => 0,
+            'skipped' => 0,
+            'errors' => 0,
+            'synced' => 0,
+        ];
+
+        try {
+            $globalVolume = (int) CronSetting::getValue('volume_per_minute', 100);
+            $listVolumes = [];
+
+            // 1. Pobierz aktywne wiadomości SMS i zsynchronizuj odbiorców
+            $activeMessages = Message::where('status', 'scheduled')
+                ->where('channel', 'sms')
+                ->where(function($query) {
+                    $query->where('type', 'broadcast')
+                        ->orWhere(function($q) {
+                            $q->where('type', 'autoresponder')
+                                ->where('is_active', true);
+                        });
+                })
+                ->where(function($q) {
+                    $q->whereNull('scheduled_at')
+                        ->orWhere('scheduled_at', '<=', now());
+                })
+                ->with('contactLists')
+                ->get();
+
+            foreach ($activeMessages as $message) {
+                $syncResult = $message->syncPlannedRecipients();
+                $stats['synced'] += $syncResult['added'];
+            }
+
+            // 2. Przetwórz kolejkę SMS używając chunków
+            $lastId = 0;
+            $batchSize = 200;
+            $maxInspected = 2000;
+            $totalInspected = 0;
+
+            while ($stats['dispatched'] < $globalVolume && $totalInspected < $maxInspected) {
+                $entries = MessageQueueEntry::where('status', MessageQueueEntry::STATUS_PLANNED)
+                    ->where('id', '>', $lastId)
+                    ->whereHas('message', function($query) {
+                        $query->where('status', 'scheduled')
+                            ->where('channel', 'sms')
+                            ->where(function($q) {
+                                $q->where('type', 'broadcast')
+                                    ->orWhere(function($sub) {
+                                        $sub->where('type', 'autoresponder')
+                                            ->where('is_active', true);
+                                    });
+                            })
+                            ->where(function($q) {
+                                $q->whereNull('scheduled_at')
+                                    ->orWhere('scheduled_at', '<=', now());
+                            });
+                    })
+                    ->with(['message.contactLists', 'subscriber'])
+                    ->orderBy('id', 'asc')
+                    ->limit($batchSize)
+                    ->get();
+
+                if ($entries->isEmpty()) {
+                    break;
+                }
+
+                foreach ($entries as $entry) {
+                    $lastId = $entry->id;
+                    $totalInspected++;
+
+                    if ($stats['dispatched'] >= $globalVolume) {
+                        break 2;
+                    }
+
+                    $message = $entry->message;
+                    $subscriber = $entry->subscriber;
+
+                    // Sprawdź czy subskrybent ma numer telefonu i jest aktywny
+                    if (!$subscriber || $subscriber->status !== 'active' || empty($subscriber->phone)) {
+                        $entry->markAsSkipped('Subscriber inactive or has no phone number');
+                        $stats['skipped']++;
+                        continue;
+                    }
+
+                    $listId = $message->contactLists->first()?->id;
+
+                    if ($listId) {
+                        if (!$this->isDispatchAllowed($listId)) {
+                            $stats['skipped']++;
+                            continue;
+                        }
+
+                        $settings = ContactListCronSetting::getOrCreateForList($listId);
+                        $listVolume = $settings->getEffectiveVolumePerMinute();
+                        $listVolumes[$listId] = ($listVolumes[$listId] ?? 0);
+
+                        if ($listVolumes[$listId] >= $listVolume) {
+                            $stats['skipped']++;
+                            continue;
+                        }
+
+                        $listVolumes[$listId]++;
+                    }
+
+                    try {
+                        $entry->markAsQueued();
+
+                        SendSmsJob::dispatch($message, $subscriber, null, $entry->id);
+
+                        $stats['dispatched']++;
+                        $log->incrementSent();
+                    } catch (\Exception $e) {
+                        $entry->markAsFailed($e->getMessage());
+                        $stats['errors']++;
+                        $log->incrementFailed();
+                        $log->appendError("SMS Entry {$entry->id} (Message {$message->id}, Subscriber {$subscriber->id}): " . $e->getMessage());
+                        Log::error("CRON SMS dispatch error: " . $e->getMessage(), [
+                            'entry_id' => $entry->id,
+                            'message_id' => $message->id,
+                            'subscriber_id' => $subscriber->id,
+                        ]);
+                    }
+                }
+            }
+
+            CronSetting::setValue('last_sms_run', now()->toIso8601String());
+
+            $log->completeSuccess($stats['dispatched'], $stats['errors']);
+        } catch (\Exception $e) {
+            $log->completeFailed($e->getMessage(), $stats['dispatched'], $stats['errors']);
+            Log::error("CRON SMS queue processor failed: " . $e->getMessage());
             throw $e;
         }
 

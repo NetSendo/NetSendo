@@ -26,6 +26,13 @@ Schedule::command('cron:process-queue')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-queue.log'));
 
+// Przetwarzanie kolejki SMS - co minutę
+Schedule::command('cron:process-sms-queue')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/cron-sms-queue.log'));
+
 // Operacje dzienne (czyszczenie logów, etc.) - o 4:00
 Schedule::command('cron:daily-maintenance')
     ->dailyAt('04:00')

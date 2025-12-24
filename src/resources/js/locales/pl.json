@@ -195,6 +195,7 @@
         "logout": "Wyloguj",
         "ai_integrations": "Integracje AI",
         "mailboxes": "Skrzynki pocztowe",
+        "sms_providers": "Dostawcy SMS",
         "groups_nav": "Grupy",
         "tags": "Tagi",
         "add_message": "Dodaj wiadomość",
@@ -1761,6 +1762,58 @@
             "not_connected": "Nie połączono",
             "disconnect": "Rozłącz",
             "disconnected": "Rozłączono konto Google."
+        }
+    },
+    "sms_providers": {
+        "title": "Dostawcy SMS",
+        "subtitle": "Zarządzaj dostawcami usług SMS (Twilio, SMS API)",
+        "add_new": "Dodaj dostawcę",
+        "add_first": "Dodaj pierwszego dostawcę",
+        "default": "Domyślny",
+        "test_connection": "Testuj połączenie",
+        "set_as_default": "Ustaw jako domyślny",
+        "sent_today": "Wysłane dziś",
+        "status": {
+            "active": "Aktywny",
+            "inactive": "Nieaktywny",
+            "error": "Błąd połączenia",
+            "not_tested": "Nie testowany"
+        },
+        "empty": {
+            "title": "Brak dostawców SMS",
+            "description": "Dodaj dostawcę SMS, aby rozpocząć wysyłkę wiadomości tekstowych."
+        },
+        "notifications": {
+            "created": "Dostawca SMS został utworzony.",
+            "updated": "Dostawca SMS został zaktualizowany.",
+            "deleted": "Dostawca SMS został usunięty.",
+            "set_default": "Dostawca został ustawiony jako domyślny."
+        },
+        "delete_modal": {
+            "title": "Usuń dostawcę SMS",
+            "message": "Czy na pewno chcesz usunąć tego dostawcę SMS? Tej operacji nie można cofnąć."
+        },
+        "modal": {
+            "add_title": "Dodaj dostawcę SMS",
+            "edit_title": "Edytuj dostawcę SMS",
+            "provider": "Dostawca",
+            "name": "Nazwa dostawcy",
+            "name_placeholder": "np. Główny Twilio, SMS API Polska",
+            "from_number": "Numer nadawcy",
+            "from_name": "Nazwa nadawcy",
+            "from_name_hint": "Maksymalnie 11 znaków alfanumerycznych",
+            "daily_limit": "Dzienny limit wysyłek",
+            "daily_limit_placeholder": "Bez limitu",
+            "is_active": "Aktywny",
+            "is_default": "Domyślny"
+        },
+        "info": {
+            "title": "Informacje o dostawcach",
+            "twilio": "Twilio - globalny dostawca SMS, wymagany numer telefonu",
+            "smsapi": "SMS API - polski dostawca SMS (smsapi.pl), obsługuje nazwy nadawcy",
+            "vonage": "Vonage (Nexmo) - #2 na świecie, świetne API i reliability",
+            "messagebird": "MessageBird - holenderski dostawca, dobre ceny w Europie",
+            "plivo": "Plivo - ekonomiczna alternatywa dla Twilio"
         }
     },
     "cron": {
