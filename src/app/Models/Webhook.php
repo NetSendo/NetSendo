@@ -29,6 +29,7 @@ class Webhook extends Model
      * Available webhook events
      */
     public const EVENTS = [
+        // Subscriber events
         'subscriber.created',
         'subscriber.updated',
         'subscriber.deleted',
@@ -37,6 +38,10 @@ class Webhook extends Model
         'subscriber.bounced',
         'subscriber.tag_added',
         'subscriber.tag_removed',
+        // SMS events
+        'sms.queued',
+        'sms.sent',
+        'sms.failed',
     ];
 
     /**

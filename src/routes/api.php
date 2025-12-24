@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\ContactListController;
+use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SubscriberController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\ExportController;
@@ -50,6 +51,16 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
     // Export
     Route::post('lists/{list}/export', [ExportController::class, 'export'])
         ->name('api.v1.lists.export');
+
+    // SMS Operations
+    Route::post('sms/send', [SmsController::class, 'send'])
+        ->name('api.v1.sms.send');
+    Route::post('sms/batch', [SmsController::class, 'batch'])
+        ->name('api.v1.sms.batch');
+    Route::get('sms/status/{id}', [SmsController::class, 'status'])
+        ->name('api.v1.sms.status');
+    Route::get('sms/providers', [SmsController::class, 'providers'])
+        ->name('api.v1.sms.providers');
 
     // Webhooks (Triggers)
     Route::get('webhooks/events', [\App\Http\Controllers\Api\V1\WebhookController::class, 'availableEvents'])
