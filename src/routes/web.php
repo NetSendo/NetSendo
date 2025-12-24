@@ -23,19 +23,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // License routes
     Route::get('/license', [LicenseController::class, 'index'])->name('license.index');
     Route::post('/license/request-silver', [LicenseController::class, 'requestSilverLicense'])->name('license.request-silver');
     Route::post('/license/validate', [LicenseController::class, 'validateLicense'])->name('license.validate');
     Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
-    
+
     // Version check routes
     Route::get('/api/version/check', [VersionController::class, 'check'])->name('api.version.check');
     Route::get('/api/version/refresh', [VersionController::class, 'refresh'])->name('api.version.refresh');
     Route::get('/api/version/current', [VersionController::class, 'current'])->name('api.version.current');
     Route::get('/api/version/changelog', [VersionController::class, 'changelog'])->name('api.version.changelog');
-    
+
     // Two-Factor Authentication routes
     Route::get('/profile/2fa', [\App\Http\Controllers\TwoFactorController::class, 'index'])->name('profile.2fa.index');
     Route::get('/profile/2fa/enable', [\App\Http\Controllers\TwoFactorController::class, 'enable'])->name('profile.2fa.enable');
@@ -51,19 +51,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Subscribers
     Route::get('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'importForm'])->name('subscribers.import');
     Route::post('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'import'])->name('subscribers.import.store');
-    
+
     // Subscriber Bulk Actions (must be before resource to avoid route conflict)
     Route::post('subscribers/bulk-delete', [\App\Http\Controllers\SubscriberController::class, 'bulkDelete'])->name('subscribers.bulk-delete');
     Route::post('subscribers/bulk-move', [\App\Http\Controllers\SubscriberController::class, 'bulkMove'])->name('subscribers.bulk-move');
     Route::post('subscribers/bulk-status', [\App\Http\Controllers\SubscriberController::class, 'bulkChangeStatus'])->name('subscribers.bulk-status');
-    
+
     Route::resource('subscribers', \App\Http\Controllers\SubscriberController::class);
-    
+
     // Subscriber Tags
     Route::post('subscribers/{subscriber}/tags', [\App\Http\Controllers\SubscriberController::class, 'syncTags'])->name('subscribers.tags.sync');
     Route::post('subscribers/{subscriber}/tags/{tag}', [\App\Http\Controllers\SubscriberController::class, 'attachTag'])->name('subscribers.tags.attach');
     Route::delete('subscribers/{subscriber}/tags/{tag}', [\App\Http\Controllers\SubscriberController::class, 'detachTag'])->name('subscribers.tags.detach');
-    
+
     // Groups & Tags
     Route::resource('groups', \App\Http\Controllers\ContactListGroupController::class);
     Route::resource('tags', \App\Http\Controllers\TagController::class)->except(['create', 'edit', 'show']);
@@ -131,7 +131,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('forms/{form}/duplicate', [\App\Http\Controllers\SubscriptionFormController::class, 'duplicate'])->name('forms.duplicate');
     Route::get('forms/{form}/code', [\App\Http\Controllers\SubscriptionFormController::class, 'code'])->name('forms.code');
     Route::get('forms/{form}/stats', [\App\Http\Controllers\SubscriptionFormController::class, 'stats'])->name('forms.stats');
-    
+
     // Form Integrations (webhooks)
     Route::prefix('forms/{form}/integrations')->name('forms.integrations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\FormIntegrationController::class, 'index'])->name('index');
@@ -281,9 +281,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     // Updates/Changelog
     Route::get('/update', [\App\Http\Controllers\UpdatesController::class, 'index'])->name('update.index');
-    
+
     // Marketplace (Coming Soon)
     Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
+    Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
 
     // User Management (Team Members)
     Route::prefix('settings/users')->name('settings.users.')->group(function () {

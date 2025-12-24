@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.19] – Short Description
+
+**Release date:** 2025-12-24
+
+### Added
+
+- **Marketplace Integration:**
+  - Added dedicated page for **n8n** integration (`/marketplace/n8n`) including installation instructions and feature overview.
+  - Updated Marketplace dashboard to mark n8n as "Available" and link to the integration page.
+
 ## [1.0.18] – Short Description
 
 **Release date:** 2025-12-24
