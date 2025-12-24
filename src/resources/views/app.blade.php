@@ -8,6 +8,9 @@
         <meta name="author" content="NetSendo">
         <meta name="keywords" content="email marketing, automation, newsletter, campaign, netsendo">
 
+        <!-- Google Analytics -->
+        @include('partials.google-analytics')
+
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">

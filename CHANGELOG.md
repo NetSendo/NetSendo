@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Google Analytics Integration:**
+  - Integrated Google Analytics 4 (gtag.js) tracking for all NetSendo installations.
+  - Tracking code hardcoded in `partials/google-analytics.blade.php` for universal deployment monitoring.
+  - Automatically tracks all users across all domains where NetSendo is installed.
+
 ## [1.0.20] – Short Description
 
 **Release date:** 2025-12-24
