@@ -43,7 +43,7 @@ class ContactListController extends Controller
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = min($request->get('per_page', 25), 100);
+        $perPage = $request->get('per_page', 25);
 
         return ContactListResource::collection($query->paginate($perPage));
     }
@@ -99,7 +99,7 @@ class ContactListController extends Controller
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = min($request->get('per_page', 25), 100);
+        $perPage = $request->get('per_page', 25);
 
         return SubscriberResource::collection($query->paginate($perPage));
     }

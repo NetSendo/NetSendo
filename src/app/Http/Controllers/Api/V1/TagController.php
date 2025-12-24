@@ -30,7 +30,7 @@ class TagController extends Controller
         $sortOrder = $request->get('sort_order', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
-        $perPage = min($request->get('per_page', 50), 100);
+        $perPage = $request->get('per_page', 50);
 
         return TagResource::collection($query->paginate($perPage));
     }
