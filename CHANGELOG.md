@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.20] – Short Description
+
+**Release date:** 2025-12-24
+
+### Added
+
+- **API Triggers (Webhooks):**
+  - Implemented comprehensive webhook system for real-time event notifications.
+  - New endpoints: `CRUD /api/v1/webhooks` for managing webhook subscriptions.
+  - Supported events: `subscriber.created`, `subscriber.updated`, `subscriber.deleted`, `subscriber.subscribed`, etc.
+  - Security: HMAC-SHA256 signature verification (`X-NetSendo-Signature`) for all payloads.
+  - Built-in failure tracking and automatic deactivation after 10 consecutive failures.
+  - Integrated with `n8n` via new "NetSendo Trigger" node support.
+
 ## [1.0.19] – Short Description
 
 **Release date:** 2025-12-24

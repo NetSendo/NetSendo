@@ -8,6 +8,7 @@ use App\Models\ContactList;
 use App\Models\Subscriber;
 use App\Models\Tag;
 use App\Events\SubscriberSignedUp;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -15,6 +16,9 @@ use Illuminate\Validation\Rule;
 
 class SubscriberController extends Controller
 {
+    public function __construct(
+        protected WebhookDispatcher $webhookDispatcher
+    ) {}
     /**
      * Get all subscribers with pagination and filtering
      */
@@ -166,6 +170,13 @@ class SubscriberController extends Controller
         $contactList = $subscriber->contactLists()->first();
         event(new SubscriberSignedUp($subscriber, $contactList, null, 'api'));
 
+        // Dispatch webhook
+        $this->webhookDispatcher->dispatch($user->id, 'subscriber.created', [
+            'subscriber' => (new SubscriberResource($subscriber))->toArray($request),
+            'list_id' => $contactList?->id,
+            'list_name' => $contactList?->name,
+        ]);
+
         $subscriber->load(['tags', 'fieldValues.customField', 'contactLists']);
 
         return (new SubscriberResource($subscriber))
@@ -235,6 +246,11 @@ class SubscriberController extends Controller
 
         $subscriber->load(['tags', 'fieldValues.customField', 'contactLists']);
 
+        // Dispatch webhook
+        $this->webhookDispatcher->dispatch($user->id, 'subscriber.updated', [
+            'subscriber' => (new SubscriberResource($subscriber))->toArray($request),
+        ]);
+
         return new SubscriberResource($subscriber);
     }
 
@@ -262,6 +278,12 @@ class SubscriberController extends Controller
                 'message' => 'Subscriber not found',
             ], 404);
         }
+
+        // Dispatch webhook before deleting
+        $this->webhookDispatcher->dispatch($user->id, 'subscriber.deleted', [
+            'subscriber_id' => $subscriber->id,
+            'email' => $subscriber->email,
+        ]);
 
         $subscriber->delete();
 

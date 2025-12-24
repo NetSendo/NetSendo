@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () {
-    
+
     // Subscribers (CRUD)
     Route::get('subscribers/by-email/{email}', [SubscriberController::class, 'findByEmail'])
         ->name('api.v1.subscribers.by-email');
@@ -32,7 +32,7 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
             'update' => 'api.v1.subscribers.update',
             'destroy' => 'api.v1.subscribers.destroy',
         ]);
-    
+
     // Contact Lists (read-only)
     Route::get('lists', [ContactListController::class, 'index'])
         ->name('api.v1.lists.index');
@@ -40,7 +40,7 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
         ->name('api.v1.lists.show');
     Route::get('lists/{list}/subscribers', [ContactListController::class, 'subscribers'])
         ->name('api.v1.lists.subscribers');
-    
+
     // Tags (read-only)
     Route::get('tags', [TagController::class, 'index'])
         ->name('api.v1.tags.index');
@@ -50,6 +50,22 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
     // Export
     Route::post('lists/{list}/export', [ExportController::class, 'export'])
         ->name('api.v1.lists.export');
+
+    // Webhooks (Triggers)
+    Route::get('webhooks/events', [\App\Http\Controllers\Api\V1\WebhookController::class, 'availableEvents'])
+        ->name('api.v1.webhooks.events');
+    Route::post('webhooks/{webhook}/test', [\App\Http\Controllers\Api\V1\WebhookController::class, 'test'])
+        ->name('api.v1.webhooks.test');
+    Route::post('webhooks/{webhook}/regenerate-secret', [\App\Http\Controllers\Api\V1\WebhookController::class, 'regenerateSecret'])
+        ->name('api.v1.webhooks.regenerate-secret');
+    Route::apiResource('webhooks', \App\Http\Controllers\Api\V1\WebhookController::class)
+        ->names([
+            'index' => 'api.v1.webhooks.index',
+            'store' => 'api.v1.webhooks.store',
+            'show' => 'api.v1.webhooks.show',
+            'update' => 'api.v1.webhooks.update',
+            'destroy' => 'api.v1.webhooks.destroy',
+        ]);
 });
 
 // Public Download Route (Signed)

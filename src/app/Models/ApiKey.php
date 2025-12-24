@@ -32,6 +32,8 @@ class ApiKey extends Model
         'subscribers:write',
         'lists:read',
         'tags:read',
+        'webhooks:read',
+        'webhooks:write',
     ];
 
     /**
@@ -68,7 +70,7 @@ class ApiKey extends Model
         }
 
         $hash = hash('sha256', $plainKey);
-        
+
         return static::where('key_hash', $hash)->first();
     }
 
