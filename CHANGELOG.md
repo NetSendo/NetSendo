@@ -5,6 +5,28 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **SMS API Extensions:**
+  - New `SmsController` with comprehensive endpoints:
+    - `POST /api/v1/sms/send`: Send single SMS.
+    - `POST /api/v1/sms/batch`: Batch send SMS to lists or tags.
+    - `GET /api/v1/sms/status/{id}`: Check SMS delivery status.
+    - `GET /api/v1/sms/providers`: List available SMS providers.
+  - Added SMS-specific webhook events: `sms.queued`, `sms.sent`, `sms.failed`.
+  - Added new API key permissions: `sms:read` and `sms:write`.
+
+### Documentation
+
+- **n8n Integration:**
+  - Created detailed implementation guide for n8n SMS node (`docs/N8N_SMS_IMPLEMENTATION.md`).
+  - Added SMS resource definition, operations, and trigger events for n8n agent.
+- **API Documentation:**
+  - Updated `API_DOCUMENTATION.md` with complete SMS section and examples.
+  - Updated permissions table with new SMS access rights.
+
 ## [1.1.0] – Short Description
 
 **Release date:** 2025-12-24
