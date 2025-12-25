@@ -5,7 +5,9 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.2] – Short Description
+
+**Release date:** 2025-12-25
 
 ### Added
 
@@ -34,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Enhanced phone mockup preview with dynamic data substitution.
   - Added full Polish and English translations for all new SMS features.
 
-**Release date:** 2025-12-24
+## [1.1.1] – Short Description
 
 ### Added
 
