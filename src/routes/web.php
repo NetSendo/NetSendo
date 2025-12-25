@@ -164,6 +164,23 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('automations/{automation}/logs', [\App\Http\Controllers\AutomationController::class, 'logs'])->name('automations.logs');
     Route::get('api/automations/stats', [\App\Http\Controllers\AutomationController::class, 'stats'])->name('api.automations.stats');
 
+    // AI Campaign Architect
+    Route::prefix('campaign-architect')->name('campaign-architect.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CampaignArchitectController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\CampaignArchitectController::class, 'store'])->name('store');
+        Route::get('/{plan}', [\App\Http\Controllers\CampaignArchitectController::class, 'show'])->name('show');
+        Route::put('/{plan}', [\App\Http\Controllers\CampaignArchitectController::class, 'update'])->name('update');
+        Route::delete('/{plan}', [\App\Http\Controllers\CampaignArchitectController::class, 'destroy'])->name('destroy');
+        Route::post('/{plan}/generate', [\App\Http\Controllers\CampaignArchitectController::class, 'generateStrategy'])->name('generate');
+        Route::post('/{plan}/forecast', [\App\Http\Controllers\CampaignArchitectController::class, 'updateForecast'])->name('forecast');
+        Route::post('/{plan}/export', [\App\Http\Controllers\CampaignArchitectController::class, 'export'])->name('export');
+    });
+
+    Route::prefix('api/campaign-architect')->name('api.campaign-architect.')->group(function () {
+        Route::get('/audience', [\App\Http\Controllers\CampaignArchitectController::class, 'getAudienceData'])->name('audience');
+        Route::get('/benchmarks', [\App\Http\Controllers\CampaignArchitectController::class, 'getBenchmarks'])->name('benchmarks');
+    });
+
     // AI Integrations
     Route::prefix('settings/ai-integrations')->name('settings.ai-integrations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AiIntegrationController::class, 'index'])->name('index');

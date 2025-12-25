@@ -5,6 +5,27 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] – AI Campaign Architect
+
+**Release date:** 2025-12-25
+
+### Added
+
+- **AI Campaign Architect Module:**
+  - New AI-powered campaign planning wizard for strategic email/SMS campaign creation.
+  - 4-step wizard flow: Business Context → Audience Selection → AI Strategy Generation → Forecast & Export.
+  - Business context inputs: industry, business model, campaign goal, AOV, margin, decision cycle.
+  - Multi-list audience selection with real-time subscriber statistics.
+  - AI-generated campaign strategy with message sequence, timing, and conditional logic.
+  - Interactive forecast dashboard with ROI projections and adjustable sliders.
+  - Campaign language selection (12 languages) for AI-generated content - allows creating campaigns in different language than UI.
+  - Export functionality to create messages as drafts or scheduled campaigns.
+  - Industry benchmark data for forecast calculations.
+  - New database tables: `campaign_plans`, `campaign_plan_steps`, `campaign_benchmarks`.
+  - New backend: `CampaignArchitectService`, `CampaignArchitectController`, models, and policies.
+  - Full Polish and English translations.
+  - Sidebar navigation with "AI" badge.
+
 ## [1.1.3] – SMS List Enhancements & UI Fixes
 
 **Release date:** 2025-12-25
