@@ -14,6 +14,10 @@ const props = defineProps({
     campaignGoals: Object,
     languages: Object,
     messageTypes: Object,
+    licensePlan: {
+        type: String,
+        default: "SILVER",
+    },
 });
 
 // Wizard state
@@ -748,6 +752,283 @@ const getMessageTypeIcon = (type) => {
                                 {{ $t("campaign_architect.strategy_summary") }}
                             </h3>
                             <p>{{ generatedPlan.strategy?.summary }}</p>
+                        </div>
+
+                        <!-- SILVER vs GOLD Comparison -->
+                        <div
+                            :class="[
+                                'rounded-xl border-2 p-6',
+                                licensePlan === 'GOLD'
+                                    ? 'border-amber-400 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20'
+                                    : 'border-indigo-300 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20',
+                            ]"
+                        >
+                            <!-- GOLD License Message -->
+                            <div
+                                v-if="licensePlan === 'GOLD'"
+                                class="flex items-start gap-4"
+                            >
+                                <div class="flex-shrink-0">
+                                    <span class="text-4xl">👑</span>
+                                </div>
+                                <div>
+                                    <h4
+                                        class="text-lg font-bold text-amber-700 dark:text-amber-400"
+                                    >
+                                        {{
+                                            $t(
+                                                "campaign_architect.gold_active_title"
+                                            )
+                                        }}
+                                    </h4>
+                                    <p
+                                        class="mt-2 text-gray-700 dark:text-gray-300"
+                                    >
+                                        {{
+                                            $t(
+                                                "campaign_architect.gold_active_desc"
+                                            )
+                                        }}
+                                    </p>
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-200 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                        >
+                                            ✅
+                                            {{
+                                                $t(
+                                                    "campaign_architect.feature_unlimited_campaigns"
+                                                )
+                                            }}
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-200 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                        >
+                                            ✅
+                                            {{
+                                                $t(
+                                                    "campaign_architect.feature_advanced_ai"
+                                                )
+                                            }}
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-200 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                        >
+                                            ✅
+                                            {{
+                                                $t(
+                                                    "campaign_architect.feature_ab_testing"
+                                                )
+                                            }}
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-200 px-3 py-1 text-sm font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                        >
+                                            ✅
+                                            {{
+                                                $t(
+                                                    "campaign_architect.feature_priority_support"
+                                                )
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SILVER License Upgrade Message -->
+                            <div
+                                v-else
+                                class="flex flex-col lg:flex-row lg:items-start lg:gap-6"
+                            >
+                                <div class="flex-1">
+                                    <div class="flex items-start gap-4">
+                                        <div class="flex-shrink-0">
+                                            <span class="text-4xl">🚀</span>
+                                        </div>
+                                        <div>
+                                            <h4
+                                                class="text-lg font-bold text-indigo-700 dark:text-indigo-400"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "campaign_architect.upgrade_title"
+                                                    )
+                                                }}
+                                            </h4>
+                                            <p
+                                                class="mt-2 text-gray-700 dark:text-gray-300"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "campaign_architect.upgrade_desc"
+                                                    )
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Features Comparison -->
+                                    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                                        <!-- SILVER Features -->
+                                        <div
+                                            class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800"
+                                        >
+                                            <h5
+                                                class="mb-3 flex items-center gap-2 font-semibold text-gray-700 dark:text-gray-300"
+                                            >
+                                                🥈 SILVER
+                                                <span
+                                                    class="text-xs text-gray-500"
+                                                    >({{
+                                                        $t(
+                                                            "campaign_architect.current_plan"
+                                                        )
+                                                    }})</span
+                                                >
+                                            </h5>
+                                            <ul class="space-y-2 text-sm">
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.silver_basic_ai"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.silver_3_campaigns"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+                                                >
+                                                    <span class="text-red-400"
+                                                        >✗</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.silver_no_ab"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-600 dark:text-gray-400"
+                                                >
+                                                    <span class="text-red-400"
+                                                        >✗</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.silver_no_advanced"
+                                                        )
+                                                    }}
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <!-- GOLD Features -->
+                                        <div
+                                            class="rounded-lg bg-gradient-to-br from-amber-100 to-yellow-100 p-4 ring-2 ring-amber-400 dark:from-amber-900/30 dark:to-yellow-900/30"
+                                        >
+                                            <h5
+                                                class="mb-3 flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-400"
+                                            >
+                                                👑 GOLD
+                                                <span
+                                                    class="ml-1 rounded bg-amber-500 px-2 py-0.5 text-xs font-bold text-white"
+                                                    >PRO</span
+                                                >
+                                            </h5>
+                                            <ul class="space-y-2 text-sm">
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.gold_advanced_ai"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.gold_unlimited"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.gold_ab_testing"
+                                                        )
+                                                    }}
+                                                </li>
+                                                <li
+                                                    class="flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                                                >
+                                                    <span class="text-green-500"
+                                                        >✓</span
+                                                    >
+                                                    {{
+                                                        $t(
+                                                            "campaign_architect.gold_priority"
+                                                        )
+                                                    }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Upgrade CTA -->
+                                <div class="mt-6 flex-shrink-0 lg:mt-0">
+                                    <Link
+                                        :href="route('license.index')"
+                                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 px-6 py-4 text-lg font-bold text-white shadow-lg transition-all hover:from-amber-600 hover:to-yellow-600 hover:shadow-xl"
+                                    >
+                                        👑
+                                        {{
+                                            $t(
+                                                "campaign_architect.upgrade_to_gold"
+                                            )
+                                        }}
+                                    </Link>
+                                    <p
+                                        class="mt-2 text-center text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            $t(
+                                                "campaign_architect.upgrade_price"
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Campaign Blueprint -->

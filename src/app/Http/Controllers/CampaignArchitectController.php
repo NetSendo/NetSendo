@@ -60,6 +60,10 @@ class CampaignArchitectController extends Controller
                 ];
             });
 
+        // Get current license plan
+        $licensePlan = \App\Models\Setting::where('key', 'license_plan')->first();
+        $currentPlan = $licensePlan ? $licensePlan->value : 'SILVER';
+
         return Inertia::render('CampaignArchitect/Index', [
             'plans' => $plans,
             'lists' => $lists,
@@ -68,6 +72,7 @@ class CampaignArchitectController extends Controller
             'campaignGoals' => CampaignPlan::getCampaignGoals(),
             'languages' => CampaignPlan::getLanguages(),
             'messageTypes' => CampaignPlanStep::getMessageTypes(),
+            'licensePlan' => $currentPlan,
         ]);
     }
 
@@ -122,10 +127,15 @@ class CampaignArchitectController extends Controller
 
         $plan->load('steps');
 
+        // Get current license plan
+        $licensePlan = \App\Models\Setting::where('key', 'license_plan')->first();
+        $currentPlan = $licensePlan ? $licensePlan->value : 'SILVER';
+
         return Inertia::render('CampaignArchitect/Show', [
             'plan' => $plan,
             'messageTypes' => CampaignPlanStep::getMessageTypes(),
             'conditionTriggers' => CampaignPlanStep::getConditionTriggers(),
+            'licensePlan' => $currentPlan,
         ]);
     }
 
