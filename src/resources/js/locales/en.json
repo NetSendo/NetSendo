@@ -2476,6 +2476,14 @@
         "polling_timeout": "Timeout. Enter license key manually or try again.",
         "enter_manually": "Enter key manually",
         "auto_activated_success": "License activated successfully!",
+        "check_status": "Check license status",
+        "checking_status": "Checking...",
+        "status_verified": "License verified successfully",
+        "status_deactivated": "License has been deactivated. Page will refresh...",
+        "status_check_failed": "Failed to check license status",
+        "status_invalid": "License is invalid or inactive",
+        "status_check_error": "Connection error with verification server",
+        "view_eula": "View End User License Agreement (EULA)",
         "plans": {
             "silver": {
                 "name": "SILVER",

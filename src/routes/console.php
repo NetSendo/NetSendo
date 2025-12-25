@@ -75,3 +75,10 @@ Schedule::command('netsendo:check-updates')
     ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/cron-updates.log'));
+
+// Weryfikacja licencji z serwerem zewnętrznym - raz dziennie o 6:00
+Schedule::command('license:verify --deactivate')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/license-verify.log'));
+

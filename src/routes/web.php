@@ -29,6 +29,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('/license/request-silver', [LicenseController::class, 'requestSilverLicense'])->name('license.request-silver');
     Route::post('/license/validate', [LicenseController::class, 'validateLicense'])->name('license.validate');
     Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
+    Route::post('/license/check-status', [LicenseController::class, 'checkLicenseStatus'])->name('license.check-status');
 
     // Version check routes
     Route::get('/api/version/check', [VersionController::class, 'check'])->name('api.version.check');

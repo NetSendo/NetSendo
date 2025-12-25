@@ -1303,6 +1303,14 @@
         "polling_timeout": "Upłynął czas oczekiwania. Wpisz klucz licencji ręcznie lub spróbuj ponownie.",
         "enter_manually": "Wolę wpisać klucz ręcznie",
         "auto_activated_success": "Licencja została automatycznie aktywowana!",
+        "check_status": "Sprawdź status licencji",
+        "checking_status": "Sprawdzanie...",
+        "status_verified": "Licencja zweryfikowana pomyślnie",
+        "status_deactivated": "Licencja została dezaktywowana. Strona zostanie odświeżona...",
+        "status_check_failed": "Nie udało się sprawdzić statusu licencji",
+        "status_invalid": "Licencja jest nieprawidłowa lub nieaktywna",
+        "status_check_error": "Błąd połączenia z serwerem weryfikacji",
+        "view_eula": "Przeczytaj umowę licencyjną (EULA)",
         "plans": {
             "silver": {
                 "name": "SILVER",

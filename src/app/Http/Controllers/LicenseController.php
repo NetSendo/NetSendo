@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\LicenseVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
@@ -45,7 +46,7 @@ class LicenseController extends Controller
 
         $domain = $request->getHost();
         $webhookUrl = config('netsendo.license_webhook_url');
-        
+
         try {
             $response = Http::timeout(30)->post($webhookUrl, [
                 'action' => 'request_license',
@@ -57,19 +58,19 @@ class LicenseController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Check if license key is returned directly
                 if (isset($data['license_key']) && !empty($data['license_key'])) {
                     // Auto-activate the license
                     $this->saveLicense($data['license_key'], 'SILVER', null);
-                    
+
                     return response()->json([
                         'success' => true,
                         'auto_activated' => true,
                         'message' => 'Licencja SILVER została automatycznie aktywowana!',
                     ]);
                 }
-                
+
                 // License will be sent later (e.g., via email)
                 return response()->json([
                     'success' => true,
@@ -82,7 +83,7 @@ class LicenseController extends Controller
                 'success' => false,
                 'message' => 'Nie udało się wysłać prośby. Spróbuj ponownie później.',
             ], 422);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -102,7 +103,7 @@ class LicenseController extends Controller
 
         $webhookUrl = config('netsendo.license_validate_webhook_url');
         $domain = $request->getHost();
-        
+
         try {
             $response = Http::timeout(30)->post($webhookUrl, [
                 'action' => 'validate_license',
@@ -113,7 +114,7 @@ class LicenseController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 return response()->json([
                     'valid' => $data['status'] === 'VALID_LIFETIME' || $data['status'] === 'VALID_GOLD',
                     'status' => $data['status'] ?? 'UNKNOWN',
@@ -127,7 +128,7 @@ class LicenseController extends Controller
                 'status' => 'INVALID',
                 'message' => 'Nie udało się zweryfikować licencji.',
             ], 422);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'valid' => false,
@@ -139,8 +140,9 @@ class LicenseController extends Controller
 
     /**
      * Activate license with provided key.
+     * Now validates license with external webhook BEFORE activation.
      */
-    public function activate(Request $request)
+    public function activate(Request $request, LicenseVerificationService $verificationService)
     {
         $request->validate([
             'license_key' => 'required|string|min:10',
@@ -148,7 +150,7 @@ class LicenseController extends Controller
 
         $key = trim($request->license_key);
         $parts = explode('-', $key);
-        
+
         if (count($parts) < 2) {
             return back()->withErrors(['license_key' => 'Nieprawidłowy format klucza licencji.']);
         }
@@ -159,13 +161,26 @@ class LicenseController extends Controller
             return back()->withErrors(['license_key' => 'Nieprawidłowy klucz licencji.']);
         }
 
-        $plan = strtoupper($decodedPlan);
-        
-        // Save the license directly (offline validation - no external webhook needed)
-        $this->saveLicense($key, $plan, null);
-        
-        // Save domain from current request
         $domain = $request->getHost();
+
+        // WERYFIKACJA LICENCJI PRZEZ WEBHOOK PRZED AKTYWACJĄ
+        // Użytkownik nie może wpisać dowolnego klucza - musi być zwalidowany
+        $verificationResult = $verificationService->verifyLicense($key, $domain);
+
+        if (!$verificationResult['valid']) {
+            return back()->withErrors([
+                'license_key' => $verificationResult['message'] ?? 'Nieprawidłowy klucz licencji lub licencja nieaktywna.'
+            ]);
+        }
+
+        // Używamy planu z odpowiedzi webhooka (bardziej wiarygodne)
+        $plan = $verificationResult['plan'] ?? strtoupper($decodedPlan);
+        $expiresAt = $verificationResult['expires_at'] ?? null;
+
+        // Zapisz licencję - teraz wiemy że jest zwalidowana
+        $this->saveLicense($key, $plan, $expiresAt);
+
+        // Zapisz domenę
         Setting::updateOrCreate(
             ['key' => 'license_domain'],
             ['value' => $domain]
@@ -210,7 +225,7 @@ class LicenseController extends Controller
 
         $isActive = $licenseKey !== null;
         $isExpired = false;
-        
+
         if ($licensePlan?->value === 'GOLD' && $licenseExpiresAt?->value) {
             $isExpired = now()->isAfter($licenseExpiresAt->value);
         }
@@ -224,6 +239,23 @@ class LicenseController extends Controller
     }
 
     /**
+     * Manual license status check (same as cron verification).
+     * Returns license status from external webhook.
+     */
+    public function checkLicenseStatus(LicenseVerificationService $verificationService)
+    {
+        $result = $verificationService->checkLicenseStatus();
+
+        // If license should be deactivated, do it
+        if (isset($result['should_deactivate']) && $result['should_deactivate']) {
+            $verificationService->deactivateLicense();
+            $result['deactivated'] = true;
+        }
+
+        return response()->json($result);
+    }
+
+    /**
      * Webhook endpoint for automatic license activation from external system.
      * Expects JSON array with license data:
      * [{"package": "SILVER", "licenseKey": "...", "domain": "...", "contact_email": "...", "is_active": true}]
@@ -232,7 +264,7 @@ class LicenseController extends Controller
     {
         // Get the payload - can be array or object
         $payload = $request->all();
-        
+
         // If it's an array with numeric keys, get the first item
         if (isset($payload[0])) {
             $licenseData = $payload[0];
