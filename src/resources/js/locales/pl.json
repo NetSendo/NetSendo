@@ -618,6 +618,63 @@
             "send_now": "Wyślij teraz",
             "schedule": "Zaplanuj wysyłkę",
             "activate": "Aktywuj (Zapisz)"
+        },
+        "ai_assistant": {
+            "title": "Asystent AI dla SMS",
+            "subtitle": "Wygeneruj treść SMS z pomocą AI",
+            "generate": "Generuj treść",
+            "generating": "Generuję...",
+            "select_model": "Model AI",
+            "no_models_available": "Brak skonfigurowanych integracji AI. Skonfiguruj je w Ustawieniach.",
+            "describe_content": "Opisz, co chcesz wygenerować",
+            "placeholder": "np. Promocja -30% na wszystkie produkty, wygasa dziś...",
+            "select_tone": "Wybierz ton",
+            "select_count": "Ile propozycji?",
+            "count_one": "1 propozycja",
+            "count_three": "3 propozycje",
+            "quick_prompts": "Szybkie pomysły",
+            "suggestions": "Propozycje",
+            "use_this": "Użyj tej treści",
+            "chars": "znaków",
+            "segments": "SMS",
+            "error_generating": "Wystąpił błąd podczas generowania treści.",
+            "tones": {
+                "casual": "Luźny",
+                "formal": "Formalny",
+                "persuasive": "Perswazyjny"
+            },
+            "prompts": {
+                "promo_reminder": "Przypomnienie o promocji",
+                "order_confirm": "Potwierdzenie zamówienia",
+                "event_notify": "Powiadomienie o wydarzeniu",
+                "discount_code": "Kod rabatowy"
+            },
+            "placeholders": {
+                "section_title": "Personalizacja (wstawki)",
+                "standard_title": "Pola standardowe (zawsze aktywne)",
+                "custom_title": "Pola niestandardowe (wybierz)",
+                "no_custom": "Brak pól niestandardowych."
+            },
+            "voice": {
+                "start": "Dyktuj głosowo",
+                "stop": "Zatrzymaj nagrywanie",
+                "listening": "Słucham..."
+            }
+        },
+        "preview": {
+            "title": "Podgląd z danymi",
+            "select_subscriber": "Wybierz odbiorcę do podglądu",
+            "no_subscriber": "Brak (surowe wstawki)",
+            "info": "Podgląd uwzględnia dane wybranego odbiorcy.",
+            "refresh": "Odśwież podgląd",
+            "search_placeholder": "Szukaj odbiorcy...",
+            "no_results": "Brak wyników"
+        },
+        "inserts": {
+            "title": "Wstawki",
+            "insert_variable": "Wstaw zmienną",
+            "standard": "Standardowe",
+            "custom": "Niestandardowe"
         }
     },
     "messages": {

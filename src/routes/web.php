@@ -100,6 +100,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('generate-message-content', [\App\Http\Controllers\TemplateAiController::class, 'generateMessageContent'])->name('message-content');
         Route::post('improve-text', [\App\Http\Controllers\TemplateAiController::class, 'improveText'])->name('improve');
         Route::post('generate-subject', [\App\Http\Controllers\TemplateAiController::class, 'generateSubject'])->name('subject');
+        Route::post('generate-sms-content', [\App\Http\Controllers\TemplateAiController::class, 'generateSmsContent'])->name('sms-content');
         Route::post('generate-product', [\App\Http\Controllers\TemplateAiController::class, 'generateProductDescription'])->name('product');
         Route::post('suggest-improvements', [\App\Http\Controllers\TemplateAiController::class, 'suggestImprovements'])->name('suggestions');
         Route::get('check', [\App\Http\Controllers\TemplateAiController::class, 'checkAvailability'])->name('check');
@@ -123,6 +124,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');
+    Route::post('sms/preview', [\App\Http\Controllers\SmsController::class, 'preview'])->name('sms.preview');
+    Route::post('sms/preview-subscribers', [\App\Http\Controllers\SmsController::class, 'previewSubscribers'])->name('sms.preview-subscribers');
     Route::resource('sms', \App\Http\Controllers\SmsController::class);
     Route::resource('external-pages', \App\Http\Controllers\Automation\ExternalPageController::class);
 

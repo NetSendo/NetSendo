@@ -616,6 +616,63 @@
             "send_now": "Send Now",
             "schedule": "Schedule",
             "activate": "Activate (Save)"
+        },
+        "ai_assistant": {
+            "title": "SMS AI Assistant",
+            "subtitle": "Generate SMS content with AI",
+            "generate": "Generate content",
+            "generating": "Generating...",
+            "select_model": "AI Model",
+            "no_models_available": "No AI integrations configured. Configure them in Settings.",
+            "describe_content": "Describe what you want to generate",
+            "placeholder": "e.g. Promo -30% on all products, expires today...",
+            "select_tone": "Select tone",
+            "select_count": "How many suggestions?",
+            "count_one": "1 suggestion",
+            "count_three": "3 suggestions",
+            "quick_prompts": "Quick ideas",
+            "suggestions": "Suggestions",
+            "use_this": "Use this content",
+            "chars": "chars",
+            "segments": "SMS",
+            "error_generating": "An error occurred while generating content.",
+            "tones": {
+                "casual": "Casual",
+                "formal": "Formal",
+                "persuasive": "Persuasive"
+            },
+            "prompts": {
+                "promo_reminder": "Promotion reminder",
+                "order_confirm": "Order confirmation",
+                "event_notify": "Event notification",
+                "discount_code": "Discount code"
+            },
+            "placeholders": {
+                "section_title": "Personalization (placeholders)",
+                "standard_title": "Standard fields (always active)",
+                "custom_title": "Custom fields (select)",
+                "no_custom": "No custom fields."
+            },
+            "voice": {
+                "start": "Dictate voice",
+                "stop": "Stop recording",
+                "listening": "Listening..."
+            }
+        },
+        "preview": {
+            "title": "Preview with Data",
+            "select_subscriber": "Select subscriber for preview",
+            "no_subscriber": "None (raw placeholders)",
+            "info": "Preview uses selected subscriber's data.",
+            "refresh": "Refresh preview",
+            "search_placeholder": "Search subscriber...",
+            "no_results": "No results"
+        },
+        "inserts": {
+            "title": "Inserts",
+            "insert_variable": "Insert variable",
+            "standard": "Standard",
+            "custom": "Custom"
         }
     },
     "messages": {

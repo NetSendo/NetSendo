@@ -238,4 +238,85 @@ class SmsController extends Controller
             'message' => $message->is_active ? 'SMS została aktywowana.' : 'SMS została dezaktywowana.'
         ]);
     }
+
+    /**
+     * Get subscribers from selected lists for preview selection
+     */
+    public function previewSubscribers(Request $request)
+    {
+        $validated = $request->validate([
+            'contact_list_ids' => 'nullable|array',
+            'contact_list_ids.*' => 'exists:contact_lists,id',
+            'search' => 'nullable|string|max:100',
+        ]);
+
+        $listIds = $validated['contact_list_ids'] ?? [];
+        $search = $validated['search'] ?? null;
+
+        // Get subscribers from selected lists
+        $query = \App\Models\Subscriber::query()
+            ->where('user_id', auth()->id())
+            ->whereNotNull('phone') // SMS requires phone number
+            ->where('phone', '!=', '');
+
+        if (!empty($listIds)) {
+            $query->whereHas('contactLists', function ($q) use ($listIds) {
+                $q->whereIn('contact_lists.id', $listIds);
+            });
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $subscribers = $query
+            ->select(['id', 'first_name', 'last_name', 'email', 'phone'])
+            ->orderBy('first_name')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'subscribers' => $subscribers,
+        ]);
+    }
+
+    /**
+     * Generate preview content with placeholders substituted
+     */
+    public function preview(Request $request, \App\Services\PlaceholderService $placeholderService)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string',
+            'subscriber_id' => 'nullable|exists:subscribers,id',
+        ]);
+
+        try {
+            $content = $validated['content'];
+            $subscriberId = $validated['subscriber_id'] ?? null;
+
+            if ($subscriberId) {
+                $subscriber = \App\Models\Subscriber::find($subscriberId);
+
+                // Security: verify subscriber belongs to user
+                if ($subscriber && $subscriber->user_id === auth()->id()) {
+                    $content = $placeholderService->replacePlaceholders($content, $subscriber, [
+                        'unsubscribe_link' => $placeholderService->generateUnsubscribeLink($subscriber),
+                        'unsubscribe_url' => $placeholderService->generateUnsubscribeLink($subscriber),
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'content' => $content,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

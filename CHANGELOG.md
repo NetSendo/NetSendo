@@ -5,7 +5,34 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.1.1] – Short Description
+## [Unreleased]
+
+### Added
+
+- **SMS AI Assistant:**
+
+  - Added new AI generation feature for SMS content (similar to email assistant).
+  - Support for tone selection (Casual, Formal, Persuasive) and multiple suggestions (1 or 3).
+  - Includes SMS-specific character counting and GSM/Unicode detection.
+  - New `SmsAiAssistant` Vue component integrated into SMS creation page.
+
+- **SMS Preview with Data:**
+
+  - Added "Preview with Data" feature to SMS editor.
+  - Allows previewing content with real subscriber data (replacing `[[first_name]]`, etc.).
+  - Added dynamic placeholder replacement API (`POST /sms/preview`).
+  - Added subscriber search for preview context.
+
+- **Backend AI Extensions:**
+  - New `TemplateAiService::generateSmsContent()` method optimized for plain-text SMS messages.
+  - New API endpoint `POST /api/templates/ai/generate-sms-content`.
+
+### Improved
+
+- **SMS Editor UX:**
+  - Integrated "Insert Variable" dropdown for quick placeholder insertion.
+  - Enhanced phone mockup preview with dynamic data substitution.
+  - Added full Polish and English translations for all new SMS features.
 
 **Release date:** 2025-12-24
 

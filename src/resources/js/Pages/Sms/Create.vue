@@ -1,13 +1,15 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
+import axios from "axios";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import InputError from "@/Components/InputError.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import ActionMessage from "@/Components/ActionMessage.vue";
+import SmsAiAssistant from "@/Components/SmsAiAssistant.vue";
 
 const props = defineProps({
     sms: Object,
@@ -63,6 +65,118 @@ const segments = computed(() => {
 });
 
 const isUnicode = computed(() => /[^\x00-\x7F]/.test(form.content));
+
+// AI Assistant state
+const showSmsAiPanel = ref(false);
+
+const handleAiContent = (content) => {
+    form.content = content;
+    showSmsAiPanel.value = false;
+};
+
+// Preview with data state
+const previewSearch = ref("");
+const previewSubscriber = ref(null);
+const previewSubscribers = ref([]);
+const previewContent = ref("");
+const isPreviewLoading = ref(false);
+
+// Fetch subscribers for preview
+const fetchPreviewSubscribers = async () => {
+    if (!form.list_id) {
+        previewSubscribers.value = [];
+        return;
+    }
+
+    try {
+        const response = await axios.post(route("sms.preview-subscribers"), {
+            contact_list_ids: [form.list_id],
+            search: previewSearch.value,
+        });
+        previewSubscribers.value = response.data.subscribers || [];
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+// Fetch preview content
+const fetchPreviewContent = async () => {
+    if (!previewSubscriber.value) {
+        previewContent.value = "";
+        return;
+    }
+
+    if (!form.content) return;
+
+    isPreviewLoading.value = true;
+    try {
+        const response = await axios.post(route("sms.preview"), {
+            content: form.content,
+            subscriber_id: previewSubscriber.value.id,
+        });
+        previewContent.value = response.data.content;
+    } catch (e) {
+        console.error(e);
+        previewContent.value = "";
+    } finally {
+        isPreviewLoading.value = false;
+    }
+};
+
+// Watch for changes
+watch(previewSubscriber, () => {
+    fetchPreviewContent();
+});
+
+watch(
+    () => form.list_id,
+    () => {
+        if (form.list_id) {
+            fetchPreviewSubscribers();
+        } else {
+            previewSubscribers.value = [];
+        }
+    }
+);
+
+// Insert placeholder into content
+const insertPlaceholder = (placeholder) => {
+    const textarea = document.getElementById("content");
+    if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = form.content.substring(0, start);
+        const after = form.content.substring(end);
+        form.content = before + placeholder + after;
+        // Reset cursor position
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(
+                start + placeholder.length,
+                start + placeholder.length
+            );
+        }, 0);
+    } else {
+        form.content += placeholder;
+    }
+};
+
+// Placeholders state
+const showPlaceholdersDropdown = ref(false);
+const placeholders = ref({ standard: [], custom: [] });
+
+onMounted(async () => {
+    try {
+        const response = await axios.get(route("api.placeholders"));
+        placeholders.value = response.data;
+    } catch (e) {
+        console.error("Failed to load placeholders:", e);
+    }
+
+    if (form.list_id) {
+        fetchPreviewSubscribers();
+    }
+});
 
 const submit = (targetStatus = null) => {
     if (targetStatus) {
@@ -212,6 +326,127 @@ const submit = (targetStatus = null) => {
                                     :message="form.errors.content"
                                     class="mt-2"
                                 />
+
+                                <!-- Insert Placeholder & AI buttons -->
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <!-- Insert Placeholder dropdown -->
+                                    <div class="relative">
+                                        <button
+                                            type="button"
+                                            @click="
+                                                showPlaceholdersDropdown =
+                                                    !showPlaceholdersDropdown
+                                            "
+                                            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                        >
+                                            <svg
+                                                class="h-4 w-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                                />
+                                            </svg>
+                                            {{
+                                                $t(
+                                                    "sms.inserts.insert_variable"
+                                                )
+                                            }}
+                                        </button>
+                                        <div
+                                            v-if="showPlaceholdersDropdown"
+                                            class="absolute left-0 z-10 mt-1 w-56 rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                                        >
+                                            <div class="p-2">
+                                                <p
+                                                    class="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "sms.inserts.standard"
+                                                        )
+                                                    }}
+                                                </p>
+                                                <button
+                                                    v-for="p in placeholders.standard"
+                                                    :key="p.name"
+                                                    type="button"
+                                                    @click="
+                                                        insertPlaceholder(
+                                                            p.placeholder
+                                                        );
+                                                        showPlaceholdersDropdown = false;
+                                                    "
+                                                    class="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                >
+                                                    {{ p.placeholder }} -
+                                                    {{ p.label }}
+                                                </button>
+                                                <template
+                                                    v-if="
+                                                        placeholders.custom
+                                                            ?.length
+                                                    "
+                                                >
+                                                    <hr
+                                                        class="my-2 border-slate-200 dark:border-slate-700"
+                                                    />
+                                                    <p
+                                                        class="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                                    >
+                                                        {{
+                                                            $t(
+                                                                "sms.inserts.custom"
+                                                            )
+                                                        }}
+                                                    </p>
+                                                    <button
+                                                        v-for="p in placeholders.custom"
+                                                        :key="p.name"
+                                                        type="button"
+                                                        @click="
+                                                            insertPlaceholder(
+                                                                p.placeholder
+                                                            );
+                                                            showPlaceholdersDropdown = false;
+                                                        "
+                                                        class="block w-full rounded px-2 py-1 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                                                    >
+                                                        {{ p.placeholder }} -
+                                                        {{ p.label }}
+                                                    </button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- AI Assistant button -->
+                                    <button
+                                        type="button"
+                                        @click="showSmsAiPanel = true"
+                                        class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-2 text-sm font-medium text-white hover:from-emerald-600 hover:to-teal-700"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M13 10V3L4 14h7v7l9-11h-7z"
+                                            />
+                                        </svg>
+                                        {{ $t("sms.ai_assistant.generate") }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -556,13 +791,77 @@ const submit = (targetStatus = null) => {
                                 <div
                                     class="self-start max-w-[85%] rounded-2xl rounded-tl-none bg-slate-200 dark:bg-slate-700 p-3 text-sm text-slate-800 dark:text-slate-200 shadow-sm"
                                 >
-                                    {{ form.content || "..." }}
+                                    <span
+                                        v-if="isPreviewLoading"
+                                        class="animate-pulse"
+                                        >...</span
+                                    >
+                                    <span v-else>{{
+                                        previewSubscriber && previewContent
+                                            ? previewContent
+                                            : form.content || "..."
+                                    }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Preview with Data -->
+                    <div
+                        class="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                        <h4
+                            class="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ $t("sms.preview.title") }}
+                        </h4>
+                        <p
+                            class="mb-2 text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{ $t("sms.preview.info") }}
+                        </p>
+                        <input
+                            v-model="previewSearch"
+                            type="text"
+                            :placeholder="$t('sms.preview.search_placeholder')"
+                            class="mb-2 w-full rounded border border-slate-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                            @input="fetchPreviewSubscribers"
+                        />
+                        <select
+                            v-model="previewSubscriber"
+                            class="w-full rounded border border-slate-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                        >
+                            <option :value="null">
+                                {{ $t("sms.preview.no_subscriber") }}
+                            </option>
+                            <option
+                                v-for="sub in previewSubscribers"
+                                :key="sub.id"
+                                :value="sub"
+                            >
+                                {{ sub.first_name }} {{ sub.last_name }} ({{
+                                    sub.phone
+                                }})
+                            </option>
+                        </select>
+                        <button
+                            v-if="previewSubscriber"
+                            type="button"
+                            @click="fetchPreviewContent"
+                            class="mt-2 w-full rounded bg-slate-600 px-2 py-1 text-xs text-white hover:bg-slate-700"
+                        >
+                            {{ $t("sms.preview.refresh") }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- SMS AI Assistant Panel -->
+        <SmsAiAssistant
+            v-if="showSmsAiPanel"
+            @close="showSmsAiPanel = false"
+            @use-content="handleAiContent"
+        />
     </AuthenticatedLayout>
 </template>

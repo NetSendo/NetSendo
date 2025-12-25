@@ -24,7 +24,7 @@ class TemplateAiService
                 ->where('is_active', true)
                 ->first();
         }
-        
+
         return $this->aiService->getDefaultIntegration();
     }
 
@@ -40,8 +40,8 @@ class TemplateAiService
      * Generate content for a specific block type
      */
     public function generateContent(
-        string $prompt, 
-        string $blockType, 
+        string $prompt,
+        string $blockType,
         string $tone = 'casual',
         ?int $integrationId = null,
         ?string $modelId = null
@@ -97,7 +97,7 @@ PROMPT;
      * Generate entire email section
      */
     public function generateSection(
-        string $description, 
+        string $description,
         string $sectionType = 'promotional',
         ?int $integrationId = null,
         ?string $modelId = null
@@ -126,7 +126,7 @@ Odpowiedz w formacie JSON z następującą strukturą:
     "headline": "Krótki nagłówek sekcji",
     "text": "Główna treść w HTML (krótkie paragrafy)",
     "buttonText": "Tekst przycisku CTA",
-    "buttonUrl": "#" 
+    "buttonUrl": "#"
 }
 
 Odpowiedź TYLKO JSON, bez żadnych dodatkowych wyjaśnień.
@@ -194,7 +194,7 @@ PROMPT;
     /**
      * Build placeholder section for AI prompts
      * Includes standard placeholders and any custom ones provided
-     * 
+     *
      * @param array $customPlaceholders Custom placeholders selected by user
      * @return string Formatted placeholder section for prompt
      */
@@ -205,7 +205,7 @@ PROMPT;
         $lines[] = "   NIGDY nie używaj nawiasów klamrowych {}, tylko podwójne kwadratowe [[]]!";
         $lines[] = "";
         $lines[] = "   DOSTĘPNE WSTAWKI:";
-        
+
         // Standard placeholders (always available)
         $standardPlaceholders = [
             ['name' => 'first_name', 'label' => 'Imię', 'description' => 'Imię odbiorcy'],
@@ -214,12 +214,12 @@ PROMPT;
             ['name' => 'phone', 'label' => 'Telefon', 'description' => 'Numer telefonu'],
             ['name' => 'unsubscribe_link', 'label' => 'Link wypisania', 'description' => 'Link do wypisania z listy'],
         ];
-        
+
         foreach ($standardPlaceholders as $p) {
             $desc = $p['description'] ?? $p['label'];
             $lines[] = "   - [[{$p['name']}]] - {$desc}";
         }
-        
+
         // Add custom placeholders if any
         if (!empty($customPlaceholders)) {
             $lines[] = "";
@@ -229,13 +229,13 @@ PROMPT;
                 $lines[] = "   - [[{$p['name']}]] - {$desc}";
             }
         }
-        
+
         return implode("\n", $lines);
     }
 
     /**
      * Generate message content with two modes: text fragment or full template
-     * 
+     *
      * @param string $prompt User's request
      * @param string $mode 'text' for fragment, 'template' for full email
      * @param string|null $currentContent Current HTML content for context
@@ -247,9 +247,9 @@ PROMPT;
      * @return string Generated HTML content
      */
     public function generateMessageContent(
-        string $prompt, 
-        string $mode = 'text', 
-        ?string $currentContent = null, 
+        string $prompt,
+        string $mode = 'text',
+        ?string $currentContent = null,
         string $tone = 'casual',
         bool $withFormatting = true,
         ?int $integrationId = null,
@@ -323,18 +323,18 @@ ZASADY PROJEKTOWANIA:
    - Tekst 16-18px na desktop, 18-20px na mobile (większa czcionka!)
    - Przyciski CTA min. 48px wysokości (łatwe klikanie na mobile)
    - Obrazy max-width: 100% i height: auto
-   
+
 3. DARK MODE:
    - Używaj kolorów, które działają w obu trybach
    - Preferuj ciemniejsze tła (#1a1a2e, #16213e) z jasnym tekstem
    - Lub jasne tła z ciemnym tekstem (kontrast min. 4.5:1)
-   
+
 4. KOMPATYBILNOŚĆ Z KLIENTAMI POCZTY:
    - Wszystkie style inline (style="...")
    - Używaj table-based layout dla starszych Outlooka
    - Unikaj: position, float, flexbox, grid (słabe wsparcie)
    - Preferuj: tables, inline-block, margin, padding
-   
+
 5. STRUKTURA SZABLONU:
    - Nagłówek z logo lub tytułem
    - Treść główna z akapitami
@@ -345,10 +345,10 @@ ZASADY PROJEKTOWANIA:
    - Fonty web-safe: Arial, Helvetica, Georgia, Times New Roman
    - Line-height: 1.5-1.6 dla czytelności
    - Nagłówki: font-weight: bold
-   
+
 7. PERSONALIZACJA (wstawki):
 {$placeholderSection}
-   
+
 8. ZAWSZE generuj KOMPLETNY, PEŁNY szablon - bez obcinania treści.
 
 {$htmlTagsGuide}
@@ -356,7 +356,7 @@ ZASADY PROJEKTOWANIA:
 PRZYKŁAD RESPONSYWNEGO PRZYCISKU CTA:
 <a href="#" style="display:inline-block;padding:16px 32px;background:#4F46E5;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:18px;">Tekst przycisku</a>
 
-WAŻNE: 
+WAŻNE:
 - Odpowiadaj TYLKO kodem HTML szablonu, bez żadnych komentarzy czy wyjaśnień.
 - Wygeneruj CAŁĄ treść od początku do końca, nie przerywaj w połowie.
 - Jeśli modyfikujesz istniejącą treść, zachowaj jej strukturę i dodaj/zmień tylko to, o co prosi użytkownik.
@@ -405,8 +405,142 @@ PROMPT;
     }
 
     /**
+     * Generate SMS content with AI
+     *
+     * @param string $prompt User's request/description
+     * @param int $count Number of suggestions to generate (1 or 3)
+     * @param string $tone Tone of the content
+     * @param int|null $integrationId Optional specific integration to use
+     * @param string|null $modelId Optional specific model to use
+     * @param array $placeholders Available placeholders for personalization
+     * @return array Array of generated SMS content suggestions
+     */
+    public function generateSmsContent(
+        string $prompt,
+        int $count = 1,
+        string $tone = 'casual',
+        ?int $integrationId = null,
+        ?string $modelId = null,
+        array $placeholders = []
+    ): array {
+        $integration = $this->getIntegration($integrationId);
+
+        if (!$integration) {
+            throw new \Exception('Brak skonfigurowanej integracji AI. Skonfiguruj ją w Ustawieniach.');
+        }
+
+        $toneInstructions = match ($tone) {
+            'formal' => 'Pisz w stylu formalnym, profesjonalnym i uprzejmym.',
+            'casual' => 'Pisz w stylu luźnym, przyjaznym i bezpośrednim.',
+            'persuasive' => 'Pisz w stylu perswazyjnym, zachęcającym do działania.',
+            default => 'Pisz w stylu neutralnym.',
+        };
+
+        // Build placeholder section for SMS
+        $placeholderSection = $this->buildSmsPlaceholderSection($placeholders);
+
+        $countInstruction = $count > 1
+            ? "Wygeneruj DOKŁADNIE {$count} RÓŻNE propozycje treści SMS."
+            : "Wygeneruj 1 propozycję treści SMS.";
+
+        $systemPrompt = <<<PROMPT
+Jesteś ekspertem od SMS marketingu. Tworzysz krótkie, skuteczne wiadomości SMS.
+
+ZADANIE: {$countInstruction}
+
+ZASADY DLA KAŻDEJ PROPOZYCJI:
+1. {$toneInstructions}
+2. MAKSYMALNIE 160 znaków (jeden segment SMS) - to BEZWZGLĘDNY limit!
+3. Treść MUSI być czystym tekstem - BEZ HTML, BEZ formatowania
+4. Pisz po polsku (chyba że użytkownik poprosi o inny język)
+5. Krótko i na temat - każde słowo musi mieć znaczenie
+6. Zachęć do działania (CTA) jeśli pasuje do kontekstu
+7. Unikaj znaków specjalnych (emotikony zwiększają koszt SMS)
+
+{$placeholderSection}
+
+FORMAT ODPOWIEDZI:
+Zwróć TYLKO tablicę JSON z propozycjami - bez żadnego dodatkowego tekstu.
+
+Dla 1 propozycji:
+["Treść wiadomości SMS tutaj"]
+
+Dla 3 propozycji:
+["Pierwsza propozycja SMS", "Druga propozycja SMS", "Trzecia propozycja SMS"]
+
+WAŻNE: Każda propozycja to osobny string w tablicy. Odpowiadaj TYLKO JSON array.
+PROMPT;
+
+        $fullPrompt = $systemPrompt . "\n\nOpis od użytkownika: " . $prompt;
+
+        $response = $this->aiService->generateContent($fullPrompt, $integration, [
+            'max_tokens' => $integration->max_tokens_small ?: 8000,
+            'temperature' => 0.8,
+            'model' => $modelId,
+        ]);
+
+        $results = $this->extractJsonArray($response);
+
+        if (!empty($results) && is_array($results)) {
+            // Ensure we have strings in the array
+            return array_filter(array_map(function($item) {
+                if (is_string($item)) {
+                    return trim($item);
+                }
+                if (is_array($item) && isset($item['content'])) {
+                    return trim($item['content']);
+                }
+                return null;
+            }, $results));
+        }
+
+        // Fallback: return the raw response as single suggestion
+        return [trim(strip_tags($response))];
+    }
+
+    /**
+     * Build placeholder section for SMS AI prompts
+     * Similar to email but adapted for SMS context
+     *
+     * @param array $customPlaceholders Custom placeholders selected by user
+     * @return string Formatted placeholder section for prompt
+     */
+    protected function buildSmsPlaceholderSection(array $customPlaceholders = []): string
+    {
+        $lines = [];
+        $lines[] = "PERSONALIZACJA (wstawki):";
+        $lines[] = "   Używaj wstawek w formacie [[nazwa_pola]] do personalizacji.";
+        $lines[] = "   NIGDY nie używaj nawiasów klamrowych {}, tylko podwójne kwadratowe [[]]!";
+        $lines[] = "";
+        $lines[] = "   DOSTĘPNE WSTAWKI:";
+
+        // Standard placeholders for SMS
+        $standardPlaceholders = [
+            ['name' => 'first_name', 'description' => 'Imię odbiorcy'],
+            ['name' => 'last_name', 'description' => 'Nazwisko odbiorcy'],
+            ['name' => 'phone', 'description' => 'Numer telefonu'],
+        ];
+
+        foreach ($standardPlaceholders as $p) {
+            $lines[] = "   - [[{$p['name']}]] - {$p['description']}";
+        }
+
+        // Add custom placeholders if any
+        if (!empty($customPlaceholders)) {
+            $lines[] = "";
+            $lines[] = "   POLA NIESTANDARDOWE:";
+            foreach ($customPlaceholders as $p) {
+                $desc = $p['description'] ?? $p['label'] ?? $p['name'];
+                $lines[] = "   - [[{$p['name']}]] - {$desc}";
+            }
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * Generate email subject lines with preheaders based on content
-     * 
+     *
      * @param string $emailContent Email HTML content
      * @param int $count Number of suggestions
      * @param string|null $userHint Optional user hint/requirements for the subject
@@ -415,8 +549,8 @@ PROMPT;
      * @return array Array of objects with 'subject' and 'preheader' fields
      */
     public function generateSubjectLine(
-        string $emailContent, 
-        int $count = 3, 
+        string $emailContent,
+        int $count = 3,
         ?string $userHint = null,
         ?int $integrationId = null,
         ?string $modelId = null
@@ -627,20 +761,20 @@ PROMPT;
         $cleanResponse = preg_replace('/```(?:json)?\s*/i', '', $response);
         $cleanResponse = preg_replace('/```\s*/i', '', $cleanResponse);
         $cleanResponse = trim($cleanResponse);
-        
+
         \Log::info('extractJsonArray attempting parse', [
             'original_length' => strlen($response),
             'cleaned_length' => strlen($cleanResponse),
             'first_100_chars' => substr($cleanResponse, 0, 100),
         ]);
-        
+
         // First try: direct json_decode on cleaned response
         $json = json_decode($cleanResponse, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
             \Log::info('extractJsonArray direct decode success', ['count' => count($json)]);
             return $json;
         }
-        
+
         // Second try: find first [ and corresponding ]
         $startPos = strpos($cleanResponse, '[');
         if ($startPos !== false) {
@@ -654,11 +788,11 @@ PROMPT;
                     break;
                 }
             }
-            
+
             if ($endPos !== null) {
                 $jsonStr = substr($cleanResponse, $startPos, $endPos - $startPos + 1);
                 \Log::info('extractJsonArray extracted json string', ['jsonStr' => $jsonStr]);
-                
+
                 $json = json_decode($jsonStr, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
                     \Log::info('extractJsonArray bracket matching success', ['count' => count($json)]);
