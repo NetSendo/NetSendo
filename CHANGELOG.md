@@ -5,6 +5,35 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.3] – SMS List Enhancements & UI Fixes
+
+**Release date:** 2025-12-25
+
+### Added
+
+- **SMS List Advanced Settings:**
+  - Added Integration settings tab with API key generation and webhook configuration.
+  - Added CRON settings tab with custom schedule configuration per SMS list.
+  - Added Advanced settings tab with co-registration (parent list sync) and limits.
+  - New routes: `sms-lists.generate-api-key` and `sms-lists.test-webhook`.
+  - Expanded `SmsListController` with `generateApiKey()` and `testWebhook()` methods.
+  - Full Polish and English translations for all new SMS list settings.
+
+### Improved
+
+- **SMS Campaign List Display:**
+
+  - Added subscriber count display in the "Audience" column of SMS campaigns list (matching email campaigns behavior).
+  - Added `recipients_count` field to `SmsController::index()` response.
+
+- **SMS Campaign Creation:**
+  - Improved list selection indicator to show "X selected of Y lists" format for better clarity.
+
+### Fixed
+
+- **Visibility Filter:**
+  - Added visibility filter (public/private) support to SMS list index, matching mailing list functionality.
+
 ## [1.1.2] – Notification System & Translations
 
 **Release date:** 2025-12-25

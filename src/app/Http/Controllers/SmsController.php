@@ -42,6 +42,7 @@ class SmsController extends Controller
                 'status' => $message->status, // draft, scheduled, sent
                 'created_at' => DateHelper::formatForUser($message->created_at),
                 'list_name' => $message->contactLists->first()->name ?? '-',
+                'recipients_count' => $message->contactLists->first()?->subscribers()->count() ?? 0,
             ]);
 
         // Get all lists (both email and SMS) for SMS campaigns

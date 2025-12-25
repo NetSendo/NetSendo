@@ -327,7 +327,21 @@ const toggleActive = async (message) => {
                                 </span>
                             </td>
                             <td class="px-6 py-4">
-                                {{ message.list_name }}
+                                <div class="flex flex-col">
+                                    <span
+                                        class="font-medium text-slate-900 dark:text-white"
+                                        >{{ message.list_name }}</span
+                                    >
+                                    <span
+                                        class="text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            message.recipients_count?.toLocaleString() ||
+                                            0
+                                        }}
+                                        {{ $t("messages.recipients") }}
+                                    </span>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <!-- Queue/Autoresponder: show active/inactive status -->

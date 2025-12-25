@@ -29,6 +29,14 @@ class SmsListController extends Controller
             });
         }
 
+        if ($request->filled('visibility')) {
+            if ($request->visibility === 'public') {
+                $query->where('is_public', true);
+            } elseif ($request->visibility === 'private') {
+                $query->where('is_public', false);
+            }
+        }
+
         return Inertia::render('SmsList/Index', [
             'lists' => $query->latest()
                 ->paginate(12)
@@ -42,7 +50,7 @@ class SmsListController extends Controller
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
                 ])->withQueryString(),
-            'filters' => $request->only(['search', 'group_id', 'tag_id']),
+            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
             'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
             'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
         ]);
@@ -71,7 +79,7 @@ class SmsListController extends Controller
         $validated['type'] = 'sms';
 
         $list = auth()->user()->contactLists()->create($validated);
-        
+
         if (isset($validated['tags'])) {
             $list->tags()->sync($validated['tags']);
         }
@@ -86,6 +94,12 @@ class SmsListController extends Controller
             abort(403);
         }
 
+        // Get other SMS lists for co-registration (exclude current list)
+        $otherLists = auth()->user()->contactLists()
+            ->sms()
+            ->where('id', '!=', $smsList->id)
+            ->get(['id', 'name']);
+
         return Inertia::render('SmsList/Edit', [
             'list' => [
                 'id' => $smsList->id,
@@ -94,9 +108,22 @@ class SmsListController extends Controller
                 'contact_list_group_id' => $smsList->contact_list_group_id,
                 'is_public' => $smsList->is_public,
                 'tags' => $smsList->tags->pluck('id'),
+                'settings' => $smsList->settings ?? [],
+                'cron_settings' => $smsList->cronSettings ?? null,
+                // Integration settings
+                'api_key' => $smsList->api_key,
+                'webhook_url' => $smsList->webhook_url,
+                'webhook_events' => $smsList->webhook_events ?? [],
+                // Advanced settings
+                'parent_list_id' => $smsList->parent_list_id,
+                'sync_settings' => $smsList->sync_settings ?? [],
+                'max_subscribers' => $smsList->max_subscribers ?? 0,
+                'signups_blocked' => $smsList->signups_blocked ?? false,
             ],
             'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
             'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
+            'otherLists' => $otherLists,
+            'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
         ]);
     }
 
@@ -113,6 +140,26 @@ class SmsListController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
             'is_public' => 'boolean',
+
+            // Settings
+            'settings' => 'nullable|array',
+            'settings.cron' => 'nullable|array',
+            'settings.cron.use_custom' => 'boolean',
+            'settings.cron.volume_per_minute' => 'nullable|integer|min:1|max:10000',
+            'settings.cron.schedule' => 'nullable|array',
+
+            // Integration
+            'webhook_url' => 'nullable|url|max:500',
+            'webhook_events' => 'nullable|array',
+            'webhook_events.*' => 'string|in:subscribe,unsubscribe,update',
+
+            // Advanced
+            'parent_list_id' => 'nullable|exists:contact_lists,id',
+            'sync_settings' => 'nullable|array',
+            'sync_settings.sync_on_subscribe' => 'boolean',
+            'sync_settings.sync_on_unsubscribe' => 'boolean',
+            'max_subscribers' => 'nullable|integer|min:0',
+            'signups_blocked' => 'boolean',
         ]);
 
         $smsList->update($validated);
@@ -145,7 +192,7 @@ class SmsListController extends Controller
                 $subscriberIds = $smsList->subscribers()->pluck('subscribers.id')->toArray();
                 $smsList->subscribers()->detach($subscriberIds);
                 $targetList->subscribers()->attach($subscriberIds, ['status' => 'active', 'subscribed_at' => now()]);
-                
+
             } elseif ($request->boolean('force_delete')) {
                 $smsList->subscribers()->delete();
             } else {
@@ -157,5 +204,54 @@ class SmsListController extends Controller
 
         return redirect()->route('sms-lists.index')
             ->with('success', 'Lista SMS została usunięta.');
+    }
+
+    /**
+     * Generate a new API key for the SMS list
+     */
+    public function generateApiKey(ContactList $smsList)
+    {
+        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        $smsList->generateApiKey();
+
+        return back()->with('success', 'Nowy klucz API został wygenerowany.');
+    }
+
+    /**
+     * Test webhook configuration
+     */
+    public function testWebhook(ContactList $smsList)
+    {
+        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if (empty($smsList->webhook_url)) {
+            return back()->with('error', 'Nie skonfigurowano URL webhooka.');
+        }
+
+        $testData = [
+            'phone' => '+48123456789',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+        ];
+
+        // Temporarily enable 'test' event
+        $originalEvents = $smsList->webhook_events;
+        $smsList->webhook_events = ['test'];
+
+        $success = $smsList->triggerWebhook('test', $testData);
+
+        // Restore original events
+        $smsList->webhook_events = $originalEvents;
+
+        if ($success) {
+            return back()->with('success', 'Testowy webhook został wysłany pomyślnie!');
+        } else {
+            return back()->with('error', 'Nie udało się wysłać testowego webhooka. Sprawdź URL i logi.');
+        }
     }
 }

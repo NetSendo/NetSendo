@@ -36,6 +36,7 @@
         "of": "z",
         "results": "wyników",
         "lists_lowercase": "list",
+        "selected_of": "wybrano z",
         "no_results": "Brak wyników",
         "per_page": "na stronę",
         "previous": "Poprzedni",
@@ -556,8 +557,66 @@
             "delete_all_label": "Usuń trwale subskrybentów i listę",
             "confirm_empty": "Czy na pewno chcesz usunąć tę listę SMS? Procesu nie można cofnąć.",
             "submit": "Usuń listę"
+        },
+        "tabs": {
+            "general": "Ogólne",
+            "settings": "Ustawienia"
+        },
+        "settings": {
+            "tabs": {
+                "integration": "Integracja",
+                "cron": "Harmonogram (CRON)",
+                "advanced": "Zaawansowane"
+            },
+            "cron_section": "⏰ Harmonogram wysyłki SMS",
+            "use_custom_cron": "Własne ustawienia CRON",
+            "use_custom_cron_desc": "Wyłączone = używaj globalnych ustawień. Włączone = ustaw własny harmonogram dla tej listy SMS.",
+            "using_global_cron": "Używasz globalnych ustawień CRON",
+            "cron_limit_label": "Limit SMS / minutę (dla tej listy)",
+            "cron_limit_placeholder": "np. 50 (puste = użyj globalnego)",
+            "cron_limit_help": "Pozostaw puste, aby używać globalnego limitu.",
+            "weekly_schedule": "Harmonogram tygodniowy",
+            "cron_from": "Od:",
+            "cron_to": "Do:",
+            "cron_disabled": "Wysyłka wyłączona",
+            "advanced_section": "Zaawansowane",
+            "advanced": {
+                "coregistration_section": "Co-rejestracja",
+                "parent_list": "Lista nadrzędna",
+                "parent_list_desc": "Subskrybenci tej listy będą automatycznie kopiowani do listy nadrzędnej",
+                "no_parent": "-- Brak listy nadrzędnej --",
+                "sync_on_subscribe": "Synchronizuj przy zapisie",
+                "sync_on_unsubscribe": "Synchronizuj przy wypisie",
+                "limits_section": "Limity i ograniczenia",
+                "max_subscribers": "Maksymalna liczba subskrybentów",
+                "max_subscribers_help": "Pozostaw 0 dla braku limitu",
+                "block_signups": "Blokuj nowe zapisy",
+                "block_signups_desc": "Tymczasowo zablokuj możliwość zapisu na listę"
+            },
+            "integration": {
+                "title": "Integracja API (SMS)",
+                "api_key_section": "Klucz API listy SMS",
+                "api_key_desc": "Użyj tego klucza do integracji z zewnętrznymi systemami",
+                "list_id_label": "ID Listy",
+                "api_key_label": "Klucz API",
+                "no_api_key": "Klucz API nie został jeszcze wygenerowany",
+                "generate_key": "Generuj nowy klucz",
+                "copy_key": "Kopiuj",
+                "copied": "Skopiowano!",
+                "webhook_section": "Webhooks",
+                "webhook_url": "URL Webhooka",
+                "webhook_url_placeholder": "https://twoja-strona.pl/webhook",
+                "webhook_events": "Wydarzenia do wysyłania",
+                "event_subscribe": "Nowy zapis",
+                "event_unsubscribe": "Wypisanie",
+                "event_update": "Aktualizacja danych",
+                "test_webhook": "Wyślij testowy webhook",
+                "endpoint_section": "Endpoint Subskrypcji SMS",
+                "endpoint_desc": "Użyj tego URL aby dodawać numery z zewnętrznych źródeł"
+            }
         }
     },
+
     "sms": {
         "title": "Kampanie SMS",
         "subtitle": "Zarządzaj wysyłką wiadomości SMS",

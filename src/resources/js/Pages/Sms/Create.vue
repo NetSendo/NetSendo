@@ -603,8 +603,9 @@ const submit = (targetStatus = null) => {
                                     {{ $t("common.no_results") }}
                                 </p>
                                 <p v-else class="mt-1 text-xs text-slate-500">
+                                    {{ form.list_id ? 1 : 0 }}
+                                    {{ $t("common.selected_of") }}
                                     {{ filteredLists.length }}
-                                    {{ $t("common.of") }} {{ lists.length }}
                                     {{ $t("common.lists_lowercase") }}
                                 </p>
                                 <InputError
