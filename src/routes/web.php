@@ -280,6 +280,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Dashboard Stats API
     Route::get('/api/dashboard/stats', [\App\Http\Controllers\GlobalStatsController::class, 'getDashboardStats'])->name('api.dashboard.stats');
 
+    // Notifications API
+    Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::get('/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('/recent', [\App\Http\Controllers\NotificationController::class, 'recent'])->name('recent');
+        Route::post('/{notification}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::delete('/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('destroy');
+    });
+
     // Activity Logs (Audit Log)
     Route::prefix('settings/activity-logs')->name('settings.activity-logs.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('index');

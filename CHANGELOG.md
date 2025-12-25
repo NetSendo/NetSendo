@@ -5,11 +5,20 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.1.2] – Short Description
+## [1.1.2] – Notification System & Translations
 
 **Release date:** 2025-12-25
 
 ### Added
+
+- **In-App Notification System:**
+
+  - New real-time notification dropdown in application header with animated unread badge.
+  - Backend: `Notification` model, `NotificationService`, and `NotificationController` with full API.
+  - Database migration for `notifications` table with support for types (info/success/warning/error).
+  - Polling mechanism (60s interval) to check for new notifications.
+  - Helper methods for common events: new subscriber, campaign sent, automation executed, SMTP errors, license expiring.
+  - Mark as read (individual and bulk) functionality.
 
 - **SMS AI Assistant:**
 
@@ -30,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - New API endpoint `POST /api/templates/ai/generate-sms-content`.
 
 ### Improved
+
+- **Translations:**
+
+  - Added `notifications` section to vue-i18n locale files (EN/PL) with all notification-related keys.
+  - Created new PHP translation files: `license.php`, `sms_providers.php`, `common.php` (EN/PL).
 
 - **SMS Editor UX:**
   - Integrated "Insert Variable" dropdown for quick placeholder insertion.
