@@ -181,6 +181,29 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/benchmarks', [\App\Http\Controllers\CampaignArchitectController::class, 'getBenchmarks'])->name('benchmarks');
     });
 
+    // AI Campaign Auditor
+    Route::prefix('campaign-auditor')->name('campaign-auditor.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CampaignAuditorController::class, 'index'])->name('index');
+        Route::post('/run', [\App\Http\Controllers\CampaignAuditorController::class, 'runAudit'])->name('run');
+        Route::get('/{audit}', [\App\Http\Controllers\CampaignAuditorController::class, 'show'])->name('show');
+        Route::get('/{audit}/issues', [\App\Http\Controllers\CampaignAuditorController::class, 'issues'])->name('issues');
+        Route::post('/issues/{issue}/mark-fixed', [\App\Http\Controllers\CampaignAuditorController::class, 'markFixed'])->name('mark-fixed');
+
+        // Recommendations
+        Route::get('/{audit}/recommendations', [\App\Http\Controllers\CampaignAuditorController::class, 'recommendations'])->name('recommendations');
+        Route::post('/recommendations/{recommendation}/apply', [\App\Http\Controllers\CampaignAuditorController::class, 'applyRecommendation'])->name('recommendations.apply');
+        Route::post('/recommendations/{recommendation}/measure', [\App\Http\Controllers\CampaignAuditorController::class, 'measureImpact'])->name('recommendations.measure');
+
+        // Advisor Settings
+        Route::get('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'getAdvisorSettings'])->name('advisor.settings');
+        Route::put('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'updateAdvisorSettings'])->name('advisor.settings.update');
+    });
+
+    Route::prefix('api/campaign-auditor')->name('api.campaign-auditor.')->group(function () {
+        Route::get('/dashboard-widget', [\App\Http\Controllers\CampaignAuditorController::class, 'dashboardWidget'])->name('dashboard-widget');
+        Route::get('/statistics', [\App\Http\Controllers\CampaignAuditorController::class, 'statistics'])->name('statistics');
+    });
+
     // AI Integrations
     Route::prefix('settings/ai-integrations')->name('settings.ai-integrations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AiIntegrationController::class, 'index'])->name('index');

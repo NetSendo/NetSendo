@@ -82,3 +82,10 @@ Schedule::command('license:verify --deactivate')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/license-verify.log'));
 
+// AI Campaign Audit - raz dziennie o 5:00
+// Automatyczna analiza kampanii dla wszystkich użytkowników
+Schedule::command('audit:run --all')
+    ->dailyAt('05:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/campaign-audit.log'));
+

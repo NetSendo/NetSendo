@@ -59,6 +59,8 @@
         "optional": "opcjonalne",
         "messages": "Wiadomości",
         "view_messages": "Zobacz Wiadomości",
+        "show_details": "Pokaż szczegóły",
+        "hide_details": "Ukryj szczegóły",
         "notifications": {
             "saved": "Zapisano pomyślnie.",
             "created": "Utworzono pomyślnie.",
@@ -2906,5 +2908,72 @@
         "form_submission_message": "Nowe zgłoszenie w formularzu \"{form}\"",
         "welcome": "Witaj w NetSendo!",
         "welcome_message": "Twoje konto jest gotowe. Zacznij od stworzenia pierwszej listy mailingowej."
+    },
+    "campaign_auditor": {
+        "title": "Audytor Kampanii",
+        "subtitle": "Analiza kampanii email i SMS wspomagana sztuczną inteligencją",
+        "ai_badge": "AI",
+        "health_score": "Wynik Zdrowia Kampanii",
+        "view_details": "Zobacz szczegóły →",
+        "run_audit": "Uruchom audyt",
+        "run_first_audit": "Uruchom pierwszy audyt",
+        "run_new_audit": "Uruchom nowy audyt",
+        "running": "Analizuję...",
+        "audit_failed": "Audyt nie powiódł się. Spróbuj ponownie.",
+        "audit_in_progress": "Audyt jest już w toku.",
+        "rate_limit_exceeded": "Zbyt wiele audytów. Poczekaj przed uruchomieniem kolejnego.",
+        "last_audit": "Ostatni audyt",
+        "critical": "Krytyczne",
+        "warnings": "Ostrzeżenia",
+        "info": "Wskazówki",
+        "all_categories": "Wszystkie kategorie",
+        "revenue_loss": "Szacowana strata przychodów",
+        "estimated_monthly": "miesięcznie (szacunek)",
+        "recommendation": "Rekomendacja",
+        "mark_as_fixed": "Oznacz jako naprawione",
+        "fixed": "Naprawione",
+        "no_audit_title": "Brak audytu",
+        "no_audit_description": "Uruchom pierwszy audyt, aby odkryć możliwości optymalizacji i potencjalne ryzyka.",
+        "no_audit_widget": "Brak danych audytu. Uruchom pierwszy audyt.",
+        "audit_stale": "Audyt jest starszy niż 24 godziny. Rozważ uruchomienie nowego.",
+        "no_issues": "Nie znaleziono problemów!",
+        "no_issues_description": "Twoje kampanie wyglądają świetnie. Tak trzymaj!",
+        "score": {
+            "excellent": "Doskonały",
+            "good": "Dobry",
+            "needs_attention": "Wymaga uwagi",
+            "critical": "Krytyczny"
+        },
+        "sections": {
+            "critical_issues": "Problemy krytyczne",
+            "optimization": "Możliwości optymalizacji",
+            "suggestions": "Sugestie"
+        },
+        "categories": {
+            "frequency": "Częstotliwość wysyłki",
+            "content": "Jakość treści",
+            "timing": "Moment wysyłki",
+            "segmentation": "Segmentacja odbiorców",
+            "deliverability": "Dostarczalność",
+            "revenue": "Wpływ na przychód",
+            "automation": "Automatyzacja"
+        }
+    },
+    "campaign_advisor": {
+        "title": "Doradca AI",
+        "subtitle": "Spersonalizowane rekomendacje z potencjałem",
+        "potential": "poprawy",
+        "settings": "Ustawienia",
+        "settings_title": "Ustawienia doradcy",
+        "weekly_target": "Tygodniowy cel poprawy",
+        "recommendation_count": "Maks. rekomendacji",
+        "analysis_language": "Język analizy",
+        "quick_wins": "Szybkie wygrane",
+        "strategic": "Rekomendacje strategiczne",
+        "growth": "Możliwości wzrostu",
+        "expected_impact": "Oczekiwany wpływ",
+        "action_steps": "Kroki do wykonania",
+        "apply": "Oznacz jako wdrożone",
+        "applied": "Wdrożone"
     }
 }

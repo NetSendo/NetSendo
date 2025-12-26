@@ -5,6 +5,65 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+## [1.2.1] – AI Campaign Auditor & Advisor
+
+**Release date:** 2025-12-26
+
+### Added
+
+- **AI Campaign Auditor Module:**
+
+  - New AI-powered campaign analysis tool that identifies issues, risks, and optimization opportunities.
+  - 8 analysis types: frequency, content quality, timing, segmentation, deliverability, automations, revenue impact, and AI-powered insights.
+  - Overall health score (0-100) with color-coded severity levels (Excellent/Good/Needs Attention/Critical).
+  - Issues categorized by severity (Critical/Warning/Info) with expandable recommendations.
+  - "Mark as Fixed" functionality for tracked issues.
+  - Estimated monthly revenue loss calculation based on detected issues.
+  - New database tables: `campaign_audits`, `campaign_audit_issues`.
+  - New backend: `CampaignAuditorService`, `CampaignAuditorController`, `CampaignAuditPolicy`, and Eloquent models.
+  - Full Polish and English translations.
+  - Sidebar navigation under Automation section with "AI" badge.
+
+- **AI Campaign Advisor (Recommendations):**
+
+  - New AI-powered recommendation engine providing actionable advice for campaign improvement.
+  - Three recommendation categories: **Quick Wins** (low-effort fixes), **Strategic** (medium-term improvements), **Growth** (AI-generated scaling opportunities).
+  - New `CampaignAdvisorService` generating recommendations from audit issues, historical data, and AI analysis.
+  - New `CampaignRecommendation` model with types (quick_win, strategic, growth), effort levels (low, medium, high), and expected impact tracking.
+  - New database table: `campaign_recommendations` with migration.
+  - Extended `CampaignAuditorController` with recommendation endpoints: fetch, apply, measure impact, and settings management.
+  - Configurable user settings persisted in account: **Weekly Improvement Target** (1-10%), **Max Recommendations** (3-10), **Analysis Language** (EN/PL/DE/ES/FR/IT/PT/NL).
+  - Settings panel UI in Campaign Auditor page with language selector for AI-generated analysis.
+  - Applied recommendation tracking with timestamp and effectiveness measurement.
+  - Visual recommendation cards with color-coded categories (emerald/blue/purple themes).
+  - Full translations for EN, PL, DE, and ES locales.
+
+- **Campaign Health Score Dashboard Widget:**
+
+  - New `HealthScoreWidget` component displayed on the main Dashboard.
+  - Shows circular score gauge, issue counts (critical/warnings/info), and stale audit warning.
+  - Direct link to full Campaign Auditor page for detailed analysis.
+
+- **Automated Daily Campaign Audit:**
+
+  - New Artisan command: `php artisan audit:run` with `--all` and `--user=ID` options.
+  - Scheduled daily at 05:00 via Laravel Scheduler.
+  - Logs saved to `storage/logs/campaign-audit.log`.
+
+- **Campaign Advisor Settings in Profile Page:**
+  - New `CampaignAdvisorSettingsForm` component on user Profile page.
+  - Users can configure advisor settings from two locations: Campaign Auditor page and Profile page.
+  - Settings include: weekly improvement target, max recommendations count, and analysis language.
+
+### Fixed
+
+- **Campaign Auditor UI Issues:**
+  - Fixed sidebar menu collapsing when navigating to Campaign Auditor or Campaign Architect pages.
+  - Fixed dark mode visibility for issue count labels (Critical/Warnings/Info) - text now properly visible on dark backgrounds.
+  - AI Advisor section now displays when an audit exists (not only when recommendations are present), allowing access to settings panel.
+
 ## [1.2.0] – AI Campaign Architect
 
 **Release date:** 2025-12-25

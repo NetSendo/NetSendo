@@ -59,6 +59,8 @@
         "optional": "Optional",
         "messages": "Messages",
         "view_messages": "View Messages",
+        "show_details": "Show details",
+        "hide_details": "Hide details",
         "notifications": {
             "saved": "Saved successfully.",
             "created": "Created successfully.",
@@ -2780,5 +2782,72 @@
         "form_submission_message": "New submission on form \"{form}\"",
         "welcome": "Welcome to NetSendo!",
         "welcome_message": "Your account is ready. Start by creating your first mailing list."
+    },
+    "campaign_auditor": {
+        "title": "Campaign Auditor",
+        "subtitle": "AI-powered analysis of your email and SMS campaigns",
+        "ai_badge": "AI Powered",
+        "health_score": "Campaign Health Score",
+        "view_details": "View Details →",
+        "run_audit": "Run Audit",
+        "run_first_audit": "Run Your First Audit",
+        "run_new_audit": "Run New Audit",
+        "running": "Analyzing...",
+        "audit_failed": "Audit failed. Please try again.",
+        "audit_in_progress": "An audit is already in progress.",
+        "rate_limit_exceeded": "Too many audits. Please wait before running another.",
+        "last_audit": "Last audit",
+        "critical": "Critical",
+        "warnings": "Warnings",
+        "info": "Tips",
+        "all_categories": "All Categories",
+        "revenue_loss": "Estimated Revenue Loss",
+        "estimated_monthly": "per month (estimated)",
+        "recommendation": "Recommendation",
+        "mark_as_fixed": "Mark as Fixed",
+        "fixed": "Fixed",
+        "no_audit_title": "No Audit Yet",
+        "no_audit_description": "Run your first campaign audit to discover optimization opportunities and potential risks.",
+        "no_audit_widget": "No audit data. Run your first audit.",
+        "audit_stale": "Audit is older than 24 hours. Consider running a new one.",
+        "no_issues": "No Issues Found!",
+        "no_issues_description": "Your campaigns look great. Keep up the good work!",
+        "score": {
+            "excellent": "Excellent",
+            "good": "Good",
+            "needs_attention": "Needs Attention",
+            "critical": "Critical"
+        },
+        "sections": {
+            "critical_issues": "Critical Issues",
+            "optimization": "Optimization Opportunities",
+            "suggestions": "Suggestions"
+        },
+        "categories": {
+            "frequency": "Sending Frequency",
+            "content": "Content Quality",
+            "timing": "Send Timing",
+            "segmentation": "Audience Segmentation",
+            "deliverability": "Deliverability",
+            "revenue": "Revenue Impact",
+            "automation": "Automation"
+        }
+    },
+    "campaign_advisor": {
+        "title": "AI Advisor",
+        "subtitle": "Personalized recommendations with",
+        "potential": "improvement potential",
+        "settings": "Settings",
+        "settings_title": "Advisor Settings",
+        "weekly_target": "Weekly Improvement Target",
+        "recommendation_count": "Max Recommendations",
+        "analysis_language": "Analysis Language",
+        "quick_wins": "Quick Wins",
+        "strategic": "Strategic Recommendations",
+        "growth": "Growth Opportunities",
+        "expected_impact": "Expected Impact",
+        "action_steps": "Action Steps",
+        "apply": "Mark as Applied",
+        "applied": "Applied"
     }
 }
