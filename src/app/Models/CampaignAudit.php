@@ -17,6 +17,7 @@ class CampaignAudit extends Model
         'status',
         'audit_type',
         'summary',
+        'ai_summary',
         'metrics',
         'critical_count',
         'warning_count',

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import Modal from "@/Components/Modal.vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 
@@ -46,6 +47,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    aiIntegrations: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const isLoading = ref(false);
@@ -60,8 +65,14 @@ const settingsForm = ref({
     auto_prioritize: props.advisorSettings.auto_prioritize,
     focus_areas: props.advisorSettings.focus_areas || [],
     analysis_language: props.advisorSettings.analysis_language || "en",
+    ai_integration_id: props.advisorSettings.ai_integration_id || null,
 });
 const isSavingSettings = ref(false);
+
+// Error modal state
+const showErrorModal = ref(false);
+const errorMessage = ref("");
+const isRateLimitError = ref(false);
 
 // Run a new audit
 const runAudit = async (type = "full") => {
@@ -73,13 +84,25 @@ const runAudit = async (type = "full") => {
         if (response.data.success) {
             currentAudit.value = response.data.audit;
         } else {
-            alert(response.data.error || t("campaign_auditor.audit_failed"));
+            isRateLimitError.value = false;
+            errorMessage.value =
+                response.data.error || t("campaign_auditor.audit_failed");
+            showErrorModal.value = true;
         }
     } catch (error) {
         console.error("Audit failed:", error);
-        alert(
-            error.response?.data?.error || t("campaign_auditor.audit_failed")
-        );
+
+        // Handle rate limit error (429)
+        if (error.response?.status === 429) {
+            isRateLimitError.value = true;
+            errorMessage.value = t("campaign_auditor.rate_limit_exceeded");
+        } else {
+            isRateLimitError.value = false;
+            errorMessage.value =
+                error.response?.data?.error ||
+                t("campaign_auditor.audit_failed");
+        }
+        showErrorModal.value = true;
     } finally {
         isLoading.value = false;
     }
@@ -196,14 +219,29 @@ const markAsFixed = async (issue) => {
     }
 };
 
-// Categories for filter
+// Categories for filter - using translation keys
+const categoryKeys = [
+    "frequency",
+    "content",
+    "timing",
+    "segmentation",
+    "deliverability",
+    "revenue",
+    "automation",
+];
+
 const categories = computed(() => {
     const cats = [{ key: "all", label: t("campaign_auditor.all_categories") }];
-    Object.entries(props.categories).forEach(([key, label]) => {
-        cats.push({ key, label });
+    categoryKeys.forEach((key) => {
+        cats.push({ key, label: t(`campaign_auditor.categories.${key}`) });
     });
     return cats;
 });
+
+// Helper to get translated category label
+const getCategoryLabel = (category) => {
+    return t(`campaign_auditor.categories.${category}`);
+};
 
 // Recommendations computed
 const recommendations = computed(() => {
@@ -602,6 +640,62 @@ const saveAdvisorSettings = async () => {
                         </div>
                     </div>
 
+                    <!-- AI Summary Section -->
+                    <div
+                        v-if="currentAudit.ai_summary"
+                        class="rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-6 shadow-xl ring-1 ring-indigo-100 dark:from-indigo-900/20 dark:via-gray-800 dark:to-purple-900/20 dark:ring-indigo-800"
+                    >
+                        <div class="flex items-start gap-4">
+                            <div
+                                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h3
+                                    class="mb-3 text-lg font-semibold text-gray-900 dark:text-white"
+                                >
+                                    <span
+                                        class="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                                    >
+                                        {{
+                                            $t(
+                                                "campaign_auditor.ai_executive_summary"
+                                            )
+                                        }}
+                                    </span>
+                                </h3>
+                                <div
+                                    class="prose prose-sm prose-indigo max-w-none text-gray-700 dark:prose-invert dark:text-gray-300"
+                                >
+                                    <p
+                                        v-for="(
+                                            paragraph, idx
+                                        ) in currentAudit.ai_summary.split(
+                                            '\n\n'
+                                        )"
+                                        :key="idx"
+                                        class="mb-3 last:mb-0"
+                                    >
+                                        {{ paragraph }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Category Filter -->
                     <div class="flex flex-wrap gap-2">
                         <button
@@ -683,9 +777,9 @@ const saveAdvisorSettings = async () => {
                                                 class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                             >
                                                 {{
-                                                    props.categories[
+                                                    getCategoryLabel(
                                                         issue.category
-                                                    ]
+                                                    )
                                                 }}
                                             </p>
                                         </div>
@@ -843,9 +937,9 @@ const saveAdvisorSettings = async () => {
                                                 class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                             >
                                                 {{
-                                                    props.categories[
+                                                    getCategoryLabel(
                                                         issue.category
-                                                    ]
+                                                    )
                                                 }}
                                             </p>
                                         </div>
@@ -967,9 +1061,9 @@ const saveAdvisorSettings = async () => {
                                                 class="mt-1 text-sm text-gray-500 dark:text-gray-400"
                                             >
                                                 {{
-                                                    props.categories[
+                                                    getCategoryLabel(
                                                         issue.category
-                                                    ]
+                                                    )
                                                 }}
                                             </p>
                                         </div>
@@ -1140,7 +1234,7 @@ const saveAdvisorSettings = async () => {
                                         v-model="
                                             settingsForm.recommendation_count
                                         "
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     >
                                         <option :value="3">3</option>
                                         <option :value="5">5</option>
@@ -1160,7 +1254,7 @@ const saveAdvisorSettings = async () => {
                                     </label>
                                     <select
                                         v-model="settingsForm.analysis_language"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     >
                                         <option value="en">English</option>
                                         <option value="pl">Polski</option>
@@ -1170,6 +1264,28 @@ const saveAdvisorSettings = async () => {
                                         <option value="it">Italiano</option>
                                         <option value="pt">Português</option>
                                         <option value="nl">Nederlands</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-2">
+                                    <label
+                                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    >
+                                        {{ $t("campaign_advisor.ai_model") }}
+                                    </label>
+                                    <select
+                                        v-model="settingsForm.ai_integration_id"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option :value="null">
+                                            {{ $t("common.default") }}
+                                        </option>
+                                        <option
+                                            v-for="integration in aiIntegrations"
+                                            :key="integration.id"
+                                            :value="integration.id"
+                                        >
+                                            {{ integration.name }}
+                                        </option>
                                     </select>
                                 </div>
                             </div>
@@ -1583,5 +1699,83 @@ const saveAdvisorSettings = async () => {
                 </div>
             </div>
         </div>
+
+        <!-- Error Modal -->
+        <Modal
+            :show="showErrorModal"
+            @close="showErrorModal = false"
+            max-width="md"
+        >
+            <div class="p-6">
+                <div class="flex items-center gap-4">
+                    <div
+                        :class="[
+                            'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full',
+                            isRateLimitError
+                                ? 'bg-amber-100 dark:bg-amber-900/30'
+                                : 'bg-red-100 dark:bg-red-900/30',
+                        ]"
+                    >
+                        <svg
+                            v-if="isRateLimitError"
+                            class="h-6 w-6 text-amber-600 dark:text-amber-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        <svg
+                            v-else
+                            class="h-6 w-6 text-red-600 dark:text-red-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3
+                            :class="[
+                                'text-lg font-semibold',
+                                isRateLimitError
+                                    ? 'text-amber-800 dark:text-amber-200'
+                                    : 'text-red-800 dark:text-red-200',
+                            ]"
+                        >
+                            {{
+                                isRateLimitError
+                                    ? $t("campaign_auditor.rate_limit_title")
+                                    : $t("campaign_auditor.error_title")
+                            }}
+                        </h3>
+                        <p
+                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                        >
+                            {{ errorMessage }}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button
+                        @click="showErrorModal = false"
+                        class="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    >
+                        {{ $t("common.close") }}
+                    </button>
+                </div>
+            </div>
+        </Modal>
     </AuthenticatedLayout>
 </template>

@@ -30,20 +30,21 @@ class CampaignAdvisorService
         $settings = $user->settings['campaign_advisor'] ?? [];
         $maxRecommendations = $settings['recommendation_count'] ?? 5;
         $focusAreas = $settings['focus_areas'] ?? [];
+        $language = $settings['analysis_language'] ?? 'en';
 
         $recommendations = collect();
 
         try {
             // 1. Generate Quick Wins from current issues
-            $quickWins = $this->generateQuickWins($audit, $focusAreas);
+            $quickWins = $this->generateQuickWins($audit, $focusAreas, $language);
             $recommendations = $recommendations->merge($quickWins);
 
             // 2. Generate Strategic recommendations from historical data
-            $strategic = $this->generateStrategicRecommendations($user, $audit, $focusAreas);
+            $strategic = $this->generateStrategicRecommendations($user, $audit, $focusAreas, $language);
             $recommendations = $recommendations->merge($strategic);
 
             // 3. Generate Growth recommendations using AI
-            $growth = $this->generateGrowthRecommendations($user, $audit);
+            $growth = $this->generateGrowthRecommendations($user, $audit, $language);
             $recommendations = $recommendations->merge($growth);
 
             // Prioritize and limit recommendations
@@ -69,144 +70,90 @@ class CampaignAdvisorService
     /**
      * Generate Quick Win recommendations from current audit issues
      */
-    protected function generateQuickWins(CampaignAudit $audit, array $focusAreas = []): Collection
+    protected function generateQuickWins(CampaignAudit $audit, array $focusAreas = [], string $language = 'en'): Collection
     {
         $quickWins = collect();
         $issues = $audit->issues()->orderBy('impact_score', 'desc')->get();
 
-        // Map issues to quick win recommendations
-        $issueRecommendations = [
+        // Issue keys that have recommendations
+        $issueKeysWithRecommendations = [
             CampaignAuditIssue::ISSUE_MISSING_PREHEADER => [
-                'title' => 'Add preheaders to your emails',
-                'description' => 'Emails without preheaders miss valuable inbox preview space. Adding compelling preheaders can increase open rates by 5-10%.',
                 'expected_impact' => 3.0,
                 'effort_level' => CampaignRecommendation::EFFORT_LOW,
-                'action_steps' => [
-                    'Open the email editor for each draft/scheduled email',
-                    'Add a preheader that complements your subject line',
-                    'Keep it under 100 characters for best display',
-                    'Use personalization tokens for higher engagement',
-                ],
             ],
             CampaignAuditIssue::ISSUE_LONG_SUBJECT => [
-                'title' => 'Shorten your subject lines',
-                'description' => 'Long subject lines get truncated on mobile devices. Keeping them under 50 characters ensures your message is fully visible.',
                 'expected_impact' => 2.0,
                 'effort_level' => CampaignRecommendation::EFFORT_LOW,
-                'action_steps' => [
-                    'Review subject lines over 50 characters',
-                    'Focus on the most compelling part of your message',
-                    'Use power words that trigger emotion',
-                    'Test with emoji (sparingly) for visual appeal',
-                ],
             ],
             CampaignAuditIssue::ISSUE_NO_PERSONALIZATION => [
-                'title' => 'Personalize your email content',
-                'description' => 'Personalized emails achieve 26% higher open rates. Using subscriber names and relevant data creates stronger connections.',
                 'expected_impact' => 4.0,
                 'effort_level' => CampaignRecommendation::EFFORT_LOW,
-                'action_steps' => [
-                    'Add [[first_name]] to subject lines and greetings',
-                    'Use [[company]] or [[city]] for B2B communications',
-                    'Create dynamic content blocks based on subscriber tags',
-                    'Set up fallback values for missing data',
-                ],
             ],
             CampaignAuditIssue::ISSUE_SPAM_CONTENT => [
-                'title' => 'Reduce spam trigger words',
-                'description' => 'Your content contains words that may trigger spam filters. Cleaning up the language improves deliverability.',
                 'expected_impact' => 5.0,
                 'effort_level' => CampaignRecommendation::EFFORT_MEDIUM,
-                'action_steps' => [
-                    'Avoid ALL CAPS and excessive exclamation marks',
-                    'Replace words like "FREE", "URGENT", "ACT NOW" with softer alternatives',
-                    'Balance promotional and value-driven content',
-                    'Use HTML email checkers before sending',
-                ],
             ],
             CampaignAuditIssue::ISSUE_STALE_LIST => [
-                'title' => 'Clean your subscriber lists',
-                'description' => 'Lists with inactive subscribers hurt deliverability. Regular cleaning improves open rates and sender reputation.',
                 'expected_impact' => 6.0,
                 'effort_level' => CampaignRecommendation::EFFORT_MEDIUM,
-                'action_steps' => [
-                    'Identify subscribers with no opens in 90 days',
-                    'Run a re-engagement campaign before removing',
-                    'Remove hard bounces immediately',
-                    'Consider a sunset policy for long-inactive users',
-                ],
             ],
             CampaignAuditIssue::ISSUE_POOR_TIMING => [
-                'title' => 'Optimize your send times',
-                'description' => 'Sending at optimal times significantly impacts open rates. Your best window is typically 9-11 AM or 2-4 PM local time.',
                 'expected_impact' => 3.5,
                 'effort_level' => CampaignRecommendation::EFFORT_LOW,
-                'action_steps' => [
-                    'Schedule emails between 9-11 AM for business audiences',
-                    'Try 2-4 PM for consumer audiences',
-                    'Tuesday through Thursday typically perform best',
-                    'Avoid weekends unless you have data showing otherwise',
-                ],
             ],
             CampaignAuditIssue::ISSUE_OVER_MAILING => [
-                'title' => 'Reduce sending frequency',
-                'description' => 'You are sending too frequently to some lists. This increases unsubscribes and spam complaints.',
                 'expected_impact' => 4.0,
                 'effort_level' => CampaignRecommendation::EFFORT_MEDIUM,
-                'action_steps' => [
-                    'Limit to 2-3 emails per week per list',
-                    'Create a preference center for frequency options',
-                    'Segment high-engagement users for more content',
-                    'Use automations instead of manual broadcasts where possible',
-                ],
             ],
             CampaignAuditIssue::ISSUE_NO_AUTOMATION => [
-                'title' => 'Set up welcome automations',
-                'description' => 'Automated emails generate 320% more revenue than non-automated. Start with a welcome sequence.',
                 'expected_impact' => 8.0,
                 'effort_level' => CampaignRecommendation::EFFORT_HIGH,
-                'action_steps' => [
-                    'Create a 3-5 email welcome sequence',
-                    'Set up automation triggered on new subscriber',
-                    'Include value content before promotional offers',
-                    'Track engagement to identify hot leads',
-                ],
             ],
             CampaignAuditIssue::ISSUE_SMS_MISSING => [
-                'title' => 'Launch SMS campaigns',
-                'description' => 'You have phone numbers but are not using SMS. Multi-channel campaigns improve conversion by 12-15%.',
                 'expected_impact' => 7.0,
                 'effort_level' => CampaignRecommendation::EFFORT_HIGH,
-                'action_steps' => [
-                    'Create an SMS follow-up for key email campaigns',
-                    'Use SMS for time-sensitive offers',
-                    'Keep messages under 160 characters',
-                    'Include a clear call-to-action with link',
-                ],
             ],
         ];
 
         foreach ($issues as $issue) {
-            if (isset($issueRecommendations[$issue->issue_key])) {
-                $recData = $issueRecommendations[$issue->issue_key];
+            if (isset($issueKeysWithRecommendations[$issue->issue_key])) {
+                $recMeta = $issueKeysWithRecommendations[$issue->issue_key];
 
                 // Skip if focus areas set and this category isn't included
                 if (!empty($focusAreas) && !in_array($issue->category, $focusAreas)) {
                     continue;
                 }
 
+                // Get translated content using Laravel's localization
+                $translationKey = "recommendations.{$issue->issue_key}";
+                $title = __("{$translationKey}.title", [], $language);
+                $description = __("{$translationKey}.description", [], $language);
+                $actionSteps = __("{$translationKey}.action_steps", [], $language);
+
+                // Fallback to English if translation not found
+                if ($title === "{$translationKey}.title") {
+                    $title = __("{$translationKey}.title", [], 'en');
+                    $description = __("{$translationKey}.description", [], 'en');
+                    $actionSteps = __("{$translationKey}.action_steps", [], 'en');
+                }
+
+                // Ensure action_steps is an array
+                if (is_string($actionSteps)) {
+                    $actionSteps = [$actionSteps];
+                }
+
                 $quickWins->push([
                     'type' => CampaignRecommendation::TYPE_QUICK_WIN,
                     'priority' => $this->calculatePriorityFromImpactEffort(
-                        $recData['expected_impact'],
-                        $recData['effort_level']
+                        $recMeta['expected_impact'],
+                        $recMeta['effort_level']
                     ),
-                    'title' => $recData['title'],
-                    'description' => $recData['description'],
-                    'expected_impact' => $recData['expected_impact'],
-                    'effort_level' => $recData['effort_level'],
+                    'title' => $title,
+                    'description' => $description,
+                    'expected_impact' => $recMeta['expected_impact'],
+                    'effort_level' => $recMeta['effort_level'],
                     'category' => $issue->category,
-                    'action_steps' => $recData['action_steps'],
+                    'action_steps' => $actionSteps,
                     'context' => [
                         'source_issue_id' => $issue->id,
                         'source_issue_key' => $issue->issue_key,
@@ -221,7 +168,7 @@ class CampaignAdvisorService
     /**
      * Generate Strategic recommendations from historical performance data
      */
-    protected function generateStrategicRecommendations(User $user, CampaignAudit $audit, array $focusAreas = []): Collection
+    protected function generateStrategicRecommendations(User $user, CampaignAudit $audit, array $focusAreas = [], string $language = 'en'): Collection
     {
         $strategic = collect();
 
@@ -230,20 +177,16 @@ class CampaignAdvisorService
 
         // Check open rate trend
         if (isset($trends['open_rate']) && $trends['open_rate']['trend'] === 'declining') {
+            $change = $trends['open_rate']['change'];
             $strategic->push([
                 'type' => CampaignRecommendation::TYPE_STRATEGIC,
                 'priority' => 8,
-                'title' => 'Reverse declining open rates',
-                'description' => "Your open rates have dropped by {$trends['open_rate']['change']}% over the last 30 days. Focus on subject line optimization and list hygiene.",
+                'title' => __('recommendations.declining_open_rate.title', [], $language),
+                'description' => __('recommendations.declining_open_rate.description', ['change' => $change], $language),
                 'expected_impact' => 5.0,
                 'effort_level' => CampaignRecommendation::EFFORT_MEDIUM,
                 'category' => CampaignAuditIssue::CATEGORY_DELIVERABILITY,
-                'action_steps' => [
-                    'A/B test subject lines on your next 5 campaigns',
-                    'Remove subscribers inactive for 90+ days',
-                    'Check your sender reputation on mail-tester.com',
-                    'Verify SPF/DKIM/DMARC records',
-                ],
+                'action_steps' => __('recommendations.declining_open_rate.action_steps', [], $language),
                 'context' => [
                     'open_rate_change' => $trends['open_rate']['change'],
                     'current_rate' => $trends['open_rate']['current'],
@@ -256,17 +199,12 @@ class CampaignAdvisorService
             $strategic->push([
                 'type' => CampaignRecommendation::TYPE_STRATEGIC,
                 'priority' => 7,
-                'title' => 'Improve email click-through rates',
-                'description' => 'Your click rate is below 2%, which is under industry average. Better CTAs and content structure can help.',
+                'title' => __('recommendations.low_click_rate.title', [], $language),
+                'description' => __('recommendations.low_click_rate.description', [], $language),
                 'expected_impact' => 4.0,
                 'effort_level' => CampaignRecommendation::EFFORT_MEDIUM,
                 'category' => CampaignAuditIssue::CATEGORY_CONTENT,
-                'action_steps' => [
-                    'Use button-style CTAs instead of text links',
-                    'Place your main CTA above the fold',
-                    'Use action-oriented language ("Get Started" vs "Click Here")',
-                    'Limit to 1-2 primary CTAs per email',
-                ],
+                'action_steps' => __('recommendations.low_click_rate.action_steps', [], $language),
                 'context' => [
                     'current_click_rate' => $trends['click_rate']['current'],
                 ],
@@ -281,17 +219,12 @@ class CampaignAdvisorService
             $strategic->push([
                 'type' => CampaignRecommendation::TYPE_STRATEGIC,
                 'priority' => 6,
-                'title' => 'Implement subscriber segmentation',
-                'description' => "Only {$taggedPercent}% of your subscribers are tagged. Better segmentation leads to 14% higher click rates.",
+                'title' => __('recommendations.low_segmentation.title', [], $language),
+                'description' => __('recommendations.low_segmentation.description', ['percent' => $taggedPercent], $language),
                 'expected_impact' => 5.0,
                 'effort_level' => CampaignRecommendation::EFFORT_HIGH,
                 'category' => CampaignAuditIssue::CATEGORY_SEGMENTATION,
-                'action_steps' => [
-                    'Create interest-based tags from click behavior',
-                    'Set up tag automations for key actions',
-                    'Segment by engagement level (active/passive/cold)',
-                    'Use dynamic content blocks for different segments',
-                ],
+                'action_steps' => __('recommendations.low_segmentation.action_steps', [], $language),
                 'context' => [
                     'subscriber_count' => $subscriberCount,
                     'tagged_percent' => $taggedPercent,
@@ -305,7 +238,7 @@ class CampaignAdvisorService
     /**
      * Generate AI-powered Growth recommendations
      */
-    protected function generateGrowthRecommendations(User $user, CampaignAudit $audit): Collection
+    protected function generateGrowthRecommendations(User $user, CampaignAudit $audit, string $language = 'en'): Collection
     {
         $growth = collect();
 
@@ -318,7 +251,7 @@ class CampaignAdvisorService
             // Build context for AI
             $context = $this->buildAiContext($user, $audit);
 
-            $prompt = $this->buildGrowthPrompt($context);
+            $prompt = $this->buildGrowthPrompt($context, $language);
             $response = $this->aiService->generateContent($prompt, $integration, [
                 'max_tokens' => 800,
                 'temperature' => 0.4,
@@ -498,10 +431,28 @@ class CampaignAdvisorService
     /**
      * Build prompt for AI growth recommendations
      */
-    protected function buildGrowthPrompt(array $context): string
+    protected function buildGrowthPrompt(array $context, string $language = 'en'): string
     {
+        $languageNames = [
+            'en' => 'English',
+            'pl' => 'Polish',
+            'de' => 'German',
+            'es' => 'Spanish',
+            'fr' => 'French',
+            'it' => 'Italian',
+            'pt' => 'Portuguese',
+            'nl' => 'Dutch',
+        ];
+
+        $languageName = $languageNames[$language] ?? 'English';
+        $categoriesWithIssues = is_array($context['categories_with_issues'])
+            ? implode(', ', $context['categories_with_issues'])
+            : $context['categories_with_issues'];
+
         return <<<PROMPT
 You are an email marketing expert advisor. Based on this user's campaign data, provide 1-2 growth-focused recommendations.
+
+IMPORTANT: Respond in {$languageName} language. All text (title, description, action_steps) MUST be written in {$languageName}.
 
 USER DATA:
 - Current health score: {$context['score']}/100
@@ -512,20 +463,20 @@ USER DATA:
 - Automations: {$context['automation_count']}
 - Uses SMS: {$context['has_sms']}
 
-CATEGORIES WITH ISSUES: {$context['categories_with_issues']}
+CATEGORIES WITH ISSUES: {$categoriesWithIssues}
 
 Provide strategic growth recommendations that go beyond fixing current issues. Focus on scaling their email marketing success.
 
-RESPOND IN JSON FORMAT ONLY:
+RESPOND IN JSON FORMAT ONLY (but with {$languageName} text content):
 [
   {
-    "title": "Short recommendation title",
-    "description": "2-3 sentence description",
+    "title": "Short recommendation title in {$languageName}",
+    "description": "2-3 sentence description in {$languageName}",
     "expected_impact": 5.0,
     "effort_level": "medium",
     "priority": 6,
     "category": "revenue|content|automation|segmentation",
-    "action_steps": ["Step 1", "Step 2", "Step 3"]
+    "action_steps": ["Step 1 in {$languageName}", "Step 2 in {$languageName}", "Step 3 in {$languageName}"]
   }
 ]
 

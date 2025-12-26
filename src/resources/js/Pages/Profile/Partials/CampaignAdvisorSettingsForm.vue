@@ -8,6 +8,7 @@ const settings = ref({
     auto_prioritize: true,
     focus_areas: [],
     analysis_language: "en",
+    audit_lookback_days: 30,
 });
 
 const isSaving = ref(false);
@@ -205,6 +206,37 @@ onMounted(() => {
                 </p>
             </div>
 
+            <!-- Audit Lookback Days -->
+            <div>
+                <label
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                    {{ $t("campaign_advisor.audit_lookback_days") }}
+                </label>
+                <select
+                    v-model="settings.audit_lookback_days"
+                    class="mt-2 w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                    <option :value="7">
+                        7 {{ $t("campaign_advisor.days") }}
+                    </option>
+                    <option :value="14">
+                        14 {{ $t("campaign_advisor.days") }}
+                    </option>
+                    <option :value="30">
+                        30 {{ $t("campaign_advisor.days") }}
+                    </option>
+                    <option :value="60">
+                        60 {{ $t("campaign_advisor.days") }}
+                    </option>
+                    <option :value="90">
+                        90 {{ $t("campaign_advisor.days") }}
+                    </option>
+                </select>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{ $t("campaign_advisor.audit_lookback_days_hint") }}
+                </p>
+            </div>
             <!-- Save Button -->
             <div class="flex items-center gap-4">
                 <button

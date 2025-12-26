@@ -421,11 +421,15 @@ onMounted(() => {
                 />
             </div>
 
-            <!-- Quick Actions + Health Score -->
-            <div class="space-y-6">
-                <QuickActions />
+            <!-- Health Score Widget -->
+            <div>
                 <HealthScoreWidget />
             </div>
+        </div>
+
+        <!-- Quick Actions (full width, 4 columns on large screens) -->
+        <div class="mt-6">
+            <QuickActions :columns="4" />
         </div>
 
         <!-- CRON Status Widget -->

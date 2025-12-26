@@ -54,10 +54,21 @@ class CampaignAuditorController extends Controller
             'recommendation_count' => 5,
             'auto_prioritize' => true,
             'focus_areas' => [],
+            'audit_lookback_days' => 30,
         ];
 
         // Get recommendation effectiveness stats
         $effectiveness = $this->advisorService->getRecommendationEffectiveness($user);
+
+        // Get available AI integrations
+        $aiIntegrations = \App\Models\AiIntegration::active()
+            ->get(['id', 'provider', 'name', 'default_model'])
+            ->map(function ($integration) {
+                return [
+                    'id' => $integration->id,
+                    'name' => $integration->name ?: ucfirst($integration->provider) . ' (' . $integration->default_model . ')',
+                ];
+            });
 
         return Inertia::render('CampaignAuditor/Index', [
             'latestAudit' => $latestAudit,
@@ -69,6 +80,7 @@ class CampaignAuditorController extends Controller
             'recommendationTypes' => CampaignRecommendation::TYPE_LABELS,
             'effortLevels' => CampaignRecommendation::EFFORT_LABELS,
             'effectiveness' => $effectiveness,
+            'aiIntegrations' => $aiIntegrations,
         ]);
     }
 
@@ -108,7 +120,10 @@ class CampaignAuditorController extends Controller
             ], 429);
         }
 
-        $audit = $this->auditorService->runAudit($user, $type);
+        // Get lookback days from user settings (default 30)
+        $lookbackDays = $user->settings['campaign_advisor']['audit_lookback_days'] ?? 30;
+
+        $audit = $this->auditorService->runAudit($user, $type, $lookbackDays);
 
         return response()->json([
             'success' => $audit->status === CampaignAudit::STATUS_COMPLETED,
@@ -197,7 +212,41 @@ class CampaignAuditorController extends Controller
                 'warningCount' => 0,
                 'lastAuditAt' => null,
                 'isStale' => true,
+                'aiSummary' => null,
+                'aiSummaryShort' => null,
             ]);
+        }
+
+        // Generate short summary based on audit data and key findings
+        $aiSummaryShort = null;
+        if ($latestAudit->ai_summary) {
+            // Try to find second paragraph as it usually contains key findings
+            $paragraphs = array_filter(explode("\n\n", $latestAudit->ai_summary), fn($p) => trim($p) !== '');
+            $paragraphs = array_values($paragraphs);
+
+            // If multiple paragraphs, take second one (usually contains specifics)
+            // If only one paragraph, use it
+            $targetParagraph = isset($paragraphs[1]) ? $paragraphs[1] : ($paragraphs[0] ?? '');
+            $aiSummaryShort = mb_strlen($targetParagraph) > 250
+                ? mb_substr($targetParagraph, 0, 250) . '...'
+                : $targetParagraph;
+        }
+
+        // Fallback: generate a simple data-based summary if no AI summary
+        if (!$aiSummaryShort && $latestAudit) {
+            $score = $latestAudit->overall_score;
+            $critical = $latestAudit->critical_count;
+            $warnings = $latestAudit->warning_count;
+            $info = $latestAudit->info_count;
+
+            $aiSummaryShort = "Wynik: {$score}/100. ";
+            if ($critical > 0) {
+                $aiSummaryShort .= "Krytyczne: {$critical}. ";
+            }
+            if ($warnings > 0) {
+                $aiSummaryShort .= "Ostrzeżenia: {$warnings}. ";
+            }
+            $aiSummaryShort .= "Wskazówki: {$info}.";
         }
 
         return response()->json([
@@ -212,6 +261,8 @@ class CampaignAuditorController extends Controller
             'lastAuditAt' => $latestAudit->created_at->toISOString(),
             'lastAuditHuman' => $latestAudit->created_at->diffForHumans(),
             'isStale' => !$latestAudit->isValid(24),
+            'aiSummary' => $latestAudit->ai_summary,
+            'aiSummaryShort' => $aiSummaryShort,
         ]);
     }
 
@@ -326,6 +377,7 @@ class CampaignAuditorController extends Controller
             'recommendation_count' => 5,
             'auto_prioritize' => true,
             'focus_areas' => [],
+            'audit_lookback_days' => 30,
         ];
 
         return response()->json([
@@ -346,6 +398,7 @@ class CampaignAuditorController extends Controller
             'focus_areas' => 'nullable|array',
             'focus_areas.*' => 'string|in:' . implode(',', array_keys(CampaignAuditIssue::CATEGORY_LABELS)),
             'analysis_language' => 'nullable|string|in:en,pl,de,es,fr,it,pt,nl',
+            'audit_lookback_days' => 'nullable|integer|min:7|max:365',
         ]);
 
         $user = Auth::user();
@@ -357,6 +410,7 @@ class CampaignAuditorController extends Controller
             'auto_prioritize' => (bool) $request->input('auto_prioritize', true),
             'focus_areas' => $request->input('focus_areas', []),
             'analysis_language' => $request->input('analysis_language', 'en'),
+            'audit_lookback_days' => (int) $request->input('audit_lookback_days', 30),
         ];
 
         $user->update(['settings' => $settings]);

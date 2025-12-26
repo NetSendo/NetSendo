@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.2] – UI Improvements & Bug Fixes
+
+**Release date:** 2025-12-26
+
+### Added
+
+- **AI Executive Summary for Campaign Auditor:**
+
+  - New AI-generated executive summary displayed after each audit.
+  - Summary uses user's preferred language and informal tone ("Ty" not "Państwa").
+  - New `ai_summary` column in `campaign_audits` table.
+  - Uses `max_tokens_large` from selected AI integration for complete responses.
+  - Summary displayed in dedicated section with gradient styling on Campaign Auditor page.
+
+- **AI Model Selection for Campaign Advisor:**
+
+  - New "AI Model" dropdown in Campaign Advisor settings.
+  - Users can select which AI integration to use for audit summaries.
+  - Falls back to default integration if selected one is not active.
+
+- **AI Summary Widget on Dashboard:**
+
+  - Short AI summary excerpt displayed in Health Score Widget.
+  - Shows key findings (second paragraph) instead of intro text.
+  - Fallback to data-based summary if AI summary unavailable.
+
+- **Community Links:**
+
+  - Added Official Telegram Channel link to Help Modal.
+
+- **Developer Experience:**
+
+  - Added `bug_report.md` GitHub Issue template for standardized bug reporting.
+
+- **Translations:**
+  - Added `ai_executive_summary` translation key to EN, PL, DE, ES.
+  - Added `ai_model` translation key to EN, PL, DE, ES.
+  - Added `common.default` translation key to EN, PL.
+  - Added missing `help_menu.telegram` translation key to EN, PL, DE, ES locales.
+  - Added `rate_limit_title` and `error_title` translation keys to EN, PL, DE, ES locales.
+
+### Changed
+
+- **Dashboard Layout:**
+  - Quick Actions widget moved below Activity chart with full-width 4-column layout.
+  - Health Score Widget now displays alone in the right column for better visual balance.
+  - Added `columns` prop to QuickActions component for flexible grid configuration.
+- **Campaign Auditor Dark Mode:**
+  - Fixed dark mode styling for select dropdowns in settings (added `dark:text-white`).
+
+### Fixed
+
+- **AI Summary Generation:**
+
+  - Fixed `Undefined array key 0` error when generating AI summary with empty recommendations.
+  - Fixed SQL error with incorrect column names (`label`/`model` → `name`/`default_model`).
+
+- **Help Modal Updates:**
+
+  - Updated Documentation link to `https://netsendo.com/en/docs`.
+  - Updated "Report a bug" link to professional GitHub Issues flow.
+  - Hidden "Courses and Training" link.
+
+- **Campaign Auditor Rate Limit Error Modal:**
+  - Replaced native `window.alert()` with styled Vue Modal component for 429 rate limit errors.
+  - Error modal now displays properly instead of being blocked or disappearing.
+  - Added visual distinction between rate limit errors (amber) and general audit errors (red).
+
 ## [1.2.1] – AI Campaign Auditor & Advisor
 
 **Release date:** 2025-12-26

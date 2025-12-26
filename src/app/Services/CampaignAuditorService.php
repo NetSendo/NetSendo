@@ -26,7 +26,7 @@ class CampaignAuditorService
     /**
      * Run a complete audit for a user
      */
-    public function runAudit(User $user, string $type = CampaignAudit::TYPE_FULL): CampaignAudit
+    public function runAudit(User $user, string $type = CampaignAudit::TYPE_FULL, int $lookbackDays = 30): CampaignAudit
     {
         $audit = CampaignAudit::create([
             'user_id' => $user->id,
@@ -47,30 +47,33 @@ class CampaignAuditorService
                 'automations_analyzed' => $automationsCount,
             ]);
 
+            // Calculate frequency lookback (proportional - roughly 7 days for 30 day period)
+            $frequencyLookback = max(7, (int) ceil($lookbackDays / 4.3));
+
             // 1. Analyze campaign frequency
-            $this->analyzeFrequency($audit, $user);
+            $this->analyzeFrequency($audit, $user, $frequencyLookback);
 
             // 2. Check content for spam signals
-            $this->analyzeContent($audit, $user);
+            $this->analyzeContent($audit, $user, $lookbackDays);
 
             // 3. Evaluate timing patterns
-            $this->analyzeTiming($audit, $user);
+            $this->analyzeTiming($audit, $user, $lookbackDays);
 
             // 4. Check segmentation quality
-            $this->analyzeSegmentation($audit, $user);
+            $this->analyzeSegmentation($audit, $user, $lookbackDays);
 
             // 5. Deliverability risk assessment
-            $this->analyzeDeliverability($audit, $user);
+            $this->analyzeDeliverability($audit, $user, $lookbackDays);
 
             // 6. Automation analysis
             $this->analyzeAutomations($audit, $user);
 
             // 7. Revenue optimization opportunities
-            $this->analyzeRevenueOpportunities($audit, $user);
+            $this->analyzeRevenueOpportunities($audit, $user, $lookbackDays);
 
             // 8. AI-powered deep analysis (only for full audit)
             if ($type === CampaignAudit::TYPE_FULL) {
-                $this->runAiAnalysis($audit, $user);
+                $this->runAiAnalysis($audit, $user, $lookbackDays);
             }
 
             // Calculate overall score
@@ -80,8 +83,13 @@ class CampaignAuditorService
             $targetPercent = $user->settings['campaign_advisor']['weekly_improvement_target'] ?? 2.0;
             $this->advisorService->generateRecommendations($audit, $targetPercent);
 
+            // Generate AI summary
+            $language = $user->settings['campaign_advisor']['analysis_language'] ?? 'en';
+            $aiSummary = $this->generateAiSummary($audit, $user, $language);
+
             $audit->update([
                 'status' => CampaignAudit::STATUS_COMPLETED,
+                'ai_summary' => $aiSummary,
                 'completed_at' => now(),
             ]);
 
@@ -105,35 +113,37 @@ class CampaignAuditorService
     /**
      * Analyze sending frequency
      */
-    protected function analyzeFrequency(CampaignAudit $audit, User $user): void
+    protected function analyzeFrequency(CampaignAudit $audit, User $user, int $lookbackDays = 7): void
     {
-        // Check messages sent in last 7 days per list
+        // Check messages sent in the lookback period per list
         $lists = ContactList::where('user_id', $user->id)->get();
 
         foreach ($lists as $list) {
-            $messagesLast7Days = Message::where('user_id', $user->id)
+            $messagesCount = Message::where('user_id', $user->id)
                 ->where('status', 'sent')
-                ->where('created_at', '>=', now()->subDays(7))
+                ->where('created_at', '>=', now()->subDays($lookbackDays))
                 ->whereHas('contactLists', function ($q) use ($list) {
                     $q->where('contact_lists.id', $list->id);
                 })
                 ->count();
 
-            // More than 5 emails in 7 days = over-mailing
-            if ($messagesLast7Days > 5) {
+            // Calculate threshold proportionally (more than 5 per 7 days)
+            $threshold = max(5, (int) ceil($lookbackDays * 0.7));
+
+            if ($messagesCount > $threshold) {
                 $audit->issues()->create([
                     'severity' => CampaignAuditIssue::SEVERITY_CRITICAL,
                     'category' => CampaignAuditIssue::CATEGORY_FREQUENCY,
                     'issue_key' => CampaignAuditIssue::ISSUE_OVER_MAILING,
-                    'message' => "List '{$list->name}' received {$messagesLast7Days} emails in 7 days – unsubscribe risk +18%",
+                    'message' => "List '{$list->name}' received {$messagesCount} emails in {$lookbackDays} days – unsubscribe risk +18%",
                     'recommendation' => 'Reduce sending to 2-3 emails per week. Consider segmenting high-engagement users for more frequent contact.',
                     'impact_score' => 18.0,
                     'affected_type' => 'contact_list',
                     'affected_id' => $list->id,
                     'context' => [
-                        'emails_sent' => $messagesLast7Days,
-                        'period_days' => 7,
-                        'recommended_max' => 3,
+                        'emails_sent' => $messagesCount,
+                        'period_days' => $lookbackDays,
+                        'recommended_max' => (int) ceil($lookbackDays * 0.4),
                     ],
                     'is_fixable' => false,
                 ]);
@@ -158,11 +168,11 @@ class CampaignAuditorService
     /**
      * Analyze content quality
      */
-    protected function analyzeContent(CampaignAudit $audit, User $user): void
+    protected function analyzeContent(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
         $recentMessages = Message::where('user_id', $user->id)
             ->whereIn('status', ['sent', 'draft', 'scheduled'])
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->limit(20)
             ->get();
 
@@ -240,14 +250,14 @@ class CampaignAuditorService
     /**
      * Analyze send timing
      */
-    protected function analyzeTiming(CampaignAudit $audit, User $user): void
+    protected function analyzeTiming(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
         // Get sent messages with their performance
         $sentMessages = Message::where('user_id', $user->id)
             ->where('status', 'sent')
             ->where('channel', 'email')
             ->whereNotNull('scheduled_at')
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->get();
 
         if ($sentMessages->isEmpty()) {
@@ -281,14 +291,14 @@ class CampaignAuditorService
     /**
      * Analyze segmentation quality
      */
-    protected function analyzeSegmentation(CampaignAudit $audit, User $user): void
+    protected function analyzeSegmentation(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
         // Check for broadcasts without exclusions
         $broadcastsWithoutExclusions = Message::where('user_id', $user->id)
             ->where('type', 'broadcast')
             ->where('status', 'sent')
             ->whereDoesntHave('excludedLists')
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->count();
 
         if ($broadcastsWithoutExclusions > 5) {
@@ -329,11 +339,11 @@ class CampaignAuditorService
     /**
      * Analyze deliverability risks
      */
-    protected function analyzeDeliverability(CampaignAudit $audit, User $user): void
+    protected function analyzeDeliverability(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
-        // Check for stale lists (not updated in 30+ days)
+        // Check for stale lists (not updated in lookback period)
         $staleLists = ContactList::where('user_id', $user->id)
-            ->where('updated_at', '<', now()->subDays(30))
+            ->where('updated_at', '<', now()->subDays($lookbackDays))
             ->get();
 
         foreach ($staleLists as $list) {
@@ -343,7 +353,7 @@ class CampaignAuditorService
                     'severity' => CampaignAuditIssue::SEVERITY_WARNING,
                     'category' => CampaignAuditIssue::CATEGORY_DELIVERABILITY,
                     'issue_key' => CampaignAuditIssue::ISSUE_STALE_LIST,
-                    'message' => "List '{$list->name}' ({$subscriberCount} subscribers) not cleaned for 30+ days – deliverability risk",
+                    'message' => "List '{$list->name}' ({$subscriberCount} subscribers) not cleaned for {$lookbackDays}+ days – deliverability risk",
                     'recommendation' => 'Remove inactive subscribers (no opens in 90 days). Clean bounced emails. Re-engagement campaigns can recover 10-15% of inactive users.',
                     'impact_score' => 12.0,
                     'affected_type' => 'contact_list',
@@ -362,7 +372,7 @@ class CampaignAuditorService
         $sentMessages = Message::where('user_id', $user->id)
             ->where('status', 'sent')
             ->where('channel', 'email')
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->withCount('queueEntries as total_sent')
             ->get();
 
@@ -459,7 +469,7 @@ class CampaignAuditorService
     /**
      * Analyze revenue opportunities
      */
-    protected function analyzeRevenueOpportunities(CampaignAudit $audit, User $user): void
+    protected function analyzeRevenueOpportunities(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
         // Check if user has phone numbers but no SMS campaigns
         $listsWithPhones = ContactList::where('user_id', $user->id)
@@ -498,7 +508,7 @@ class CampaignAuditorService
         // Check for abandoned flows (clicks but no follow-up)
         $messagesWithClicks = Message::where('user_id', $user->id)
             ->where('status', 'sent')
-            ->where('created_at', '>=', now()->subDays(30))
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->whereHas('queueEntries')
             ->get();
 
@@ -527,7 +537,7 @@ class CampaignAuditorService
     /**
      * Run AI-powered deep analysis (for full audits only)
      */
-    protected function runAiAnalysis(CampaignAudit $audit, User $user): void
+    protected function runAiAnalysis(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
     {
         try {
             $integration = $this->aiService->getDefaultIntegration();
@@ -538,7 +548,7 @@ class CampaignAuditorService
             // Get recent message subjects for AI analysis
             $recentSubjects = Message::where('user_id', $user->id)
                 ->whereIn('status', ['sent', 'draft', 'scheduled'])
-                ->where('created_at', '>=', now()->subDays(30))
+                ->where('created_at', '>=', now()->subDays($lookbackDays))
                 ->limit(10)
                 ->pluck('subject')
                 ->filter()
@@ -749,5 +759,125 @@ PROMPT;
                     ->toArray(),
             ],
         ]);
+    }
+
+    /**
+     * Generate AI-powered professional summary of the audit
+     */
+    protected function generateAiSummary(CampaignAudit $audit, User $user, string $language = 'en'): ?string
+    {
+        try {
+            // Get user's preferred AI integration or fallback to default
+            $integrationId = $user->settings['campaign_advisor']['ai_integration_id'] ?? null;
+
+            if ($integrationId) {
+                $integration = \App\Models\AiIntegration::find($integrationId);
+                // Fallback to default if selected integration is not active
+                if (!$integration || !$integration->is_active) {
+                    $integration = $this->aiService->getDefaultIntegration();
+                }
+            } else {
+                $integration = $this->aiService->getDefaultIntegration();
+            }
+
+            if (!$integration) {
+                return null;
+            }
+
+            $languageNames = [
+                'en' => 'English',
+                'pl' => 'Polish',
+                'de' => 'German',
+                'es' => 'Spanish',
+                'fr' => 'French',
+                'it' => 'Italian',
+                'pt' => 'Portuguese',
+                'nl' => 'Dutch',
+            ];
+
+            $languageName = $languageNames[$language] ?? 'English';
+
+            // Get issues grouped by category
+            $issuesByCategory = $audit->issues()
+                ->selectRaw('category, severity, COUNT(*) as count')
+                ->groupBy('category', 'severity')
+                ->get()
+                ->groupBy('category')
+                ->toArray();
+
+            $issuesSummary = collect($issuesByCategory)->map(function ($items, $category) {
+                $counts = collect($items)->pluck('count', 'severity')->toArray();
+                return "{$category}: " . json_encode($counts);
+            })->implode(', ');
+
+            // Get top recommendations
+            $topRecommendations = $audit->recommendations()
+                ->orderBy('priority', 'desc')
+                ->limit(3)
+                ->pluck('title')
+                ->toArray();
+
+            // Build top priorities list
+            $prioritiesList = '';
+            if (!empty($topRecommendations)) {
+                foreach ($topRecommendations as $rec) {
+                    $prioritiesList .= "- {$rec}\n";
+                }
+            } else {
+                $prioritiesList = "- No specific recommendations generated yet\n";
+            }
+
+            $prompt = <<<PROMPT
+You are a professional email marketing consultant. Write a professional executive summary of this campaign audit.
+
+IMPORTANT RULES:
+1. Write the ENTIRE response in {$languageName} language.
+2. Use INFORMAL, friendly tone - address the reader directly with informal "you" (in Polish: "Ty", not "Państwa" or "Pan/Pani").
+3. Be encouraging but honest about issues.
+4. Do NOT use formal greetings like "Dear..." or "Dear Sir/Madam".
+
+AUDIT DATA:
+- Overall Health Score: {$audit->overall_score}/100
+- Score Level: {$audit->score_label}
+- Critical Issues: {$audit->critical_count}
+- Warnings: {$audit->warning_count}
+- Informational: {$audit->info_count}
+- Messages Analyzed: {$audit->messages_analyzed}
+- Lists Analyzed: {$audit->lists_analyzed}
+- Automations Analyzed: {$audit->automations_analyzed}
+- Estimated Revenue Loss: \${$audit->estimated_revenue_loss}
+
+ISSUES BY CATEGORY: {$issuesSummary}
+
+TOP PRIORITIES:
+{$prioritiesList}
+
+Write a professional 3-4 paragraph executive summary that:
+1. Opens with an overall assessment of the email marketing health
+2. Highlights the most critical findings and their business impact
+3. Provides actionable priorities for improvement
+4. Ends with an encouraging but realistic outlook
+
+Keep the tone professional yet friendly, consultative, and data-driven. Speak directly to the reader using "you/your".
+Write in {$languageName} language only. Remember: use informal "you" form.
+PROMPT;
+
+            // Use max_tokens_large from integration or default to 8000
+            $maxTokens = $integration->max_tokens_large ?? 8000;
+
+            $response = $this->aiService->generateContent($prompt, $integration, [
+                'max_tokens' => $maxTokens,
+                'temperature' => 0.5,
+            ]);
+
+            return trim($response);
+
+        } catch (\Exception $e) {
+            Log::warning('AI summary generation failed', [
+                'audit_id' => $audit->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }
