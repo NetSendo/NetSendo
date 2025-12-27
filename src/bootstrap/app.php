@@ -48,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $apiKey = $request->get('api_key');
             $identifier = $apiKey?->id ?? $request->ip();
 
-            return Limit::perMinute(60)->by($identifier);
+            return Limit::perMinute(600)->by($identifier);
         });
     })
     ->create();
