@@ -59,10 +59,12 @@ class LicenseController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Check if license key is returned directly
-                if (isset($data['license_key']) && !empty($data['license_key'])) {
+                // Check if license key is returned directly (support both formats)
+                $licenseKey = $data['license_key'] ?? $data['licenseKey'] ?? null;
+
+                if (!empty($licenseKey)) {
                     // Auto-activate the license
-                    $this->saveLicense($data['license_key'], 'SILVER', null);
+                    $this->saveLicense($licenseKey, 'SILVER', null);
 
                     return response()->json([
                         'success' => true,
@@ -79,12 +81,23 @@ class LicenseController extends Controller
                 ]);
             }
 
+            \Illuminate\Support\Facades\Log::error('License request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'url' => $webhookUrl
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Nie udało się wysłać prośby. Spróbuj ponownie później.',
             ], 422);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('License request exception', [
+                'message' => $e->getMessage(),
+                'url' => $webhookUrl
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Błąd połączenia z serwerem licencji. Spróbuj ponownie później.',
