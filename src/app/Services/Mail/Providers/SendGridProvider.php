@@ -16,7 +16,7 @@ class SendGridProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
         try {
             $payload = [
@@ -47,6 +47,21 @@ class SendGridProvider implements MailProviderInterface
                 $payload['headers'] = $headers;
             }
 
+            // Add attachments
+            if (!empty($attachments)) {
+                $payload['attachments'] = [];
+                foreach ($attachments as $attachment) {
+                    if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                        $payload['attachments'][] = [
+                            'content' => base64_encode(file_get_contents($attachment['path'])),
+                            'filename' => $attachment['name'] ?? basename($attachment['path']),
+                            'type' => $attachment['mime_type'] ?? 'application/pdf',
+                            'disposition' => 'attachment',
+                        ];
+                    }
+                }
+            }
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->apiKey,
                 'Content-Type' => 'application/json',
@@ -74,15 +89,15 @@ class SendGridProvider implements MailProviderInterface
 
             if ($response->successful()) {
                 $scopes = $response->json('scopes', []);
-                
+
                 if (in_array('mail.send', $scopes)) {
                     // Scopes are okay, now try to send a test email
                     try {
                         $recipient = $toEmail ?? $this->fromEmail;
                         $this->send(
-                            $recipient, 
-                            'Test User', 
-                            'NetSendo Connection Test', 
+                            $recipient,
+                            'Test User',
+                            'NetSendo Connection Test',
                             '<p>This is a test email from NetSendo to verify your SendGrid integration.</p>'
                         );
 
@@ -99,7 +114,7 @@ class SendGridProvider implements MailProviderInterface
                 }
 
                 return [
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Connected to SendGrid, but "mail.send" scope is missing. Please check your API Key permissions.',
                 ];
             }

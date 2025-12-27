@@ -1003,6 +1003,17 @@
             "excluded_lists_help": "Subskrybenci znajdujący się na wykluczonych listach nie otrzymają wiadomości, nawet jeśli są na listach wysyłkowych.",
             "excluded_count": "Wykluczono {count} list(y)"
         },
+        "attachments": {
+            "title": "Załączniki PDF",
+            "dropzone": "Przeciągnij pliki PDF tutaj lub kliknij, aby wybrać",
+            "info": "Maksymalnie {max} plików, każdy do {size}",
+            "existing": "Zapisane załączniki",
+            "new": "Nowe załączniki (do przesłania)",
+            "ready": "Gotowy do przesłania",
+            "max_files": "Możesz dodać maksymalnie {count} załączników",
+            "only_pdf": "Tylko pliki PDF są dozwolone",
+            "max_size": "Maksymalny rozmiar pliku to {size}"
+        },
         "actions": {
             "save_draft": "Zapisz jako szkic",
             "send_now": "Wyślij natychmiast",

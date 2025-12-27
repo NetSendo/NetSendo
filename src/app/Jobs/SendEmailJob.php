@@ -38,7 +38,7 @@ class SendEmailJob implements ShouldQueue
         try {
             // Get the mailbox to use (explicit mailbox, message's mailbox, or user's default)
             $mailbox = $this->resolveMailbox($providerService);
-            
+
             // Validate mailbox can send this message type
             if ($mailbox && !$providerService->validateMailboxForType($mailbox, $this->message->type ?? 'broadcast')) {
                 Log::warning("Mailbox {$mailbox->id} cannot send message type: {$this->message->type}");
@@ -67,7 +67,7 @@ class SendEmailJob implements ShouldQueue
                     '',
                     $content
                 );
-                
+
                 // Also remove any hidden preheader divs without comment
                 $content = preg_replace(
                     '/<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none;\s*max-height:\s*0[^"\']*["\'][^>]*>.*?<\/div>/is',
@@ -98,7 +98,7 @@ class SendEmailJob implements ShouldQueue
             // 3. Link Tracking Replacement
             $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash) {
                 $url = $matches[1];
-                
+
                 // Skip special links
                 if (str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:') || str_starts_with($url, '#') || str_contains($url, 'unsubscribe')) {
                     return 'href="' . $url . '"';
@@ -121,9 +121,9 @@ class SendEmailJob implements ShouldQueue
                 'subscriber' => $this->subscriber->id,
                 'hash' => $hash,
             ]);
-            
+
             $pixelHtml = '<img src="' . $pixelUrl . '" alt="" width="1" height="1" border="0" style="height:1px !important;width:1px !important;border-width:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-right:0 !important;margin-left:0 !important;padding-top:0 !important;padding-bottom:0 !important;padding-right:0 !important;padding-left:0 !important;"/>';
-            
+
             if (str_contains($content, '</body>')) {
                 $content = str_replace('</body>', $pixelHtml . '</body>', $content);
             } else {
@@ -132,7 +132,14 @@ class SendEmailJob implements ShouldQueue
 
             // 5. Send Email using Mailbox Provider or Default Laravel Mailer
             $recipientName = trim(($this->subscriber->first_name ?? '') . ' ' . ($this->subscriber->last_name ?? ''));
-            
+
+            // Prepare attachments array
+            $attachments = $this->message->attachments->map(fn($a) => [
+                'path' => $a->getFullPath(),
+                'name' => $a->original_name,
+                'mime_type' => $a->mime_type,
+            ])->filter(fn($a) => file_exists($a['path']))->values()->toArray();
+
             if ($mailbox) {
                 // Use custom mailbox provider
                 $provider = $providerService->getProvider($mailbox);
@@ -144,21 +151,30 @@ class SendEmailJob implements ShouldQueue
                     $recipientName ?: $this->subscriber->email,
                     $subject,
                     $content,
-                    $headers
+                    $headers,
+                    $attachments
                 );
 
                 // Track sent count for rate limiting
                 $mailbox->incrementSentCount();
-                
+
                 Log::info("Email sent via {$mailbox->provider} ({$mailbox->name}) to {$this->subscriber->email}");
             } else {
                 // Fall back to default Laravel mailer
-                Mail::html($content, function ($mail) use ($subject) {
+                Mail::html($content, function ($mail) use ($subject, $attachments) {
                     $mail->to($this->subscriber->email, ($this->subscriber->first_name . ' ' . $this->subscriber->last_name));
                     $mail->subject($subject);
                     $mail->from(config('mail.from.address'), config('mail.from.name'));
+
+                    // Add attachments
+                    foreach ($attachments as $attachment) {
+                        $mail->attach($attachment['path'], [
+                            'as' => $attachment['name'],
+                            'mime' => $attachment['mime_type'],
+                        ]);
+                    }
                 });
-                
+
                 Log::info("Email sent via default mailer to {$this->subscriber->email}");
             }
 
@@ -167,10 +183,10 @@ class SendEmailJob implements ShouldQueue
 
         } catch (\Exception $e) {
             Log::error("Failed to send email to {$this->subscriber->email}: " . $e->getMessage());
-            
+
             // Mark queue entry as failed
             $this->markQueueEntryAsFailed($e->getMessage());
-            
+
             $this->fail($e);
         }
     }
@@ -190,16 +206,16 @@ class SendEmailJob implements ShouldQueue
         }
 
         $entry->markAsSent();
-        
+
         // Increment sent_count on the message
         $this->message->increment('sent_count');
-        
+
         // For broadcast messages: check if all entries are processed
         if ($this->message->type === 'broadcast') {
             $pendingCount = $this->message->queueEntries()
                 ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
                 ->count();
-            
+
             if ($pendingCount === 0) {
                 $this->message->update(['status' => 'sent']);
                 Log::info("Broadcast message {$this->message->id} marked as sent - all entries processed");
@@ -258,7 +274,7 @@ class SendEmailJob implements ShouldQueue
 
         // Process values
         $finalHeaders = [];
-        
+
         // List-Unsubscribe
         if (!empty($rawHeaders['list_unsubscribe'])) {
             $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe'], $this->subscriber, $additionalData);
@@ -266,7 +282,7 @@ class SendEmailJob implements ShouldQueue
                 $finalHeaders['List-Unsubscribe'] = $value;
             }
         }
-        
+
         // List-Unsubscribe-Post
         if (!empty($rawHeaders['list_unsubscribe_post'])) {
             $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe_post'], $this->subscriber, $additionalData);

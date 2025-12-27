@@ -12,9 +12,10 @@ interface MailProviderInterface
      * @param string $subject Email subject
      * @param string $htmlContent HTML content of the email
      * @param array $headers Custom headers (e.g. List-Unsubscribe)
+     * @param array $attachments Attachments array with 'path', 'name', 'mime_type' keys
      * @return bool
      */
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool;
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool;
 
     /**
      * Test the connection to the mail provider

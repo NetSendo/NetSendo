@@ -122,6 +122,14 @@ class Message extends Model
     }
 
     /**
+     * Get all attachments for this message.
+     */
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class);
+    }
+
+    /**
      * Get aggregated queue statistics.
      *
      * @return array{planned: int, queued: int, sent: int, failed: int, skipped: int, total: int}
@@ -160,16 +168,16 @@ class Message extends Model
         }
 
         $result = ['added' => 0, 'skipped' => 0];
-        
+
         // Get current active subscribers
         $currentRecipients = $this->getUniqueRecipients();
         $currentSubscriberIds = $currentRecipients->pluck('id')->toArray();
-        
+
         // Get existing queue entries
         $existingEntryIds = $this->queueEntries()
             ->pluck('subscriber_id')
             ->toArray();
-        
+
         // Add new subscribers as planned
         $newSubscriberIds = array_diff($currentSubscriberIds, $existingEntryIds);
         foreach ($newSubscriberIds as $subscriberId) {
@@ -180,7 +188,7 @@ class Message extends Model
             ]);
             $result['added']++;
         }
-        
+
         // Mark removed/unsubscribed subscribers as skipped (only if still pending)
         $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
         if (!empty($removedSubscriberIds)) {
@@ -193,13 +201,13 @@ class Message extends Model
                 ]);
             $result['skipped'] = $skipped;
         }
-        
+
         // Update message stats
         $this->update([
             'planned_recipients_count' => count($currentSubscriberIds),
             'recipients_calculated_at' => now(),
         ]);
-        
+
         return $result;
     }
 

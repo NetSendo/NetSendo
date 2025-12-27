@@ -61,12 +61,12 @@ class SmtpProvider implements MailProviderInterface
         return $dsn;
     }
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
         try {
             $email = (new Email())
                 ->from(new Address($this->fromEmail, $this->fromName));
-            
+
             if ($this->replyTo) {
                 $email->replyTo($this->replyTo);
             }
@@ -79,6 +79,17 @@ class SmtpProvider implements MailProviderInterface
             $email->to(new Address($to, $toName))
                 ->subject($subject)
                 ->html($htmlContent);
+
+            // Add attachments
+            foreach ($attachments as $attachment) {
+                if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                    $email->attachFromPath(
+                        $attachment['path'],
+                        $attachment['name'] ?? basename($attachment['path']),
+                        $attachment['mime_type'] ?? 'application/pdf'
+                    );
+                }
+            }
 
             $this->mailer->send($email);
             return true;
@@ -95,7 +106,7 @@ class SmtpProvider implements MailProviderInterface
             // We'll just initialize the transport to test credentials
             $dsn = $this->buildDsn();
             $transport = Transport::fromDsn($dsn);
-            
+
             // Create a test email (won't actually send)
             $email = (new Email())
                 ->from(new Address($this->fromEmail, $this->fromName));

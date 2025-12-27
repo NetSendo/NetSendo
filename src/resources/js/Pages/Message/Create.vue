@@ -158,7 +158,16 @@ const form = useForm({
     ab_split_percentage: props.message?.ab_split_percentage || 50,
     trigger_type: props.message?.trigger_type || null,
     trigger_config: props.message?.trigger_config || {},
+    // PDF Attachments
+    attachments: [],
+    remove_attachment_ids: [],
 });
+
+// Existing attachments from database (for editing)
+const existingAttachments = ref(props.message?.attachments || []);
+
+// Pending files to upload (File objects)
+const pendingFiles = ref([]);
 
 // Selected template for display
 const selectedTemplate = computed(() => {
@@ -325,6 +334,89 @@ const handleInsert = (content) => {
     }
     showInsertPickerModal.value = false;
 };
+
+// ===== PDF Attachments Logic =====
+const fileInputRef = ref(null);
+const isDragging = ref(false);
+const maxFiles = 5;
+const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+// Total attachments count (existing + pending)
+const totalAttachments = computed(() => {
+    return existingAttachments.value.length + pendingFiles.value.length;
+});
+
+// Handle file input change
+const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files || []);
+    addFiles(files);
+    // Reset input so same file can be selected again
+    if (fileInputRef.value) fileInputRef.value.value = "";
+};
+
+// Handle drag and drop
+const handleDrop = (event) => {
+    event.preventDefault();
+    isDragging.value = false;
+    const files = Array.from(event.dataTransfer?.files || []);
+    addFiles(files);
+};
+
+// Add files to pending list
+const addFiles = (files) => {
+    for (const file of files) {
+        // Validate file count
+        if (totalAttachments.value >= maxFiles) {
+            alert(t("messages.attachments.max_files", { count: maxFiles }));
+            break;
+        }
+
+        // Validate file type
+        if (file.type !== "application/pdf") {
+            alert(t("messages.attachments.only_pdf"));
+            continue;
+        }
+
+        // Validate file size
+        if (file.size > maxFileSize) {
+            alert(t("messages.attachments.max_size", { size: "10MB" }));
+            continue;
+        }
+
+        // Add to pending files and form
+        pendingFiles.value.push({
+            id: Date.now() + Math.random(), // temp ID for UI
+            file: file,
+            name: file.name,
+            size: file.size,
+        });
+    }
+
+    // Update form attachments array
+    form.attachments = pendingFiles.value.map((p) => p.file);
+};
+
+// Remove existing attachment (mark for deletion)
+const removeExistingAttachment = (attachmentId) => {
+    form.remove_attachment_ids.push(attachmentId);
+    existingAttachments.value = existingAttachments.value.filter(
+        (a) => a.id !== attachmentId
+    );
+};
+
+// Remove pending file
+const removePendingFile = (tempId) => {
+    pendingFiles.value = pendingFiles.value.filter((p) => p.id !== tempId);
+    form.attachments = pendingFiles.value.map((p) => p.file);
+};
+
+// Format file size
+const formatFileSize = (bytes) => {
+    if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + " MB";
+    if (bytes >= 1024) return (bytes / 1024).toFixed(2) + " KB";
+    return bytes + " B";
+};
+// ===== End PDF Attachments Logic =====
 
 const submit = (targetStatus = null) => {
     if (targetStatus) {
@@ -1052,6 +1144,234 @@ if (form.contact_list_ids.length > 0) {
                                 <InputError
                                     class="mt-2"
                                     :message="form.errors.content"
+                                />
+                            </div>
+
+                            <!-- PDF Attachments Section -->
+                            <div class="mt-6">
+                                <InputLabel class="mb-2">
+                                    📎 {{ $t("messages.attachments.title") }}
+                                    <span
+                                        class="text-slate-400 font-normal ml-1"
+                                        >({{ $t("common.optional") }})</span
+                                    >
+                                </InputLabel>
+
+                                <!-- Dropzone -->
+                                <div
+                                    @dragenter.prevent="isDragging = true"
+                                    @dragover.prevent="isDragging = true"
+                                    @dragleave.prevent="isDragging = false"
+                                    @drop="handleDrop"
+                                    :class="[
+                                        'relative rounded-xl border-2 border-dashed p-6 text-center transition-all cursor-pointer',
+                                        isDragging
+                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                            : 'border-slate-300 dark:border-slate-600 hover:border-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                                    ]"
+                                    @click="fileInputRef?.click()"
+                                >
+                                    <input
+                                        ref="fileInputRef"
+                                        type="file"
+                                        accept=".pdf,application/pdf"
+                                        multiple
+                                        class="hidden"
+                                        @change="handleFileSelect"
+                                    />
+
+                                    <div
+                                        class="flex flex-col items-center gap-2"
+                                    >
+                                        <svg
+                                            class="h-10 w-10 text-slate-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="1.5"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                            />
+                                        </svg>
+                                        <p
+                                            class="text-sm text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{
+                                                $t(
+                                                    "messages.attachments.dropzone"
+                                                )
+                                            }}
+                                        </p>
+                                        <p class="text-xs text-slate-400">
+                                            {{
+                                                $t(
+                                                    "messages.attachments.info",
+                                                    { max: 5, size: "10MB" }
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Existing Attachments -->
+                                <div
+                                    v-if="existingAttachments.length > 0"
+                                    class="mt-4"
+                                >
+                                    <p
+                                        class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2"
+                                    >
+                                        {{
+                                            $t("messages.attachments.existing")
+                                        }}
+                                    </p>
+                                    <div class="space-y-2">
+                                        <div
+                                            v-for="attachment in existingAttachments"
+                                            :key="attachment.id"
+                                            class="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                                        >
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <svg
+                                                    class="h-8 w-8 text-red-500"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10.92,12.31C10.68,11.54 10.15,9.08 11.55,9.04C12.95,9 12.03,12.16 12.03,12.16C12.42,13.65 14.05,14.72 14.05,14.72C14.55,14.57 17.4,14.24 17,15.72C16.57,17.2 13.5,15.81 13.5,15.81C11.55,15.95 10.09,16.47 10.09,16.47C8.96,18.58 7.64,19.5 7.1,18.61C6.43,17.5 9.23,16.07 9.23,16.07C10.68,13.72 10.9,12.35 10.92,12.31Z"
+                                                    />
+                                                </svg>
+                                                <div>
+                                                    <p
+                                                        class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[200px]"
+                                                    >
+                                                        {{ attachment.name }}
+                                                    </p>
+                                                    <p
+                                                        class="text-xs text-slate-400"
+                                                    >
+                                                        {{
+                                                            attachment.formatted_size
+                                                        }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                @click="
+                                                    removeExistingAttachment(
+                                                        attachment.id
+                                                    )
+                                                "
+                                                class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pending Files (new uploads) -->
+                                <div
+                                    v-if="pendingFiles.length > 0"
+                                    class="mt-4"
+                                >
+                                    <p
+                                        class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2"
+                                    >
+                                        {{ $t("messages.attachments.new") }}
+                                    </p>
+                                    <div class="space-y-2">
+                                        <div
+                                            v-for="file in pendingFiles"
+                                            :key="file.id"
+                                            class="flex items-center justify-between p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800"
+                                        >
+                                            <div
+                                                class="flex items-center gap-3"
+                                            >
+                                                <svg
+                                                    class="h-8 w-8 text-red-500"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10.92,12.31C10.68,11.54 10.15,9.08 11.55,9.04C12.95,9 12.03,12.16 12.03,12.16C12.42,13.65 14.05,14.72 14.05,14.72C14.55,14.57 17.4,14.24 17,15.72C16.57,17.2 13.5,15.81 13.5,15.81C11.55,15.95 10.09,16.47 10.09,16.47C8.96,18.58 7.64,19.5 7.1,18.61C6.43,17.5 9.23,16.07 9.23,16.07C10.68,13.72 10.9,12.35 10.92,12.31Z"
+                                                    />
+                                                </svg>
+                                                <div>
+                                                    <p
+                                                        class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[200px]"
+                                                    >
+                                                        {{ file.name }}
+                                                    </p>
+                                                    <p
+                                                        class="text-xs text-emerald-600 dark:text-emerald-400"
+                                                    >
+                                                        {{
+                                                            formatFileSize(
+                                                                file.size
+                                                            )
+                                                        }}
+                                                        •
+                                                        {{
+                                                            $t(
+                                                                "messages.attachments.ready"
+                                                            )
+                                                        }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                @click="
+                                                    removePendingFile(file.id)
+                                                "
+                                                class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Attachment Errors -->
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.attachments"
+                                />
+                                <InputError
+                                    class="mt-1"
+                                    :message="form.errors['attachments.0']"
                                 />
                             </div>
                         </div>
@@ -2497,9 +2817,7 @@ if (form.contact_list_ids.length > 0) {
                                 :href="route('automations.index')"
                                 class="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                             >
-                                {{
-                                    $t("messages.triggers.go_to_automations")
-                                }}
+                                {{ $t("messages.triggers.go_to_automations") }}
                                 →
                             </Link>
                         </div>

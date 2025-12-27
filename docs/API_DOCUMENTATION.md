@@ -31,6 +31,8 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | `tags:read`         | Odczyt tagów                            |
 | `webhooks:read`     | Odczyt webhooków                        |
 | `webhooks:write`    | Tworzenie/edycja/usuwanie webhooków     |
+| `email:read`        | Odczyt statusu email i mailboxów        |
+| `email:write`       | Wysyłanie email                         |
 | `sms:read`          | Odczyt statusu SMS i providerów         |
 | `sms:write`         | Wysyłanie SMS                           |
 
@@ -344,6 +346,165 @@ POST /api/v1/lists/{id}/export
 ```
 
 > Eksport wykonywany jest asynchronicznie. Powiadomienie zostanie wysłane po zakończeniu.
+
+---
+
+## 📧 Email (API)
+
+### Wysyłka pojedynczego Email
+
+```http
+POST /api/v1/email/send
+```
+
+**Wymagane uprawnienie:** `email:write`
+
+**Body (JSON):**
+
+```json
+{
+  "email": "user@example.com",
+  "subject": "Witaj!",
+  "content": "<h1>Hello</h1><p>Treść wiadomości...</p>",
+  "preheader": "Opcjonalny preheader",
+  "mailbox_id": 1,
+  "schedule_at": "2025-12-25T10:00:00Z"
+}
+```
+
+| Pole            | Typ      | Wymagane | Opis                       |
+| --------------- | -------- | -------- | -------------------------- |
+| `email`         | string   | ✅       | Adres email odbiorcy       |
+| `subject`       | string   | ✅       | Temat wiadomości           |
+| `content`       | string   | ✅       | Treść HTML wiadomości      |
+| `preheader`     | string   | ❌       | Preheader (max 500 znaków) |
+| `mailbox_id`    | integer  | ❌       | ID skrzynki nadawczej      |
+| `schedule_at`   | datetime | ❌       | Zaplanuj wysyłkę           |
+| `subscriber_id` | integer  | ❌       | Powiąż z subskrybentem     |
+
+**Odpowiedź (202):**
+
+```json
+{
+  "data": {
+    "id": 123,
+    "email": "user@example.com",
+    "subject": "Witaj!",
+    "status": "queued",
+    "mailbox": "Główna skrzynka",
+    "scheduled_at": "2025-12-25T10:00:00Z"
+  },
+  "message": "Email queued successfully"
+}
+```
+
+---
+
+### Wysyłka batch Email
+
+```http
+POST /api/v1/email/batch
+```
+
+**Wymagane uprawnienie:** `email:write`
+
+**Body (JSON):**
+
+```json
+{
+  "subject": "Newsletter grudzień",
+  "content": "<h1>Nasz newsletter</h1>...",
+  "list_id": 5,
+  "schedule_at": "2025-12-25T10:00:00Z",
+  "excluded_list_ids": [7, 8]
+}
+```
+
+| Pole                | Typ      | Wymagane | Opis                     |
+| ------------------- | -------- | -------- | ------------------------ |
+| `subject`           | string   | ✅       | Temat wiadomości         |
+| `content`           | string   | ✅       | Treść HTML               |
+| `list_id`           | integer  | ❌\*     | ID listy email           |
+| `tag_ids`           | array    | ❌\*     | Tablica ID tagów         |
+| `subscriber_ids`    | array    | ❌\*     | Tablica ID subskrybentów |
+| `mailbox_id`        | integer  | ❌       | ID skrzynki nadawczej    |
+| `schedule_at`       | datetime | ❌       | Zaplanuj wysyłkę         |
+| `excluded_list_ids` | array    | ❌       | Listy do wykluczenia     |
+
+\* Wymagane jest jedno z: `list_id`, `tag_ids` lub `subscriber_ids`
+
+**Odpowiedź (202):**
+
+```json
+{
+  "data": {
+    "id": 124,
+    "queued_count": 150,
+    "subject": "Newsletter grudzień",
+    "status": "queued",
+    "mailbox": "Główna skrzynka",
+    "scheduled_at": "2025-12-25T10:00:00Z"
+  },
+  "message": "Batch email queued for 150 recipients"
+}
+```
+
+---
+
+### Status Email
+
+```http
+GET /api/v1/email/status/{id}
+```
+
+**Wymagane uprawnienie:** `email:read`
+
+**Odpowiedź:**
+
+```json
+{
+  "data": {
+    "id": 123,
+    "subject": "Witaj!",
+    "status": "scheduled",
+    "scheduled_at": "2025-12-25T10:00:00.000000Z",
+    "created_at": "2025-12-24T21:00:00.000000Z",
+    "stats": {
+      "planned": 10,
+      "queued": 5,
+      "sent": 140,
+      "failed": 0
+    }
+  }
+}
+```
+
+---
+
+### Lista skrzynek nadawczych
+
+```http
+GET /api/v1/email/mailboxes
+```
+
+**Wymagane uprawnienie:** `email:read`
+
+**Odpowiedź:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Główna skrzynka",
+      "provider": "smtp",
+      "from_email": "newsletter@example.com",
+      "from_name": "NetSendo",
+      "is_default": true
+    }
+  ]
+}
+```
 
 ---
 

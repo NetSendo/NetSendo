@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.3] – Short Description
+
+**Release date:** 2025-12-27
+
+### Added
+
+- **PDF Attachments for Emails:**
+  - Added ability to attach PDF files to emails (max 5 files, 10MB each).
+  - New `message_attachments` table and `MessageAttachment` model.
+  - Integration with SMTP, SendGrid, and Gmail providers.
+  - Drag-and-drop file upload in Message Editor.
+  - Full management (add/remove) of attachments during message creation and editing.
+  - Polish translations for attachment interface.
+
 ## [1.2.2] – UI Improvements & Bug Fixes
 
 **Release date:** 2025-12-26

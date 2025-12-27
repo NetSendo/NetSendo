@@ -9,9 +9,11 @@ use App\Models\EmailOpen;
 use App\Models\EmailReadSession;
 use App\Models\Mailbox;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use App\Models\MessageQueueEntry;
 use App\Models\Template;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Http\Controllers\InsertController;
 
@@ -190,6 +192,9 @@ class MessageController extends Controller
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
             'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom',
             'trigger_config' => 'nullable|array',
+            // PDF Attachments
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:pdf|max:10240', // 10MB max per file
         ]);
 
         // Verify ownership of lists
@@ -268,6 +273,25 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids']);
         }
 
+        // Handle PDF attachments upload
+        if ($request->hasFile('attachments')) {
+            $userId = auth()->id();
+            $storagePath = "attachments/{$userId}/{$message->id}";
+
+            foreach ($request->file('attachments') as $file) {
+                $storedPath = $file->store($storagePath, 'local');
+
+                MessageAttachment::create([
+                    'message_id' => $message->id,
+                    'user_id' => $userId,
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_path' => $storedPath,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
+
         // For "send immediately" broadcast messages (status=scheduled, but no send_at date),
         // sync recipients immediately so stats are available right away.
         // For future scheduled messages (send_at is set), CRON will handle this when the time comes.
@@ -299,7 +323,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox']);
+        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -313,7 +337,6 @@ class MessageController extends Controller
                 'preheader' => $message->preheader,
                 'status' => $message->status,
                 'contact_list_ids' => $message->contactLists->pluck('id'),
-                'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 // Convert stored UTC time back to user's timezone for display
                 'send_at' => $message->send_at
@@ -329,6 +352,13 @@ class MessageController extends Controller
                 'ab_split_percentage' => $message->ab_split_percentage,
                 'trigger_type' => $message->trigger_type,
                 'trigger_config' => $message->trigger_config,
+                // Attachments
+                'attachments' => $message->attachments->map(fn($a) => [
+                    'id' => $a->id,
+                    'name' => $a->original_name,
+                    'size' => $a->size,
+                    'formatted_size' => $a->formatted_size,
+                ]),
             ],
             'lists' => auth()->user()->contactLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
@@ -388,6 +418,11 @@ class MessageController extends Controller
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
             'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom',
             'trigger_config' => 'nullable|array',
+            // PDF Attachments
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:pdf|max:10240', // 10MB max per file
+            'remove_attachment_ids' => 'nullable|array',
+            'remove_attachment_ids.*' => 'integer',
         ]);
 
         // Verify ownership
@@ -461,6 +496,36 @@ class MessageController extends Controller
         // Sync excluded lists
         if (array_key_exists('excluded_list_ids', $validated)) {
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
+        }
+
+        // Handle attachment removals
+        if (!empty($validated['remove_attachment_ids'])) {
+            $attachmentsToRemove = $message->attachments()
+                ->whereIn('id', $validated['remove_attachment_ids'])
+                ->get();
+
+            foreach ($attachmentsToRemove as $attachment) {
+                $attachment->delete(); // Model auto-deletes file from storage
+            }
+        }
+
+        // Handle new PDF attachments upload
+        if ($request->hasFile('attachments')) {
+            $userId = auth()->id();
+            $storagePath = "attachments/{$userId}/{$message->id}";
+
+            foreach ($request->file('attachments') as $file) {
+                $storedPath = $file->store($storagePath, 'local');
+
+                MessageAttachment::create([
+                    'message_id' => $message->id,
+                    'user_id' => $userId,
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_path' => $storedPath,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
         }
 
         // For "send immediately" broadcast messages (status=scheduled, but no send_at date),

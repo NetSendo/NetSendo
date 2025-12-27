@@ -22,7 +22,7 @@ class GmailProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
         try {
             // Get valid access token
@@ -38,6 +38,17 @@ class GmailProvider implements MailProviderInterface
             // Add custom headers
             foreach ($headers as $name => $value) {
                 $email->getHeaders()->addTextHeader($name, $value);
+            }
+
+            // Add attachments
+            foreach ($attachments as $attachment) {
+                if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                    $email->attachFromPath(
+                        $attachment['path'],
+                        $attachment['name'] ?? basename($attachment['path']),
+                        $attachment['mime_type'] ?? 'application/pdf'
+                    );
+                }
             }
 
             // Get raw content headers + body
@@ -83,9 +94,9 @@ class GmailProvider implements MailProviderInterface
             if ($toEmail) {
                 $subject = "Test Connection for {$this->mailbox->name}";
                 $body = "<h1>Connection Successful!</h1><p>This email confirms that your Gmail mailbox '{$this->mailbox->name}' is correctly connected and able to send emails.</p>";
-                
+
                 $this->send($toEmail, 'Test Recipient', $subject, $body);
-                
+
                 return [
                     'success' => true,
                     'message' => "Connected successfully as {$emailAddress} and test email sent to {$toEmail}",
