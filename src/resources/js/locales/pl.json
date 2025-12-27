@@ -1673,11 +1673,64 @@
         "unable_to_check": "Nie można sprawdzić aktualizacji",
         "new_tag": "NOWOŚĆ",
         "update": "Aktualizuj",
+        "system_logs": "Logi systemowe",
         "whats_new_list": [
             "Nowy system licencjonowania",
             "Sprawdzanie aktualizacji",
             "Ulepszone szablony email"
         ]
+    },
+    "logs": {
+        "title": "Logi systemowe",
+        "lines": "linii",
+        "last_modified": "Ostatnia modyfikacja",
+        "tabs": {
+            "logs": "Logi Laravel",
+            "webhooks": "Logi Webhooków",
+            "settings": "Ustawienia"
+        },
+        "levels": {
+            "all": "Wszystkie"
+        },
+        "actions": {
+            "refresh": "Odśwież",
+            "clear": "Wyczyść logi",
+            "copy": "Kopiuj",
+            "search": "Szukaj..."
+        },
+        "settings": {
+            "retention_title": "Czas przechowywania logów",
+            "retention_desc": "Logi starsze niż ustawiony czas zostaną automatycznie usunięte przez CRON",
+            "hours": "godzin",
+            "days": "dni",
+            "saved": "Ustawienia zapisane",
+            "cron_info_title": "Automatyczne czyszczenie",
+            "cron_info_desc": "Komenda logs:clean jest uruchamiana co godzinę przez system CRON. Sprawdza wiek pliku logów i czyści go, jeśli przekracza ustawiony czas retencji."
+        },
+        "confirm": {
+            "clear_title": "Wyczyść logi",
+            "clear_message": "Czy na pewno chcesz wyczyścić wszystkie logi? Ta operacja jest nieodwracalna."
+        },
+        "empty": "Brak logów do wyświetlenia",
+        "cleared": "Logi zostały wyczyszczone",
+        "error_reading": "Nie udało się odczytać pliku logów",
+        "webhook": {
+            "total": "Łącznie (24h)",
+            "success": "Sukces",
+            "failed": "Błąd",
+            "avg_duration": "Śr. czas",
+            "all_status": "Wszystkie statusy",
+            "all_events": "Wszystkie eventy",
+            "empty": "Brak logów webhooków",
+            "date": "Data",
+            "event": "Event",
+            "status": "Status",
+            "response_code": "Kod",
+            "duration": "Czas",
+            "error": "Błąd",
+            "response": "Odpowiedź",
+            "payload": "Payload"
+        }
     },
     "template_builder": {
         "untitled": "Bez nazwy",
@@ -2235,6 +2288,7 @@
             "actions": "Akcje"
         },
         "builder": {
+            "title_required": "Proszę podać nazwę formularza",
             "name_placeholder": "Nazwa formularza...",
             "available_fields": "Dostępne pola",
             "custom_fields": "Pola niestandardowe",
@@ -3002,5 +3056,20 @@
         "audit_lookback_days": "Okres analizy danych",
         "audit_lookback_days_hint": "Określa jak wiele dni wstecz będzie analizowanych podczas audytu",
         "days": "dni"
+    },
+    "queue_stats": {
+        "title": "Statystyki kolejki",
+        "day_info": "Ta wiadomość jest ustawiona na dzień {day} po zapisie subskrybenta.",
+        "sent": "Wysłane",
+        "tomorrow": "Jutro",
+        "day_after_tomorrow": "Pojutrze",
+        "days_3_7": "3-7 dni",
+        "over_7_days": "Ponad 7 dni",
+        "missed": "Pominięci (czas przeminął)",
+        "missed_explanation": "Ci subskrybenci dołączyli do listy przed dniem {day} i nigdy nie otrzymaliby tej wiadomości automatycznie.",
+        "send_to_missed": "Wyślij teraz do pominiętych",
+        "send_to_missed_confirm": "Czy na pewno chcesz wysłać tę wiadomość do {count} pominiętych subskrybentów?",
+        "send_success": "Zaplanowano wysyłkę do {count} pominiętych subskrybentów.",
+        "no_missed": "Brak pominiętych subskrybentów - świetnie!"
     }
 }

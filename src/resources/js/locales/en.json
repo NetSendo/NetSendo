@@ -1287,6 +1287,7 @@
             "actions": "Actions"
         },
         "builder": {
+            "title_required": "Please provide a form name",
             "name_placeholder": "Form name...",
             "available_fields": "Available Fields",
             "custom_fields": "Custom Fields",
@@ -1973,11 +1974,64 @@
         "unable_to_check": "Unable to check for updates",
         "new_tag": "NEW",
         "update": "Update",
+        "system_logs": "System Logs",
         "whats_new_list": [
             "New licensing system",
             "Update checking",
             "Improved email templates"
         ]
+    },
+    "logs": {
+        "title": "System Logs",
+        "lines": "lines",
+        "last_modified": "Last modified",
+        "tabs": {
+            "logs": "Laravel Logs",
+            "webhooks": "Webhook Logs",
+            "settings": "Settings"
+        },
+        "levels": {
+            "all": "All"
+        },
+        "actions": {
+            "refresh": "Refresh",
+            "clear": "Clear Logs",
+            "copy": "Copy",
+            "search": "Search..."
+        },
+        "settings": {
+            "retention_title": "Log Retention Time",
+            "retention_desc": "Logs older than the set time will be automatically deleted by CRON",
+            "hours": "hours",
+            "days": "days",
+            "saved": "Settings saved",
+            "cron_info_title": "Automatic Cleanup",
+            "cron_info_desc": "The logs:clean command runs every hour via CRON. It checks the log file age and clears it if it exceeds the set retention time."
+        },
+        "confirm": {
+            "clear_title": "Clear Logs",
+            "clear_message": "Are you sure you want to clear all logs? This action cannot be undone."
+        },
+        "empty": "No logs to display",
+        "cleared": "Logs have been cleared",
+        "error_reading": "Failed to read log file",
+        "webhook": {
+            "total": "Total (24h)",
+            "success": "Success",
+            "failed": "Failed",
+            "avg_duration": "Avg. time",
+            "all_status": "All statuses",
+            "all_events": "All events",
+            "empty": "No webhook logs",
+            "date": "Date",
+            "event": "Event",
+            "status": "Status",
+            "response_code": "Code",
+            "duration": "Duration",
+            "error": "Error",
+            "response": "Response",
+            "payload": "Payload"
+        }
     },
     "mailboxes": {
         "title": "Mailboxes",
@@ -2864,5 +2918,20 @@
         "audit_lookback_days": "Audit Data Period",
         "audit_lookback_days_hint": "Determines how many days back will be analyzed during the audit",
         "days": "days"
+    },
+    "queue_stats": {
+        "title": "Queue Statistics",
+        "day_info": "This message is set to day {day} after subscriber signup.",
+        "sent": "Sent",
+        "tomorrow": "Tomorrow",
+        "day_after_tomorrow": "Day after tomorrow",
+        "days_3_7": "3-7 days",
+        "over_7_days": "Over 7 days",
+        "missed": "Missed (time passed)",
+        "missed_explanation": "These subscribers joined the list before day {day} and would never receive this message automatically.",
+        "send_to_missed": "Send now to missed",
+        "send_to_missed_confirm": "Are you sure you want to send this message to {count} missed subscribers?",
+        "send_success": "Scheduled sending to {count} missed subscribers.",
+        "no_missed": "No missed subscribers - great!"
     }
 }

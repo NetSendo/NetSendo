@@ -1502,6 +1502,7 @@
             "actions": "Acciones"
         },
         "builder": {
+            "title_required": "Por favor proporcione un nombre de formulario",
             "name_placeholder": "Nombre del formulario...",
             "available_fields": "Campos disponibles",
             "custom_fields": "Campos personalizados",
@@ -2274,11 +2275,64 @@
         "unable_to_check": "No se pudo buscar actualizaciones",
         "new_tag": "NUEVO",
         "update": "Actualizar",
+        "system_logs": "Registros del sistema",
         "whats_new_list": [
             "Nuevo sistema de licencias",
             "Comprobación de actualizaciones",
             "Plantillas de correo mejoradas"
         ]
+    },
+    "logs": {
+        "title": "Registros del sistema",
+        "lines": "líneas",
+        "last_modified": "Última modificación",
+        "tabs": {
+            "logs": "Registros Laravel",
+            "webhooks": "Registros de Webhooks",
+            "settings": "Ajustes"
+        },
+        "levels": {
+            "all": "Todos"
+        },
+        "actions": {
+            "refresh": "Actualizar",
+            "clear": "Limpiar registros",
+            "copy": "Copiar",
+            "search": "Buscar..."
+        },
+        "settings": {
+            "retention_title": "Tiempo de retención de registros",
+            "retention_desc": "Los registros anteriores al tiempo establecido serán eliminados automáticamente por CRON",
+            "hours": "horas",
+            "days": "días",
+            "saved": "Ajustes guardados",
+            "cron_info_title": "Limpieza automática",
+            "cron_info_desc": "El comando logs:clean se ejecuta cada hora a través de CRON. Comprueba la antigüedad del archivo de registro y lo limpia si supera el tiempo de retención establecido."
+        },
+        "confirm": {
+            "clear_title": "Limpiar registros",
+            "clear_message": "¿Está seguro de que desea limpiar todos los registros? Esta acción no se puede deshacer."
+        },
+        "empty": "No hay registros para mostrar",
+        "cleared": "Registros limpiados",
+        "error_reading": "No se pudo leer el archivo de registro",
+        "webhook": {
+            "total": "Total (24h)",
+            "success": "Éxito",
+            "failed": "Error",
+            "avg_duration": "Tiempo promedio",
+            "all_status": "Todos los estados",
+            "all_events": "Todos los eventos",
+            "empty": "Sin registros de webhooks",
+            "date": "Fecha",
+            "event": "Evento",
+            "status": "Estado",
+            "response_code": "Código",
+            "duration": "Duración",
+            "error": "Error",
+            "response": "Respuesta",
+            "payload": "Payload"
+        }
     },
     "license": {
         "title": "Licencia",
@@ -2479,5 +2533,20 @@
         "action_steps": "Pasos de acción",
         "apply": "Marcar como aplicado",
         "applied": "Aplicado"
+    },
+    "queue_stats": {
+        "title": "Estadísticas de cola",
+        "day_info": "Este mensaje está configurado para el día {day} después de la suscripción.",
+        "sent": "Enviados",
+        "tomorrow": "Mañana",
+        "day_after_tomorrow": "Pasado mañana",
+        "days_3_7": "3-7 días",
+        "over_7_days": "Más de 7 días",
+        "missed": "Omitidos (tiempo pasado)",
+        "missed_explanation": "Estos suscriptores se unieron a la lista antes del día {day} y nunca recibirían este mensaje automáticamente.",
+        "send_to_missed": "Enviar ahora a omitidos",
+        "send_to_missed_confirm": "¿Está seguro de que desea enviar este mensaje a {count} suscriptores omitidos?",
+        "send_success": "Envío programado para {count} suscriptores omitidos.",
+        "no_missed": "No hay suscriptores omitidos - ¡excelente!"
     }
 }

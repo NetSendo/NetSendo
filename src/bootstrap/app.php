@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust all proxies for HTTPS behind reverse proxy (nginx, Cloudflare, etc.)
         $middleware->trustProxies(at: '*');
-        
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
@@ -36,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
             'api/cron/webhook',
             'webhooks/bounce/*',
+            'subscribe/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -46,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         RateLimiter::for('api', function (Request $request) {
             $apiKey = $request->get('api_key');
             $identifier = $apiKey?->id ?? $request->ip();
-            
+
             return Limit::perMinute(60)->by($identifier);
         });
     })

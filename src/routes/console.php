@@ -89,3 +89,10 @@ Schedule::command('audit:run --all')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/campaign-audit.log'));
 
+// Czyszczenie logów Laravel - co godzinę sprawdza retencję
+Schedule::command('logs:clean')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/log-cleanup.log'));
+
+

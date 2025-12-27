@@ -153,6 +153,119 @@ class Message extends Model
     }
 
     /**
+     * Get detailed queue schedule statistics for autoresponder messages.
+     * Shows breakdown by scheduled send date and missed recipients.
+     *
+     * @return array
+     */
+    public function getQueueScheduleStats(): array
+    {
+        if (!$this->isQueueType()) {
+            return [];
+        }
+
+        $dayOffset = $this->day ?? 0;
+        $today = now()->startOfDay();
+        $tomorrow = $today->copy()->addDay();
+        $dayAfterTomorrow = $today->copy()->addDays(2);
+        $weekFromNow = $today->copy()->addDays(7);
+
+        // Get all active subscribers from assigned lists with their subscribed_at dates
+        $includedListIds = $this->contactLists->pluck('id')->toArray();
+        $excludedListIds = $this->excludedLists->pluck('id')->toArray();
+
+        if (empty($includedListIds)) {
+            return [
+                'sent' => 0,
+                'tomorrow' => 0,
+                'day_after_tomorrow' => 0,
+                'days_3_7' => 0,
+                'over_7_days' => 0,
+                'missed' => 0,
+                'missed_subscribers' => [],
+                'total_scheduled' => 0,
+            ];
+        }
+
+        // Get subscribers with their subscribed_at from pivot
+        $subscribers = Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
+                $query->whereIn('contact_lists.id', $includedListIds)
+                    ->where('contact_list_subscriber.status', 'active');
+            })
+            ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
+                $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
+                    $q->whereIn('contact_lists.id', $excludedListIds);
+                })->pluck('email')->toArray();
+                $query->whereNotIn('email', $excludedEmails);
+            })
+            ->with(['contactLists' => function ($query) use ($includedListIds) {
+                $query->whereIn('contact_lists.id', $includedListIds);
+            }])
+            ->get();
+
+        // Get existing queue entries to check sent status
+        $sentSubscriberIds = $this->queueEntries()
+            ->where('status', MessageQueueEntry::STATUS_SENT)
+            ->pluck('subscriber_id')
+            ->toArray();
+
+        $stats = [
+            'sent' => count($sentSubscriberIds),
+            'tomorrow' => 0,
+            'day_after_tomorrow' => 0,
+            'days_3_7' => 0,
+            'over_7_days' => 0,
+            'missed' => 0,
+            'missed_subscribers' => [],
+        ];
+
+        foreach ($subscribers as $subscriber) {
+            // Skip if already sent
+            if (in_array($subscriber->id, $sentSubscriberIds)) {
+                continue;
+            }
+
+            // Get subscribed_at from the first matching list's pivot
+            $pivot = $subscriber->contactLists->first()?->pivot;
+            $subscribedAt = $pivot?->subscribed_at ? \Carbon\Carbon::parse($pivot->subscribed_at) : null;
+
+            if (!$subscribedAt) {
+                continue;
+            }
+
+            // Calculate expected send date
+            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($dayOffset);
+
+            // Check if this subscriber was "missed" (joined before the offset applies)
+            if ($expectedSendDate->lt($today)) {
+                $stats['missed']++;
+                // Store first 100 missed subscribers for display
+                if (count($stats['missed_subscribers']) < 100) {
+                    $stats['missed_subscribers'][] = [
+                        'id' => $subscriber->id,
+                        'email' => $subscriber->email,
+                        'name' => trim(($subscriber->first_name ?? '') . ' ' . ($subscriber->last_name ?? '')),
+                        'subscribed_at' => $subscribedAt->format('Y-m-d'),
+                        'would_send_at' => $expectedSendDate->format('Y-m-d'),
+                    ];
+                }
+            } elseif ($expectedSendDate->isSameDay($tomorrow)) {
+                $stats['tomorrow']++;
+            } elseif ($expectedSendDate->isSameDay($dayAfterTomorrow)) {
+                $stats['day_after_tomorrow']++;
+            } elseif ($expectedSendDate->lte($weekFromNow)) {
+                $stats['days_3_7']++;
+            } else {
+                $stats['over_7_days']++;
+            }
+        }
+
+        $stats['total_scheduled'] = $stats['tomorrow'] + $stats['day_after_tomorrow'] + $stats['days_3_7'] + $stats['over_7_days'];
+
+        return $stats;
+    }
+
+    /**
      * Synchronize planned recipients with current active subscribers.
      * This adds new subscribers and marks unsubscribed ones as skipped.
      *

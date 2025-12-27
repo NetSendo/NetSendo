@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Webhook;
+use App\Models\WebhookLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -37,6 +38,15 @@ class WebhookDispatcher
         $jsonPayload = json_encode($payload);
         $signature = $webhook->sign($jsonPayload);
 
+        $startTime = microtime(true);
+        $logEntry = [
+            'user_id' => $webhook->user_id,
+            'webhook_id' => $webhook->id,
+            'event' => $event,
+            'url' => $webhook->url,
+            'payload' => $payload,
+        ];
+
         try {
             $response = Http::timeout(10)
                 ->withHeaders([
@@ -48,8 +58,19 @@ class WebhookDispatcher
                 ->withBody($jsonPayload, 'application/json')
                 ->post($webhook->url);
 
+            $durationMs = (int)((microtime(true) - $startTime) * 1000);
+
             if ($response->successful()) {
                 $webhook->markTriggered();
+
+                // Log to database
+                WebhookLog::create(array_merge($logEntry, [
+                    'status' => 'success',
+                    'response_code' => $response->status(),
+                    'response_body' => substr($response->body(), 0, 1000),
+                    'duration_ms' => $durationMs,
+                    'created_at' => now(),
+                ]));
 
                 Log::info('Webhook dispatched successfully', [
                     'webhook_id' => $webhook->id,
@@ -63,6 +84,16 @@ class WebhookDispatcher
 
             $webhook->incrementFailure();
 
+            // Log failure to database
+            WebhookLog::create(array_merge($logEntry, [
+                'status' => 'failed',
+                'response_code' => $response->status(),
+                'response_body' => substr($response->body(), 0, 1000),
+                'error_message' => 'Non-success HTTP status',
+                'duration_ms' => $durationMs,
+                'created_at' => now(),
+            ]));
+
             Log::warning('Webhook failed with non-success status', [
                 'webhook_id' => $webhook->id,
                 'event' => $event,
@@ -74,7 +105,16 @@ class WebhookDispatcher
             return false;
 
         } catch (\Exception $e) {
+            $durationMs = (int)((microtime(true) - $startTime) * 1000);
             $webhook->incrementFailure();
+
+            // Log exception to database
+            WebhookLog::create(array_merge($logEntry, [
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'duration_ms' => $durationMs,
+                'created_at' => now(),
+            ]));
 
             Log::error('Webhook dispatch error', [
                 'webhook_id' => $webhook->id,

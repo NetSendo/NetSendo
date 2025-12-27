@@ -7,7 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.4] – Short Description
+
+**Release date:** 2025-12-27
+
+### Added
+
+- **Queue Stats Modal for Autoresponders:**
+
+  - Implemented detailed statistics modal for autoresponder messages.
+  - Shows breakdown of scheduled recipients (tomorrow, day after, 3-7 days, 7+ days).
+  - Identifies "missed" subscribers who joined before the message's day offset.
+  - Added "Send to missed subscribers" functionality to manual triggering sends for missed recipients.
+  - Integrated into Message List with a new calendar icon action.
+  - Full translations for EN, PL, DE, ES.
+
+- **System Logs Viewer:**
+
+  - New logs viewer page at `/settings/logs` for monitoring `storage/logs/laravel.log`.
+  - Log level filtering (ERROR, WARNING, INFO, DEBUG) with color-coded display.
+  - Search functionality to find specific log entries.
+  - Auto-refresh mode (every 5 seconds) for real-time monitoring.
+  - Manual log clearing with confirmation modal.
+  - Configurable log retention settings (6h to 7 days, default 24h).
+  - Automatic log cleanup via scheduled CRON command (`logs:clean`).
+  - **Webhook Logs Tab:** Dedicated view for tracking webhook execution history with:
+    - Stats cards showing total, successful, failed webhooks and average response time (24h).
+    - Filterable table by status (success/failed) and event type.
+    - Expandable rows showing payload, response body, and error details.
+    - New `webhook_logs` database table for structured logging.
+  - Link added to "Help & Resources" sidebar menu.
+  - Full translations for PL, EN, DE, ES.
+
 ### Fixed
+
+- **Custom Field Creation:**
+
+  - Fixed issue where creating new "Text" / "Number" type custom fields failed silently due to empty options data validation error.
+  - Implemented automatic data sanitization in form submission to remove invalid empty options.
 
 - **Form Submission Redirects:**
 
@@ -16,8 +53,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added support for "External Page" and custom URL redirections from List settings.
 
 - **List Webhooks:**
+
   - Fixed issue where `subscribe` webhook event was not being triggered for public form submissions.
   - Submissions from public forms now correctly trigger configured List webhooks with full subscriber data.
+
+- **Form Submission 404 Error:**
+
+  - Fixed critical route conflict causing 404 errors when submitting embedded forms.
+  - Removed deprecated `/subscribe/{contactList}` route that conflicted with form slug-based routing.
+  - Added CSRF token exclusion for `/subscribe/*` routes to enable cross-domain form submissions.
+
+- **Webhook Triggers:**
+  - Fixed `subscriber.created` webhook not being triggered when a subscriber is created via public form.
+  - Fixed `subscriber.subscribed` webhook not being triggered when a subscriber joins a list via public form.
+  - Refactored `FormSubmissionService` to use global `WebhookDispatcher` for consistent event dispatching.
 
 ## [1.2.3] – Short Description
 

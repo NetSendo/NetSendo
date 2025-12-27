@@ -125,6 +125,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('messages/{message}/duplicate', [\App\Http\Controllers\MessageController::class, 'duplicate'])->name('messages.duplicate');
     Route::post('messages/{message}/resend', [\App\Http\Controllers\MessageController::class, 'resend'])->name('messages.resend');
     Route::post('messages/{message}/toggle-active', [\App\Http\Controllers\MessageController::class, 'toggleActive'])->name('messages.toggle-active');
+    Route::get('messages/{message}/queue-schedule-stats', [\App\Http\Controllers\MessageController::class, 'queueScheduleStats'])->name('messages.queue-schedule-stats');
+    Route::post('messages/{message}/send-to-missed', [\App\Http\Controllers\MessageController::class, 'sendToMissedRecipients'])->name('messages.send-to-missed');
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');
@@ -340,6 +342,18 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/cleanup', [\App\Http\Controllers\ActivityLogController::class, 'cleanup'])->name('cleanup');
     });
 
+    // System Logs (Laravel Log Viewer)
+    Route::prefix('settings/logs')->name('settings.logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\LogViewerController::class, 'index'])->name('index');
+        Route::get('/content', [\App\Http\Controllers\LogViewerController::class, 'getLogContent'])->name('content');
+        Route::post('/clear', [\App\Http\Controllers\LogViewerController::class, 'clearLog'])->name('clear');
+        Route::get('/settings', [\App\Http\Controllers\LogViewerController::class, 'getSettings'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\LogViewerController::class, 'saveSettings'])->name('settings.save');
+        // Webhook logs
+        Route::get('/webhooks', [\App\Http\Controllers\LogViewerController::class, 'getWebhookLogs'])->name('webhooks');
+        Route::delete('/webhooks/clear', [\App\Http\Controllers\LogViewerController::class, 'clearWebhookLogs'])->name('webhooks.clear');
+    });
+
     // Tracked Links Dashboard
     Route::prefix('settings/tracked-links')->name('settings.tracked-links.')->group(function () {
         Route::get('/', [\App\Http\Controllers\TrackedLinksController::class, 'index'])->name('index');
@@ -399,9 +413,6 @@ Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\SubscriberControl
 
 // External Pages (Public)
 Route::get('/p/{externalPage}', [\App\Http\Controllers\Public\ExternalPageHandlerController::class, 'show'])->name('page.show');
-
-// Public Subscription
-Route::post('/subscribe/{contactList}', [\App\Http\Controllers\Public\SubscriptionController::class, 'store'])->name('subscribe');
 
 // Public Subscription Forms (no auth)
 Route::prefix('subscribe')->name('subscribe.')->group(function () {

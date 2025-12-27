@@ -13,6 +13,7 @@ import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import QueueStatsModal from "@/Components/QueueStatsModal.vue";
 import throttle from "lodash/throttle";
 import pickBy from "lodash/pickBy";
 import axios from "axios";
@@ -44,6 +45,7 @@ const togglingMessages = ref(new Set()); // Track which messages are being toggl
 const resendingMessages = ref(new Set()); // Track which messages are being resent
 const messageToResend = ref(null);
 const resendResult = ref(null);
+const messageForQueueStats = ref(null);
 
 // Reactive local state for is_active (to update UI immediately)
 const localActiveStates = reactive({});
@@ -699,6 +701,27 @@ const getAttachmentTooltip = (message, trans) => {
                                             />
                                         </svg>
                                     </button>
+                                    <!-- Queue Stats button (only for autoresponder/queue type) -->
+                                    <button
+                                        v-if="message.type === 'autoresponder'"
+                                        @click="messageForQueueStats = message"
+                                        class="text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
+                                        :title="$t('queue_stats.title')"
+                                    >
+                                        <svg
+                                            class="h-5 w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                    </button>
                                     <Link
                                         :href="
                                             route('messages.edit', message.id)
@@ -1236,5 +1259,13 @@ const getAttachmentTooltip = (message, trans) => {
                 </template>
             </div>
         </Modal>
+
+        <!-- Queue Stats Modal -->
+        <QueueStatsModal
+            :show="!!messageForQueueStats"
+            :message="messageForQueueStats"
+            @close="messageForQueueStats = null"
+            @sent="messageForQueueStats = null"
+        />
     </AuthenticatedLayout>
 </template>

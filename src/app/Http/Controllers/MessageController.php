@@ -1214,4 +1214,117 @@ class MessageController extends Controller
             'total' => $sessions->count(),
         ];
     }
+
+    /**
+     * Get detailed queue schedule statistics for an autoresponder message.
+     * Shows breakdown by day of scheduled delivery and missed recipients.
+     */
+    public function queueScheduleStats(Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if (!$message->isQueueType()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ta funkcja jest dostępna tylko dla wiadomości typu Kolejka.',
+            ], 422);
+        }
+
+        $stats = $message->getQueueScheduleStats();
+
+        return response()->json([
+            'success' => true,
+            'message' => [
+                'id' => $message->id,
+                'subject' => $message->subject,
+                'day' => $message->day,
+                'is_active' => $message->is_active ?? true,
+            ],
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Send message to missed recipients (those who joined before the queue day offset).
+     * Creates queue entries for them and schedules for immediate dispatch.
+     */
+    public function sendToMissedRecipients(Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if (!$message->isQueueType()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ta funkcja jest dostępna tylko dla wiadomości typu Kolejka.',
+            ], 422);
+        }
+
+        if (!($message->is_active ?? true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Wiadomość musi być aktywna, aby wysyłać do pominiętych subskrybentów.',
+            ], 422);
+        }
+
+        $stats = $message->getQueueScheduleStats();
+        $missedSubscribers = $stats['missed_subscribers'] ?? [];
+
+        if (empty($missedSubscribers)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak pominiętych subskrybentów do wysłania.',
+            ], 422);
+        }
+
+        $created = 0;
+        $alreadyExists = 0;
+
+        foreach ($missedSubscribers as $subscriberData) {
+            // Check if queue entry already exists
+            $existing = $message->queueEntries()
+                ->where('subscriber_id', $subscriberData['id'])
+                ->first();
+
+            if ($existing) {
+                // If skipped or failed, reset to planned
+                if (in_array($existing->status, [MessageQueueEntry::STATUS_SKIPPED, MessageQueueEntry::STATUS_FAILED])) {
+                    $existing->update([
+                        'status' => MessageQueueEntry::STATUS_PLANNED,
+                        'planned_at' => now(),
+                        'error_message' => null,
+                    ]);
+                    $created++;
+                } else {
+                    $alreadyExists++;
+                }
+            } else {
+                // Create new entry
+                $message->queueEntries()->create([
+                    'subscriber_id' => $subscriberData['id'],
+                    'status' => MessageQueueEntry::STATUS_PLANNED,
+                    'planned_at' => now(),
+                ]);
+                $created++;
+            }
+        }
+
+        // Ensure message is scheduled for processing
+        if ($message->status !== 'scheduled') {
+            $message->update([
+                'status' => 'scheduled',
+                'scheduled_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'created' => $created,
+            'already_exists' => $alreadyExists,
+            'message' => "Zaplanowano wysyłkę do {$created} pominiętych subskrybentów.",
+        ]);
+    }
 }

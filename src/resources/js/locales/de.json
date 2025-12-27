@@ -1636,6 +1636,7 @@
             "actions": "Aktionen"
         },
         "builder": {
+            "title_required": "Bitte geben Sie einen Formularnamen an",
             "name_placeholder": "Formularname...",
             "available_fields": "Verfügbare Felder",
             "custom_fields": "Benutzerdefinierte Felder",
@@ -2251,11 +2252,64 @@
         "unable_to_check": "Updates konnten nicht geprüft werden",
         "new_tag": "NEU",
         "update": "Update",
+        "system_logs": "Systemprotokolle",
         "whats_new_list": [
             "Neues Lizenzierungssystem",
             "Update-Prüfung",
             "Verbesserte E-Mail-Vorlagen"
         ]
+    },
+    "logs": {
+        "title": "Systemprotokolle",
+        "lines": "Zeilen",
+        "last_modified": "Zuletzt geändert",
+        "tabs": {
+            "logs": "Laravel-Protokolle",
+            "webhooks": "Webhook-Protokolle",
+            "settings": "Einstellungen"
+        },
+        "levels": {
+            "all": "Alle"
+        },
+        "actions": {
+            "refresh": "Aktualisieren",
+            "clear": "Protokolle löschen",
+            "copy": "Kopieren",
+            "search": "Suchen..."
+        },
+        "settings": {
+            "retention_title": "Aufbewahrungszeit für Protokolle",
+            "retention_desc": "Protokolle, die älter als die eingestellte Zeit sind, werden automatisch von CRON gelöscht",
+            "hours": "Stunden",
+            "days": "Tage",
+            "saved": "Einstellungen gespeichert",
+            "cron_info_title": "Automatische Bereinigung",
+            "cron_info_desc": "Der Befehl logs:clean wird stündlich über CRON ausgeführt. Er prüft das Alter der Protokolldatei und löscht sie, wenn sie die eingestellte Aufbewahrungszeit überschreitet."
+        },
+        "confirm": {
+            "clear_title": "Protokolle löschen",
+            "clear_message": "Sind Sie sicher, dass Sie alle Protokolle löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+        },
+        "empty": "Keine Protokolle zum Anzeigen",
+        "cleared": "Protokolle wurden gelöscht",
+        "error_reading": "Protokolldatei konnte nicht gelesen werden",
+        "webhook": {
+            "total": "Gesamt (24h)",
+            "success": "Erfolg",
+            "failed": "Fehler",
+            "avg_duration": "Durchschn. Zeit",
+            "all_status": "Alle Status",
+            "all_events": "Alle Events",
+            "empty": "Keine Webhook-Protokolle",
+            "date": "Datum",
+            "event": "Event",
+            "status": "Status",
+            "response_code": "Code",
+            "duration": "Dauer",
+            "error": "Fehler",
+            "response": "Antwort",
+            "payload": "Payload"
+        }
     },
     "license": {
         "title": "Lizenz",
@@ -2456,5 +2510,20 @@
         "action_steps": "Handlungsschritte",
         "apply": "Als angewendet markieren",
         "applied": "Angewendet"
+    },
+    "queue_stats": {
+        "title": "Warteschlangen-Statistiken",
+        "day_info": "Diese Nachricht ist auf Tag {day} nach der Anmeldung eingestellt.",
+        "sent": "Gesendet",
+        "tomorrow": "Morgen",
+        "day_after_tomorrow": "Übermorgen",
+        "days_3_7": "3-7 Tage",
+        "over_7_days": "Über 7 Tage",
+        "missed": "Verpasst (Zeit abgelaufen)",
+        "missed_explanation": "Diese Abonnenten sind vor Tag {day} beigetreten und würden diese Nachricht niemals automatisch erhalten.",
+        "send_to_missed": "Jetzt an Verpasste senden",
+        "send_to_missed_confirm": "Möchten Sie diese Nachricht wirklich an {count} verpasste Abonnenten senden?",
+        "send_success": "Versand an {count} verpasste Abonnenten geplant.",
+        "no_missed": "Keine verpassten Abonnenten - hervorragend!"
     }
 }

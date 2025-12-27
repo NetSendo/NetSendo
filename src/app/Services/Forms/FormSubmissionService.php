@@ -9,6 +9,7 @@ use App\Models\ContactList;
 use App\Models\CustomField;
 use App\Events\SubscriberSignedUp;
 use App\Events\FormSubmitted;
+use App\Services\WebhookDispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,13 @@ use Illuminate\Support\Facades\Http;
 
 class FormSubmissionService
 {
+    protected WebhookDispatcher $webhookDispatcher;
+
+    public function __construct(WebhookDispatcher $webhookDispatcher)
+    {
+        $this->webhookDispatcher = $webhookDispatcher;
+    }
+
     /**
      * Process a form submission
      */
@@ -60,7 +68,10 @@ class FormSubmissionService
             }
 
             // Create or update subscriber
-            $subscriber = $this->createOrUpdateSubscriber($data, $form->contactList, $form);
+            $result = $this->createOrUpdateSubscriber($data, $form->contactList, $form);
+            $subscriber = $result['subscriber'];
+            $isNewSubscriber = $result['isNew'];
+            $wasAlreadySubscribed = $result['wasSubscribed'];
 
             // Link submission to subscriber
             $submission->update(['subscriber_id' => $subscriber->id]);
@@ -90,7 +101,39 @@ class FormSubmissionService
             event(new SubscriberSignedUp($subscriber, $form->contactList, $form, 'form'));
             event(new FormSubmitted($submission, $subscriber, $form));
 
-            // Trigger list webhook for subscribe event
+            // Prepare subscriber data for webhooks
+            $subscriberData = [
+                'id' => $subscriber->id,
+                'email' => $subscriber->email,
+                'first_name' => $subscriber->first_name,
+                'last_name' => $subscriber->last_name,
+                'phone' => $subscriber->phone,
+                'source' => 'form:' . $form->slug,
+            ];
+
+            // Dispatch subscriber.created webhook (for new subscribers)
+            if ($isNewSubscriber) {
+                $this->webhookDispatcher->dispatch($form->contactList->user_id, 'subscriber.created', [
+                    'subscriber' => $subscriberData,
+                    'list_id' => $form->contactList->id,
+                    'list_name' => $form->contactList->name,
+                    'form_id' => $form->id,
+                    'form_name' => $form->name,
+                ]);
+            }
+
+            // Dispatch subscriber.subscribed webhook (for new subscriptions to list)
+            if (!$wasAlreadySubscribed) {
+                $this->webhookDispatcher->dispatch($form->contactList->user_id, 'subscriber.subscribed', [
+                    'subscriber' => $subscriberData,
+                    'list_id' => $form->contactList->id,
+                    'list_name' => $form->contactList->name,
+                    'form_id' => $form->id,
+                    'form_name' => $form->name,
+                ]);
+            }
+
+            // Trigger list webhook for subscribe event (legacy/list-specific webhook)
             $form->contactList->triggerWebhook('subscribe', [
                 'subscriber_email' => $subscriber->email,
                 'subscriber_id' => $subscriber->id,
@@ -110,6 +153,7 @@ class FormSubmissionService
             Log::error('Form submission error', [
                 'form_id' => $form->id,
                 'error' => $e->getMessage(),
+
             ]);
             $submission->markError($e->getMessage());
             return $submission;
@@ -226,10 +270,12 @@ class FormSubmissionService
 
     /**
      * Create or update subscriber
+     * Returns array with 'subscriber' and 'isNew' flag
      */
-    public function createOrUpdateSubscriber(array $data, ContactList $list, SubscriptionForm $form): Subscriber
+    public function createOrUpdateSubscriber(array $data, ContactList $list, SubscriptionForm $form): array
     {
         $email = strtolower(trim($data['email']));
+        $isNew = false;
 
         // Check if subscriber exists
         $subscriber = Subscriber::where('email', $email)->first();
@@ -238,6 +284,7 @@ class FormSubmissionService
             $subscriber = new Subscriber();
             $subscriber->email = $email;
             $subscriber->user_id = $list->user_id;
+            $isNew = true;
         }
 
         // Update basic fields
@@ -258,6 +305,9 @@ class FormSubmissionService
 
         $subscriber->save();
 
+        // Check if already subscribed to this list
+        $wasSubscribed = $subscriber->contactLists()->where('contact_list_id', $list->id)->exists();
+
         // Subscribe to list (if not already)
         $pivotData = [
             'status' => $form->shouldUseDoubleOptin() ? 'pending' : 'active',
@@ -265,7 +315,7 @@ class FormSubmissionService
             'subscribed_at' => now(),
         ];
 
-        if (!$subscriber->contactLists()->where('contact_list_id', $list->id)->exists()) {
+        if (!$wasSubscribed) {
             $subscriber->contactLists()->attach($list->id, $pivotData);
         } else {
             // Update existing subscription
@@ -277,8 +327,13 @@ class FormSubmissionService
             $this->saveCustomFields($subscriber, $data['fields']);
         }
 
-        return $subscriber;
+        return [
+            'subscriber' => $subscriber,
+            'isNew' => $isNew,
+            'wasSubscribed' => $wasSubscribed,
+        ];
     }
+
 
     /**
      * Save custom field values
