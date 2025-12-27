@@ -55,6 +55,8 @@
         "import": "Importieren",
         "download": "Herunterladen",
         "upload": "Hochladen",
+        "copy": "Kopieren",
+        "copied": "Kopiert",
         "notifications": {
             "saved": "Erfolgreich gespeichert.",
             "created": "Erfolgreich erstellt.",
@@ -671,12 +673,16 @@
         "mailbox": {
             "label": "Absender-Postfach",
             "use_default": "Standard verwenden",
+            "use_auto": "Automatisch erkennen",
+            "group_default": "🌐 Globaler Standard",
+            "group_list": "📋 Postfach der Liste: {name}",
+            "group_other": "📧 Weitere Postfächer",
             "inherited_from_list": "Von Liste übernommen: {name}",
             "inherited_global": "Globaler Standard",
             "selected_for_message": "Für diese Nachricht ausgewählt",
             "none_configured": "Kein Postfach konfiguriert",
             "change_in_settings": "In den Einstellungen ändern",
-            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die Standardkonfiguration"
+            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die automatische Erkennung (Priorität: Nachricht → Liste → Global)"
         },
         "ai_assistant": {
             "title": "KI-Assistent",

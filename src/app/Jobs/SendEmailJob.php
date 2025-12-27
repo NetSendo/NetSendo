@@ -296,26 +296,86 @@ class SendEmailJob implements ShouldQueue
 
     /**
      * Resolve which mailbox to use for this email
+     *
+     * Priority hierarchy:
+     * 1. Explicitly passed mailbox (e.g., from automation)
+     * 2. Message's assigned mailbox_id
+     * 3. First contact list's default_mailbox_id
+     * 4. User's global default or best available mailbox
      */
     private function resolveMailbox(MailProviderService $providerService): ?Mailbox
     {
         // Priority 1: Explicitly passed mailbox
         if ($this->mailbox && $this->mailbox->is_active) {
+            Log::debug("Mailbox resolved: Priority 1 - Explicit mailbox", [
+                'mailbox_id' => $this->mailbox->id,
+                'mailbox_name' => $this->mailbox->name,
+            ]);
             return $this->mailbox;
         }
 
         // Priority 2: Message's assigned mailbox
-        if ($this->message->mailbox_id && $this->message->mailbox?->is_active) {
-            return $this->message->mailbox;
+        // Load mailbox relation if not loaded to avoid null issues
+        if ($this->message->mailbox_id) {
+            $messageMailbox = $this->message->mailbox ?? Mailbox::find($this->message->mailbox_id);
+            if ($messageMailbox && $messageMailbox->is_active) {
+                Log::debug("Mailbox resolved: Priority 2 - Message's mailbox", [
+                    'message_id' => $this->message->id,
+                    'mailbox_id' => $messageMailbox->id,
+                    'mailbox_name' => $messageMailbox->name,
+                ]);
+                return $messageMailbox;
+            }
         }
 
-        // Priority 3: User's best available mailbox for this message type
+        // Priority 3: Contact list's default mailbox
+        // Use first contact list that has a default_mailbox_id set
+        $contactLists = $this->message->contactLists;
+        if ($contactLists && $contactLists->isNotEmpty()) {
+            foreach ($contactLists as $list) {
+                if ($list->default_mailbox_id) {
+                    $listMailbox = $list->defaultMailbox ?? Mailbox::find($list->default_mailbox_id);
+                    if ($listMailbox && $listMailbox->is_active) {
+                        Log::debug("Mailbox resolved: Priority 3 - List's default mailbox", [
+                            'message_id' => $this->message->id,
+                            'list_id' => $list->id,
+                            'list_name' => $list->name,
+                            'mailbox_id' => $listMailbox->id,
+                            'mailbox_name' => $listMailbox->name,
+                        ]);
+                        return $listMailbox;
+                    }
+                }
+            }
+        }
+
+        // Priority 4: User's best available mailbox for this message type
         if ($this->message->user_id) {
-            return $providerService->getBestMailbox(
+            $bestMailbox = $providerService->getBestMailbox(
                 $this->message->user_id,
                 $this->message->type ?? 'broadcast'
             );
+
+            if ($bestMailbox) {
+                Log::debug("Mailbox resolved: Priority 4 - User's best mailbox", [
+                    'message_id' => $this->message->id,
+                    'user_id' => $this->message->user_id,
+                    'mailbox_id' => $bestMailbox->id,
+                    'mailbox_name' => $bestMailbox->name,
+                ]);
+            } else {
+                Log::warning("Mailbox resolved: No mailbox found for message", [
+                    'message_id' => $this->message->id,
+                    'user_id' => $this->message->user_id,
+                ]);
+            }
+
+            return $bestMailbox;
         }
+
+        Log::warning("Mailbox resolved: No user_id on message, cannot resolve mailbox", [
+            'message_id' => $this->message->id,
+        ]);
 
         return null;
     }

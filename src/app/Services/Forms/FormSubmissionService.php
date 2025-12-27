@@ -90,7 +90,20 @@ class FormSubmissionService
             event(new SubscriberSignedUp($subscriber, $form->contactList, $form, 'form'));
             event(new FormSubmitted($submission, $subscriber, $form));
 
+            // Trigger list webhook for subscribe event
+            $form->contactList->triggerWebhook('subscribe', [
+                'subscriber_email' => $subscriber->email,
+                'subscriber_id' => $subscriber->id,
+                'first_name' => $subscriber->first_name,
+                'last_name' => $subscriber->last_name,
+                'phone' => $subscriber->phone,
+                'source' => 'form:' . $form->slug,
+                'form_id' => $form->id,
+                'form_name' => $form->name,
+            ]);
+
             return $submission;
+
 
         } catch (\Exception $e) {
             DB::rollBack();

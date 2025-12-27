@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Form Submission Redirects:**
+
+  - Fixed issue where form submissions were resulting in 404 errors instead of correct redirects.
+  - Implemented priority-based redirect logic: Form settings -> List settings (Success/Confirmation page) -> Global settings.
+  - Added support for "External Page" and custom URL redirections from List settings.
+
+- **List Webhooks:**
+  - Fixed issue where `subscribe` webhook event was not being triggered for public form submissions.
+  - Submissions from public forms now correctly trigger configured List webhooks with full subscriber data.
+
 ## [1.2.3] – Short Description
 
 **Release date:** 2025-12-27

@@ -218,6 +218,36 @@ const effectiveMailboxInfo = computed(() => {
     };
 });
 
+// Get list's default mailbox (if different from global default)
+const listDefaultMailbox = computed(() => {
+    if (form.contact_list_ids.length > 0) {
+        const firstListId = form.contact_list_ids[0];
+        const list = props.lists.find((l) => l.id === firstListId);
+        if (
+            list?.default_mailbox &&
+            list.default_mailbox.id !== props.defaultMailbox?.id
+        ) {
+            return {
+                mailbox: list.default_mailbox,
+                listName: list.name,
+            };
+        }
+    }
+    return null;
+});
+
+// Get other mailboxes (excluding global default and list default)
+const otherMailboxes = computed(() => {
+    const excludeIds = [];
+    if (props.defaultMailbox) {
+        excludeIds.push(props.defaultMailbox.id);
+    }
+    if (listDefaultMailbox.value) {
+        excludeIds.push(listDefaultMailbox.value.mailbox.id);
+    }
+    return props.mailboxes.filter((m) => !excludeIds.includes(m.id));
+});
+
 // UI State for Broadcast Scheduling
 const scheduleMode = ref(form.status === "scheduled" ? "later" : "now");
 
@@ -2340,18 +2370,57 @@ if (form.contact_list_ids.length > 0) {
                                 v-model="form.mailbox_id"
                                 class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                             >
-                                <option :value="null">
-                                    {{ $t("messages.mailbox.use_default") }}
-                                </option>
-                                <option
-                                    v-for="mailbox in mailboxes"
-                                    :key="mailbox.id"
-                                    :value="mailbox.id"
+                                <!-- Use Default (null = auto-resolve) -->
+                                <optgroup
+                                    :label="
+                                        $t('messages.mailbox.group_default')
+                                    "
                                 >
-                                    {{ mailbox.name }} ({{
-                                        mailbox.from_email
-                                    }})
-                                </option>
+                                    <option :value="null">
+                                        {{ $t("messages.mailbox.use_auto") }}
+                                        <template v-if="defaultMailbox">
+                                            ({{ defaultMailbox.name }})
+                                        </template>
+                                    </option>
+                                </optgroup>
+
+                                <!-- List's Default Mailbox (if different from global) -->
+                                <optgroup
+                                    v-if="listDefaultMailbox"
+                                    :label="
+                                        $t('messages.mailbox.group_list', {
+                                            name: listDefaultMailbox.listName,
+                                        })
+                                    "
+                                >
+                                    <option
+                                        :value="listDefaultMailbox.mailbox.id"
+                                    >
+                                        {{
+                                            listDefaultMailbox.mailbox.name
+                                        }}
+                                        ({{
+                                            listDefaultMailbox.mailbox
+                                                .from_email
+                                        }})
+                                    </option>
+                                </optgroup>
+
+                                <!-- Other Mailboxes -->
+                                <optgroup
+                                    v-if="otherMailboxes.length > 0"
+                                    :label="$t('messages.mailbox.group_other')"
+                                >
+                                    <option
+                                        v-for="mailbox in otherMailboxes"
+                                        :key="mailbox.id"
+                                        :value="mailbox.id"
+                                    >
+                                        {{ mailbox.name }} ({{
+                                            mailbox.from_email
+                                        }})
+                                    </option>
+                                </optgroup>
                             </select>
                             <p class="mt-1 text-xs text-slate-500">
                                 {{ $t("messages.mailbox.help") }}

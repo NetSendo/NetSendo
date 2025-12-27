@@ -137,21 +137,100 @@ class PublicFormController extends Controller
      */
     protected function successResponse(Request $request, SubscriptionForm $form, $submission)
     {
+        // Get redirect settings with priority (form -> list -> global)
+        $redirectSettings = $this->determineRedirectSettings($form);
+        $redirectUrl = $redirectSettings['url'];
+        $successMessage = $redirectSettings['message'];
+
         // AJAX request
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => $form->success_message ?? 'Dziękujemy za zapisanie się!',
-                'redirect' => $form->redirect_url,
+                'message' => $successMessage,
+                'redirect' => $redirectUrl,
             ]);
         }
 
         // Regular form submission
-        if ($form->redirect_url) {
-            return redirect()->away($form->redirect_url);
+        if ($redirectUrl) {
+            return redirect()->away($redirectUrl);
         }
 
         return redirect()->route('subscribe.success', $form->slug);
+    }
+
+    /**
+     * Determine redirect URL with priority: form -> list -> global
+     */
+    protected function determineRedirectSettings(SubscriptionForm $form): array
+    {
+        // Priority 1: Form has custom redirect (and not using list redirect)
+        if (!$form->use_list_redirect && $form->redirect_url) {
+            return [
+                'url' => $form->redirect_url,
+                'message' => $form->success_message ?? 'Dziękujemy za zapisanie się!',
+            ];
+        }
+
+        // Priority 2: List settings
+        $listSettings = $form->contactList->settings ?? [];
+        $useDoubleOptin = $form->shouldUseDoubleOptin();
+
+        if ($useDoubleOptin) {
+            $pageConfig = $listSettings['pages']['confirmation'] ?? null;
+            $message = $listSettings['confirmation_message'] ?? 'Sprawdź swoją skrzynkę email, aby potwierdzić subskrypcję.';
+        } else {
+            $pageConfig = $listSettings['pages']['success'] ?? null;
+            $message = $listSettings['thank_you_message'] ?? $form->success_message ?? 'Dziękujemy za zapisanie się!';
+        }
+
+        if ($pageConfig) {
+            $url = $this->resolvePageUrl($pageConfig);
+            if ($url) {
+                return [
+                    'url' => $url,
+                    'message' => $message,
+                ];
+            }
+        }
+
+        // Priority 3: Global user settings
+        $userDefaults = $form->user->settings['form_defaults'] ?? [];
+
+        if (!empty($userDefaults['redirect_url'])) {
+            return [
+                'url' => $userDefaults['redirect_url'],
+                'message' => $userDefaults['success_message'] ?? 'Dziękujemy za zapisanie się!',
+            ];
+        }
+
+        // Fallback: no redirect, use internal success page
+        return [
+            'url' => null,
+            'message' => $form->success_message ?? 'Dziękujemy za zapisanie się!',
+        ];
+    }
+
+    /**
+     * Resolve page URL from config (external page or custom URL)
+     */
+    protected function resolvePageUrl(?array $pageConfig): ?string
+    {
+        if (!$pageConfig) {
+            return null;
+        }
+
+        $type = $pageConfig['type'] ?? 'system';
+
+        if ($type === 'external' && !empty($pageConfig['external_page_id'])) {
+            return route('page.show', ['externalPage' => $pageConfig['external_page_id']]);
+        }
+
+        if ($type === 'custom' && !empty($pageConfig['url'])) {
+            return $pageConfig['url'];
+        }
+
+        return null;
     }
 
     /**
@@ -174,3 +253,4 @@ class PublicFormController extends Controller
             ->withInput();
     }
 }
+

@@ -56,6 +56,8 @@
         "import": "Import",
         "download": "Download",
         "upload": "Upload",
+        "copy": "Copy",
+        "copied": "Copied",
         "soon": "Soon",
         "optional": "Optional",
         "messages": "Messages",
@@ -839,12 +841,16 @@
         "mailbox": {
             "label": "Sending mailbox",
             "use_default": "Use default",
+            "use_auto": "Auto-detect",
+            "group_default": "🌐 Global Default",
+            "group_list": "📋 List mailbox: {name}",
+            "group_other": "📧 Other Mailboxes",
             "inherited_from_list": "Inherited from list: {name}",
             "inherited_global": "Global default",
             "selected_for_message": "Selected for this message",
             "none_configured": "No mailbox configured",
             "change_in_settings": "Change in settings",
-            "help": "Select a sending mailbox or use the default configuration"
+            "help": "Select a sending mailbox or use auto-detection (priority: message → list → global)"
         },
         "ai_assistant": {
             "title": "AI Assistant",

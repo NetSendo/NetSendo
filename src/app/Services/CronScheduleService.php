@@ -212,7 +212,7 @@ class CronScheduleService
                                     ->orWhere('scheduled_at', '<=', now());
                             });
                     })
-                    ->with(['message.contactLists', 'subscriber'])
+                    ->with(['message.contactLists.defaultMailbox', 'message.mailbox', 'subscriber'])
                     ->orderBy('id', 'asc') // Sortowanie po ID dla kursora
                     ->limit($batchSize)
                     ->get();

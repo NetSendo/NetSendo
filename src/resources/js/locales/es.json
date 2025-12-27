@@ -55,6 +55,8 @@
         "import": "Importar",
         "download": "Descargar",
         "upload": "Subir",
+        "copy": "Copiar",
+        "copied": "Copiado",
         "notifications": {
             "saved": "Guardado exitosamente.",
             "created": "Creado exitosamente.",
@@ -661,12 +663,16 @@
         "mailbox": {
             "label": "Buzón de envío",
             "use_default": "Usar predeterminado",
+            "use_auto": "Detección automática",
+            "group_default": "🌐 Predeterminado Global",
+            "group_list": "📋 Buzón de la lista: {name}",
+            "group_other": "📧 Otros Buzones",
             "inherited_from_list": "Heredado de la lista: {name}",
             "inherited_global": "Predeterminado global",
             "selected_for_message": "Seleccionado para este mensaje",
             "none_configured": "Ningún buzón configurado",
             "change_in_settings": "Cambiar en configuración",
-            "help": "Elija un buzón remitente o use la configuración predeterminada"
+            "help": "Elija un buzón remitente o use la detección automática (prioridad: mensaje → lista → global)"
         },
         "ai_assistant": {
             "title": "Asistente de IA",

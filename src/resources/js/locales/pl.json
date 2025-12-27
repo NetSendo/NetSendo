@@ -56,6 +56,8 @@
         "import": "Importuj",
         "download": "Pobierz",
         "upload": "Prześlij",
+        "copy": "Kopiuj",
+        "copied": "Skopiowano",
         "soon": "Wkrótce",
         "optional": "opcjonalne",
         "messages": "Wiadomości",
@@ -867,12 +869,16 @@
         "mailbox": {
             "label": "Skrzynka nadawcza",
             "use_default": "Użyj domyślnej",
+            "use_auto": "Automatycznie",
+            "group_default": "🌐 Domyślna globalna",
+            "group_list": "📋 Skrzynka listy: {name}",
+            "group_other": "📧 Pozostałe skrzynki",
             "inherited_from_list": "Dziedziczona z listy: {name}",
             "inherited_global": "Globalna domyślna",
             "selected_for_message": "Wybrana dla tej wiadomości",
             "none_configured": "Brak skonfigurowanej skrzynki",
             "change_in_settings": "Zmień w ustawieniach",
-            "help": "Wybierz skrzynkę nadawczą lub użyj domyślnej konfiguracji"
+            "help": "Wybierz skrzynkę nadawczą lub użyj automatycznego rozpoznawania (priorytet: wiadomość → lista → globalna)"
         },
         "ai_assistant": {
             "title": "Asystent AI",
