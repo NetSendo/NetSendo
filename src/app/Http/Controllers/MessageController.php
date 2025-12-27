@@ -24,7 +24,7 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->messages()->with('contactLists');
+        $query = auth()->user()->messages()->with(['contactLists', 'attachments']);
 
         // Filter by Type
         if ($request->filled('type')) {
@@ -84,7 +84,14 @@ class MessageController extends Controller
                     'status' => $msg->status,
                     'type' => $msg->type,
                     'day' => $msg->day,
+                    'type' => $msg->type,
+                    'day' => $msg->day,
                     'is_active' => $msg->is_active ?? true,
+                    'pdf_attachments' => $msg->attachments
+                        ->filter(fn($a) => $a->mime_type === 'application/pdf')
+                        ->map(fn($a) => $a->original_name)
+                        ->values()
+                        ->toArray(),
                     'lists_count' => $msg->contactLists->count(),
                     'list_name' => $msg->contactLists->count() > 0
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)

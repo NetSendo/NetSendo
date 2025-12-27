@@ -797,6 +797,7 @@
         "edit_title": "Edytuj wiadomość",
         "create_subtitle": "Przygotuj nową kampanię email",
         "edit_subtitle": "Zaktualizuj treść i ustawienia kampanii",
+        "has_pdf_attachments": "{count} załącznik(ów) PDF",
         "back_to_list": "Wróć do listy",
         "tabs": {
             "content": "Treść",

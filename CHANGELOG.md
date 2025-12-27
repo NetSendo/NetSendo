@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **PDF Attachments Indicator:**
+
+  - Added visual indicator (PDF icon) in the email message list for messages with PDF attachments.
+  - Implemented smart tooltip showing the count and filenames of attached PDF files.
+  - Backend now exposes `pdf_attachments` data in the message list API.
+
 - **PDF Attachments for Emails:**
   - Added ability to attach PDF files to emails (max 5 files, 10MB each).
   - New `message_attachments` table and `MessageAttachment` model.
