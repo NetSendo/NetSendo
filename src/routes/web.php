@@ -409,7 +409,14 @@ Route::post('/t/page', [\App\Http\Controllers\PageVisitController::class, 'track
 Route::get('/t/page-script/{user}', [\App\Http\Controllers\PageVisitController::class, 'getTrackingScript'])->name('tracking.page-script');
 Route::post('/t/link-visitor', [\App\Http\Controllers\PageVisitController::class, 'linkVisitor'])->name('tracking.link-visitor');
 
-Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\SubscriberController::class, 'unsubscribe'])->name('unsubscribe')->middleware('signed');
+// Unsubscribe Routes (signed URLs from emails)
+Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
+Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
+Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
+
+// Subscriber Activation Routes (signed URLs from system emails)
+Route::get('/activate/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'activate'])->name('subscriber.activate');
+Route::get('/resubscribe/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'resubscribe'])->name('subscriber.resubscribe');
 
 // External Pages (Public)
 Route::get('/p/{externalPage}', [\App\Http\Controllers\Public\ExternalPageHandlerController::class, 'show'])->name('page.show');

@@ -73,21 +73,21 @@ class GlobalStatsController extends Controller
         // Open rate
         $opensThisMonth = EmailOpen::where('created_at', '>=', $startOfMonth)->count();
         $clicksThisMonth = EmailClick::where('created_at', '>=', $startOfMonth)->count();
-        
-        $openRate = $emailsSentThisMonth > 0 
-            ? round(($opensThisMonth / $emailsSentThisMonth) * 100, 1) 
+
+        $openRate = $emailsSentThisMonth > 0
+            ? round(($opensThisMonth / $emailsSentThisMonth) * 100, 1)
             : 0;
-        
-        $clickRate = $emailsSentThisMonth > 0 
-            ? round(($clicksThisMonth / $emailsSentThisMonth) * 100, 1) 
+
+        $clickRate = $emailsSentThisMonth > 0
+            ? round(($clicksThisMonth / $emailsSentThisMonth) * 100, 1)
             : 0;
 
         // Calculate trends
-        $subscribersTrend = $newSubscribersLastMonth > 0 
+        $subscribersTrend = $newSubscribersLastMonth > 0
             ? round((($newSubscribersThisMonth - $newSubscribersLastMonth) / $newSubscribersLastMonth) * 100, 1)
             : ($newSubscribersThisMonth > 0 ? 100 : 0);
 
-        $emailsTrend = $emailsSentLastMonth > 0 
+        $emailsTrend = $emailsSentLastMonth > 0
             ? round((($emailsSentThisMonth - $emailsSentLastMonth) / $emailsSentLastMonth) * 100, 1)
             : ($emailsSentThisMonth > 0 ? 100 : 0);
 
@@ -99,7 +99,7 @@ class GlobalStatsController extends Controller
             ->map(function ($message) {
                 $opens = EmailOpen::where('message_id', $message->id)->count();
                 $clicks = EmailClick::where('message_id', $message->id)->count();
-                
+
                 return [
                     'id' => $message->id,
                     'name' => $message->subject,
@@ -168,10 +168,10 @@ class GlobalStatsController extends Controller
 
         return response()->streamDownload(function () use ($stats, $year, $month) {
             $handle = fopen('php://output', 'w');
-            
+
             // UTF-8 BOM
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-            
+
             // Summary
             fputcsv($handle, ['Statystyki NetSendo - ' . $month . '/' . $year], ';');
             fputcsv($handle, [], ';');
@@ -185,11 +185,11 @@ class GlobalStatsController extends Controller
             fputcsv($handle, ['Open Rate', $stats['summary']['open_rate'] . '%'], ';');
             fputcsv($handle, ['Click Rate', $stats['summary']['click_rate'] . '%'], ';');
             fputcsv($handle, [], ';');
-            
+
             // Per list stats
             fputcsv($handle, ['Statystyki per lista'], ';');
             fputcsv($handle, ['Lista', 'Nowi', 'Aktywni', 'Wypisani', 'Emaile wysłane', 'Otwarcia', 'Kliknięcia'], ';');
-            
+
             foreach ($stats['lists'] as $list) {
                 fputcsv($handle, [
                     $list['name'],
@@ -201,7 +201,7 @@ class GlobalStatsController extends Controller
                     $list['clicks'],
                 ], ';');
             }
-            
+
             fclose($handle);
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -251,15 +251,15 @@ class GlobalStatsController extends Controller
                 ->count();
 
             $listUnsubscribed = Subscriber::whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $list->id)
-                    ->where('contact_list_subscriber.status', 'unsubscribed'))
-                ->whereBetween('contact_list_subscriber.updated_at', [$startDate, $endDate])
+                    ->where('contact_list_subscriber.status', 'unsubscribed')
+                    ->whereBetween('contact_list_subscriber.updated_at', [$startDate, $endDate]))
                 ->count();
 
             // Get messages for this list (via pivot table)
             $messageIds = DB::table('contact_list_message')
                 ->where('contact_list_id', $list->id)
                 ->pluck('message_id');
-            
+
             $listOpens = EmailOpen::whereIn('message_id', $messageIds)
                 ->whereBetween('created_at', [$startDate, $endDate])
                 ->count();
@@ -334,12 +334,12 @@ class GlobalStatsController extends Controller
     {
         $oldestSubscriber = Subscriber::withTrashed()->orderBy('created_at')->first();
         $startYear = $oldestSubscriber ? $oldestSubscriber->created_at->year : now()->year;
-        
+
         $years = [];
         for ($y = now()->year; $y >= $startYear; $y--) {
             $years[] = $y;
         }
-        
+
         return $years;
     }
 }

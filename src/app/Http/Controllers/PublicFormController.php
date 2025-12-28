@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Subscriber;
 use App\Models\SubscriptionForm;
+use App\Models\SystemPage;
 use App\Services\Forms\FormBuilderService;
 use App\Services\Forms\FormSubmissionService;
 use App\Services\PlaceholderService;
@@ -96,14 +97,21 @@ class PublicFormController extends Controller
 
     /**
      * Success page with dynamic placeholder support.
+     * Uses SystemPage model for customizable content.
      */
     public function success(Request $request, string $slug)
     {
-        $form = SubscriptionForm::where('slug', $slug)->first();
+        $form = SubscriptionForm::where('slug', $slug)->with('contactList')->first();
+        $listId = $form?->contact_list_id;
 
-        // Get title and message from form settings
-        $title = $form->success_title ?? 'Dziękujemy!';
-        $message = $form->success_message ?? 'Dziękujemy za zapisanie się na naszą listę!';
+        // Determine which system page to show based on subscription status
+        $pageSlug = $this->determineSuccessPageSlug($form, $request);
+        $systemPage = SystemPage::getBySlug($pageSlug, $listId);
+
+        // Fallback to global signup_success if not found
+        if (!$systemPage) {
+            $systemPage = SystemPage::getBySlug('signup_success', null);
+        }
 
         // Get subscriber from signed URL parameter for placeholder replacement
         $subscriberId = $request->query('sid');
@@ -113,33 +121,90 @@ class PublicFormController extends Controller
             $subscriber = Subscriber::find($subscriberId);
         }
 
+        // Prepare page content
+        $title = $systemPage->title ?? 'Dziękujemy!';
+        $content = $systemPage->content ?? '<h1>Dziękujemy!</h1><p>Dziękujemy za zapisanie się na naszą listę!</p>';
+
         // Replace placeholders if subscriber is available
         if ($subscriber) {
             $placeholderService = app(PlaceholderService::class);
             $title = $placeholderService->replacePlaceholders($title, $subscriber);
-            $message = $placeholderService->replacePlaceholders($message, $subscriber);
+            $content = $placeholderService->replacePlaceholders($content, $subscriber);
         }
 
-        return view('forms.success', [
+        return view('forms.system-page', [
             'form' => $form,
             'title' => $title,
-            'message' => $message,
+            'content' => $content,
+            'icon' => $this->getIconForPageSlug($pageSlug),
+            'systemPage' => $systemPage,
         ]);
     }
 
     /**
      * Error page.
+     * Uses SystemPage model for customizable content.
      */
     public function error(Request $request, string $slug)
     {
-        $form = SubscriptionForm::where('slug', $slug)->first();
+        $form = SubscriptionForm::where('slug', $slug)->with('contactList')->first();
+        $listId = $form?->contact_list_id;
 
-        $message = $request->get('message', $form->error_message ?? 'Wystąpił błąd podczas zapisu.');
+        // Get error page from SystemPage
+        $systemPage = SystemPage::getBySlug('signup_error', $listId);
+        if (!$systemPage) {
+            $systemPage = SystemPage::getBySlug('signup_error', null);
+        }
 
-        return view('forms.error', [
+        // Use custom error message from request if provided
+        $errorMessage = $request->get('message');
+
+        $title = $systemPage->title ?? 'Wystąpił błąd';
+        $content = $systemPage->content ?? '<h1>Wystąpił błąd</h1><p>Przepraszamy, nie udało się przetworzyć Twojego zgłoszenia.</p>';
+
+        // If there's a specific error message, append it
+        if ($errorMessage) {
+            $content .= '<p class="error-detail">' . e($errorMessage) . '</p>';
+        }
+
+        return view('forms.system-page', [
             'form' => $form,
-            'message' => $message,
+            'title' => $title,
+            'content' => $content,
+            'icon' => 'error',
+            'systemPage' => $systemPage,
         ]);
+    }
+
+    /**
+     * Determine which success page slug to use based on form settings.
+     */
+    protected function determineSuccessPageSlug(?SubscriptionForm $form, Request $request): string
+    {
+        if (!$form) {
+            return 'signup_success';
+        }
+
+        // Check if double opt-in is enabled - show "check your email" page
+        if ($form->shouldUseDoubleOptin()) {
+            return 'signup_exists_inactive';
+        }
+
+        return 'signup_success';
+    }
+
+    /**
+     * Get icon type for a given page slug.
+     */
+    protected function getIconForPageSlug(string $slug): string
+    {
+        return match ($slug) {
+            'signup_success', 'activation_success', 'unsubscribe_success' => 'success',
+            'signup_error', 'activation_error', 'unsubscribe_error' => 'error',
+            'signup_exists', 'signup_exists_active' => 'warning',
+            'signup_exists_inactive', 'unsubscribe_confirm' => 'info',
+            default => 'info',
+        };
     }
 
     /**

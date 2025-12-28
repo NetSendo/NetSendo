@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.6] – Short Description
+
+**Release date:** 2025-12-28
+
 ### Added
 
 - **Webhook-Based Password Reset:**
@@ -33,16 +37,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - API requests no longer block on webhook HTTP calls, significantly improving response times for batch operations.
 
 - **Custom Fields API Endpoints:**
+
   - New `GET /api/v1/custom-fields` endpoint to list all user's custom fields with filtering options.
   - New `GET /api/v1/custom-fields/{id}` endpoint to get single custom field details.
   - New `GET /api/v1/custom-fields/placeholders` endpoint returning all available placeholders (system + custom).
   - Enables n8n nodes to dynamically load available fields and placeholders.
 
+- **System Emails Integration:**
+
+  - All 8 system emails from `/settings/system-emails` are now fully functional.
+  - **Signup Confirmation (Double Opt-In):** `signup_confirmation` email sent with activation link when double opt-in is enabled.
+  - **Activation Confirmation:** `activation_confirmation` email sent after user clicks activation link.
+  - **Already Active Notification:** `already_active_resubscribe` email sent when active subscriber tries to sign up again.
+  - **Inactive Re-subscribe:** `inactive_resubscribe` email sent when inactive subscriber re-joins list.
+  - **Unsubscribe Confirmation:** `unsubscribed_confirmation` email sent after successful unsubscribe.
+  - New `SystemEmailMailable` class for rendering any system email with placeholders.
+  - New `SystemEmailService` for centralized email sending.
+  - New `ActivationController` for handling signed activation links.
+  - New `SendUnsubscribeConfirmation` listener for `SubscriberUnsubscribed` event.
+
+- **System Pages Integration:**
+  - All 10 system pages from `/settings/system-pages` are now fully functional.
+  - New `UnsubscribeController` for public unsubscribe flow using SystemPage templates.
+  - Unsubscribe now shows `unsubscribe_confirm`, `unsubscribe_success`, or `unsubscribe_error` pages.
+  - List-specific and global unsubscribe routes support signed URLs.
+  - `signup_exists`, `signup_exists_active`, `signup_exists_inactive` pages used in form submission flow.
+
 ### Fixed
 
 - **Missing `subscriber.subscribed` Webhook:**
+
   - Fixed issue where `subscriber.subscribed` webhook was not dispatched when creating subscribers via API.
   - API subscriber creation (`POST /api/v1/subscribers`) now dispatches both `subscriber.created` and `subscriber.subscribed` events, matching form submission behavior.
+
+- **System Pages Not Used After Form Submission:**
+
+  - Fixed issue where customizable system pages from `/settings/system-pages` were not rendered after form submission.
+  - Form success and error pages now properly use content from `SystemPage` model instead of hardcoded Polish text.
+  - New `system-page.blade.php` template supports dynamic HTML content with placeholder replacement.
+  - System pages now correctly fall back from list-specific to global defaults.
+  - Icon type (success/error/warning/info) is automatically determined based on page type.
+  - Added migration to ensure all system page slugs exist in the database.
+
+- **Global Stats Query Error:**
+  - Fixed `SQLSTATE[42S22]: Column not found` error in Global Stats when filtering by date.
+  - Resolved scope issue with `contact_list_subscriber.updated_at` in `whereHas` query constraints.
 
 ## [1.2.5] – Placeholder Personalization & n8n Documentation
 

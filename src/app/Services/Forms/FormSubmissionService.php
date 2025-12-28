@@ -10,6 +10,7 @@ use App\Models\CustomField;
 use App\Events\SubscriberSignedUp;
 use App\Events\FormSubmitted;
 use App\Services\WebhookDispatcher;
+use App\Services\SystemEmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,10 +19,12 @@ use Illuminate\Support\Facades\Http;
 class FormSubmissionService
 {
     protected WebhookDispatcher $webhookDispatcher;
+    protected SystemEmailService $emailService;
 
-    public function __construct(WebhookDispatcher $webhookDispatcher)
+    public function __construct(WebhookDispatcher $webhookDispatcher, SystemEmailService $emailService)
     {
         $this->webhookDispatcher = $webhookDispatcher;
+        $this->emailService = $emailService;
     }
 
     /**
@@ -72,6 +75,7 @@ class FormSubmissionService
             $subscriber = $result['subscriber'];
             $isNewSubscriber = $result['isNew'];
             $wasAlreadySubscribed = $result['wasSubscribed'];
+            $previousStatus = $result['previousStatus'] ?? null;
 
             // Link submission to subscriber
             $submission->update(['subscriber_id' => $subscriber->id]);
@@ -84,9 +88,19 @@ class FormSubmissionService
             // Mark as confirmed (or pending if double opt-in)
             if ($form->shouldUseDoubleOptin()) {
                 $submission->update(['status' => 'pending']);
-                // TODO: Send confirmation email
+                // Send double opt-in confirmation email
+                $this->emailService->sendSignupConfirmation($subscriber, $form->contactList);
             } else {
                 $submission->markConfirmed();
+
+                // Send re-subscribe notifications if applicable (only for non-double-opt-in)
+                if ($wasAlreadySubscribed && $previousStatus === 'active') {
+                    // User was already active, notify them
+                    $this->emailService->sendAlreadyActiveNotification($subscriber, $form->contactList);
+                } elseif ($wasAlreadySubscribed && $previousStatus !== 'active') {
+                    // User was inactive/unsubscribed, send welcome back
+                    $this->emailService->sendInactiveResubscribeNotification($subscriber, $form->contactList);
+                }
             }
 
             // Update form stats
@@ -315,6 +329,13 @@ class FormSubmissionService
 
         // Check if already subscribed to this list
         $wasSubscribed = $subscriber->contactLists()->where('contact_list_id', $list->id)->exists();
+        $previousStatus = null;
+
+        if ($wasSubscribed) {
+            // Get previous subscription status
+            $pivot = $subscriber->contactLists()->where('contact_list_id', $list->id)->first();
+            $previousStatus = $pivot->pivot->status ?? null;
+        }
 
         // Subscribe to list (if not already)
         $pivotData = [
@@ -339,6 +360,7 @@ class FormSubmissionService
             'subscriber' => $subscriber,
             'isNew' => $isNew,
             'wasSubscribed' => $wasSubscribed,
+            'previousStatus' => $previousStatus,
         ];
     }
 

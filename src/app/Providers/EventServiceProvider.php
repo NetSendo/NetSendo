@@ -22,6 +22,7 @@ use App\Events\SubscriptionAnniversary;
 // Listeners
 use App\Listeners\TriggerAutomationsListener;
 use App\Listeners\SendNewSubscriberNotification;
+use App\Listeners\SendUnsubscribeConfirmation;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -44,6 +45,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         SubscriberUnsubscribed::class => [
             TriggerAutomationsListener::class,
+            SendUnsubscribeConfirmation::class,
         ],
         EmailBounced::class => [
             TriggerAutomationsListener::class,
