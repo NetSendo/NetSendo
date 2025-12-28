@@ -79,9 +79,9 @@ class Subscriber extends Model
     public function contactLists(): BelongsToMany
     {
         return $this->belongsToMany(ContactList::class, 'contact_list_subscriber')
-            ->withPivot('status', 'subscribed_at', 'unsubscribed_at')
+            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at')
             ->withTimestamps();
-    } 
+    }
     // Removed old contactList relationship to avoid confusion
 
 
@@ -119,7 +119,7 @@ class Subscriber extends Model
     public function setCustomFieldValue(string $fieldName, ?string $value): void
     {
         $field = CustomField::where('name', $fieldName)->first();
-        
+
         if (!$field) {
             return;
         }
@@ -161,7 +161,7 @@ class Subscriber extends Model
         $globalFields = CustomField::global()
             ->where('user_id', $this->user_id)
             ->get();
-            
+
         foreach ($globalFields as $field) {
             if (!isset($values[$field->name])) {
                 $values[$field->name] = $field->default_value ?? '';
@@ -206,7 +206,7 @@ class Subscriber extends Model
         if (!$this->tags->contains($tag->id)) {
             $this->tags()->attach($tag->id);
             $this->load('tags'); // Refresh relationship
-            
+
             event(new TagAdded($this, $tag));
         }
     }
@@ -219,7 +219,7 @@ class Subscriber extends Model
         if ($this->tags->contains($tag->id)) {
             $this->tags()->detach($tag->id);
             $this->load('tags'); // Refresh relationship
-            
+
             event(new TagRemoved($this, $tag));
         }
     }
@@ -230,7 +230,7 @@ class Subscriber extends Model
     public function syncTagsWithEvents(array $tagIds): void
     {
         $currentTagIds = $this->tags->pluck('id')->toArray();
-        
+
         // Find tags to add
         $toAdd = array_diff($tagIds, $currentTagIds);
         foreach ($toAdd as $tagId) {
@@ -239,7 +239,7 @@ class Subscriber extends Model
                 $this->addTag($tag);
             }
         }
-        
+
         // Find tags to remove
         $toRemove = array_diff($currentTagIds, $tagIds);
         foreach ($toRemove as $tagId) {

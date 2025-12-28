@@ -60,7 +60,7 @@ class ContactList extends Model
     public function subscribers()
     {
         return $this->belongsToMany(Subscriber::class, 'contact_list_subscriber')
-            ->withPivot('status', 'subscribed_at', 'unsubscribed_at')
+            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at')
             ->withTimestamps();
     }
 
@@ -161,7 +161,7 @@ class ContactList extends Model
 
         try {
             $response = Http::timeout(10)->post($this->webhook_url, $payload);
-            
+
             Log::info('Webhook triggered', [
                 'list_id' => $this->id,
                 'event' => $event,
@@ -210,7 +210,7 @@ class ContactList extends Model
         }
 
         $syncSettings = $this->sync_settings ?? [];
-        
+
         // Check if sync is enabled for this action
         $syncOnSubscribe = $syncSettings['sync_on_subscribe'] ?? true;
         $syncOnUnsubscribe = $syncSettings['sync_on_unsubscribe'] ?? false;
