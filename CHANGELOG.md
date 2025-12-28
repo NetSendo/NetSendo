@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Subscriber Duplicate Check:**
 
   - Fixed `Integrity constraint violation: 1062` error when a subscriber re-subscribes via form.
-  - Updated `createOrUpdateSubscriber` to scope subscriber lookup by `user_id` in addition to `email`, properly handling the unique composite index.
+  - Updated `createOrUpdateSubscriber` to scope lookup by `user_id` and include soft-deleted records (`withTrashed`), restoring them if found to prevent unique constraint violations.
 
 - **Console Command Error:**
   - Fixed `LogicException: An option named "verbose" already exists` in `ProcessEmailQueueCommand`.

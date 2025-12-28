@@ -277,8 +277,10 @@ class FormSubmissionService
         $email = strtolower(trim($data['email']));
         $isNew = false;
 
-        // Check if subscriber exists for this user
-        $subscriber = Subscriber::where('email', $email)
+        // Check if subscriber exists for this user (including soft-deleted ones)
+        // This is important because the unique index doesn't exclude soft-deleted records
+        $subscriber = Subscriber::withTrashed()
+            ->where('email', $email)
             ->where('user_id', $list->user_id)
             ->first();
 
@@ -287,6 +289,10 @@ class FormSubmissionService
             $subscriber->email = $email;
             $subscriber->user_id = $list->user_id;
             $isNew = true;
+        } elseif ($subscriber->trashed()) {
+            // Restore soft-deleted subscriber
+            $subscriber->restore();
+            $isNew = false; // Not technically new, but was deleted
         }
 
         // Update basic fields
