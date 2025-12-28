@@ -291,7 +291,14 @@ if (operation === "create") {
 }
 ```
 
-### 4. Metoda ładowania pól niestandardowych (opcjonalnie)
+### 4. Metoda ładowania pól niestandardowych z API
+
+NetSendo udostępnia endpoint do pobierania listy dostępnych pól niestandardowych:
+
+```http
+GET /api/v1/custom-fields
+GET /api/v1/custom-fields/placeholders   # Wszystkie placeholdery (systemowe + custom)
+```
 
 ```typescript
 // methods/customFieldMethods.ts
@@ -301,7 +308,6 @@ export async function getCustomFields(
   const credentials = await this.getCredentials("netSendoApi");
   const baseUrl = credentials.baseUrl as string;
 
-  // Endpoint do pobrania pól niestandardowych (jeśli dostępny)
   try {
     const response = await this.helpers.httpRequest({
       method: "GET",
@@ -316,6 +322,47 @@ export async function getCustomFields(
       name: `${field.label} (${field.name})`,
       value: field.name,
     }));
+  } catch (error) {
+    return [];
+  }
+}
+
+// Pobierz wszystkie placeholdery (do notice lub dropdown)
+export async function getAllPlaceholders(
+  this: ILoadOptionsFunctions
+): Promise<INodePropertyOptions[]> {
+  const credentials = await this.getCredentials("netSendoApi");
+  const baseUrl = credentials.baseUrl as string;
+
+  try {
+    const response = await this.helpers.httpRequest({
+      method: "GET",
+      url: `${baseUrl}/api/v1/custom-fields/placeholders`,
+      headers: {
+        Authorization: `Bearer ${credentials.apiKey}`,
+      },
+      json: true,
+    });
+
+    const placeholders: INodePropertyOptions[] = [];
+
+    // System placeholders
+    for (const p of response.data.system) {
+      placeholders.push({
+        name: `${p.label} - ${p.placeholder}`,
+        value: p.placeholder,
+      });
+    }
+
+    // Custom placeholders
+    for (const p of response.data.custom) {
+      placeholders.push({
+        name: `${p.label} - ${p.placeholder}`,
+        value: p.placeholder,
+      });
+    }
+
+    return placeholders;
   } catch (error) {
     return [];
   }

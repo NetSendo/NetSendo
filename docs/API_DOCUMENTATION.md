@@ -407,6 +407,141 @@ POST /api/v1/lists/{id}/export
 
 ---
 
+## 📝 Pola niestandardowe (Custom Fields)
+
+### Lista pól niestandardowych
+
+```http
+GET /api/v1/custom-fields
+```
+
+**Parametry query:**
+
+| Parametr      | Typ     | Opis                                      |
+| ------------- | ------- | ----------------------------------------- |
+| `scope`       | string  | `global` lub `list`                       |
+| `list_id`     | integer | Pobierz pola globalne + dla tej listy     |
+| `public_only` | boolean | Tylko pola publiczne (widoczne w formach) |
+| `search`      | string  | Szukaj po nazwie lub etykiecie            |
+
+**Odpowiedź:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "city",
+      "label": "Miasto",
+      "description": "Miasto zamieszkania",
+      "type": "text",
+      "placeholder": "[[city]]",
+      "options": null,
+      "default_value": null,
+      "is_public": true,
+      "is_required": false,
+      "scope": "global",
+      "contact_list_id": null
+    }
+  ]
+}
+```
+
+---
+
+### Pobierz szczegóły pola
+
+```http
+GET /api/v1/custom-fields/{id}
+```
+
+---
+
+### Pobierz wszystkie dostępne placeholdery
+
+```http
+GET /api/v1/custom-fields/placeholders
+```
+
+Zwraca wszystkie dostępne placeholdery systemowe i niestandardowe.
+
+**Odpowiedź:**
+
+```json
+{
+  "data": {
+    "system": [
+      {
+        "name": "email",
+        "placeholder": "[[email]]",
+        "label": "Email",
+        "type": "system"
+      },
+      {
+        "name": "fname",
+        "placeholder": "[[fname]]",
+        "label": "First Name",
+        "type": "system"
+      },
+      {
+        "name": "!fname",
+        "placeholder": "[[!fname]]",
+        "label": "First Name (Vocative)",
+        "type": "system"
+      },
+      {
+        "name": "lname",
+        "placeholder": "[[lname]]",
+        "label": "Last Name",
+        "type": "system"
+      },
+      {
+        "name": "phone",
+        "placeholder": "[[phone]]",
+        "label": "Phone",
+        "type": "system"
+      },
+      {
+        "name": "sex",
+        "placeholder": "[[sex]]",
+        "label": "Gender",
+        "type": "system"
+      },
+      {
+        "name": "unsubscribe",
+        "placeholder": "[[unsubscribe]]",
+        "label": "Unsubscribe Link",
+        "type": "link"
+      },
+      {
+        "name": "manage",
+        "placeholder": "[[manage]]",
+        "label": "Manage Preferences Link",
+        "type": "link"
+      }
+    ],
+    "custom": [
+      {
+        "name": "city",
+        "placeholder": "[[city]]",
+        "label": "Miasto",
+        "type": "custom",
+        "field_type": "text"
+      },
+      {
+        "name": "company",
+        "placeholder": "[[company]]",
+        "label": "Firma",
+        "type": "custom",
+        "field_type": "text"
+      }
+    ]
+  }
+}
+```
+
+---
+
 ## 📧 Email (API)
 
 ### Wysyłka pojedynczego Email

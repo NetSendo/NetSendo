@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Custom Fields API Endpoints:**
+  - New `GET /api/v1/custom-fields` endpoint to list all user's custom fields with filtering options.
+  - New `GET /api/v1/custom-fields/{id}` endpoint to get single custom field details.
+  - New `GET /api/v1/custom-fields/placeholders` endpoint returning all available placeholders (system + custom).
+  - Enables n8n nodes to dynamically load available fields and placeholders.
+
 ## [1.2.5] – Placeholder Personalization & n8n Documentation
 
 **Release date:** 2025-12-28
@@ -30,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Works with all standard fields and custom fields defined in the system.
 
 - **n8n Subscriber Inserts Documentation:**
+
   - New `docs/N8N_SUBSCRIBER_INSERTS_GUIDE.md` with comprehensive instructions for n8n node agent.
   - Documents `custom_fields` support for subscriber creation/update via API.
   - Lists all available placeholders (`[[fname]]`, `[[email]]`, `[[phone]]`, etc.) for email/SMS personalization.

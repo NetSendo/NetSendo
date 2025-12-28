@@ -53,6 +53,14 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
     Route::post('lists/{list}/export', [ExportController::class, 'export'])
         ->name('api.v1.lists.export');
 
+    // Custom Fields
+    Route::get('custom-fields', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'index'])
+        ->name('api.v1.custom-fields.index');
+    Route::get('custom-fields/placeholders', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'placeholders'])
+        ->name('api.v1.custom-fields.placeholders');
+    Route::get('custom-fields/{id}', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'show'])
+        ->name('api.v1.custom-fields.show');
+
     // Email Operations
     Route::post('email/send', [EmailController::class, 'send'])
         ->name('api.v1.email.send');
