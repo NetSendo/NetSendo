@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Mail\SystemEmailMailable;
 use App\Models\ContactList;
+use App\Models\Mailbox;
 use App\Models\Subscriber;
 use App\Models\SystemEmail;
+use App\Services\Mail\SystemMailService;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -16,6 +19,13 @@ use Illuminate\Support\Facades\URL;
  */
 class SystemEmailService
 {
+    protected SystemMailService $systemMailService;
+
+    public function __construct(SystemMailService $systemMailService)
+    {
+        $this->systemMailService = $systemMailService;
+    }
+
     /**
      * Send a system email by slug.
      */
@@ -46,6 +56,25 @@ class SystemEmailService
             return false;
         }
 
+        // Configure the mailbox for sending
+        $mailbox = $this->getMailboxForList($list);
+
+        if (!$mailbox) {
+            Log::warning("No mailbox configured for system email: {$slug}", [
+                'list_id' => $list->id,
+                'user_id' => $list->user_id,
+            ]);
+
+            // Try to use SystemMailService as fallback
+            if (!$this->systemMailService->prepare()) {
+                Log::error("No mail configuration available for system email: {$slug}");
+                return false;
+            }
+        } else {
+            // Configure Laravel mailer with the mailbox settings
+            $this->configureMailer($mailbox);
+        }
+
         try {
             Mail::to($recipient)->send(
                 new SystemEmailMailable($subscriber, $list, $systemEmail, $extraData)
@@ -55,6 +84,8 @@ class SystemEmailService
                 'subscriber_id' => $subscriber->id,
                 'list_id' => $list->id,
                 'recipient' => $recipient,
+                'mailbox_id' => $mailbox?->id,
+                'mailbox_name' => $mailbox?->name,
             ]);
 
             return true;
@@ -62,10 +93,68 @@ class SystemEmailService
             Log::error("Failed to send system email: {$slug}", [
                 'subscriber_id' => $subscriber->id,
                 'list_id' => $list->id,
+                'mailbox_id' => $mailbox?->id,
                 'error' => $e->getMessage(),
             ]);
             return false;
         }
+    }
+
+    /**
+     * Get the appropriate mailbox for a contact list.
+     * Priority: List's default mailbox -> User's default mailbox -> Any active system mailbox
+     */
+    protected function getMailboxForList(ContactList $list): ?Mailbox
+    {
+        // 1. Try list's default mailbox
+        if ($list->default_mailbox_id) {
+            $mailbox = Mailbox::where('id', $list->default_mailbox_id)
+                ->where('is_active', true)
+                ->whereJsonContains('allowed_types', Mailbox::TYPE_SYSTEM)
+                ->first();
+
+            if ($mailbox) {
+                return $mailbox;
+            }
+        }
+
+        // 2. Try user's default mailbox that can send system emails
+        $userDefault = Mailbox::where('user_id', $list->user_id)
+            ->where('is_active', true)
+            ->where('is_default', true)
+            ->whereJsonContains('allowed_types', Mailbox::TYPE_SYSTEM)
+            ->first();
+
+        if ($userDefault) {
+            return $userDefault;
+        }
+
+        // 3. Try any active mailbox of the user that can send system emails
+        return Mailbox::where('user_id', $list->user_id)
+            ->where('is_active', true)
+            ->whereJsonContains('allowed_types', Mailbox::TYPE_SYSTEM)
+            ->first();
+    }
+
+    /**
+     * Configure Laravel's mail system to use a specific Mailbox.
+     */
+    protected function configureMailer(Mailbox $mailbox): void
+    {
+        $credentials = $mailbox->getDecryptedCredentials();
+
+        Config::set('mail.default', 'smtp');
+        Config::set('mail.mailers.smtp.host', $credentials['host'] ?? '');
+        Config::set('mail.mailers.smtp.port', $credentials['port'] ?? 587);
+        Config::set('mail.mailers.smtp.username', $credentials['username'] ?? '');
+        Config::set('mail.mailers.smtp.password', $credentials['password'] ?? '');
+        Config::set('mail.mailers.smtp.encryption', $credentials['encryption'] ?? 'tls');
+
+        Config::set('mail.from.address', $mailbox->from_email);
+        Config::set('mail.from.name', $mailbox->from_name ?: config('app.name'));
+
+        // Force Laravel to recreate the mailer with new config
+        Mail::purge('smtp');
     }
 
     /**

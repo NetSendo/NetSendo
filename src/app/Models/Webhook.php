@@ -34,6 +34,7 @@ class Webhook extends Model
         'subscriber.updated',
         'subscriber.deleted',
         'subscriber.subscribed',
+        'subscriber.resubscribed',  // Re-activated after being unsubscribed
         'subscriber.unsubscribed',
         'subscriber.bounced',
         'subscriber.tag_added',

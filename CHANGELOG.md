@@ -57,18 +57,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - New `SendUnsubscribeConfirmation` listener for `SubscriberUnsubscribed` event.
 
 - **System Pages Integration:**
+
   - All 10 system pages from `/settings/system-pages` are now fully functional.
   - New `UnsubscribeController` for public unsubscribe flow using SystemPage templates.
   - Unsubscribe now shows `unsubscribe_confirm`, `unsubscribe_success`, or `unsubscribe_error` pages.
   - List-specific and global unsubscribe routes support signed URLs.
   - `signup_exists`, `signup_exists_active`, `signup_exists_inactive` pages used in form submission flow.
 
+- **New `subscriber.resubscribed` Webhook Event:**
+  - Added new webhook event `subscriber.resubscribed` for tracking re-activations (when unsubscribed/inactive users sign up again).
+  - Includes `previous_status` in payload for automation workflows to know the subscriber's prior state.
+
 ### Fixed
 
-- **Missing `subscriber.subscribed` Webhook:**
+- **Webhook Triggers for All Subscription Scenarios:**
 
-  - Fixed issue where `subscriber.subscribed` webhook was not dispatched when creating subscribers via API.
-  - API subscriber creation (`POST /api/v1/subscribers`) now dispatches both `subscriber.created` and `subscriber.subscribed` events, matching form submission behavior.
+  - Fixed missing webhooks for re-subscription and already-active scenarios.
+  - Form submissions now dispatch: `subscriber.subscribed` (new), `subscriber.resubscribed` (re-activation), `subscriber.updated` (already active).
+  - API `POST /api/v1/subscribers` now returns 200 with subscriber data instead of 409 when adding existing subscriber to a new list.
+  - API `POST /api/v1/subscribers/batch` now correctly handles re-activation scenarios with proper webhooks.
+  - All subscription scenarios (form and API) now trigger appropriate webhooks for n8n and other integrations.
 
 - **System Pages Not Used After Form Submission:**
 
@@ -80,8 +88,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added migration to ensure all system page slugs exist in the database.
 
 - **Global Stats Query Error:**
+
   - Fixed `SQLSTATE[42S22]: Column not found` error in Global Stats when filtering by date.
   - Resolved scope issue with `contact_list_subscriber.updated_at` in `whereHas` query constraints.
+
+- **System Emails Not Sending:**
+  - Fixed critical issue where system emails (signup confirmation, activation, etc.) were not being delivered.
+  - `SystemEmailService` was using the default Laravel mail driver instead of the configured mailbox.
+  - System emails now correctly use the list's default mailbox, user's default mailbox, or any active system mailbox as fallback.
+  - Added detailed logging with mailbox information for troubleshooting.
 
 ## [1.2.5] – Placeholder Personalization & n8n Documentation
 

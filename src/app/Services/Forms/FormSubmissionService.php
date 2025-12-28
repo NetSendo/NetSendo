@@ -145,6 +145,25 @@ class FormSubmissionService
                     'form_id' => $form->id,
                     'form_name' => $form->name,
                 ]);
+            } elseif ($wasAlreadySubscribed && $previousStatus !== 'active') {
+                // Dispatch subscriber.resubscribed webhook (for re-activation after unsubscribe/inactive)
+                $this->webhookDispatcher->dispatch($form->contactList->user_id, 'subscriber.resubscribed', [
+                    'subscriber' => $subscriberData,
+                    'list_id' => $form->contactList->id,
+                    'list_name' => $form->contactList->name,
+                    'form_id' => $form->id,
+                    'form_name' => $form->name,
+                    'previous_status' => $previousStatus,
+                ]);
+            } elseif ($wasAlreadySubscribed && $previousStatus === 'active') {
+                // Dispatch subscriber.updated webhook (for already active subscribers updating their data)
+                $this->webhookDispatcher->dispatch($form->contactList->user_id, 'subscriber.updated', [
+                    'subscriber' => $subscriberData,
+                    'list_id' => $form->contactList->id,
+                    'list_name' => $form->contactList->name,
+                    'form_id' => $form->id,
+                    'form_name' => $form->name,
+                ]);
             }
 
             // Trigger list webhook for subscribe event (legacy/list-specific webhook)

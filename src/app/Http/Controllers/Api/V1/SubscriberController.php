@@ -147,18 +147,75 @@ class SubscriberController extends Controller
         }
 
         if ($existing) {
-            // Add the list to existing subscriber if not already attached
-            if (!$existing->contactLists()->where('contact_list_id', $validated['contact_list_id'])->exists()) {
+            // Check if already subscribed to this list
+            $existingPivot = $existing->contactLists()
+                ->where('contact_list_id', $validated['contact_list_id'])
+                ->first();
+
+            $wasSubscribed = $existingPivot !== null;
+            $previousStatus = $existingPivot?->pivot?->status;
+
+            if (!$wasSubscribed) {
+                // Add the list to existing subscriber (new subscription)
                 $existing->contactLists()->attach($validated['contact_list_id'], [
                     'status' => 'active',
                     'subscribed_at' => now(),
+                    'source' => $validated['source'] ?? 'api',
+                ]);
+
+                // Dispatch subscriber.subscribed webhook
+                $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
+                    'subscriber' => (new SubscriberResource($existing->fresh(['tags', 'fieldValues.customField', 'contactLists'])))->toArray($request),
+                    'list_id' => $list->id,
+                    'list_name' => $list->name,
+                ]);
+            } elseif ($previousStatus !== 'active') {
+                // Re-activate subscription
+                $existing->contactLists()->updateExistingPivot($validated['contact_list_id'], [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                    'source' => $validated['source'] ?? 'api',
+                ]);
+
+                // Dispatch subscriber.resubscribed webhook
+                $this->webhookDispatcher->dispatch($user->id, 'subscriber.resubscribed', [
+                    'subscriber' => (new SubscriberResource($existing->fresh(['tags', 'fieldValues.customField', 'contactLists'])))->toArray($request),
+                    'list_id' => $list->id,
+                    'list_name' => $list->name,
+                    'previous_status' => $previousStatus,
+                ]);
+            } else {
+                // Already active on this list - dispatch update webhook if data was updated
+                $this->webhookDispatcher->dispatch($user->id, 'subscriber.updated', [
+                    'subscriber' => (new SubscriberResource($existing->fresh(['tags', 'fieldValues.customField', 'contactLists'])))->toArray($request),
+                    'list_id' => $list->id,
+                    'list_name' => $list->name,
                 ]);
             }
-            return response()->json([
-                'error' => 'Conflict',
-                'message' => 'Subscriber with this email already exists',
-                'subscriber_id' => $existing->id,
-            ], 409);
+
+            // Update subscriber data if provided
+            $updateData = collect($validated)->only(['first_name', 'last_name', 'phone'])->filter()->toArray();
+            if (!empty($updateData)) {
+                $existing->update($updateData);
+            }
+
+            // Handle custom fields
+            if (!empty($validated['custom_fields'])) {
+                foreach ($validated['custom_fields'] as $fieldName => $value) {
+                    $existing->setCustomFieldValue($fieldName, $value);
+                }
+            }
+
+            // Handle tags
+            if (!empty($validated['tags'])) {
+                $existing->syncTagsWithEvents($validated['tags']);
+            }
+
+            $existing->load(['tags', 'fieldValues.customField', 'contactLists']);
+
+            return (new SubscriberResource($existing))
+                ->response()
+                ->setStatusCode(200);
         }
 
         // Create subscriber
@@ -486,15 +543,19 @@ class SubscriberController extends Controller
 
                 $isNew = !$existing;
                 $wasSubscribed = false;
+                $previousStatus = null;
 
                 if ($existing) {
                     $subscriber = $existing;
-                    $wasSubscribed = $subscriber->contactLists()
+                    $existingPivot = $subscriber->contactLists()
                         ->where('contact_list_id', $subData['contact_list_id'])
-                        ->exists();
+                        ->first();
 
-                    if ($wasSubscribed) {
-                        // Already subscribed to this list, skip
+                    $wasSubscribed = $existingPivot !== null;
+                    $previousStatus = $existingPivot?->pivot?->status;
+
+                    if ($wasSubscribed && $previousStatus === 'active') {
+                        // Already active on this list, skip
                         $results['skipped']++;
                         continue;
                     }
@@ -560,15 +621,32 @@ class SubscriberController extends Controller
                         'list_name' => $list->name,
                         'source' => 'api_batch',
                     ]);
-                }
 
-                // Always dispatch subscriber.subscribed for new list subscriptions
-                $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
-                    'subscriber' => $subscriberData,
-                    'list_id' => $list->id,
-                    'list_name' => $list->name,
-                    'source' => 'api_batch',
-                ]);
+                    // New subscriber = new subscription
+                    $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
+                        'subscriber' => $subscriberData,
+                        'list_id' => $list->id,
+                        'list_name' => $list->name,
+                        'source' => 'api_batch',
+                    ]);
+                } elseif (!$wasSubscribed) {
+                    // Existing subscriber, new list subscription
+                    $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
+                        'subscriber' => $subscriberData,
+                        'list_id' => $list->id,
+                        'list_name' => $list->name,
+                        'source' => 'api_batch',
+                    ]);
+                } elseif ($wasSubscribed && $previousStatus !== 'active') {
+                    // Resubscription (was inactive/unsubscribed)
+                    $this->webhookDispatcher->dispatch($user->id, 'subscriber.resubscribed', [
+                        'subscriber' => $subscriberData,
+                        'list_id' => $list->id,
+                        'list_name' => $list->name,
+                        'previous_status' => $previousStatus,
+                        'source' => 'api_batch',
+                    ]);
+                }
 
             } catch (\Exception $e) {
                 $results['errors'][] = [
