@@ -12,9 +12,8 @@ class ProcessEmailQueueCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'cron:process-queue 
-                            {--dry-run : Wykonaj symulację bez faktycznej wysyłki}
-                            {--verbose : Pokaż szczegółowe informacje}';
+    protected $signature = 'cron:process-queue
+                            {--dry-run : Wykonaj symulację bez faktycznej wysyłki}';
 
     /**
      * The console command description.
@@ -29,9 +28,9 @@ class ProcessEmailQueueCommand extends Command
     public function handle(CronScheduleService $cronService): int
     {
         $this->info('🚀 Rozpoczynam przetwarzanie kolejki emaili...');
-        
+
         $isDryRun = $this->option('dry-run');
-        
+
         if ($isDryRun) {
             $this->warn('⚠️  Tryb symulacji - żadne emaile nie zostaną wysłane');
         }
@@ -45,7 +44,7 @@ class ProcessEmailQueueCommand extends Command
 
             // Pobierz dozwolone listy
             $allowedLists = $cronService->getListsAllowedForDispatch();
-            
+
             if ($this->option('verbose')) {
                 $this->info('📋 Dozwolone listy: ' . count($allowedLists));
                 foreach ($allowedLists as $list) {
@@ -65,7 +64,7 @@ class ProcessEmailQueueCommand extends Command
             $this->line("   🔄 Zsynchronizowano: {$stats['synced']}");
             $this->line("   📧 Wysłano: {$stats['dispatched']}");
             $this->line("   ⏭️  Pominięto: {$stats['skipped']}");
-            
+
             if ($stats['errors'] > 0) {
                 $this->error("   ❌ Błędy: {$stats['errors']}");
             }

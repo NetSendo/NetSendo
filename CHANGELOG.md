@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Form Submission Error:**
+
+  - Fixed `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'source'` error during form submission.
+  - Added missing `source` column to `contact_list_subscriber` table via new migration.
+  - Updated `Subscriber` and `ContactList` models to include `source` in pivot relationships.
+
+- **Console Command Error:**
+  - Fixed `LogicException: An option named "verbose" already exists` in `ProcessEmailQueueCommand`.
+  - Removed conflicting `--verbose` option definition from command signature as it overlaps with Symfony defaults.
+
 ## [1.2.4] – Short Description
 
 **Release date:** 2025-12-27
