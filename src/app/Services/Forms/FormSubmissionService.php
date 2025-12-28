@@ -277,8 +277,10 @@ class FormSubmissionService
         $email = strtolower(trim($data['email']));
         $isNew = false;
 
-        // Check if subscriber exists
-        $subscriber = Subscriber::where('email', $email)->first();
+        // Check if subscriber exists for this user
+        $subscriber = Subscriber::where('email', $email)
+            ->where('user_id', $list->user_id)
+            ->first();
 
         if (!$subscriber) {
             $subscriber = new Subscriber();

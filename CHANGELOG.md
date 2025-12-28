@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added missing `source` column to `contact_list_subscriber` table via new migration.
   - Updated `Subscriber` and `ContactList` models to include `source` in pivot relationships.
 
+- **Subscriber Duplicate Check:**
+
+  - Fixed `Integrity constraint violation: 1062` error when a subscriber re-subscribes via form.
+  - Updated `createOrUpdateSubscriber` to scope subscriber lookup by `user_id` in addition to `email`, properly handling the unique composite index.
+
 - **Console Command Error:**
   - Fixed `LogicException: An option named "verbose" already exists` in `ProcessEmailQueueCommand`.
   - Removed conflicting `--verbose` option definition from command signature as it overlaps with Symfony defaults.
