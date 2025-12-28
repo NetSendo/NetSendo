@@ -1592,6 +1592,13 @@
             "link_sent": "Nowy link weryfikacyjny został wysłany na adres e-mail podany podczas rejestracji.",
             "submit": "Wyślij ponownie e-mail weryfikacyjny",
             "logout": "Wyloguj się"
+        },
+        "webhook_reset": {
+            "title": "Zresetuj hasło",
+            "content": "Podaj swój adres e-mail, aby zresetować hasło. System przetworzy Twoje żądanie, a nowe hasło otrzymasz w wiadomości e-mail.",
+            "success": "Nowe hasło zostało wygenerowane i wysłane na Twój adres e-mail.",
+            "button": "Zresetuj hasło",
+            "processing": "Przetwarzanie..."
         }
     },
     "profile": {

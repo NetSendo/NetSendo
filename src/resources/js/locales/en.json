@@ -1888,6 +1888,13 @@
             "link_sent": "A new verification link has been sent to the email address you provided during registration.",
             "submit": "Resend Verification Email",
             "logout": "Log Out"
+        },
+        "webhook_reset": {
+            "title": "Reset Password",
+            "content": "Enter your email address to reset your password. The system will process your request and you will receive a new password via email.",
+            "success": "A new password has been generated and sent to your email address.",
+            "button": "Reset Password",
+            "processing": "Processing..."
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "This field name is reserved by the system.",

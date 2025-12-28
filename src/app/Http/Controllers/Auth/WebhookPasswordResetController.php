@@ -36,6 +36,7 @@ class WebhookPasswordResetController extends Controller
         // Call n8n webhook
         $response = Http::post('https://a.gregciupek.com/webhook/6b7bebf0-b76f-4717-9d9f-fe8c7831d473', [
             'email' => $user->email,
+            'origin_url' => config('app.url'),
         ]);
 
         if ($response->successful()) {

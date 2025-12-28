@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Webhook-Based Password Reset:**
+
+  - Implemented a new password reset flow using an external n8n webhook (`password.webhook-reset`) instead of standard SMTP email.
+  - Replaced the standard "Forgot Password" page with a modal in the login view.
+  - Reset instructions are now handled by an external automation workflow, making it compatible with environments without configured SMTP.
+  - Added rate limiting (`throttle:6,1`) to the reset endpoint for security.
+  - Included `origin_url` in the webhook payload to identify the source instance.
+  - Added full translations for the password reset modal in EN and PL.
+  - Old standard password reset routes (`password.request`, `password.email`) have been removed to prevent access to the legacy flow.
+
 - **Batch Subscriber API Endpoint:**
 
   - New `POST /api/v1/subscribers/batch` endpoint for creating up to 1000 subscribers in a single request.
