@@ -266,6 +266,77 @@ curl -X POST "https://example.com/api/v1/subscribers" \
 
 ---
 
+### Utwórz subskrybentów (batch)
+
+```http
+POST /api/v1/subscribers/batch
+```
+
+**Wymagane uprawnienie:** `subscribers:write`
+
+**Body (JSON):**
+
+```json
+{
+  "subscribers": [
+    {
+      "email": "jan@example.com",
+      "contact_list_id": 5,
+      "first_name": "Jan",
+      "last_name": "Kowalski",
+      "tags": [1, 2],
+      "custom_fields": {
+        "city": "Warszawa"
+      }
+    },
+    {
+      "email": "anna@example.com",
+      "contact_list_id": 5,
+      "first_name": "Anna"
+    }
+  ]
+}
+```
+
+| Pole          | Typ   | Wymagane | Opis                             |
+| ------------- | ----- | -------- | -------------------------------- |
+| `subscribers` | array | ✅       | Tablica subskrybentów (max 1000) |
+
+Każdy element tablicy przyjmuje te same pola co `POST /api/v1/subscribers`.
+
+**Odpowiedź (200):**
+
+```json
+{
+  "data": {
+    "created": 45,
+    "updated": 53,
+    "skipped": 0,
+    "errors": [
+      {
+        "index": 2,
+        "email": "invalid@",
+        "error": "The email must be a valid email address."
+      }
+    ]
+  },
+  "message": "Batch completed: 45 created, 53 updated, 0 skipped, 2 errors"
+}
+```
+
+**Przykład cURL:**
+
+```bash
+curl -X POST "https://example.com/api/v1/subscribers/batch" \
+  -H "Authorization: Bearer ns_live_xxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{"subscribers":[{"email":"jan@example.com","contact_list_id":5},{"email":"anna@example.com","contact_list_id":5}]}'
+```
+
+> **Uwaga:** Webhooks (`subscriber.created`, `subscriber.subscribed`) są wysyłane asynchronicznie dla każdego subskrybenta, co nie blokuje requestu.
+
+---
+
 ### Aktualizuj subskrybenta
 
 ```http

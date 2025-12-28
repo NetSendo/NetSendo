@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\DispatchWebhookJob;
 use App\Models\Webhook;
 use App\Models\WebhookLog;
 use Illuminate\Support\Facades\Http;
@@ -11,8 +12,13 @@ class WebhookDispatcher
 {
     /**
      * Dispatch an event to all registered webhooks
+     *
+     * @param int $userId User ID
+     * @param string $event Event name
+     * @param array $data Event data
+     * @param bool $async If true, dispatch via queue (default). If false, send synchronously.
      */
-    public function dispatch(int $userId, string $event, array $data): void
+    public function dispatch(int $userId, string $event, array $data, bool $async = true): void
     {
         $webhooks = Webhook::where('user_id', $userId)
             ->active()
@@ -20,9 +26,16 @@ class WebhookDispatcher
             ->get();
 
         foreach ($webhooks as $webhook) {
-            $this->send($webhook, $event, $data);
+            if ($async) {
+                // Dispatch to queue for async processing
+                DispatchWebhookJob::dispatch($webhook->id, $event, $data);
+            } else {
+                // Send synchronously (for testing or specific cases)
+                $this->send($webhook, $event, $data);
+            }
         }
     }
+
 
     /**
      * Send webhook payload

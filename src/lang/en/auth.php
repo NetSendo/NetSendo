@@ -46,7 +46,7 @@ return [
     'enable_2fa' => 'Enable 2FA',
     'disable_2fa' => 'Disable 2FA',
     'verify_code' => 'Verify Code',
-    
+
     // 2FA
     'two_factor_verification' => 'Two-Factor Verification',
     'enter_code_from_app' => 'Enter the code from your authentication app',
@@ -56,7 +56,7 @@ return [
     'two_factor_active' => '2FA Active',
     'two_factor_inactive' => '2FA Inactive',
 
-    
+
     // Password reset email
     'reset_password' => [
         'email_subject' => 'Reset Password - :app',
@@ -66,5 +66,12 @@ return [
         'expire' => 'This password reset link will expire in :count minutes.',
         'ignore' => 'If you did not request a password reset, no further action is required.',
         'salutation' => 'Regards, :app',
+    ],
+
+    'webhook_reset' => [
+        'title' => 'Reset Password',
+        'content' => 'Enter your email address to reset your password. The system will process your request and you will receive a new password via email.',
+        'success' => 'Password reset instructions passed to system.',
+        'button' => 'Reset Password',
     ],
 ];

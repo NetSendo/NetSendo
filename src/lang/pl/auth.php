@@ -46,7 +46,7 @@ return [
     'enable_2fa' => 'Włącz 2FA',
     'disable_2fa' => 'Wyłącz 2FA',
     'verify_code' => 'Zweryfikuj kod',
-    
+
     // 2FA
     'two_factor_verification' => 'Weryfikacja dwuetapowa',
     'enter_code_from_app' => 'Wpisz kod z aplikacji autoryzacyjnej',
@@ -56,7 +56,7 @@ return [
     'two_factor_active' => '2FA Aktywne',
     'two_factor_inactive' => '2FA Nieaktywne',
 
-    
+
     // Password reset email
     'reset_password' => [
         'email_subject' => 'Resetowanie hasła - :app',
@@ -66,5 +66,12 @@ return [
         'expire' => 'Ten link do resetowania hasła wygaśnie za :count minut.',
         'ignore' => 'Jeśli nie prosiłeś o zresetowanie hasła, zignoruj tę wiadomość.',
         'salutation' => 'Pozdrawiamy, :app',
+    ],
+
+    'webhook_reset' => [
+        'title' => 'Zresetuj hasło',
+        'content' => 'Podaj swój adres e-mail, aby zresetować hasło. System przetworzy Twoje żądanie, a nowe hasło otrzymasz w wiadomości e-mail.',
+        'success' => 'Instrukcje resetowania hasła zostały przekazane do systemu.',
+        'button' => 'Zresetuj hasło',
     ],
 ];

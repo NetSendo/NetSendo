@@ -196,8 +196,15 @@ class SubscriberController extends Controller
         $contactList = $subscriber->contactLists()->first();
         event(new SubscriberSignedUp($subscriber, $contactList, null, 'api'));
 
-        // Dispatch webhook
+        // Dispatch webhook - subscriber.created
         $this->webhookDispatcher->dispatch($user->id, 'subscriber.created', [
+            'subscriber' => (new SubscriberResource($subscriber))->toArray($request),
+            'list_id' => $contactList?->id,
+            'list_name' => $contactList?->name,
+        ]);
+
+        // Dispatch webhook - subscriber.subscribed (for new subscription to list)
+        $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
             'subscriber' => (new SubscriberResource($subscriber))->toArray($request),
             'list_id' => $contactList?->id,
             'list_name' => $contactList?->name,
@@ -392,6 +399,200 @@ class SubscriberController extends Controller
     }
 
     /**
+     * Create multiple subscribers in batch
+     */
+    public function batch(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Verify permission
+        $apiKey = $request->get('api_key');
+        if (!$apiKey->hasPermission('subscribers:write')) {
+            return response()->json([
+                'error' => 'Forbidden',
+                'message' => 'API key does not have subscribers:write permission',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'subscribers' => 'required|array|min:1|max:1000',
+            'subscribers.*.email' => 'nullable|email',
+            'subscribers.*.phone' => 'nullable|string|max:50',
+            'subscribers.*.contact_list_id' => [
+                'required',
+                'integer',
+                Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
+            ],
+            'subscribers.*.first_name' => 'nullable|string|max:255',
+            'subscribers.*.last_name' => 'nullable|string|max:255',
+            'subscribers.*.status' => 'nullable|in:active,inactive',
+            'subscribers.*.source' => 'nullable|string|max:255',
+            'subscribers.*.tags' => 'nullable|array',
+            'subscribers.*.tags.*' => 'integer',
+            'subscribers.*.custom_fields' => 'nullable|array',
+        ]);
+
+        $results = [
+            'created' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'errors' => [],
+        ];
+
+        // Pre-load lists for validation
+        $listIds = collect($validated['subscribers'])->pluck('contact_list_id')->unique();
+        $lists = ContactList::whereIn('id', $listIds)->get()->keyBy('id');
+
+        foreach ($validated['subscribers'] as $index => $subData) {
+            try {
+                $list = $lists->get($subData['contact_list_id']);
+
+                if (!$list) {
+                    $results['errors'][] = [
+                        'index' => $index,
+                        'error' => 'Contact list not found',
+                    ];
+                    continue;
+                }
+
+                // Validate required fields based on list type
+                if ($list->type === 'email' && empty($subData['email'])) {
+                    $results['errors'][] = [
+                        'index' => $index,
+                        'error' => 'Email is required for email lists',
+                    ];
+                    continue;
+                }
+                if ($list->type === 'sms' && empty($subData['phone'])) {
+                    $results['errors'][] = [
+                        'index' => $index,
+                        'error' => 'Phone is required for SMS lists',
+                    ];
+                    continue;
+                }
+
+                // Find existing subscriber
+                $existing = null;
+                if (!empty($subData['email'])) {
+                    $existing = Subscriber::where('email', $subData['email'])
+                        ->where('user_id', $user->id)
+                        ->first();
+                }
+                if (!$existing && !empty($subData['phone']) && $list->type === 'sms') {
+                    $existing = Subscriber::where('phone', $subData['phone'])
+                        ->where('user_id', $user->id)
+                        ->first();
+                }
+
+                $isNew = !$existing;
+                $wasSubscribed = false;
+
+                if ($existing) {
+                    $subscriber = $existing;
+                    $wasSubscribed = $subscriber->contactLists()
+                        ->where('contact_list_id', $subData['contact_list_id'])
+                        ->exists();
+
+                    if ($wasSubscribed) {
+                        // Already subscribed to this list, skip
+                        $results['skipped']++;
+                        continue;
+                    }
+
+                    // Update subscriber data if provided
+                    $updateData = collect($subData)->only(['first_name', 'last_name', 'phone'])->filter()->toArray();
+                    if (!empty($updateData)) {
+                        $subscriber->update($updateData);
+                    }
+
+                    $results['updated']++;
+                } else {
+                    $subscriber = Subscriber::create([
+                        'user_id' => $user->id,
+                        'email' => $subData['email'] ?? null,
+                        'first_name' => $subData['first_name'] ?? null,
+                        'last_name' => $subData['last_name'] ?? null,
+                        'phone' => $subData['phone'] ?? null,
+                        'is_active_global' => ($subData['status'] ?? 'active') === 'active',
+                        'source' => $subData['source'] ?? 'api_batch',
+                        'ip_address' => $request->ip(),
+                        'subscribed_at' => now(),
+                    ]);
+
+                    $results['created']++;
+                }
+
+                // Attach to contact list
+                $subscriber->contactLists()->syncWithoutDetaching([
+                    $subData['contact_list_id'] => [
+                        'status' => $subData['status'] ?? 'active',
+                        'subscribed_at' => now(),
+                    ]
+                ]);
+
+                // Handle tags
+                if (!empty($subData['tags'])) {
+                    // Verify tags belong to user
+                    $userTagIds = Tag::where('user_id', $user->id)->pluck('id')->toArray();
+                    $validTags = array_intersect($subData['tags'], $userTagIds);
+                    if (!empty($validTags)) {
+                        $subscriber->syncTagsWithEvents($validTags);
+                    }
+                }
+
+                // Handle custom fields
+                if (!empty($subData['custom_fields'])) {
+                    foreach ($subData['custom_fields'] as $fieldName => $value) {
+                        $subscriber->setCustomFieldValue($fieldName, $value);
+                    }
+                }
+
+                // Prepare subscriber data for webhooks
+                $subscriberData = (new SubscriberResource($subscriber->fresh(['tags', 'fieldValues.customField', 'contactLists'])))->toArray($request);
+
+                // Dispatch webhooks (async via queue)
+                if ($isNew) {
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch'));
+
+                    $this->webhookDispatcher->dispatch($user->id, 'subscriber.created', [
+                        'subscriber' => $subscriberData,
+                        'list_id' => $list->id,
+                        'list_name' => $list->name,
+                        'source' => 'api_batch',
+                    ]);
+                }
+
+                // Always dispatch subscriber.subscribed for new list subscriptions
+                $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
+                    'subscriber' => $subscriberData,
+                    'list_id' => $list->id,
+                    'list_name' => $list->name,
+                    'source' => 'api_batch',
+                ]);
+
+            } catch (\Exception $e) {
+                $results['errors'][] = [
+                    'index' => $index,
+                    'email' => $subData['email'] ?? null,
+                    'phone' => $subData['phone'] ?? null,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'data' => $results,
+            'message' => sprintf(
+                'Batch completed: %d created, %d updated, %d skipped, %d errors',
+                $results['created'],
+                $results['updated'],
+                $results['skipped'],
+                count($results['errors'])
+            ),
+        ], 200);
+    }
+
+    /**
      * Find subscriber by ID ensuring it belongs to user's lists
      */
     protected function findSubscriberForUser($user, int $id): ?Subscriber
@@ -401,3 +602,4 @@ class SubscriberController extends Controller
         })->find($id);
     }
 }
+

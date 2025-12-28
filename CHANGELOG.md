@@ -9,11 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Batch Subscriber API Endpoint:**
+
+  - New `POST /api/v1/subscribers/batch` endpoint for creating up to 1000 subscribers in a single request.
+  - Returns detailed results: created count, updated count, skipped count, and per-item errors.
+  - Supports all subscriber fields: email, phone, first_name, last_name, tags, custom_fields.
+  - Webhooks (`subscriber.created`, `subscriber.subscribed`) dispatched asynchronously for each subscriber.
+
+- **Async Webhook Dispatching:**
+
+  - Webhooks are now dispatched asynchronously via Laravel queue for better performance.
+  - New `DispatchWebhookJob` handles webhook delivery with 3 retry attempts and 10s backoff.
+  - API requests no longer block on webhook HTTP calls, significantly improving response times for batch operations.
+
 - **Custom Fields API Endpoints:**
   - New `GET /api/v1/custom-fields` endpoint to list all user's custom fields with filtering options.
   - New `GET /api/v1/custom-fields/{id}` endpoint to get single custom field details.
   - New `GET /api/v1/custom-fields/placeholders` endpoint returning all available placeholders (system + custom).
   - Enables n8n nodes to dynamically load available fields and placeholders.
+
+### Fixed
+
+- **Missing `subscriber.subscribed` Webhook:**
+  - Fixed issue where `subscriber.subscribed` webhook was not dispatched when creating subscribers via API.
+  - API subscriber creation (`POST /api/v1/subscribers`) now dispatches both `subscriber.created` and `subscriber.subscribed` events, matching form submission behavior.
 
 ## [1.2.5] – Placeholder Personalization & n8n Documentation
 

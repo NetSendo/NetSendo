@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () {
 
     // Subscribers (CRUD)
+    Route::post('subscribers/batch', [SubscriberController::class, 'batch'])
+        ->name('api.v1.subscribers.batch');
     Route::get('subscribers/by-email/{email}', [SubscriberController::class, 'findByEmail'])
         ->name('api.v1.subscribers.by-email');
     Route::post('subscribers/{subscriber}/tags', [SubscriberController::class, 'syncTags'])

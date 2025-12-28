@@ -1,6 +1,8 @@
 <script setup>
+import { ref } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import FirstRunModal from '@/Components/FirstRunModal.vue';
+import Modal from '@/Components/Modal.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 
@@ -24,6 +26,26 @@ const form = useForm({
     password: '',
     remember: false,
 });
+
+const resetForm = useForm({
+    email: '',
+});
+
+const showResetModal = ref(false);
+const resetStatus = ref(null);
+
+const submitReset = () => {
+    resetForm.post(route('password.webhook-reset'), {
+        onSuccess: () => {
+            resetStatus.value = t('auth.webhook_reset.success');
+            setTimeout(() => {
+                showResetModal.value = false;
+                resetForm.reset();
+                resetStatus.value = null;
+            }, 3000);
+        },
+    });
+};
 
 const submit = () => {
     form.post(route('login'), {
@@ -124,14 +146,15 @@ const submit = () => {
                     />
                     <span class="ml-2 text-sm text-white/60">{{ $t('auth.remember_me') }}</span>
                 </label>
-                
-                <Link
+
+                <button
                     v-if="canResetPassword"
-                    :href="route('password.request')"
+                    type="button"
+                    @click="showResetModal = true"
                     class="text-sm text-purple-400 hover:text-purple-300 transition-colors"
                 >
                     {{ $t('auth.forgot_password_link') }}
-                </Link>
+                </button>
             </div>
 
             <!-- Submit button -->
@@ -140,11 +163,11 @@ const submit = () => {
                 :disabled="form.processing"
                 class="w-full relative group"
             >
-                <div 
+                <div
                     class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"
                     :class="{ 'opacity-30': form.processing }"
                 ></div>
-                <div 
+                <div
                     class="relative flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-semibold transition-all duration-200"
                     :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                 >
@@ -169,6 +192,62 @@ const submit = () => {
         </div>
         <!-- First Run Modal -->
         <FirstRunModal :show="isFirstUser" />
+
+        <!-- Reset Password Modal -->
+        <Modal :show="showResetModal" @close="showResetModal = false">
+            <div class="p-6">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    {{ $t('auth.webhook_reset.title') }}
+                </h2>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {{ $t('auth.webhook_reset.content') }}
+                </p>
+
+                <div class="mt-6">
+                    <label for="reset_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {{ $t('auth.email') }}
+                    </label>
+                    <input
+                        id="reset_email"
+                        type="email"
+                        v-model="resetForm.email"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                        placeholder="your@email.com"
+                        @keyup.enter="submitReset"
+                    />
+                    <p v-if="resetForm.errors.email" class="mt-2 text-sm text-red-600 dark:text-red-400">
+                        {{ resetForm.errors.email }}
+                    </p>
+                    <p v-if="resetStatus" class="mt-2 text-sm text-green-600 dark:text-green-400">
+                        {{ resetStatus }}
+                    </p>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
+                        @click="showResetModal = false"
+                    >
+                        {{ $t('common.cancel') || 'Cancel' }}
+                    </button>
+
+                    <button
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center gap-2"
+                        :disabled="resetForm.processing"
+                        @click="submitReset"
+                    >
+                        <svg v-if="resetForm.processing" class="animate-spin -ml-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {{ resetForm.processing ? $t('common.loading') : $t('auth.webhook_reset.button') }}
+                    </button>
+                </div>
+            </div>
+        </Modal>
     </GuestLayout>
 </template>
 
