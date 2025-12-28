@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.7] - Stripe Integration & Improvements
+
+**Release date:** 2025-12-28
+
+### Added
+
+- **Stripe Payments Integration:**
+  - Implemented full Stripe integration for handling product sales and payments.
+  - Added `StripeService` for interacting with Stripe API using the database-stored configuration.
+  - Created `StripeProduct` model and controller for managing products.
+  - Created `StripeTransaction` model for tracking payment history.
+  - Added Vue components for Product Management (`StripeProducts/Index.vue`) and Settings (`StripeSettings/Index.vue`).
+  - Added **Stripe Settings** page in the panel (Settings -> Stripe Integration) to configure API keys (`publishable_key`, `secret_key`, `webhook_secret`) securely in the database.
+  - Added **Stripe Products** page in the panel (Products -> Stripe Products) to manage improved product listings.
+  - Sensitive API keys are encrypted in the database for security.
+  - Added new sidebar menu items for Stripe Products and Stripe Integration settings.
+  - Added comprehensive translations for Stripe features in PL, EN, DE, ES.
+  - Installed `stripe/stripe-php` SDK.
+
 ## [1.2.6] – Short Description
 
 **Release date:** 2025-12-28

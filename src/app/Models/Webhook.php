@@ -43,6 +43,9 @@ class Webhook extends Model
         'sms.queued',
         'sms.sent',
         'sms.failed',
+        // Stripe events
+        'stripe.purchase_completed',
+        'stripe.payment_refunded',
     ];
 
     /**

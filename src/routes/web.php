@@ -368,6 +368,24 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
     Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
 
+    // Stripe Settings
+    Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StripeSettingsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\StripeSettingsController::class, 'update'])->name('update');
+        Route::post('/test-connection', [\App\Http\Controllers\StripeSettingsController::class, 'testConnection'])->name('test-connection');
+    });
+
+    // Stripe Products (Settings)
+    Route::prefix('settings/stripe-products')->name('settings.stripe-products.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\StripeProductController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\StripeProductController::class, 'store'])->name('store');
+        Route::put('/{product}', [\App\Http\Controllers\StripeProductController::class, 'update'])->name('update');
+        Route::delete('/{product}', [\App\Http\Controllers\StripeProductController::class, 'destroy'])->name('destroy');
+        Route::get('/{product}/transactions', [\App\Http\Controllers\StripeProductController::class, 'transactions'])->name('transactions');
+        Route::post('/{product}/checkout-url', [\App\Http\Controllers\StripeProductController::class, 'checkoutUrl'])->name('checkout-url');
+        Route::get('/all-transactions', [\App\Http\Controllers\StripeProductController::class, 'allTransactions'])->name('all-transactions');
+    });
+
     // User Management (Team Members)
     Route::prefix('settings/users')->name('settings.users.')->group(function () {
         Route::get('/', [\App\Http\Controllers\UserManagementController::class, 'index'])->name('index');
@@ -446,6 +464,9 @@ Route::prefix('webhooks/bounce')->name('webhooks.bounce.')->group(function () {
     Route::post('/mailgun', [\App\Http\Controllers\Webhooks\BounceController::class, 'mailgun'])->name('mailgun');
     Route::post('/generic', [\App\Http\Controllers\Webhooks\BounceController::class, 'generic'])->name('generic');
 });
+
+// Stripe Webhook (public, Stripe-signature authenticated)
+Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhooks\StripeController::class, 'handle'])->name('webhooks.stripe');
 
 require __DIR__.'/auth.php';
 

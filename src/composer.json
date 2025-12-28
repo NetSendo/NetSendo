@@ -20,6 +20,7 @@
         "pragmarx/google2fa-laravel": "^2.3",
         "spatie/laravel-backup": "^9.3",
         "spatie/laravel-permission": "^6.24",
+        "stripe/stripe-php": "^19.1",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

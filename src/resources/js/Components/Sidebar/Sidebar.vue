@@ -117,6 +117,12 @@ const updateOpenGroup = () => {
         return;
     }
 
+    // Products
+    if (isActive("settings.stripe-products.*")) {
+        openGroup.value = "products";
+        return;
+    }
+
     // Ustawienia
     if (
         isActive("defaults.*") ||
@@ -988,6 +994,53 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 </SidebarItem>
             </SidebarGroup>
 
+            <!-- Produkty -->
+            <SidebarGroup
+                :label="$t('navigation.groups.products')"
+                :collapsed="collapsed"
+                :is-open="openGroup === 'products'"
+                @toggle="toggleGroup('products')"
+            >
+                <template #icon>
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                        />
+                    </svg>
+                </template>
+
+                <SidebarItem
+                    :href="route('settings.stripe-products.index')"
+                    :active="isActive('settings.stripe-products.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("stripe.products") }}
+                </SidebarItem>
+            </SidebarGroup>
+
             <!-- Statystyki -->
             <SidebarGroup
                 :label="$t('navigation.groups.statistics')"
@@ -1246,6 +1299,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("navigation.ai_integrations") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.stripe.index')"
+                    :active="isActive('settings.stripe.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("stripe.settings_title") }}
                 </SidebarItem>
 
                 <SidebarItem
