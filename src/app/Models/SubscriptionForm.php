@@ -32,6 +32,7 @@ class SubscriptionForm extends Model
         'redirect_url',
         'use_list_redirect',
         'success_message',
+        'success_title',
         'error_message',
         'coregister_lists',
         'coregister_optional',
@@ -71,7 +72,7 @@ class SubscriptionForm extends Model
         'border_radius' => 8,
         'border_width' => 1,
         'padding' => 24,
-        
+
         // Fields
         'field_bgcolor' => '#FFFFFF',
         'field_text' => '#374151',
@@ -83,7 +84,7 @@ class SubscriptionForm extends Model
         'field_height' => 42,
         'fields_vertical_margin' => 16,
         'fields_horizontal_margin' => 0,
-        
+
         // Submit button
         'submit_color' => '#6366F1',
         'submit_text_color' => '#FFFFFF',
@@ -97,16 +98,16 @@ class SubscriptionForm extends Model
         'submit_text' => 'Zapisz się',
         'submit_align' => 'center',
         'submit_full_width' => true,
-        
+
         // Typography
         'font_family' => 'Inter, system-ui, sans-serif',
         'label_font_size' => 14,
         'label_font_weight' => 500,
         'placeholder_color' => '#9CA3AF',
-        
+
         // Transparency
         'bgcolor_opacity' => 100,
-        
+
         // Shadow
         'shadow_enabled' => false,
         'shadow_color' => '#000000',
@@ -114,13 +115,13 @@ class SubscriptionForm extends Model
         'shadow_blur' => 20,
         'shadow_x' => 0,
         'shadow_y' => 10,
-        
+
         // Gradient
         'gradient_enabled' => false,
         'gradient_direction' => 'to bottom right',
         'gradient_from' => '#6366F1',
         'gradient_to' => '#8B5CF6',
-        
+
         // Animation
         'animation_enabled' => false,
         'animation_type' => 'fadeIn',

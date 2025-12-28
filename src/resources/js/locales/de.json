@@ -2525,5 +2525,50 @@
         "send_to_missed_confirm": "Möchten Sie diese Nachricht wirklich an {count} verpasste Abonnenten senden?",
         "send_success": "Versand an {count} verpasste Abonnenten geplant.",
         "no_missed": "Keine verpassten Abonnenten - hervorragend!"
+    },
+    "system_pages": {
+        "title": "Systemseiten",
+        "subtitle": "Verwalten Sie HTML-Seiten, die Benutzern nach Aktionen angezeigt werden",
+        "all_lists": "Globale Vorlagen",
+        "select_list": "Liste auswählen",
+        "search_list": "Liste suchen...",
+        "no_lists_found": "Keine Listen gefunden",
+        "global_default": "Globale Vorlage (Standard)",
+        "edit_for_list": "Bearbeite Seiten für Liste: {name}",
+        "table": {
+            "name": "Name",
+            "title": "Seitentitel",
+            "slug": "Slug (URI)",
+            "access": "Zugriff",
+            "status": "Status"
+        },
+        "customized": "Angepasst",
+        "default": "Standard",
+        "customize": "Anpassen",
+        "access": {
+            "public": "Öffentlich",
+            "private": "Privat"
+        },
+        "edit_title": "Seite bearbeiten: {name}",
+        "context": "Kontext:",
+        "back_to_list": "← Zurück zur Liste",
+        "page_title_label": "Seitentitel",
+        "slug_label": "Seiten-Slug",
+        "slug_readonly_global": "Slug kann nur für listenspezifische benutzerdefinierte Seiten geändert werden",
+        "access_label": "Sichtbarkeit",
+        "access_help": "Öffentliche Seiten sind für jeden zugänglich. Private erfordern Authentifizierung.",
+        "content_label": "HTML-Seiteninhalt",
+        "current_url": "Aktuelle URL",
+        "updated": "Seite wurde aktualisiert.",
+        "custom_created": "Benutzerdefinierte Seitenversion für diese Liste erstellt.",
+        "reset_to_default": "Auf Standard-Seitenversion zurückgesetzt.",
+        "cannot_delete_global": "Globale Seitenvorlage kann nicht gelöscht werden.",
+        "global_defaults": "Globale Vorlagen",
+        "available_placeholders": "Verfügbare Platzhalter",
+        "click_to_copy": "(zum Kopieren klicken)",
+        "standard_fields": "Standardfelder",
+        "system_placeholders": "System-Platzhalter",
+        "custom_fields": "Benutzerdefinierte Felder",
+        "no_placeholders": "Keine Platzhalter verfügbar"
     }
 }

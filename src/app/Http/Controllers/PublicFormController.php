@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subscriber;
 use App\Models\SubscriptionForm;
 use App\Services\Forms\FormBuilderService;
 use App\Services\Forms\FormSubmissionService;
+use App\Services\PlaceholderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class PublicFormController extends Controller
 {
@@ -92,16 +95,34 @@ class PublicFormController extends Controller
     }
 
     /**
-     * Success page.
+     * Success page with dynamic placeholder support.
      */
-    public function success(string $slug)
+    public function success(Request $request, string $slug)
     {
         $form = SubscriptionForm::where('slug', $slug)->first();
 
+        // Get title and message from form settings
+        $title = $form->success_title ?? 'Dziękujemy!';
         $message = $form->success_message ?? 'Dziękujemy za zapisanie się na naszą listę!';
+
+        // Get subscriber from signed URL parameter for placeholder replacement
+        $subscriberId = $request->query('sid');
+        $subscriber = null;
+
+        if ($subscriberId && $request->hasValidSignature()) {
+            $subscriber = Subscriber::find($subscriberId);
+        }
+
+        // Replace placeholders if subscriber is available
+        if ($subscriber) {
+            $placeholderService = app(PlaceholderService::class);
+            $title = $placeholderService->replacePlaceholders($title, $subscriber);
+            $message = $placeholderService->replacePlaceholders($message, $subscriber);
+        }
 
         return view('forms.success', [
             'form' => $form,
+            'title' => $title,
             'message' => $message,
         ]);
     }
@@ -156,7 +177,13 @@ class PublicFormController extends Controller
             return redirect()->away($redirectUrl);
         }
 
-        return redirect()->route('subscribe.success', $form->slug);
+        // Redirect to internal success page with signed URL containing subscriber ID
+        return redirect()->to(
+            URL::signedRoute('subscribe.success', [
+                'slug' => $form->slug,
+                'sid' => $submission->subscriber_id,
+            ])
+        );
     }
 
     /**

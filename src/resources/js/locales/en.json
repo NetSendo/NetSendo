@@ -2781,7 +2781,13 @@
         "custom_created": "Created custom page version for this list.",
         "reset_to_default": "Reset to default page version.",
         "cannot_delete_global": "Cannot delete global page template.",
-        "global_defaults": "Global Templates"
+        "global_defaults": "Global Templates",
+        "available_placeholders": "Available Placeholders",
+        "click_to_copy": "(click to copy)",
+        "standard_fields": "Standard Fields",
+        "system_placeholders": "System Placeholders",
+        "custom_fields": "Custom Fields",
+        "no_placeholders": "No placeholders available"
     },
     "system_emails": {
         "title": "System Emails",

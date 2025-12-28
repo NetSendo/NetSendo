@@ -66,6 +66,64 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ---
 
+## 🏷️ Wstawki (Placeholders)
+
+Wstawki (placeholders) pozwalają na personalizację treści wiadomości Email i SMS. Używaj składni `[[nazwa_pola]]`.
+
+### Dostępne zmienne
+
+#### Dane subskrybenta
+
+| Placeholder  | Opis                | Przykład          |
+| ------------ | ------------------- | ----------------- |
+| `[[email]]`  | Adres email         | `jan@example.com` |
+| `[[fname]]`  | Imię                | `Jan`             |
+| `[[!fname]]` | Imię w wołaczu (PL) | `Janie`           |
+| `[[lname]]`  | Nazwisko            | `Kowalski`        |
+| `[[phone]]`  | Numer telefonu      | `+48123456789`    |
+| `[[sex]]`    | Płeć                | `male` / `female` |
+
+#### Linki systemowe
+
+| Placeholder       | Opis                           |
+| ----------------- | ------------------------------ |
+| `[[unsubscribe]]` | Link wypisania z listy         |
+| `[[manage]]`      | Link zarządzania preferencjami |
+
+#### Pola niestandardowe
+
+Każde zdefiniowane pole niestandardowe jest dostępne jako `[[nazwa_pola]]`:
+
+```
+[[city]]        → Warszawa
+[[company]]     → Firma Sp. z o.o.
+```
+
+### Przykład użycia w Email
+
+```json
+{
+  "email": "jan@example.com",
+  "subject": "Witaj [[fname]]!",
+  "content": "<h1>Cześć [[fname]] [[lname]]!</h1><p>Twoja firma: [[company]]</p>",
+  "subscriber_id": 123
+}
+```
+
+### Przykład użycia w SMS
+
+```json
+{
+  "phone": "+48123456789",
+  "message": "Cześć [[fname]]! Mamy dla Ciebie ofertę. Szczegóły: example.com",
+  "subscriber_id": 123
+}
+```
+
+> **Uwaga:** Przy batch wysyłce (do listy lub tagów) personalizacja następuje automatycznie dla każdego odbiorcy.
+
+---
+
 ## 📧 Subskrybenci (Subscribers)
 
 ### Lista subskrybentów

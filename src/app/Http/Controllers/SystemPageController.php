@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SystemPage;
 use App\Models\ContactList;
+use App\Services\PlaceholderService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,7 +20,7 @@ class SystemPageController extends Controller
 
         // Get Global Defaults
         $globalPages = SystemPage::whereNull('contact_list_id')->get()->keyBy('slug');
-        
+
         // If a list is selected, get its overrides
         $listPages = collect();
         if ($selectedListId) {
@@ -36,7 +37,7 @@ class SystemPageController extends Controller
             // Use global, but mark as default
             $page = $globalPage;
             $page->is_custom = false;
-            $page->context_list_id = $selectedListId; 
+            $page->context_list_id = $selectedListId;
             return $page;
         })->values();
 
@@ -50,10 +51,10 @@ class SystemPageController extends Controller
     /**
      * Show the form for editing a system page.
      */
-    public function edit(Request $request, SystemPage $systemPage)
+    public function edit(Request $request, SystemPage $systemPage, PlaceholderService $placeholderService)
     {
         $listId = $systemPage->contact_list_id ?? $request->list_id;
-        
+
         $listName = __('system_pages.global_defaults');
         if ($listId) {
             $list = ContactList::find($listId);
@@ -65,10 +66,17 @@ class SystemPageController extends Controller
             }
         }
 
+        // Get available placeholders for this user
+        $placeholders = $placeholderService->getAvailablePlaceholders(
+            $listId ? (int) $listId : null,
+            auth()->id()
+        );
+
         return Inertia::render('SystemPage/Edit', [
             'page' => $systemPage,
             'list_id' => $listId,
             'list_name' => $listName,
+            'placeholders' => $placeholders,
         ]);
     }
 
@@ -103,7 +111,7 @@ class SystemPageController extends Controller
                 'access' => $validated['access'] ?? 'public',
                 'contact_list_id' => $listId,
             ]);
-            
+
             return redirect()->route('settings.system-pages.index', ['list_id' => $listId])
                 ->with('success', __('system_pages.custom_created'));
         }
@@ -113,16 +121,16 @@ class SystemPageController extends Controller
             'title' => $validated['title'],
             'content' => $validated['content'],
         ];
-        
+
         if (isset($validated['access'])) {
             $updateData['access'] = $validated['access'];
         }
-        
+
         // Only allow slug change for list-specific pages (not global)
         if ($systemPage->contact_list_id !== null && !empty($validated['slug'])) {
             $updateData['slug'] = $validated['slug'];
         }
-        
+
         $systemPage->update($updateData);
 
         return redirect()->route('settings.system-pages.index', ['list_id' => $systemPage->contact_list_id])

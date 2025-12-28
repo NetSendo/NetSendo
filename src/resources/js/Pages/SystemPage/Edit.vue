@@ -7,7 +7,7 @@ import InputError from '@/Components/InputError.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import AdvancedEditor from '@/Components/AdvancedEditor.vue';
 import { useI18n } from 'vue-i18n';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const { t } = useI18n();
 
@@ -24,6 +24,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    placeholders: {
+        type: Object,
+        default: () => ({ standard: [], system: [], custom: [] }),
+    },
 });
 
 const displayListName = computed(() => props.list_name || t('system_pages.global_default'));
@@ -35,6 +39,20 @@ const form = useForm({
     access: props.page.access || 'public',
     list_id: props.list_id,
 });
+
+const copiedPlaceholder = ref(null);
+
+const copyToClipboard = async (placeholder) => {
+    try {
+        await navigator.clipboard.writeText(placeholder);
+        copiedPlaceholder.value = placeholder;
+        setTimeout(() => {
+            copiedPlaceholder.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy:', err);
+    }
+};
 
 const submit = () => {
     form.put(route('settings.system-pages.update', props.page.id), {
@@ -68,18 +86,95 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                
+
                 <!-- Info about URL -->
                 <div class="bg-blue-50 p-4 shadow sm:rounded-lg dark:bg-blue-900/20">
                     <p class="text-sm text-blue-700 dark:text-blue-300">
-                        <strong>{{ t('system_pages.current_url') }}:</strong> 
+                        <strong>{{ t('system_pages.current_url') }}:</strong>
                         <code class="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-800 rounded">/p/{{ form.slug }}</code>
                     </p>
                 </div>
 
+                <!-- Available Placeholders Section -->
+                <div class="bg-indigo-50 p-4 shadow sm:rounded-lg dark:bg-indigo-900/20">
+                    <p class="text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-3">
+                        {{ t('system_pages.available_placeholders') }}
+                        <span class="text-xs font-normal ml-2 text-indigo-500 dark:text-indigo-400">
+                            {{ t('system_pages.click_to_copy') }}
+                        </span>
+                    </p>
+
+                    <!-- Standard Fields -->
+                    <div v-if="placeholders.standard?.length" class="mb-3">
+                        <span class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                            {{ t('system_pages.standard_fields') }}
+                        </span>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            <button
+                                v-for="ph in placeholders.standard"
+                                :key="ph.name"
+                                type="button"
+                                @click="copyToClipboard(ph.placeholder)"
+                                class="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded text-xs font-mono cursor-pointer hover:bg-indigo-200 dark:hover:bg-indigo-700 transition-colors"
+                                :class="{ 'ring-2 ring-green-500 bg-green-100 dark:bg-green-800': copiedPlaceholder === ph.placeholder }"
+                                :title="ph.description"
+                            >
+                                {{ ph.placeholder }}
+                                <span v-if="copiedPlaceholder === ph.placeholder" class="ml-1 text-green-600 dark:text-green-400">✓</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- System Placeholders -->
+                    <div v-if="placeholders.system?.length" class="mb-3">
+                        <span class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                            {{ t('system_pages.system_placeholders') }}
+                        </span>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            <button
+                                v-for="ph in placeholders.system"
+                                :key="ph.name"
+                                type="button"
+                                @click="copyToClipboard(ph.placeholder)"
+                                class="px-2 py-1 bg-amber-100 dark:bg-amber-800 rounded text-xs font-mono cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-700 transition-colors"
+                                :class="{ 'ring-2 ring-green-500 bg-green-100 dark:bg-green-800': copiedPlaceholder === ph.placeholder }"
+                                :title="ph.description"
+                            >
+                                {{ ph.placeholder }}
+                                <span v-if="copiedPlaceholder === ph.placeholder" class="ml-1 text-green-600 dark:text-green-400">✓</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Fields -->
+                    <div v-if="placeholders.custom?.length">
+                        <span class="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                            {{ t('system_pages.custom_fields') }}
+                        </span>
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            <button
+                                v-for="ph in placeholders.custom"
+                                :key="ph.id"
+                                type="button"
+                                @click="copyToClipboard(ph.placeholder)"
+                                class="px-2 py-1 bg-purple-100 dark:bg-purple-800 rounded text-xs font-mono cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-700 transition-colors"
+                                :class="{ 'ring-2 ring-green-500 bg-green-100 dark:bg-green-800': copiedPlaceholder === ph.placeholder }"
+                                :title="ph.label"
+                            >
+                                {{ ph.placeholder }}
+                                <span v-if="copiedPlaceholder === ph.placeholder" class="ml-1 text-green-600 dark:text-green-400">✓</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="!placeholders.custom?.length && !placeholders.standard?.length" class="text-sm text-indigo-500 dark:text-indigo-400">
+                        {{ t('system_pages.no_placeholders') }}
+                    </div>
+                </div>
+
                 <div class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800">
                     <form @submit.prevent="submit" class="space-y-6">
-                        
+
                         <div class="grid gap-6 md:grid-cols-2">
                             <div>
                                 <InputLabel for="title" :value="t('system_pages.page_title_label')" />
@@ -158,3 +253,4 @@ const submit = () => {
         </div>
     </AuthenticatedLayout>
 </template>
+

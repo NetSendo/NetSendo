@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.5] – Placeholder Personalization & n8n Documentation
+
+**Release date:** 2025-12-28
+
+### Added
+
+- **Dynamic Placeholders on Thank You Page:**
+
+  - Thank you page after form submission now supports dynamic placeholders (`[[first_name]]`, `[[email]]`, etc.).
+  - Users can personalize success page title and message using subscriber data.
+  - New `success_title` field on forms for customizable heading (e.g., `[[first_name]], dziękujemy!`).
+  - Uses signed URLs for secure subscriber data passing to thank you page.
+  - Works with all standard fields and custom fields defined in the system.
+
+- **Placeholder Picker for System Pages:**
+
+  - New "Available Placeholders" section in System Pages editor showing all available placeholders.
+  - Placeholders are grouped by type: Standard Fields, System Placeholders, Custom Fields.
+  - Click-to-copy functionality for easy insertion into content.
+  - Supports user-defined custom fields from "Zarządzanie polami" settings.
+  - Works with all standard fields and custom fields defined in the system.
+
+- **n8n Subscriber Inserts Documentation:**
+  - New `docs/N8N_SUBSCRIBER_INSERTS_GUIDE.md` with comprehensive instructions for n8n node agent.
+  - Documents `custom_fields` support for subscriber creation/update via API.
+  - Lists all available placeholders (`[[fname]]`, `[[email]]`, `[[phone]]`, etc.) for email/SMS personalization.
+  - Includes TypeScript code examples for n8n node implementation.
+  - Updated `API_DOCUMENTATION.md` with new "Wstawki (Placeholders)" section.
+
 ### Fixed
 
 - **Form Submission Error:**

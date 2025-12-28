@@ -2548,5 +2548,50 @@
         "send_to_missed_confirm": "¿Está seguro de que desea enviar este mensaje a {count} suscriptores omitidos?",
         "send_success": "Envío programado para {count} suscriptores omitidos.",
         "no_missed": "No hay suscriptores omitidos - ¡excelente!"
+    },
+    "system_pages": {
+        "title": "Páginas del sistema",
+        "subtitle": "Administre páginas HTML mostradas a los usuarios tras acciones",
+        "all_lists": "Plantillas globales",
+        "select_list": "Seleccionar lista",
+        "search_list": "Buscar lista...",
+        "no_lists_found": "No se encontraron listas",
+        "global_default": "Plantilla global (Default)",
+        "edit_for_list": "Editando páginas para la lista: {name}",
+        "table": {
+            "name": "Nombre",
+            "title": "Título de página",
+            "slug": "Slug (URI)",
+            "access": "Acceso",
+            "status": "Estado"
+        },
+        "customized": "Personalizado",
+        "default": "Por defecto",
+        "customize": "Personalizar",
+        "access": {
+            "public": "Público",
+            "private": "Privado"
+        },
+        "edit_title": "Editar página: {name}",
+        "context": "Contexto:",
+        "back_to_list": "← Volver a la lista",
+        "page_title_label": "Título de página",
+        "slug_label": "Slug de página",
+        "slug_readonly_global": "El slug solo se puede cambiar para páginas personalizadas de lista",
+        "access_label": "Visibilidad",
+        "access_help": "Las páginas públicas son accesibles para todos. Las privadas requieren autenticación.",
+        "content_label": "Contenido HTML de la página",
+        "current_url": "URL actual",
+        "updated": "La página ha sido actualizada.",
+        "custom_created": "Versión de página personalizada creada para esta lista.",
+        "reset_to_default": "Restablecido a la versión de página por defecto.",
+        "cannot_delete_global": "No se puede eliminar la plantilla de página global.",
+        "global_defaults": "Plantillas globales",
+        "available_placeholders": "Marcadores disponibles",
+        "click_to_copy": "(clic para copiar)",
+        "standard_fields": "Campos estándar",
+        "system_placeholders": "Marcadores del sistema",
+        "custom_fields": "Campos personalizados",
+        "no_placeholders": "No hay marcadores disponibles"
     }
 }

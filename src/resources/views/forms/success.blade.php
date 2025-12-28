@@ -63,7 +63,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
             </svg>
         </div>
-        <h1>Dziękujemy!</h1>
+        <h1>{{ $title ?? 'Dziękujemy!' }}</h1>
         <p class="message">{{ $message }}</p>
     </div>
 </body>

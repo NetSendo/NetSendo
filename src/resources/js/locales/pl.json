@@ -2919,7 +2919,13 @@
         "custom_created": "Utworzono dostosowaną wersję strony dla tej listy.",
         "reset_to_default": "Przywrócono domyślną wersję strony.",
         "cannot_delete_global": "Nie można usunąć globalnego szablonu strony.",
-        "global_defaults": "Szablony globalne"
+        "global_defaults": "Szablony globalne",
+        "available_placeholders": "Dostępne wstawki",
+        "click_to_copy": "(kliknij, aby skopiować)",
+        "standard_fields": "Pola standardowe",
+        "system_placeholders": "Pola systemowe",
+        "custom_fields": "Pola niestandardowe",
+        "no_placeholders": "Brak dostępnych wstawek"
     },
     "system_emails": {
         "title": "Wiadomości systemowe",
