@@ -3012,6 +3012,20 @@
         "settings_saved": "Stripe settings saved.",
         "help_title": "Where to find API keys?",
         "help_text": "You can find API keys in your Stripe dashboard under Developers → API keys. Use live keys for production or test keys for testing.",
-        "open_stripe_dashboard": "Open Stripe Dashboard"
+        "open_stripe_dashboard": "Open Stripe Dashboard",
+        "oauth_connect": "Connect with Stripe",
+        "oauth_connect_desc": "Quick and secure connection to your Stripe account without copying API keys.",
+        "oauth_connected": "Successfully connected to Stripe!",
+        "oauth_disconnected": "Stripe account disconnected.",
+        "oauth_disconnect": "Disconnect",
+        "oauth_disconnect_confirm": "Are you sure you want to disconnect your Stripe account?",
+        "oauth_error": "Connection error",
+        "oauth_code_missing": "Authorization code missing",
+        "oauth_client_id_missing": "Stripe Client ID is not configured. Contact your administrator or use the API keys method.",
+        "connection_mode_oauth": "Quick Connect (OAuth)",
+        "connection_mode_api_key": "API Keys (Manual)",
+        "connected_account": "Connected Account",
+        "stripe_account_id": "Stripe Account ID",
+        "connected_via_oauth": "Connected via OAuth Connect"
     }
 }

@@ -373,6 +373,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\StripeSettingsController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\StripeSettingsController::class, 'update'])->name('update');
         Route::post('/test-connection', [\App\Http\Controllers\StripeSettingsController::class, 'testConnection'])->name('test-connection');
+
+        // OAuth routes
+        Route::get('/oauth/authorize', [\App\Http\Controllers\StripeOAuthController::class, 'redirectToStripe'])->name('oauth.authorize');
+        Route::get('/oauth/callback', [\App\Http\Controllers\StripeOAuthController::class, 'callback'])->name('oauth.callback');
+        Route::post('/oauth/disconnect', [\App\Http\Controllers\StripeOAuthController::class, 'disconnect'])->name('oauth.disconnect');
     });
 
     // Stripe Products (Settings)

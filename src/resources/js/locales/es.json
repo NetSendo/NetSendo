@@ -2659,6 +2659,20 @@
         "settings_saved": "Configuración de Stripe guardada.",
         "help_title": "¿Dónde encontrar las claves API?",
         "help_text": "Las claves API se encuentran en tu panel de Stripe en Developers → API keys. Usa claves live para producción o claves test para pruebas.",
-        "open_stripe_dashboard": "Abrir panel de Stripe"
+        "open_stripe_dashboard": "Abrir panel de Stripe",
+        "oauth_connect": "Conectar con Stripe",
+        "oauth_connect_desc": "Conexión rápida y segura a tu cuenta de Stripe sin copiar claves API.",
+        "oauth_connected": "¡Conectado exitosamente con Stripe!",
+        "oauth_disconnected": "Cuenta de Stripe desconectada.",
+        "oauth_disconnect": "Desconectar",
+        "oauth_disconnect_confirm": "¿Estás seguro de que deseas desconectar tu cuenta de Stripe?",
+        "oauth_error": "Error de conexión",
+        "oauth_code_missing": "Código de autorización faltante",
+        "oauth_client_id_missing": "Stripe Client ID no está configurado. Contacta a tu administrador o usa el método de claves API.",
+        "connection_mode_oauth": "Conexión rápida (OAuth)",
+        "connection_mode_api_key": "Claves API (Manual)",
+        "connected_account": "Cuenta conectada",
+        "stripe_account_id": "ID de cuenta Stripe",
+        "connected_via_oauth": "Conectado vía OAuth Connect"
     }
 }

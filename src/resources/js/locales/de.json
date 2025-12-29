@@ -2636,6 +2636,20 @@
         "settings_saved": "Stripe-Einstellungen gespeichert.",
         "help_title": "Wo finde ich API-Schlüssel?",
         "help_text": "API-Schlüssel finden Sie in Ihrem Stripe-Dashboard unter Developers → API keys. Verwenden Sie Live-Schlüssel für die Produktion oder Test-Schlüssel zum Testen.",
-        "open_stripe_dashboard": "Stripe-Dashboard öffnen"
+        "open_stripe_dashboard": "Stripe-Dashboard öffnen",
+        "oauth_connect": "Mit Stripe verbinden",
+        "oauth_connect_desc": "Schnelle und sichere Verbindung zu Ihrem Stripe-Konto ohne Kopieren von API-Schlüsseln.",
+        "oauth_connected": "Erfolgreich mit Stripe verbunden!",
+        "oauth_disconnected": "Stripe-Konto getrennt.",
+        "oauth_disconnect": "Trennen",
+        "oauth_disconnect_confirm": "Sind Sie sicher, dass Sie Ihr Stripe-Konto trennen möchten?",
+        "oauth_error": "Verbindungsfehler",
+        "oauth_code_missing": "Autorisierungscode fehlt",
+        "oauth_client_id_missing": "Stripe Client ID ist nicht konfiguriert. Kontaktieren Sie Ihren Administrator oder verwenden Sie die API-Schlüssel-Methode.",
+        "connection_mode_oauth": "Schnellverbindung (OAuth)",
+        "connection_mode_api_key": "API-Schlüssel (Manuell)",
+        "connected_account": "Verbundenes Konto",
+        "stripe_account_id": "Stripe-Konto-ID",
+        "connected_via_oauth": "Über OAuth Connect verbunden"
     }
 }

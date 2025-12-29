@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Stripe OAuth (Connect) Integration:**
+  - Added new OAuth-based connection method for Stripe alongside existing API key entry.
+  - New `StripeOAuthController` handling OAuth authorization flow, callback token exchange, and disconnection.
+  - Redesigned Stripe Settings page with connection mode toggle (OAuth vs Manual API Keys).
+  - "Connect with Stripe" button for quick one-click Stripe account linking.
+  - Connected account info display with Stripe Account ID.
+  - Disconnect functionality to remove OAuth connection.
+  - Added `STRIPE_CLIENT_ID` environment variable support for OAuth configuration.
+  - Full translations for OAuth features in PL, EN, DE, ES.
+
 ## [1.2.7] - Stripe Integration & Improvements
 
 **Release date:** 2025-12-28

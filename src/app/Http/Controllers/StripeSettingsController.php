@@ -15,6 +15,7 @@ class StripeSettingsController extends Controller
     public function index()
     {
         $settings = $this->getStripeSettings();
+        $oauthSettings = $this->getOAuthSettings();
 
         return Inertia::render('Settings/StripeSettings/Index', [
             'settings' => [
@@ -22,8 +23,28 @@ class StripeSettingsController extends Controller
                 'secret_key_masked' => $this->maskSecretKey($settings['secret_key'] ?? ''),
                 'webhook_secret_masked' => $this->maskSecretKey($settings['webhook_secret'] ?? ''),
                 'is_configured' => !empty($settings['publishable_key']) && !empty($settings['secret_key']),
+                'connection_mode' => $oauthSettings['connection_mode'] ?? 'api_key',
+                'oauth' => [
+                    'is_connected' => !empty($oauthSettings['stripe_user_id']),
+                    'stripe_user_id' => $oauthSettings['stripe_user_id'] ?? null,
+                    'publishable_key' => $oauthSettings['publishable_key'] ?? null,
+                ],
+                'client_id_configured' => !empty(config('services.stripe.client_id'))
+                    || !empty(Setting::where('key', 'stripe_client_id')->first()?->value),
             ],
         ]);
+    }
+
+    /**
+     * Get OAuth-related settings.
+     */
+    protected function getOAuthSettings(): array
+    {
+        return [
+            'connection_mode' => Setting::where('key', 'stripe_connection_mode')->first()?->value,
+            'stripe_user_id' => Setting::where('key', 'stripe_oauth_stripe_user_id')->first()?->value,
+            'publishable_key' => Setting::where('key', 'stripe_oauth_publishable_key')->first()?->value,
+        ];
     }
 
     /**

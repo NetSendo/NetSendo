@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import axios from 'axios';
@@ -12,6 +12,10 @@ const props = defineProps({
 const { t } = useI18n();
 const page = usePage();
 
+// Connection mode: 'oauth' or 'api_key'
+const connectionMode = ref(props.settings?.connection_mode || 'api_key');
+const isOAuthConnected = computed(() => props.settings?.oauth?.is_connected);
+
 const form = useForm({
     publishable_key: props.settings?.publishable_key || '',
     secret_key: '',
@@ -22,8 +26,15 @@ const showSecretKey = ref(false);
 const showWebhookSecret = ref(false);
 const testingConnection = ref(false);
 const testResult = ref(null);
+const disconnecting = ref(false);
+const showDisconnectConfirm = ref(false);
 
-const isConfigured = computed(() => props.settings?.is_configured);
+const isConfigured = computed(() => {
+    if (connectionMode.value === 'oauth') {
+        return isOAuthConnected.value;
+    }
+    return props.settings?.is_configured;
+});
 
 const submit = () => {
     form.post(route('settings.stripe.update'), {
@@ -53,6 +64,29 @@ const testConnection = async () => {
         testingConnection.value = false;
     }
 };
+
+const connectWithOAuth = () => {
+    window.location.href = route('settings.stripe.oauth.authorize');
+};
+
+const disconnectOAuth = () => {
+    disconnecting.value = true;
+    router.post(route('settings.stripe.oauth.disconnect'), {}, {
+        preserveScroll: true,
+        onFinish: () => {
+            disconnecting.value = false;
+            showDisconnectConfirm.value = false;
+        }
+    });
+};
+
+const switchToApiKeys = () => {
+    connectionMode.value = 'api_key';
+};
+
+const switchToOAuth = () => {
+    connectionMode.value = 'oauth';
+};
 </script>
 
 <template>
@@ -75,25 +109,197 @@ const testConnection = async () => {
                 <!-- Status Card -->
                 <div class="mb-6 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
                     <div class="p-6">
-                        <div class="flex items-center space-x-3">
-                            <div :class="[
-                                'flex-shrink-0 w-3 h-3 rounded-full',
-                                isConfigured ? 'bg-green-500' : 'bg-yellow-500'
-                            ]"></div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                    {{ isConfigured ? t('stripe.status_configured') : t('stripe.status_not_configured') }}
-                                </p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ isConfigured ? t('stripe.status_ready') : t('stripe.status_add_keys') }}
-                                </p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div :class="[
+                                    'flex-shrink-0 w-3 h-3 rounded-full',
+                                    isConfigured ? 'bg-green-500' : 'bg-yellow-500'
+                                ]"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                        {{ isConfigured ? t('stripe.status_configured') : t('stripe.status_not_configured') }}
+                                    </p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        <template v-if="isConfigured && connectionMode === 'oauth'">
+                                            {{ t('stripe.connected_via_oauth') }}
+                                        </template>
+                                        <template v-else-if="isConfigured">
+                                            {{ t('stripe.status_ready') }}
+                                        </template>
+                                        <template v-else>
+                                            {{ t('stripe.status_add_keys') }}
+                                        </template>
+                                    </p>
+                                </div>
+                            </div>
+                            <!-- Connection Mode Badge -->
+                            <div v-if="isConfigured" class="flex items-center">
+                                <span :class="[
+                                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                                    connectionMode === 'oauth'
+                                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                ]">
+                                    {{ connectionMode === 'oauth' ? 'OAuth' : 'API Keys' }}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Settings Form -->
-                <div class="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+                <!-- Connection Mode Toggle -->
+                <div class="mb-6 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+                    <div class="p-4">
+                        <div class="flex rounded-lg bg-gray-100 dark:bg-gray-700 p-1">
+                            <button
+                                type="button"
+                                @click="switchToOAuth"
+                                :class="[
+                                    'flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors',
+                                    connectionMode === 'oauth'
+                                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                                ]"
+                            >
+                                <div class="flex items-center justify-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    <span>{{ t('stripe.connection_mode_oauth') }}</span>
+                                </div>
+                            </button>
+                            <button
+                                type="button"
+                                @click="switchToApiKeys"
+                                :class="[
+                                    'flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors',
+                                    connectionMode === 'api_key'
+                                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                                ]"
+                            >
+                                <div class="flex items-center justify-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                    <span>{{ t('stripe.connection_mode_api_key') }}</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OAuth Connect Section -->
+                <div v-if="connectionMode === 'oauth'" class="mb-6 overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
+                    <div class="p-6">
+                        <template v-if="isOAuthConnected">
+                            <!-- Connected State -->
+                            <div class="text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-green-100 rounded-full dark:bg-green-900/30">
+                                    <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    {{ t('stripe.connected_account') }}
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t('stripe.stripe_account_id') }}:
+                                    <code class="px-2 py-1 text-xs bg-gray-100 rounded dark:bg-gray-700">
+                                        {{ settings?.oauth?.stripe_user_id }}
+                                    </code>
+                                </p>
+
+                                <div class="mt-6">
+                                    <button
+                                        v-if="!showDisconnectConfirm"
+                                        type="button"
+                                        @click="showDisconnectConfirm = true"
+                                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-transparent rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                    >
+                                        {{ t('stripe.oauth_disconnect') }}
+                                    </button>
+
+                                    <div v-else class="space-y-3">
+                                        <p class="text-sm text-red-600 dark:text-red-400">
+                                            {{ t('stripe.oauth_disconnect_confirm') }}
+                                        </p>
+                                        <div class="flex items-center justify-center space-x-3">
+                                            <button
+                                                type="button"
+                                                @click="showDisconnectConfirm = false"
+                                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+                                            >
+                                                {{ t('common.cancel') }}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                @click="disconnectOAuth"
+                                                :disabled="disconnecting"
+                                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                                            >
+                                                <svg v-if="disconnecting" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                {{ t('common.confirm') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <template v-else>
+                            <!-- Not Connected State -->
+                            <div class="text-center">
+                                <div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-purple-100 rounded-full dark:bg-purple-900/30">
+                                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                    {{ t('stripe.oauth_connect') }}
+                                </h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ t('stripe.oauth_connect_desc') }}
+                                </p>
+
+                                <div class="mt-6">
+                                    <button
+                                        v-if="settings?.client_id_configured"
+                                        type="button"
+                                        @click="connectWithOAuth"
+                                        class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                    >
+                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                                        </svg>
+                                        {{ t('stripe.oauth_connect') }}
+                                    </button>
+
+                                    <div v-else class="p-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div class="ml-3">
+                                                <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                                                    {{ t('stripe.oauth_client_id_missing') }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- API Keys Form Section -->
+                <div v-if="connectionMode === 'api_key'" class="overflow-hidden bg-white rounded-lg shadow dark:bg-gray-800">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
                         <!-- Publishable Key -->
                         <div>
