@@ -367,6 +367,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Marketplace (Coming Soon)
     Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
     Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
+    Route::get('/marketplace/stripe', fn() => Inertia::render('Marketplace/Stripe'))->name('marketplace.stripe');
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {
@@ -389,6 +390,27 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/{product}/transactions', [\App\Http\Controllers\StripeProductController::class, 'transactions'])->name('transactions');
         Route::post('/{product}/checkout-url', [\App\Http\Controllers\StripeProductController::class, 'checkoutUrl'])->name('checkout-url');
         Route::get('/all-transactions', [\App\Http\Controllers\StripeProductController::class, 'allTransactions'])->name('all-transactions');
+    });
+
+    // Polar Marketplace Page
+    Route::get('/marketplace/polar', fn() => Inertia::render('Marketplace/Polar'))->name('marketplace.polar');
+
+    // Polar Settings
+    Route::prefix('settings/polar')->name('settings.polar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PolarSettingsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\PolarSettingsController::class, 'update'])->name('update');
+        Route::post('/test-connection', [\App\Http\Controllers\PolarSettingsController::class, 'testConnection'])->name('test-connection');
+    });
+
+    // Polar Products (Settings)
+    Route::prefix('settings/polar-products')->name('settings.polar-products.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PolarProductController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\PolarProductController::class, 'store'])->name('store');
+        Route::put('/{product}', [\App\Http\Controllers\PolarProductController::class, 'update'])->name('update');
+        Route::delete('/{product}', [\App\Http\Controllers\PolarProductController::class, 'destroy'])->name('destroy');
+        Route::get('/{product}/transactions', [\App\Http\Controllers\PolarProductController::class, 'transactions'])->name('transactions');
+        Route::post('/{product}/checkout-url', [\App\Http\Controllers\PolarProductController::class, 'checkoutUrl'])->name('checkout-url');
+        Route::get('/all-transactions', [\App\Http\Controllers\PolarProductController::class, 'allTransactions'])->name('all-transactions');
     });
 
     // User Management (Team Members)
@@ -472,6 +494,9 @@ Route::prefix('webhooks/bounce')->name('webhooks.bounce.')->group(function () {
 
 // Stripe Webhook (public, Stripe-signature authenticated)
 Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhooks\StripeController::class, 'handle'])->name('webhooks.stripe');
+
+// Polar Webhook (public, Polar-signature authenticated)
+Route::post('/webhooks/polar', [\App\Http\Controllers\Webhooks\PolarController::class, 'handle'])->name('webhooks.polar');
 
 require __DIR__.'/auth.php';
 

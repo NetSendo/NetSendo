@@ -20,6 +20,7 @@ const form = useForm({
     publishable_key: props.settings?.publishable_key || '',
     secret_key: '',
     webhook_secret: '',
+    client_id: props.settings?.client_id || '',
 });
 
 const showSecretKey = ref(false);
@@ -28,6 +29,8 @@ const testingConnection = ref(false);
 const testResult = ref(null);
 const disconnecting = ref(false);
 const showDisconnectConfirm = ref(false);
+const copiedRedirectUri = ref(false);
+const savingClientId = ref(false);
 
 const isConfigured = computed(() => {
     if (connectionMode.value === 'oauth') {
@@ -86,6 +89,26 @@ const switchToApiKeys = () => {
 
 const switchToOAuth = () => {
     connectionMode.value = 'oauth';
+};
+
+const copyRedirectUri = () => {
+    navigator.clipboard.writeText(props.settings?.redirect_uri || '');
+    copiedRedirectUri.value = true;
+    setTimeout(() => {
+        copiedRedirectUri.value = false;
+    }, 2000);
+};
+
+const saveClientId = () => {
+    savingClientId.value = true;
+    router.post(route('settings.stripe.update'), {
+        client_id: form.client_id,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            savingClientId.value = false;
+        }
+    });
 };
 </script>
 
@@ -251,45 +274,114 @@ const switchToOAuth = () => {
                         </template>
 
                         <template v-else>
-                            <!-- Not Connected State -->
-                            <div class="text-center">
-                                <div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-purple-100 rounded-full dark:bg-purple-900/30">
-                                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                </div>
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                    {{ t('stripe.oauth_connect') }}
-                                </h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ t('stripe.oauth_connect_desc') }}
-                                </p>
-
-                                <div class="mt-6">
-                                    <button
-                                        v-if="settings?.client_id_configured"
-                                        type="button"
-                                        @click="connectWithOAuth"
-                                        class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                            <!-- Not Connected State - Setup Instructions -->
+                            <div class="space-y-6">
+                                <!-- Step 1: Instructions -->
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <h4 class="flex items-center text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-white bg-indigo-600 rounded-full">1</span>
+                                        {{ t('stripe.oauth_setup_step1_title') }}
+                                    </h4>
+                                    <ol class="ml-8 text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal">
+                                        <li>{{ t('stripe.oauth_setup_step1_1') }}</li>
+                                        <li>{{ t('stripe.oauth_setup_step1_2') }}</li>
+                                        <li>{{ t('stripe.oauth_setup_step1_3') }}</li>
+                                    </ol>
+                                    <a
+                                        href="https://dashboard.stripe.com/settings/connect"
+                                        target="_blank"
+                                        class="inline-flex items-center mt-3 ml-8 text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
                                     >
-                                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                                        {{ t('stripe.oauth_open_connect_settings') }}
+                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
-                                        {{ t('stripe.oauth_connect') }}
-                                    </button>
+                                    </a>
+                                </div>
 
-                                    <div v-else class="p-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20">
-                                        <div class="flex">
-                                            <div class="flex-shrink-0">
-                                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                <!-- Step 2: Redirect URI -->
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <h4 class="flex items-center text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-white bg-indigo-600 rounded-full">2</span>
+                                        {{ t('stripe.oauth_setup_step2_title') }}
+                                    </h4>
+                                    <p class="ml-8 text-sm text-gray-600 dark:text-gray-400 mb-2">{{ t('stripe.oauth_setup_step2_desc') }}</p>
+                                    <div class="ml-8 flex items-center space-x-2">
+                                        <code class="flex-1 px-3 py-2 text-xs bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 break-all">
+                                            {{ settings?.redirect_uri }}
+                                        </code>
+                                        <button
+                                            type="button"
+                                            @click="copyRedirectUri"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+                                        >
+                                            <svg v-if="!copiedRedirectUri" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <svg v-else class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Step 3: Client ID -->
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <h4 class="flex items-center text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-white bg-indigo-600 rounded-full">3</span>
+                                        {{ t('stripe.oauth_setup_step3_title') }}
+                                    </h4>
+                                    <p class="ml-8 text-sm text-gray-600 dark:text-gray-400 mb-2">{{ t('stripe.oauth_setup_step3_desc') }}</p>
+                                    <div class="ml-8">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ t('stripe.client_id') }}
+                                        </label>
+                                        <div class="flex items-center space-x-2">
+                                            <input
+                                                type="text"
+                                                v-model="form.client_id"
+                                                :placeholder="t('stripe.client_id_placeholder')"
+                                                class="flex-1 block border-gray-300 rounded-md shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                            <button
+                                                type="button"
+                                                @click="saveClientId"
+                                                :disabled="savingClientId || !form.client_id"
+                                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+                                            >
+                                                <svg v-if="savingClientId" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                 </svg>
-                                            </div>
-                                            <div class="ml-3">
-                                                <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                                                    {{ t('stripe.oauth_client_id_missing') }}
-                                                </p>
-                                            </div>
+                                                {{ t('common.save') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step 4: Connect Button -->
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <h4 class="flex items-center text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 mr-2 text-xs font-bold text-white bg-indigo-600 rounded-full">4</span>
+                                        {{ t('stripe.oauth_setup_step4_title') }}
+                                    </h4>
+                                    <div class="ml-8">
+                                        <button
+                                            v-if="settings?.client_id_configured"
+                                            type="button"
+                                            @click="connectWithOAuth"
+                                            class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                        >
+                                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+                                            </svg>
+                                            {{ t('stripe.oauth_connect') }}
+                                        </button>
+
+                                        <div v-else class="p-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20">
+                                            <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                                                {{ t('stripe.oauth_save_client_id_first') }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

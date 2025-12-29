@@ -7,17 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.8] – Polar Payment Processor Integration
+
+**Release date:** 2025-12-29
+
 ### Added
 
 - **Stripe OAuth (Connect) Integration:**
+
   - Added new OAuth-based connection method for Stripe alongside existing API key entry.
   - New `StripeOAuthController` handling OAuth authorization flow, callback token exchange, and disconnection.
   - Redesigned Stripe Settings page with connection mode toggle (OAuth vs Manual API Keys).
+  - **In-panel OAuth setup wizard** with 4 steps: Create Connect app, add Redirect URI, paste Client ID, connect account.
+  - Client ID can be configured directly in the UI (stored in database) - no `.env` editing required.
+  - Auto-generated Redirect URI with copy-to-clipboard functionality.
   - "Connect with Stripe" button for quick one-click Stripe account linking.
   - Connected account info display with Stripe Account ID.
   - Disconnect functionality to remove OAuth connection.
-  - Added `STRIPE_CLIENT_ID` environment variable support for OAuth configuration.
-  - Full translations for OAuth features in PL, EN, DE, ES.
+  - Full translations for OAuth setup wizard in PL, EN, DE, ES.
+
+- **Polar Payment Processor Integration:**
+
+  - Implemented full Polar integration for handling digital product sales and subscriptions.
+  - New `PolarService` for interacting with Polar API, including product management, checkout sessions, and webhook verification.
+  - Created `PolarProduct` model and controller for managing Polar products.
+  - Created `PolarTransaction` model for tracking payment history.
+  - Added Vue components for Product Management (`PolarProducts/Index.vue`) and Settings (`PolarSettings/Index.vue`).
+  - Added **Polar Settings** page in the panel (Settings → Polar) to configure API access token and webhook secret.
+  - Added **Polar Products** page in the panel (Products → Polar Products) to manage digital products.
+  - Environment selection (Sandbox/Production) for testing and live modes.
+  - Webhook endpoint `/webhooks/polar` for receiving Polar events.
+  - Webhook signature verification for security.
+  - Sensitive API tokens are encrypted in the database.
+  - Added new sidebar menu items for Polar Products and Polar Settings.
+  - Added comprehensive translations for Polar features in PL, EN, DE, ES.
+  - Updated Marketplace page to show Polar as "Available" integration.
+  - New Polar marketplace detail page (`/marketplace/polar`) with features overview and setup instructions.
+
+- **Marketplace Improvements:**
+  - Added "Active Integrations" section showing implemented integrations (n8n, Stripe, SendGrid, Twilio, SMSAPI, OpenAI).
+  - Green indicators for active/available integrations.
+  - New Stripe integration detail page (`/marketplace/stripe`).
+  - Added Polar to payments section (coming soon).
+  - Fixed documentation links to use `netsendo.com/en/docs`.
+  - **Request Integration Modal:**
+    - Implementation of a dedicated modal form for users to request new integrations.
+    - Fields: Integration Name, Description, Priority.
+    - Submits request payload with user context to central webhook.
+    - Full translations for the modal in PL, EN, DE, ES.
 
 ## [1.2.7] - Stripe Integration & Improvements
 

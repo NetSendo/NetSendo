@@ -1,9 +1,128 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
+import { ref, computed } from "vue";
+import axios from "axios";
 
 const { t } = useI18n();
+const page = usePage();
+
+// Modal state
+const showRequestModal = ref(false);
+const submitting = ref(false);
+const submitted = ref(false);
+const submitError = ref(null);
+
+const requestForm = ref({
+    integration_name: '',
+    description: '',
+    priority: 'normal',
+});
+
+const currentUser = computed(() => page.props.auth?.user);
+
+const openRequestModal = () => {
+    showRequestModal.value = true;
+    submitted.value = false;
+    submitError.value = null;
+};
+
+const closeRequestModal = () => {
+    showRequestModal.value = false;
+    requestForm.value = {
+        integration_name: '',
+        description: '',
+        priority: 'normal',
+    };
+};
+
+const submitRequest = async () => {
+    submitting.value = true;
+    submitError.value = null;
+
+    try {
+        const payload = {
+            integration_name: requestForm.value.integration_name,
+            description: requestForm.value.description,
+            priority: requestForm.value.priority,
+            user: {
+                id: currentUser.value?.id,
+                name: currentUser.value?.name,
+                email: currentUser.value?.email,
+            },
+            netsendo_url: window.location.origin,
+            submitted_at: new Date().toISOString(),
+        };
+
+        await axios.post('https://a.gregciupek.com/webhook/559eb483-f939-40a7-9ee6-49488f4d1b5e', payload);
+        submitted.value = true;
+    } catch (error) {
+        submitError.value = t('marketplace.request_error') || 'Failed to submit request';
+    } finally {
+        submitting.value = false;
+    }
+};
+
+// Active/existing integrations that are already implemented
+const activeIntegrations = [
+    {
+        id: "n8n",
+        name: "n8n",
+        description: "Workflow automation",
+        icon: "⚡",
+        color: "orange",
+        route: "marketplace.n8n",
+    },
+    {
+        id: "stripe",
+        name: "Stripe",
+        description: "Payment processing",
+        icon: "💳",
+        color: "purple",
+        route: "marketplace.stripe",
+    },
+    {
+        id: "polar",
+        name: "Polar",
+        description: "Developer-first payments",
+        icon: "🔷",
+        color: "cyan",
+        route: "marketplace.polar",
+    },
+    {
+        id: "sendgrid",
+        name: "SendGrid",
+        description: "Email delivery",
+        icon: "📧",
+        color: "blue",
+        route: null,
+    },
+    {
+        id: "twilio",
+        name: "Twilio",
+        description: "SMS gateway",
+        icon: "📱",
+        color: "red",
+        route: null,
+    },
+    {
+        id: "smsapi",
+        name: "SMSAPI",
+        description: "SMS gateway",
+        icon: "💬",
+        color: "green",
+        route: null,
+    },
+    {
+        id: "openai",
+        name: "OpenAI",
+        description: "AI content generation",
+        icon: "🤖",
+        color: "teal",
+        route: null,
+    },
+];
 
 // Future integration categories with planned platforms
 const categories = [
@@ -61,7 +180,8 @@ const categories = [
         icon: "💳",
         color: "rose",
         platforms: [
-            { name: "Stripe", logo: null },
+            { name: "Stripe", logo: null, status: "available", route: "marketplace.stripe" },
+            { name: "Polar", logo: null, status: "available", route: "marketplace.polar" },
             { name: "PayPal", logo: null },
             { name: "Paddle", logo: null },
             { name: "LemonSqueezy", logo: null },
@@ -88,6 +208,11 @@ const getColorClasses = (color) => {
         purple: "from-purple-500 to-purple-600 ring-purple-500/20",
         rose: "from-rose-500 to-rose-600 ring-rose-500/20",
         cyan: "from-cyan-500 to-cyan-600 ring-cyan-500/20",
+        orange: "from-orange-500 to-orange-600 ring-orange-500/20",
+        blue: "from-blue-500 to-blue-600 ring-blue-500/20",
+        red: "from-red-500 to-red-600 ring-red-500/20",
+        green: "from-green-500 to-green-600 ring-green-500/20",
+        teal: "from-teal-500 to-teal-600 ring-teal-500/20",
     };
     return colors[color] || colors.indigo;
 };
@@ -100,6 +225,11 @@ const getBgClasses = (color) => {
         purple: "bg-purple-500/10",
         rose: "bg-rose-500/10",
         cyan: "bg-cyan-500/10",
+        orange: "bg-orange-500/10",
+        blue: "bg-blue-500/10",
+        red: "bg-red-500/10",
+        green: "bg-green-500/10",
+        teal: "bg-teal-500/10",
     };
     return colors[color] || colors.indigo;
 };
@@ -113,14 +243,6 @@ const getBgClasses = (color) => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
                 <div class="mb-8 text-center">
-                    <div
-                        class="mb-4 inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 py-1.5"
-                    >
-                        <span class="text-lg">🚀</span>
-                        <span class="text-sm font-semibold text-indigo-400">{{
-                            $t("marketplace.coming_soon")
-                        }}</span>
-                    </div>
                     <h1 class="text-4xl font-bold text-white">
                         {{ $t("marketplace.title") }}
                     </h1>
@@ -129,15 +251,63 @@ const getBgClasses = (color) => {
                     </p>
                 </div>
 
+                <!-- Active Integrations -->
+                <div class="mb-12">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="flex items-center gap-2">
+                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <h2 class="text-xl font-bold text-white">
+                                {{ $t("marketplace.active_integrations") }}
+                            </h2>
+                        </div>
+                        <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
+                            {{ activeIntegrations.length }} {{ $t("marketplace.active") }}
+                        </span>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <component
+                            :is="integration.route ? Link : 'div'"
+                            v-for="integration in activeIntegrations"
+                            :key="integration.id"
+                            :href="integration.route ? route(integration.route) : undefined"
+                            class="group relative overflow-hidden rounded-xl bg-slate-800/50 p-4 ring-1 ring-emerald-500/30 transition-all hover:ring-emerald-500/50"
+                            :class="integration.route ? 'cursor-pointer' : ''"
+                        >
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-xl ring-4"
+                                    :class="getColorClasses(integration.color)"
+                                >
+                                    {{ integration.icon }}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-white">{{ integration.name }}</h3>
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-400">{{ integration.description }}</p>
+                                </div>
+                                <svg v-if="integration.route" class="h-5 w-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                        </component>
+                    </div>
+                </div>
+
                 <!-- Coming Soon Banner -->
                 <div
                     class="mb-12 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-0.5"
                 >
                     <div class="rounded-xl bg-slate-900 px-8 py-12 text-center">
                         <div
-                            class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-4xl shadow-lg shadow-indigo-500/30"
+                            class="mb-4 inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-4 py-1.5"
                         >
-                            🔌
+                            <span class="text-lg">🚀</span>
+                            <span class="text-sm font-semibold text-indigo-400">{{
+                                $t("marketplace.coming_soon")
+                            }}</span>
                         </div>
                         <h2 class="mb-3 text-2xl font-bold text-white">
                             {{ $t("marketplace.banner_title") }}
@@ -268,12 +438,23 @@ const getBgClasses = (color) => {
                                         class="text-sm font-medium text-slate-300"
                                         >{{ platform.name }}</span
                                     >
+                                    <!-- Green dot for available integrations -->
+                                    <span
+                                        v-if="platform.status === 'available'"
+                                        class="h-2 w-2 rounded-full bg-emerald-400"
+                                    ></span>
                                 </div>
                                 <span
                                     v-if="platform.status === 'soon'"
                                     class="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-medium text-slate-400"
                                 >
                                     {{ $t("marketplace.soon") }}
+                                </span>
+                                <span
+                                    v-else-if="platform.status === 'available'"
+                                    class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400 ring-1 ring-emerald-500/20"
+                                >
+                                    {{ $t("marketplace.active") }}
                                 </span>
                                 <svg
                                     v-else
@@ -310,10 +491,9 @@ const getBgClasses = (color) => {
                     <p class="mb-6 text-sm text-slate-400">
                         {{ $t("marketplace.request_desc") }}
                     </p>
-                    <a
-                        href="https://support.netsendo.com/integrations"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        type="button"
+                        @click="openRequestModal"
                         class="inline-flex items-center gap-2 rounded-xl bg-white/5 px-6 py-3 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10"
                     >
                         <svg
@@ -330,9 +510,144 @@ const getBgClasses = (color) => {
                             />
                         </svg>
                         {{ $t("marketplace.request_button") }}
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
+
+        <!-- Request Integration Modal -->
+        <Teleport to="body">
+            <Transition name="modal">
+                <div
+                    v-if="showRequestModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                >
+                    <!-- Backdrop -->
+                    <div
+                        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        @click="closeRequestModal"
+                    ></div>
+
+                    <!-- Modal -->
+                    <div class="relative w-full max-w-lg rounded-2xl bg-slate-800 shadow-2xl ring-1 ring-white/10">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+                            <h3 class="text-lg font-semibold text-white">
+                                {{ $t("marketplace.request_modal_title") }}
+                            </h3>
+                            <button
+                                type="button"
+                                @click="closeRequestModal"
+                                class="rounded-lg p-1 text-slate-400 hover:bg-slate-700 hover:text-white"
+                            >
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="px-6 py-4">
+                            <!-- Success State -->
+                            <div v-if="submitted" class="text-center py-8">
+                                <div class="inline-flex items-center justify-center w-16 h-16 mb-4 bg-emerald-500/10 rounded-full">
+                                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <h4 class="text-lg font-semibold text-white mb-2">{{ $t("marketplace.request_success_title") }}</h4>
+                                <p class="text-sm text-slate-400 mb-6">{{ $t("marketplace.request_success_desc") }}</p>
+                                <button
+                                    type="button"
+                                    @click="closeRequestModal"
+                                    class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    {{ $t("common.close") }}
+                                </button>
+                            </div>
+
+                            <!-- Form -->
+                            <form v-else @submit.prevent="submitRequest" class="space-y-4">
+                                <!-- Integration Name -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-1">
+                                        {{ $t("marketplace.request_integration_name") }} *
+                                    </label>
+                                    <input
+                                        v-model="requestForm.integration_name"
+                                        type="text"
+                                        required
+                                        :placeholder="$t('marketplace.request_integration_name_placeholder')"
+                                        class="w-full rounded-lg border-slate-600 bg-slate-900 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-1">
+                                        {{ $t("marketplace.request_description") }}
+                                    </label>
+                                    <textarea
+                                        v-model="requestForm.description"
+                                        rows="3"
+                                        :placeholder="$t('marketplace.request_description_placeholder')"
+                                        class="w-full rounded-lg border-slate-600 bg-slate-900 px-4 py-2.5 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-indigo-500"
+                                    ></textarea>
+                                </div>
+
+                                <!-- Priority -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-300 mb-1">
+                                        {{ $t("marketplace.request_priority") }}
+                                    </label>
+                                    <select
+                                        v-model="requestForm.priority"
+                                        class="w-full rounded-lg border-slate-600 bg-slate-900 px-4 py-2.5 text-white focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="low">{{ $t("marketplace.priority_low") }}</option>
+                                        <option value="normal">{{ $t("marketplace.priority_normal") }}</option>
+                                        <option value="high">{{ $t("marketplace.priority_high") }}</option>
+                                    </select>
+                                </div>
+
+                                <!-- Error -->
+                                <div v-if="submitError" class="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                    <p class="text-sm text-red-400">{{ submitError }}</p>
+                                </div>
+
+                                <!-- User Info -->
+                                <div class="p-3 rounded-lg bg-slate-900/50">
+                                    <p class="text-xs text-slate-500">
+                                        {{ $t("marketplace.request_submitted_as") }}: <span class="text-slate-400">{{ currentUser?.email }}</span>
+                                    </p>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center justify-end gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        @click="closeRequestModal"
+                                        class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                                    >
+                                        {{ $t("common.cancel") }}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        :disabled="submitting || !requestForm.integration_name"
+                                        class="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        <svg v-if="submitting" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        {{ $t("marketplace.request_submit") }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

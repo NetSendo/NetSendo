@@ -118,7 +118,7 @@ const updateOpenGroup = () => {
     }
 
     // Products
-    if (isActive("settings.stripe-products.*")) {
+    if (isActive("settings.stripe-products.*") || isActive("settings.polar-products.*")) {
         openGroup.value = "products";
         return;
     }
@@ -137,7 +137,9 @@ const updateOpenGroup = () => {
         isActive("settings.mailboxes.*") ||
         isActive("settings.cron.*") ||
         isActive("settings.api-keys.*") ||
-        isActive("settings.backup.*")
+        isActive("settings.backup.*") ||
+        isActive("settings.stripe.*") ||
+        isActive("settings.polar.*")
     ) {
         openGroup.value = "settings";
         return;
@@ -1039,6 +1041,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     {{ $t("stripe.products") }}
                 </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.polar-products.index')"
+                    :active="isActive('settings.polar-products.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("polar.products_title") }}
+                </SidebarItem>
             </SidebarGroup>
 
             <!-- Statystyki -->
@@ -1322,6 +1347,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("stripe.settings_title") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.polar.index')"
+                    :active="isActive('settings.polar.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("polar.settings_title") }}
                 </SidebarItem>
 
                 <SidebarItem

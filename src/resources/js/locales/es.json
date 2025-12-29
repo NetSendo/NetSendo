@@ -2,6 +2,9 @@
     "common": {
         "save": "Guardar",
         "saved": "Guardado",
+        "documentation": "Documentación",
+        "resources": "Recursos",
+        "need_help": "¿Necesitas ayuda?",
         "cancel": "Cancelar",
         "delete": "Eliminar",
         "edit": "Editar",
@@ -172,6 +175,72 @@
             "width": "Ancho",
             "link": "Enlace (opcional)"
         }
+    },
+    "marketplace": {
+        "title": "Marketplace",
+        "subtitle": "Conecta NetSendo con tus herramientas y plataformas favoritas. ¡Pronto más integraciones!",
+        "coming_soon": "Próximamente",
+        "soon": "Pronto",
+        "active": "Activo",
+        "active_integrations": "Integraciones Activas",
+        "banner_title": "Potentes integraciones en camino",
+        "banner_desc": "Estamos construyendo un marketplace completo de integraciones para ayudarte a conectar NetSendo con las herramientas que ya usas. ¡Mantente atento!",
+        "features": {
+            "one_click": "Configuración en un clic",
+            "auto_sync": "Sincronización automática de datos",
+            "no_code": "No requiere código"
+        },
+        "categories": {
+            "ecommerce": {
+                "title": "Comercio Electrónico",
+                "desc": "Sincronizar clientes y pedidos"
+            },
+            "crm": {
+                "title": "CRM",
+                "desc": "Gestionar leads y contactos"
+            },
+            "forms": {
+                "title": "Formularios",
+                "desc": "Capturar leads de formularios"
+            },
+            "automation": {
+                "title": "Automatización",
+                "desc": "Conectar flujos de trabajo con Zapier y otros"
+            },
+            "payments": {
+                "title": "Pagos",
+                "desc": "Aceptar pagos en línea"
+            },
+            "messaging": {
+                "title": "Mensajería",
+                "desc": "Pasarelas de SMS y chat"
+            },
+            "email": {
+                "title": "Correo Electrónico",
+                "desc": "Servicios de entrega de correo"
+            },
+            "ai": {
+                "title": "IA",
+                "desc": "Generación de contenido y chatbots"
+            }
+        },
+        "request_title": "¿Necesita una integración específica?",
+        "request_desc": "Háganos saber qué herramientas le gustaría ver en NetSendo Marketplace.",
+        "request_button": "Solicitar integración",
+        "request_modal_title": "Solicitar integración",
+        "request_integration_name": "Nombre de la integración",
+        "request_integration_name_placeholder": "ej. WooCommerce, Shopify, HubSpot...",
+        "request_description": "Descripción (opcional)",
+        "request_description_placeholder": "Describa cómo le gustaría usar esta integración...",
+        "request_priority": "Prioridad",
+        "priority_low": "Baja",
+        "priority_normal": "Normal",
+        "priority_high": "Alta",
+        "request_submitted_as": "Enviado como",
+        "request_submit": "Enviar solicitud",
+        "request_success_title": "¡Gracias!",
+        "request_success_desc": "Su solicitud de integración ha sido enviada. Nos pondremos en contacto pronto.",
+        "request_error": "No se pudo enviar la solicitud. Inténtelo de nuevo."
     },
     "navigation": {
         "dashboard": "Tablero",
@@ -2673,6 +2742,80 @@
         "connection_mode_api_key": "Claves API (Manual)",
         "connected_account": "Cuenta conectada",
         "stripe_account_id": "ID de cuenta Stripe",
-        "connected_via_oauth": "Conectado vía OAuth Connect"
+        "connected_via_oauth": "Conectado vía OAuth Connect",
+        "client_id": "Client ID",
+        "client_id_placeholder": "ca_xxxxxxxxxxxxxxxxxxxxxxxxx",
+        "oauth_setup_step1_title": "Crear aplicación Stripe Connect",
+        "oauth_setup_step1_1": "Inicia sesión en el panel de Stripe",
+        "oauth_setup_step1_2": "Ve a Settings → Connect → OAuth settings",
+        "oauth_setup_step1_3": "Copia tu Client ID (comienza con ca_)",
+        "oauth_open_connect_settings": "Abrir configuración de Connect en Stripe",
+        "oauth_setup_step2_title": "Agregar Redirect URI en Stripe",
+        "oauth_setup_step2_desc": "Copia la URL de abajo y pégala como Redirect URI en la configuración OAuth de Stripe:",
+        "oauth_setup_step3_title": "Pegar Client ID",
+        "oauth_setup_step3_desc": "Pega el Client ID copiado del panel de Stripe y guarda:",
+        "oauth_setup_step4_title": "Conectar cuenta",
+        "oauth_save_client_id_first": "Por favor, guarda primero el Client ID de arriba."
+    },
+    "polar": {
+        "title": "Polar",
+        "description": "Infraestructura de pagos para desarrolladores. Checkouts, suscripciones y facturación basada en uso.",
+        "long_description": "Polar es una plataforma de pagos moderna que permite vender productos digitales, suscripciones y facturación basada en uso de manera simple.",
+        "features_title": "Características",
+        "setup_title": "Configuración",
+        "go_to_settings": "Ir a configuración de Polar",
+        "manage_products": "Gestionar productos",
+        "help_description": "Consulta la documentación de Polar para instrucciones detalladas.",
+        "webhook_info": "Usa esta URL como endpoint del webhook en tu configuración de Polar.",
+        "settings_title": "Configuración de Polar",
+        "settings_saved": "Configuración de Polar guardada.",
+        "api_settings": "Configuración de API",
+        "environment": "Entorno",
+        "sandbox": "Sandbox (pruebas)",
+        "production": "Producción",
+        "environment_help": "Usa Sandbox para pruebas. Producción para pagos reales.",
+        "access_token": "Token de acceso",
+        "access_token_placeholder": "Pega tu token de acceso de Polar...",
+        "access_token_help": "Puedes encontrar el token de acceso en la configuración de tu organización en Polar.",
+        "access_token_missing": "Falta el token de acceso. Guarda la configuración primero.",
+        "webhook_secret": "Secreto del Webhook",
+        "webhook_secret_placeholder": "Pega tu secreto del webhook...",
+        "webhook_secret_help": "El secreto del webhook se usa para verificar eventos desde Polar.",
+        "webhook_url": "URL del Webhook",
+        "webhook_url_help": "Copia esta URL y configúrala en los ajustes de webhook de Polar.",
+        "configured": "Polar está configurado",
+        "configured_desc": "Puedes crear productos y aceptar pagos.",
+        "not_configured": "Polar no está configurado",
+        "not_configured_desc": "Añade un token de acceso para activar la integración.",
+        "test_connection": "Probar conexión",
+        "connection_success": "¡La conexión con Polar funciona correctamente!",
+        "connection_failed": "Error en la conexión con Polar.",
+        "products_title": "Productos Polar",
+        "create_product": "Crear producto",
+        "create_first_product": "Crear primer producto",
+        "no_products": "Aún no tienes ningún producto.",
+        "no_products_desc": "Crea tu primer producto para empezar a aceptar pagos.",
+        "configure_first": "Por favor, configura Polar primero.",
+        "product_name": "Nombre del producto",
+        "description": "Descripción",
+        "price": "Precio",
+        "currency": "Moneda",
+        "type": "Tipo",
+        "one_time": "Pago único",
+        "recurring": "Suscripción",
+        "billing_interval": "Intervalo de facturación",
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "transactions": "Transacciones",
+        "checkout_url": "Enlace de pago",
+        "get_checkout_url": "Obtener enlace de pago",
+        "generating_url": "Generando enlace...",
+        "checkout_url_desc": "Usa este enlace para redirigir a los clientes a la página de pago.",
+        "checkout_url_error": "Error al generar el enlace de pago.",
+        "open_checkout": "Abrir página de pago",
+        "confirm_delete": "¿Estás seguro de que quieres eliminar este producto?",
+        "product_created": "Producto creado.",
+        "product_updated": "Producto actualizado.",
+        "product_deleted": "Producto eliminado."
     }
 }

@@ -29,8 +29,10 @@ class StripeSettingsController extends Controller
                     'stripe_user_id' => $oauthSettings['stripe_user_id'] ?? null,
                     'publishable_key' => $oauthSettings['publishable_key'] ?? null,
                 ],
+                'client_id' => Setting::where('key', 'stripe_client_id')->first()?->value ?? '',
                 'client_id_configured' => !empty(config('services.stripe.client_id'))
                     || !empty(Setting::where('key', 'stripe_client_id')->first()?->value),
+                'redirect_uri' => route('settings.stripe.oauth.callback'),
             ],
         ]);
     }
@@ -56,6 +58,7 @@ class StripeSettingsController extends Controller
             'publishable_key' => ['nullable', 'string', 'max:255'],
             'secret_key' => ['nullable', 'string', 'max:255'],
             'webhook_secret' => ['nullable', 'string', 'max:255'],
+            'client_id' => ['nullable', 'string', 'max:255'],
         ]);
 
         // Save publishable key (not encrypted - it's public)
@@ -71,6 +74,11 @@ class StripeSettingsController extends Controller
         // Save webhook secret (encrypted)
         if (!empty($validated['webhook_secret']) && !str_contains($validated['webhook_secret'], '••••')) {
             $this->saveSetting('stripe_webhook_secret', Crypt::encryptString($validated['webhook_secret']));
+        }
+
+        // Save Client ID (for OAuth Connect)
+        if (isset($validated['client_id'])) {
+            $this->saveSetting('stripe_client_id', $validated['client_id']);
         }
 
         return back()->with('success', __('stripe.settings_saved'));
