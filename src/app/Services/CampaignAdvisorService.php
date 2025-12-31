@@ -212,7 +212,9 @@ class CampaignAdvisorService
         }
 
         // Check for segmentation opportunities
-        $subscriberCount = $user->subscribers()->count();
+        $subscriberCount = \App\Models\Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->distinct()->count();
         $taggedPercent = $this->calculateTaggedSubscriberPercent($user);
 
         if ($subscriberCount > 500 && $taggedPercent < 30) {
@@ -356,12 +358,18 @@ class CampaignAdvisorService
      */
     protected function calculateTaggedSubscriberPercent(User $user): float
     {
-        $total = $user->subscribers()->count();
+        $total = \App\Models\Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->distinct()->count();
+
         if ($total === 0) {
             return 0;
         }
 
-        $tagged = $user->subscribers()->whereHas('tags')->count();
+        $tagged = \App\Models\Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->whereHas('tags')->distinct()->count();
+
         return round(($tagged / $total) * 100, 1);
     }
 
@@ -416,11 +424,15 @@ class CampaignAdvisorService
      */
     protected function buildAiContext(User $user, CampaignAudit $audit): array
     {
+        $subscriberCount = \App\Models\Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->distinct()->count();
+
         return [
             'score' => $audit->overall_score,
             'critical_issues' => $audit->critical_count,
             'warning_issues' => $audit->warning_count,
-            'subscriber_count' => $user->subscribers()->count(),
+            'subscriber_count' => $subscriberCount,
             'list_count' => $user->contactLists()->count(),
             'automation_count' => $user->automationRules()->count(),
             'has_sms' => Message::where('user_id', $user->id)->where('channel', 'sms')->exists(),
