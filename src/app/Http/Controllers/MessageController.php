@@ -60,6 +60,11 @@ class MessageController extends Controller
             $query->where('subject', 'like', '%' . $search . '%');
         }
 
+        // Filter by Campaign Plan
+        if ($request->filled('campaign_plan_id')) {
+            $query->where('campaign_plan_id', $request->input('campaign_plan_id'));
+        }
+
         // Sorting
         $sortField = $request->input('sort', 'created_at');
         $sortDirection = $request->input('direction', 'desc');
@@ -106,10 +111,15 @@ class MessageController extends Controller
                         ? DateHelper::formatForUser($msg->scheduled_at)
                         : null,
                 ]),
-            'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'search', 'sort', 'direction', 'per_page']),
+            'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
             'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
             'tags' => auth()->user()->tags()->select('id', 'name')->orderBy('name')->get(),
+            'campaignPlans' => \App\Models\CampaignPlan::forUser(auth()->id())
+                ->whereNotNull('exported_at')
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

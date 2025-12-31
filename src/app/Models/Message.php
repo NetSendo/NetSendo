@@ -18,6 +18,7 @@ class Message extends Model
 
     protected $fillable = [
         'user_id',
+        'campaign_plan_id',
         'channel', // email, sms
         'mailbox_id',
         'template_id',
@@ -66,6 +67,16 @@ class Message extends Model
     public function scopeSms($query)
     {
         return $query->where('channel', 'sms');
+    }
+
+    public function scopeForCampaignPlan($query, $planId)
+    {
+        return $query->where('campaign_plan_id', $planId);
+    }
+
+    public function campaignPlan()
+    {
+        return $this->belongsTo(CampaignPlan::class);
     }
 
     /**

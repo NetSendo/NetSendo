@@ -368,6 +368,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace', fn() => Inertia::render('Marketplace/Index'))->name('marketplace.index');
     Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
     Route::get('/marketplace/stripe', fn() => Inertia::render('Marketplace/Stripe'))->name('marketplace.stripe');
+    Route::get('/marketplace/woocommerce', fn() => Inertia::render('Marketplace/WooCommerce'))->name('marketplace.woocommerce');
+
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {
@@ -511,6 +513,10 @@ Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhooks\StripeController
 
 // Polar Webhook (public, Polar-signature authenticated)
 Route::post('/webhooks/polar', [\App\Http\Controllers\Webhooks\PolarController::class, 'handle'])->name('webhooks.polar');
+
+// WooCommerce Webhook (public, API-key authenticated)
+Route::post('/webhooks/woocommerce', [\App\Http\Controllers\Webhooks\WooCommerceController::class, 'handle'])->name('webhooks.woocommerce');
+
 
 require __DIR__.'/auth.php';
 

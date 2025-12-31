@@ -7,6 +7,7 @@ use App\Models\CampaignPlanStep;
 use App\Models\CampaignBenchmark;
 use App\Models\ContactList;
 use App\Services\CampaignArchitectService;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,7 +15,8 @@ use Inertia\Inertia;
 class CampaignArchitectController extends Controller
 {
     public function __construct(
-        protected CampaignArchitectService $architectService
+        protected CampaignArchitectService $architectService,
+        protected LicenseService $licenseService
     ) {}
 
     /**
@@ -60,9 +62,8 @@ class CampaignArchitectController extends Controller
                 ];
             });
 
-        // Get current license plan
-        $licensePlan = \App\Models\Setting::where('key', 'license_plan')->first();
-        $currentPlan = $licensePlan ? $licensePlan->value : 'SILVER';
+        // Get current license plan and limits
+        $licenseInfo = $this->licenseService->getLicenseInfo($user->id);
 
         return Inertia::render('CampaignArchitect/Index', [
             'plans' => $plans,
@@ -72,7 +73,10 @@ class CampaignArchitectController extends Controller
             'campaignGoals' => CampaignPlan::getCampaignGoals(),
             'languages' => CampaignPlan::getLanguages(),
             'messageTypes' => CampaignPlanStep::getMessageTypes(),
-            'licensePlan' => $currentPlan,
+            'licensePlan' => $licenseInfo['plan'],
+            'campaignCount' => $licenseInfo['campaignCount'],
+            'campaignLimit' => $licenseInfo['campaignLimit'],
+            'canCreateCampaign' => $licenseInfo['canCreateCampaign'],
         ]);
     }
 
@@ -93,6 +97,16 @@ class CampaignArchitectController extends Controller
             'selected_lists' => 'required|array|min:1',
             'selected_lists.*' => 'exists:contact_lists,id',
         ]);
+
+        // Check campaign limit for SILVER plan
+        if (!$this->licenseService->canCreateCampaign()) {
+            $limit = $this->licenseService->getCampaignLimit();
+            return response()->json([
+                'success' => false,
+                'error' => __('campaign_architect.campaign_limit_reached', ['limit' => $limit]),
+                'limit_reached' => true,
+            ], 403);
+        }
 
         // Get audience snapshot
         $audienceSnapshot = $this->architectService->getAudienceData($validated['selected_lists']);
@@ -174,13 +188,28 @@ class CampaignArchitectController extends Controller
     /**
      * Delete a campaign plan
      */
-    public function destroy(CampaignPlan $plan)
+    public function destroy(Request $request, CampaignPlan $plan)
     {
         $this->authorize('delete', $plan);
 
+        $validated = $request->validate([
+            'delete_messages' => 'sometimes|boolean',
+        ]);
+
+        $deletedMessagesCount = 0;
+
+        // Delete associated messages if requested
+        if ($validated['delete_messages'] ?? false) {
+            $deletedMessagesCount = \App\Models\Message::where('campaign_plan_id', $plan->id)->count();
+            \App\Models\Message::where('campaign_plan_id', $plan->id)->delete();
+        }
+
         $plan->delete();
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'deleted_messages_count' => $deletedMessagesCount,
+        ]);
     }
 
     /**
@@ -259,6 +288,8 @@ class CampaignArchitectController extends Controller
             return response()->json([
                 'success' => true,
                 'exported_items' => $exportedItems,
+                'emails_created' => count($exportedItems['emails'] ?? []),
+                'sms_created' => count($exportedItems['sms'] ?? []),
                 'message' => 'Campaign exported successfully!',
             ]);
         } catch (\Exception $e) {

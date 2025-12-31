@@ -137,6 +137,11 @@ class CampaignPlan extends Model
         return $this->hasMany(CampaignPlanStep::class)->orderBy('order');
     }
 
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
+
     /**
      * Accessors
      */

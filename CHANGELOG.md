@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Campaign Architect Enhancements:**
+
+  - **Campaign Deletion:** Ability to delete campaign plans with option to cascade delete associated email and SMS messages.
+  - **Export Success Modal:** New modal with export summary and "Next Steps" guidance after exporting campaigns.
+  - **Campaign Filtering:** Emails and SMS messages created from plans are now linked to the campaign and filterable in message lists.
+  - **Draft Creation:** Exported messages are now correctly saved as drafts linked to the campaign plan.
+
+- **License Restrictions (SILVER vs GOLD):**
+  - **Campaign Limit Enforcement:** Backend validation now strictly enforces the 3-campaign limit for SILVER plan users.
+  - **UI Indicators:** Added campaign count badge (e.g., "2/3") in Campaign Architect header for SILVER users.
+  - **Create Blockade:** "Create Campaign" button and functionality are disabled when the limit is reached.
+  - **Centralized Service:** Implemented `LicenseService` to handle plan capabilities and restrictions.
+
+### Fixed
+
+- **Campaign Advisor Recommendations:**
+  - Fixed critical issue where AI recommendations were showing "+0.0% improvement" due to a backend error.
+  - Resolved `Call to undefined method User::subscribers()` error by correctly querying subscribers through contact lists.
+  - Recommendations (Quick Wins, Strategic) are now correctly generated and displayed with potential impact percentage.
+  - **Campaign ROI Calculation:** Fixed issue where ROI was displaying as -100% when projected profit was 0 (now correctly shows 0%).
+
 ## [1.2.9] – Sales Funnels Integration
 
 **Release date:** 2025-12-31

@@ -14,6 +14,7 @@ const props = defineProps({
     filters: Object,
     lists: Array,
     groups: Array,
+    campaignPlans: Array,
 });
 
 const form = reactive({
@@ -21,6 +22,7 @@ const form = reactive({
     type: props.filters.type || "",
     list_id: props.filters.list_id || "",
     group_id: props.filters.group_id || "",
+    campaign_plan_id: props.filters.campaign_plan_id || "",
     sort: props.filters.sort || "created_at",
     direction: props.filters.direction || "desc",
 });
@@ -71,6 +73,7 @@ const resetFilters = () => {
     form.type = "";
     form.list_id = "";
     form.group_id = "";
+    form.campaign_plan_id = "";
     form.sort = "created_at";
     form.direction = "desc";
 };
@@ -210,9 +213,24 @@ const toggleActive = async (message) => {
                 </option>
             </select>
 
+            <!-- Campaign Plan Filter -->
+            <select
+                v-model="form.campaign_plan_id"
+                class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+                <option value="">{{ $t("messages.all_campaigns") }}</option>
+                <option
+                    v-for="plan in campaignPlans"
+                    :key="plan.id"
+                    :value="plan.id"
+                >
+                    {{ plan.name }}
+                </option>
+            </select>
+
             <!-- Reset -->
             <button
-                v-if="form.search || form.list_id || form.type || form.group_id"
+                v-if="form.search || form.list_id || form.type || form.group_id || form.campaign_plan_id"
                 @click="resetFilters"
                 class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             >

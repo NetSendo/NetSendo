@@ -29,6 +29,9 @@ class SmsController extends Controller
             ->when($request->type, function ($query, $type) {
                 $query->where('type', $type);
             })
+            ->when($request->campaign_plan_id, function ($query, $campaignPlanId) {
+                $query->where('campaign_plan_id', $campaignPlanId);
+            })
             ->orderBy($request->sort ?? 'created_at', $request->direction ?? 'desc')
             ->paginate(10)
             ->withQueryString()
@@ -55,9 +58,14 @@ class SmsController extends Controller
 
         return Inertia::render('Sms/Index', [
             'messages' => $messages,
-            'filters' => $request->only(['search', 'type', 'list_id', 'sort', 'direction']),
+            'filters' => $request->only(['search', 'type', 'list_id', 'campaign_plan_id', 'sort', 'direction']),
             'lists' => $lists,
             'groups' => [], // Placeholder if we want to add group support later
+            'campaignPlans' => \App\Models\CampaignPlan::forUser(auth()->id())
+                ->whereNotNull('exported_at')
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

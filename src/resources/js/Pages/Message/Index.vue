@@ -24,6 +24,7 @@ const props = defineProps({
     lists: Array,
     groups: Array,
     tags: Array,
+    campaignPlans: Array,
 });
 
 const form = reactive({
@@ -32,6 +33,7 @@ const form = reactive({
     list_id: props.filters.list_id || "",
     group_id: props.filters.group_id || "",
     tag_id: props.filters.tag_id || "",
+    campaign_plan_id: props.filters.campaign_plan_id || "",
     sort: props.filters.sort || "created_at",
     direction: props.filters.direction || "desc",
     per_page: props.filters.per_page || "30",
@@ -147,6 +149,7 @@ const resetFilters = () => {
     form.list_id = "";
     form.group_id = "";
     form.tag_id = "";
+    form.campaign_plan_id = "";
     form.sort = "created_at";
     form.direction = "desc";
 };
@@ -405,6 +408,21 @@ const getAttachmentTooltip = (message, trans) => {
                 <option value="100">100 {{ $t("common.per_page") }}</option>
             </select>
 
+            <!-- Campaign Plan Filter -->
+            <select
+                v-model="form.campaign_plan_id"
+                class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+                <option value="">{{ $t("messages.all_campaigns") }}</option>
+                <option
+                    v-for="plan in campaignPlans"
+                    :key="plan.id"
+                    :value="plan.id"
+                >
+                    {{ plan.name }}
+                </option>
+            </select>
+
             <!-- Reset -->
             <button
                 v-if="
@@ -412,7 +430,8 @@ const getAttachmentTooltip = (message, trans) => {
                     form.list_id ||
                     form.type ||
                     form.group_id ||
-                    form.tag_id
+                    form.tag_id ||
+                    form.campaign_plan_id
                 "
                 @click="resetFilters"
                 class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"

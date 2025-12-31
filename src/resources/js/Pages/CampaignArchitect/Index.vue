@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import Modal from "@/Components/Modal.vue";
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -18,6 +19,18 @@ const props = defineProps({
         type: String,
         default: "SILVER",
     },
+    campaignCount: {
+        type: Number,
+        default: 0,
+    },
+    campaignLimit: {
+        type: Number,
+        default: null,
+    },
+    canCreateCampaign: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 // Wizard state
@@ -25,6 +38,13 @@ const wizardStep = ref(1);
 const totalSteps = 4;
 const isGenerating = ref(false);
 const generatedPlan = ref(null);
+const showExportSuccessModal = ref(false);
+const exportResult = ref(null);
+const showDeleteModal = ref(false);
+const planToDelete = ref(null);
+const deleteWithMessages = ref(true);
+const isDeleting = ref(false);
+const showLimitModal = ref(false);
 
 // Form data
 const form = useForm({
@@ -63,6 +83,13 @@ const canProceedStep2 = computed(() => {
 
 const selectedListsInfo = computed(() => {
     return props.lists.filter((l) => form.selected_lists.includes(l.id));
+});
+
+const campaignLimitDisplay = computed(() => {
+    if (props.campaignLimit === null) {
+        return null;
+    }
+    return `${props.campaignCount}/${props.campaignLimit}`;
 });
 
 // Methods
@@ -126,6 +153,12 @@ const createPlanAndGenerate = async () => {
         const planResult = await createResponse.json();
 
         if (!planResult.success) {
+            // Check if limit is reached - show styled modal instead of alert
+            if (planResult.limit_reached) {
+                showLimitModal.value = true;
+                wizardStep.value = 1;
+                return;
+            }
             throw new Error(planResult.error || "Failed to create plan");
         }
 
@@ -154,6 +187,7 @@ const createPlanAndGenerate = async () => {
         }
     } catch (error) {
         console.error("Error:", error);
+        // Show styled modal for general errors too
         alert(error.message || t("campaign_architect.generation_failed"));
         wizardStep.value = 2;
     } finally {
@@ -208,14 +242,75 @@ const exportPlan = async (mode) => {
 
         const result = await response.json();
         if (result.success) {
-            alert(t("campaign_architect.export_success"));
-            router.visit(route("campaign-architect.index"));
+            exportResult.value = result;
+            showExportSuccessModal.value = true;
         } else {
             throw new Error(result.error);
         }
     } catch (error) {
         console.error("Export failed:", error);
         alert(error.message || t("campaign_architect.export_failed"));
+    }
+};
+
+const closeExportModal = () => {
+    showExportSuccessModal.value = false;
+    exportResult.value = null;
+};
+
+const goToList = (type) => {
+    closeExportModal();
+    if (type === 'email') {
+        router.visit(route('messages.index', { campaign_plan_id: generatedPlan.value.id }));
+    } else {
+        router.visit(route('sms.index', { campaign_plan_id: generatedPlan.value.id }));
+    }
+};
+
+const openDeleteModal = (plan, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    planToDelete.value = plan;
+    deleteWithMessages.value = true;
+    showDeleteModal.value = true;
+};
+
+const closeDeleteModal = () => {
+    showDeleteModal.value = false;
+    planToDelete.value = null;
+    isDeleting.value = false;
+};
+
+const confirmDeletePlan = async () => {
+    if (!planToDelete.value) return;
+
+    isDeleting.value = true;
+    try {
+        const response = await fetch(
+            route("campaign-architect.destroy", planToDelete.value.id),
+            {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+                body: JSON.stringify({ delete_messages: deleteWithMessages.value }),
+            }
+        );
+
+        const result = await response.json();
+        if (result.success) {
+            closeDeleteModal();
+            router.reload();
+        } else {
+            throw new Error(result.error || 'Delete failed');
+        }
+    } catch (error) {
+        console.error("Delete failed:", error);
+        alert(error.message || t("common.error"));
+        isDeleting.value = false;
     }
 };
 
@@ -248,11 +343,25 @@ const getMessageTypeIcon = (type) => {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h2
-                    class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-                >
-                    🎯 {{ $t("campaign_architect.title") }}
-                </h2>
+                <div class="flex items-center gap-4">
+                    <h2
+                        class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
+                    >
+                        🎯 {{ $t("campaign_architect.title") }}
+                    </h2>
+                    <!-- Campaign Count Badge for SILVER -->
+                    <span
+                        v-if="licensePlan === 'SILVER' && campaignLimit"
+                        :class="[
+                            'rounded-full px-3 py-1 text-xs font-bold',
+                            canCreateCampaign
+                                ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+                        ]"
+                    >
+                        {{ campaignLimitDisplay }} {{ $t("campaign_architect.campaigns_label", { count: campaignLimit }) || "kampanii" }}
+                    </span>
+                </div>
                 <span
                     class="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 text-xs font-bold text-white"
                 >
@@ -1519,10 +1628,20 @@ const getMessageTypeIcon = (type) => {
                                 >
                                     {{ plan.status }}
                                 </span>
-                                <span
-                                    class="text-xs text-gray-500 dark:text-gray-400"
-                                    >{{ plan.updated_at }}</span
-                                >
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="text-xs text-gray-500 dark:text-gray-400"
+                                    >{{ plan.updated_at }}</span>
+                                    <button
+                                        @click="openDeleteModal(plan, $event)"
+                                        class="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                                        :title="$t('common.delete')"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <h4
                                 class="mt-2 font-semibold text-gray-900 dark:text-white"
@@ -1541,4 +1660,196 @@ const getMessageTypeIcon = (type) => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Export Success Modal -->
+    <Modal :show="showExportSuccessModal" @close="closeExportModal" max-width="lg">
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                    <svg class="h-8 w-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+                    {{ $t('campaign_architect.export_success_title') }}
+                </h3>
+                <p class="mt-2 text-gray-500 dark:text-gray-400">
+                    {{ $t('campaign_architect.export_success_description') }}
+                </p>
+            </div>
+
+            <!-- Created Messages Summary -->
+            <div v-if="exportResult" class="mb-6 rounded-xl bg-gray-50 p-4 dark:bg-gray-700/50">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                        <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                            {{ exportResult.emails_created || 0 }}
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ $t('campaign_architect.created_emails') }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            {{ exportResult.sms_created || 0 }}
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ $t('campaign_architect.created_sms') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="mb-6">
+                <h4 class="mb-3 font-semibold text-gray-900 dark:text-white">
+                    {{ $t('campaign_architect.next_steps_title') }}
+                </h4>
+                <ol class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <li class="flex items-start gap-2">
+                        <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">1</span>
+                        {{ $t('campaign_architect.next_step_1') }}
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">2</span>
+                        {{ $t('campaign_architect.next_step_2') }}
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">3</span>
+                        {{ $t('campaign_architect.next_step_3') }}
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col gap-3 sm:flex-row">
+                <button
+                    v-if="exportResult?.emails_created > 0"
+                    @click="goToList('email')"
+                    class="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white hover:bg-indigo-700"
+                >
+                    📧 {{ $t('campaign_architect.go_to_emails') }}
+                </button>
+                <button
+                    v-if="exportResult?.sms_created > 0"
+                    @click="goToList('sms')"
+                    class="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white hover:bg-emerald-700"
+                >
+                    📱 {{ $t('campaign_architect.go_to_sms') }}
+                </button>
+                <button
+                    @click="closeExportModal"
+                    class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                >
+                    {{ $t('campaign_architect.stay_here') }}
+                </button>
+            </div>
+        </div>
+    </Modal>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal :show="showDeleteModal" @close="closeDeleteModal" max-width="md">
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                    <svg class="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+                    {{ $t('campaign_architect.delete_plan_title') }}
+                </h3>
+                <p class="mt-2 text-gray-500 dark:text-gray-400">
+                    {{ $t('campaign_architect.delete_plan_confirm') }}
+                </p>
+            </div>
+
+            <!-- Plan Info -->
+            <div v-if="planToDelete" class="mb-6 rounded-xl bg-gray-50 p-4 dark:bg-gray-700/50">
+                <h4 class="font-semibold text-gray-900 dark:text-white">{{ planToDelete.name }}</h4>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ planToDelete.total_messages }} {{ $t('campaign_architect.messages_count') }}
+                </p>
+            </div>
+
+            <!-- Delete Messages Checkbox -->
+            <div class="mb-6">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input
+                        v-model="deleteWithMessages"
+                        type="checkbox"
+                        class="mt-1 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500 dark:border-gray-600 dark:bg-gray-700"
+                    />
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                        {{ $t('campaign_architect.delete_associated_messages') }}
+                    </span>
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button
+                    @click="closeDeleteModal"
+                    class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                >
+                    {{ $t('common.cancel') }}
+                </button>
+                <button
+                    @click="confirmDeletePlan"
+                    :disabled="isDeleting"
+                    class="flex-1 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                    <span v-if="isDeleting">{{ $t('common.deleting') }}...</span>
+                    <span v-else>{{ $t('common.delete') }}</span>
+                </button>
+            </div>
+        </div>
+    </Modal>
+
+    <!-- Campaign Limit Reached Modal -->
+    <Modal :show="showLimitModal" @close="showLimitModal = false" max-width="md">
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                    <svg class="h-8 w-8 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+                    {{ $t('campaign_architect.limit_reached_title') }}
+                </h3>
+                <p class="mt-2 text-gray-500 dark:text-gray-400">
+                    {{ $t('campaign_architect.campaign_limit_reached', { limit: campaignLimit }) }}
+                </p>
+            </div>
+
+            <!-- GOLD Upgrade Benefits -->
+            <div class="mb-6 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 p-4 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800">
+                <h4 class="font-semibold text-amber-800 dark:text-amber-300 mb-2">
+                    ✨ {{ $t('campaign_architect.gold_benefits_title') }}
+                </h4>
+                <ul class="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+                    <li>• {{ $t('campaign_architect.gold_unlimited') }}</li>
+                    <li>• {{ $t('campaign_architect.gold_ab_testing') }}</li>
+                    <li>• {{ $t('campaign_architect.gold_ai_models') }}</li>
+                </ul>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button
+                    @click="showLimitModal = false"
+                    class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                >
+                    {{ $t('common.close') }}
+                </button>
+                <Link
+                    :href="route('license.index')"
+                    class="flex-1 rounded-lg bg-gradient-to-r from-yellow-500 to-amber-500 px-4 py-2.5 font-medium text-white text-center hover:from-yellow-600 hover:to-amber-600"
+                >
+                    {{ $t('campaign_architect.upgrade_to_gold') }}
+                </Link>
+            </div>
+        </div>
+    </Modal>
 </template>

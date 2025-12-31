@@ -1,0 +1,90 @@
+/**
+ * NetSendo for WooCommerce - Admin Styles
+ */
+
+.netsendo-woocommerce-settings {
+    max-width: 800px;
+}
+
+.netsendo-woocommerce-settings h1 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.netsendo-woocommerce-settings h1 img {
+    height: 30px;
+    margin-right: 10px;
+}
+
+.netsendo-woocommerce-settings .form-table th {
+    width: 200px;
+}
+
+.netsendo-woocommerce-settings .regular-text {
+    width: 350px;
+}
+
+#netsendo_connection_status {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+#netsendo_connection_status.success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+#netsendo_connection_status.error {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+#netsendo_connection_status.loading {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+/* Product Panel Styles */
+#netsendo_product_data .options_group {
+    border-bottom: 1px solid #eee;
+    padding: 15px;
+}
+
+#netsendo_product_data .options_group:last-child {
+    border-bottom: none;
+}
+
+#netsendo_product_data .form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+#netsendo_product_data .form-field input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+#netsendo_product_data .form-field select {
+    width: 100%;
+    max-width: 350px;
+}
+
+#netsendo_product_data .form-field input[type="url"] {
+    width: 100%;
+    max-width: 350px;
+}
+
+#netsendo_product_data .form-field .description {
+    display: inline;
+    margin-left: 5px;
+    font-style: italic;
+    color: #666;
+}
+
+.netsendo-override-fields {
+    transition: opacity 0.3s ease;
+}

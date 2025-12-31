@@ -298,7 +298,7 @@ PROMPT;
         $smsCount = $plan->strategy['total_sms'] ?? 0;
         $estimatedCost = ($emailCount * $audienceSize * 0.001) + ($smsCount * $audienceSize * 0.02);
 
-        $roi = $estimatedCost > 0
+        $roi = ($estimatedCost > 0 && $projectedProfit > 0)
             ? round((($projectedProfit - $estimatedCost) / $estimatedCost) * 100, 0)
             : 0;
 
@@ -324,7 +324,8 @@ PROMPT;
     public function exportToCampaigns(CampaignPlan $plan, string $exportMode = 'draft'): array
     {
         $createdItems = [
-            'messages' => [],
+            'emails' => [],
+            'sms' => [],
             'automations' => [],
         ];
 
@@ -346,30 +347,40 @@ PROMPT;
             $previousMessageId = null;
 
             foreach ($steps as $step) {
-                if ($step->channel === 'email') {
-                    // Create email message
-                    $message = Message::create([
-                        'user_id' => $plan->user_id,
-                        'contact_list_id' => $primaryListId,
-                        'name' => $plan->name . ' - Step ' . $step->order,
-                        'subject' => $step->subject ?? 'Message ' . $step->order,
-                        'content' => '<p>' . ($step->description ?? 'Content to be created') . '</p>',
-                        'status' => $exportMode === 'draft' ? 'draft' : 'scheduled',
-                        'type' => 'broadcast',
-                    ]);
+                $channel = $step->channel ?? 'email';
 
-                    $createdItems['messages'][] = [
-                        'id' => $message->id,
-                        'name' => $message->name,
-                        'step_order' => $step->order,
-                    ];
+                // Create message (email or SMS) - always as draft
+                $message = Message::create([
+                    'user_id' => $plan->user_id,
+                    'campaign_plan_id' => $plan->id,
+                    'channel' => $channel,
+                    'subject' => $step->subject ?? ($plan->name . ' - ' . ($channel === 'sms' ? 'SMS' : 'Email') . ' ' . $step->order),
+                    'content' => '<p>' . ($step->description ?? 'Content to be created') . '</p>',
+                    'status' => 'draft', // Always create as draft
+                    'type' => 'broadcast',
+                ]);
 
-                    // Note: Automation rules with conditional logic can be created manually
-                    // The existing AutomationRule schema differs from what we need here
-                    // Future enhancement: integrate with automation builder
+                // Attach the primary contact list
+                $message->contactLists()->attach($primaryListId);
 
-                    $previousMessageId = $message->id;
+                $itemData = [
+                    'id' => $message->id,
+                    'subject' => $message->subject,
+                    'step_order' => $step->order,
+                    'channel' => $channel,
+                ];
+
+                if ($channel === 'sms') {
+                    $createdItems['sms'][] = $itemData;
+                } else {
+                    $createdItems['emails'][] = $itemData;
                 }
+
+                // Note: Automation rules with conditional logic can be created manually
+                // The existing AutomationRule schema differs from what we need here
+                // Future enhancement: integrate with automation builder
+
+                $previousMessageId = $message->id;
             }
 
             // Update plan status
