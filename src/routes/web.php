@@ -369,6 +369,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
     Route::get('/marketplace/stripe', fn() => Inertia::render('Marketplace/Stripe'))->name('marketplace.stripe');
     Route::get('/marketplace/woocommerce', fn() => Inertia::render('Marketplace/WooCommerce'))->name('marketplace.woocommerce');
+    Route::get('/marketplace/woocommerce/download', function () {
+        $path = public_path('plugins/woocommerce/netsendo-woocommerce.zip');
+        if (!file_exists($path)) {
+            abort(404, 'Plugin file not found');
+        }
+        return response()->download($path, 'netsendo-woocommerce.zip');
+    })->name('marketplace.woocommerce.download');
 
 
     // Stripe Settings

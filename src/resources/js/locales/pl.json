@@ -1365,7 +1365,39 @@
         "request_submit": "Wyślij prośbę",
         "request_success_title": "Dziękujemy!",
         "request_success_desc": "Twoja prośba o integrację została wysłana. Skontaktujemy się z Tobą wkrótce.",
-        "request_error": "Nie udało się wysłać prośby. Spróbuj ponownie."
+        "request_error": "Nie udało się wysłać prośby. Spróbuj ponownie.",
+        "woocommerce": {
+            "title": "Integracja WooCommerce",
+            "description": "Integruj swój sklep WooCommerce z NetSendo - automatycznie zapisuj klientów na listy mailingowe po zakupie.",
+            "features": {
+                "auto_subscription": "Automatyczna subskrypcja",
+                "auto_subscription_desc": "Automatycznie dodawaj klientów do list mailingowych po zakupie produktu.",
+                "cart_recovery": "Odzyskiwanie koszyków",
+                "cart_recovery_desc": "Zapisuj klientów z nieopłaconymi zamówieniami na osobną listę do follow-up.",
+                "per_product": "Ustawienia per produkt",
+                "per_product_desc": "Nadpisuj domyślne listy dla poszczególnych produktów WooCommerce.",
+                "external_pages": "Zewnętrzne strony",
+                "external_pages_desc": "Przekierowuj klientów na strony zewnętrzne z lejkiem sprzedażowym po zakupie."
+            },
+            "setup_steps": {
+                "step1_title": "Pobierz wtyczkę",
+                "step1_desc": "Kliknij przycisk poniżej, aby pobrać wtyczkę NetSendo for WooCommerce.",
+                "step2_title": "Zainstaluj w WordPress",
+                "step2_desc": "Przejdź do WordPress → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer, i zainstaluj pobrany plik ZIP.",
+                "step3_title": "Skonfiguruj połączenie",
+                "step3_desc": "W WordPress przejdź do WooCommerce → NetSendo i wprowadź URL NetSendo oraz klucz API.",
+                "step4_title": "Ustaw domyślne listy",
+                "step4_desc": "Wybierz listy, na które mają być zapisywani klienci po zakupie i przy nieopłaconych zamówieniach."
+            },
+            "download_plugin": "Pobierz wtyczkę",
+            "api_config": "Konfiguracja API",
+            "netsendo_url": "URL NetSendo",
+            "api_key": "Klucz API",
+            "manage_api_keys": "Zarządzaj kluczami API",
+            "requirements": "Wymagania",
+            "need_help": "Potrzebujesz pomocy?",
+            "check_docs": "Sprawdź dokumentację lub skontaktuj się z naszym zespołem wsparcia."
+        }
     },
     "license": {
         "title": "Licencja",

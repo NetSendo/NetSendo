@@ -63,23 +63,27 @@
                     if (response.success && response.data.lists) {
                         // Update all list dropdowns
                         var lists = response.data.lists;
-                        var $selects = $('select[name*="list_id"]');
+                        var $selects = $('select.netsendo-list-select');
 
                         $selects.each(function() {
                             var $select = $(this);
                             var currentValue = $select.val();
 
-                            // Keep the first option (placeholder)
-                            $select.find('option:not(:first)').remove();
+                            // Keep the first option (placeholder) and the manual option
+                            $select.find('option').not(':first').not('[value="manual"]').remove();
 
-                            // Add new options
+                            // Add new options before the "manual" option
+                            var $manualOption = $select.find('option[value="manual"]');
                             $.each(lists, function(index, list) {
-                                $select.append(
-                                    $('<option></option>')
-                                        .attr('value', list.id)
-                                        .text(list.name)
-                                        .prop('selected', list.id == currentValue)
-                                );
+                                var $option = $('<option></option>')
+                                    .attr('value', list.id)
+                                    .text(list.name)
+                                    .prop('selected', list.id == currentValue);
+                                if ($manualOption.length) {
+                                    $manualOption.before($option);
+                                } else {
+                                    $select.append($option);
+                                }
                             });
                         });
 
@@ -93,6 +97,19 @@
                     alert('Failed to refresh lists');
                 }
             });
+        });
+
+        // Toggle manual ID input fields when "manual" option is selected
+        $('.netsendo-list-select').on('change', function() {
+            var $select = $(this);
+            var $wrapper = $select.closest('.netsendo-list-field');
+            var $manualInput = $wrapper.next('.netsendo-manual-id');
+
+            if ($select.val() === 'manual') {
+                $manualInput.show();
+            } else {
+                $manualInput.hide();
+            }
         });
 
     });

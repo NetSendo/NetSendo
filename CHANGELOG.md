@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.11] – Short Description
+
+**Release date:** 2026-01-01
+
+### Added
+
+- **WooCommerce Integration:**
+  - New WordPress plugin "NetSendo for WooCommerce" for automatic customer subscription after purchase.
+  - Plugin features: auto-subscription on order completion, abandoned cart recovery (pending orders), per-product list settings, external page redirects with sales funnel.
+  - Admin settings page with NetSendo API connection, dynamic list dropdown with manual ID input option.
+  - Product meta box in WooCommerce for overriding default list and redirect settings per product.
+  - External pages dropdown to redirect customers to NetSendo sales funnel pages after purchase.
+  - Download ZIP package available at `/marketplace/woocommerce/download`.
+  - New Laravel webhook controller `WooCommerceController` at `/webhooks/woocommerce` for receiving plugin events.
+  - New API endpoint `GET /api/v1/external-pages` for fetching external pages list.
+  - New `ExternalPageController` for API external pages access.
+  - WooCommerce marketplace page with installation instructions and plugin download.
+  - WooCommerce added to E-commerce category in Marketplace with "Active" status.
+  - Full translations for WooCommerce integration in PL and EN.
+
 ## [1.2.10] – Short Description
 
 **Release date:** 2025-12-31

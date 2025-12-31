@@ -188,6 +188,42 @@ class NetSendo_WC_API {
     }
 
     /**
+     * Get external pages from NetSendo
+     *
+     * @return array|false
+     */
+    public function get_external_pages() {
+        if (!$this->is_configured()) {
+            return false;
+        }
+
+        $endpoint = $this->api_url . '/api/v1/external-pages';
+
+        $response = wp_remote_get($endpoint, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->api_key,
+                'Accept' => 'application/json',
+            ],
+            'timeout' => 30,
+        ]);
+
+        if (is_wp_error($response)) {
+            $this->log('API Error getting external pages: ' . $response->get_error_message());
+            return false;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code >= 200 && $code < 300) {
+            return $body['data'] ?? $body;
+        }
+
+        $this->log('API Error getting external pages: ' . ($body['message'] ?? 'Unknown error'));
+        return false;
+    }
+
+    /**
      * Log message for debugging
      *
      * @param string $message

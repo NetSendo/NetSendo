@@ -98,6 +98,10 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
             'update' => 'api.v1.webhooks.update',
             'destroy' => 'api.v1.webhooks.destroy',
         ]);
+
+    // External Pages (read-only, for integrations like WooCommerce)
+    Route::get('external-pages', [\App\Http\Controllers\Api\V1\ExternalPageController::class, 'index'])
+        ->name('api.v1.external-pages.index');
 });
 
 // Public Download Route (Signed)

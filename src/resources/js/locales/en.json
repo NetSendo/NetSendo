@@ -1773,7 +1773,39 @@
         "request_submit": "Submit Request",
         "request_success_title": "Thank you!",
         "request_success_desc": "Your integration request has been submitted. We will contact you soon.",
-        "request_error": "Failed to submit request. Please try again."
+        "request_error": "Failed to submit request. Please try again.",
+        "woocommerce": {
+            "title": "WooCommerce Integration",
+            "description": "Integrate your WooCommerce store with NetSendo - automatically add customers to mailing lists after purchase.",
+            "features": {
+                "auto_subscription": "Automatic Subscription",
+                "auto_subscription_desc": "Automatically add customers to mailing lists after product purchase.",
+                "cart_recovery": "Cart Recovery",
+                "cart_recovery_desc": "Capture customers from unpaid orders on a separate list for follow-up.",
+                "per_product": "Per-Product Settings",
+                "per_product_desc": "Override default lists for individual WooCommerce products.",
+                "external_pages": "External Pages",
+                "external_pages_desc": "Redirect customers to external pages with sales funnel after purchase."
+            },
+            "setup_steps": {
+                "step1_title": "Download Plugin",
+                "step1_desc": "Click the button below to download the NetSendo for WooCommerce plugin.",
+                "step2_title": "Install in WordPress",
+                "step2_desc": "Go to WordPress → Plugins → Add New → Upload Plugin, and install the downloaded ZIP file.",
+                "step3_title": "Configure Connection",
+                "step3_desc": "In WordPress, go to WooCommerce → NetSendo and enter your NetSendo URL and API Key.",
+                "step4_title": "Set Default Lists",
+                "step4_desc": "Select the lists where customers should be added after purchase and for pending orders."
+            },
+            "download_plugin": "Download Plugin",
+            "api_config": "API Configuration",
+            "netsendo_url": "NetSendo URL",
+            "api_key": "API Key",
+            "manage_api_keys": "Manage API Keys",
+            "requirements": "Requirements",
+            "need_help": "Need help?",
+            "check_docs": "Check our documentation or contact our support team."
+        }
     },
     "ai": {
         "title": "AI Integrations",

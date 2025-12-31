@@ -103,7 +103,7 @@ function netsendo_wc_handle_order_completed($order_id) {
 
         // Get product-specific settings or use defaults
         $product_settings = netsendo_wc_get_product_settings($product_id);
-        $list_id = $product_settings['purchase_list_id'] ?: ($settings['default_purchase_list_id'] ?? '');
+        $list_id = $product_settings['purchase_list_id'] ?: NetSendo_WC_Admin_Settings::get_effective_list_id('purchase');
 
         if ($list_id) {
             $custom_fields = [
@@ -163,7 +163,7 @@ function netsendo_wc_handle_order_pending($order_id, $posted_data, $order) {
 
         // Get product-specific settings or use defaults
         $product_settings = netsendo_wc_get_product_settings($product_id);
-        $list_id = $product_settings['pending_list_id'] ?: ($settings['default_pending_list_id'] ?? '');
+        $list_id = $product_settings['pending_list_id'] ?: NetSendo_WC_Admin_Settings::get_effective_list_id('pending');
 
         if ($list_id) {
             $custom_fields = [
@@ -212,28 +212,42 @@ function netsendo_wc_handle_thank_you_redirect($order_id) {
 
     $settings = NetSendo_WC_Admin_Settings::get_settings();
     $redirect_url = null;
+    $first_product_id = null;
 
     // Check each product for custom redirect URL (first one wins)
     foreach ($order->get_items() as $item) {
         $product_id = $item->get_product_id();
+        if (!$first_product_id) {
+            $first_product_id = $product_id;
+        }
         $product_settings = netsendo_wc_get_product_settings($product_id);
 
         if (!empty($product_settings['redirect_url'])) {
             $redirect_url = $product_settings['redirect_url'];
             break;
         }
+
+        // Check for product-specific external page
+        if (!empty($product_settings['external_page_id'])) {
+            $api_url = $settings['api_url'] ?? '';
+            $redirect_url = rtrim($api_url, '/') . '/p/' . $product_settings['external_page_id'];
+            break;
+        }
     }
 
-    // Fall back to default redirect URL
-    if (!$redirect_url && !empty($settings['default_redirect_url'])) {
-        $redirect_url = $settings['default_redirect_url'];
+    // Fall back to default redirect URL from settings
+    if (!$redirect_url) {
+        $redirect_url = NetSendo_WC_Admin_Settings::get_redirect_url();
     }
 
     if ($redirect_url) {
-        // Add order data to URL
+        // Add order data to URL for NetSendo external page processing
         $redirect_url = add_query_arg([
             'order_id' => $order_id,
             'order_key' => $order->get_order_key(),
+            'email' => urlencode($order->get_billing_email()),
+            'product_id' => $first_product_id,
+            'source' => 'woocommerce',
         ], $redirect_url);
 
         // Mark as redirected

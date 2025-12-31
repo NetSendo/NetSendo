@@ -207,21 +207,33 @@ class NetSendo_WC_Admin_Settings {
         $settings = self::get_settings();
         $lists = self::get_cached_lists();
         $selected = $settings['default_purchase_list_id'] ?? '';
+        $manual_id = $settings['default_purchase_list_manual'] ?? '';
+        $use_manual = !empty($manual_id) && (empty($selected) || $selected === 'manual');
         ?>
-        <select name="<?php echo self::OPTION_NAME; ?>[default_purchase_list_id]" id="netsendo_purchase_list" class="regular-text">
-            <option value=""><?php _e('— Select List —', 'netsendo-woocommerce'); ?></option>
-            <?php if ($lists): ?>
-                <?php foreach ($lists as $list): ?>
-                    <option value="<?php echo esc_attr($list['id']); ?>" <?php selected($selected, $list['id']); ?>>
-                        <?php echo esc_html($list['name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </select>
-        <button type="button" id="netsendo_refresh_lists" class="button button-secondary">
-            <?php _e('Refresh Lists', 'netsendo-woocommerce'); ?>
-        </button>
-        <p class="description"><?php _e('Customers will be added to this list after completing a purchase.', 'netsendo-woocommerce'); ?></p>
+        <div class="netsendo-list-field">
+            <select name="<?php echo self::OPTION_NAME; ?>[default_purchase_list_id]" id="netsendo_purchase_list" class="regular-text netsendo-list-select">
+                <option value=""><?php _e('— Select List —', 'netsendo-woocommerce'); ?></option>
+                <?php if ($lists): ?>
+                    <?php foreach ($lists as $list): ?>
+                        <option value="<?php echo esc_attr($list['id']); ?>" <?php selected($selected, $list['id']); ?>>
+                            <?php echo esc_html($list['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <option value="manual" <?php selected($selected, 'manual'); ?>><?php _e('— Enter ID manually —', 'netsendo-woocommerce'); ?></option>
+            </select>
+            <button type="button" id="netsendo_refresh_lists" class="button button-secondary">
+                <?php _e('Refresh Lists', 'netsendo-woocommerce'); ?>
+            </button>
+        </div>
+        <div class="netsendo-manual-id" style="margin-top: 8px; <?php echo $use_manual ? '' : 'display: none;'; ?>">
+            <input type="text"
+                   name="<?php echo self::OPTION_NAME; ?>[default_purchase_list_manual]"
+                   value="<?php echo esc_attr($manual_id); ?>"
+                   class="regular-text"
+                   placeholder="<?php _e('Enter list ID', 'netsendo-woocommerce'); ?>">
+        </div>
+        <p class="description"><?php _e('Customers will be added to this list after completing a purchase. Select from dropdown or enter ID manually.', 'netsendo-woocommerce'); ?></p>
         <?php
     }
 
@@ -232,18 +244,30 @@ class NetSendo_WC_Admin_Settings {
         $settings = self::get_settings();
         $lists = self::get_cached_lists();
         $selected = $settings['default_pending_list_id'] ?? '';
+        $manual_id = $settings['default_pending_list_manual'] ?? '';
+        $use_manual = !empty($manual_id) && (empty($selected) || $selected === 'manual');
         ?>
-        <select name="<?php echo self::OPTION_NAME; ?>[default_pending_list_id]" class="regular-text">
-            <option value=""><?php _e('— Select List —', 'netsendo-woocommerce'); ?></option>
-            <?php if ($lists): ?>
-                <?php foreach ($lists as $list): ?>
-                    <option value="<?php echo esc_attr($list['id']); ?>" <?php selected($selected, $list['id']); ?>>
-                        <?php echo esc_html($list['name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </select>
-        <p class="description"><?php _e('Customers will be added to this list when they create an order but have not yet paid (abandoned cart recovery).', 'netsendo-woocommerce'); ?></p>
+        <div class="netsendo-list-field">
+            <select name="<?php echo self::OPTION_NAME; ?>[default_pending_list_id]" class="regular-text netsendo-list-select">
+                <option value=""><?php _e('— Select List —', 'netsendo-woocommerce'); ?></option>
+                <?php if ($lists): ?>
+                    <?php foreach ($lists as $list): ?>
+                        <option value="<?php echo esc_attr($list['id']); ?>" <?php selected($selected, $list['id']); ?>>
+                            <?php echo esc_html($list['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                <option value="manual" <?php selected($selected, 'manual'); ?>><?php _e('— Enter ID manually —', 'netsendo-woocommerce'); ?></option>
+            </select>
+        </div>
+        <div class="netsendo-manual-id" style="margin-top: 8px; <?php echo $use_manual ? '' : 'display: none;'; ?>">
+            <input type="text"
+                   name="<?php echo self::OPTION_NAME; ?>[default_pending_list_manual]"
+                   value="<?php echo esc_attr($manual_id); ?>"
+                   class="regular-text"
+                   placeholder="<?php _e('Enter list ID', 'netsendo-woocommerce'); ?>">
+        </div>
+        <p class="description"><?php _e('Customers will be added to this list when they create an order but have not yet paid (abandoned cart recovery). Select from dropdown or enter ID manually.', 'netsendo-woocommerce'); ?></p>
         <?php
     }
 
@@ -252,13 +276,38 @@ class NetSendo_WC_Admin_Settings {
      */
     public static function render_redirect_url_field() {
         $settings = self::get_settings();
+        $external_pages = self::get_cached_external_pages();
+        $selected_page = $settings['default_external_page_id'] ?? '';
+        $redirect_url = $settings['default_redirect_url'] ?? '';
         ?>
-        <input type="url"
-               name="<?php echo self::OPTION_NAME; ?>[default_redirect_url]"
-               value="<?php echo esc_attr($settings['default_redirect_url'] ?? ''); ?>"
-               class="regular-text"
-               placeholder="https://example.com/thank-you">
-        <p class="description"><?php _e('Optional: Redirect customers to this URL after purchase instead of the default thank you page.', 'netsendo-woocommerce'); ?></p>
+        <div class="netsendo-redirect-field">
+            <label style="display: block; margin-bottom: 8px;">
+                <strong><?php _e('NetSendo External Page:', 'netsendo-woocommerce'); ?></strong>
+            </label>
+            <select name="<?php echo self::OPTION_NAME; ?>[default_external_page_id]" class="regular-text" style="margin-bottom: 10px;">
+                <option value=""><?php _e('— No NetSendo page —', 'netsendo-woocommerce'); ?></option>
+                <?php if ($external_pages): ?>
+                    <?php foreach ($external_pages as $page): ?>
+                        <option value="<?php echo esc_attr($page['id']); ?>"
+                                data-url="<?php echo esc_attr($page['url'] ?? ''); ?>"
+                                <?php selected($selected_page, $page['id']); ?>>
+                            <?php echo esc_html($page['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </select>
+            <p class="description" style="margin-bottom: 15px;"><?php _e('Select a NetSendo external page to use as thank you page with sales funnel functionality.', 'netsendo-woocommerce'); ?></p>
+
+            <label style="display: block; margin-bottom: 8px;">
+                <strong><?php _e('Or Custom URL:', 'netsendo-woocommerce'); ?></strong>
+            </label>
+            <input type="url"
+                   name="<?php echo self::OPTION_NAME; ?>[default_redirect_url]"
+                   value="<?php echo esc_attr($redirect_url); ?>"
+                   class="regular-text"
+                   placeholder="https://example.com/thank-you">
+            <p class="description"><?php _e('Enter a custom URL if not using NetSendo external page. The following parameters will be added: order_id, email, product_id.', 'netsendo-woocommerce'); ?></p>
+        </div>
         <?php
     }
 
@@ -301,11 +350,15 @@ class NetSendo_WC_Admin_Settings {
         $sanitized['api_url'] = isset($input['api_url']) ? esc_url_raw(rtrim($input['api_url'], '/')) : '';
         $sanitized['api_key'] = isset($input['api_key']) ? sanitize_text_field($input['api_key']) : '';
         $sanitized['default_purchase_list_id'] = isset($input['default_purchase_list_id']) ? sanitize_text_field($input['default_purchase_list_id']) : '';
+        $sanitized['default_purchase_list_manual'] = isset($input['default_purchase_list_manual']) ? sanitize_text_field($input['default_purchase_list_manual']) : '';
         $sanitized['default_pending_list_id'] = isset($input['default_pending_list_id']) ? sanitize_text_field($input['default_pending_list_id']) : '';
+        $sanitized['default_pending_list_manual'] = isset($input['default_pending_list_manual']) ? sanitize_text_field($input['default_pending_list_manual']) : '';
+        $sanitized['default_external_page_id'] = isset($input['default_external_page_id']) ? sanitize_text_field($input['default_external_page_id']) : '';
         $sanitized['default_redirect_url'] = isset($input['default_redirect_url']) ? esc_url_raw($input['default_redirect_url']) : '';
 
-        // Clear cached lists when settings change
+        // Clear cached data when settings change
         delete_transient('netsendo_wc_lists');
+        delete_transient('netsendo_wc_external_pages');
 
         return $sanitized;
     }
@@ -320,7 +373,10 @@ class NetSendo_WC_Admin_Settings {
             'api_key' => '',
             'api_url' => '',
             'default_purchase_list_id' => '',
+            'default_purchase_list_manual' => '',
             'default_pending_list_id' => '',
+            'default_pending_list_manual' => '',
+            'default_external_page_id' => '',
             'default_redirect_url' => '',
         ]);
     }
@@ -350,6 +406,77 @@ class NetSendo_WC_Admin_Settings {
 
         self::$cached_lists = $lists;
         return $lists;
+    }
+
+    /**
+     * Get cached external pages from API
+     *
+     * @return array|false
+     */
+    public static function get_cached_external_pages() {
+        // Try to get from transient
+        $pages = get_transient('netsendo_wc_external_pages');
+
+        if ($pages === false) {
+            // Fetch from API
+            $api = new NetSendo_WC_API();
+            $pages = $api->get_external_pages();
+
+            if ($pages) {
+                set_transient('netsendo_wc_external_pages', $pages, HOUR_IN_SECONDS);
+            }
+        }
+
+        return $pages;
+    }
+
+    /**
+     * Get effective list ID (from dropdown or manual input)
+     *
+     * @param string $type 'purchase' or 'pending'
+     * @return string|null
+     */
+    public static function get_effective_list_id($type = 'purchase') {
+        $settings = self::get_settings();
+
+        $list_id_key = "default_{$type}_list_id";
+        $manual_key = "default_{$type}_list_manual";
+
+        $selected = $settings[$list_id_key] ?? '';
+        $manual = $settings[$manual_key] ?? '';
+
+        if ($selected === 'manual' && !empty($manual)) {
+            return $manual;
+        }
+
+        return !empty($selected) && $selected !== 'manual' ? $selected : null;
+    }
+
+    /**
+     * Get redirect URL (from external page or custom URL)
+     *
+     * @return string|null
+     */
+    public static function get_redirect_url() {
+        $settings = self::get_settings();
+        $api = new NetSendo_WC_API();
+
+        // Check for NetSendo external page first
+        $external_page_id = $settings['default_external_page_id'] ?? '';
+        if (!empty($external_page_id)) {
+            $pages = self::get_cached_external_pages();
+            if ($pages) {
+                foreach ($pages as $page) {
+                    if ($page['id'] == $external_page_id) {
+                        // Return the URL from the external page
+                        return $page['url'] ?? '';
+                    }
+                }
+            }
+        }
+
+        // Fall back to custom redirect URL
+        return $settings['default_redirect_url'] ?? null;
     }
 
     /**
