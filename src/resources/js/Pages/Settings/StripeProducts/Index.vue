@@ -5,6 +5,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
+import SalesFunnelTab from "@/Components/SalesFunnelTab.vue";
 import { useI18n } from "vue-i18n";
 
 const { t, locale } = useI18n();
@@ -25,6 +26,7 @@ const transactions = ref([]);
 const transactionsLoading = ref(false);
 const checkoutUrl = ref(null);
 const copySuccess = ref(false);
+const activeTab = ref('products');
 
 // Forms
 const createForm = useForm({
@@ -233,7 +235,37 @@ async function getCheckoutUrl(product) {
                     </div>
                 </div>
 
-                <!-- Products List -->
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="-mb-px flex space-x-8">
+                        <button
+                            @click="activeTab = 'products'"
+                            :class="[
+                                'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                                activeTab === 'products'
+                                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                        >
+                            📦 {{ t('sales_funnels.tabs.products') }}
+                        </button>
+                        <button
+                            @click="activeTab = 'funnels'"
+                            :class="[
+                                'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                                activeTab === 'funnels'
+                                    ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                            ]"
+                        >
+                            🚀 {{ t('sales_funnels.tabs.funnels') }}
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Products Tab Content -->
+                <div v-if="activeTab === 'products'">
+                    <!-- Products List -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
@@ -382,6 +414,15 @@ async function getCheckoutUrl(product) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                     {{ t("stripe.url_copied") }}
+                </div>
+                </div>
+
+                <!-- Sales Funnels Tab Content -->
+                <div v-if="activeTab === 'funnels'">
+                    <SalesFunnelTab
+                        product-type="stripe"
+                        :products="products"
+                    />
                 </div>
             </div>
         </div>

@@ -24,6 +24,7 @@ class PolarProduct extends Model
         'billing_interval',
         'is_active',
         'metadata',
+        'sales_funnel_id',
     ];
 
     protected $casts = [
@@ -55,6 +56,14 @@ class PolarProduct extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(PolarTransaction::class);
+    }
+
+    /**
+     * Get the sales funnel for this product.
+     */
+    public function salesFunnel(): BelongsTo
+    {
+        return $this->belongsTo(SalesFunnel::class);
     }
 
     /**

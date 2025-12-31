@@ -413,6 +413,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/all-transactions', [\App\Http\Controllers\PolarProductController::class, 'allTransactions'])->name('all-transactions');
     });
 
+    // Sales Funnels (for external page product embedding)
+    Route::prefix('settings/sales-funnels')->name('settings.sales-funnels.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SalesFunnelController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\SalesFunnelController::class, 'store'])->name('store');
+        Route::put('/{salesFunnel}', [\App\Http\Controllers\SalesFunnelController::class, 'update'])->name('update');
+        Route::delete('/{salesFunnel}', [\App\Http\Controllers\SalesFunnelController::class, 'destroy'])->name('destroy');
+        Route::get('/options', [\App\Http\Controllers\SalesFunnelController::class, 'getOptions'])->name('options');
+        Route::post('/embed-code', [\App\Http\Controllers\SalesFunnelController::class, 'getEmbedCode'])->name('embed-code');
+    });
+
     // User Management (Team Members)
     Route::prefix('settings/users')->name('settings.users.')->group(function () {
         Route::get('/', [\App\Http\Controllers\UserManagementController::class, 'index'])->name('index');
@@ -474,6 +484,10 @@ Route::prefix('subscribe')->name('subscribe.')->group(function () {
     Route::get('/success/{slug}', [\App\Http\Controllers\PublicFormController::class, 'success'])->name('success');
     Route::get('/error/{slug}', [\App\Http\Controllers\PublicFormController::class, 'error'])->name('error');
 });
+
+// Public Sales Funnel Checkout Routes (no auth)
+Route::get('/checkout/{type}/{product}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'checkout'])->name('sales-funnel.checkout');
+Route::get('/checkout/success/{funnel}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'success'])->name('sales-funnel.success');
 
 // CRON Webhook (public, authenticated via token)
 Route::match(['get', 'post'], '/api/cron/webhook', [\App\Http\Controllers\CronSettingsController::class, 'webhookTrigger'])->name('cron.webhook');

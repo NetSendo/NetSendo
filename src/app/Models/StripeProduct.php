@@ -22,6 +22,7 @@ class StripeProduct extends Model
         'type',
         'is_active',
         'metadata',
+        'sales_funnel_id',
     ];
 
     protected $casts = [
@@ -44,6 +45,14 @@ class StripeProduct extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(StripeTransaction::class);
+    }
+
+    /**
+     * Get the sales funnel for this product.
+     */
+    public function salesFunnel(): BelongsTo
+    {
+        return $this->belongsTo(SalesFunnel::class);
     }
 
     /**

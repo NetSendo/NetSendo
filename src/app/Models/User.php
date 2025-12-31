@@ -230,6 +230,11 @@ class User extends Authenticatable
         return $this->hasMany(SmsProvider::class);
     }
 
+    public function externalPages()
+    {
+        return $this->hasMany(ExternalPage::class);
+    }
+
     /**
      * Send the password reset notification.
      * Overrides default to use SystemMailService for ENV/Mailbox fallback.

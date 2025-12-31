@@ -4,6 +4,7 @@ import { Head, useForm, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, computed } from "vue";
 import axios from "axios";
+import SalesFunnelTab from "@/Components/SalesFunnelTab.vue";
 
 const { t } = useI18n();
 
@@ -23,6 +24,7 @@ const showCheckoutModal = ref(false);
 const checkoutUrl = ref(null);
 const generatingUrl = ref(false);
 const selectedProduct = ref(null);
+const activeTab = ref('products');
 
 const createForm = useForm({
     name: "",
@@ -123,7 +125,37 @@ const formatPrice = (price, currency) => {
                     </div>
                 </div>
 
-                <!-- Products List -->
+                <!-- Tabs Navigation -->
+                <div class="border-b border-slate-700 mb-6">
+                    <nav class="-mb-px flex space-x-8">
+                        <button
+                            @click="activeTab = 'products'"
+                            :class="[
+                                'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                                activeTab === 'products'
+                                    ? 'border-blue-500 text-blue-400'
+                                    : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
+                            ]"
+                        >
+                            📦 {{ $t('sales_funnels.tabs.products') }}
+                        </button>
+                        <button
+                            @click="activeTab = 'funnels'"
+                            :class="[
+                                'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                                activeTab === 'funnels'
+                                    ? 'border-blue-500 text-blue-400'
+                                    : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
+                            ]"
+                        >
+                            🚀 {{ $t('sales_funnels.tabs.funnels') }}
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Products Tab Content -->
+                <div v-if="activeTab === 'products'">
+                    <!-- Products List -->
                 <div class="rounded-2xl bg-slate-800 ring-1 ring-white/10 overflow-hidden">
                     <div v-if="productsList.length === 0" class="p-12 text-center">
                         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-700">
@@ -194,6 +226,15 @@ const formatPrice = (price, currency) => {
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                </div>
+
+                <!-- Sales Funnels Tab Content -->
+                <div v-if="activeTab === 'funnels'">
+                    <SalesFunnelTab
+                        product-type="polar"
+                        :products="productsList"
+                    />
                 </div>
             </div>
         </div>

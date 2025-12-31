@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Services\SalesFunnelService;
 use App\Services\StripeService;
 use App\Services\WebhookDispatcher;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ class StripeController extends Controller
 {
     public function __construct(
         private StripeService $stripeService,
-        private WebhookDispatcher $webhookDispatcher
+        private WebhookDispatcher $webhookDispatcher,
+        private SalesFunnelService $salesFunnelService
     ) {}
 
     /**
@@ -71,6 +73,15 @@ class StripeController extends Controller
                 $transaction = $this->stripeService->handleCheckoutCompleted($event);
                 if ($transaction) {
                     $this->dispatchNetSendoWebhook('stripe.purchase_completed', $transaction);
+
+                    // Process sales funnel actions (subscribe to list, add tag)
+                    if ($transaction->product?->sales_funnel_id) {
+                        $this->salesFunnelService->processPurchase(
+                            $transaction->product->salesFunnel,
+                            $transaction->customer_email,
+                            $transaction->customer_name
+                        );
+                    }
                 }
                 break;
 

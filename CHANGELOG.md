@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.9] – Sales Funnels Integration
+
+**Release date:** 2025-12-31
+
+### Added
+
+- **Sales Funnels Integration:**
+
+  - Implemented Sales Funnels feature for Stripe and Polar products.
+  - New "Sales Funnels" tab in Stripe and Polar product settings.
+  - Ability to create sales funnels, assign products, and generate embed codes.
+  - **Auto-Subscription:** Automatic mailing list subscription and tagging upon successful purchase.
+  - **Flexible Thank You Pages:** Support for default thank-you page, external page redirect, or custom URL.
+  - New `SalesFunnel` model, controller, service, and policy.
+  - **Embed Code Generator:** JavaScript embed code for external pages (WordPress, ClickFunnels, etc.).
+  - Full translations for Sales Funnels in PL, EN, DE, ES.
+
+- **User Model Improvement:**
+
+  - Added missing `externalPages()` relationship to `User` model, fixing "Call to undefined method" error in automations.
+
+- **Integration Documentation Updates:**
+  - Added comprehensive webhook setup instructions for Stripe (API Keys) and Polar.
+  - Added list of required webhook events for both providers.
+  - Added webhook URL copying functionality to settings pages.
+  - Added OAuth permission requirements (`read_write`) to Stripe Connect setup.
+  - Updated translations for setup wizards in PL, EN, DE, ES.
+
 ## [1.2.8] – Polar Payment Processor Integration
 
 **Release date:** 2025-12-29

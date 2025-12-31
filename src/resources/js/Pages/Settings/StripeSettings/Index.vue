@@ -31,6 +31,20 @@ const disconnecting = ref(false);
 const showDisconnectConfirm = ref(false);
 const copiedRedirectUri = ref(false);
 const savingClientId = ref(false);
+const copiedWebhookUrl = ref(false);
+
+// Webhook URL computed
+const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/webhooks/stripe` : '/webhooks/stripe';
+
+const copyWebhookUrl = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(webhookUrl);
+        copiedWebhookUrl.value = true;
+        setTimeout(() => {
+            copiedWebhookUrl.value = false;
+        }, 2000);
+    }
+};
 
 const isConfigured = computed(() => {
     if (connectionMode.value === 'oauth') {
@@ -287,6 +301,10 @@ const saveClientId = () => {
                                         <li>{{ t('stripe.oauth_setup_step1_2') }}</li>
                                         <li>{{ t('stripe.oauth_setup_step1_3') }}</li>
                                     </ol>
+                                    <div class="mt-3 ml-8 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                                        <p class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">{{ t('stripe.oauth_required_permissions') }}</p>
+                                        <p class="text-xs text-blue-700 dark:text-blue-300">{{ t('stripe.oauth_permissions_list') }}</p>
+                                    </div>
                                     <a
                                         href="https://dashboard.stripe.com/settings/connect"
                                         target="_blank"
@@ -469,6 +487,61 @@ const saveClientId = () => {
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 {{ t('stripe.webhook_secret_help') }}
                             </p>
+                        </div>
+
+                        <!-- Webhook URL Info -->
+                        <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {{ t('stripe.webhook_url') }}
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <code class="flex-1 p-2 rounded bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-200 font-mono break-all border border-gray-200 dark:border-gray-600">
+                                    {{ webhookUrl }}
+                                </code>
+                                <button
+                                    type="button"
+                                    @click="copyWebhookUrl"
+                                    class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-600 dark:text-gray-300"
+                                >
+                                    <svg v-if="!copiedWebhookUrl" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <svg v-else class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                {{ t('stripe.webhook_url_help') }}
+                            </p>
+
+                            <!-- Webhook Setup Instructions -->
+                            <div class="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+                                <p class="text-xs font-medium text-amber-800 dark:text-amber-200 mb-2">{{ t('stripe.webhook_setup_title') }}</p>
+                                <ol class="text-xs text-amber-700 dark:text-amber-300 space-y-1 list-decimal ml-4">
+                                    <li>{{ t('stripe.webhook_setup_step1') }}</li>
+                                    <li>{{ t('stripe.webhook_setup_step2') }}</li>
+                                    <li>{{ t('stripe.webhook_setup_step3') }}</li>
+                                </ol>
+                                <div class="mt-3">
+                                    <p class="text-xs font-medium text-amber-800 dark:text-amber-200 mb-1">{{ t('stripe.webhook_events_title') }}</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <code class="px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 rounded">checkout.session.completed</code>
+                                        <code class="px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 rounded">charge.refunded</code>
+                                        <code class="px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-200 rounded">payment_intent.succeeded</code>
+                                    </div>
+                                </div>
+                                <a
+                                    href="https://dashboard.stripe.com/webhooks/create"
+                                    target="_blank"
+                                    class="inline-flex items-center mt-3 text-xs font-medium text-amber-700 hover:text-amber-600 dark:text-amber-300"
+                                >
+                                    {{ t('stripe.webhook_open_stripe') }}
+                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Test Result -->
