@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.10] – Short Description
+
+**Release date:** 2025-12-31
+
 ### Added
 
 - **Campaign Architect Enhancements:**
