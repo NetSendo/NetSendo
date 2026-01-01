@@ -187,6 +187,166 @@
             "auto_sync": "Automatische Datensynchronisation",
             "no_code": "Kein Code erforderlich"
         },
+        "woocommerce": {
+            "title": "WooCommerce",
+            "description": "Professionelle Abonnement-Formulare und Kundensynchronisation für WooCommerce-Shops.",
+            "hero_title": "WooCommerce",
+            "hero_subtitle": "Integrieren Sie Ihren WooCommerce-Shop mit NetSendo - fügen Sie Kunden nach dem Kauf automatisch zu Mailinglisten hinzu.",
+            "hero_description": "Das NetSendo für WooCommerce Plugin ermöglicht es Ihnen, Kunden nach einem Kauf oder Kaufversuch (unbezahlte Bestellung) automatisch zu Mailinglisten hinzuzufügen. Sie können Kunden auch auf externe Sales-Funnel-Seiten umleiten.",
+            "features_title": "🚀 Funktionen",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Automatische Anmeldung",
+                    "description": "Fügen Sie Kunden nach dem Kauf eines Produkts automatisch zu Mailinglisten hinzu."
+                },
+                "cart_recovery": {
+                    "title": "Warenkorbwiederherstellung",
+                    "description": "Speichern Sie Kunden mit unbezahlten Bestellungen in einer separaten Liste für Follow-ups."
+                },
+                "product_settings": {
+                    "title": "Einstellungen pro Produkt",
+                    "description": "Überschreiben Sie Standardlisten für bestimmte WooCommerce-Produkte."
+                },
+                "external_pages": {
+                    "title": "Externe Seiten",
+                    "description": "Leiten Sie Kunden nach dem Kauf auf externe Sales-Funnel-Seiten um."
+                }
+            },
+            "setup_title": "⚙️ Installation",
+            "setup_steps": {
+                "download": {
+                    "title": "Plugin herunterladen",
+                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WooCommerce Plugin herunterzuladen."
+                },
+                "install": {
+                    "title": "In WordPress installieren",
+                    "description": "Gehen Sie zu WordPress → Plugins → Installieren → Plugin hochladen und installieren Sie die heruntergeladene ZIP-Datei."
+                },
+                "configure": {
+                    "title": "Verbindung konfigurieren",
+                    "description": "Gehen Sie in WordPress zu WooCommerce → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest."
+                },
+                "lists": {
+                    "title": "Standardlisten festlegen",
+                    "description": "Wählen Sie Listen aus, zu denen Kunden nach dem Kauf und bei unbezahlten Bestellungen hinzugefügt werden sollen."
+                }
+            },
+            "download_button": "Plugin herunterladen",
+            "api_config_title": "🔑 API-Konfiguration",
+            "api_url_label": "NetSendo URL",
+            "api_url_help": "Geben Sie diese URL in den WooCommerce-Plugin-Einstellungen ein",
+            "api_key_label": "API-Schlüssel",
+            "api_key_desc": "Erstellen Sie einen API-Schlüssel in NetSendo, der für die Plugin-Autorisierung verwendet wird.",
+            "manage_api_keys": "API-Schlüssel verwalten",
+            "requirements_title": "📋 Anforderungen",
+            "requirements": {
+                "wp": "WordPress 5.8 oder neuer",
+                "wc": "WooCommerce 5.0 oder neuer",
+                "php": "PHP 7.4 oder neuer",
+                "account": "Aktives NetSendo-Konto mit API-Schlüssel"
+            },
+            "resources_title": "Ressourcen",
+            "docs_link": "WooCommerce Docs",
+            "lists_link": "Listen verwalten",
+            "funnels_link": "Sales Funnels",
+            "help_title": "Brauchen Sie Hilfe?",
+            "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie unser Support-Team.",
+            "documentation_button": "Dokumentation"
+        },
+        "wordpress": {
+            "title": "WordPress",
+            "description": "Professionelle Abonnement-Formulare und Content Gating für Blogger und Content-Ersteller auf WordPress.",
+            "hero_title": "WordPress",
+            "hero_subtitle": "Professionelle Abonnement-Formulare und Content Gating für Blogger und Content-Ersteller auf WordPress.",
+            "hero_description": "Das NetSendo für WordPress Plugin ist eine Komplettlösung für Blogger und Content-Ersteller. Fügen Sie professionelle Newsletter-Anmeldeformulare hinzu, beschränken Sie die Sichtbarkeit von Artikeln nur auf Abonnenten und bauen Sie Ihre Mailingliste von WordPress aus auf.",
+            "features_title": "🚀 Funktionen",
+            "features": {
+                "forms": {
+                    "title": "Anmeldeformulare",
+                    "description": "Professionelle Anmeldeformulare mit verschiedenen Stilen: Inline, Minimal, Karte."
+                },
+                "content_gating": {
+                    "title": "Content Gating",
+                    "description": "Beschränken Sie die Sichtbarkeit von Artikeln - zeigen Sie X% des Inhalts, den Rest nur für Abonnenten."
+                },
+                "gutenberg": {
+                    "title": "Gutenberg-Blöcke",
+                    "description": "Native Gutenberg-Blöcke für Formulare und Content Gates."
+                },
+                "widget": {
+                    "title": "Sidebar-Widget",
+                    "description": "Gebrauchsfertiges Anmeldeformular-Widget zur Platzierung in jeder Sidebar."
+                },
+                "gdpr": {
+                    "title": "DSGVO-Bereit",
+                    "description": "Eingebautes DSGVO-Zustimmungs-Kontrollkästchen mit anpassbarem Text."
+                },
+                "per_post": {
+                    "title": "Einstellungen pro Beitrag",
+                    "description": "Aktivieren Sie Content Gating für bestimmte Beiträge direkt im Editor."
+                }
+            },
+            "setup_title": "⚙️ Installation",
+            "setup_steps": {
+                "download": {
+                    "title": "Plugin herunterladen",
+                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WordPress Plugin herunterzuladen."
+                },
+                "install": {
+                    "title": "In WordPress installieren",
+                    "description": "Gehen Sie zu WordPress → Plugins → Installieren → Plugin hochladen und installieren Sie die heruntergeladene ZIP-Datei."
+                },
+                "configure": {
+                    "title": "Verbindung konfigurieren",
+                    "description": "Gehen Sie in WordPress zu Einstellungen → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest."
+                },
+                "forms": {
+                    "title": "Formulare hinzufügen",
+                    "description": "Verwenden Sie Gutenberg-Blöcke oder Shortcodes, um Formulare und Content Gates zu Ihren Beiträgen hinzuzufügen."
+                }
+            },
+            "download_button": "Plugin herunterladen",
+            "shortcodes_title": "📝 Shortcodes",
+            "shortcodes": {
+                "form_basic": "Basis-Anmeldeformular",
+                "form_style": "Formular mit bestimmter Liste und Stil",
+                "gate_percent": "30% Inhalt zeigen, Rest verborgen",
+                "gate_subscribers": "Vollständiger Inhalt nur für Abonnenten"
+            },
+            "api_config_title": "🔑 API-Konfiguration",
+            "api_url_label": "NetSendo URL",
+            "api_url_help": "Geben Sie diese URL in den WordPress-Plugin-Einstellungen ein",
+            "api_key_label": "API-Schlüssel",
+            "api_key_desc": "Erstellen Sie einen API-Schlüssel in NetSendo, der für die Plugin-Autorisierung verwendet wird.",
+            "manage_api_keys": "API-Schlüssel verwalten",
+            "requirements_title": "📋 Anforderungen",
+            "requirements": {
+                "wp": "WordPress 5.8 oder neuer",
+                "php": "PHP 7.4 oder neuer",
+                "account": "Aktives NetSendo-Konto mit API-Schlüssel"
+            },
+            "gate_types_title": "🔒 Content Gate Typen",
+            "gate_types": {
+                "percentage": {
+                    "title": "Prozentsatz",
+                    "desc": "Zeige X% des Artikels, Rest verborgen"
+                },
+                "subscribers": {
+                    "title": "Nur Abonnenten",
+                    "desc": "Vollständiger Inhalt erfordert Abonnement"
+                },
+                "logged_in": {
+                    "title": "Eingeloggt",
+                    "desc": "Erfordert Login in WP"
+                }
+            },
+            "resources_title": "Ressourcen",
+            "docs_link": "WordPress Docs",
+            "lists_link": "Listen verwalten",
+            "help_title": "Brauchen Sie Hilfe?",
+            "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie unser Support-Team.",
+            "documentation_button": "Dokumentation"
+        },
         "categories": {
             "ecommerce": {
                 "title": "E-Commerce",

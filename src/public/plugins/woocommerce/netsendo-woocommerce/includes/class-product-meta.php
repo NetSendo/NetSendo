@@ -47,9 +47,11 @@ class NetSendo_WC_Product_Meta {
         $override = get_post_meta($product_id, '_netsendo_override_settings', true);
         $purchase_list_id = get_post_meta($product_id, '_netsendo_purchase_list_id', true);
         $pending_list_id = get_post_meta($product_id, '_netsendo_pending_list_id', true);
+        $external_page_id = get_post_meta($product_id, '_netsendo_external_page_id', true);
         $redirect_url = get_post_meta($product_id, '_netsendo_redirect_url', true);
 
         $lists = NetSendo_WC_Admin_Settings::get_cached_lists();
+        $external_pages = NetSendo_WC_Admin_Settings::get_cached_external_pages();
         ?>
         <div id="netsendo_product_data" class="panel woocommerce_options_panel">
             <div class="options_group">
@@ -110,8 +112,28 @@ class NetSendo_WC_Product_Meta {
                 </p>
 
                 <p class="form-field">
+                    <label for="netsendo_external_page_id">
+                        <?php _e('NetSendo External Page', 'netsendo-woocommerce'); ?>
+                    </label>
+                    <select id="netsendo_external_page_id"
+                            name="_netsendo_external_page_id"
+                            class="select short"
+                            <?php disabled($override !== 'yes'); ?>>
+                        <option value=""><?php _e('— Use Default —', 'netsendo-woocommerce'); ?></option>
+                        <?php if ($external_pages): ?>
+                            <?php foreach ($external_pages as $page): ?>
+                                <option value="<?php echo esc_attr($page['id']); ?>" <?php selected($external_page_id, $page['id']); ?>>
+                                    <?php echo esc_html($page['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                    <?php echo wc_help_tip(__('Select a NetSendo external page to use as thank you page with sales funnel functionality.', 'netsendo-woocommerce')); ?>
+                </p>
+
+                <p class="form-field">
                     <label for="netsendo_redirect_url">
-                        <?php _e('Redirect URL after Purchase', 'netsendo-woocommerce'); ?>
+                        <?php _e('Or Custom Redirect URL', 'netsendo-woocommerce'); ?>
                     </label>
                     <input type="url"
                            id="netsendo_redirect_url"
@@ -120,7 +142,7 @@ class NetSendo_WC_Product_Meta {
                            class="short"
                            placeholder="https://example.com/thank-you"
                            <?php disabled($override !== 'yes'); ?>>
-                    <?php echo wc_help_tip(__('If set, customers will be redirected to this URL after purchasing this product.', 'netsendo-woocommerce')); ?>
+                    <?php echo wc_help_tip(__('Enter a custom URL if not using NetSendo external page. This overrides the external page selection above.', 'netsendo-woocommerce')); ?>
                 </p>
             </div>
 
@@ -191,6 +213,14 @@ class NetSendo_WC_Product_Meta {
                 );
             }
 
+            if (isset($_POST['_netsendo_external_page_id'])) {
+                update_post_meta(
+                    $post_id,
+                    '_netsendo_external_page_id',
+                    sanitize_text_field($_POST['_netsendo_external_page_id'])
+                );
+            }
+
             if (isset($_POST['_netsendo_redirect_url'])) {
                 update_post_meta(
                     $post_id,
@@ -202,6 +232,7 @@ class NetSendo_WC_Product_Meta {
             // Clear product-specific settings when override is disabled
             delete_post_meta($post_id, '_netsendo_purchase_list_id');
             delete_post_meta($post_id, '_netsendo_pending_list_id');
+            delete_post_meta($post_id, '_netsendo_external_page_id');
             delete_post_meta($post_id, '_netsendo_redirect_url');
         }
     }

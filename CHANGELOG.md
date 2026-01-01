@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.12] – Short Description
+
+**Release date:** 2026-01-01
+
+### Added
+
+- **NetSendo Logo for Plugins:**
+
+  - Added NetSendo logo (`netsendo-logo.png`) to both WooCommerce and WordPress plugin assets.
+  - WordPress plugin settings page now displays actual logo instead of dashicons icon.
+
+- **WooCommerce Product-Level External Pages:**
+
+  - Added dynamic "NetSendo External Page" dropdown to WooCommerce product settings.
+  - Product override settings now support selecting external pages from API (matching global settings).
+  - Renamed "Redirect URL after Purchase" to "Or Custom Redirect URL" for clarity.
+  - Added `external_page_id` support to product meta saving and retrieval.
+
+- **WordPress Integration Plugin:**
+  - New WordPress plugin "NetSendo for WordPress" for bloggers and content creators.
+  - **Subscription Forms:** Shortcode `[netsendo_form]`, sidebar widget, and Gutenberg block with 3 styles (inline, minimal, card).
+  - **Content Gating:** Restrict article visibility with percentage-based, subscribers-only, or logged-in modes via `[netsendo_gate]` shortcode and Gutenberg block.
+  - Admin settings page with API configuration, default list selection, form styling, GDPR consent settings.
+  - Per-post content gate settings in WordPress editor sidebar.
+  - AJAX subscription handling with cookie-based content unlock.
+  - Frontend and admin CSS/JS assets with modern design system.
+  - WordPress marketplace page (`/marketplace/wordpress`) with features overview and plugin download.
+  - Download ZIP package available at `/marketplace/wordpress/download`.
+  - WordPress added to Marketplace Index with "Active" status.
+
+### Fixed
+
+- **WooCommerce Plugin Compatibility:**
+  - Added HPOS (High-Performance Order Storage) compatibility declaration for WooCommerce 8.0+.
+  - Added Cart/Checkout Blocks compatibility declaration.
+  - Resolves "incompatible plugins" warning in WooCommerce admin.
+
 ## [1.2.11] – Short Description
 
 **Release date:** 2026-01-01

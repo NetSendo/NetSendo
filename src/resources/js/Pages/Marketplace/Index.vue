@@ -99,6 +99,14 @@ const activeIntegrations = [
         route: "marketplace.woocommerce",
     },
     {
+        id: "wordpress",
+        name: "WordPress",
+        description: "Forms & content gating",
+        icon: "📝",
+        color: "blue",
+        route: "marketplace.wordpress",
+    },
+    {
         id: "sendgrid",
         name: "SendGrid",
         description: "Email delivery",

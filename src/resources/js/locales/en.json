@@ -1731,6 +1731,166 @@
             "auto_sync": "Auto-sync data",
             "no_code": "No code required"
         },
+        "woocommerce": {
+            "title": "WooCommerce",
+            "description": "Professional subscription forms and customer synchronization for WooCommerce stores.",
+            "hero_title": "WooCommerce",
+            "hero_subtitle": "Integrate your WooCommerce store with NetSendo - automatically add customers to mailing lists after purchase.",
+            "hero_description": "The NetSendo for WooCommerce plugin allows you to automatically add customers to mailing lists after a purchase or attempted purchase (unpaid order). You can also redirect customers to external sales funnel pages.",
+            "features_title": "🚀 Features",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Automatic Subscription",
+                    "description": "Automatically add customers to mailing lists after purchasing a product."
+                },
+                "cart_recovery": {
+                    "title": "Cart Recovery",
+                    "description": "Save customers with unpaid orders to a separate list for follow-up."
+                },
+                "product_settings": {
+                    "title": "Per-product Settings",
+                    "description": "Override default lists for specific WooCommerce products."
+                },
+                "external_pages": {
+                    "title": "External Pages",
+                    "description": "Redirect customers to external sales funnel pages after purchase."
+                }
+            },
+            "setup_title": "⚙️ Installation",
+            "setup_steps": {
+                "download": {
+                    "title": "Download Plugin",
+                    "description": "Click the button below to download the NetSendo for WooCommerce plugin."
+                },
+                "install": {
+                    "title": "Install in WordPress",
+                    "description": "Go to WordPress → Plugins → Add New → Upload Plugin, and install the downloaded ZIP file."
+                },
+                "configure": {
+                    "title": "Configure Connection",
+                    "description": "In WordPress go to WooCommerce → NetSendo, enter NetSendo URL and API Key, then save settings before testing connection."
+                },
+                "lists": {
+                    "title": "Set Default Lists",
+                    "description": "Select lists where customers should be added after purchase and for unpaid orders."
+                }
+            },
+            "download_button": "Download Plugin",
+            "api_config_title": "🔑 API Configuration",
+            "api_url_label": "NetSendo URL",
+            "api_url_help": "Enter this URL in WooCommerce plugin settings",
+            "api_key_label": "API Key",
+            "api_key_desc": "Create an API key in NetSendo to be used for plugin authorization.",
+            "manage_api_keys": "Manage API Keys",
+            "requirements_title": "📋 Requirements",
+            "requirements": {
+                "wp": "WordPress 5.8 or newer",
+                "wc": "WooCommerce 5.0 or newer",
+                "php": "PHP 7.4 or newer",
+                "account": "Active NetSendo account with API key"
+            },
+            "resources_title": "Resources",
+            "docs_link": "WooCommerce Docs",
+            "lists_link": "Manage Lists",
+            "funnels_link": "Sales Funnels",
+            "help_title": "Need Help?",
+            "help_desc": "Check documentation or contact our support team.",
+            "documentation_button": "Documentation"
+        },
+        "wordpress": {
+            "title": "WordPress",
+            "description": "Professional subscription forms and content gating for bloggers and content creators on WordPress.",
+            "hero_title": "WordPress",
+            "hero_subtitle": "Professional subscription forms and content gating for bloggers and content creators on WordPress.",
+            "hero_description": "The NetSendo for WordPress plugin is a complete solution for bloggers and content creators. Add professional newsletter subscription forms, limit article visibility to subscribers only, and build your mailing list from WordPress.",
+            "features_title": "🚀 Features",
+            "features": {
+                "forms": {
+                    "title": "Subscription Forms",
+                    "description": "Professional signup forms with various styles: inline, minimal, card."
+                },
+                "content_gating": {
+                    "title": "Content Gating",
+                    "description": "Limit article visibility - show X% of content, the rest for subscribers only."
+                },
+                "gutenberg": {
+                    "title": "Gutenberg Blocks",
+                    "description": "Native Gutenberg blocks for forms and content gates."
+                },
+                "widget": {
+                    "title": "Sidebar Widget",
+                    "description": "Ready-to-use signup form widget to place in any sidebar."
+                },
+                "gdpr": {
+                    "title": "GDPR Ready",
+                    "description": "Built-in GDPR consent checkbox with customizable text."
+                },
+                "per_post": {
+                    "title": "Per-post Settings",
+                    "description": "Enable content gating for specific posts directly from the editor."
+                }
+            },
+            "setup_title": "⚙️ Installation",
+            "setup_steps": {
+                "download": {
+                    "title": "Download Plugin",
+                    "description": "Click the button below to download the NetSendo for WordPress plugin."
+                },
+                "install": {
+                    "title": "Install in WordPress",
+                    "description": "Go to WordPress → Plugins → Add New → Upload Plugin, and install the downloaded ZIP file."
+                },
+                "configure": {
+                    "title": "Configure Connection",
+                    "description": "In WordPress go to Settings → NetSendo, enter NetSendo URL and API Key, then save settings before testing connection."
+                },
+                "forms": {
+                    "title": "Add Forms",
+                    "description": "Use Gutenberg blocks or shortcodes to add forms and content gates to your posts."
+                }
+            },
+            "download_button": "Download Plugin",
+            "shortcodes_title": "📝 Shortcodes",
+            "shortcodes": {
+                "form_basic": "Basic subscription form",
+                "form_style": "Form with specific list and style",
+                "gate_percent": "Show 30% content, rest hidden",
+                "gate_subscribers": "Full content for subscribers only"
+            },
+            "api_config_title": "🔑 API Configuration",
+            "api_url_label": "NetSendo URL",
+            "api_url_help": "Enter this URL in WordPress plugin settings",
+            "api_key_label": "API Key",
+            "api_key_desc": "Create an API key in NetSendo to be used for plugin authorization.",
+            "manage_api_keys": "Manage API Keys",
+            "requirements_title": "📋 Requirements",
+            "requirements": {
+                "wp": "WordPress 5.8 or newer",
+                "php": "PHP 7.4 or newer",
+                "account": "Active NetSendo account with API key"
+            },
+            "gate_types_title": "🔒 Content Gate Types",
+            "gate_types": {
+                "percentage": {
+                    "title": "Percentage",
+                    "desc": "Show X% of article, rest hidden"
+                },
+                "subscribers": {
+                    "title": "Subscribers Only",
+                    "desc": "Full content requires subscription"
+                },
+                "logged_in": {
+                    "title": "Logged In",
+                    "desc": "Requires login to WP"
+                }
+            },
+            "resources_title": "Resources",
+            "docs_link": "WordPress Docs",
+            "lists_link": "Manage Lists",
+            "help_title": "Need Help?",
+            "help_desc": "Check documentation or contact our support team.",
+            "documentation_button": "Documentation"
+        },
         "categories": {
             "ecommerce": {
                 "title": "E-commerce",

@@ -1323,6 +1323,166 @@
             "auto_sync": "Automatyczna synchronizacja",
             "no_code": "Bez kodowania"
         },
+        "woocommerce": {
+            "title": "WooCommerce",
+            "description": "Profesjonalne formularze zapisu i synchronizacja klientów dla sklepów WooCommerce.",
+            "hero_title": "WooCommerce",
+            "hero_subtitle": "Integruj swój sklep WooCommerce z NetSendo - automatycznie zapisuj klientów na listy mailingowe po zakupie.",
+            "hero_description": "Wtyczka NetSendo for WooCommerce pozwala na automatyczne dodawanie klientów do list mailingowych po dokonaniu zakupu lub przy próbie zakupu (nieopłacone zamówienie). Możesz też przekierowywać klientów na zewnętrzne strony z lejkiem sprzedażowym.",
+            "features_title": "🚀 Funkcje",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Automatyczna subskrypcja",
+                    "description": "Automatycznie dodawaj klientów do list mailingowych po zakupie produktu."
+                },
+                "cart_recovery": {
+                    "title": "Odzyskiwanie koszyków",
+                    "description": "Zapisuj klientów z nieopłaconymi zamówieniami na osobną listę do follow-up."
+                },
+                "product_settings": {
+                    "title": "Ustawienia per produkt",
+                    "description": "Nadpisuj domyślne listy dla poszczególnych produktów WooCommerce."
+                },
+                "external_pages": {
+                    "title": "Zewnętrzne strony",
+                    "description": "Przekierowuj klientów na strony zewnętrzne z lejkiem sprzedażowym po zakupie."
+                }
+            },
+            "setup_title": "⚙️ Instalacja",
+            "setup_steps": {
+                "download": {
+                    "title": "Pobierz wtyczkę",
+                    "description": "Kliknij przycisk poniżej, aby pobrać wtyczkę NetSendo for WooCommerce."
+                },
+                "install": {
+                    "title": "Zainstaluj w WordPress",
+                    "description": "Przejdź do WordPress → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer, i zainstaluj pobrany plik ZIP."
+                },
+                "configure": {
+                    "title": "Skonfiguruj połączenie",
+                    "description": "W WordPress przejdź do WooCommerce → NetSendo, wprowadź URL NetSendo oraz klucz API, a następnie zapisz ustawienia przed testowaniem połączenia."
+                },
+                "lists": {
+                    "title": "Ustaw domyślne listy",
+                    "description": "Wybierz listy, na które mają być zapisywani klienci po zakupie i przy nieopłaconych zamówieniach."
+                }
+            },
+            "download_button": "Pobierz wtyczkę",
+            "api_config_title": "🔑 Konfiguracja API",
+            "api_url_label": "URL NetSendo",
+            "api_url_help": "Wpisz ten adres w ustawieniach wtyczki WooCommerce",
+            "api_key_label": "Klucz API",
+            "api_key_desc": "Utwórz klucz API w NetSendo, który będzie używany do autoryzacji wtyczki.",
+            "manage_api_keys": "Zarządzaj kluczami API",
+            "requirements_title": "📋 Wymagania",
+            "requirements": {
+                "wp": "WordPress 5.8 lub nowszy",
+                "wc": "WooCommerce 5.0 lub nowszy",
+                "php": "PHP 7.4 lub nowszy",
+                "account": "Aktywne konto NetSendo z kluczem API"
+            },
+            "resources_title": "Zasoby",
+            "docs_link": "WooCommerce Docs",
+            "lists_link": "Zarządzaj listami",
+            "funnels_link": "Lejki sprzedażowe",
+            "help_title": "Potrzebujesz pomocy?",
+            "help_desc": "Sprawdź dokumentację lub skontaktuj się z naszym zespołem wsparcia.",
+            "documentation_button": "Dokumentacja"
+        },
+        "wordpress": {
+            "title": "WordPress",
+            "description": "Profesjonalne formularze zapisu i content gating dla blogerów i twórców treści na WordPress.",
+            "hero_title": "WordPress",
+            "hero_subtitle": "Profesjonalne formularze zapisu i content gating dla blogerów i twórców treści na WordPress.",
+            "hero_description": "Wtyczka NetSendo for WordPress to kompletne rozwiązanie dla blogerów i twórców treści. Dodawaj profesjonalne formularze zapisu do newslettera, ograniczaj widoczność artykułów tylko dla subskrybentów, i buduj swoją listę mailingową z poziomu WordPress.",
+            "features_title": "🚀 Funkcje",
+            "features": {
+                "forms": {
+                    "title": "Formularze subskrypcji",
+                    "description": "Profesjonalne formularze zapisu z różnymi stylami: inline, minimal, card."
+                },
+                "content_gating": {
+                    "title": "Content Gating",
+                    "description": "Ograniczaj widoczność artykułów - pokaż X% treści, reszta tylko dla subskrybentów."
+                },
+                "gutenberg": {
+                    "title": "Gutenberg Blocks",
+                    "description": "Natywne bloki Gutenberga dla formularzy i bramek treści."
+                },
+                "widget": {
+                    "title": "Widget do sidebara",
+                    "description": "Gotowy widget formularza zapisu do umieszczenia w dowolnym sidebarze."
+                },
+                "gdpr": {
+                    "title": "GDPR Ready",
+                    "description": "Wbudowany checkbox zgody GDPR z konfigurowalnym tekstem."
+                },
+                "per_post": {
+                    "title": "Per-post ustawienia",
+                    "description": "Włączaj content gating dla poszczególnych postów z poziomu edytora."
+                }
+            },
+            "setup_title": "⚙️ Instalacja",
+            "setup_steps": {
+                "download": {
+                    "title": "Pobierz wtyczkę",
+                    "description": "Kliknij przycisk poniżej, aby pobrać wtyczkę NetSendo for WordPress."
+                },
+                "install": {
+                    "title": "Zainstaluj w WordPress",
+                    "description": "Przejdź do WordPress → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer, i zainstaluj pobrany plik ZIP."
+                },
+                "configure": {
+                    "title": "Skonfiguruj połączenie",
+                    "description": "W WordPress przejdź do Ustawienia → NetSendo, wprowadź URL NetSendo oraz klucz API, a następnie zapisz ustawienia przed testowaniem połączenia."
+                },
+                "forms": {
+                    "title": "Dodaj formularze",
+                    "description": "Użyj bloków Gutenberga lub shortcodes aby dodać formularze i bramki treści do swoich postów."
+                }
+            },
+            "download_button": "Pobierz wtyczkę",
+            "shortcodes_title": "📝 Shortcodes",
+            "shortcodes": {
+                "form_basic": "Podstawowy formularz zapisu",
+                "form_style": "Formularz z określoną listą i stylem",
+                "gate_percent": "Pokaż 30% treści, reszta ukryta",
+                "gate_subscribers": "Cała treść tylko dla subskrybentów"
+            },
+            "api_config_title": "🔑 Konfiguracja API",
+            "api_url_label": "URL NetSendo",
+            "api_url_help": "Wpisz ten adres w ustawieniach wtyczki WordPress",
+            "api_key_label": "Klucz API",
+            "api_key_desc": "Utwórz klucz API w NetSendo, który będzie używany do autoryzacji wtyczki.",
+            "manage_api_keys": "Zarządzaj kluczami API",
+            "requirements_title": "📋 Wymagania",
+            "requirements": {
+                "wp": "WordPress 5.8 lub nowszy",
+                "php": "PHP 7.4 lub nowszy",
+                "account": "Aktywne konto NetSendo z kluczem API"
+            },
+            "gate_types_title": "🔒 Typy Content Gate",
+            "gate_types": {
+                "percentage": {
+                    "title": "Percentage",
+                    "desc": "Pokaż X% artykułu, reszta ukryta"
+                },
+                "subscribers": {
+                    "title": "Subscribers Only",
+                    "desc": "Cała treść wymaga subskrypcji"
+                },
+                "logged_in": {
+                    "title": "Logged In",
+                    "desc": "Wymaga zalogowania do WP"
+                }
+            },
+            "resources_title": "Zasoby",
+            "docs_link": "WordPress Docs",
+            "lists_link": "Zarządzaj listami",
+            "help_title": "Potrzebujesz pomocy?",
+            "help_desc": "Sprawdź dokumentację lub skontaktuj się z naszym zespołem wsparcia.",
+            "documentation_button": "Dokumentacja"
+        },
         "categories": {
             "ecommerce": {
                 "title": "E-commerce",

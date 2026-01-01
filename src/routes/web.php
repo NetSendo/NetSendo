@@ -377,6 +377,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
         return response()->download($path, 'netsendo-woocommerce.zip');
     })->name('marketplace.woocommerce.download');
 
+    // WordPress Integration
+    Route::get('/marketplace/wordpress', fn() => Inertia::render('Marketplace/WordPress'))->name('marketplace.wordpress');
+    Route::get('/marketplace/wordpress/download', function () {
+        $path = public_path('plugins/wordpress/netsendo-wordpress.zip');
+        if (!file_exists($path)) {
+            abort(404, 'Plugin file not found');
+        }
+        return response()->download($path, 'netsendo-wordpress.zip');
+    })->name('marketplace.wordpress.download');
+
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {

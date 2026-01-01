@@ -1,0 +1,61 @@
+/**
+ * NetSendo for WordPress - Gutenberg Blocks Editor Styles
+ *
+ * @package NetSendo_WordPress
+ */
+
+/* Block Preview Styles */
+.netsendo-block-preview {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.netsendo-form-preview input {
+    background: #fff;
+    font-size: 14px;
+}
+
+.netsendo-form-preview input:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+/* Content Gate Editor */
+.netsendo-content-gate-editor {
+    min-height: 100px;
+}
+
+.netsendo-content-gate-editor .block-editor-inner-blocks {
+    margin-top: 0;
+}
+
+.netsendo-content-gate-editor .block-editor-block-list__layout {
+    margin: 0;
+}
+
+/* Block Icon */
+.wp-block-netsendo-subscription-form .block-editor-block-icon,
+.wp-block-netsendo-content-gate .block-editor-block-icon {
+    color: #6366f1;
+}
+
+/* Block Toolbar */
+.wp-block[data-type="netsendo/subscription-form"],
+.wp-block[data-type="netsendo/content-gate"] {
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+/* Panel Styles */
+.components-panel__body-title button {
+    font-weight: 500;
+}
+
+/* Range Control */
+.components-range-control__slider {
+    accent-color: #6366f1;
+}
+
+/* Toggle Control */
+.components-form-toggle.is-checked .components-form-toggle__track {
+    background-color: #6366f1;
+}

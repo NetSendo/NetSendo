@@ -191,6 +191,166 @@
             "auto_sync": "Sincronización automática de datos",
             "no_code": "No requiere código"
         },
+        "woocommerce": {
+            "title": "WooCommerce",
+            "description": "Formularios de suscripción profesionales y sincronización de clientes para tiendas WooCommerce.",
+            "hero_title": "WooCommerce",
+            "hero_subtitle": "Integra tu tienda WooCommerce con NetSendo: añade clientes automáticamente a listas de correo después de la compra.",
+            "hero_description": "El complemento NetSendo para WooCommerce te permite añadir clientes automáticamente a listas de correo después de una compra o intento de compra (pedido no pagado). También puedes redirigir a los clientes a páginas externas de embudos de venta.",
+            "features_title": "🚀 Características",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Suscripción automática",
+                    "description": "Añade clientes automáticamente a las listas de correo después de comprar un producto."
+                },
+                "cart_recovery": {
+                    "title": "Recuperación de carritos",
+                    "description": "Guarda a los clientes con pedidos no pagados en una lista separada para seguimiento."
+                },
+                "product_settings": {
+                    "title": "Configuración por producto",
+                    "description": "Anula las listas predeterminadas para productos específicos de WooCommerce."
+                },
+                "external_pages": {
+                    "title": "Páginas externas",
+                    "description": "Redirige a los clientes a páginas externas de embudos de ventas después de la compra."
+                }
+            },
+            "setup_title": "⚙️ Instalación",
+            "setup_steps": {
+                "download": {
+                    "title": "Descargar complemento",
+                    "description": "Haz clic en el botón de abajo para descargar el complemento NetSendo para WooCommerce."
+                },
+                "install": {
+                    "title": "Instalar en WordPress",
+                    "description": "Ve a WordPress → Plugins → Añadir nuevo → Subir plugin, e instala el archivo ZIP descargado."
+                },
+                "configure": {
+                    "title": "Configurar conexión",
+                    "description": "En WordPress, ve a WooCommerce → NetSendo, introduce la URL de NetSendo y la clave API, luego guarda la configuración antes de probar la conexión."
+                },
+                "lists": {
+                    "title": "Establecer listas predeterminadas",
+                    "description": "Selecciona las listas donde se deben añadir los clientes después de la compra y para pedidos no pagados."
+                }
+            },
+            "download_button": "Descargar complemento",
+            "api_config_title": "🔑 Configuración de API",
+            "api_url_label": "URL de NetSendo",
+            "api_url_help": "Introduce esta URL en la configuración del complemento de WooCommerce",
+            "api_key_label": "Clave API",
+            "api_key_desc": "Crea una clave API en NetSendo para usar en la autorización del complemento.",
+            "manage_api_keys": "Gestionar claves API",
+            "requirements_title": "📋 Requisitos",
+            "requirements": {
+                "wp": "WordPress 5.8 o superior",
+                "wc": "WooCommerce 5.0 o superior",
+                "php": "PHP 7.4 o superior",
+                "account": "Cuenta NetSendo activa con clave API"
+            },
+            "resources_title": "Recursos",
+            "docs_link": "Documentación WooCommerce",
+            "lists_link": "Gestionar listas",
+            "funnels_link": "Embudos de venta",
+            "help_title": "¿Necesitas ayuda?",
+            "help_desc": "Consulta la documentación o contacta a nuestro equipo de soporte.",
+            "documentation_button": "Documentación"
+        },
+        "wordpress": {
+            "title": "WordPress",
+            "description": "Formularios de suscripción profesionales y restricción de contenido para bloggers y creadores en WordPress.",
+            "hero_title": "WordPress",
+            "hero_subtitle": "Formularios de suscripción profesionales y restricción de contenido para bloggers y creadores en WordPress.",
+            "hero_description": "El complemento NetSendo para WordPress es una solución completa para bloggers y creadores de contenido. Añade formularios profesionales de suscripción a boletines, limita la visibilidad de los artículos solo a suscriptores y construye tu lista de correo desde WordPress.",
+            "features_title": "🚀 Características",
+            "features": {
+                "forms": {
+                    "title": "Formularios de suscripción",
+                    "description": "Formularios de registro profesionales con varios estilos: en línea, minimalista, tarjeta."
+                },
+                "content_gating": {
+                    "title": "Restricción de contenido",
+                    "description": "Limita la visibilidad del artículo: muestra un X% del contenido, el resto solo para suscriptores."
+                },
+                "gutenberg": {
+                    "title": "Bloques Gutenberg",
+                    "description": "Bloques nativos de Gutenberg para formularios y restricciones de contenido."
+                },
+                "widget": {
+                    "title": "Widget de barra lateral",
+                    "description": "Widget de formulario de registro listo para usar en cualquier barra lateral."
+                },
+                "gdpr": {
+                    "title": "Listo para GDPR",
+                    "description": "Casilla de consentimiento GDPR integrada con texto personalizable."
+                },
+                "per_post": {
+                    "title": "Configuración por publicación",
+                    "description": "Habilita la restricción de contenido para publicaciones específicas directamente desde el editor."
+                }
+            },
+            "setup_title": "⚙️ Instalación",
+            "setup_steps": {
+                "download": {
+                    "title": "Descargar complemento",
+                    "description": "Haz clic en el botón de abajo para descargar el complemento NetSendo para WordPress."
+                },
+                "install": {
+                    "title": "Instalar en WordPress",
+                    "description": "Ve a WordPress → Plugins → Añadir nuevo → Subir plugin, e instala el archivo ZIP descargado."
+                },
+                "configure": {
+                    "title": "Configurar conexión",
+                    "description": "En WordPress, ve a Ajustes → NetSendo, introduce la URL de NetSendo y la clave API, luego guarda la configuración antes de probar la conexión."
+                },
+                "forms": {
+                    "title": "Añadir formularios",
+                    "description": "Usa bloques Gutenberg o códigos cortos para añadir formularios y restricciones de contenido a tus publicaciones."
+                }
+            },
+            "download_button": "Descargar complemento",
+            "shortcodes_title": "📝 Códigos cortos",
+            "shortcodes": {
+                "form_basic": "Formulario de suscripción básico",
+                "form_style": "Formulario con lista y estilo específicos",
+                "gate_percent": "Mostrar 30% del contenido, resto oculto",
+                "gate_subscribers": "Contenido completo solo para suscriptores"
+            },
+            "api_config_title": "🔑 Configuración de API",
+            "api_url_label": "URL de NetSendo",
+            "api_url_help": "Introduce esta URL en la configuración del complemento de WordPress",
+            "api_key_label": "Clave API",
+            "api_key_desc": "Crea una clave API en NetSendo para usar en la autorización del complemento.",
+            "manage_api_keys": "Gestionar claves API",
+            "requirements_title": "📋 Requisitos",
+            "requirements": {
+                "wp": "WordPress 5.8 o superior",
+                "php": "PHP 7.4 o superior",
+                "account": "Cuenta NetSendo activa con clave API"
+            },
+            "gate_types_title": "🔒 Tipos de restricción",
+            "gate_types": {
+                "percentage": {
+                    "title": "Porcentaje",
+                    "desc": "Mostrar X% del artículo, resto oculto"
+                },
+                "subscribers": {
+                    "title": "Solo suscriptores",
+                    "desc": "El contenido completo requiere suscripción"
+                },
+                "logged_in": {
+                    "title": "Con sesión iniciada",
+                    "desc": "Requiere iniciar sesión en WP"
+                }
+            },
+            "resources_title": "Recursos",
+            "docs_link": "Documentación WordPress",
+            "lists_link": "Gestionar listas",
+            "help_title": "¿Necesitas ayuda?",
+            "help_desc": "Consulta la documentación o contacta a nuestro equipo de soporte.",
+            "documentation_button": "Documentación"
+        },
         "categories": {
             "ecommerce": {
                 "title": "Comercio Electrónico",

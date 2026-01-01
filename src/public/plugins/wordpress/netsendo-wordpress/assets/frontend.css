@@ -1,0 +1,472 @@
+/**
+ * NetSendo for WordPress - Frontend Styles
+ *
+ * @package NetSendo_WordPress
+ */
+
+/* ==========================================================================
+   CSS Variables
+   ========================================================================== */
+:root {
+    --netsendo-primary: #6366f1;
+    --netsendo-primary-hover: #4f46e5;
+    --netsendo-primary-light: #eef2ff;
+    --netsendo-success: #10b981;
+    --netsendo-error: #ef4444;
+    --netsendo-text: #1f2937;
+    --netsendo-text-muted: #6b7280;
+    --netsendo-border: #e5e7eb;
+    --netsendo-bg: #ffffff;
+    --netsendo-bg-light: #f9fafb;
+    --netsendo-radius: 8px;
+    --netsendo-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --netsendo-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   Subscription Forms
+   ========================================================================== */
+.netsendo-form {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 1.5rem 0;
+}
+
+.netsendo-form__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--netsendo-text);
+    margin: 0 0 0.5rem;
+}
+
+.netsendo-form__description {
+    font-size: 0.875rem;
+    color: var(--netsendo-text-muted);
+    margin: 0 0 1rem;
+}
+
+.netsendo-form__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.netsendo-form__fields {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.netsendo-form__field {
+    flex: 1;
+    min-width: 180px;
+}
+
+.netsendo-form__field--submit {
+    flex: 0 0 auto;
+    min-width: auto;
+}
+
+.netsendo-form__input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--netsendo-border);
+    border-radius: var(--netsendo-radius);
+    background: var(--netsendo-bg);
+    color: var(--netsendo-text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.netsendo-form__input:focus {
+    outline: none;
+    border-color: var(--netsendo-primary);
+    box-shadow: 0 0 0 3px var(--netsendo-primary-light);
+}
+
+.netsendo-form__input::placeholder {
+    color: var(--netsendo-text-muted);
+}
+
+.netsendo-form__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--netsendo-primary), var(--netsendo-primary-hover));
+    border: none;
+    border-radius: var(--netsendo-radius);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+.netsendo-form__button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--netsendo-shadow);
+}
+
+.netsendo-form__button:active {
+    transform: translateY(0);
+}
+
+.netsendo-form__button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.netsendo-form__gdpr {
+    margin-top: 0.5rem;
+}
+
+.netsendo-form__gdpr-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--netsendo-text-muted);
+    cursor: pointer;
+}
+
+.netsendo-form__gdpr-checkbox {
+    margin-top: 0.2rem;
+    accent-color: var(--netsendo-primary);
+}
+
+.netsendo-form__message {
+    padding: 0.75rem 1rem;
+    border-radius: var(--netsendo-radius);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.netsendo-form__message--error {
+    background: #fef2f2;
+    color: var(--netsendo-error);
+    border: 1px solid #fecaca;
+}
+
+.netsendo-form__message--success {
+    background: #ecfdf5;
+    color: var(--netsendo-success);
+    border: 1px solid #a7f3d0;
+}
+
+/* Success State */
+.netsendo-form__success {
+    text-align: center;
+    padding: 2rem;
+}
+
+.netsendo-form__success-icon {
+    color: var(--netsendo-success);
+    margin-bottom: 1rem;
+}
+
+.netsendo-form__success-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--netsendo-text);
+    margin: 0;
+}
+
+/* ==========================================================================
+   Form Styles
+   ========================================================================== */
+
+/* Card Style */
+.netsendo-form--card {
+    background: var(--netsendo-bg);
+    padding: 1.5rem;
+    border-radius: calc(var(--netsendo-radius) * 1.5);
+    box-shadow: var(--netsendo-shadow);
+    border: 1px solid var(--netsendo-border);
+}
+
+/* Minimal Style */
+.netsendo-form--minimal .netsendo-form__fields {
+    flex-direction: row;
+}
+
+.netsendo-form--minimal .netsendo-form__field {
+    min-width: 150px;
+}
+
+.netsendo-form--minimal .netsendo-form__input {
+    border-color: transparent;
+    background: var(--netsendo-bg-light);
+}
+
+.netsendo-form--minimal .netsendo-form__input:focus {
+    border-color: var(--netsendo-primary);
+}
+
+/* Inline Style */
+.netsendo-form--inline .netsendo-form__form {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.netsendo-form--inline .netsendo-form__fields {
+    flex: 1;
+}
+
+.netsendo-form--inline .netsendo-form__gdpr {
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+/* ==========================================================================
+   Content Gate
+   ========================================================================== */
+.netsendo-content-gate {
+    position: relative;
+    margin: 2rem 0;
+}
+
+.netsendo-content-gate__visible {
+    position: relative;
+}
+
+.netsendo-content-gate__overlay {
+    position: relative;
+    margin-top: -4rem;
+    padding-top: 4rem;
+}
+
+.netsendo-content-gate__fade {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8rem;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 40%,
+        rgba(255, 255, 255, 1) 100%
+    );
+    pointer-events: none;
+}
+
+.netsendo-content-gate__box {
+    position: relative;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid var(--netsendo-border);
+    border-radius: calc(var(--netsendo-radius) * 2);
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: var(--netsendo-shadow-lg);
+}
+
+.netsendo-content-gate__box--large {
+    padding: 3rem 2.5rem;
+}
+
+.netsendo-content-gate__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--netsendo-primary), var(--netsendo-primary-hover));
+    border-radius: 50%;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.netsendo-content-gate__icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+.netsendo-content-gate__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--netsendo-text);
+    margin: 0 0 0.5rem;
+}
+
+.netsendo-content-gate__subtitle {
+    font-size: 1rem;
+    color: var(--netsendo-text-muted);
+    margin: 0 0 1.5rem;
+}
+
+/* Gate Form */
+.netsendo-content-gate__form {
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.netsendo-content-gate__input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.netsendo-content-gate__input {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--netsendo-border);
+    border-radius: var(--netsendo-radius);
+    background: var(--netsendo-bg);
+    color: var(--netsendo-text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.netsendo-content-gate__input:focus {
+    outline: none;
+    border-color: var(--netsendo-primary);
+    box-shadow: 0 0 0 3px var(--netsendo-primary-light);
+}
+
+.netsendo-content-gate__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--netsendo-primary), var(--netsendo-primary-hover));
+    border: none;
+    border-radius: var(--netsendo-radius);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+}
+
+.netsendo-content-gate__submit:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--netsendo-shadow);
+}
+
+.netsendo-content-gate__gdpr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--netsendo-text-muted);
+    cursor: pointer;
+}
+
+.netsendo-content-gate__gdpr input {
+    accent-color: var(--netsendo-primary);
+}
+
+.netsendo-content-gate__message {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--netsendo-radius);
+    font-size: 0.875rem;
+}
+
+.netsendo-content-gate__message--error {
+    background: #fef2f2;
+    color: var(--netsendo-error);
+}
+
+.netsendo-content-gate__message--success {
+    background: #ecfdf5;
+    color: var(--netsendo-success);
+}
+
+/* Login Button */
+.netsendo-content-gate__login-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--netsendo-primary), var(--netsendo-primary-hover));
+    border: none;
+    border-radius: var(--netsendo-radius);
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.netsendo-content-gate__login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--netsendo-shadow);
+    color: #ffffff;
+}
+
+.netsendo-content-gate__register {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--netsendo-text-muted);
+}
+
+.netsendo-content-gate__register a {
+    color: var(--netsendo-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.netsendo-content-gate__register a:hover {
+    text-decoration: underline;
+}
+
+/* Hidden Content (for unlocking via JS) */
+.netsendo-content-gate__hidden {
+    display: none;
+}
+
+.netsendo-content-gate--unlocked .netsendo-content-gate__overlay {
+    display: none;
+}
+
+.netsendo-content-gate--unlocked .netsendo-content-gate__hidden {
+    display: block;
+}
+
+/* ==========================================================================
+   Spinner Animation
+   ========================================================================== */
+.netsendo-spinner {
+    animation: netsendo-spin 1s linear infinite;
+}
+
+@keyframes netsendo-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 640px) {
+    .netsendo-form__fields {
+        flex-direction: column;
+    }
+
+    .netsendo-form__field {
+        min-width: 100%;
+    }
+
+    .netsendo-form--inline .netsendo-form__form {
+        flex-direction: column;
+    }
+
+    .netsendo-content-gate__box {
+        padding: 1.5rem;
+    }
+
+    .netsendo-content-gate__input-group {
+        flex-direction: column;
+    }
+
+    .netsendo-content-gate__input,
+    .netsendo-content-gate__submit {
+        width: 100%;
+    }
+}

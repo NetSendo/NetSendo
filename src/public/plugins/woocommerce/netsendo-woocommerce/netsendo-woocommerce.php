@@ -74,6 +74,16 @@ function netsendo_wc_init() {
 add_action('plugins_loaded', 'netsendo_wc_init');
 
 /**
+ * Declare WooCommerce HPOS and Blocks compatibility
+ */
+add_action('before_woocommerce_init', function() {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('cart_checkout_blocks', __FILE__, true);
+    }
+});
+
+/**
  * Handle completed order - add subscriber to "purchase" list
  *
  * @param int $order_id
@@ -277,6 +287,7 @@ function netsendo_wc_get_product_settings($product_id) {
         return [
             'purchase_list_id' => '',
             'pending_list_id' => '',
+            'external_page_id' => '',
             'redirect_url' => '',
         ];
     }
@@ -284,6 +295,7 @@ function netsendo_wc_get_product_settings($product_id) {
     return [
         'purchase_list_id' => get_post_meta($product_id, '_netsendo_purchase_list_id', true),
         'pending_list_id' => get_post_meta($product_id, '_netsendo_pending_list_id', true),
+        'external_page_id' => get_post_meta($product_id, '_netsendo_external_page_id', true),
         'redirect_url' => get_post_meta($product_id, '_netsendo_redirect_url', true),
     ];
 }

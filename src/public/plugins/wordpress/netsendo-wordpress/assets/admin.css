@@ -1,0 +1,127 @@
+/**
+ * NetSendo for WordPress - Admin Styles
+ *
+ * @package NetSendo_WordPress
+ */
+
+/* Settings Page */
+.netsendo-wordpress-settings {
+    max-width: 800px;
+}
+
+.netsendo-wordpress-settings h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.netsendo-wordpress-settings .form-table th {
+    width: 200px;
+    padding-top: 15px;
+}
+
+.netsendo-wordpress-settings .form-table td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* Connection Status */
+#netsendo_connection_status {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#netsendo_connection_status.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+#netsendo_connection_status.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#netsendo_connection_status.loading {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* List Field */
+.netsendo-list-field {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.netsendo-list-field select {
+    min-width: 300px;
+}
+
+/* Shortcode Reference */
+.netsendo-shortcode-reference h3 {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.netsendo-shortcode-reference code {
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 13px;
+}
+
+/* Meta Box Styles */
+.netsendo-gate-options {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.netsendo-gate-options p {
+    margin-bottom: 12px;
+}
+
+.netsendo-gate-options select,
+.netsendo-gate-options input[type="text"] {
+    width: 100%;
+}
+
+#netsendo_percentage_display {
+    font-weight: 600;
+    color: #6366f1;
+}
+
+/* Notices */
+.netsendo-notice {
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.netsendo-notice--info {
+    background: #e0f2fe;
+    border: 1px solid #7dd3fc;
+    color: #0369a1;
+}
+
+.netsendo-notice--success {
+    background: #d1fae5;
+    border: 1px solid #6ee7b7;
+    color: #065f46;
+}
+
+.netsendo-notice--warning {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+
+.netsendo-notice--error {
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+}
