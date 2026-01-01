@@ -88,6 +88,16 @@
                             </div>
                         </div>
 
+                        <div>
+                            <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.timezone') }}</label>
+                            <select name="timezone" id="timezone"
+                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @foreach($timezones as $tz => $label)
+                                    <option value="{{ $tz }}" {{ $tz === $defaultTimezone ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <!-- UTM params -->
                         <input type="hidden" name="utm_source" value="{{ request('utm_source') }}">
                         <input type="hidden" name="utm_medium" value="{{ request('utm_medium') }}">
@@ -102,6 +112,25 @@
                             {{ __('webinars.public.register.consent') }}
                         </p>
                     </form>
+
+                    <script>
+                        // Auto-detect browser timezone
+                        (function() {
+                            try {
+                                const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                                const select = document.getElementById('timezone');
+                                if (select) {
+                                    const options = Array.from(select.options);
+                                    const match = options.find(opt => opt.value === browserTimezone);
+                                    if (match) {
+                                        select.value = browserTimezone;
+                                    }
+                                }
+                            } catch (e) {
+                                console.log('Timezone detection failed:', e);
+                            }
+                        })();
+                    </script>
                 </div>
             @else
                 <div class="bg-white/10 backdrop-blur rounded-xl p-8 text-center">

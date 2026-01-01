@@ -9,6 +9,18 @@ return [
     'ended' => 'Seminario web finalizado.',
     'error_start' => 'No se pudo iniciar el seminario web.',
     'error_end' => 'No se pudo finalizar el seminario web.',
+    'status_updated' => 'El estado del seminario web ha sido cambiado.',
+    'status_change_not_allowed' => 'Este cambio de estado no está permitido.',
+
+    'edit' => [
+        'public_link' => 'Enlace de registro',
+        'public_link_desc' => 'Comparte este enlace con los participantes para que puedan registrarse.',
+        'copy_link' => 'Copiar',
+        'copied' => '¡Copiado!',
+        'change_status' => 'Cambiar estado...',
+        'no_status_change' => 'No hay cambios de estado disponibles.',
+        'schedule' => 'Programación',
+    ],
 
     'public' => [
         'register' => [
@@ -23,6 +35,7 @@ return [
             'consent' => 'Al registrarse, acepta recibir mensajes relacionados con el seminario web.',
             'closed' => 'El registro para este seminario web está cerrado.',
             'benefits' => '¿Qué aprenderás?',
+            'timezone' => 'Tu zona horaria',
         ],
         'registered' => [
             'success_title' => '¡Felicidades, :name estás registrado/a!',
@@ -40,6 +53,44 @@ return [
             'viewers' => ':count espectadores',
             'loading_chat' => 'Cargando chat...',
             'type_message' => 'Escribe un mensaje...',
+            'starts_in' => 'El seminario web comienza en',
+            'session_starts_at' => 'La sesión comienza a las',
+            'countdown' => [
+                'days' => 'Días',
+                'hours' => 'Horas',
+                'minutes' => 'Minutos',
+                'seconds' => 'Segundos',
+            ],
         ],
     ],
+
+    'autoconfig' => [
+        'title' => 'Configuración de Autowebinar',
+        'schedule_type' => 'Tipo de Programación',
+        'recurring_settings' => 'Configuración de Programación Recurrente',
+        'days_of_week' => 'Días de la Semana',
+        'times_of_day' => 'Horarios de Inicio',
+        'times_hint' => '(puedes añadir múltiples horarios)',
+        'add_time' => 'Añadir Horario',
+        'fixed_dates' => 'Fechas y Horarios Fijos',
+        'add_date' => 'Añadir Fecha',
+        'on_demand_settings' => 'Configuración Bajo Demanda',
+        'start_delay' => 'Retraso de Inicio Después del Registro',
+        'minutes' => 'minutos',
+        'start_delay_hint' => 'El seminario web comenzará automáticamente después del tiempo especificado desde el registro.',
+        'evergreen_settings' => 'Configuración Evergreen',
+        'available_slots' => 'Horarios Disponibles',
+        'add_slot' => 'Añadir Horario',
+        'evergreen_hint' => 'Los usuarios verán opciones "en X minutos" durante el registro.',
+        'limits' => 'Rango de Fechas y Límites',
+        'start_date' => 'Fecha de Inicio',
+        'end_date' => 'Fecha de Fin',
+        'max_sessions_per_day' => 'Máx. Sesiones por Día',
+        'max_attendees' => 'Máx. Asistentes por Sesión',
+        'is_active' => 'Programación Activa',
+        'next_sessions' => 'Próximas Sesiones',
+        'save' => 'Guardar Programación',
+        'cancel' => 'Cancelar',
+    ],
 ];
+

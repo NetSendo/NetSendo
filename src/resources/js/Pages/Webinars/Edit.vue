@@ -24,6 +24,9 @@ const form = useForm({
     settings: props.webinar.settings || {},
 });
 
+const copied = ref(false);
+const statusUpdating = ref(false);
+
 const submit = () => {
     form.put(route('webinars.update', props.webinar.id));
 };
@@ -36,6 +39,42 @@ const deleteWebinar = () => {
 
 const duplicateWebinar = () => {
     router.post(route('webinars.duplicate', props.webinar.id));
+};
+
+const copyLink = async () => {
+    try {
+        await navigator.clipboard.writeText(props.webinar.registration_url);
+        copied.value = true;
+        setTimeout(() => copied.value = false, 2000);
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+    }
+};
+
+// Status transitions - what statuses can be changed to from current
+const allowedStatusTransitions = computed(() => {
+    const transitions = {
+        draft: ['scheduled', 'published'],
+        scheduled: ['draft', 'live'],
+        live: ['ended'],
+        ended: ['published', 'draft'],
+        published: ['draft'],
+    };
+    return transitions[props.webinar.status] || [];
+});
+
+const changeStatus = (newStatus) => {
+    if (statusUpdating.value) return;
+    statusUpdating.value = true;
+
+    router.post(route('webinars.update-status', props.webinar.id), {
+        status: newStatus,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            statusUpdating.value = false;
+        },
+    });
 };
 
 const getStatusColor = (status) => {
@@ -71,6 +110,16 @@ const getStatusColor = (status) => {
                 </div>
                 <div class="flex items-center gap-2">
                     <Link
+                        v-if="webinar.type === 'auto'"
+                        :href="route('webinars.auto.config', webinar.id)"
+                        class="inline-flex items-center px-3 py-2 bg-purple-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700"
+                    >
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ $t('webinars.edit.schedule') }}
+                    </Link>
+                    <Link
                         :href="route('webinars.studio', webinar.id)"
                         class="inline-flex items-center px-3 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700"
                     >
@@ -95,6 +144,43 @@ const getStatusColor = (status) => {
         <div class="py-6">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
                 <form @submit.prevent="submit" class="space-y-6">
+                    <!-- Public Registration Link -->
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-medium text-white mb-1">{{ $t('webinars.edit.public_link') }}</h3>
+                                <p class="text-indigo-100 text-sm mb-3">{{ $t('webinars.edit.public_link_desc') }}</p>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 bg-white/20 rounded-md px-3 py-2 text-white font-mono text-sm overflow-x-auto">
+                                        {{ webinar.registration_url }}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="copyLink"
+                                        class="inline-flex items-center px-3 py-2 bg-white rounded-md font-semibold text-xs text-indigo-600 uppercase tracking-widest hover:bg-indigo-50 transition-colors"
+                                    >
+                                        <svg v-if="!copied" class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                        </svg>
+                                        <svg v-else class="w-4 h-4 mr-1 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        {{ copied ? $t('webinars.edit.copied') : $t('webinars.edit.copy_link') }}
+                                    </button>
+                                    <a
+                                        :href="webinar.registration_url"
+                                        target="_blank"
+                                        class="inline-flex items-center px-3 py-2 bg-white/20 rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-white/30 transition-colors"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Basic Info -->
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ $t('webinars.edit.basic_info') }}</h3>
@@ -130,9 +216,30 @@ const getStatusColor = (status) => {
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.status') }}</label>
-                                <div class="mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-gray-700 dark:text-gray-300">
-                                    {{ statuses[webinar.status] }}
+                                <div class="mt-1 flex items-center gap-2">
+                                    <span :class="['inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium', getStatusColor(webinar.status)]">
+                                        {{ statuses[webinar.status] }}
+                                    </span>
+                                    <div v-if="allowedStatusTransitions.length > 0" class="relative">
+                                        <select
+                                            @change="changeStatus($event.target.value); $event.target.value = ''"
+                                            :disabled="statusUpdating"
+                                            class="block rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm pr-8"
+                                        >
+                                            <option value="">{{ $t('webinars.edit.change_status') }}</option>
+                                            <option v-for="status in allowedStatusTransitions" :key="status" :value="status">
+                                                → {{ statuses[status] }}
+                                            </option>
+                                        </select>
+                                        <div v-if="statusUpdating" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 rounded-md">
+                                            <svg class="animate-spin h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
                                 </div>
+                                <p v-if="allowedStatusTransitions.length === 0" class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.no_status_change') }}</p>
                             </div>
 
                             <div v-if="webinar.type === 'live'">
@@ -274,3 +381,4 @@ const getStatusColor = (status) => {
         </div>
     </AuthenticatedLayout>
 </template>
+

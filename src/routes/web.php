@@ -466,6 +466,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/start', [\App\Http\Controllers\WebinarController::class, 'start'])->name('start');
         Route::post('/{webinar}/end', [\App\Http\Controllers\WebinarController::class, 'end'])->name('end');
         Route::get('/{webinar}/analytics', [\App\Http\Controllers\WebinarController::class, 'analytics'])->name('analytics');
+        Route::post('/{webinar}/update-status', [\App\Http\Controllers\WebinarController::class, 'updateStatus'])->name('update-status');
 
         // Chat API
         Route::get('/{webinar}/chat', [\App\Http\Controllers\WebinarChatController::class, 'index'])->name('chat.index');

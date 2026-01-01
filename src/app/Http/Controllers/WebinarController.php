@@ -76,12 +76,58 @@ class WebinarController extends Controller
     {
         $this->authorize('update', $webinar);
 
+        $webinarData = $webinar->load(['products', 'ctas', 'schedule', 'targetList'])->toArray();
+        $webinarData['registration_url'] = $webinar->registration_url;
+
         return Inertia::render('Webinars/Edit', [
-            'webinar' => $webinar->load(['products', 'ctas', 'schedule', 'targetList']),
+            'webinar' => $webinarData,
             'types' => Webinar::getTypes(),
             'statuses' => Webinar::getStatuses(),
             'lists' => ContactList::forUser(auth()->id())->get(['id', 'name']),
         ]);
+    }
+
+    public function updateStatus(Request $request, Webinar $webinar)
+    {
+        $this->authorize('update', $webinar);
+
+        $validated = $request->validate([
+            'status' => 'required|in:draft,scheduled,live,ended,published',
+        ]);
+
+        $newStatus = $validated['status'];
+        $currentStatus = $webinar->status;
+
+        // Validate status transitions
+        $allowedTransitions = [
+            Webinar::STATUS_DRAFT => [Webinar::STATUS_SCHEDULED, Webinar::STATUS_PUBLISHED],
+            Webinar::STATUS_SCHEDULED => [Webinar::STATUS_DRAFT, Webinar::STATUS_LIVE],
+            Webinar::STATUS_LIVE => [Webinar::STATUS_ENDED],
+            Webinar::STATUS_ENDED => [Webinar::STATUS_PUBLISHED, Webinar::STATUS_DRAFT],
+            Webinar::STATUS_PUBLISHED => [Webinar::STATUS_DRAFT],
+        ];
+
+        if (!in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return back()->with('error', __('webinars.status_change_not_allowed'));
+        }
+
+        // Update timestamps based on status change
+        $updateData = ['status' => $newStatus];
+
+        if ($newStatus === Webinar::STATUS_LIVE && !$webinar->started_at) {
+            $updateData['started_at'] = now();
+        }
+
+        if ($newStatus === Webinar::STATUS_ENDED && !$webinar->ended_at) {
+            $updateData['ended_at'] = now();
+            if ($webinar->started_at) {
+                $updateData['duration_minutes'] = $webinar->started_at->diffInMinutes(now());
+            }
+        }
+
+        $webinar->update($updateData);
+
+        return back()->with('success', __('webinars.status_updated'));
     }
 
     public function update(Request $request, Webinar $webinar)

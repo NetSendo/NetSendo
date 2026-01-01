@@ -6,47 +6,138 @@
     <title>{{ $webinar->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/js/app.js'])
+    <style>
+        /* Hide default video controls */
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+        video::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+        video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+        video::-moz-range-progress {
+            display: none !important;
+        }
+        video::-ms-fill-upper {
+            display: none !important;
+        }
+
+        /* Disable pointer events on video */
+        .video-container video {
+            pointer-events: none;
+        }
+
+        /* Hide YouTube iframe controls by overlay */
+        .youtube-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            cursor: default;
+        }
+
+        /* Countdown styling */
+        .countdown-number {
+            font-variant-numeric: tabular-nums;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+        }
+
+        .countdown-card {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-gray-900 text-white">
     <div class="flex flex-col lg:flex-row h-screen">
         <!-- Video Player -->
         <div class="flex-1 bg-black flex flex-col">
             <!-- Video Area -->
-            <div class="flex-1 relative">
-                @if($webinar->youtube_live_id)
-                    <iframe
-                        src="https://www.youtube.com/embed/{{ $webinar->youtube_live_id }}?autoplay=1"
-                        class="absolute inset-0 w-full h-full"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                    ></iframe>
-                @elseif($webinar->video_url)
-                    <video
-                        id="webinar-video"
-                        class="absolute inset-0 w-full h-full"
-                        controls
-                        autoplay
-                    >
-                        <source src="{{ $webinar->video_url }}" type="video/mp4">
-                        Twoja przeglądarka nie obsługuje wideo.
-                    </video>
-                @else
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="animate-pulse mb-4">
-                                <svg class="w-16 h-16 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
+            <div class="flex-1 relative video-container">
+                @if(!$shouldPlay && $sessionStartTime)
+                    <!-- Countdown Timer -->
+                    <div id="countdown-container" class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">
+                        <div class="text-center p-8">
+                            @if($webinar->thumbnail_url)
+                                <img src="{{ $webinar->thumbnail_url }}" alt="{{ $webinar->name }}" class="mx-auto rounded-xl shadow-2xl mb-8 max-w-md w-full opacity-80">
+                            @endif
+                            <h2 class="text-3xl md:text-4xl font-bold mb-4">{{ $webinar->name }}</h2>
+                            <p class="text-indigo-300 text-lg mb-8">{{ __('webinars.public.watch.starts_in') }}</p>
+
+                            <div class="flex justify-center gap-4 md:gap-6 mb-8">
+                                <div class="countdown-card bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 min-w-[80px] md:min-w-[100px]">
+                                    <div id="countdown-days" class="countdown-number text-3xl md:text-5xl font-bold text-white">00</div>
+                                    <div class="text-indigo-300 text-sm uppercase tracking-wide mt-2">{{ __('webinars.public.watch.countdown.days') }}</div>
+                                </div>
+                                <div class="countdown-card bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 min-w-[80px] md:min-w-[100px]">
+                                    <div id="countdown-hours" class="countdown-number text-3xl md:text-5xl font-bold text-white">00</div>
+                                    <div class="text-indigo-300 text-sm uppercase tracking-wide mt-2">{{ __('webinars.public.watch.countdown.hours') }}</div>
+                                </div>
+                                <div class="countdown-card bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 min-w-[80px] md:min-w-[100px]">
+                                    <div id="countdown-minutes" class="countdown-number text-3xl md:text-5xl font-bold text-white">00</div>
+                                    <div class="text-indigo-300 text-sm uppercase tracking-wide mt-2">{{ __('webinars.public.watch.countdown.minutes') }}</div>
+                                </div>
+                                <div class="countdown-card bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 min-w-[80px] md:min-w-[100px]">
+                                    <div id="countdown-seconds" class="countdown-number text-3xl md:text-5xl font-bold text-white">00</div>
+                                    <div class="text-indigo-300 text-sm uppercase tracking-wide mt-2">{{ __('webinars.public.watch.countdown.seconds') }}</div>
+                                </div>
                             </div>
-                            <p class="text-gray-400">{{ __('webinars.public.watch.waiting') }}</p>
+
+                            <p class="text-gray-400 text-sm">
+                                {{ __('webinars.public.watch.session_starts_at') }}
+                                <span id="session-start-local" class="font-semibold text-white">{{ \Carbon\Carbon::parse($sessionStartTime)->format('d.m.Y H:i') }}</span>
+                                <span class="text-indigo-300 text-xs">({{ $registrationTimezone }})</span>
+                            </p>
                         </div>
                     </div>
                 @endif
+
+                <div id="video-player-container" class="absolute inset-0 {{ !$shouldPlay && $sessionStartTime ? 'hidden' : '' }}">
+                    @if($webinar->youtube_live_id)
+                        <div class="relative w-full h-full">
+                            <div class="youtube-overlay" onclick="return false;"></div>
+                            <iframe
+                                id="youtube-player"
+                                src="https://www.youtube.com/embed/{{ $webinar->youtube_live_id }}?autoplay=1&controls=0&disablekb=1&modestbranding=1&rel=0&showinfo=0"
+                                class="absolute inset-0 w-full h-full"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                            ></iframe>
+                        </div>
+                    @elseif($webinar->video_url)
+                        <video
+                            id="webinar-video"
+                            class="absolute inset-0 w-full h-full"
+                            autoplay
+                            playsinline
+                            disablepictureinpicture
+                            controlslist="nodownload nofullscreen noremoteplayback"
+                        >
+                            <source src="{{ $webinar->video_url }}" type="video/mp4">
+                            Twoja przeglądarka nie obsługuje wideo.
+                        </video>
+                    @else
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="animate-pulse mb-4">
+                                    <svg class="w-16 h-16 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-gray-400">{{ __('webinars.public.watch.waiting') }}</p>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <!-- Pinned Product (overlay) -->
-            @if($pinnedProduct)
+            @if($pinnedProduct && $shouldPlay)
                 <div id="pinned-product" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4">
                     <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
@@ -109,8 +200,84 @@
         </div>
     </div>
 
-    <!-- Leave tracking -->
     <script>
+        // Session start time from server
+        const sessionStartTime = @json($sessionStartTime);
+        const shouldPlayInitially = @json($shouldPlay);
+
+        // Countdown timer logic
+        function updateCountdown() {
+            if (!sessionStartTime) return;
+
+            const now = new Date();
+            const target = new Date(sessionStartTime);
+            const diff = target - now;
+
+            if (diff <= 0) {
+                // Time to start!
+                startWebinar();
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown-days').textContent = String(days).padStart(2, '0');
+            document.getElementById('countdown-hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('countdown-minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('countdown-seconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        function startWebinar() {
+            const countdownContainer = document.getElementById('countdown-container');
+            const videoContainer = document.getElementById('video-player-container');
+
+            if (countdownContainer) {
+                countdownContainer.classList.add('hidden');
+            }
+            if (videoContainer) {
+                videoContainer.classList.remove('hidden');
+            }
+
+            // Start video playback
+            const video = document.getElementById('webinar-video');
+            if (video) {
+                video.play().catch(e => console.log('Autoplay blocked:', e));
+            }
+
+            // Reload page to get live session data
+            setTimeout(() => window.location.reload(), 1000);
+        }
+
+        // Start countdown if not playing yet
+        if (!shouldPlayInitially && sessionStartTime) {
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        // Block right-click context menu on video
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'VIDEO') {
+                e.preventDefault();
+            }
+        });
+
+        // Block keyboard controls on video
+        document.addEventListener('keydown', function(e) {
+            const video = document.getElementById('webinar-video');
+            if (!video) return;
+
+            // Block space, arrow keys, etc. when video has focus
+            if (document.activeElement === video || e.target === video) {
+                if ([' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'k', 'm', 'f'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // Leave tracking
         window.addEventListener('beforeunload', function() {
             const video = document.getElementById('webinar-video');
             const currentTime = video ? Math.floor(video.currentTime) : 0;

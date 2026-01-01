@@ -9,6 +9,18 @@ return [
     'ended' => 'Webinar beendet.',
     'error_start' => 'Webinar konnte nicht gestartet werden.',
     'error_end' => 'Webinar konnte nicht beendet werden.',
+    'status_updated' => 'Webinar-Status wurde geändert.',
+    'status_change_not_allowed' => 'Diese Statusänderung ist nicht erlaubt.',
+
+    'edit' => [
+        'public_link' => 'Registrierungslink',
+        'public_link_desc' => 'Teilen Sie diesen Link mit Teilnehmern, damit sie sich registrieren können.',
+        'copy_link' => 'Kopieren',
+        'copied' => 'Kopiert!',
+        'change_status' => 'Status ändern...',
+        'no_status_change' => 'Keine Statusänderungen verfügbar.',
+        'schedule' => 'Zeitplan',
+    ],
 
     'public' => [
         'register' => [
@@ -23,6 +35,7 @@ return [
             'consent' => 'Mit der Registrierung stimmen Sie zu, Nachrichten im Zusammenhang mit dem Webinar zu erhalten.',
             'closed' => 'Die Registrierung für dieses Webinar ist geschlossen.',
             'benefits' => 'Was Sie lernen werden?',
+            'timezone' => 'Ihre Zeitzone',
         ],
         'registered' => [
             'success_title' => 'Herzlichen Glückwunsch, :name Sie sind angemeldet!',
@@ -40,6 +53,44 @@ return [
             'viewers' => ':count Zuschauer',
             'loading_chat' => 'Chat wird geladen...',
             'type_message' => 'Nachricht schreiben...',
+            'starts_in' => 'Webinar beginnt in',
+            'session_starts_at' => 'Sitzung beginnt am',
+            'countdown' => [
+                'days' => 'Tage',
+                'hours' => 'Stunden',
+                'minutes' => 'Minuten',
+                'seconds' => 'Sekunden',
+            ],
         ],
     ],
+
+    'autoconfig' => [
+        'title' => 'Autowebinar-Konfiguration',
+        'schedule_type' => 'Zeitplantyp',
+        'recurring_settings' => 'Wiederkehrende Zeitplaneinstellungen',
+        'days_of_week' => 'Wochentage',
+        'times_of_day' => 'Startzeiten',
+        'times_hint' => '(Sie können mehrere Zeiten hinzufügen)',
+        'add_time' => 'Zeit hinzufügen',
+        'fixed_dates' => 'Feste Daten und Zeiten',
+        'add_date' => 'Datum hinzufügen',
+        'on_demand_settings' => 'On-Demand-Einstellungen',
+        'start_delay' => 'Startverzögerung nach Registrierung',
+        'minutes' => 'Minuten',
+        'start_delay_hint' => 'Das Webinar startet automatisch nach der angegebenen Zeit nach der Registrierung.',
+        'evergreen_settings' => 'Evergreen-Einstellungen',
+        'available_slots' => 'Verfügbare Zeitfenster',
+        'add_slot' => 'Slot hinzufügen',
+        'evergreen_hint' => 'Benutzer sehen bei der Registrierung Optionen wie "in X Minuten".',
+        'limits' => 'Datumsbereich und Limits',
+        'start_date' => 'Startdatum',
+        'end_date' => 'Enddatum',
+        'max_sessions_per_day' => 'Max Sitzungen pro Tag',
+        'max_attendees' => 'Max Teilnehmer pro Sitzung',
+        'is_active' => 'Zeitplan aktiv',
+        'next_sessions' => 'Kommende Sitzungen',
+        'save' => 'Zeitplan speichern',
+        'cancel' => 'Abbrechen',
+    ],
 ];
+

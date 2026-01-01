@@ -7,6 +7,8 @@ use App\Models\Webinar;
 use App\Models\WebinarRegistration;
 use App\Models\WebinarAnalytic;
 use App\Services\Webinar\WebinarService;
+use Carbon\Carbon;
+use DateTimeZone;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -29,10 +31,18 @@ class PublicWebinarController extends Controller
             $nextSessions = $webinar->schedule->getNextSessionTimes(5);
         }
 
+        // Get common timezones for dropdown
+        $timezones = $this->getCommonTimezones();
+
+        // Get webinar's timezone or user's timezone as default
+        $defaultTimezone = $webinar->timezone ?? $webinar->user->timezone ?? 'Europe/Warsaw';
+
         return view('webinar.register', [
             'webinar' => $webinar,
             'nextSessions' => $nextSessions,
             'canRegister' => $webinar->canRegister(),
+            'timezones' => $timezones,
+            'defaultTimezone' => $defaultTimezone,
         ]);
     }
 
@@ -46,6 +56,7 @@ class PublicWebinarController extends Controller
             'last_name' => 'nullable|string|max:100',
             'phone' => 'nullable|string|max:20',
             'session_time' => 'nullable|date',
+            'timezone' => 'nullable|string|max:64',
         ]);
 
         // Add UTM and technical data
@@ -81,12 +92,39 @@ class PublicWebinarController extends Controller
         $session = $webinar->sessions()->where('status', 'live')->first();
         $this->webinarService->handleJoin($webinar, $registration, $session);
 
+        // Calculate session start time for countdown
+        $sessionStartTime = null;
+
+        if ($registration->session && $registration->session->scheduled_at) {
+            // Use the registered session's scheduled time
+            $sessionStartTime = $registration->session->scheduled_at;
+        } elseif ($webinar->scheduled_at) {
+            // Use webinar's scheduled time for live webinars
+            $sessionStartTime = $webinar->scheduled_at;
+        } elseif ($webinar->isAutoWebinar() && $webinar->schedule) {
+            // Get next session time for autowebinars
+            $nextSessions = $webinar->schedule->getNextSessionTimes(1);
+            if (!empty($nextSessions)) {
+                $sessionStartTime = $nextSessions[0];
+            }
+        }
+
+        // Check if session should already be playing
+        $isLive = $session && $session->status === 'live';
+        $shouldPlay = $isLive || ($sessionStartTime && now()->gte($sessionStartTime));
+
+        // Get registration's timezone for display
+        $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
+
         return view('webinar.watch', [
             'webinar' => $webinar,
             'registration' => $registration,
             'session' => $session,
             'products' => $webinar->products()->active()->get(),
             'pinnedProduct' => $webinar->products()->pinned()->first(),
+            'sessionStartTime' => $sessionStartTime?->toIso8601String(),
+            'shouldPlay' => $shouldPlay,
+            'registrationTimezone' => $registrationTimezone,
         ]);
     }
 
@@ -143,5 +181,46 @@ class PublicWebinarController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get common timezones for dropdown.
+     */
+    protected function getCommonTimezones(): array
+    {
+        return [
+            'Europe/Warsaw' => '(UTC+01:00) Warsaw',
+            'Europe/London' => '(UTC+00:00) London',
+            'Europe/Paris' => '(UTC+01:00) Paris',
+            'Europe/Berlin' => '(UTC+01:00) Berlin',
+            'Europe/Madrid' => '(UTC+01:00) Madrid',
+            'Europe/Rome' => '(UTC+01:00) Rome',
+            'Europe/Amsterdam' => '(UTC+01:00) Amsterdam',
+            'Europe/Brussels' => '(UTC+01:00) Brussels',
+            'Europe/Vienna' => '(UTC+01:00) Vienna',
+            'Europe/Prague' => '(UTC+01:00) Prague',
+            'Europe/Stockholm' => '(UTC+01:00) Stockholm',
+            'Europe/Helsinki' => '(UTC+02:00) Helsinki',
+            'Europe/Athens' => '(UTC+02:00) Athens',
+            'Europe/Moscow' => '(UTC+03:00) Moscow',
+            'America/New_York' => '(UTC-05:00) New York',
+            'America/Chicago' => '(UTC-06:00) Chicago',
+            'America/Denver' => '(UTC-07:00) Denver',
+            'America/Los_Angeles' => '(UTC-08:00) Los Angeles',
+            'America/Toronto' => '(UTC-05:00) Toronto',
+            'America/Mexico_City' => '(UTC-06:00) Mexico City',
+            'America/Sao_Paulo' => '(UTC-03:00) São Paulo',
+            'Asia/Tokyo' => '(UTC+09:00) Tokyo',
+            'Asia/Shanghai' => '(UTC+08:00) Shanghai',
+            'Asia/Hong_Kong' => '(UTC+08:00) Hong Kong',
+            'Asia/Singapore' => '(UTC+08:00) Singapore',
+            'Asia/Seoul' => '(UTC+09:00) Seoul',
+            'Asia/Dubai' => '(UTC+04:00) Dubai',
+            'Asia/Kolkata' => '(UTC+05:30) Kolkata',
+            'Australia/Sydney' => '(UTC+10:00) Sydney',
+            'Australia/Melbourne' => '(UTC+10:00) Melbourne',
+            'Pacific/Auckland' => '(UTC+12:00) Auckland',
+            'UTC' => '(UTC+00:00) UTC',
+        ];
     }
 }

@@ -9,6 +9,18 @@ return [
     'ended' => 'Webinar ended.',
     'error_start' => 'Could not start webinar.',
     'error_end' => 'Could not end webinar.',
+    'status_updated' => 'Webinar status has been changed.',
+    'status_change_not_allowed' => 'This status change is not allowed.',
+
+    'edit' => [
+        'public_link' => 'Registration Link',
+        'public_link_desc' => 'Share this link with participants so they can register.',
+        'copy_link' => 'Copy',
+        'copied' => 'Copied!',
+        'change_status' => 'Change status...',
+        'no_status_change' => 'No status changes available.',
+        'schedule' => 'Schedule',
+    ],
 
     'public' => [
         'register' => [
@@ -23,6 +35,7 @@ return [
             'consent' => 'By registering you agree to receive messages related to the webinar.',
             'closed' => 'Registration for this webinar is closed.',
             'benefits' => 'What you will learn?',
+            'timezone' => 'Your timezone',
         ],
         'registered' => [
             'success_title' => 'Congratulations, :name you are registered!',
@@ -40,6 +53,44 @@ return [
             'viewers' => ':count viewers',
             'loading_chat' => 'Loading chat...',
             'type_message' => 'Type a message...',
+            'starts_in' => 'Webinar starts in',
+            'session_starts_at' => 'Session starts at',
+            'countdown' => [
+                'days' => 'Days',
+                'hours' => 'Hours',
+                'minutes' => 'Minutes',
+                'seconds' => 'Seconds',
+            ],
         ],
     ],
+
+    'autoconfig' => [
+        'title' => 'Autowebinar Configuration',
+        'schedule_type' => 'Schedule Type',
+        'recurring_settings' => 'Recurring Schedule Settings',
+        'days_of_week' => 'Days of Week',
+        'times_of_day' => 'Start Times',
+        'times_hint' => '(you can add multiple times)',
+        'add_time' => 'Add Time',
+        'fixed_dates' => 'Fixed Dates and Times',
+        'add_date' => 'Add Date',
+        'on_demand_settings' => 'On-Demand Settings',
+        'start_delay' => 'Start Delay After Registration',
+        'minutes' => 'minutes',
+        'start_delay_hint' => 'The webinar will start automatically after the specified time from registration.',
+        'evergreen_settings' => 'Evergreen Settings',
+        'available_slots' => 'Available Time Slots',
+        'add_slot' => 'Add Slot',
+        'evergreen_hint' => 'Users will see "in X minutes" options during registration.',
+        'limits' => 'Date Range and Limits',
+        'start_date' => 'Start Date',
+        'end_date' => 'End Date',
+        'max_sessions_per_day' => 'Max Sessions Per Day',
+        'max_attendees' => 'Max Attendees Per Session',
+        'is_active' => 'Schedule Active',
+        'next_sessions' => 'Upcoming Sessions',
+        'save' => 'Save Schedule',
+        'cancel' => 'Cancel',
+    ],
 ];
+

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Webinar Public Registration Link:**
+
+  - Added public registration link display in webinar edit view with copy-to-clipboard functionality.
+  - Visual link preview with prominent gradient styling and external link button.
+  - Full translations for link section in PL, EN, DE, ES.
+
+- **Webinar Status Management:**
+  - Added status change dropdown allowing manual status transitions in webinar edit view.
+  - Implemented status transition validation (e.g., draft → scheduled → live → ended → published).
+  - Automatic timestamp updates (started_at, ended_at, duration_minutes) when changing status.
+  - Visual loading spinner during status update.
+  - Full translations for status change UI in PL, EN, DE, ES.
+  - **Webinar Video Player:**
+    - Blocked native video controls for better presenter control.
+    - Added countdown timer overlay before session start.
+    - Auto-play functionality when countdown reaches zero.
+  - **Autowebinar Configuration:**
+    - Added new "Schedule" configuration UI for automated webinars.
+    - Support for multiple sessions per day.
+    - Support for Recurring, Fixed Dates, On-demand, and Evergreen schedule types.
+  - **Translations:**
+    - Added missing translation keys for autowebinar configuration and schedule button in PL, EN, DE, ES.
+  - **Webinar Timezone Support:**
+    - Added timezone selector to webinar registration form with browser auto-detection.
+    - Registration's timezone is stored and used for countdown display.
+    - Session start time displayed in registrant's timezone on watch page.
+
 ## [1.3.0] – Short Description
 
 **Release date:** 2026-01-01

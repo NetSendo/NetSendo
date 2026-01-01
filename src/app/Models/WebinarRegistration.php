@@ -41,6 +41,7 @@ class WebinarRegistration extends Model
         'utm_term',
         'ip_address',
         'user_agent',
+        'timezone',
         'referrer_url',
         'reminder_24h_sent',
         'reminder_1h_sent',
