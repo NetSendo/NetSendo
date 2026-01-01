@@ -7,9 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.2.12] – Short Description
+## [1.2.13] – Shopify Integration & Translations
 
 **Release date:** 2026-01-01
+
+### Added
+
+- **Shopify Integration:**
+  - Full Shopify integration for automatic customer subscription and order tracking.
+  - New internal webhook handler `ShopifyController` supporting `orders/paid`, `orders/create`, and `customers/create` events.
+  - Secure authentication via Bearer token and optional HMAC signature verification.
+  - Custom fields support: `shopify_order_id`, `shopify_order_number`, `shopify_customer_id`, `shopify_currency`.
+  - New authenticated Marketplace page (`/marketplace/shopify`) with setup guide and webhook configuration.
+  - Added Shopify to Active Integrations list in Marketplace.
+  - Full translations for Shopify integration in EN, PL, DE, ES.
+
+### Fixed
+
+- **Translation Consistency:**
+  - Fixed incorrect structure of `woocommerce` translation block in `pl.json` and `en.json`.
+  - Fixed incorrect structure of `wordpress` translation block in `de.json`, `en.json`, `pl.json`, and `es.json`.
+  - Ensured all integration features (features list, setup steps, shortcodes) are correctly localized across all supported languages.
 
 ### Added
 
