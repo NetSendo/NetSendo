@@ -2097,6 +2097,40 @@
                 "condition": "Bedingung",
                 "action": "Aktion",
                 "end": "Ende"
+            },
+            "retry": {
+                "title": "Warten & Wiederholen",
+                "wait_for_condition": "Auf Bedingungserfüllung warten",
+                "wait_for_condition_desc": "Der Abonnent geht nicht weiter, bis die Bedingung erfüllt ist (z.B. E-Mail geöffnet)",
+                "enabled": "Automatische Erinnerungen aktivieren",
+                "enabled_desc": "Erinnerungen senden, wenn der Abonnent die Bedingung nicht erfüllt hat",
+                "max_attempts": "Maximale Erinnerungsversuche",
+                "max_attempts_help": "Nach Erschöpfung der Versuche wird die Schlusshandlung ausgeführt",
+                "interval": "Intervall zwischen Erinnerungen",
+                "interval_unit": "Intervalleinheit",
+                "interval_hours": "Stunden",
+                "interval_days": "Tage",
+                "reminder_message": "Erinnerungsnachricht",
+                "reminder_message_help": "Falls leer, wird die ursprüngliche Nachricht gesendet",
+                "select_reminder_message": "Erinnerungsnachricht auswählen",
+                "same_as_original": "Standard: gleiche Nachricht",
+                "exhausted_action": "Nach Erschöpfung der Versuche",
+                "exhausted_continue": "Trichter fortsetzen (zu NEIN gehen)",
+                "exhausted_exit": "Als inaktiv markieren",
+                "exhausted_unsubscribe": "Von Liste abmelden"
+            },
+            "condition_types": {
+                "email_opened": "E-Mail wurde geöffnet",
+                "email_clicked": "E-Mail wurde angeklickt",
+                "link_clicked": "Bestimmter Link wurde angeklickt",
+                "tag_exists": "Abonnent hat Tag",
+                "field_value": "Feld hat bestimmten Wert",
+                "task_completed": "Aufgabe wurde abgeschlossen"
+            },
+            "task_config": {
+                "task_id": "Aufgaben-ID",
+                "task_id_placeholder": "z.B. quiz-1, onboarding-schritt-2",
+                "task_id_help": "Wird vom externen System zum Markieren des Abschlusses verwendet"
             }
         },
         "stats_title": "Trichter-Statistiken",

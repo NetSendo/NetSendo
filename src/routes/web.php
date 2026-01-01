@@ -594,6 +594,12 @@ Route::post('/webhooks/woocommerce', [\App\Http\Controllers\Webhooks\WooCommerce
 // Shopify Webhook (public, HMAC + API-key authenticated)
 Route::post('/webhooks/shopify', [\App\Http\Controllers\Webhooks\ShopifyController::class, 'handle'])->name('webhooks.shopify');
 
+// Funnel Task Completion Webhook (public, for external quiz/task systems)
+Route::prefix('funnel/task')->name('funnel.task.')->group(function () {
+    Route::post('/complete', [\App\Http\Controllers\Public\FunnelTaskController::class, 'complete'])->name('complete');
+    Route::get('/status', [\App\Http\Controllers\Public\FunnelTaskController::class, 'status'])->name('status');
+});
+
 
 require __DIR__.'/auth.php';
 

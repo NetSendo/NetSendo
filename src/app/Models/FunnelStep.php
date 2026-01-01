@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FunnelStep extends Model
 {
@@ -30,6 +31,16 @@ class FunnelStep extends Model
     public const CONDITION_LINK_CLICKED = 'link_clicked';
     public const CONDITION_TAG_EXISTS = 'tag_exists';
     public const CONDITION_FIELD_VALUE = 'field_value';
+    public const CONDITION_TASK_COMPLETED = 'task_completed';
+
+    // Retry interval unit constants
+    public const RETRY_UNIT_HOURS = 'hours';
+    public const RETRY_UNIT_DAYS = 'days';
+
+    // Retry exhausted action constants
+    public const RETRY_ACTION_CONTINUE = 'continue';
+    public const RETRY_ACTION_EXIT = 'exit';
+    public const RETRY_ACTION_UNSUBSCRIBE = 'unsubscribe';
 
     // Action type constants
     public const ACTION_ADD_TAG = 'add_tag';
@@ -57,6 +68,14 @@ class FunnelStep extends Model
         'next_step_yes_id',
         'next_step_no_id',
         'order',
+        // Retry settings
+        'wait_for_condition',
+        'retry_enabled',
+        'retry_max_attempts',
+        'retry_interval_value',
+        'retry_interval_unit',
+        'retry_message_id',
+        'retry_exhausted_action',
     ];
 
     protected $casts = [
@@ -66,6 +85,10 @@ class FunnelStep extends Model
         'position_x' => 'integer',
         'position_y' => 'integer',
         'order' => 'integer',
+        'wait_for_condition' => 'boolean',
+        'retry_enabled' => 'boolean',
+        'retry_max_attempts' => 'integer',
+        'retry_interval_value' => 'integer',
     ];
 
     // =====================================
@@ -95,6 +118,16 @@ class FunnelStep extends Model
     public function nextStepNo(): BelongsTo
     {
         return $this->belongsTo(FunnelStep::class, 'next_step_no_id');
+    }
+
+    public function retryMessage(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'retry_message_id');
+    }
+
+    public function retries(): HasMany
+    {
+        return $this->hasMany(FunnelStepRetry::class);
     }
 
     // =====================================
@@ -278,7 +311,47 @@ class FunnelStep extends Model
             self::CONDITION_LINK_CLICKED => 'Kliknięto konkretny link',
             self::CONDITION_TAG_EXISTS => 'Subskrybent ma tag',
             self::CONDITION_FIELD_VALUE => 'Pole ma określoną wartość',
+            self::CONDITION_TASK_COMPLETED => 'Zadanie zostało zaliczone',
         ];
+    }
+
+    public static function getRetryIntervalUnits(): array
+    {
+        return [
+            self::RETRY_UNIT_HOURS => 'Godziny',
+            self::RETRY_UNIT_DAYS => 'Dni',
+        ];
+    }
+
+    public static function getRetryExhaustedActions(): array
+    {
+        return [
+            self::RETRY_ACTION_CONTINUE => 'Kontynuuj lejek',
+            self::RETRY_ACTION_EXIT => 'Oznacz jako nieaktywny',
+            self::RETRY_ACTION_UNSUBSCRIBE => 'Wypisz z listy',
+        ];
+    }
+
+    // =====================================
+    // Retry helpers
+    // =====================================
+
+    public function hasRetryEnabled(): bool
+    {
+        return $this->wait_for_condition && $this->retry_enabled;
+    }
+
+    public function getRetryIntervalInSecondsAttribute(): ?int
+    {
+        if (!$this->retry_enabled || !$this->retry_interval_value || !$this->retry_interval_unit) {
+            return null;
+        }
+
+        return match ($this->retry_interval_unit) {
+            self::RETRY_UNIT_HOURS => $this->retry_interval_value * 3600,
+            self::RETRY_UNIT_DAYS => $this->retry_interval_value * 86400,
+            default => null,
+        };
     }
 
     public static function getActionTypes(): array

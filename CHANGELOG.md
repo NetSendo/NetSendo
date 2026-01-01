@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+## [1.3.2] – Short Description
+
+**Release date:** 2026-01-01
+
+### Added
+
+- **Smart Email Funnels (Conditional Sequences):**
+  - New "Wait & Retry" logic for funnel condition steps with configurable max attempts and interval.
+  - Automatic reminder emails for subscribers who haven't met conditions (e.g., email opened).
+  - New `task_completed` condition type for external quiz/task integration.
+  - New migrations: `add_retry_settings_to_funnel_steps`, `create_funnel_step_retries`, `add_task_completed_condition`, `create_funnel_tasks`.
+  - New models: `FunnelStepRetry`, `FunnelTask` with relationships and helper methods.
+  - New `FunnelRetryService` for processing retry logic (shouldSendRetry, sendRetry, handleRetryExhausted).
+  - New `ProcessFunnelRetriesCommand` artisan command for scheduled retry processing.
+  - New `FunnelTaskController` with public endpoints for external task completion webhooks (`/funnel/task/complete`, `/funnel/task/status`).
+  - Updated `FunnelExecutionService` with `wait_for_condition` support and `task_completed` condition check.
+  - Updated `FunnelStep` model with retry constants, fillable fields, casts, and relationships.
+  - Updated `FunnelSubscriber` model with `STATUS_WAITING_CONDITION` status and new relationships.
+  - Full translations for retry/wait UI in PL, EN, DE, ES.
+
 ## [1.3.1] – Webinar Email Integration
 
 **Release date:** 2026-01-01

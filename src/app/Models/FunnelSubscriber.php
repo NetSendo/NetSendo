@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 
 class FunnelSubscriber extends Model
@@ -17,6 +18,7 @@ class FunnelSubscriber extends Model
     public const STATUS_COMPLETED = 'completed';
     public const STATUS_PAUSED = 'paused';
     public const STATUS_EXITED = 'exited';
+    public const STATUS_WAITING_CONDITION = 'waiting_condition';
 
     protected $fillable = [
         'funnel_id',
@@ -55,6 +57,17 @@ class FunnelSubscriber extends Model
     public function currentStep(): BelongsTo
     {
         return $this->belongsTo(FunnelStep::class, 'current_step_id');
+    }
+
+    public function retries(): HasMany
+    {
+        return $this->hasMany(FunnelStepRetry::class);
+    }
+
+    public function completedTasks(): HasMany
+    {
+        return $this->hasMany(FunnelTask::class, 'subscriber_id', 'subscriber_id')
+            ->where('funnel_id', $this->funnel_id);
     }
 
     // =====================================
@@ -174,13 +187,13 @@ class FunnelSubscriber extends Model
     {
         $this->status = self::STATUS_EXITED;
         $this->next_action_at = null;
-        
+
         if ($reason) {
             $data = $this->data ?? [];
             $data['exit_reason'] = $reason;
             $this->data = $data;
         }
-        
+
         $this->save();
 
         return $this;

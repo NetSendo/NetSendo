@@ -5,6 +5,7 @@ namespace App\Services\Funnels;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
+use App\Models\FunnelTask;
 use App\Models\Subscriber;
 use App\Jobs\SendEmailJob;
 use Illuminate\Support\Facades\Log;
@@ -22,10 +23,10 @@ class FunnelExecutionService
         }
 
         $enrollment = FunnelSubscriber::enroll($funnel, $subscriber);
-        
+
         if ($enrollment) {
             Log::info("Subscriber {$subscriber->id} enrolled in funnel {$funnel->id}");
-            
+
             // Process the first step immediately
             $this->processNextStep($enrollment);
         }
@@ -39,7 +40,7 @@ class FunnelExecutionService
     public function processNextStep(FunnelSubscriber $enrollment): void
     {
         $step = $enrollment->currentStep;
-        
+
         if (!$step) {
             $enrollment->markCompleted();
             return;
@@ -130,6 +131,23 @@ class FunnelExecutionService
      */
     protected function executeConditionStep(FunnelSubscriber $enrollment, FunnelStep $step): void
     {
+        // If wait_for_condition is enabled, check if condition is met first
+        if ($step->wait_for_condition) {
+            $conditionMet = $this->evaluateCondition($enrollment, $step);
+
+            if (!$conditionMet) {
+                // Put enrollment in waiting state for retry processing
+                $enrollment->addToHistory('condition_started', [
+                    'condition_type' => $step->condition_type,
+                    'wait_for_condition' => true,
+                ]);
+
+                $enrollment->status = FunnelSubscriber::STATUS_WAITING_CONDITION;
+                $enrollment->save();
+                return; // Will be processed by FunnelRetryService
+            }
+        }
+
         $conditionMet = $this->evaluateCondition($enrollment, $step);
 
         $enrollment->addToHistory('condition_evaluated', [
@@ -156,6 +174,7 @@ class FunnelExecutionService
             FunnelStep::CONDITION_EMAIL_CLICKED => $this->checkEmailClicked($subscriber, $config),
             FunnelStep::CONDITION_TAG_EXISTS => $this->checkTagExists($subscriber, $config),
             FunnelStep::CONDITION_FIELD_VALUE => $this->checkFieldValue($subscriber, $config),
+            FunnelStep::CONDITION_TASK_COMPLETED => $this->checkTaskCompleted($enrollment, $config),
             default => false,
         };
     }
@@ -186,6 +205,20 @@ class FunnelExecutionService
             ->where('message_id', $messageId)
             ->where('event_type', 'click')
             ->exists();
+    }
+
+    protected function checkTaskCompleted(FunnelSubscriber $enrollment, array $config): bool
+    {
+        $taskId = $config['task_id'] ?? null;
+        if (!$taskId) {
+            return false;
+        }
+
+        return FunnelTask::hasCompleted(
+            $enrollment->funnel_id,
+            $enrollment->subscriber_id,
+            $taskId
+        );
     }
 
     protected function checkTagExists(Subscriber $subscriber, array $config): bool
@@ -290,7 +323,7 @@ class FunnelExecutionService
         }
 
         $subscriber = $enrollment->subscriber;
-        
+
         try {
             Http::post($url, [
                 'event' => 'funnel_webhook',
@@ -346,7 +379,7 @@ class FunnelExecutionService
         }
 
         $enrollment->moveToStep($nextStep);
-        
+
         // If not waiting (delay), process immediately
         if (!$enrollment->isWaiting()) {
             $this->processNextStep($enrollment);

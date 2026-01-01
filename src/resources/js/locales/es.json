@@ -1920,6 +1920,40 @@
                 "condition": "Condición",
                 "action": "Acción",
                 "end": "Fin"
+            },
+            "retry": {
+                "title": "Esperar y Reintentar",
+                "wait_for_condition": "Esperar a que se cumpla la condición",
+                "wait_for_condition_desc": "El suscriptor no avanzará hasta que se cumpla la condición (ej. email abierto)",
+                "enabled": "Activar recordatorios automáticos",
+                "enabled_desc": "Enviar recordatorios si el suscriptor no ha cumplido la condición",
+                "max_attempts": "Máximo de intentos de recordatorio",
+                "max_attempts_help": "Tras agotar los intentos, se ejecutará la acción final",
+                "interval": "Intervalo entre recordatorios",
+                "interval_unit": "Unidad del intervalo",
+                "interval_hours": "Horas",
+                "interval_days": "Días",
+                "reminder_message": "Mensaje de recordatorio",
+                "reminder_message_help": "Si está vacío, se enviará el mensaje original",
+                "select_reminder_message": "Seleccionar mensaje de recordatorio",
+                "same_as_original": "Por defecto: mismo mensaje",
+                "exhausted_action": "Tras agotar los intentos",
+                "exhausted_continue": "Continuar embudo (ir a NO)",
+                "exhausted_exit": "Marcar como inactivo",
+                "exhausted_unsubscribe": "Dar de baja de la lista"
+            },
+            "condition_types": {
+                "email_opened": "El email fue abierto",
+                "email_clicked": "Se hizo clic en el email",
+                "link_clicked": "Se hizo clic en un enlace específico",
+                "tag_exists": "El suscriptor tiene la etiqueta",
+                "field_value": "El campo tiene un valor específico",
+                "task_completed": "La tarea fue completada"
+            },
+            "task_config": {
+                "task_id": "ID de la tarea",
+                "task_id_placeholder": "ej. quiz-1, onboarding-paso-2",
+                "task_id_help": "Usado por el sistema externo para marcar la finalización"
             }
         },
         "table": {

@@ -2727,6 +2727,40 @@
                 "condition": "Warunek",
                 "action": "Akcja",
                 "end": "Koniec"
+            },
+            "retry": {
+                "title": "Czekaj i Przypominaj",
+                "wait_for_condition": "Czekaj na spełnienie warunku przed dalszym krokiem",
+                "wait_for_condition_desc": "Subskrybent nie przejdzie dalej, dopóki warunek nie zostanie spełniony (np. otwarcie emaila)",
+                "enabled": "Włącz automatyczne przypomnienia",
+                "enabled_desc": "Wysyłaj przypomnienia jeśli subskrybent nie spełnił warunku",
+                "max_attempts": "Maksymalna liczba przypomnień",
+                "max_attempts_help": "Po wyczerpaniu prób zostanie wykonana akcja końcowa",
+                "interval": "Odstęp między przypomnieniami",
+                "interval_unit": "Jednostka odstępu",
+                "interval_hours": "Godziny",
+                "interval_days": "Dni",
+                "reminder_message": "Wiadomość przypomnienia",
+                "reminder_message_help": "Jeśli puste, zostanie wysłana oryginalna wiadomość",
+                "select_reminder_message": "Wybierz wiadomość przypomnienia",
+                "same_as_original": "Domyślnie: ta sama wiadomość",
+                "exhausted_action": "Po wyczerpaniu prób",
+                "exhausted_continue": "Kontynuuj lejek (idź do NO)",
+                "exhausted_exit": "Oznacz jako nieaktywny",
+                "exhausted_unsubscribe": "Wypisz z listy"
+            },
+            "condition_types": {
+                "email_opened": "Email został otwarty",
+                "email_clicked": "Kliknięto w email",
+                "link_clicked": "Kliknięto konkretny link",
+                "tag_exists": "Subskrybent ma tag",
+                "field_value": "Pole ma określoną wartość",
+                "task_completed": "Zadanie zostało zaliczone"
+            },
+            "task_config": {
+                "task_id": "ID zadania",
+                "task_id_placeholder": "np. quiz-1, onboarding-step-2",
+                "task_id_help": "Używane przez zewnętrzny system do oznaczania zaliczenia"
             }
         },
         "table": {

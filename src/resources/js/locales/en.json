@@ -2477,6 +2477,40 @@
                 "condition": "Condition",
                 "action": "Action",
                 "end": "End"
+            },
+            "retry": {
+                "title": "Wait & Retry",
+                "wait_for_condition": "Wait for condition before proceeding",
+                "wait_for_condition_desc": "Subscriber won't proceed until the condition is met (e.g. email opened)",
+                "enabled": "Enable automatic reminders",
+                "enabled_desc": "Send reminders if subscriber hasn't met the condition",
+                "max_attempts": "Maximum reminder attempts",
+                "max_attempts_help": "After exhausting attempts, the final action will be executed",
+                "interval": "Interval between reminders",
+                "interval_unit": "Interval unit",
+                "interval_hours": "Hours",
+                "interval_days": "Days",
+                "reminder_message": "Reminder message",
+                "reminder_message_help": "If empty, the original message will be sent",
+                "select_reminder_message": "Select reminder message",
+                "same_as_original": "Default: same message",
+                "exhausted_action": "After exhausting attempts",
+                "exhausted_continue": "Continue funnel (go to NO branch)",
+                "exhausted_exit": "Mark as inactive",
+                "exhausted_unsubscribe": "Unsubscribe from list"
+            },
+            "condition_types": {
+                "email_opened": "Email was opened",
+                "email_clicked": "Email was clicked",
+                "link_clicked": "Specific link was clicked",
+                "tag_exists": "Subscriber has tag",
+                "field_value": "Field has specific value",
+                "task_completed": "Task was completed"
+            },
+            "task_config": {
+                "task_id": "Task ID",
+                "task_id_placeholder": "e.g. quiz-1, onboarding-step-2",
+                "task_id_help": "Used by external system to mark completion"
             }
         },
         "table": {
