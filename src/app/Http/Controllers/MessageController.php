@@ -181,6 +181,11 @@ class MessageController extends Controller
             'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
             'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
             'systemVariables' => $insertController->getSystemVariables(),
+            'webinars' => \App\Models\Webinar::forUser(auth()->id())
+                ->whereIn('status', ['scheduled', 'live', 'published'])
+                ->select('id', 'name', 'slug')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -403,6 +408,11 @@ class MessageController extends Controller
             'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
             'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
             'systemVariables' => $insertController->getSystemVariables(),
+            'webinars' => \App\Models\Webinar::forUser(auth()->id())
+                ->whereIn('status', ['scheduled', 'live', 'published'])
+                ->select('id', 'name', 'slug')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

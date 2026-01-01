@@ -22,10 +22,13 @@
 
         <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
             <p class="text-sm opacity-75 mb-2">{{ __('webinars.public.registered.starts_at') }}</p>
-            @if($webinar->scheduled_at)
-                <p class="text-2xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }} o {{ $webinar->scheduled_at->format('H:i') }}</p>
-            @elseif($registration->session)
+            @if($registration->session && $registration->session->scheduled_at)
                 <p class="text-2xl font-bold">{{ $registration->session->scheduled_at->format('d.m.Y') }} o {{ $registration->session->scheduled_at->format('H:i') }}</p>
+                @if($registration->timezone)
+                    <p class="text-sm opacity-60 mt-1">({{ $registration->timezone }})</p>
+                @endif
+            @elseif($webinar->scheduled_at)
+                <p class="text-2xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }} o {{ $webinar->scheduled_at->format('H:i') }}</p>
             @else
                 <p class="text-2xl font-bold">{{ __('webinars.public.registered.soon') }}</p>
             @endif

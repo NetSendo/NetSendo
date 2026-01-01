@@ -73,6 +73,9 @@ class PublicWebinarController extends Controller
             return back()->with('error', __('Registration is closed.'));
         }
 
+        // Load session relationship for display
+        $registration->load('session');
+
         return view('webinar.registered', [
             'webinar' => $webinar,
             'registration' => $registration,
@@ -83,7 +86,7 @@ class PublicWebinarController extends Controller
     {
         $registration = WebinarRegistration::where('access_token', $token)
             ->whereHas('webinar', fn($q) => $q->where('slug', $slug))
-            ->with('webinar')
+            ->with(['webinar', 'session'])
             ->firstOrFail();
 
         $webinar = $registration->webinar;
@@ -222,5 +225,65 @@ class PublicWebinarController extends Controller
             'Pacific/Auckland' => '(UTC+12:00) Auckland',
             'UTC' => '(UTC+00:00) UTC',
         ];
+    }
+
+    /**
+     * Auto-register subscriber for webinar from email link.
+     * Uses signed URL for security.
+     */
+    public function autoRegister(Request $request, string $slug, string $subscriberToken)
+    {
+        $webinar = Webinar::where('slug', $slug)
+            ->whereIn('status', [Webinar::STATUS_SCHEDULED, Webinar::STATUS_LIVE, Webinar::STATUS_PUBLISHED])
+            ->firstOrFail();
+
+        // Find subscriber by signed token
+        $subscriber = \App\Models\Subscriber::where('id', $subscriberToken)->first();
+
+        if (!$subscriber) {
+            // If subscriber not found, redirect to normal registration
+            return redirect()->route('webinar.register', $slug);
+        }
+
+        // Check if already registered
+        $existingRegistration = $webinar->registrations()
+            ->where('email', $subscriber->email)
+            ->first();
+
+        if ($existingRegistration) {
+            // Already registered, redirect to watch
+            return redirect()->route('webinar.watch', [
+                'slug' => $slug,
+                'token' => $existingRegistration->access_token,
+            ]);
+        }
+
+        // Auto-register the subscriber
+        $registrationData = [
+            'email' => $subscriber->email,
+            'first_name' => $subscriber->first_name,
+            'last_name' => $subscriber->last_name,
+            'phone' => $subscriber->phone,
+            'timezone' => $webinar->timezone ?? $webinar->user->timezone ?? 'Europe/Warsaw',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'referrer_url' => $request->header('referer'),
+            'utm_source' => 'email',
+            'utm_medium' => 'auto-register',
+        ];
+
+        $registration = $this->webinarService->register($webinar, $registrationData);
+
+        if (!$registration) {
+            // Registration failed, redirect to normal registration page
+            return redirect()->route('webinar.register', $slug)
+                ->with('error', __('webinars.public.register.closed'));
+        }
+
+        // Redirect to watch page
+        return redirect()->route('webinar.watch', [
+            'slug' => $slug,
+            'token' => $registration->access_token,
+        ]);
     }
 }

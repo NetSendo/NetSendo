@@ -928,6 +928,12 @@
             "no_templates": "No se encontraron plantillas",
             "compilation_error": "La plantilla requiere compilación MJML"
         },
+        "webinar": {
+            "title": "Integración con webinar",
+            "none": "-- Sin webinar --",
+            "auto_register": "Auto-registro al hacer clic en el enlace",
+            "placeholders_info": "Usa estos marcadores en el contenido del correo:"
+        },
         "triggers": {
             "title": "Disparadores y automatizaciones",
             "coming_soon": "Esta función estará disponible pronto. Podrá lanzar mensajes basados en acciones como clics en enlaces, visitas a páginas o fechas específicas.",

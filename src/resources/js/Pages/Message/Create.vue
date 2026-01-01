@@ -62,6 +62,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    webinars: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const isEditing = computed(() => !!props.message);
@@ -161,6 +165,9 @@ const form = useForm({
     // PDF Attachments
     attachments: [],
     remove_attachment_ids: [],
+    // Webinar Integration
+    webinar_id: props.message?.webinar_id || null,
+    webinar_auto_register: props.message?.webinar_auto_register ?? true,
 });
 
 // Existing attachments from database (for editing)
@@ -1505,6 +1512,76 @@ if (form.contact_list_ids.length > 0) {
                                             : $t("messages.template.select")
                                     }}
                                 </button>
+                            </div>
+
+                            <!-- Webinar Integration -->
+                            <div
+                                v-if="webinars.length > 0"
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <h3
+                                    class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
+                                >
+                                    <svg
+                                        class="h-4 w-4 text-emerald-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    {{ $t("messages.webinar.title") }}
+                                </h3>
+
+                                <select
+                                    v-model="form.webinar_id"
+                                    class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                >
+                                    <option :value="null">
+                                        {{ $t("messages.webinar.none") }}
+                                    </option>
+                                    <option
+                                        v-for="webinar in webinars"
+                                        :key="webinar.id"
+                                        :value="webinar.id"
+                                    >
+                                        {{ webinar.name }}
+                                    </option>
+                                </select>
+
+                                <div
+                                    v-if="form.webinar_id"
+                                    class="mt-3 space-y-2"
+                                >
+                                    <label
+                                        class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            v-model="form.webinar_auto_register"
+                                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        {{ $t("messages.webinar.auto_register") }}
+                                    </label>
+                                    <p
+                                        class="text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{ $t("messages.webinar.placeholders_info") }}
+                                    </p>
+                                    <div
+                                        class="mt-2 rounded-lg bg-slate-100 p-2 dark:bg-slate-700"
+                                    >
+                                        <p class="text-xs font-mono text-slate-600 dark:text-slate-300">
+                                            [[webinar_register_link]]<br />
+                                            [[webinar_watch_link]]
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- AI Assistant -->

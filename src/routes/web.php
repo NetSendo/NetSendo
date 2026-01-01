@@ -509,6 +509,7 @@ Route::prefix('webinar')->name('webinar.')->group(function () {
     Route::get('/{slug}/replay/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'replay'])->name('replay');
     Route::post('/{slug}/leave/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'leave'])->name('leave');
     Route::post('/{slug}/progress/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'trackProgress'])->name('progress');
+    Route::get('/{slug}/auto/{subscriberToken}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'autoRegister'])->name('auto-register')->middleware('signed');
 });
 
 // API route for license status (no auth required for setup checks)

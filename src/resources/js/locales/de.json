@@ -966,6 +966,12 @@
             "no_templates": "Keine Vorlagen gefunden",
             "compilation_error": "Vorlage erfordert MJML-Kompilierung"
         },
+        "webinar": {
+            "title": "Webinar-Integration",
+            "none": "-- Kein Webinar --",
+            "auto_register": "Auto-Registrierung bei Link-Klick",
+            "placeholders_info": "Verwende diese Platzhalter im E-Mail-Inhalt:"
+        },
         "triggers": {
             "title": "Trigger und Automatisierungen",
             "coming_soon": "Diese Funktion wird bald verfügbar sein. Sie können Nachrichten basierend auf Aktionen wie Link-Klicks, Seitenbesuchen oder bestimmten Daten auslösen.",

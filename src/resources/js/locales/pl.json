@@ -828,6 +828,12 @@
             "no_templates": "Nie znaleziono szablonów",
             "compilation_error": "Szablon wymaga kompilacji MJML"
         },
+        "webinar": {
+            "title": "Integracja z webinarem",
+            "none": "-- Bez webinaru --",
+            "auto_register": "Auto-rejestracja przy kliknięciu w link",
+            "placeholders_info": "Użyj tych placeholderów w treści maila:"
+        },
         "triggers": {
             "title": "Triggery i automatyzacje",
             "coming_soon": "Ta funkcja będzie dostępna wkrótce. Będziesz mógł uruchamiać wiadomości na podstawie akcji takich jak kliknięcie w link, odwiedziny strony lub konkretne daty.",

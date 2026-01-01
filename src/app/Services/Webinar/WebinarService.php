@@ -174,9 +174,14 @@ class WebinarService
             return $existing;
         }
 
-        // For auto-webinars, determine session
+        // For auto-webinars, determine session from user selection or calculate
         if ($webinar->isAutoWebinar() && !$session && $webinar->schedule) {
-            $sessionTime = $webinar->schedule->calculateSessionTimeForRegistration();
+            // Use session_time from form if provided, otherwise calculate
+            if (!empty($data['session_time'])) {
+                $sessionTime = new \DateTime($data['session_time']);
+            } else {
+                $sessionTime = $webinar->schedule->calculateSessionTimeForRegistration();
+            }
             $session = $this->getOrCreateSession($webinar, $sessionTime);
         }
 
@@ -201,6 +206,7 @@ class WebinarService
             'utm_term' => $data['utm_term'] ?? null,
             'ip_address' => $data['ip_address'] ?? null,
             'user_agent' => $data['user_agent'] ?? null,
+            'timezone' => $data['timezone'] ?? null,
             'referrer_url' => $data['referrer_url'] ?? null,
         ]);
 

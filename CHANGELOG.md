@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+## [1.3.1] – Webinar Email Integration
+
+**Release date:** 2026-01-01
+
+### Added
+
 - **Webinar Public Registration Link:**
 
   - Added public registration link display in webinar edit view with copy-to-clipboard functionality.
@@ -35,6 +41,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     - Added timezone selector to webinar registration form with browser auto-detection.
     - Registration's timezone is stored and used for countdown display.
     - Session start time displayed in registrant's timezone on watch page.
+  - **Email Placeholders:**
+    - Added `[[webinar_register_link]]` and `[[webinar_watch_link]]` placeholders for email templates.
+
+### Fixed
+
+- Fixed autowebinar session time not being saved correctly when user selects specific session time during registration.
+- Fixed registration confirmation page showing webinar's default time instead of selected session time.
+
+### Added (continued)
+
+- **Webinar Email Integration:**
+  - Added `webinar_id` and `webinar_auto_register` fields to messages for email campaigns.
+  - Auto-registration endpoint (`/webinar/{slug}/auto/{token}`) with signed URL security.
+  - PlaceholderService: `[[webinar_register_link]]` and `[[webinar_watch_link]]` generation.
+  - When subscriber clicks email link, they are auto-registered and redirected to watch page.
+  - **Frontend UI:**
+    - Added "Webinar Integration" section to email campaign creation form.
+    - Dropdown to select active webinar.
+    - Checkbox to enable/disable auto-registration functionality.
+    - Info panel with available placeholders.
+  - Full translations for new UI in PL, EN, DE, ES.
 
 ## [1.3.0] – Short Description
 

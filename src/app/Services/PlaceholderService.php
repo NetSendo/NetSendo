@@ -29,6 +29,8 @@ class PlaceholderService
     protected array $systemPlaceholders = [
         'unsubscribe_link' => ['label' => 'Link wypisania', 'description' => 'Link do wypisania z listy'],
         'unsubscribe_url' => ['label' => 'URL wypisania', 'description' => 'URL do wypisania (alias)'],
+        'webinar_register_link' => ['label' => 'Link rejestracji na webinar', 'description' => 'Link do strony rejestracji na webinar'],
+        'webinar_watch_link' => ['label' => 'Link do webinaru', 'description' => 'Personalny link do oglądania webinaru'],
     ];
 
     /**
@@ -49,7 +51,7 @@ class PlaceholderService
 
     /**
      * Get all available placeholders for a specific list context
-     * 
+     *
      * @param int|null $listId Contact list ID (null for global only)
      * @param int|null $userId User ID to filter custom fields
      * @return array Grouped placeholders
@@ -84,7 +86,7 @@ class PlaceholderService
 
         // Custom fields
         $query = CustomField::query()->orderBy('sort_order');
-        
+
         if ($userId) {
             $query->where('user_id', $userId);
         }
@@ -113,7 +115,7 @@ class PlaceholderService
 
     /**
      * Replace all placeholders in content with subscriber values
-     * 
+     *
      * @param string $content Content with placeholders
      * @param Subscriber $subscriber Subscriber to get values from
      * @param array $additionalData Additional replacements (e.g., unsubscribe_link)
@@ -123,7 +125,7 @@ class PlaceholderService
     {
         // Get all subscriber placeholder values
         $values = $subscriber->getAllPlaceholderValues();
-        
+
         // Merge with additional data (override if needed)
         $values = array_merge($values, $additionalData);
 
@@ -167,6 +169,59 @@ class PlaceholderService
     }
 
     /**
+     * Replace placeholders in content with webinar context.
+     * Generates webinar_register_link and webinar_watch_link.
+     */
+    public function processEmailContentWithWebinar(
+        string $content,
+        string $subject,
+        Subscriber $subscriber,
+        ?\App\Models\Webinar $webinar = null,
+        bool $autoRegister = true
+    ): array {
+        // Generate system links
+        $additionalData = [
+            'unsubscribe_link' => $this->generateUnsubscribeLink($subscriber),
+            'unsubscribe_url' => $this->generateUnsubscribeLink($subscriber),
+        ];
+
+        // Add webinar links if webinar is provided
+        if ($webinar) {
+            $additionalData['webinar_register_link'] = $this->generateWebinarRegisterLink($webinar);
+
+            if ($autoRegister) {
+                $additionalData['webinar_watch_link'] = $this->generateWebinarAutoRegisterLink($webinar, $subscriber);
+            } else {
+                $additionalData['webinar_watch_link'] = $this->generateWebinarRegisterLink($webinar);
+            }
+        }
+
+        return [
+            'content' => $this->replacePlaceholders($content, $subscriber, $additionalData),
+            'subject' => $this->replacePlaceholders($subject, $subscriber, $additionalData),
+        ];
+    }
+
+    /**
+     * Generate webinar registration link.
+     */
+    public function generateWebinarRegisterLink(\App\Models\Webinar $webinar): string
+    {
+        return route('webinar.register', $webinar->slug);
+    }
+
+    /**
+     * Generate webinar auto-register link with signed URL.
+     */
+    public function generateWebinarAutoRegisterLink(\App\Models\Webinar $webinar, Subscriber $subscriber): string
+    {
+        return URL::signedRoute('webinar.auto-register', [
+            'slug' => $webinar->slug,
+            'subscriberToken' => $subscriber->id,
+        ]);
+    }
+
+    /**
      * Check if content contains any placeholders
      */
     public function hasPlaceholders(string $content): bool
@@ -190,7 +245,7 @@ class PlaceholderService
     {
         $usedPlaceholders = $this->extractPlaceholders($content);
         $available = $this->getAvailablePlaceholders($listId, $userId);
-        
+
         $allAvailable = [];
         foreach ($available as $group) {
             foreach ($group as $placeholder) {

@@ -825,6 +825,12 @@
             "no_templates": "No templates found",
             "compilation_error": "Template requires MJML compilation"
         },
+        "webinar": {
+            "title": "Webinar Integration",
+            "none": "-- No webinar --",
+            "auto_register": "Auto-register on link click",
+            "placeholders_info": "Use these placeholders in email content:"
+        },
         "triggers": {
             "title": "Triggers and Automations",
             "coming_soon": "This feature is coming soon. You will be able to trigger messages by actions like link clicks, page visits, or specific dates.",

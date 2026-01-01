@@ -22,6 +22,8 @@ class Message extends Model
         'channel', // email, sms
         'mailbox_id',
         'template_id',
+        'webinar_id',
+        'webinar_auto_register',
         'type', // broadcast, autoresponder
         'day', // day offset
         'subject',
@@ -57,6 +59,7 @@ class Message extends Model
         'sent_count' => 'integer',
         'planned_recipients_count' => 'integer',
         'recipients_calculated_at' => 'datetime',
+        'webinar_auto_register' => 'boolean',
     ];
 
     public function scopeEmail($query)
@@ -109,6 +112,11 @@ class Message extends Model
     public function template()
     {
         return $this->belongsTo(Template::class);
+    }
+
+    public function webinar()
+    {
+        return $this->belongsTo(Webinar::class);
     }
 
     public function contactLists()
