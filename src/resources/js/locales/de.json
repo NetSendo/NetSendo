@@ -187,36 +187,43 @@
             "auto_sync": "Automatische Datensynchronisation",
             "no_code": "Kein Code erforderlich"
         },
-        "woocommerce": {
-            "title": "WooCommerce",
-            "description": "Professionelle Abonnement-Formulare und Kundensynchronisation für WooCommerce-Shops.",
-            "hero_title": "WooCommerce",
-            "hero_subtitle": "Integrieren Sie Ihren WooCommerce-Shop mit NetSendo - fügen Sie Kunden nach dem Kauf automatisch zu Mailinglisten hinzu.",
-            "hero_description": "Das NetSendo für WooCommerce Plugin ermöglicht es Ihnen, Kunden nach einem Kauf oder Kaufversuch (unbezahlte Bestellung) automatisch zu Mailinglisten hinzuzufügen. Sie können Kunden auch auf externe Sales-Funnel-Seiten umleiten.",
-            "features_title": "🚀 Funktionen",
+        "wordpress": {
+            "title": "WordPress",
+            "hero_title": "WordPress",
+            "hero_subtitle": "Professionelle Abonnement-Formulare und Content Gating für Blogger und Content-Ersteller auf WordPress.",
+            "hero_description": "Das NetSendo für WordPress Plugin ist eine Komplettlösung für Blogger und Content-Ersteller. Fügen Sie professionelle Newsletter-Anmeldeformulare hinzu, beschränken Sie die Sichtbarkeit von Artikeln nur auf Abonnenten und bauen Sie Ihre Mailingliste von WordPress aus auf.",
+            "features_title": "Funktionen",
             "features": {
-                "auto_subscribe": {
-                    "title": "Automatische Anmeldung",
-                    "description": "Fügen Sie Kunden nach dem Kauf eines Produkts automatisch zu Mailinglisten hinzu."
+                "forms": {
+                    "title": "Anmeldeformulare",
+                    "description": "Professionelle Anmeldeformulare mit verschiedenen Stilen: Inline, Minimal, Karte."
                 },
-                "cart_recovery": {
-                    "title": "Warenkorbwiederherstellung",
-                    "description": "Speichern Sie Kunden mit unbezahlten Bestellungen in einer separaten Liste für Follow-ups."
+                "gating": {
+                    "title": "Content Gating",
+                    "description": "Beschränken Sie den Zugriff auf Inhalte nur für Abonnenten."
                 },
-                "product_settings": {
-                    "title": "Einstellungen pro Produkt",
-                    "description": "Überschreiben Sie Standardlisten für bestimmte WooCommerce-Produkte."
+                "blocks": {
+                    "title": "Gutenberg Blöcke",
+                    "description": "Spezielle Blöcke für einfache Inhaltsbearbeitung."
                 },
-                "external_pages": {
-                    "title": "Externe Seiten",
-                    "description": "Leiten Sie Kunden nach dem Kauf auf externe Sales-Funnel-Seiten um."
+                "widget": {
+                    "title": "Sidebar-Widget",
+                    "description": "Gebrauchsfertiges Anmeldeformular-Widget zur Platzierung in jeder Sidebar."
+                },
+                "gdpr": {
+                    "title": "DSGVO-Bereit",
+                    "description": "Eingebautes DSGVO-Zustimmungs-Kontrollkästchen mit anpassbarem Text."
+                },
+                "settings": {
+                    "title": "Einfache Konfiguration",
+                    "description": "Einfaches Einstellungsfeld im WP-Admin."
                 }
             },
-            "setup_title": "⚙️ Installation",
+            "setup_title": "Installation",
             "setup_steps": {
                 "download": {
                     "title": "Plugin herunterladen",
-                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WooCommerce Plugin herunterzuladen."
+                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WordPress Plugin herunterzuladen."
                 },
                 "install": {
                     "title": "In WordPress installieren",
@@ -224,33 +231,109 @@
                 },
                 "configure": {
                     "title": "Verbindung konfigurieren",
-                    "description": "Gehen Sie in WordPress zu WooCommerce → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest."
+                    "description": "Gehen Sie in WordPress zu Einstellungen → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest."
                 },
-                "lists": {
-                    "title": "Standardlisten festlegen",
-                    "description": "Wählen Sie Listen aus, zu denen Kunden nach dem Kauf und bei unbezahlten Bestellungen hinzugefügt werden sollen."
+                "add_forms": {
+                    "title": "Formulare hinzufügen",
+                    "description": "Verwenden Sie Shortcodes oder Blöcke, um Formulare zu Ihren Beiträgen hinzuzufügen."
                 }
             },
             "download_button": "Plugin herunterladen",
-            "api_config_title": "🔑 API-Konfiguration",
+            "shortcodes_title": "Shortcodes",
+            "shortcodes": {
+                "form_basic": "Basis-Anmeldeformular",
+                "form_styled": "Gestaltetes Formular",
+                "gate_percentage": "Inhalt nach X% sperren",
+                "gate_subscribers": "Nur für Abonnenten sperren"
+            },
+            "api_config_title": "API-Konfiguration",
             "api_url_label": "NetSendo URL",
-            "api_url_help": "Geben Sie diese URL in den WooCommerce-Plugin-Einstellungen ein",
+            "api_url_help": "Geben Sie diese URL in den WordPress-Plugin-Einstellungen ein",
             "api_key_label": "API-Schlüssel",
             "api_key_desc": "Erstellen Sie einen API-Schlüssel in NetSendo, der für die Plugin-Autorisierung verwendet wird.",
             "manage_api_keys": "API-Schlüssel verwalten",
-            "requirements_title": "📋 Anforderungen",
+            "requirements_title": "Anforderungen",
             "requirements": {
                 "wp": "WordPress 5.8 oder neuer",
-                "wc": "WooCommerce 5.0 oder neuer",
                 "php": "PHP 7.4 oder neuer",
                 "account": "Aktives NetSendo-Konto mit API-Schlüssel"
             },
+            "content_gate_types_title": "Content Gating Typen",
+            "content_gate_types": {
+                "percentage_desc": "Inhalt nach Lesen eines gewissen Prozentsatzes ausblenden.",
+                "subscribers_only_desc": "Inhalt nur für aktive Abonnenten sichtbar.",
+                "logged_in_desc": "Inhalt nur für eingeloggte Benutzer sichtbar."
+            },
             "resources_title": "Ressourcen",
-            "docs_link": "WooCommerce Docs",
+            "docs_link": "WordPress Docs",
             "lists_link": "Listen verwalten",
-            "funnels_link": "Sales Funnels",
             "help_title": "Brauchen Sie Hilfe?",
             "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie unser Support-Team.",
+            "documentation_button": "Dokumentation"
+        },
+        "shopify": {
+            "title": "Shopify",
+            "hero_title": "Shopify Integration",
+            "hero_subtitle": "Verbinden Sie Ihren Shopify-Shop und synchronisieren Sie Kunden automatisch.",
+            "hero_description": "Integrieren Sie Ihren Shopify-Shop mit NetSendo über Webhooks. Fügen Sie Kunden automatisch zu Ihren Mailinglisten hinzu, wenn sie Bestellungen aufgeben, Konten erstellen oder Käufe abschließen.",
+            "features_title": "Funktionen",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Automatisch Abonnieren",
+                    "description": "Kunden automatisch bei Einkäufen zu Listen hinzufügen."
+                },
+                "customer_sync": {
+                    "title": "Kundensynchronisierung",
+                    "description": "Neue Registrierungen direkt zu Listen synchronisieren."
+                },
+                "order_tracking": {
+                    "title": "Bestellungsverfolgung",
+                    "description": "Bestelldaten als benutzerdefinierte Felder speichern."
+                },
+                "real_time": {
+                    "title": "Echtzeit-Updates",
+                    "description": "Sofortige Webhook-Benachrichtigungen."
+                }
+            },
+            "setup_title": "Einrichtung",
+            "setup_steps": {
+                "api_key": {
+                    "title": "API-Schlüssel Generieren",
+                    "description": "Erstellen Sie einen API-Schlüssel in den NetSendo-Einstellungen."
+                },
+                "shopify_admin": {
+                    "title": "Shopify Admin Öffnen",
+                    "description": "Gehen Sie zu Einstellungen > Benachrichtigungen > Webhooks."
+                },
+                "create_webhook": {
+                    "title": "Webhook Erstellen",
+                    "description": "Fügen Sie die Webhook-URL hinzu und wählen Sie zu verfolgenden Ereignisse."
+                },
+                "test": {
+                    "title": "Verbindung Testen",
+                    "description": "Geben Sie eine Testbestellung auf, um die Integration zu überprüfen."
+                }
+            },
+            "webhook_config_title": "Webhook Konfiguration",
+            "webhook_url_label": "Webhook URL",
+            "webhook_url_help": "Fügen Sie diese URL in Ihren Shopify-Webhook-Einstellungen hinzu.",
+            "api_key_label": "API Schlüssel",
+            "api_key_desc": "Fügen Sie Ihren API-Schlüssel als Bearer-Token in Webhook-Headern hinzu.",
+            "manage_api_keys": "API Schlüssel Verwalten",
+            "supported_events": "Unterstützte Ereignisse",
+            "list_id_note_title": "Wichtig: Listen-ID Erforderlich",
+            "list_id_note_desc": "Fügen Sie netsendo_list_id zum Webhook-Payload hinzu oder verwenden Sie Shopify Flow.",
+            "requirements_title": "Anforderungen",
+            "requirements": {
+                "store": "Aktiver Shopify-Shop",
+                "account": "NetSendo-Konto",
+                "api_key": "API-Schlüssel zur Authentifizierung"
+            },
+            "resources_title": "Ressourcen",
+            "docs_link": "Shopify Webhook Dokumentation",
+            "lists_link": "Listen Verwalten",
+            "help_title": "Brauchen Sie Hilfe?",
+            "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie uns.",
             "documentation_button": "Dokumentation"
         },
         "wordpress": {

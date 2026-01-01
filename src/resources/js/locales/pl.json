@@ -1391,23 +1391,22 @@
         },
         "wordpress": {
             "title": "WordPress",
-            "description": "Profesjonalne formularze zapisu i content gating dla blogerów i twórców treści na WordPress.",
             "hero_title": "WordPress",
             "hero_subtitle": "Profesjonalne formularze zapisu i content gating dla blogerów i twórców treści na WordPress.",
-            "hero_description": "Wtyczka NetSendo for WordPress to kompletne rozwiązanie dla blogerów i twórców treści. Dodawaj profesjonalne formularze zapisu do newslettera, ograniczaj widoczność artykułów tylko dla subskrybentów, i buduj swoją listę mailingową z poziomu WordPress.",
-            "features_title": "🚀 Funkcje",
+            "hero_description": "Wtyczka NetSendo dla WordPress to kompletne rozwiązanie dla blogerów i twórców treści. Dodawaj profesjonalne formularze zapisu do newslettera, ograniczaj widoczność artykułów tylko dla subskrybentów i buduj swoją listę mailingową z poziomu WordPress.",
+            "features_title": "Funkcje",
             "features": {
                 "forms": {
                     "title": "Formularze subskrypcji",
                     "description": "Profesjonalne formularze zapisu z różnymi stylami: inline, minimal, card."
                 },
-                "content_gating": {
+                "gating": {
                     "title": "Content Gating",
-                    "description": "Ograniczaj widoczność artykułów - pokaż X% treści, reszta tylko dla subskrybentów."
+                    "description": "Ogranicz dostęp do treści tylko dla subskrybentów."
                 },
-                "gutenberg": {
-                    "title": "Gutenberg Blocks",
-                    "description": "Natywne bloki Gutenberga dla formularzy i bramek treści."
+                "blocks": {
+                    "title": "Bloki Gutenberg",
+                    "description": "Dedykowane bloki do łatwej edycji treści."
                 },
                 "widget": {
                     "title": "Widget do sidebara",
@@ -1415,72 +1414,63 @@
                 },
                 "gdpr": {
                     "title": "GDPR Ready",
-                    "description": "Wbudowany checkbox zgody GDPR z konfigurowalnym tekstem."
+                    "description": "Wbudowany checkbox zgody RODO z konfigurowalnym tekstem."
                 },
-                "per_post": {
-                    "title": "Per-post ustawienia",
-                    "description": "Włączaj content gating dla poszczególnych postów z poziomu edytora."
+                "settings": {
+                    "title": "Łatwa Konfiguracja",
+                    "description": "Prosty panel ustawień w administratorze WP."
                 }
             },
-            "setup_title": "⚙️ Instalacja",
+            "setup_title": "Konfiguracja",
             "setup_steps": {
                 "download": {
-                    "title": "Pobierz wtyczkę",
-                    "description": "Kliknij przycisk poniżej, aby pobrać wtyczkę NetSendo for WordPress."
+                    "title": "Pobierz Wtyczkę",
+                    "description": "Pobierz plik zip wtyczki na swój komputer."
                 },
                 "install": {
-                    "title": "Zainstaluj w WordPress",
-                    "description": "Przejdź do WordPress → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer, i zainstaluj pobrany plik ZIP."
+                    "title": "Zainstaluj",
+                    "description": "Prześlij i aktywuj wtyczkę w panelu WordPress."
                 },
                 "configure": {
-                    "title": "Skonfiguruj połączenie",
-                    "description": "W WordPress przejdź do Ustawienia → NetSendo, wprowadź URL NetSendo oraz klucz API, a następnie zapisz ustawienia przed testowaniem połączenia."
+                    "title": "Skonfiguruj",
+                    "description": "Wprowadź klucz API i URL w ustawieniach wtyczki."
                 },
-                "forms": {
-                    "title": "Dodaj formularze",
-                    "description": "Użyj bloków Gutenberga lub shortcodes aby dodać formularze i bramki treści do swoich postów."
+                "add_forms": {
+                    "title": "Dodaj Formularze",
+                    "description": "Użyj shortcodów lub bloków, aby dodać formularze do postów."
                 }
             },
-            "download_button": "Pobierz wtyczkę",
-            "shortcodes_title": "📝 Shortcodes",
+            "download_button": "Pobierz Wtyczkę",
+            "shortcodes_title": "Shortcodes",
             "shortcodes": {
-                "form_basic": "Podstawowy formularz zapisu",
-                "form_style": "Formularz z określoną listą i stylem",
-                "gate_percent": "Pokaż 30% treści, reszta ukryta",
-                "gate_subscribers": "Cała treść tylko dla subskrybentów"
+                "form_basic": "Formularz podstawowy",
+                "form_styled": "Formularz stylizowany",
+                "gate_percentage": "Ukryj treść po X%",
+                "gate_subscribers": "Ukryj dla subskrybentów"
             },
-            "api_config_title": "🔑 Konfiguracja API",
-            "api_url_label": "URL NetSendo",
-            "api_url_help": "Wpisz ten adres w ustawieniach wtyczki WordPress",
+            "api_config_title": "Konfiguracja API",
+            "api_url_label": "URL API",
+            "api_url_help": "Skopiuj ten URL do ustawień wtyczki.",
             "api_key_label": "Klucz API",
-            "api_key_desc": "Utwórz klucz API w NetSendo, który będzie używany do autoryzacji wtyczki.",
-            "manage_api_keys": "Zarządzaj kluczami API",
-            "requirements_title": "📋 Wymagania",
+            "api_key_desc": "Potrzebujesz klucza API, aby połączyć wtyczkę.",
+            "manage_api_keys": "Zarządzaj Kluczami API",
+            "requirements_title": "Wymagania",
             "requirements": {
                 "wp": "WordPress 5.8 lub nowszy",
                 "php": "PHP 7.4 lub nowszy",
-                "account": "Aktywne konto NetSendo z kluczem API"
+                "account": "Aktywne konto NetSendo"
             },
-            "gate_types_title": "🔒 Typy Content Gate",
-            "gate_types": {
-                "percentage": {
-                    "title": "Percentage",
-                    "desc": "Pokaż X% artykułu, reszta ukryta"
-                },
-                "subscribers": {
-                    "title": "Subscribers Only",
-                    "desc": "Cała treść wymaga subskrypcji"
-                },
-                "logged_in": {
-                    "title": "Logged In",
-                    "desc": "Wymaga zalogowania do WP"
-                }
+            "content_gate_types_title": "Typy Content Gating",
+            "content_gate_types": {
+                "percentage_desc": "Ukryj treść po przeczytaniu określonego procentu.",
+                "subscribers_only_desc": "Treść widoczna tylko dla aktywnych subskrybentów.",
+                "logged_in_desc": "Treść widoczna tylko dla zalogowanych użytkowników."
             },
             "resources_title": "Zasoby",
-            "docs_link": "WordPress Docs",
-            "lists_link": "Zarządzaj listami",
+            "docs_link": "Dokumentacja WordPress",
+            "lists_link": "Zarządzaj Listami",
             "help_title": "Potrzebujesz pomocy?",
-            "help_desc": "Sprawdź dokumentację lub skontaktuj się z naszym zespołem wsparcia.",
+            "help_desc": "Sprawdź naszą dokumentację lub skontaktuj się z pomocą techniczną.",
             "documentation_button": "Dokumentacja"
         },
         "categories": {
@@ -1527,36 +1517,133 @@
         "request_success_desc": "Twoja prośba o integrację została wysłana. Skontaktujemy się z Tobą wkrótce.",
         "request_error": "Nie udało się wysłać prośby. Spróbuj ponownie.",
         "woocommerce": {
-            "title": "Integracja WooCommerce",
-            "description": "Integruj swój sklep WooCommerce z NetSendo - automatycznie zapisuj klientów na listy mailingowe po zakupie.",
+            "title": "WooCommerce",
+            "hero_title": "Integracja WooCommerce",
+            "hero_subtitle": "Połącz swój sklep i zwiększ sprzedaż.",
+            "hero_description": "Bezproblemowo zintegruj swój sklep WooCommerce z NetSendo. Automatycznie synchronizuj klientów, odzyskuj porzucone koszyki i śledź przychody.",
+            "features_title": "Funkcje",
             "features": {
-                "auto_subscription": "Automatyczna subskrypcja",
-                "auto_subscription_desc": "Automatycznie dodawaj klientów do list mailingowych po zakupie produktu.",
-                "cart_recovery": "Odzyskiwanie koszyków",
-                "cart_recovery_desc": "Zapisuj klientów z nieopłaconymi zamówieniami na osobną listę do follow-up.",
-                "per_product": "Ustawienia per produkt",
-                "per_product_desc": "Nadpisuj domyślne listy dla poszczególnych produktów WooCommerce.",
-                "external_pages": "Zewnętrzne strony",
-                "external_pages_desc": "Przekierowuj klientów na strony zewnętrzne z lejkiem sprzedażowym po zakupie."
+                "auto_subscribe": {
+                    "title": "Automatyczna Subskrypcja",
+                    "description": "Automatycznie dodawaj klientów do list mailingowych podczas zakupu."
+                },
+                "cart_recovery": {
+                    "title": "Odzyskiwanie Koszyków",
+                    "description": "Odzyskuj utraconą sprzedaż dzięki automatycznym e-mailom o porzuconych koszykach."
+                },
+                "product_settings": {
+                    "title": "Synchronizacja Produktów",
+                    "description": "Mapuj produkty WooCommerce do tagów i list NetSendo."
+                },
+                "external_pages": {
+                    "title": "Strony Zewnętrzne",
+                    "description": "Śledź odwiedziny i zdarzenia na stronach sklepu."
+                }
             },
+            "setup_title": "Konfiguracja",
             "setup_steps": {
-                "step1_title": "Pobierz wtyczkę",
-                "step1_desc": "Kliknij przycisk poniżej, aby pobrać wtyczkę NetSendo for WooCommerce.",
-                "step2_title": "Zainstaluj w WordPress",
-                "step2_desc": "Przejdź do WordPress → Wtyczki → Dodaj nową → Wyślij wtyczkę na serwer, i zainstaluj pobrany plik ZIP.",
-                "step3_title": "Skonfiguruj połączenie",
-                "step3_desc": "W WordPress przejdź do WooCommerce → NetSendo i wprowadź URL NetSendo oraz klucz API.",
-                "step4_title": "Ustaw domyślne listy",
-                "step4_desc": "Wybierz listy, na które mają być zapisywani klienci po zakupie i przy nieopłaconych zamówieniach."
+                "download": {
+                    "title": "Pobierz",
+                    "description": "Pobierz plik wtyczki."
+                },
+                "install": {
+                    "title": "Zainstaluj",
+                    "description": "Prześlij do WordPress/WooCommerce."
+                },
+                "configure": {
+                    "title": "Skonfiguruj",
+                    "description": "Połącz API."
+                },
+                "lists": {
+                    "title": "Mapuj Listy",
+                    "description": "Wybierz listy dla klientów."
+                }
             },
-            "download_plugin": "Pobierz wtyczkę",
-            "api_config": "Konfiguracja API",
-            "netsendo_url": "URL NetSendo",
-            "api_key": "Klucz API",
-            "manage_api_keys": "Zarządzaj kluczami API",
-            "requirements": "Wymagania",
-            "need_help": "Potrzebujesz pomocy?",
-            "check_docs": "Sprawdź dokumentację lub skontaktuj się z naszym zespołem wsparcia."
+            "download_button": "Pobierz Wtyczkę",
+            "api_config_title": "Konfiguracja API",
+            "api_url_label": "URL API",
+            "api_url_help": "Endpoint dla webhooków.",
+            "api_key_label": "Klucz API",
+            "api_key_desc": "Wygeneruj klucz dla swojego sklepu.",
+            "manage_api_keys": "Zarządzaj Kluczami API",
+            "requirements_title": "Wymagania",
+            "requirements": {
+                "wp": "WordPress 5.8+",
+                "wc": "WooCommerce 6.0+",
+                "php": "PHP 7.4+",
+                "account": "Konto NetSendo"
+            },
+            "docs_link": "Dokumentacja WooCommerce",
+            "lists_link": "Zarządzaj Listami",
+            "funnels_link": "Lejki Sprzedażowe",
+            "help_title": "Pomoc",
+            "help_desc": "Przeczytaj poradnik lub skontaktuj się z nami.",
+            "documentation_button": "Dokumentacja"
+        },
+        "shopify": {
+            "title": "Shopify",
+            "hero_title": "Integracja Shopify",
+            "hero_subtitle": "Połącz swój sklep Shopify i automatycznie synchronizuj klientów.",
+            "hero_description": "Zintegruj swój sklep Shopify z NetSendo za pomocą webhooków. Automatycznie dodawaj klientów do list mailingowych, gdy składają zamówienia, tworzą konta lub finalizują zakupy.",
+            "features_title": "Funkcje",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Automatyczna Subskrypcja",
+                    "description": "Automatycznie dodawaj klientów do list przy zakupie."
+                },
+                "customer_sync": {
+                    "title": "Synchronizacja Klientów",
+                    "description": "Synchronizuj nowe rejestracje bezpośrednio na listy."
+                },
+                "order_tracking": {
+                    "title": "Śledzenie Zamówień",
+                    "description": "Przechowuj dane zamówień jako pola niestandardowe."
+                },
+                "real_time": {
+                    "title": "Aktualizacje w Czasie Rzeczywistym",
+                    "description": "Natychmiastowe powiadomienia webhook."
+                }
+            },
+            "setup_title": "Konfiguracja",
+            "setup_steps": {
+                "api_key": {
+                    "title": "Wygeneruj Klucz API",
+                    "description": "Utwórz klucz API w ustawieniach NetSendo."
+                },
+                "shopify_admin": {
+                    "title": "Otwórz Panel Shopify",
+                    "description": "Przejdź do Ustawienia > Powiadomienia > Webhooki."
+                },
+                "create_webhook": {
+                    "title": "Utwórz Webhook",
+                    "description": "Dodaj URL webhooka i wybierz zdarzenia do śledzenia."
+                },
+                "test": {
+                    "title": "Przetestuj Połączenie",
+                    "description": "Złóż testowe zamówienie, aby zweryfikować integrację."
+                }
+            },
+            "webhook_config_title": "Konfiguracja Webhooka",
+            "webhook_url_label": "URL Webhooka",
+            "webhook_url_help": "Dodaj ten URL w ustawieniach webhooka Shopify.",
+            "api_key_label": "Klucz API",
+            "api_key_desc": "Dołącz klucz API jako Bearer token w nagłówkach webhooka.",
+            "manage_api_keys": "Zarządzaj Kluczami API",
+            "supported_events": "Obsługiwane Zdarzenia",
+            "list_id_note_title": "Ważne: Wymagane ID Listy",
+            "list_id_note_desc": "Dodaj netsendo_list_id do payloadu webhooka lub użyj Shopify Flow.",
+            "requirements_title": "Wymagania",
+            "requirements": {
+                "store": "Aktywny sklep Shopify",
+                "account": "Konto NetSendo",
+                "api_key": "Klucz API do uwierzytelniania"
+            },
+            "resources_title": "Zasoby",
+            "docs_link": "Dokumentacja Shopify Webhook",
+            "lists_link": "Zarządzaj Listami",
+            "help_title": "Potrzebujesz pomocy?",
+            "help_desc": "Sprawdź dokumentację lub skontaktuj się z nami.",
+            "documentation_button": "Dokumentacja"
         }
     },
     "license": {

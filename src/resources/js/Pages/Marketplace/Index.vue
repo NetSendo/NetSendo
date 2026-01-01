@@ -107,6 +107,14 @@ const activeIntegrations = [
         route: "marketplace.wordpress",
     },
     {
+        id: "shopify",
+        name: "Shopify",
+        description: "E-commerce integration",
+        icon: "🛍️",
+        color: "green",
+        route: "marketplace.shopify",
+    },
+    {
         id: "sendgrid",
         name: "SendGrid",
         description: "Email delivery",
@@ -148,7 +156,7 @@ const categories = [
         color: "indigo",
         platforms: [
             { name: "WooCommerce", logo: null, status: "available", route: "marketplace.woocommerce" },
-            { name: "Shopify", logo: null },
+            { name: "Shopify", logo: null, status: "available", route: "marketplace.shopify" },
             { name: "PrestaShop", logo: null },
             { name: "Magento", logo: null },
         ],

@@ -369,6 +369,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace/n8n', fn() => Inertia::render('Marketplace/N8n'))->name('marketplace.n8n');
     Route::get('/marketplace/stripe', fn() => Inertia::render('Marketplace/Stripe'))->name('marketplace.stripe');
     Route::get('/marketplace/woocommerce', fn() => Inertia::render('Marketplace/WooCommerce'))->name('marketplace.woocommerce');
+    Route::get('/marketplace/shopify', fn() => Inertia::render('Marketplace/Shopify'))->name('marketplace.shopify');
     Route::get('/marketplace/woocommerce/download', function () {
         $path = public_path('plugins/woocommerce/netsendo-woocommerce.zip');
         if (!file_exists($path)) {
@@ -533,6 +534,9 @@ Route::post('/webhooks/polar', [\App\Http\Controllers\Webhooks\PolarController::
 
 // WooCommerce Webhook (public, API-key authenticated)
 Route::post('/webhooks/woocommerce', [\App\Http\Controllers\Webhooks\WooCommerceController::class, 'handle'])->name('webhooks.woocommerce');
+
+// Shopify Webhook (public, HMAC + API-key authenticated)
+Route::post('/webhooks/shopify', [\App\Http\Controllers\Webhooks\ShopifyController::class, 'handle'])->name('webhooks.shopify');
 
 
 require __DIR__.'/auth.php';

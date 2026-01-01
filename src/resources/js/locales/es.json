@@ -257,23 +257,87 @@
             "help_desc": "Consulta la documentación o contacta a nuestro equipo de soporte.",
             "documentation_button": "Documentación"
         },
+        "shopify": {
+            "title": "Shopify",
+            "hero_title": "Integración Shopify",
+            "hero_subtitle": "Conecta tu tienda Shopify y sincroniza clientes automáticamente.",
+            "hero_description": "Integra tu tienda Shopify con NetSendo usando webhooks. Agrega clientes automáticamente a tus listas de correo cuando realizan pedidos, crean cuentas o completan compras.",
+            "features_title": "Características",
+            "features": {
+                "auto_subscribe": {
+                    "title": "Suscripción Automática",
+                    "description": "Agregar clientes automáticamente a las listas al comprar."
+                },
+                "customer_sync": {
+                    "title": "Sincronización de Clientes",
+                    "description": "Sincronizar nuevos registros directamente a las listas."
+                },
+                "order_tracking": {
+                    "title": "Seguimiento de Pedidos",
+                    "description": "Guardar datos de pedidos como campos personalizados."
+                },
+                "real_time": {
+                    "title": "Actualizaciones en Tiempo Real",
+                    "description": "Notificaciones webhook instantáneas."
+                }
+            },
+            "setup_title": "Configuración",
+            "setup_steps": {
+                "api_key": {
+                    "title": "Generar Clave API",
+                    "description": "Crea una clave API en la configuración de NetSendo."
+                },
+                "shopify_admin": {
+                    "title": "Abrir Admin de Shopify",
+                    "description": "Ve a Configuración > Notificaciones > Webhooks."
+                },
+                "create_webhook": {
+                    "title": "Crear Webhook",
+                    "description": "Agrega la URL del webhook y selecciona eventos a rastrear."
+                },
+                "test": {
+                    "title": "Probar Conexión",
+                    "description": "Realiza un pedido de prueba para verificar la integración."
+                }
+            },
+            "webhook_config_title": "Configuración de Webhook",
+            "webhook_url_label": "URL del Webhook",
+            "webhook_url_help": "Agrega esta URL en la configuración de webhooks de Shopify.",
+            "api_key_label": "Clave API",
+            "api_key_desc": "Incluye tu clave API como Bearer token en los encabezados del webhook.",
+            "manage_api_keys": "Gestionar Claves API",
+            "supported_events": "Eventos Soportados",
+            "list_id_note_title": "Importante: ID de Lista Requerido",
+            "list_id_note_desc": "Agrega netsendo_list_id al payload del webhook o usa Shopify Flow.",
+            "requirements_title": "Requisitos",
+            "requirements": {
+                "store": "Tienda Shopify activa",
+                "account": "Cuenta NetSendo",
+                "api_key": "Clave API para autenticación"
+            },
+            "resources_title": "Recursos",
+            "docs_link": "Documentación de Webhooks Shopify",
+            "lists_link": "Gestionar Listas",
+            "help_title": "¿Necesitas ayuda?",
+            "help_desc": "Revisa la documentación o contáctanos.",
+            "documentation_button": "Documentación"
+        },
         "wordpress": {
             "title": "WordPress",
-            "description": "Formularios de suscripción profesionales y restricción de contenido para bloggers y creadores en WordPress.",
             "hero_title": "WordPress",
             "hero_subtitle": "Formularios de suscripción profesionales y restricción de contenido para bloggers y creadores en WordPress.",
             "hero_description": "El complemento NetSendo para WordPress es una solución completa para bloggers y creadores de contenido. Añade formularios profesionales de suscripción a boletines, limita la visibilidad de los artículos solo a suscriptores y construye tu lista de correo desde WordPress.",
-            "features_title": "🚀 Características",
+            "features_title": "Características",
             "features": {
                 "forms": {
                     "title": "Formularios de suscripción",
                     "description": "Formularios de registro profesionales con varios estilos: en línea, minimalista, tarjeta."
                 },
-                "content_gating": {
+                "gating": {
                     "title": "Restricción de contenido",
                     "description": "Limita la visibilidad del artículo: muestra un X% del contenido, el resto solo para suscriptores."
                 },
-                "gutenberg": {
+                "blocks": {
                     "title": "Bloques Gutenberg",
                     "description": "Bloques nativos de Gutenberg para formularios y restricciones de contenido."
                 },
@@ -285,12 +349,12 @@
                     "title": "Listo para GDPR",
                     "description": "Casilla de consentimiento GDPR integrada con texto personalizable."
                 },
-                "per_post": {
-                    "title": "Configuración por publicación",
-                    "description": "Habilita la restricción de contenido para publicaciones específicas directamente desde el editor."
+                "settings": {
+                    "title": "Fácil Configuración",
+                    "description": "Panel de configuración sencillo en el administrador de WP."
                 }
             },
-            "setup_title": "⚙️ Instalación",
+            "setup_title": "Instalación",
             "setup_steps": {
                 "download": {
                     "title": "Descargar complemento",
@@ -304,45 +368,36 @@
                     "title": "Configurar conexión",
                     "description": "En WordPress, ve a Ajustes → NetSendo, introduce la URL de NetSendo y la clave API, luego guarda la configuración antes de probar la conexión."
                 },
-                "forms": {
+                "add_forms": {
                     "title": "Añadir formularios",
                     "description": "Usa bloques Gutenberg o códigos cortos para añadir formularios y restricciones de contenido a tus publicaciones."
                 }
             },
             "download_button": "Descargar complemento",
-            "shortcodes_title": "📝 Códigos cortos",
+            "shortcodes_title": "Códigos cortos",
             "shortcodes": {
                 "form_basic": "Formulario de suscripción básico",
-                "form_style": "Formulario con lista y estilo específicos",
-                "gate_percent": "Mostrar 30% del contenido, resto oculto",
+                "form_styled": "Formulario con lista y estilo específicos",
+                "gate_percentage": "Mostrar 30% del contenido, resto oculto",
                 "gate_subscribers": "Contenido completo solo para suscriptores"
             },
-            "api_config_title": "🔑 Configuración de API",
+            "api_config_title": "Configuración de API",
             "api_url_label": "URL de NetSendo",
             "api_url_help": "Introduce esta URL en la configuración del complemento de WordPress",
             "api_key_label": "Clave API",
             "api_key_desc": "Crea una clave API en NetSendo para usar en la autorización del complemento.",
             "manage_api_keys": "Gestionar claves API",
-            "requirements_title": "📋 Requisitos",
+            "requirements_title": "Requisitos",
             "requirements": {
                 "wp": "WordPress 5.8 o superior",
                 "php": "PHP 7.4 o superior",
                 "account": "Cuenta NetSendo activa con clave API"
             },
-            "gate_types_title": "🔒 Tipos de restricción",
-            "gate_types": {
-                "percentage": {
-                    "title": "Porcentaje",
-                    "desc": "Mostrar X% del artículo, resto oculto"
-                },
-                "subscribers": {
-                    "title": "Solo suscriptores",
-                    "desc": "El contenido completo requiere suscripción"
-                },
-                "logged_in": {
-                    "title": "Con sesión iniciada",
-                    "desc": "Requiere iniciar sesión en WP"
-                }
+            "content_gate_types_title": "Tipos de restricción",
+            "content_gate_types": {
+                "percentage_desc": "Mostrar X% del artículo, resto oculto",
+                "subscribers_only_desc": "El contenido completo requiere suscripción",
+                "logged_in_desc": "Requiere iniciar sesión en WP"
             },
             "resources_title": "Recursos",
             "docs_link": "Documentación WordPress",

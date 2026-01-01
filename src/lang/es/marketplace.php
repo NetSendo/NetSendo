@@ -207,4 +207,70 @@ return [
         'help_desc' => 'Lee la guía o contacta soporte.',
         'documentation_button' => 'Documentación',
     ],
+
+    'shopify' => [
+        'title' => 'Shopify',
+        'hero_title' => 'Integración Shopify',
+        'hero_subtitle' => 'Conecta tu tienda Shopify y sincroniza clientes automáticamente.',
+        'hero_description' => 'Integra tu tienda Shopify con NetSendo usando webhooks. Agrega clientes automáticamente a tus listas de correo cuando realizan pedidos, crean cuentas o completan compras.',
+        'features_title' => 'Características',
+        'features' => [
+            'auto_subscribe' => [
+                'title' => 'Suscripción Automática',
+                'description' => 'Agregar clientes automáticamente a las listas al comprar.',
+            ],
+            'customer_sync' => [
+                'title' => 'Sincronización de Clientes',
+                'description' => 'Sincronizar nuevos registros directamente a las listas.',
+            ],
+            'order_tracking' => [
+                'title' => 'Seguimiento de Pedidos',
+                'description' => 'Guardar datos de pedidos como campos personalizados.',
+            ],
+            'real_time' => [
+                'title' => 'Actualizaciones en Tiempo Real',
+                'description' => 'Notificaciones webhook instantáneas.',
+            ],
+        ],
+        'setup_title' => 'Configuración',
+        'setup_steps' => [
+            'api_key' => [
+                'title' => 'Generar Clave API',
+                'description' => 'Crea una clave API en la configuración de NetSendo.',
+            ],
+            'shopify_admin' => [
+                'title' => 'Abrir Admin de Shopify',
+                'description' => 'Ve a Configuración > Notificaciones > Webhooks.',
+            ],
+            'create_webhook' => [
+                'title' => 'Crear Webhook',
+                'description' => 'Agrega la URL del webhook y selecciona eventos a rastrear.',
+            ],
+            'test' => [
+                'title' => 'Probar Conexión',
+                'description' => 'Realiza un pedido de prueba para verificar la integración.',
+            ],
+        ],
+        'webhook_config_title' => 'Configuración de Webhook',
+        'webhook_url_label' => 'URL del Webhook',
+        'webhook_url_help' => 'Agrega esta URL en la configuración de webhooks de Shopify.',
+        'api_key_label' => 'Clave API',
+        'api_key_desc' => 'Incluye tu clave API como Bearer token en los encabezados del webhook.',
+        'manage_api_keys' => 'Gestionar Claves API',
+        'supported_events' => 'Eventos Soportados',
+        'list_id_note_title' => 'Importante: ID de Lista Requerido',
+        'list_id_note_desc' => 'Agrega netsendo_list_id al payload del webhook o usa Shopify Flow.',
+        'requirements_title' => 'Requisitos',
+        'requirements' => [
+            'store' => 'Tienda Shopify activa',
+            'account' => 'Cuenta NetSendo',
+            'api_key' => 'Clave API para autenticación',
+        ],
+        'resources_title' => 'Recursos',
+        'docs_link' => 'Documentación de Webhooks Shopify',
+        'lists_link' => 'Gestionar Listas',
+        'help_title' => '¿Necesitas ayuda?',
+        'help_desc' => 'Revisa la documentación o contáctanos.',
+        'documentation_button' => 'Documentación',
+    ],
 ];
