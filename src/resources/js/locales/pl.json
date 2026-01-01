@@ -3679,7 +3679,9 @@
             "unpin": "Odepnij",
             "delete": "Usuń",
             "host": "Host",
-            "pinned_message": "Przypięta wiadomość"
+            "pinned_message": "Przypięta wiadomość",
+            "slow_mode": "Tryb powolny jest aktywny. Możesz wysłać wiadomość co {seconds} sekund.",
+            "viewers": "{count} widzów"
         },
         "products": {
             "title": "Produkty",
@@ -3750,6 +3752,7 @@
             "viewers": "{count} widzów",
             "start": "Rozpocznij",
             "end": "Zakończ",
+            "auto_mode": "Tryb automatyczny – transmisja rozpoczyna się zgodnie z harmonogramem",
             "video_preview": "Podgląd wideo",
             "configure_youtube": "Skonfiguruj YouTube Live ID w ustawieniach",
             "confirm_end": "Czy na pewno chcesz zakończyć webinar?",
@@ -3800,7 +3803,16 @@
             "delete": "Usuń",
             "duplicate": "Duplikuj",
             "delete_confirm": "Czy na pewno chcesz usunąć ten webinar? Ta operacja jest nieodwracalna.",
-            "schedule": "Harmonogram"
+            "schedule": "Harmonogram",
+            "list_integration_advanced": "Zaawansowana integracja z listami",
+            "list_integration_advanced_desc": "Automatycznie dodawaj subskrybentów do list na podstawie ich aktywności w webinarze.",
+            "clicked_list": "Lista dla kliknięć",
+            "clicked_list_help": "Subskrybenci zostaną dodani po wejściu na stronę webinaru",
+            "attended_list": "Lista dla uczestników",
+            "attended_list_help": "Subskrybenci zostaną dodani po przekroczeniu minimalnego czasu",
+            "attended_min_minutes": "Minimalny czas uczestnictwa",
+            "attended_min_minutes_help": "Po jakim czasie (w minutach) subskrybent jest dodawany do listy uczestników",
+            "minutes": "minut"
         },
         "autoconfig": {
             "title": "Konfiguracja Autowebinaru",
@@ -3872,6 +3884,116 @@
             "session_viewers": "Widzowie",
             "session_duration": "Czas trwania",
             "no_sessions": "Brak sesji"
+        },
+        "chat_panel": {
+            "title": "Panel sterowania czatem",
+            "viewers": "widzów",
+            "chat_enabled": "Czat włączony",
+            "chat_visibility": "Widoczność czatu",
+            "reactions": "Reakcje",
+            "reactions_hint": "Emoji od widzów",
+            "chat_mode": "Tryb czatu",
+            "slow_mode": "Tryb powolny",
+            "disabled": "Wyłączony",
+            "seconds": "sekund",
+            "minute": "minuta",
+            "viewers_counter": "Licznik widzów (social proof)",
+            "base": "Baza",
+            "variance": "Wariancja",
+            "pending_messages": "wiadomości do moderacji",
+            "view": "Zobacz",
+            "send_announcement": "Wyślij ogłoszenie",
+            "announcement_placeholder": "Wpisz treść ogłoszenia...",
+            "send": "Wyślij",
+            "saving": "Zapisywanie...",
+            "modes": {
+                "open": {
+                    "label": "Otwarty",
+                    "desc": "Wszyscy mogą pisać"
+                },
+                "moderated": {
+                    "label": "Moderowany",
+                    "desc": "Wiadomości wymagają zatwierdzenia"
+                },
+                "qa_only": {
+                    "label": "Tylko Q&A",
+                    "desc": "Tylko pytania"
+                },
+                "host_only": {
+                    "label": "Tylko host",
+                    "desc": "Uczestnicy nie mogą pisać"
+                }
+            },
+            "announcement_types": {
+                "success": "Sukces",
+                "warning": "Uwaga",
+                "promo": "Promocja"
+            }
+        },
+        "scenario": {
+            "title": "Konstruktor scenariusza",
+            "generate_random": "Generuj losowe",
+            "add_message": "Dodaj wiadomość",
+            "clear": "Wyczyść",
+            "no_messages": "Brak wiadomości w scenariuszu",
+            "add_first": "Dodaj pierwszą wiadomość",
+            "messages": "Wiadomości",
+            "avg_density": "Śr. gęstość",
+            "questions": "Pytań",
+            "testimonials": "Referencji",
+            "modal": {
+                "add_title": "Dodaj wiadomość",
+                "edit_title": "Edytuj wiadomość",
+                "sender_name": "Imię nadawcy",
+                "message_text": "Treść wiadomości",
+                "message_type": "Typ wiadomości",
+                "minute": "Minuta",
+                "second": "Sekunda",
+                "advanced": "Opcje zaawansowane",
+                "variance": "Wariancja czasowa (±sek)",
+                "reactions": "Symulowane polubienia",
+                "randomly": "Pokazuj losowo (70% szansy)",
+                "cancel": "Anuluj",
+                "save": "Zapisz zmiany",
+                "add": "Dodaj",
+                "delete_title": "Usuń wiadomość",
+                "delete_confirm": "Czy na pewno chcesz usunąć tę wiadomość ze scenariusza? Tej operacji nie można cofnąć.",
+                "clear_title": "Wyczyść scenariusz",
+                "clear_confirm": "Czy na pewno chcesz usunąć WSZYSTKIE wiadomości ze scenariusza? Tej operacji nie można cofnąć.",
+                "delete": "Usuń",
+                "clear_all": "Wyczyść wszystko"
+            },
+            "types": {
+                "comment": "Komentarz",
+                "question": "Pytanie",
+                "reaction": "Reakcja",
+                "testimonial": "Referencja",
+                "excitement": "Entuzjazm"
+            }
         }
+    },
+    "sms_providers": {
+        "title": "Dostawcy SMS",
+        "subtitle": "Konfiguruj bramki SMS",
+        "add_new": "Dodaj dostawcę",
+        "add_first": "Dodaj pierwszego dostawcę",
+        "empty": {
+            "title": "Brak skonfigurowanych dostawców SMS",
+            "description": "Dodaj swojego pierwszego dostawcę SMS, aby rozpocząć wysyłanie wiadomości."
+        },
+        "info": {
+            "title": "Wspierani dostawcy",
+            "twilio": "Twilio: Globalny zasięg, niezawodne dostarczanie.",
+            "smsapi": "SMS API (PL): Najlepsze rozwiązanie na polski rynek."
+        },
+        "modal": {
+            "add_title": "Dodaj dostawcę SMS",
+            "provider": "Wybierz dostawcę",
+            "name": "Nazwa integracji",
+            "name_placeholder": "np. Moje konto Twilio",
+            "from_number": "Sender ID / Numer nadawcy",
+            "daily_limit": "Limit dzienny",
+            "daily_limit_placeholder": "np. 1000 (zostaw puste dla braku limitu)"
     }
+}
 }

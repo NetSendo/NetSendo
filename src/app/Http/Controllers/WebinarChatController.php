@@ -149,4 +149,85 @@ class WebinarChatController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Add a reaction to the webinar.
+     */
+    public function addReaction(Request $request, Webinar $webinar): JsonResponse
+    {
+        // Anyone viewing can add reactions
+        $validated = $request->validate([
+            'type' => 'required|string|in:heart,thumbs_up,fire,clap,wow,laugh,think',
+            'session_id' => 'nullable|exists:webinar_sessions,id',
+            'registration_token' => 'nullable|string',
+        ]);
+
+        // Check if reactions are enabled
+        if (!$webinar->areReactionsEnabled()) {
+            return response()->json([
+                'error' => 'Reactions are disabled for this webinar',
+            ], 403);
+        }
+
+        $registration = null;
+        if ($validated['registration_token'] ?? null) {
+            $registration = \App\Models\WebinarRegistration::where('access_token', $validated['registration_token'])
+                ->where('webinar_id', $webinar->id)
+                ->first();
+        }
+
+        $reaction = \App\Models\WebinarChatReaction::create([
+            'webinar_id' => $webinar->id,
+            'webinar_session_id' => $validated['session_id'] ?? null,
+            'registration_id' => $registration?->id,
+            'type' => $validated['type'],
+            'is_simulated' => false,
+            'position_x' => rand(10, 90),
+        ]);
+
+        // Broadcast to all viewers
+        broadcast(new \App\Events\WebinarReactionSent($reaction))->toOthers();
+
+        return response()->json([
+            'success' => true,
+            'reaction' => $reaction->toBroadcast(),
+        ]);
+    }
+
+    /**
+     * Get reaction statistics.
+     */
+    public function reactionStats(Request $request, Webinar $webinar): JsonResponse
+    {
+        $sessionId = $request->session_id;
+        $recentSeconds = $request->get('seconds', 60);
+
+        return response()->json([
+            'counts' => \App\Models\WebinarChatReaction::getCountByType(
+                $webinar->id,
+                $sessionId,
+                $recentSeconds
+            ),
+            'total' => \App\Models\WebinarChatReaction::getTotalCount(
+                $webinar->id,
+                $sessionId,
+                $recentSeconds
+            ),
+            'types' => \App\Models\WebinarChatReaction::getTypes(),
+        ]);
+    }
+
+    /**
+     * Like a message.
+     */
+    public function like(Webinar $webinar, WebinarChatMessage $message): JsonResponse
+    {
+        $this->chatService->likeMessage($message);
+
+        return response()->json([
+            'success' => true,
+            'likes_count' => $message->fresh()->likes_count,
+        ]);
+    }
 }
+

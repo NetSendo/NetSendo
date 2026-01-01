@@ -165,16 +165,8 @@ class WebinarService
             return null;
         }
 
-        // Check if already registered
-        $existing = $webinar->registrations()
-            ->where('email', $data['email'])
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
         // For auto-webinars, determine session from user selection or calculate
+        $newSession = null;
         if ($webinar->isAutoWebinar() && !$session && $webinar->schedule) {
             // Use session_time from form if provided, otherwise calculate
             if (!empty($data['session_time'])) {
@@ -182,8 +174,29 @@ class WebinarService
             } else {
                 $sessionTime = $webinar->schedule->calculateSessionTimeForRegistration();
             }
-            $session = $this->getOrCreateSession($webinar, $sessionTime);
+            $newSession = $this->getOrCreateSession($webinar, $sessionTime);
         }
+
+        // Check if already registered
+        $existing = $webinar->registrations()
+            ->where('email', $data['email'])
+            ->first();
+
+        if ($existing) {
+            // If user selected a new session time, update their registration
+            if ($newSession && $existing->webinar_session_id !== $newSession->id) {
+                $existing->update([
+                    'webinar_session_id' => $newSession->id,
+                    'status' => WebinarRegistration::STATUS_REGISTERED,
+                    'timezone' => $data['timezone'] ?? $existing->timezone,
+                ]);
+                $existing->load('session');
+            }
+            return $existing;
+        }
+
+        // Use the calculated session
+        $session = $newSession ?? $session;
 
         // Find or create subscriber
         $subscriber = $this->findOrCreateSubscriber($webinar, $data);
@@ -262,6 +275,9 @@ class WebinarService
             $currentViewers = $session->getCurrentViewers();
             $webinar->updatePeakViewers($currentViewers);
         }
+
+        // Add subscriber to clicked list (for tracking who viewed the webinar page)
+        $this->addSubscriberToList($registration, $webinar->clickedList);
     }
 
     /**
@@ -283,6 +299,14 @@ class WebinarService
             $videoTimeSeconds,
             ['watch_time_seconds' => $registration->watch_time_seconds]
         );
+
+        // Check if subscriber should be added to attended list based on watch time
+        $minMinutes = $webinar->attended_min_minutes ?? 5;
+        $watchMinutes = floor($registration->watch_time_seconds / 60);
+
+        if ($watchMinutes >= $minMinutes) {
+            $this->addSubscriberToList($registration, $webinar->attendedList);
+        }
     }
 
     /**
@@ -364,6 +388,30 @@ class WebinarService
         );
 
         $subscriber->tags()->syncWithoutDetaching([$tag->id]);
+    }
+
+    /**
+     * Add subscriber from registration to a contact list.
+     */
+    protected function addSubscriberToList(WebinarRegistration $registration, ?ContactList $list): void
+    {
+        if (!$list || !$registration->subscriber_id) {
+            return;
+        }
+
+        $subscriber = $registration->subscriber;
+        if (!$subscriber) {
+            return;
+        }
+
+        // Attach to list if not already
+        if (!$subscriber->contactLists()->where('contact_list_id', $list->id)->exists()) {
+            $subscriber->contactLists()->attach($list->id, [
+                'source' => 'webinar',
+                'status' => 'active',
+                'subscribed_at' => now(),
+            ]);
+        }
     }
 
     /**

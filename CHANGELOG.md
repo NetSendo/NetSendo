@@ -5,9 +5,88 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.3] – Short Description
+
+**Release date:** 2026-01-01
 
 ### Added
+
+- **Webinar List Integration:**
+
+  - **Advanced Attendance Tracking:** Automatically managing subscribers based on their webinar behavior.
+  - **Click Tracking:** Subscribers entering the webinar watch page are automatically added to a specific "Clicked Link" contact list.
+  - **Watch Duration Tracking:** Subscribers who watch the webinar for a specified duration (e.g., 5 mins) are added to an "Attended" contact list.
+  - **New UI Controls:** Added "Advanced List Integration" section to Webinar Edit page for configuring these lists and the attendance threshold.
+  - **Database Updates:** New columns `clicked_list_id`, `attended_list_id`, and `attended_min_minutes` in `webinars` table.
+  - **Full Translations:** UI available in PL, EN, DE, ES.
+
+- **Webinar Chat System:**
+
+  - **Reactions (Emoji):**
+
+    - Real-time reactions system with animated bubbles (TikTok/Instagram Live style).
+    - 7 reaction types: heart, thumbs up, fire, clap, wow, laugh, think.
+    - Host-configurable (enable/disable) via control panel.
+    - "Simulated" reactions support for auto-webinars.
+    - New `WebinarReactionBar` and `ReactionBubbles` Vue components.
+
+  - **Host Control Panel:**
+
+    - New "Controls" tab in Webinar Studio for advanced chat management.
+    - **Chat Modes:** Open, Moderated, Q&A Only, Host Only.
+    - **Slow Mode:** Configurable cooldowns (5s, 10s, 30s, 1min) to prevent spam.
+    - **Fake Viewers:** "Social Proof" settings with base count and random variance.
+    - **Announcements:** Send official host messages (Info, Success, Warning, Promo) directly to chat.
+
+  - **Scenario Builder (Auto-Webinars):**
+
+    - Visual timeline editor for creating automated chat scripts.
+    - Drag-and-drop message management grouped by time segments.
+    - **Random Generator:** Templates for Sales, Educational, and Launch webinars.
+    - Import messages from previous live sessions.
+    - Support for various message types: Comment, Question, Reaction, Testimonial.
+
+  - **Promotion Features:**
+
+    - **Promotion Countdown:** Urgent pulsing timer for product offers.
+    - Shimmer effects and "Ending Soon" visual indicators.
+    - Integrated into public watch page.
+
+  - **Translations:**
+    - Full translations for reactions, host controls, and scenario builder in PL, EN, DE, ES.
+
+### Fixed
+
+- **Webinar Studio:**
+  - Fixed integration of host controls and product panel tabs.
+  - Added pending message count badge for moderators.
+  - Added periodic dashboard data refresh (viewer count, stats).
+
+### Fixed
+
+- **Webinar Playback & UI:**
+  - Fixed `500 Internal Server Error` on playback progress tracking endpoint (`/webinar/{slug}/progress/{token}`).
+  - Fixed black screen issue on autowebinars when video is not configured or session hasn't started yet.
+  - Implemented proper "Session Ended" view for webinars with expired sessions, showing replay or re-registration options.
+  - Fixed re-registration logic: users re-registering with the same email now get their session updated to the newly selected time instead of receiving old session data.
+  - Disabled "Start" and "End" buttons in Studio for autowebinars (replaced with informational message).
+
+### Added
+
+- **Webinar Success Page Integration:**
+
+  - Added "Add to Google Calendar" and "Add to Outlook" buttons to webinar success page.
+  - Generates calendar events with correct webinar title, date, time, and link.
+  - Added "Go to Webinar" button (🚀) directing users straight to the webinar room.
+  - Added translations for calendar integration and new buttons in EN, PL, DE, ES.
+
+- **Webinar Email System:**
+  - Replaced ENV-based mailer with database-controlled Mailbox system for all webinar notifications.
+  - Implemented smart mailbox resolution: uses Webinar's Target List mailbox first, falls back to User's default mailbox.
+  - New threaded queue job `SendWebinarEmail` for reliable delivery of Registration, Reminder, Started, and Replay emails.
+  - All webinar emails now correctly respect the sender identity (From Name/Email) defined in Mailbox settings.
+
+### Fixed
 
 ## [1.3.2] – Short Description
 

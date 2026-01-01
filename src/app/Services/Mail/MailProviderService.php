@@ -2,7 +2,9 @@
 
 namespace App\Services\Mail;
 
+use App\Models\ContactList;
 use App\Models\Mailbox;
+use App\Models\Webinar;
 use App\Services\Mail\Providers\GmailProvider;
 use App\Services\Mail\Providers\SendGridProvider;
 use App\Services\Mail\Providers\SmtpProvider;
@@ -32,20 +34,20 @@ class MailProviderService
                 fromName: $mailbox->from_name,
                 replyTo: $mailbox->reply_to
             ),
-            
+
             Mailbox::PROVIDER_SENDGRID => new SendGridProvider(
                 apiKey: $credentials['api_key'] ?? '',
                 fromEmail: $mailbox->from_email,
                 fromName: $mailbox->from_name
             ),
-            
+
             Mailbox::PROVIDER_GMAIL => new GmailProvider(
                 oauthService: $this->gmailService,
                 mailbox: $mailbox,
                 fromEmail: $mailbox->from_email,
                 fromName: $mailbox->from_name
             ),
-            
+
             default => throw new InvalidArgumentException("Unknown provider: {$mailbox->provider}"),
         };
     }
@@ -77,7 +79,7 @@ class MailProviderService
     {
         // First try the default mailbox
         $defaultMailbox = Mailbox::getDefaultFor($userId);
-        
+
         if ($defaultMailbox && $this->validateMailboxForType($defaultMailbox, $messageType)) {
             return $defaultMailbox;
         }
@@ -103,16 +105,37 @@ class MailProviderService
                 ['name' => 'username', 'label' => 'Username', 'type' => 'text', 'required' => true],
                 ['name' => 'password', 'label' => 'Password', 'type' => 'password', 'required' => true],
             ],
-            
+
             Mailbox::PROVIDER_SENDGRID => [
                 ['name' => 'api_key', 'label' => 'API Key', 'type' => 'password', 'required' => true, 'placeholder' => 'SG.xxxxxxxx'],
             ],
-            
+
             Mailbox::PROVIDER_GMAIL => [
                 // OAuth flow doesn't use manual input fields
             ],
-            
+
             default => [],
         };
+    }
+
+    /**
+     * Get the appropriate mailbox for a webinar.
+     * Priority: 1. List's default mailbox, 2. User's default mailbox
+     */
+    public function getMailboxForWebinar(Webinar $webinar): ?Mailbox
+    {
+        // 1. Check if webinar has target list with a configured mailbox
+        if ($webinar->target_list_id) {
+            $list = ContactList::find($webinar->target_list_id);
+            if ($list && $list->default_mailbox_id) {
+                $mailbox = Mailbox::find($list->default_mailbox_id);
+                if ($mailbox && $mailbox->is_active) {
+                    return $mailbox;
+                }
+            }
+        }
+
+        // 2. Fallback to user's default mailbox
+        return Mailbox::getDefaultFor($webinar->user_id);
     }
 }

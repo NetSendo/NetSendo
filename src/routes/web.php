@@ -498,6 +498,28 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/{webinar}/auto-config/timeline', [\App\Http\Controllers\AutoWebinarController::class, 'previewTimeline'])->name('auto.timeline');
         Route::get('/{webinar}/auto-config/sessions', [\App\Http\Controllers\AutoWebinarController::class, 'getNextSessions'])->name('auto.sessions');
         Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert');
+
+        // Chat Reactions API
+        Route::post('/{webinar}/reactions', [\App\Http\Controllers\WebinarChatController::class, 'addReaction'])->name('reactions.add');
+        Route::get('/{webinar}/reactions/stats', [\App\Http\Controllers\WebinarChatController::class, 'reactionStats'])->name('reactions.stats');
+        Route::post('/{webinar}/chat/{message}/like', [\App\Http\Controllers\WebinarChatController::class, 'like'])->name('chat.like');
+
+        // Host Control Panel API
+        Route::get('/{webinar}/host/dashboard', [\App\Http\Controllers\WebinarHostController::class, 'dashboard'])->name('host.dashboard');
+        Route::post('/{webinar}/host/chat-settings', [\App\Http\Controllers\WebinarHostController::class, 'updateChatSettings'])->name('host.chat-settings');
+        Route::post('/{webinar}/host/announcement', [\App\Http\Controllers\WebinarHostController::class, 'sendAnnouncement'])->name('host.announcement');
+        Route::post('/{webinar}/host/trigger-product', [\App\Http\Controllers\WebinarHostController::class, 'triggerProduct'])->name('host.trigger-product');
+        Route::get('/{webinar}/host/viewers', [\App\Http\Controllers\WebinarHostController::class, 'viewersCount'])->name('host.viewers');
+        Route::post('/{webinar}/host/bulk-approve', [\App\Http\Controllers\WebinarHostController::class, 'bulkApprove'])->name('host.bulk-approve');
+        Route::post('/{webinar}/host/bulk-delete', [\App\Http\Controllers\WebinarHostController::class, 'bulkDelete'])->name('host.bulk-delete');
+
+        // Scenario Builder API
+        Route::get('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'index'])->name('scripts.index');
+        Route::get('/{webinar}/scripts/builder', [\App\Http\Controllers\AutoWebinarScriptController::class, 'builder'])->name('scripts.builder');
+        Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store');
+        Route::put('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'update'])->name('scripts.update');
+        Route::delete('/{webinar}/scripts/clear', [\App\Http\Controllers\AutoWebinarScriptController::class, 'clear'])->name('scripts.clear');
+        Route::delete('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'destroy'])->name('scripts.destroy');
     });
 });
 

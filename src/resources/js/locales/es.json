@@ -472,6 +472,7 @@
         "logout": "Cerrar sesión",
         "ai_integrations": "Integraciones de IA",
         "mailboxes": "Buzones de envío",
+        "sms_providers": "Proveedores SMS",
         "groups_nav": "Grupos",
         "tags": "Etiquetas",
         "add_message": "Añadir mensaje",
@@ -3174,7 +3175,9 @@
             "unpin": "Desfijar",
             "delete": "Eliminar",
             "host": "Anfitrión",
-            "pinned_message": "Mensaje fijado"
+            "pinned_message": "Mensaje fijado",
+            "slow_mode": "El modo lento está activo. Puedes enviar un mensaje cada {seconds} segundos.",
+            "viewers": "{count} espectadores"
         },
         "products": {
             "title": "Productos",
@@ -3245,6 +3248,7 @@
             "viewers": "{count} espectadores",
             "start": "Iniciar",
             "end": "Finalizar",
+            "auto_mode": "Modo automático – la transmisión comienza según el horario",
             "video_preview": "Vista previa de video",
             "configure_youtube": "Configure el ID de YouTube Live en la configuración",
             "confirm_end": "¿Está seguro de que desea finalizar el seminario web?",
@@ -3295,7 +3299,16 @@
             "delete": "Eliminar",
             "duplicate": "Duplicar",
             "delete_confirm": "¿Está seguro de que desea eliminar este seminario web? Esta acción no se puede deshacer.",
-            "schedule": "Programación"
+            "schedule": "Programación",
+            "list_integration_advanced": "Integración avanzada de listas",
+            "list_integration_advanced_desc": "Agregue automáticamente suscriptores a listas según su actividad en el seminario web.",
+            "clicked_list": "Lista de clics",
+            "clicked_list_help": "Los suscriptores se agregarán cuando ingresen a la página del seminario web",
+            "attended_list": "Lista de asistencia",
+            "attended_list_help": "Los suscriptores se agregarán después de superar el tiempo mínimo",
+            "attended_min_minutes": "Tiempo mínimo de asistencia",
+            "attended_min_minutes_help": "Tiempo en minutos requerido para agregarse a la lista de asistencia",
+            "minutes": "minutos"
         },
         "autoconfig": {
             "title": "Configuración de seminarios web automáticos",
@@ -3367,6 +3380,116 @@
             "session_viewers": "Espectadores",
             "session_duration": "Duración",
             "no_sessions": "Sin sesiones"
+        },
+        "chat_panel": {
+            "title": "Panel de control del chat",
+            "viewers": "espectadores",
+            "chat_enabled": "Chat habilitado",
+            "chat_visibility": "Visibilidad del chat",
+            "reactions": "Reacciones",
+            "reactions_hint": "Emojis de los espectadores",
+            "chat_mode": "Modo de chat",
+            "slow_mode": "Modo lento",
+            "disabled": "Desactivado",
+            "seconds": "segundos",
+            "minute": "minuto",
+            "viewers_counter": "Contador de espectadores (Social Proof)",
+            "base": "Base",
+            "variance": "Varianza",
+            "pending_messages": "mensajes para moderar",
+            "view": "Ver",
+            "send_announcement": "Enviar anuncio",
+            "announcement_placeholder": "Introducir texto del anuncio...",
+            "send": "Enviar",
+            "saving": "Guardando...",
+            "modes": {
+                "open": {
+                    "label": "Abierto",
+                    "desc": "Todos pueden chatear"
+                },
+                "moderated": {
+                    "label": "Moderado",
+                    "desc": "Los mensajes requieren aprobación"
+                },
+                "qa_only": {
+                    "label": "Solo Q&A",
+                    "desc": "Solo preguntas"
+                },
+                "host_only": {
+                    "label": "Solo anfitrión",
+                    "desc": "Los participantes no pueden chatear"
+                }
+            },
+            "announcement_types": {
+                "success": "Éxito",
+                "warning": "Advertencia",
+                "promo": "Promo"
+            }
+        },
+        "scenario": {
+            "title": "Generador de escenarios",
+            "generate_random": "Generar aleatorio",
+            "add_message": "Agregar mensaje",
+            "clear": "Borrar",
+            "no_messages": "No hay mensajes en el escenario",
+            "add_first": "Agregar primer mensaje",
+            "messages": "Mensajes",
+            "avg_density": "Densidad prom.",
+            "questions": "Preguntas",
+            "testimonials": "Testimonios",
+            "modal": {
+                "add_title": "Agregar mensaje",
+                "edit_title": "Editar mensaje",
+                "sender_name": "Nombre del remitente",
+                "message_text": "Contenido del mensaje",
+                "message_type": "Tipo de mensaje",
+                "minute": "Minuto",
+                "second": "Segundo",
+                "advanced": "Opciones avanzadas",
+                "variance": "Variación de tiempo (±seg)",
+                "reactions": "Reacciones simuladas",
+                "randomly": "Mostrar aleatoriamente (70% de probabilidad)",
+                "cancel": "Cancelar",
+                "save": "Guardar",
+                "add": "Agregar",
+                "delete_title": "Eliminar mensaje",
+                "delete_confirm": "¿Estás seguro de que deseas eliminar este mensaje? Esta acción no se puede deshacer.",
+                "clear_title": "Borrar escenario",
+                "clear_confirm": "¿Estás seguro de que deseas borrar TODOS los mensajes? Esta acción no se puede deshacer.",
+                "delete": "Eliminar",
+                "clear_all": "Borrar todo"
+            },
+            "types": {
+                "comment": "Comentario",
+                "question": "Pregunta",
+                "reaction": "Reacción",
+                "testimonial": "Testimonio",
+                "excitement": "Entusiasmo"
+            }
         }
+    },
+    "sms_providers": {
+        "title": "Proveedores SMS",
+        "subtitle": "Configurar pasarelas SMS",
+        "add_new": "Añadir proveedor",
+        "add_first": "Añadir primer proveedor",
+        "empty": {
+            "title": "No hay proveedores SMS configurados",
+            "description": "Añade tu primer proveedor SMS para comenzar a enviar mensajes."
+        },
+        "info": {
+            "title": "Proveedores soportados",
+            "twilio": "Twilio: Cobertura global, entrega confiable.",
+            "smsapi": "SMS API (PL): La mejor solución para el mercado polaco."
+        },
+        "modal": {
+            "add_title": "Añadir proveedor SMS",
+            "provider": "Seleccionar proveedor",
+            "name": "Nombre de la integración",
+            "name_placeholder": "p.ej. Mi cuenta de Twilio",
+            "from_number": "ID de remitente / Número de origen",
+            "daily_limit": "Límite diario",
+            "daily_limit_placeholder": "p.ej. 1000 (dejar vacío para ilimitado)"
     }
+}
 }

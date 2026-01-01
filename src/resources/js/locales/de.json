@@ -496,6 +496,7 @@
         "logout": "Abmelden",
         "ai_integrations": "KI-Integrationen",
         "mailboxes": "Postfächer",
+        "sms_providers": "SMS-Anbieter",
         "groups_nav": "Gruppen",
         "tags": "Tags",
         "add_message": "Nachricht hinzufügen",
@@ -3179,7 +3180,9 @@
             "unpin": "Lösen",
             "delete": "Löschen",
             "host": "Gastgeber",
-            "pinned_message": "Angepinnte Nachricht"
+            "pinned_message": "Angepinnte Nachricht",
+            "slow_mode": "Der langsame Modus ist aktiv. Sie können alle {seconds} Sekunden eine Nachricht senden.",
+            "viewers": "{count} Zuschauer"
         },
         "products": {
             "title": "Produkte",
@@ -3250,6 +3253,7 @@
             "viewers": "{count} Zuschauer",
             "start": "Starten",
             "end": "Beenden",
+            "auto_mode": "Automatischer Modus – Übertragung startet planmäßig",
             "video_preview": "Videovorschau",
             "configure_youtube": "Konfigurieren Sie YouTube Live ID in den Einstellungen",
             "confirm_end": "Sind Sie sicher, dass Sie das Webinar beenden möchten?",
@@ -3300,7 +3304,16 @@
             "delete": "Löschen",
             "duplicate": "Duplizieren",
             "delete_confirm": "Sind Sie sicher, dass Sie dieses Webinar löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
-            "schedule": "Zeitplan"
+            "schedule": "Zeitplan",
+            "list_integration_advanced": "Erweiterte Listenintegration",
+            "list_integration_advanced_desc": "Fügen Sie Abonnenten automatisch zu Listen basierend auf ihrer Webinar-Aktivität hinzu.",
+            "clicked_list": "Klick-Liste",
+            "clicked_list_help": "Abonnenten werden hinzugefügt, wenn sie die Webinar-Seite betreten",
+            "attended_list": "Teilnahme-Liste",
+            "attended_list_help": "Abonnenten werden nach Überschreiten der Mindestzeit hinzugefügt",
+            "attended_min_minutes": "Mindestteilnahmezeit",
+            "attended_min_minutes_help": "Erforderliche Zeit in Minuten zur Aufnahme in die Teilnahmeliste",
+            "minutes": "Minuten"
         },
         "autoconfig": {
             "title": "Autowebinar-Konfiguration",
@@ -3372,6 +3385,116 @@
             "session_viewers": "Zuschauer",
             "session_duration": "Dauer",
             "no_sessions": "Keine Sitzungen"
+        },
+        "chat_panel": {
+            "title": "Chat-Kontrollpanel",
+            "viewers": "Zuschauer",
+            "chat_enabled": "Chat aktiviert",
+            "chat_visibility": "Chat-Sichtbarkeit",
+            "reactions": "Reaktionen",
+            "reactions_hint": "Emoji von Zuschauern",
+            "chat_mode": "Chat-Modus",
+            "slow_mode": "Langsamer Modus",
+            "disabled": "Deaktiviert",
+            "seconds": "Sekunden",
+            "minute": "Minute",
+            "viewers_counter": "Zuschauerzähler (Social Proof)",
+            "base": "Basis",
+            "variance": "Varianz",
+            "pending_messages": "Nachrichten zur Moderation",
+            "view": "Ansehen",
+            "send_announcement": "Ankündigung senden",
+            "announcement_placeholder": "Ankündigungstext eingeben...",
+            "send": "Senden",
+            "saving": "Speichern...",
+            "modes": {
+                "open": {
+                    "label": "Offen",
+                    "desc": "Jeder kann chatten"
+                },
+                "moderated": {
+                    "label": "Moderiert",
+                    "desc": "Nachrichten benötigen Genehmigung"
+                },
+                "qa_only": {
+                    "label": "Nur Q&A",
+                    "desc": "Nur Fragen"
+                },
+                "host_only": {
+                    "label": "Nur Host",
+                    "desc": "Teilnehmer können nicht chatten"
+                }
+            },
+            "announcement_types": {
+                "success": "Erfolg",
+                "warning": "Warnung",
+                "promo": "Promo"
+            }
+        },
+    "scenario": {
+        "title": "Szenario-Builder",
+        "generate_random": "Zufällig generieren",
+        "add_message": "Nachricht hinzufügen",
+        "clear": "Löschen",
+        "no_messages": "Keine Nachrichten im Szenario",
+        "add_first": "Erste Nachricht hinzufügen",
+        "messages": "Nachrichten",
+        "avg_density": "Durchschn. Dichte",
+        "questions": "Fragen",
+        "testimonials": "Referenzen",
+        "modal": {
+            "add_title": "Nachricht hinzufügen",
+            "edit_title": "Nachricht bearbeiten",
+            "sender_name": "Absendername",
+            "message_text": "Nachrichteninhalt",
+            "message_type": "Nachrichtentyp",
+            "minute": "Minute",
+            "second": "Sekunde",
+            "advanced": "Erweiterte Optionen",
+            "variance": "Zeitabweichung (±sek)",
+            "reactions": "Simulierte Reaktionen",
+            "randomly": "Zufällig anzeigen (70% Chance)",
+            "cancel": "Abbrechen",
+            "save": "Speichern",
+            "add": "Hinzufügen",
+            "delete_title": "Nachricht löschen",
+            "delete_confirm": "Möchten Sie diese Nachricht wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+            "clear_title": "Szenario löschen",
+            "clear_confirm": "Möchten Sie wirklich ALLE Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.",
+            "delete": "Löschen",
+            "clear_all": "Alles löschen"
+        },
+        "types": {
+            "comment": "Kommentar",
+            "question": "Frage",
+            "reaction": "Reaktion",
+            "testimonial": "Referenz",
+            "excitement": "Begeisterung"
         }
     }
+},
+    "sms_providers": {
+        "title": "SMS-Anbieter",
+        "subtitle": "SMS-Gateway-Einstellungen konfigurieren",
+        "add_new": "Anbieter hinzufügen",
+        "add_first": "Ersten Anbieter hinzufügen",
+        "empty": {
+            "title": "Keine SMS-Anbieter konfiguriert",
+            "description": "Fügen Sie Ihren ersten SMS-Anbieter hinzu, um Nachrichten zu senden."
+        },
+        "info": {
+            "title": "Unterstützte Anbieter",
+            "twilio": "Twilio: Weltweite Abdeckung, zuverlässige Zustellung.",
+            "smsapi": "SMS API (PL): Beste Lösung für den polnischen Markt."
+        },
+        "modal": {
+            "add_title": "SMS-Anbieter hinzufügen",
+            "provider": "Anbieter wählen",
+            "name": "Integrationsname",
+            "name_placeholder": "z.B. Mein Twilio-Konto",
+            "from_number": "Absender-ID / Absendernummer",
+            "daily_limit": "Tageslimit",
+            "daily_limit_placeholder": "z.B. 1000 (leer lassen für unbegrenzt)"
+    }
+}
 }

@@ -209,6 +209,7 @@
         "logout": "Logout",
         "ai_integrations": "AI Integrations",
         "mailboxes": "Mailboxes",
+        "sms_providers": "SMS Providers",
         "groups_nav": "Groups",
         "tags": "Tags",
         "add_message": "Add Message",
@@ -3541,7 +3542,9 @@
             "unpin": "Unpin",
             "delete": "Delete",
             "host": "Host",
-            "pinned_message": "Pinned Message"
+            "pinned_message": "Pinned Message",
+            "slow_mode": "Slow mode is active. You can send a message every {seconds} seconds.",
+            "viewers": "{count} viewers"
         },
         "products": {
             "title": "Products",
@@ -3612,6 +3615,7 @@
             "viewers": "{count} viewers",
             "start": "Start",
             "end": "End",
+            "auto_mode": "Automatic mode – broadcast starts according to schedule",
             "video_preview": "Video Preview",
             "configure_youtube": "Configure YouTube Live ID in settings",
             "confirm_end": "Are you sure you want to end the webinar?",
@@ -3662,7 +3666,16 @@
             "delete": "Delete",
             "duplicate": "Duplicate",
             "delete_confirm": "Are you sure you want to delete this webinar? This action cannot be undone.",
-            "schedule": "Schedule"
+            "schedule": "Schedule",
+            "list_integration_advanced": "Advanced List Integration",
+            "list_integration_advanced_desc": "Automatically add subscribers to lists based on their webinar activity.",
+            "clicked_list": "Clicked Link List",
+            "clicked_list_help": "Subscribers will be added when they enter the webinar page",
+            "attended_list": "Attendance List",
+            "attended_list_help": "Subscribers will be added after exceeding minimum watch time",
+            "attended_min_minutes": "Minimum Attendance Time",
+            "attended_min_minutes_help": "Watch time in minutes required to be added to the attendance list",
+            "minutes": "minutes"
         },
         "autoconfig": {
             "title": "Auto Webinar Configuration",
@@ -3734,6 +3747,116 @@
             "session_viewers": "Viewers",
             "session_duration": "Duration",
             "no_sessions": "No sessions"
+        },
+        "chat_panel": {
+            "title": "Chat Control Panel",
+            "viewers": "viewers",
+            "chat_enabled": "Chat Enabled",
+            "chat_visibility": "Chat visibility",
+            "reactions": "Reactions",
+            "reactions_hint": "Emoji from viewers",
+            "chat_mode": "Chat Mode",
+            "slow_mode": "Slow Mode",
+            "disabled": "Disabled",
+            "seconds": "seconds",
+            "minute": "minute",
+            "viewers_counter": "Viewer Counter (Social Proof)",
+            "base": "Base",
+            "variance": "Variance",
+            "pending_messages": "messages to moderate",
+            "view": "View",
+            "send_announcement": "Send Announcement",
+            "announcement_placeholder": "Enter announcement text...",
+            "send": "Send",
+            "saving": "Saving...",
+            "modes": {
+                "open": {
+                    "label": "Open",
+                    "desc": "Everyone can chat"
+                },
+                "moderated": {
+                    "label": "Moderated",
+                    "desc": "Messages require approval"
+                },
+                "qa_only": {
+                    "label": "Q&A Only",
+                    "desc": "Questions only"
+                },
+                "host_only": {
+                    "label": "Host Only",
+                    "desc": "Participants cannot chat"
+                }
+            },
+            "announcement_types": {
+                "success": "Success",
+                "warning": "Warning",
+                "promo": "Promo"
+            }
+        },
+        "scenario": {
+            "title": "Scenario Builder",
+            "generate_random": "Generate Random",
+            "add_message": "Add Message",
+            "clear": "Clear",
+            "no_messages": "No messages in scenario",
+            "add_first": "Add first message",
+            "messages": "Messages",
+            "avg_density": "Avg. Density",
+            "questions": "Questions",
+            "testimonials": "Testimonials",
+            "modal": {
+                "add_title": "Add Message",
+                "edit_title": "Edit Message",
+                "sender_name": "Sender Name",
+                "message_text": "Message Content",
+                "message_type": "Message Type",
+                "minute": "Minute",
+                "second": "Second",
+                "advanced": "Advanced Options",
+                "variance": "Time Variance (±sec)",
+                "reactions": "Simulated Reactions",
+                "randomly": "Show Randomly (70% chance)",
+                "cancel": "Cancel",
+                "save": "Save",
+                "add": "Add",
+                "delete_title": "Delete Message",
+                "delete_confirm": "Are you sure you want to delete this message? This cannot be undone.",
+                "clear_title": "Clear Scenario",
+                "clear_confirm": "Are you sure you want to clear ALL messages? This cannot be undone.",
+                "delete": "Delete",
+                "clear_all": "Clear All"
+            },
+            "types": {
+                "comment": "Comment",
+                "question": "Question",
+                "reaction": "Reaction",
+                "testimonial": "Testimonial",
+                "excitement": "Excitement"
+            }
         }
+    },
+    "sms_providers": {
+        "title": "SMS Providers",
+        "subtitle": "Configure SMS gateways settings",
+        "add_new": "Add Provider",
+        "add_first": "Add First Provider",
+        "empty": {
+            "title": "No SMS providers configured",
+            "description": "Add your first SMS provider to start sending messages."
+        },
+        "info": {
+            "title": "Supported Providers",
+            "twilio": "Twilio: Global coverage, reliable delivery.",
+            "smsapi": "SMS API (PL): Best solution for Polish market."
+        },
+        "modal": {
+            "add_title": "Add SMS Provider",
+            "provider": "Select Provider",
+            "name": "Integration Name",
+            "name_placeholder": "e.g. My Twilio Account",
+            "from_number": "Sender ID / From Number",
+            "daily_limit": "Daily Limit",
+            "daily_limit_placeholder": "e.g. 1000 (leave empty for unlimited)"
     }
+}
 }

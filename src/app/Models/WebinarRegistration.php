@@ -182,6 +182,56 @@ class WebinarRegistration extends Model
     }
 
     /**
+     * Get Google Calendar link.
+     */
+    public function getGoogleCalendarLinkAttribute(): string
+    {
+        $startDate = $this->session?->scheduled_at ?? $this->webinar->scheduled_at;
+
+        if (!$startDate) {
+            return '#';
+        }
+
+        $endDate = $startDate->copy()->addMinutes($this->webinar->duration_minutes ?? 60);
+
+        $params = [
+            'action' => 'TEMPLATE',
+            'text' => $this->webinar->name,
+            'dates' => $startDate->format('Ymd\THis\Z') . '/' . $endDate->format('Ymd\THis\Z'),
+            'details' => __('webinars.public.registered.calendar_description') . "\n\n" . $this->watch_url,
+            'location' => $this->watch_url,
+        ];
+
+        return 'https://calendar.google.com/calendar/render?' . http_build_query($params);
+    }
+
+    /**
+     * Get Outlook Calendar link.
+     */
+    public function getOutlookCalendarLinkAttribute(): string
+    {
+        $startDate = $this->session?->scheduled_at ?? $this->webinar->scheduled_at;
+
+        if (!$startDate) {
+            return '#';
+        }
+
+        $endDate = $startDate->copy()->addMinutes($this->webinar->duration_minutes ?? 60);
+
+        $params = [
+            'path' => '/calendar/action/compose',
+            'rru' => 'addevent',
+            'startdt' => $startDate->format('Y-m-d\TH:i:s\Z'),
+            'enddt' => $endDate->format('Y-m-d\TH:i:s\Z'),
+            'subject' => $this->webinar->name,
+            'body' => __('webinars.public.registered.calendar_description') . "\n\n" . $this->watch_url,
+            'location' => $this->watch_url,
+        ];
+
+        return 'https://outlook.live.com/calendar/0/deeplink.compose?' . http_build_query($params);
+    }
+
+    /**
      * Get watch time in minutes.
      */
     public function getWatchTimeMinutesAttribute(): int

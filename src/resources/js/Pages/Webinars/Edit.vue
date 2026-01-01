@@ -15,6 +15,9 @@ const form = useForm({
     description: props.webinar.description || '',
     scheduled_at: props.webinar.scheduled_at ? props.webinar.scheduled_at.slice(0, 16) : '',
     target_list_id: props.webinar.target_list_id || '',
+    clicked_list_id: props.webinar.clicked_list_id || '',
+    attended_list_id: props.webinar.attended_list_id || '',
+    attended_min_minutes: props.webinar.attended_min_minutes || 5,
     registration_tag: props.webinar.registration_tag || '',
     attended_tag: props.webinar.attended_tag || '',
     missed_tag: props.webinar.missed_tag || '',
@@ -338,6 +341,57 @@ const getStatusColor = (status) => {
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     />
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced List Integration -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ $t('webinars.edit.list_integration_advanced') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.edit.list_integration_advanced_desc') }}</p>
+
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.clicked_list') }}</label>
+                                    <select
+                                        v-model="form.clicked_list_id"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">{{ $t('webinars.edit.no_list') }}</option>
+                                        <option v-for="list in lists" :key="list.id" :value="list.id">
+                                            {{ list.name }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.clicked_list_help') }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.attended_list') }}</label>
+                                    <select
+                                        v-model="form.attended_list_id"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    >
+                                        <option value="">{{ $t('webinars.edit.no_list') }}</option>
+                                        <option v-for="list in lists" :key="list.id" :value="list.id">
+                                            {{ list.name }}
+                                        </option>
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.attended_list_help') }}</p>
+                                </div>
+                            </div>
+                            <div class="max-w-xs">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.attended_min_minutes') }}</label>
+                                <div class="mt-1 flex items-center gap-2">
+                                    <input
+                                        v-model.number="form.attended_min_minutes"
+                                        type="number"
+                                        min="1"
+                                        max="300"
+                                        class="block w-24 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ $t('webinars.edit.minutes') }}</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.attended_min_minutes_help') }}</p>
                             </div>
                         </div>
                     </div>

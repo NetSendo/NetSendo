@@ -40,6 +40,9 @@ class Webinar extends Model
         'thank_you_page_id',
         'thank_you_url',
         'target_list_id',
+        'clicked_list_id',
+        'attended_list_id',
+        'attended_min_minutes',
         'registration_tag',
         'attended_tag',
         'missed_tag',
@@ -57,6 +60,7 @@ class Webinar extends Model
 
     protected $casts = [
         'settings' => 'array',
+        'chat_settings' => 'array',
         'scheduled_at' => 'datetime',
         'started_at' => 'datetime',
         'ended_at' => 'datetime',
@@ -64,6 +68,21 @@ class Webinar extends Model
         'attendees_count' => 'integer',
         'peak_viewers' => 'integer',
         'duration_minutes' => 'integer',
+        'attended_min_minutes' => 'integer',
+    ];
+
+    /**
+     * Default chat settings.
+     */
+    public const DEFAULT_CHAT_SETTINGS = [
+        'enabled' => true,
+        'mode' => 'open', // open, moderated, qa_only, host_only
+        'slow_mode_seconds' => 0,
+        'fake_viewers_base' => 50,
+        'fake_viewers_variance' => 20,
+        'reactions_enabled' => true,
+        'allow_questions' => true,
+        'require_approval' => false,
     ];
 
     /**
@@ -163,6 +182,11 @@ class Webinar extends Model
         return $this->hasMany(AutoWebinarChatScript::class)->orderBy('show_at_seconds');
     }
 
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(WebinarChatReaction::class);
+    }
+
     public function registrationPage(): BelongsTo
     {
         return $this->belongsTo(ExternalPage::class, 'registration_page_id');
@@ -176,6 +200,16 @@ class Webinar extends Model
     public function targetList(): BelongsTo
     {
         return $this->belongsTo(ContactList::class, 'target_list_id');
+    }
+
+    public function clickedList(): BelongsTo
+    {
+        return $this->belongsTo(ContactList::class, 'clicked_list_id');
+    }
+
+    public function attendedList(): BelongsTo
+    {
+        return $this->belongsTo(ContactList::class, 'attended_list_id');
     }
 
     // =====================================
@@ -253,7 +287,47 @@ class Webinar extends Model
      */
     public function getChatEnabledAttribute(): bool
     {
-        return $this->settings_with_defaults['chat_enabled'] ?? true;
+        return $this->chat_settings_with_defaults['enabled'] ?? true;
+    }
+
+    /**
+     * Get chat settings with defaults merged.
+     */
+    public function getChatSettingsWithDefaultsAttribute(): array
+    {
+        return array_merge(self::DEFAULT_CHAT_SETTINGS, $this->chat_settings ?? []);
+    }
+
+    /**
+     * Update chat settings.
+     */
+    public function updateChatSettings(array $settings): void
+    {
+        $current = $this->chat_settings ?? [];
+        $this->chat_settings = array_merge($current, $settings);
+        $this->save();
+    }
+
+    /**
+     * Get current viewers count (real + fake for social proof).
+     */
+    public function getCurrentViewersCount(?int $realViewers = null): int
+    {
+        $settings = $this->chat_settings_with_defaults;
+        $base = $settings['fake_viewers_base'] ?? 0;
+        $variance = $settings['fake_viewers_variance'] ?? 0;
+
+        $fakeViewers = $base + rand(-$variance, $variance);
+
+        return max(0, $fakeViewers + ($realViewers ?? 0));
+    }
+
+    /**
+     * Check if reactions are enabled.
+     */
+    public function areReactionsEnabled(): bool
+    {
+        return $this->chat_settings_with_defaults['reactions_enabled'] ?? true;
     }
 
     /**

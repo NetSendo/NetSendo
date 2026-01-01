@@ -116,6 +116,27 @@ class PublicWebinarController extends Controller
         $isLive = $session && $session->status === 'live';
         $shouldPlay = $isLive || ($sessionStartTime && now()->gte($sessionStartTime));
 
+        // Check if webinar has video configured
+        $hasVideo = !empty($webinar->video_url) || !empty($webinar->youtube_live_id);
+
+        // Check if session has ended (session time passed, but no live session and no video)
+        // For autowebinars: if session start time was more than 2 hours ago and no video
+        $sessionEnded = false;
+        if ($sessionStartTime && now()->gte($sessionStartTime)) {
+            $hoursAfterStart = now()->diffInHours($sessionStartTime);
+            // Consider ended if more than 2 hours passed from start time and no active live session
+            if (!$isLive && !$hasVideo && $hoursAfterStart >= 2) {
+                $sessionEnded = true;
+            }
+            // Also consider ended if the registered session is marked as ended
+            if ($registration->session && $registration->session->status === 'ended') {
+                $sessionEnded = true;
+            }
+        }
+
+        // Check if replay is available
+        $hasReplay = !empty($webinar->video_url);
+
         // Get registration's timezone for display
         $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
 
@@ -127,6 +148,8 @@ class PublicWebinarController extends Controller
             'pinnedProduct' => $webinar->products()->pinned()->first(),
             'sessionStartTime' => $sessionStartTime?->toIso8601String(),
             'shouldPlay' => $shouldPlay,
+            'sessionEnded' => $sessionEnded,
+            'hasReplay' => $hasReplay,
             'registrationTimezone' => $registrationTimezone,
         ]);
     }
@@ -169,9 +192,16 @@ class PublicWebinarController extends Controller
 
     public function trackProgress(Request $request, string $slug, string $token)
     {
-        $registration = WebinarRegistration::where('access_token', $token)->firstOrFail();
+        $registration = WebinarRegistration::where('access_token', $token)
+            ->whereHas('webinar', fn($q) => $q->where('slug', $slug))
+            ->with('webinar')
+            ->first();
 
-        $videoTime = $request->get('video_time_seconds', 0);
+        if (!$registration || !$registration->webinar) {
+            return response()->json(['error' => 'Registration not found'], 404);
+        }
+
+        $videoTime = (int) $request->get('video_time_seconds', 0);
         $registration->updateVideoPosition($videoTime);
 
         WebinarAnalytic::track(

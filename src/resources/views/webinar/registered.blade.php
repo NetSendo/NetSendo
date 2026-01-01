@@ -42,6 +42,9 @@
             <button onclick="navigator.clipboard.writeText('{{ $registration->watch_url }}')" class="mt-3 text-sm text-indigo-300 hover:text-white">
                 📋 {{ __('webinars.public.registered.copy_link') }}
             </button>
+            <a href="{{ $registration->watch_url }}" class="mt-3 ml-4 text-sm text-green-400 hover:text-white inline-flex items-center gap-1">
+                🚀 {{ __('webinars.public.registered.go_to_webinar') }}
+            </a>
         </div>
 
         <p class="text-sm opacity-60">
@@ -49,11 +52,13 @@
         </p>
 
         <div class="flex justify-center gap-4 mt-4">
-            <a href="#" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
-                📅 Google Calendar
+            <a href="{{ $registration->google_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
+                Google Calendar
             </a>
-            <a href="#" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition">
-                📅 Outlook
+            <a href="{{ $registration->outlook_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
+                Outlook
             </a>
         </div>
     </div>
