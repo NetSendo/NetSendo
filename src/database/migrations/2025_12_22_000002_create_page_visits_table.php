@@ -29,7 +29,7 @@ return new class extends Migration
                 $table->index('subscriber_id');
                 $table->index('user_id');
                 $table->index('visitor_token');
-                $table->index(['user_id', 'page_url']);
+                // Note: Cannot create composite index with page_url (2048 chars) - exceeds MySQL key length limit
             });
         }
     }

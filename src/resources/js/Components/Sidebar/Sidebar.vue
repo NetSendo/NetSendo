@@ -62,6 +62,12 @@ const toggleGroup = (groupLabel) => {
 import { onMounted, watch } from "vue";
 
 const updateOpenGroup = () => {
+    // Webinary
+    if (isActive("webinars.*")) {
+        openGroup.value = null; // No group - it's a standalone item
+        return;
+    }
+
     // Automatyzacja (Check first because of overlaps like fields.global)
     if (
         isActive("templates.*") ||
@@ -255,6 +261,35 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </svg>
                 </template>
                 {{ $t("navigation.marketplace") }}
+            </SidebarItem>
+
+            <!-- Webinary -->
+            <SidebarItem
+                :href="route('webinars.index')"
+                :active="isActive('webinars.*')"
+                :collapsed="collapsed"
+            >
+                <template #icon>
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                        />
+                    </svg>
+                </template>
+                <span class="flex items-center gap-2">
+                    {{ $t('navigation.webinars') }}
+                    <span
+                        class="rounded-full bg-gradient-to-r from-red-500 to-pink-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
+                    >{{ $t('navigation.new') }}</span>
+                </span>
             </SidebarItem>
 
             <div class="my-4 border-t border-white/5"></div>

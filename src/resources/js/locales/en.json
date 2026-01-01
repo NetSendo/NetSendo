@@ -250,6 +250,8 @@
         "profit_sharing": "Profit Sharing",
         "collapse": "Collapse",
         "expand": "Expand",
+        "webinars": "Webinars",
+        "new": "NEW",
         "groups": {
             "address_list": "Address List",
             "crm": "CRM",
@@ -3487,6 +3489,176 @@
         "tabs": {
             "products": "Products",
             "funnels": "Sales Funnels"
+        }
+    },
+    "webinars": {
+        "title": "Webinars",
+        "chat": {
+            "title": "Chat",
+            "type_message": "Type a message...",
+            "send": "Send",
+            "pin": "Pin",
+            "unpin": "Unpin",
+            "delete": "Delete",
+            "host": "Host",
+            "pinned_message": "Pinned Message"
+        },
+        "products": {
+            "title": "Products",
+            "add": "Add",
+            "name_placeholder": "Product Name",
+            "price_placeholder": "Price",
+            "description_placeholder": "Description (optional)",
+            "cta_placeholder": "Button Text",
+            "submit_add": "Add Product",
+            "cancel": "Cancel",
+            "empty_title": "No products",
+            "empty_desc": "Add products to sell during the webinar",
+            "pinned_badge": "Pinned",
+            "pin_to_chat": "Pin to Chat",
+            "unpin": "Unpin",
+            "delete": "Delete",
+            "confirm_delete": "Are you sure you want to delete this product?",
+            "default_cta": "Buy Now"
+        },
+        "index": {
+            "title": "Webinars",
+            "search_placeholder": "Search webinars...",
+            "all_types": "All types",
+            "all_statuses": "All statuses",
+            "empty_title": "No webinars",
+            "empty_desc": "Start by creating your first webinar.",
+            "new_webinar": "New Webinar",
+            "registrations": "registrations",
+            "peak_viewers": "Peak: {count} viewers",
+            "studio": "Studio",
+            "start": "Start",
+            "delete_confirm": "Are you sure you want to delete webinar \"{name}\"?"
+        },
+        "create": {
+            "title": "New Webinar",
+            "type_selection": "Select Webinar Type",
+            "basic_info": "Basic Information",
+            "name": "Webinar Name *",
+            "name_placeholder": "e.g. How to build a mailing list from scratch",
+            "description": "Description",
+            "description_placeholder": "Short description visible on registration page...",
+            "start_date": "Start Date & Time",
+            "video_settings": "Video Settings",
+            "youtube_id": "YouTube Live ID",
+            "youtube_id_help": "Video ID from YouTube Live stream",
+            "video_url": "Video URL",
+            "video_url_help": "Link to recorded video (YouTube, Vimeo or self-hosted)",
+            "integration": "Contact List Integration",
+            "target_list": "Target List",
+            "no_list": "Do not add to list",
+            "list_help": "Registrants will be added to this list",
+            "tags": {
+                "registration": "Registration Tag",
+                "attended": "Attended Tag",
+                "missed": "Missed Tag"
+            },
+            "cancel": "Cancel",
+            "submit": "Create Webinar",
+            "types": {
+                "live": "Live Broadcast via YouTube. Interactive real-time chat with attendees.",
+                "auto": "Pre-recorded webinar played automatically. Simulated chat for higher engagement.",
+                "hybrid": "Recording with live join-in option. Flexible mix of both formats."
+            }
+        },
+        "studio": {
+            "live_badge": "LIVE",
+            "inactive_badge": "Inactive",
+            "viewers": "{count} viewers",
+            "start": "Start",
+            "end": "End",
+            "video_preview": "Video Preview",
+            "configure_youtube": "Configure YouTube Live ID in settings",
+            "confirm_end": "Are you sure you want to end the webinar?",
+            "tabs": {
+                "chat": "Chat",
+                "products": "Products",
+                "attendees": "Attendees"
+            },
+            "no_attendees": "No registered attendees",
+            "status": {
+                "attended": "Attended",
+                "registered": "Registered"
+            }
+        },
+        "edit": {
+            "title": "Edit Webinar",
+            "basic_info": "Basic Information",
+            "name": "Webinar Name",
+            "description": "Description",
+            "type": "Webinar Type",
+            "type_readonly": "Webinar type cannot be changed after creation",
+            "status": "Status",
+            "scheduled_at": "Start Date & Time",
+            "video_settings": "Video Settings",
+            "youtube_id": "YouTube Live ID",
+            "youtube_id_help": "Video ID from YouTube Live stream",
+            "video_url": "Video URL",
+            "video_url_help": "Link to recorded video",
+            "thumbnail_url": "Thumbnail URL",
+            "integration": "Contact List Integration",
+            "target_list": "Target List",
+            "no_list": "Do not add to list",
+            "tags": {
+                "registration": "Registration Tag",
+                "attended": "Attended Tag",
+                "missed": "Missed Tag"
+            },
+            "studio": "Studio",
+            "analytics": "Analytics",
+            "save": "Save Changes",
+            "cancel": "Cancel",
+            "delete": "Delete",
+            "duplicate": "Duplicate",
+            "delete_confirm": "Are you sure you want to delete this webinar? This action cannot be undone."
+        },
+        "analytics": {
+            "title": "Webinar Analytics",
+            "edit": "Edit",
+            "total_registrations": "Registrations",
+            "total_attended": "Attended",
+            "attendance_rate": "attendance rate",
+            "peak_viewers": "Peak Viewers",
+            "avg_watch_time": "Avg. Watch Time",
+            "conversion_funnel": "Conversion Funnel",
+            "funnel": {
+                "registrations": "Registrations",
+                "attended": "Attended",
+                "engaged": "Engaged",
+                "converted": "Converted"
+            },
+            "engagement_timeline": "Engagement Timeline",
+            "device_breakdown": "Device Breakdown",
+            "no_timeline_data": "No timeline data",
+            "no_device_data": "No device data"
+        },
+        "show": {
+            "studio": "Studio",
+            "edit": "Edit",
+            "analytics": "Analytics",
+            "registrations": "Registrations",
+            "attended": "Attended",
+            "peak_viewers": "Peak Viewers",
+            "sessions": "Sessions",
+            "details": "Webinar Details",
+            "type": "Type",
+            "scheduled_at": "Scheduled for",
+            "description": "Description",
+            "target_list": "Target List",
+            "products": "Products",
+            "pinned": "Pinned",
+            "no_products": "No products",
+            "sessions_title": "Webinar Sessions",
+            "session_date": "Date",
+            "session_status": "Status",
+            "session_viewers": "Viewers",
+            "session_duration": "Duration",
+            "no_sessions": "No sessions"
         }
     }
 }

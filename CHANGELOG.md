@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.0] – Short Description
+
+**Release date:** 2026-01-01
+
+### Added
+
+- **Webinar System:**
+  - **Comprehensive Webinar Management:** Create, schedule, and manage live and automated webinars.
+  - **Live Studio Environment:**
+    - Integrated presenter studio with camera/screen sharing.
+    - Real-time chat with message pinning, deletion, and moderation.
+    - Product offers management (pin/unpin products).
+    - CTA (Call to Action) management with timers.
+  - **Automated Webinars (Evergreen):**
+    - Schedule repeating webinars (daily, weekly, specific dates).
+    - "Just-in-time" scheduling logic.
+    - Simulated chat system for automated sessions.
+  - **Frontend Components:**
+    - Public registration pages with customizable layouts.
+    - "Webinar Room" for attendees with video player and chat interface.
+    - Webinar creation wizard and management dashboard.
+  - **Email Notifications:**
+    - Automated reminder sequence (Confirmation, 24h before, 1h before, 15min before).
+    - "Replay Available" notifications.
+  - **Sidebar Integration:**
+    - Added "Webinary" section to the main navigation menu with "NOWE" badge.
+
+### Fixed
+
+- **Database Migrations:**
+
+  - Resolved MySQL index length limit issue in `page_visits` table migration (`1071 Specified key was too long`).
+  - Fixed `SystemMessageSeeder` to support renamed `system_pages` table after migration.
+  - Fixed `webinar_chat_messages` index length issue.
+
+- **Developer Experience:**
+
+  - Removed automatic creation of test user in `DatabaseSeeder` to allow clean manual registration.
+  - Replaced external `@heroicons/vue` dependency with inline SVGs in webinar components to fix build errors.
+
+- **Webinar Functionality:**
+  - Fixed critical issue where webinar Edit, Analytics, and Show pages were missing, causing blank screens.
+  - Restored full webinar management: editing, status changes, and details view.
+  - Restored webinar analytics dashboard with charts and funnel data.
+  - Added missing translations for all webinar management interfaces (EN, PL).
+
 ## [1.2.13] – Shopify Integration & Translations
 
 **Release date:** 2026-01-01

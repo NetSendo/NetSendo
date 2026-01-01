@@ -537,6 +537,8 @@
         "profit_sharing": "Gewinnbeteiligung",
         "collapse": "Einklappen",
         "expand": "Ausklappen",
+        "webinars": "Webinare",
+        "new": "NEU",
         "groups": {
             "address_list": "Adressliste",
             "crm": "CRM",
@@ -3125,6 +3127,102 @@
         "tabs": {
             "products": "Produkte",
             "funnels": "Verkaufstrichter"
+        }
+    },
+    "webinars": {
+        "title": "Webinare",
+        "chat": {
+            "title": "Chat",
+            "type_message": "Nachricht eingeben...",
+            "send": "Senden",
+            "pin": "Anpinnen",
+            "unpin": "Lösen",
+            "delete": "Löschen",
+            "host": "Gastgeber",
+            "pinned_message": "Angepinnte Nachricht"
+        },
+        "products": {
+            "title": "Produkte",
+            "add": "Hinzufügen",
+            "name_placeholder": "Produktname",
+            "price_placeholder": "Preis",
+            "description_placeholder": "Beschreibung (optional)",
+            "cta_placeholder": "Button-Text",
+            "submit_add": "Produkt hinzufügen",
+            "cancel": "Abbrechen",
+            "empty_title": "Keine Produkte",
+            "empty_desc": "Fügen Sie Produkte hinzu, um sie während des Webinars zu verkaufen",
+            "pinned_badge": "Angepinnt",
+            "pin_to_chat": "Im Chat anpinnen",
+            "unpin": "Lösen",
+            "delete": "Löschen",
+            "confirm_delete": "Sind Sie sicher, dass Sie dieses Produkt löschen möchten?",
+            "default_cta": "Jetzt kaufen"
+        },
+        "index": {
+            "title": "Webinare",
+            "search_placeholder": "Webinare suchen...",
+            "all_types": "Alle Typen",
+            "all_statuses": "Alle Status",
+            "empty_title": "Keine Webinare",
+            "empty_desc": "Beginnen Sie mit der Erstellung Ihres ersten Webinars.",
+            "new_webinar": "Neues Webinar",
+            "registrations": "Anmeldungen",
+            "peak_viewers": "Spitze: {count} Zuschauer",
+            "studio": "Studio",
+            "start": "Starten",
+            "delete_confirm": "Sind Sie sicher, dass Sie das Webinar \"{name}\" löschen möchten?"
+        },
+        "create": {
+            "title": "Neues Webinar",
+            "type_selection": "Webinar-Typ auswählen",
+            "basic_info": "Grundlegende Informationen",
+            "name": "Webinar-Name *",
+            "name_placeholder": "z. B. Wie man eine E-Mail-Liste von Grund auf neu aufbaut",
+            "description": "Beschreibung",
+            "description_placeholder": "Kurze Beschreibung, die auf der Registrierungsseite sichtbar ist...",
+            "start_date": "Startdatum & -zeit",
+            "video_settings": "Video-Einstellungen",
+            "youtube_id": "YouTube Live ID",
+            "youtube_id_help": "Video-ID vom YouTube-Livestream",
+            "video_url": "Video-URL",
+            "video_url_help": "Link zum aufgezeichneten Video (YouTube, Vimeo oder selbst gehostet)",
+            "integration": "Kontaktlisten-Integration",
+            "target_list": "Zielliste",
+            "no_list": "Nicht zur Liste hinzufügen",
+            "list_help": "Registrierte Benutzer werden zu dieser Liste hinzugefügt",
+            "tags": {
+                "registration": "Registrierungs-Tag",
+                "attended": "Teilnehmer-Tag",
+                "missed": "Versäumt-Tag"
+            },
+            "cancel": "Abbrechen",
+            "submit": "Webinar erstellen",
+            "types": {
+                "live": "Live-Übertragung via YouTube. Interaktiver Echtzeit-Chat mit Teilnehmern.",
+                "auto": "Vorgezeichnetes Webinar, das automatisch abgespielt wird. Simulierter Chat für mehr Engagement.",
+                "hybrid": "Aufzeichnung mit Option zum Live-Beitritt. Flexible Mischung aus beiden Formaten."
+            }
+        },
+        "studio": {
+            "live_badge": "LIVE",
+            "inactive_badge": "Inaktiv",
+            "viewers": "{count} Zuschauer",
+            "start": "Starten",
+            "end": "Beenden",
+            "video_preview": "Videovorschau",
+            "configure_youtube": "Konfigurieren Sie YouTube Live ID in den Einstellungen",
+            "confirm_end": "Sind Sie sicher, dass Sie das Webinar beenden möchten?",
+            "tabs": {
+                "chat": "Chat",
+                "products": "Produkte",
+                "attendees": "Teilnehmer"
+            },
+            "no_attendees": "Keine registrierten Teilnehmer",
+            "status": {
+                "attended": "Anwesend",
+                "registered": "Registriert"
+            }
         }
     }
 }

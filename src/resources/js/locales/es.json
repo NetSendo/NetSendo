@@ -513,6 +513,8 @@
         "profit_sharing": "Participación en beneficios",
         "collapse": "Contraer",
         "expand": "Expandir",
+        "webinars": "Webinarios",
+        "new": "NUEVO",
         "groups": {
             "address_list": "Lista de direcciones",
             "crm": "CRM",
@@ -3120,6 +3122,102 @@
         "tabs": {
             "products": "Productos",
             "funnels": "Embudos de venta"
+        }
+    },
+    "webinars": {
+        "title": "Seminarios web",
+        "chat": {
+            "title": "Chat",
+            "type_message": "Escribe un mensaje...",
+            "send": "Enviar",
+            "pin": "Fijar",
+            "unpin": "Desfijar",
+            "delete": "Eliminar",
+            "host": "Anfitrión",
+            "pinned_message": "Mensaje fijado"
+        },
+        "products": {
+            "title": "Productos",
+            "add": "Añadir",
+            "name_placeholder": "Nombre del producto",
+            "price_placeholder": "Precio",
+            "description_placeholder": "Descripción (opcional)",
+            "cta_placeholder": "Texto del botón",
+            "submit_add": "Añadir producto",
+            "cancel": "Cancelar",
+            "empty_title": "Sin productos",
+            "empty_desc": "Añadir productos para vender durante el seminario web",
+            "pinned_badge": "Fijado",
+            "pin_to_chat": "Fijar en el chat",
+            "unpin": "Desfijar",
+            "delete": "Eliminar",
+            "confirm_delete": "¿Está seguro de que desea eliminar este producto?",
+            "default_cta": "Comprar ahora"
+        },
+        "index": {
+            "title": "Seminarios web",
+            "search_placeholder": "Buscar seminarios web...",
+            "all_types": "Todos los tipos",
+            "all_statuses": "Todos los estados",
+            "empty_title": "Sin seminarios web",
+            "empty_desc": "Comience creando su primer seminario web.",
+            "new_webinar": "Nuevo Seminario Web",
+            "registrations": "registros",
+            "peak_viewers": "Pico: {count} espectadores",
+            "studio": "Estudio",
+            "start": "Iniciar",
+            "delete_confirm": "¿Está seguro de que desea eliminar el seminario web \"{name}\"?"
+        },
+        "create": {
+            "title": "Nuevo Seminario Web",
+            "type_selection": "Seleccionar tipo de seminario web",
+            "basic_info": "Información básica",
+            "name": "Nombre del seminario web *",
+            "name_placeholder": "p. ej. Cómo construir una lista de correo desde cero",
+            "description": "Descripción",
+            "description_placeholder": "Breve descripción visible en la página de registro...",
+            "start_date": "Fecha y hora de inicio",
+            "video_settings": "Configuración de video",
+            "youtube_id": "ID de YouTube Live",
+            "youtube_id_help": "ID del video de la transmisión en vivo de YouTube",
+            "video_url": "URL del video",
+            "video_url_help": "Enlace al video grabado (YouTube, Vimeo o alojamiento propio)",
+            "integration": "Integración de lista de contactos",
+            "target_list": "Lista de destino",
+            "no_list": "No añadir a la lista",
+            "list_help": "Los registrados se añadirán a esta lista",
+            "tags": {
+                "registration": "Etiqueta de registro",
+                "attended": "Etiqueta de asistencia",
+                "missed": "Etiqueta de ausencia"
+            },
+            "cancel": "Cancelar",
+            "submit": "Crear Seminario Web",
+            "types": {
+                "live": "Transmisión en vivo a través de YouTube. Chat interactivo en tiempo real con los asistentes.",
+                "auto": "Seminario web pregrabado que se reproduce automáticamente. Chat simulado para mayor participación.",
+                "hybrid": "Grabación con opción de unirse en vivo. Mezcla flexible de ambos formatos."
+            }
+        },
+        "studio": {
+            "live_badge": "EN VIVO",
+            "inactive_badge": "Inactivo",
+            "viewers": "{count} espectadores",
+            "start": "Iniciar",
+            "end": "Finalizar",
+            "video_preview": "Vista previa de video",
+            "configure_youtube": "Configure el ID de YouTube Live en la configuración",
+            "confirm_end": "¿Está seguro de que desea finalizar el seminario web?",
+            "tabs": {
+                "chat": "Chat",
+                "products": "Productos",
+                "attendees": "Asistentes"
+            },
+            "no_attendees": "No hay asistentes registrados",
+            "status": {
+                "attended": "Asistió",
+                "registered": "Registrado"
+            }
         }
     }
 }

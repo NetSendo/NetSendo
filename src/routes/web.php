@@ -452,9 +452,63 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{user}', [\App\Http\Controllers\UserManagementController::class, 'destroy'])->name('destroy');
         Route::delete('/invitation/{invitation}', [\App\Http\Controllers\UserManagementController::class, 'cancelInvitation'])->name('cancel-invitation');
     });
+    // Webinars
+    Route::prefix('webinars')->name('webinars.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\WebinarController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\WebinarController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\WebinarController::class, 'store'])->name('store');
+        Route::get('/{webinar}', [\App\Http\Controllers\WebinarController::class, 'show'])->name('show');
+        Route::get('/{webinar}/edit', [\App\Http\Controllers\WebinarController::class, 'edit'])->name('edit');
+        Route::put('/{webinar}', [\App\Http\Controllers\WebinarController::class, 'update'])->name('update');
+        Route::delete('/{webinar}', [\App\Http\Controllers\WebinarController::class, 'destroy'])->name('destroy');
+        Route::post('/{webinar}/duplicate', [\App\Http\Controllers\WebinarController::class, 'duplicate'])->name('duplicate');
+        Route::get('/{webinar}/studio', [\App\Http\Controllers\WebinarController::class, 'studio'])->name('studio');
+        Route::post('/{webinar}/start', [\App\Http\Controllers\WebinarController::class, 'start'])->name('start');
+        Route::post('/{webinar}/end', [\App\Http\Controllers\WebinarController::class, 'end'])->name('end');
+        Route::get('/{webinar}/analytics', [\App\Http\Controllers\WebinarController::class, 'analytics'])->name('analytics');
+
+        // Chat API
+        Route::get('/{webinar}/chat', [\App\Http\Controllers\WebinarChatController::class, 'index'])->name('chat.index');
+        Route::post('/{webinar}/chat', [\App\Http\Controllers\WebinarChatController::class, 'send'])->name('chat.send');
+        Route::post('/{webinar}/chat/{message}/pin', [\App\Http\Controllers\WebinarChatController::class, 'pin'])->name('chat.pin');
+        Route::post('/{webinar}/chat/{message}/unpin', [\App\Http\Controllers\WebinarChatController::class, 'unpin'])->name('chat.unpin');
+        Route::delete('/{webinar}/chat/{message}', [\App\Http\Controllers\WebinarChatController::class, 'delete'])->name('chat.delete');
+        Route::post('/{webinar}/chat/{message}/highlight', [\App\Http\Controllers\WebinarChatController::class, 'highlight'])->name('chat.highlight');
+        Route::get('/{webinar}/chat/questions', [\App\Http\Controllers\WebinarChatController::class, 'questions'])->name('chat.questions');
+        Route::post('/{webinar}/chat/{question}/answer', [\App\Http\Controllers\WebinarChatController::class, 'answer'])->name('chat.answer');
+        Route::get('/{webinar}/chat/pending', [\App\Http\Controllers\WebinarChatController::class, 'pending'])->name('chat.pending');
+        Route::post('/{webinar}/chat/{message}/approve', [\App\Http\Controllers\WebinarChatController::class, 'approve'])->name('chat.approve');
+
+        // Products
+        Route::get('/{webinar}/products', [\App\Http\Controllers\WebinarProductController::class, 'index'])->name('products.index');
+        Route::post('/{webinar}/products', [\App\Http\Controllers\WebinarProductController::class, 'store'])->name('products.store');
+        Route::put('/{webinar}/products/{product}', [\App\Http\Controllers\WebinarProductController::class, 'update'])->name('products.update');
+        Route::delete('/{webinar}/products/{product}', [\App\Http\Controllers\WebinarProductController::class, 'destroy'])->name('products.destroy');
+        Route::post('/{webinar}/products/{product}/pin', [\App\Http\Controllers\WebinarProductController::class, 'pin'])->name('products.pin');
+        Route::post('/{webinar}/products/{product}/unpin', [\App\Http\Controllers\WebinarProductController::class, 'unpin'])->name('products.unpin');
+        Route::post('/{webinar}/products/reorder', [\App\Http\Controllers\WebinarProductController::class, 'reorder'])->name('products.reorder');
+
+        // Auto-Webinar Configuration
+        Route::get('/{webinar}/auto-config', [\App\Http\Controllers\AutoWebinarController::class, 'config'])->name('auto.config');
+        Route::post('/{webinar}/auto-config/schedule', [\App\Http\Controllers\AutoWebinarController::class, 'saveSchedule'])->name('auto.schedule');
+        Route::post('/{webinar}/auto-config/import-chat', [\App\Http\Controllers\AutoWebinarController::class, 'importChat'])->name('auto.import-chat');
+        Route::post('/{webinar}/auto-config/generate-chat', [\App\Http\Controllers\AutoWebinarController::class, 'generateChat'])->name('auto.generate-chat');
+        Route::delete('/{webinar}/auto-config/chat', [\App\Http\Controllers\AutoWebinarController::class, 'clearChat'])->name('auto.clear-chat');
+        Route::get('/{webinar}/auto-config/timeline', [\App\Http\Controllers\AutoWebinarController::class, 'previewTimeline'])->name('auto.timeline');
+        Route::get('/{webinar}/auto-config/sessions', [\App\Http\Controllers\AutoWebinarController::class, 'getNextSessions'])->name('auto.sessions');
+        Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert');
+    });
 });
 
-
+// Public Webinar Routes (no auth)
+Route::prefix('webinar')->name('webinar.')->group(function () {
+    Route::get('/{slug}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'register'])->name('register');
+    Route::post('/{slug}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'submitRegistration'])->name('register.submit');
+    Route::get('/{slug}/watch/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'watch'])->name('watch');
+    Route::get('/{slug}/replay/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'replay'])->name('replay');
+    Route::post('/{slug}/leave/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'leave'])->name('leave');
+    Route::post('/{slug}/progress/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'trackProgress'])->name('progress');
+});
 
 // API route for license status (no auth required for setup checks)
 Route::get('/api/license/status', [LicenseController::class, 'status'])->name('license.status');
