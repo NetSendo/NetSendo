@@ -25,12 +25,14 @@
 NetSendo is a modern email marketing and automation platform that enables:
 
 - 📧 **Email Marketing** - Create and send email campaigns with advanced MJML editor
+- 🎥 **Webinars & Auto-Webinars** - Host live sessions or schedule automated evergreen webinars with simulated chat
+- 🛍️ **E-commerce & Funnels** - Sell digital products via Stripe, Polar, & Shopify with built-in sales funnels
+- 🤖 **AI Suite** - Campaign Auditor, Advisor, and Smart Content Generation (OpenAI, Claude, Gemini)
 - 📱 **SMS Marketing** - Send SMS messages to your subscribers
-- 🤖 **Automations** - Build automated sales funnels and workflows
+- 🔄 **Automations** - Build complex scenarios and workflows
+- 📦 **Integrations** - Native support for WordPress, WooCommerce, n8n, and more
 - 📊 **Analytics** - Detailed open, click, and conversion statistics
 - 🎨 **Templates** - Drag & drop email template builder
-- 🔗 **AI Integrations** - OpenAI, Anthropic Claude, Google Gemini support
-- 📝 **Forms** - Generate subscription forms with webhooks
 - 👥 **CRM** - Manage subscribers, groups, and tags
 
 ---
