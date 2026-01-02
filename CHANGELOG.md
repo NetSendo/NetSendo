@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-level Group Hierarchy:**
+  - Implemented hierarchical structure for Contact List Groups (parent-child relationships).
+  - Updated `ContactListGroup` model with `parent`, `children`, and `allChildren` relationships.
+  - New recursive methods `getAllDescendantIds`, `getFullPathAttribute`, and `getDepthAttribute`.
+  - **Tree View UI:** Completely redesigned Groups page to display groups in a collapsible tree structure.
+  - **Hierarchical Filtering:** Filter dropdowns in Email Lists, SMS Lists, and Messages now display indented hierarchy.
+  - **Smart Filtering Logic:** Selecting a parent group now automatically includes all legitimate child groups in filters.
+  - **Group Management:** Added parent selection in create/edit forms with circular dependency prevention.
+  - New recursive Vue component `GroupTreeItem.vue` for efficient tree rendering.
+  - Full translations for new hierarchy features in PL.
+
 ## [1.3.5] – Universal Timezone Management
 
 **Release date:** 2026-01-02
