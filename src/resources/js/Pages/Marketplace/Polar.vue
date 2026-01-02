@@ -69,16 +69,16 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Breadcrumb -->
                 <div
-                    class="mb-8 flex items-center gap-2 text-sm text-slate-400"
+                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
                 >
                     <Link
                         :href="route('marketplace.index')"
-                        class="hover:text-white transition-colors"
+                        class="hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         Marketplace
                     </Link>
                     <span>/</span>
-                    <span class="text-white">Polar</span>
+                    <span class="text-gray-900 dark:text-white">Polar</span>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
@@ -86,10 +86,10 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Header -->
                         <div
-                            class="overflow-hidden rounded-2xl bg-slate-800 ring-1 ring-white/10"
+                            class="overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
                             <div
-                                class="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 px-8 py-12"
+                                class="bg-gradient-to-r from-blue-600/10 to-cyan-600/10 dark:from-blue-600/20 dark:to-cyan-600/20 px-8 py-12"
                             >
                                 <div class="flex items-start gap-6">
                                     <div
@@ -101,15 +101,15 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                     </div>
                                     <div class="pt-2">
                                         <div class="flex items-center gap-3 mb-2">
-                                            <h1 class="text-3xl font-bold text-white">
+                                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                                                 Polar
                                             </h1>
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400 ring-1 ring-blue-500/20">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></span>
                                                 Developer First
                                             </span>
                                         </div>
-                                        <p class="text-lg text-slate-300">
+                                        <p class="text-lg text-gray-600 dark:text-slate-300">
                                             {{ $t('polar.description') }}
                                         </p>
                                     </div>
@@ -117,7 +117,7 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                             </div>
                             <div class="p-8">
                                 <p
-                                    class="text-slate-400 leading-relaxed text-lg"
+                                    class="text-gray-600 dark:text-slate-400 leading-relaxed text-lg"
                                 >
                                     {{ $t('polar.long_description') }}
                                 </p>
@@ -126,9 +126,9 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
 
                         <!-- Features -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 🚀 {{ $t('polar.features_title') }}
                             </h2>
                             <div class="grid gap-6 sm:grid-cols-2">
@@ -138,15 +138,15 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xl"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-xl text-gray-600 dark:text-white"
                                     >
                                         {{ feature.icon }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ feature.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ feature.description }}
                                         </p>
                                     </div>
@@ -156,9 +156,9 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
 
                         <!-- Setup -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 ⚙️ {{ $t('polar.setup_title') }}
                             </h2>
 
@@ -169,16 +169,16 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-sm font-bold text-blue-400 ring-1 ring-blue-500/20"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-500/10 text-sm font-bold text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20"
                                     >
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ step.title }}
                                         </h3>
                                         <p
-                                            class="text-sm text-slate-400 mt-1"
+                                            class="text-sm text-gray-600 dark:text-slate-400 mt-1"
                                             v-html="step.description"
                                         ></p>
                                     </div>
@@ -201,9 +201,9 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                     <!-- Sidebar -->
                     <div class="space-y-6">
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('common.resources') }}
                             </h3>
                             <div class="space-y-3">
@@ -211,10 +211,10 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                     href="https://docs.polar.sh"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                         </svg>
                                         Polar Docs
@@ -237,10 +237,10 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                     href="https://polar.sh"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                                         </svg>
                                         Polar Website
@@ -261,10 +261,10 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                                 </a>
                                 <Link
                                     :href="route('settings.polar-products.index')"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                         </svg>
                                         {{ $t('polar.manage_products') }}
@@ -289,10 +289,10 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
                         <div
                             class="rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-6 ring-1 ring-blue-500/20"
                         >
-                            <h3 class="font-semibold text-white mb-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
                                 {{ $t('common.need_help') }}
                             </h3>
-                            <p class="text-sm text-slate-400 mb-4">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
                                 {{ $t('polar.help_description') }}
                             </p>
                             <a
@@ -307,15 +307,15 @@ const webhookUrl = typeof window !== 'undefined' ? `${window.location.origin}/we
 
                         <!-- Webhook Info -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 🔗 Webhook Endpoint
                             </h3>
-                            <div class="p-3 rounded-lg bg-slate-900 font-mono text-xs text-slate-300 break-all">
+                            <div class="p-3 rounded-lg bg-gray-50 dark:bg-slate-900 font-mono text-xs text-gray-600 dark:text-slate-300 break-all border border-gray-100 dark:border-slate-800">
                                 {{ webhookUrl }}
                             </div>
-                            <p class="text-xs text-slate-500 mt-2">
+                            <p class="text-xs text-gray-500 dark:text-slate-500 mt-2">
                                 {{ $t('polar.webhook_info') }}
                             </p>
                         </div>

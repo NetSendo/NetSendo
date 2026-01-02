@@ -56,16 +56,16 @@ const setupSteps = [
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Breadcrumb -->
                 <div
-                    class="mb-8 flex items-center gap-2 text-sm text-slate-400"
+                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
                 >
                     <Link
                         :href="route('marketplace.index')"
-                        class="hover:text-white transition-colors"
+                        class="hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         Marketplace
                     </Link>
                     <span>/</span>
-                    <span class="text-white">Stripe</span>
+                    <span class="text-gray-900 dark:text-white">Stripe</span>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
@@ -73,14 +73,14 @@ const setupSteps = [
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Header -->
                         <div
-                            class="overflow-hidden rounded-2xl bg-slate-800 ring-1 ring-white/10"
+                            class="overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
                             <div
-                                class="bg-gradient-to-r from-purple-600/20 to-indigo-600/20 px-8 py-12"
+                                class="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 dark:from-purple-600/20 dark:to-indigo-600/20 px-8 py-12"
                             >
                                 <div class="flex items-start gap-6">
                                     <div
-                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg"
+                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg ring-1 ring-gray-100 dark:ring-transparent"
                                     >
                                         <svg viewBox="0 0 24 24" fill="#635BFF" class="h-full w-full">
                                             <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
@@ -88,15 +88,15 @@ const setupSteps = [
                                     </div>
                                     <div class="pt-2">
                                         <div class="flex items-center gap-3 mb-2">
-                                            <h1 class="text-3xl font-bold text-white">
+                                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                                                 Stripe
                                             </h1>
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
                                                 Active
                                             </span>
                                         </div>
-                                        <p class="text-lg text-slate-300">
+                                        <p class="text-lg text-gray-600 dark:text-slate-300">
                                             Accept payments, manage subscriptions, and sell digital products with the world's leading payment platform.
                                         </p>
                                     </div>
@@ -104,7 +104,7 @@ const setupSteps = [
                             </div>
                             <div class="p-8">
                                 <p
-                                    class="text-slate-400 leading-relaxed text-lg"
+                                    class="text-gray-600 dark:text-slate-400 leading-relaxed text-lg"
                                 >
                                     Stripe integration allows you to monetize your email marketing platform by selling digital products, subscriptions, and one-time purchases directly to your subscribers.
                                 </p>
@@ -113,9 +113,9 @@ const setupSteps = [
 
                         <!-- Features -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 🚀 Features
                             </h2>
                             <div class="grid gap-6 sm:grid-cols-2">
@@ -125,15 +125,15 @@ const setupSteps = [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xl"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-xl text-gray-600 dark:text-white"
                                     >
                                         {{ feature.icon }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ feature.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ feature.description }}
                                         </p>
                                     </div>
@@ -143,9 +143,9 @@ const setupSteps = [
 
                         <!-- Setup -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 ⚙️ Setup
                             </h2>
 
@@ -156,16 +156,16 @@ const setupSteps = [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/10 text-sm font-bold text-purple-400 ring-1 ring-purple-500/20"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-500/10 text-sm font-bold text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
                                     >
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ step.title }}
                                         </h3>
                                         <p
-                                            class="text-sm text-slate-400 mt-1"
+                                            class="text-sm text-gray-600 dark:text-slate-400 mt-1"
                                             v-html="step.description"
                                         ></p>
                                     </div>
@@ -188,9 +188,9 @@ const setupSteps = [
                     <!-- Sidebar -->
                     <div class="space-y-6">
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 Resources
                             </h3>
                             <div class="space-y-3">
@@ -198,10 +198,10 @@ const setupSteps = [
                                     href="https://stripe.com/docs"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
                                         </svg>
                                         Stripe Docs
@@ -222,10 +222,10 @@ const setupSteps = [
                                 </a>
                                 <Link
                                     :href="route('settings.stripe-products.index')"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                         </svg>
                                         Manage Products
@@ -250,10 +250,10 @@ const setupSteps = [
                         <div
                             class="rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 p-6 ring-1 ring-purple-500/20"
                         >
-                            <h3 class="font-semibold text-white mb-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
                                 Need help?
                             </h3>
-                            <p class="text-sm text-slate-400 mb-4">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
                                 Check out our documentation for more details on
                                 how to use this integration.
                             </p>

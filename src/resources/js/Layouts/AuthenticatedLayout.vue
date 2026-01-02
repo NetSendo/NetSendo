@@ -83,7 +83,7 @@ const toggleMobileMenu = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div class="min-h-screen bg-panel-gradient">
         <!-- Sidebar -->
         <Sidebar
             :collapsed="sidebarCollapsed"

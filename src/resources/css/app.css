@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    .bg-panel-gradient {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f8fafc 50%, #e0f2fe 75%, #dbeafe 100%);
+    }
+    .dark .bg-panel-gradient {
+        background: rgb(15 23 42);
+    }
+}

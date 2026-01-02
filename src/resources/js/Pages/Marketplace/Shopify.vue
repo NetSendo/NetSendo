@@ -164,16 +164,16 @@ const requirements = computed(() => [
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Breadcrumb -->
                 <div
-                    class="mb-8 flex items-center gap-2 text-sm text-slate-400"
+                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
                 >
                     <Link
                         :href="route('marketplace.index')"
-                        class="hover:text-white transition-colors"
+                        class="hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         {{ $t('marketplace.title') }}
                     </Link>
                     <span>/</span>
-                    <span class="text-white">{{ $t('marketplace.shopify.title') }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ $t('marketplace.shopify.title') }}</span>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
@@ -181,14 +181,14 @@ const requirements = computed(() => [
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Header -->
                         <div
-                            class="overflow-hidden rounded-2xl bg-slate-800 ring-1 ring-white/10"
+                            class="overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
                             <div
-                                class="bg-gradient-to-r from-green-600/20 to-emerald-600/20 px-8 py-12"
+                                class="bg-gradient-to-r from-green-600/10 to-emerald-600/10 dark:from-green-600/20 dark:to-emerald-600/20 px-8 py-12"
                             >
                                 <div class="flex items-start gap-6">
                                     <div
-                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg"
+                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg ring-1 ring-gray-100 dark:ring-transparent"
                                     >
                                         <!-- Shopify Logo SVG -->
                                         <svg viewBox="0 0 109.5 124.5" fill="#95BF47" class="h-full w-full">
@@ -199,22 +199,22 @@ const requirements = computed(() => [
                                     </div>
                                     <div class="pt-2">
                                         <div class="flex items-center gap-3 mb-2">
-                                            <h1 class="text-3xl font-bold text-white">
+                                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                                                 {{ $t('marketplace.shopify.hero_title') }}
                                             </h1>
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
                                                 {{ $t('marketplace.active') }}
                                             </span>
                                         </div>
-                                        <p class="text-lg text-slate-300">
+                                        <p class="text-lg text-gray-600 dark:text-slate-300">
                                             {{ $t('marketplace.shopify.hero_subtitle') }}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             <div class="p-8">
-                                <p class="text-slate-400 leading-relaxed text-lg">
+                                <p class="text-gray-600 dark:text-slate-400 leading-relaxed text-lg">
                                     {{ $t('marketplace.shopify.hero_description') }}
                                 </p>
                             </div>
@@ -222,9 +222,9 @@ const requirements = computed(() => [
 
                         <!-- Features -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.shopify.features_title') }}
                             </h2>
                             <div class="grid gap-6 sm:grid-cols-2">
@@ -234,15 +234,15 @@ const requirements = computed(() => [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xl"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-xl text-gray-600 dark:text-white"
                                     >
                                         {{ feature.icon }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ feature.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ feature.description }}
                                         </p>
                                     </div>
@@ -252,9 +252,9 @@ const requirements = computed(() => [
 
                         <!-- Setup -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.shopify.setup_title') }}
                             </h2>
 
@@ -265,15 +265,15 @@ const requirements = computed(() => [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/10 text-sm font-bold text-green-400 ring-1 ring-green-500/20"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/10 text-sm font-bold text-green-600 dark:text-green-400 ring-1 ring-green-500/20"
                                     >
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ step.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ step.description }}
                                         </p>
                                     </div>
@@ -283,43 +283,43 @@ const requirements = computed(() => [
 
                         <!-- Webhook Configuration -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.shopify.webhook_config_title') }}
                             </h2>
 
                             <div class="space-y-6">
                                 <!-- Webhook URL -->
                                 <div>
-                                    <h3 class="font-semibold text-white mb-2">{{ $t('marketplace.shopify.webhook_url_label') }}</h3>
-                                    <div class="flex rounded-lg overflow-hidden">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $t('marketplace.shopify.webhook_url_label') }}</h3>
+                                    <div class="flex rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700">
                                         <input
                                             type="text"
                                             readonly
                                             :value="webhookUrl"
-                                            class="flex-1 bg-slate-900 border-slate-700 text-slate-300 text-sm px-4 py-2.5 font-mono"
+                                            class="flex-1 bg-gray-50 dark:bg-slate-900 border-none text-gray-600 dark:text-slate-300 text-sm px-4 py-2.5 font-mono"
                                         />
                                         <button
                                             type="button"
                                             @click="copyToClipboard(webhookUrl)"
-                                            class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm transition-colors"
+                                            class="px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 text-sm transition-colors"
                                         >
                                             {{ $t('common.copy') }}
                                         </button>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-1">{{ $t('marketplace.shopify.webhook_url_help') }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-slate-500 mt-1">{{ $t('marketplace.shopify.webhook_url_help') }}</p>
                                 </div>
 
                                 <!-- API Key -->
                                 <div>
-                                    <h3 class="font-semibold text-white mb-2">{{ $t('marketplace.shopify.api_key_label') }}</h3>
-                                    <p class="text-sm text-slate-400 mb-2">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $t('marketplace.shopify.api_key_label') }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-slate-400 mb-2">
                                         {{ $t('marketplace.shopify.api_key_desc') }}
                                     </p>
                                     <Link
                                         :href="route('settings.api-keys.index')"
-                                        class="inline-flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm text-slate-300 transition-colors"
+                                        class="inline-flex items-center gap-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 transition-colors"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -330,28 +330,28 @@ const requirements = computed(() => [
 
                                 <!-- Supported Events -->
                                 <div>
-                                    <h3 class="font-semibold text-white mb-3">{{ $t('marketplace.shopify.supported_events') }}</h3>
+                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-3">{{ $t('marketplace.shopify.supported_events') }}</h3>
                                     <div class="space-y-2">
                                         <div
                                             v-for="event in webhookEvents"
                                             :key="event.event"
-                                            class="flex items-center gap-3 rounded-lg bg-slate-900/50 p-3"
+                                            class="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-slate-900/50 p-3 border border-gray-100 dark:border-transparent"
                                         >
-                                            <code class="text-sm text-green-400 font-mono">{{ event.event }}</code>
-                                            <span class="text-sm text-slate-400">{{ event.description }}</span>
+                                            <code class="text-sm text-green-600 dark:text-green-400 font-mono">{{ event.event }}</code>
+                                            <span class="text-sm text-gray-600 dark:text-slate-400">{{ event.description }}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- List ID Note -->
-                                <div class="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                <div class="p-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
                                     <div class="flex gap-3">
-                                        <svg class="h-5 w-5 text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                         </svg>
                                         <div>
-                                            <h4 class="font-medium text-amber-400 text-sm">{{ $t('marketplace.shopify.list_id_note_title') }}</h4>
-                                            <p class="text-sm text-slate-400 mt-1">{{ $t('marketplace.shopify.list_id_note_desc') }}</p>
+                                            <h4 class="font-medium text-amber-700 dark:text-amber-400 text-sm">{{ $t('marketplace.shopify.list_id_note_title') }}</h4>
+                                            <p class="text-sm text-amber-600 dark:text-slate-400 mt-1">{{ $t('marketplace.shopify.list_id_note_desc') }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -363,14 +363,14 @@ const requirements = computed(() => [
                     <div class="space-y-6">
                         <!-- Requirements -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('marketplace.shopify.requirements_title') }}
                             </h3>
                             <ul class="space-y-2">
-                                <li v-for="req in requirements" :key="req" class="flex items-start gap-2 text-sm text-slate-400">
-                                    <svg class="h-5 w-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <li v-for="req in requirements" :key="req" class="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-400">
+                                    <svg class="h-5 w-5 text-emerald-500 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                     {{ req }}
@@ -380,9 +380,9 @@ const requirements = computed(() => [
 
                         <!-- Resources -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('marketplace.shopify.resources_title') }}
                             </h3>
                             <div class="space-y-3">
@@ -390,10 +390,10 @@ const requirements = computed(() => [
                                     href="https://shopify.dev/docs/api/admin-rest/current/resources/webhook"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <svg class="h-5 w-5 text-green-600 dark:text-green-400" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
                                         </svg>
                                         {{ $t('marketplace.shopify.docs_link') }}
@@ -414,10 +414,10 @@ const requirements = computed(() => [
                                 </a>
                                 <Link
                                     :href="route('mailing-lists.index')"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                         </svg>
                                         {{ $t('marketplace.shopify.lists_link') }}
@@ -442,10 +442,10 @@ const requirements = computed(() => [
                         <div
                             class="rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-6 ring-1 ring-green-500/20"
                         >
-                            <h3 class="font-semibold text-white mb-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
                                 {{ $t('marketplace.shopify.help_title') }}
                             </h3>
-                            <p class="text-sm text-slate-400 mb-4">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
                                 {{ $t('marketplace.shopify.help_desc') }}
                             </p>
                             <a

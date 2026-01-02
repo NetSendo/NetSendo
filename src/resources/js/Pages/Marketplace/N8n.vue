@@ -59,16 +59,16 @@ const installSteps = [
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Breadcrum -->
                 <div
-                    class="mb-8 flex items-center gap-2 text-sm text-slate-400"
+                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
                 >
                     <Link
                         :href="route('marketplace.index')"
-                        class="hover:text-white transition-colors"
+                        class="hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         Marketplace
                     </Link>
                     <span>/</span>
-                    <span class="text-white">n8n</span>
+                    <span class="text-gray-900 dark:text-white">n8n</span>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
@@ -76,14 +76,14 @@ const installSteps = [
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Header -->
                         <div
-                            class="overflow-hidden rounded-2xl bg-slate-800 ring-1 ring-white/10"
+                            class="overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
                             <div
-                                class="bg-gradient-to-r from-red-600/20 to-orange-600/20 px-8 py-12"
+                                class="bg-gradient-to-r from-red-600/10 to-orange-600/10 dark:from-red-600/20 dark:to-orange-600/20 px-8 py-12"
                             >
                                 <div class="flex items-start gap-6">
                                     <div
-                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-2 shadow-lg"
+                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-2 shadow-lg ring-1 ring-gray-100 dark:ring-transparent"
                                     >
                                         <img
                                             src="https://gregciupek.com/wp-content/uploads/2025/12/n8n-logo.png"
@@ -93,11 +93,11 @@ const installSteps = [
                                     </div>
                                     <div class="pt-2">
                                         <h1
-                                            class="text-3xl font-bold text-white mb-2"
+                                            class="text-3xl font-bold text-gray-900 dark:text-white mb-2"
                                         >
                                             n8n
                                         </h1>
-                                        <p class="text-lg text-slate-300">
+                                        <p class="text-lg text-gray-600 dark:text-slate-300">
                                             This is an n8n community node for
                                             NetSendo – a powerful, self-hosted
                                             email marketing automation platform.
@@ -107,7 +107,7 @@ const installSteps = [
                             </div>
                             <div class="p-8">
                                 <p
-                                    class="text-slate-400 leading-relaxed text-lg"
+                                    class="text-gray-600 dark:text-slate-400 leading-relaxed text-lg"
                                 >
                                     This node allows you to automate your email
                                     marketing workflows directly within n8n,
@@ -119,9 +119,9 @@ const installSteps = [
 
                         <!-- Features -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 🚀 Features
                             </h2>
                             <div class="grid gap-6 sm:grid-cols-2">
@@ -131,15 +131,15 @@ const installSteps = [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xl"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-xl text-gray-600 dark:text-white"
                                     >
                                         {{ feature.icon }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ feature.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ feature.description }}
                                         </p>
                                     </div>
@@ -149,9 +149,9 @@ const installSteps = [
 
                         <!-- Installation -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 📦 Installation
                             </h2>
 
@@ -162,16 +162,16 @@ const installSteps = [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400 ring-1 ring-indigo-500/20"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/10 text-sm font-bold text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/20"
                                     >
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ step.title }}
                                         </h3>
                                         <p
-                                            class="text-sm text-slate-400 mt-1"
+                                            class="text-sm text-gray-600 dark:text-slate-400 mt-1"
                                             v-html="step.description"
                                         ></p>
                                     </div>
@@ -179,14 +179,14 @@ const installSteps = [
                             </div>
 
                             <div
-                                class="rounded-xl bg-slate-950 p-6 ring-1 ring-white/10"
+                                class="rounded-xl bg-gray-900 dark:bg-slate-950 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10"
                             >
-                                <p class="text-sm text-slate-400 mb-3">
+                                <p class="text-sm text-gray-400 dark:text-slate-400 mb-3">
                                     Alternatively, if you are running n8n via
                                     Docker or npm, you can install it manually:
                                 </p>
                                 <div
-                                    class="flex items-center justify-between rounded-lg bg-white/5 px-4 py-3"
+                                    class="flex items-center justify-between rounded-lg bg-gray-800 dark:bg-white/5 px-4 py-3"
                                 >
                                     <code class="text-emerald-400 font-mono"
                                         >npm install n8n-nodes-netsendo</code
@@ -199,9 +199,9 @@ const installSteps = [
                     <!-- Sidebar -->
                     <div class="space-y-6">
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 Resources
                             </h3>
                             <div class="space-y-3">
@@ -209,11 +209,11 @@ const installSteps = [
                                     href="https://www.npmjs.com/package/n8n-nodes-netsendo"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
                                         <svg
-                                            class="h-5 w-5 text-red-500"
+                                            class="h-5 w-5 text-red-600 dark:text-red-500"
                                             viewBox="0 0 24 24"
                                             fill="currentColor"
                                         >
@@ -243,10 +243,10 @@ const installSteps = [
                         <div
                             class="rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-6 ring-1 ring-indigo-500/20"
                         >
-                            <h3 class="font-semibold text-white mb-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
                                 Need help?
                             </h3>
-                            <p class="text-sm text-slate-400 mb-4">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
                                 Check out our documentation for more details on
                                 how to use this integration.
                             </p>

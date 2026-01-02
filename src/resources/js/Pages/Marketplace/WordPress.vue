@@ -183,16 +183,16 @@ const shortcodes = computed(() => [
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Breadcrumb -->
                 <div
-                    class="mb-8 flex items-center gap-2 text-sm text-slate-400"
+                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
                 >
                     <Link
                         :href="route('marketplace.index')"
-                        class="hover:text-white transition-colors"
+                        class="hover:text-gray-900 dark:hover:text-white transition-colors"
                     >
                         {{ $t('marketplace.title') }}
                     </Link>
                     <span>/</span>
-                    <span class="text-white">{{ $t('marketplace.wordpress.title') }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ $t('marketplace.wordpress.title') }}</span>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
@@ -200,14 +200,14 @@ const shortcodes = computed(() => [
                     <div class="lg:col-span-2 space-y-8">
                         <!-- Header -->
                         <div
-                            class="overflow-hidden rounded-2xl bg-slate-800 ring-1 ring-white/10"
+                            class="overflow-hidden rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
                             <div
-                                class="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 px-8 py-12"
+                                class="bg-gradient-to-r from-blue-600/10 to-cyan-600/10 dark:from-blue-600/20 dark:to-cyan-600/20 px-8 py-12"
                             >
                                 <div class="flex items-start gap-6">
                                     <div
-                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg"
+                                        class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-3 shadow-lg ring-1 ring-gray-100 dark:ring-transparent"
                                     >
                                         <svg viewBox="0 0 24 24" fill="#21759b" class="h-full w-full">
                                             <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm-1.243 15.879l-3.51-9.619c.583-.139 1.108-.233 1.108-.233.523-.093.46-.833-.063-.803 0 0-1.574.124-2.59.124-.181 0-.394-.005-.621-.014C6.755 5.08 9.206 3.667 12 3.667c2.078 0 3.967.789 5.389 2.081-.034-.002-.067-.008-.103-.008-.976 0-1.669.849-1.669 1.759 0 .817.472 1.508.974 2.327.378.656.819 1.498.819 2.715 0 .842-.324 1.82-.749 3.181l-.981 3.278-3.553-10.572c.584-.14.866-.233.866-.233.522-.093.46-.834-.063-.803 0 0-1.574.124-2.591.124-.109 0-.233-.002-.36-.006l3.78 10.969zm1.946.132l2.948-8.538c.551-1.376.731-2.478.731-3.457 0-.356-.023-.686-.067-.988C17.694 6.56 18.333 9.156 18.333 12c0 2.611-.946 5.003-2.514 6.854l-.116.157zM3.667 12c0-2.083.754-3.994 2.003-5.476l3.286 9.003c.079.216.163.417.252.605-3.136-1.187-5.541-4.226-5.541-8.132z"/>
@@ -215,22 +215,22 @@ const shortcodes = computed(() => [
                                     </div>
                                     <div class="pt-2">
                                         <div class="flex items-center gap-3 mb-2">
-                                            <h1 class="text-3xl font-bold text-white">
+                                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
                                                 {{ $t('marketplace.wordpress.hero_title') }}
                                             </h1>
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/20">
-                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
                                                 {{ $t('marketplace.active') }}
                                             </span>
                                         </div>
-                                        <p class="text-lg text-slate-300">
+                                        <p class="text-lg text-gray-600 dark:text-slate-300">
                                             {{ $t('marketplace.wordpress.hero_subtitle') }}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             <div class="p-8">
-                                <p class="text-slate-400 leading-relaxed text-lg">
+                                <p class="text-gray-600 dark:text-slate-400 leading-relaxed text-lg">
                                     {{ $t('marketplace.wordpress.hero_description') }}
                                 </p>
                             </div>
@@ -238,9 +238,9 @@ const shortcodes = computed(() => [
 
                         <!-- Features -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.wordpress.features_title') }}
                             </h2>
                             <div class="grid gap-6 sm:grid-cols-2">
@@ -250,15 +250,15 @@ const shortcodes = computed(() => [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xl"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-xl text-gray-600 dark:text-white"
                                     >
                                         {{ feature.icon }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ feature.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ feature.description }}
                                         </p>
                                     </div>
@@ -268,9 +268,9 @@ const shortcodes = computed(() => [
 
                         <!-- Setup -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.wordpress.setup_title') }}
                             </h2>
 
@@ -281,15 +281,15 @@ const shortcodes = computed(() => [
                                     class="flex gap-4"
                                 >
                                     <div
-                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-sm font-bold text-blue-400 ring-1 ring-blue-500/20"
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-500/10 text-sm font-bold text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20"
                                     >
                                         {{ index + 1 }}
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-white">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">
                                             {{ step.title }}
                                         </h3>
-                                        <p class="text-sm text-slate-400 mt-1">
+                                        <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">
                                             {{ step.description }}
                                         </p>
                                     </div>
@@ -309,9 +309,9 @@ const shortcodes = computed(() => [
 
                         <!-- Shortcodes Reference -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.wordpress.shortcodes_title') }}
                             </h2>
 
@@ -319,12 +319,12 @@ const shortcodes = computed(() => [
                                 <div
                                     v-for="shortcode in shortcodes"
                                     :key="shortcode.code"
-                                    class="rounded-lg bg-slate-900/50 p-4"
+                                    class="rounded-lg bg-gray-50 dark:bg-slate-900/50 p-4 border border-gray-100 dark:border-transparent"
                                 >
-                                    <code class="block text-sm text-cyan-400 font-mono mb-2">
+                                    <code class="block text-sm text-cyan-600 dark:text-cyan-400 font-mono mb-2">
                                         {{ shortcode.code }}
                                     </code>
-                                    <p class="text-sm text-slate-400">
+                                    <p class="text-sm text-gray-600 dark:text-slate-400">
                                         {{ shortcode.description }}
                                     </p>
                                 </div>
@@ -333,41 +333,41 @@ const shortcodes = computed(() => [
 
                         <!-- API Configuration -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-8 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h2 class="text-xl font-bold text-white mb-6">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 {{ $t('marketplace.wordpress.api_config_title') }}
                             </h2>
 
                             <div class="space-y-4">
                                 <div>
-                                    <h3 class="font-semibold text-white mb-2">{{ $t('marketplace.wordpress.api_url_label') }}</h3>
-                                    <div class="flex rounded-lg overflow-hidden">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $t('marketplace.wordpress.api_url_label') }}</h3>
+                                    <div class="flex rounded-lg overflow-hidden border border-gray-200 dark:border-slate-700">
                                         <input
                                             type="text"
                                             readonly
                                             :value="appUrl"
-                                            class="flex-1 bg-slate-900 border-slate-700 text-slate-300 text-sm px-4 py-2.5"
+                                            class="flex-1 bg-gray-50 dark:bg-slate-900 border-none text-gray-600 dark:text-slate-300 text-sm px-4 py-2.5"
                                         />
                                         <button
                                             type="button"
                                             @click="copyToClipboard(appUrl)"
-                                            class="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm transition-colors"
+                                            class="px-4 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-slate-300 text-sm transition-colors"
                                         >
                                             {{ $t('common.copy') }}
                                         </button>
                                     </div>
-                                    <p class="text-xs text-slate-500 mt-1">{{ $t('marketplace.wordpress.api_url_help') }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-slate-500 mt-1">{{ $t('marketplace.wordpress.api_url_help') }}</p>
                                 </div>
 
                                 <div>
-                                    <h3 class="font-semibold text-white mb-2">{{ $t('marketplace.wordpress.api_key_label') }}</h3>
-                                    <p class="text-sm text-slate-400 mb-2">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{{ $t('marketplace.wordpress.api_key_label') }}</h3>
+                                    <p class="text-sm text-gray-600 dark:text-slate-400 mb-2">
                                         {{ $t('marketplace.wordpress.api_key_desc') }}
                                     </p>
                                     <Link
                                         :href="route('settings.api-keys.index')"
-                                        class="inline-flex items-center gap-2 rounded-lg bg-slate-700 hover:bg-slate-600 px-4 py-2 text-sm text-slate-300 transition-colors"
+                                        class="inline-flex items-center gap-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 px-4 py-2 text-sm text-gray-700 dark:text-slate-300 transition-colors"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -383,14 +383,14 @@ const shortcodes = computed(() => [
                     <div class="space-y-6">
                         <!-- Requirements -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('marketplace.wordpress.requirements_title') }}
                             </h3>
                             <ul class="space-y-2">
-                                <li v-for="req in requirements" :key="req" class="flex items-start gap-2 text-sm text-slate-400">
-                                    <svg class="h-5 w-5 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <li v-for="req in requirements" :key="req" class="flex items-start gap-2 text-sm text-gray-600 dark:text-slate-400">
+                                    <svg class="h-5 w-5 text-emerald-500 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                     </svg>
                                     {{ req }}
@@ -400,43 +400,43 @@ const shortcodes = computed(() => [
 
                         <!-- Content Gate Types -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('marketplace.wordpress.content_gate_types_title') }}
                             </h3>
                             <div class="space-y-3">
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <h4 class="font-medium text-white text-sm">Percentage</h4>
-                                        <p class="text-xs text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.percentage_desc') }}</p>
+                                        <h4 class="font-medium text-gray-900 dark:text-white text-sm">Percentage</h4>
+                                        <p class="text-xs text-gray-600 dark:text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.percentage_desc') }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400">
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <h4 class="font-medium text-white text-sm">Subscribers Only</h4>
-                                        <p class="text-xs text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.subscribers_only_desc') }}</p>
+                                        <h4 class="font-medium text-gray-900 dark:text-white text-sm">Subscribers Only</h4>
+                                        <p class="text-xs text-gray-600 dark:text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.subscribers_only_desc') }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
                                     </div>
                                     <div>
-                                        <h4 class="font-medium text-white text-sm">Logged In</h4>
-                                        <p class="text-xs text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.logged_in_desc') }}</p>
+                                        <h4 class="font-medium text-gray-900 dark:text-white text-sm">Logged In</h4>
+                                        <p class="text-xs text-gray-600 dark:text-slate-400">{{ $t('marketplace.wordpress.content_gate_types.logged_in_desc') }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -444,9 +444,9 @@ const shortcodes = computed(() => [
 
                         <!-- Resources -->
                         <div
-                            class="rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10"
+                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
                         >
-                            <h3 class="font-semibold text-white mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
                                 {{ $t('marketplace.wordpress.resources_title') }}
                             </h3>
                             <div class="space-y-3">
@@ -454,10 +454,10 @@ const shortcodes = computed(() => [
                                     href="https://wordpress.org/documentation/"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2z"/>
                                         </svg>
                                         {{ $t('marketplace.wordpress.docs_link') }}
@@ -478,10 +478,10 @@ const shortcodes = computed(() => [
                                 </a>
                                 <Link
                                     :href="route('mailing-lists.index')"
-                                    class="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3 text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                                    class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3 text-gray-700 dark:text-slate-300 transition-colors hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                                 >
                                     <span class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 text-amber-500 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                         </svg>
                                         {{ $t('marketplace.wordpress.lists_link') }}
@@ -506,10 +506,10 @@ const shortcodes = computed(() => [
                         <div
                             class="rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 p-6 ring-1 ring-blue-500/20"
                         >
-                            <h3 class="font-semibold text-white mb-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
                                 {{ $t('marketplace.wordpress.help_title') }}
                             </h3>
-                            <p class="text-sm text-slate-400 mb-4">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
                                 {{ $t('marketplace.wordpress.help_desc') }}
                             </p>
                             <a
