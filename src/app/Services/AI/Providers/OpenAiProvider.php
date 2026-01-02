@@ -71,7 +71,7 @@ class OpenAiProvider extends BaseProvider
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
-            'max_tokens' => $options['max_tokens'] ?? 1024,
+            'max_tokens' => $options['max_tokens'] ?? 65536,
             'temperature' => $options['temperature'] ?? 0.7,
         ]);
 

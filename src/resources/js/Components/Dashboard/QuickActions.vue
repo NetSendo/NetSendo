@@ -44,6 +44,18 @@ const actions = [
         icon: "form",
         color: "purple",
     },
+    {
+        label: t("dashboard.quick_actions.new_email_list"),
+        route: "mailing-lists.create",
+        icon: "list-email",
+        color: "blue",
+    },
+    {
+        label: t("dashboard.quick_actions.new_sms_list"),
+        route: "sms-lists.create",
+        icon: "list-sms",
+        color: "teal",
+    },
 ];
 
 const colorClasses = {
@@ -52,6 +64,8 @@ const colorClasses = {
         "bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white dark:bg-emerald-900/30 dark:text-emerald-400 dark:group-hover:bg-emerald-600 dark:group-hover:text-white",
     amber: "bg-amber-100 text-amber-600 group-hover:bg-amber-600 group-hover:text-white dark:bg-amber-900/30 dark:text-amber-400 dark:group-hover:bg-amber-600 dark:group-hover:text-white",
     purple: "bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white dark:bg-purple-900/30 dark:text-purple-400 dark:group-hover:bg-purple-600 dark:group-hover:text-white",
+    blue: "bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-900/30 dark:text-blue-400 dark:group-hover:bg-blue-600 dark:group-hover:text-white",
+    teal: "bg-teal-100 text-teal-600 group-hover:bg-teal-600 group-hover:text-white dark:bg-teal-900/30 dark:text-teal-400 dark:group-hover:bg-teal-600 dark:group-hover:text-white",
 };
 </script>
 
@@ -133,6 +147,38 @@ const colorClasses = {
                             stroke-linejoin="round"
                             stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                    </svg>
+
+                    <!-- List Email icon -->
+                    <svg
+                        v-else-if="action.icon === 'list-email'"
+                        class="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                        />
+                    </svg>
+
+                    <!-- List SMS icon -->
+                    <svg
+                        v-else-if="action.icon === 'list-sms'"
+                        class="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
                         />
                     </svg>
                 </div>

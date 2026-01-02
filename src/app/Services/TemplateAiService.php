@@ -68,7 +68,11 @@ class TemplateAiService
             default => 'Wygeneruj treść odpowiednią do wiadomości email.',
         };
 
+        $dateContext = AiService::getDateContext();
+
         $systemPrompt = <<<PROMPT
+{$dateContext}
+
 Jesteś ekspertem od email marketingu. Tworzysz treści do szablonów wiadomości email.
 
 Zasady:
@@ -116,7 +120,11 @@ PROMPT;
             default => 'sekcja emailowa',
         };
 
+        $dateContext = AiService::getDateContext();
+
         $prompt = <<<PROMPT
+{$dateContext}
+
 Wygeneruj treść dla sekcji emaila: {$sectionTemplates}
 
 Opis od użytkownika: {$description}
@@ -175,7 +183,11 @@ PROMPT;
             default => 'Ulepsz poniższy tekst.',
         };
 
+        $dateContext = AiService::getDateContext();
+
         $prompt = <<<PROMPT
+{$dateContext}
+
 {$actionInstructions}
 Użyj tonu: {$toneInstructions}.
 Odpowiedź w formacie HTML (używaj <p>, <strong>, <em>).
@@ -305,7 +317,11 @@ TAGS;
                 $contextInfo = "\n\nAKTUALNA TREŚĆ WIADOMOŚCI DO MODYFIKACJI:\n" . mb_substr($currentContent, 0, 5000);
             }
 
+            $dateContext = AiService::getDateContext();
+
             $systemPrompt = <<<PROMPT
+{$dateContext}
+
 Jesteś ekspertem od email marketingu i tworzenia szablonów HTML dla profesjonalnych wiadomości email.
 
 TWOJA ROLA: Tworzysz szablony email, które:
@@ -372,7 +388,11 @@ PROMPT;
                 $contextInfo = "\n\nKONTEKST (obecna treść wiadomości, dla odniesienia):\n" . mb_substr($plainContent, 0, 1000);
             }
 
+            $dateContext = AiService::getDateContext();
+
             $systemPrompt = <<<PROMPT
+{$dateContext}
+
 Jesteś ekspertem od email marketingu. Tworzysz treści do wiadomości email.
 
 ZADANIE: Wygeneruj fragment tekstu HTML do wstawienia w wiadomość email.
@@ -443,7 +463,11 @@ PROMPT;
             ? "Wygeneruj DOKŁADNIE {$count} RÓŻNE propozycje treści SMS."
             : "Wygeneruj 1 propozycję treści SMS.";
 
+        $dateContext = AiService::getDateContext();
+
         $systemPrompt = <<<PROMPT
+{$dateContext}
+
 Jesteś ekspertem od SMS marketingu. Tworzysz krótkie, skuteczne wiadomości SMS.
 
 ZADANIE: {$countInstruction}
@@ -571,7 +595,11 @@ PROMPT;
             $hintSection = "\n\nWskazówka od użytkownika dotycząca tematu:\n{$userHint}\n\nUwzględnij tę wskazówkę przy generowaniu tematów.";
         }
 
+        $dateContext = AiService::getDateContext();
+
         $prompt = <<<PROMPT
+{$dateContext}
+
 Jesteś ekspertem od email marketingu. Tworzysz chwytliwe tematy wiadomości email wraz z preheaderami.
 
 ZADANIE:
@@ -663,7 +691,11 @@ PROMPT;
         $category = $productData['category'] ?? '';
         $features = $productData['features'] ?? '';
 
+        $dateContext = AiService::getDateContext();
+
         $prompt = <<<PROMPT
+{$dateContext}
+
 Wygeneruj krótki, sprzedażowy opis produktu dla emaila.
 
 Produkt: {$productName}
@@ -709,7 +741,11 @@ PROMPT;
         $blockTypes = array_column($blocks, 'type');
         $blockSummary = implode(', ', $blockTypes);
 
+        $dateContext = AiService::getDateContext();
+
         $prompt = <<<PROMPT
+{$dateContext}
+
 Przeanalizuj strukturę emaila i zaproponuj ulepszenia designu.
 
 Obecne bloki w szablonie: {$blockSummary}

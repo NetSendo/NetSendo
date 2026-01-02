@@ -113,6 +113,30 @@ class AiService
     }
 
     /**
+     * Get current date context for AI prompts.
+     * This ensures AI models know the current date when generating content.
+     */
+    public static function getDateContext(): string
+    {
+        $now = now();
+        return sprintf(
+            "CURRENT DATE: %s (%s, %s) | AKTUALNA DATA: %s. Use this date when creating time-sensitive content.",
+            $now->format('Y-m-d'),
+            $now->format('l'),
+            $now->format('F j, Y'),
+            $now->translatedFormat('l, j F Y')
+        );
+    }
+
+    /**
+     * Prepend date context to a prompt.
+     */
+    public static function prependDateContext(string $prompt): string
+    {
+        return self::getDateContext() . "\n\n" . $prompt;
+    }
+
+    /**
      * Get the first active integration (for quick access).
      */
     public function getDefaultIntegration(): ?AiIntegration

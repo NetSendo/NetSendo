@@ -475,10 +475,10 @@
         "sms_providers": "Proveedores SMS",
         "groups_nav": "Grupos",
         "tags": "Etiquetas",
-        "add_message": "Añadir mensaje",
-        "message_list": "Lista de mensajes",
-        "add_sms": "Añadir SMS",
-        "sms_list": "Lista de SMS",
+        "add_message": "Añadir mensaje de email",
+        "message_list": "Lista de mensajes de email",
+        "add_sms": "Añadir mensaje SMS",
+        "sms_list": "Lista de mensajes SMS",
         "system_messages": "Mensajes del sistema",
         "list_subscribers": "Suscriptores de la lista",
         "statistics": "Estadísticas",
@@ -489,7 +489,7 @@
         "cron_settings": "Configuración de CRON",
         "field_management": "Gestión de campos",
         "integration": "Integración",
-        "address_lists": "Listas de direcciones",
+        "address_lists": "Listas de email",
         "list_groups": "Grupos de listas",
         "list_tags": "Etiquetas de listas",
         "add_subscriber": "Añadir suscriptor",
@@ -550,7 +550,9 @@
             "new_message": "Nuevo mensaje",
             "add_subscriber": "Añadir suscriptor",
             "import_contacts": "Importar contactos",
-            "new_form": "Nuevo formulario"
+            "new_form": "Nuevo formulario",
+            "new_email_list": "Nueva lista de email",
+            "new_sms_list": "Nueva lista SMS"
         },
         "recent_campaigns": {
             "title": "Campañas recientes",
@@ -584,7 +586,7 @@
         }
     },
     "mailing_lists": {
-        "title": "Listas de correo",
+        "title": "Listas de email",
         "subtitle": "Administre sus listas de correo",
         "new_list": "Nueva lista",
         "search_placeholder": "Buscar listas...",

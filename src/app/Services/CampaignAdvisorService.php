@@ -461,7 +461,11 @@ class CampaignAdvisorService
             ? implode(', ', $context['categories_with_issues'])
             : $context['categories_with_issues'];
 
+        $dateContext = AiService::getDateContext();
+
         return <<<PROMPT
+{$dateContext}
+
 You are an email marketing expert advisor. Based on this user's campaign data, provide 1-2 growth-focused recommendations.
 
 IMPORTANT: Respond in {$languageName} language. All text (title, description, action_steps) MUST be written in {$languageName}.

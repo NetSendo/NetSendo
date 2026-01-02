@@ -594,8 +594,11 @@ class CampaignAuditorService
     {
         $subjectsList = implode("\n", array_map(fn ($s) => "- {$s}", $subjects));
         $existingIssues = $audit->issues()->count();
+        $dateContext = AiService::getDateContext();
 
         return <<<PROMPT
+{$dateContext}
+
 You are an email marketing expert analyzing a user's campaign strategy.
 
 RECENT EMAIL SUBJECTS:
@@ -827,7 +830,11 @@ PROMPT;
                 $prioritiesList = "- No specific recommendations generated yet\n";
             }
 
+            $dateContext = AiService::getDateContext();
+
             $prompt = <<<PROMPT
+{$dateContext}
+
 You are a professional email marketing consultant. Write a professional executive summary of this campaign audit.
 
 IMPORTANT RULES:

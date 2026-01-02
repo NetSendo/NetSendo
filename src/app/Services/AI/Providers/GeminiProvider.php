@@ -68,7 +68,7 @@ class GeminiProvider extends BaseProvider
                 $name = $model['name'] ?? '';
                 // Extract model ID from "models/gemini-1.5-flash" format
                 $modelId = str_replace('models/', '', $name);
-                
+
                 // Only include generative models
                 if (str_starts_with($modelId, 'gemini')) {
                     $models[] = [
@@ -101,7 +101,7 @@ class GeminiProvider extends BaseProvider
                         ],
                     ],
                     'generationConfig' => [
-                        'maxOutputTokens' => $options['max_tokens'] ?? 1024,
+                        'maxOutputTokens' => $options['max_tokens'] ?? 65536,
                         'temperature' => $options['temperature'] ?? 0.7,
                     ],
                 ]);

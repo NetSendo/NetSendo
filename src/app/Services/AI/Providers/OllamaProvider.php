@@ -73,7 +73,7 @@ class OllamaProvider extends BaseProvider
             'prompt' => $prompt,
             'stream' => false,
             'options' => [
-                'num_predict' => $options['max_tokens'] ?? 1024,
+                'num_predict' => $options['max_tokens'] ?? 65536,
                 'temperature' => $options['temperature'] ?? 0.7,
             ],
         ]);
@@ -89,7 +89,7 @@ class OllamaProvider extends BaseProvider
     {
         // Remove version tags like :latest
         $name = explode(':', $modelId)[0];
-        
+
         $names = [
             'llama3.2' => 'Llama 3.2',
             'llama3.1' => 'Llama 3.1',

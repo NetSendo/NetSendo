@@ -3,6 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, usePage, router } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import axios from "axios";
 
 const { t, locale } = useI18n();
 
@@ -52,26 +53,16 @@ const pollForLicense = () => {
                 (elapsed / maxDuration) * 100
             );
 
-            const response = await fetch(route("license.status"), {
-                headers: {
-                    Accept: "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "same-origin",
-            });
+            const response = await axios.get(route("license.status"));
 
-            if (response.ok) {
-                const data = await response.json();
-
-                if (data.active) {
-                    // License activated! Stop polling and redirect
-                    stopPolling();
-                    successMessage.value = t("license.auto_activated_success");
-                    setTimeout(() => {
-                        router.visit(route("dashboard"));
-                    }, 1500);
-                    return;
-                }
+            if (response.data.active) {
+                // License activated! Stop polling and redirect
+                stopPolling();
+                successMessage.value = t("license.auto_activated_success");
+                setTimeout(() => {
+                    router.visit(route("dashboard"));
+                }, 1500);
+                return;
             }
 
             // Check if we've exceeded max duration
@@ -242,31 +233,11 @@ const requestSilverLicense = async () => {
     successMessage.value = "";
 
     try {
-        const csrfToken = document.querySelector(
-            'meta[name="csrf-token"]'
-        )?.content;
-        if (!csrfToken) {
-            errorMessage.value = t("license.request_error");
-            showManualInput.value = true;
-            isLoading.value = false;
-            return;
-        }
-
-        const response = await fetch(route("license.request-silver"), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-                "X-CSRF-TOKEN": csrfToken,
-                "X-Requested-With": "XMLHttpRequest",
-            },
-            credentials: "same-origin",
-            body: JSON.stringify({
-                email: page.props.auth.user?.email || "",
-            }),
+        const response = await axios.post(route("license.request-silver"), {
+            email: page.props.auth.user?.email || "",
         });
 
-        const data = await response.json();
+        const data = response.data;
 
         if (data.success) {
             if (data.auto_activated) {
@@ -356,21 +327,9 @@ const checkLicenseStatus = async () => {
     checkStatusError.value = false;
 
     try {
-        const csrfToken = document.querySelector(
-            'meta[name="csrf-token"]'
-        )?.content;
-        const response = await fetch(route("license.check-status"), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-                "X-CSRF-TOKEN": csrfToken,
-                "X-Requested-With": "XMLHttpRequest",
-            },
-            credentials: "same-origin",
-        });
+        const response = await axios.post(route("license.check-status"));
 
-        const data = await response.json();
+        const data = response.data;
 
         if (data.deactivated) {
             // License was deactivated - reload page

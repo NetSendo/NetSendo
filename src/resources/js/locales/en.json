@@ -212,10 +212,10 @@
         "sms_providers": "SMS Providers",
         "groups_nav": "Groups",
         "tags": "Tags",
-        "add_message": "Add Message",
-        "message_list": "Message List",
-        "add_sms": "Add SMS",
-        "sms_list": "SMS List",
+        "add_message": "Add Email Message",
+        "message_list": "Email Message List",
+        "add_sms": "Add SMS Message",
+        "sms_list": "SMS Message List",
         "system_messages": "System Messages",
         "list_subscribers": "List Subscribers",
         "statistics": "Statistics",
@@ -226,7 +226,7 @@
         "cron_settings": "CRON Settings",
         "field_management": "Field Management",
         "integration": "Integration",
-        "address_lists": "Address Lists",
+        "address_lists": "Email Lists",
         "list_groups": "List Groups",
         "list_tags": "List Tags",
         "add_subscriber": "Add Subscriber",
@@ -289,7 +289,9 @@
             "new_message": "New Message",
             "add_subscriber": "Add Subscriber",
             "import_contacts": "Import Contacts",
-            "new_form": "New Form"
+            "new_form": "New Form",
+            "new_email_list": "New Email List",
+            "new_sms_list": "New SMS List"
         },
         "recent_campaigns": {
             "title": "Recent Campaigns",
@@ -332,7 +334,7 @@
         }
     },
     "mailing_lists": {
-        "title": "Mailing Lists",
+        "title": "Email Lists",
         "subtitle": "Manage your mailing lists",
         "new_list": "New List",
         "search_placeholder": "Search lists...",

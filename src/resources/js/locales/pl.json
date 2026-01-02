@@ -212,10 +212,10 @@
         "sms_providers": "Dostawcy SMS",
         "groups_nav": "Grupy",
         "tags": "Tagi",
-        "add_message": "Dodaj wiadomość",
-        "message_list": "Lista wiadomości",
-        "add_sms": "Dodaj SMS",
-        "sms_list": "Lista SMS",
+        "add_message": "Dodaj wiadomość e-mail",
+        "message_list": "Lista wiadomości e-mail",
+        "add_sms": "Dodaj wiadomość SMS",
+        "sms_list": "Lista wiadomości SMS",
         "system_messages": "Wiadomości systemowe",
         "list_subscribers": "Lista subskrybentów",
         "statistics": "Statystyki",
@@ -226,7 +226,7 @@
         "cron_settings": "Ustawienia CRON",
         "field_management": "Zarządzanie polami",
         "integration": "Integracja",
-        "address_lists": "Listy adresowe",
+        "address_lists": "Listy e-mail",
         "list_groups": "Lista grup",
         "list_tags": "Lista tagów",
         "add_subscriber": "Dodaj subskrybenta",
@@ -289,7 +289,9 @@
             "new_message": "Nowa wiadomość",
             "add_subscriber": "Dodaj subskrybenta",
             "import_contacts": "Import kontaktów",
-            "new_form": "Nowy formularz"
+            "new_form": "Nowy formularz",
+            "new_email_list": "Nowa lista e-mail",
+            "new_sms_list": "Nowa lista SMS"
         },
         "recent_campaigns": {
             "title": "Ostatnie kampanie",
@@ -332,7 +334,7 @@
         }
     },
     "mailing_lists": {
-        "title": "Listy adresowe",
+        "title": "Listy e-mail",
         "subtitle": "Zarządzaj swoimi listami mailingowymi",
         "new_list": "Nowa lista",
         "search_placeholder": "Szukaj listy...",

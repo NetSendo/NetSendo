@@ -5,9 +5,49 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.3.3] – Short Description
+## [Unreleased]
 
-**Release date:** 2026-01-01
+## [1.3.4] – Short Description
+
+**Release date:** 2026-01-02
+
+### Added
+
+- **UI Naming Consistency Improvements:**
+
+  - Added "New Email List" and "New SMS List" quick actions on the Dashboard.
+  - New SVG icons for quick actions with blue and teal color themes.
+  - Updated navigation menu item names for better clarity:
+    - "Add Message" → "Add Email Message"
+    - "Message List" → "Email Message List"
+    - "Add SMS" → "Add SMS Message"
+    - "SMS List" → "SMS Message List"
+  - Unified list naming across CRM section: "Address Lists" → "Email Lists".
+  - Full translations updated in EN, PL, DE, ES.
+
+- **AI Date Context:**
+  - All AI prompts now include current date information to prevent outdated content generation.
+  - New `AiService::getDateContext()` method providing multilingual (EN/PL) date context.
+  - Fixes issue where AI generated content referring to wrong year (e.g., "Welcome 2024" instead of "Welcome 2026").
+  - Affected services: `TemplateAiService`, `CampaignAdvisorService`, `CampaignAuditorService`.
+
+### Fixed
+
+- **AI Token Limits:**
+
+  - Increased default fallback `max_tokens` from 1024 to 65536 in all AI providers.
+  - Prevents content truncation when generating long HTML templates.
+  - Affected providers: `GeminiProvider`, `OpenAiProvider`, `AnthropicProvider`, `GrokProvider`, `OpenrouterProvider`, `OllamaProvider`.
+
+- **License Page CSRF Token Mismatch:**
+  - Fixed "CSRF token mismatch" error when clicking SILVER license button on fresh installations.
+  - Replaced native `fetch()` with `axios` in `Activate.vue` for all API calls.
+  - Added XSRF token configuration to `bootstrap.js` for automatic CSRF handling.
+  - Affected functions: `requestSilverLicense()`, `checkLicenseStatus()`, polling.
+
+---
+
+## [1.3.3] – Webinar Chat & Advanced Features
 
 ### Added
 

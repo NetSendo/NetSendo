@@ -69,7 +69,7 @@ class AnthropicProvider extends BaseProvider
     {
         $response = $this->makeRequest('post', 'v1/messages', [
             'model' => $this->getModel($model),
-            'max_tokens' => $options['max_tokens'] ?? 1024,
+            'max_tokens' => $options['max_tokens'] ?? 65536,
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
