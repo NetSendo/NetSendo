@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if columns already exist (idempotent migration)
+        if (Schema::hasColumn('webinars', 'clicked_list_id')) {
+            return;
+        }
+
         Schema::table('webinars', function (Blueprint $table) {
             // List for people who clicked on webinar link (entered watch page)
             $table->foreignId('clicked_list_id')

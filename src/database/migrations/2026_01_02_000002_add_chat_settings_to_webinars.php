@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Skip if column already exists (idempotent migration)
+        if (Schema::hasColumn('webinars', 'chat_settings')) {
+            return;
+        }
+
         Schema::table('webinars', function (Blueprint $table) {
             $table->json('chat_settings')->nullable()->after('settings');
             // Structure:
