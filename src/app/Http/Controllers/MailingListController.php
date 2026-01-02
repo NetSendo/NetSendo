@@ -23,7 +23,11 @@ class MailingListController extends Controller
         }
 
         if ($request->filled('group_id')) {
-            $query->where('contact_list_group_id', $request->group_id);
+            $group = \App\Models\ContactListGroup::find($request->group_id);
+            if ($group) {
+                $groupIds = array_merge([$group->id], $group->getAllDescendantIds());
+                $query->whereIn('contact_list_group_id', $groupIds);
+            }
         }
 
         if ($request->filled('tag_id')) {
@@ -61,7 +65,16 @@ class MailingListController extends Controller
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
             'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
-            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                    'full_path' => $g->full_path,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
         ]);
     }
@@ -73,7 +86,16 @@ class MailingListController extends Controller
 
         return Inertia::render('MailingList/Create', [
             'defaultSettings' => $scopeUser->settings ?? [],
-            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                    'full_path' => $g->full_path,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
             'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
@@ -204,7 +226,16 @@ class MailingListController extends Controller
                 'required_fields' => $mailingList->required_fields ?? [],
             ],
             'defaultSettings' => $scopeUser->settings ?? [],
-            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                    'full_path' => $g->full_path,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
             'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),

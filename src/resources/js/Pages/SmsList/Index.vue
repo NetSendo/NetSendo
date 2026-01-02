@@ -153,7 +153,7 @@ watch(viewMode, (newMode) => {
                         :key="group.id"
                         :value="group.id"
                     >
-                        {{ group.name }}
+                        {{ '—'.repeat(group.depth || 0) }}{{ (group.depth || 0) > 0 ? ' ' : '' }}{{ group.name }}
                     </option>
                 </select>
 

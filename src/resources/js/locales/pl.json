@@ -1235,8 +1235,10 @@
         "add_new": "Dodaj nową grupę",
         "edit_group": "Edytuj grupę",
         "fields": {
-            "name": "Nazwa grupy"
+            "name": "Nazwa grupy",
+            "parent": "Grupa nadrzędna"
         },
+        "no_parent": "— Brak (grupa główna) —",
         "actions": {
             "create": "Utwórz",
             "update": "Zaktualizuj",
@@ -1248,7 +1250,8 @@
             "lists_count": "Liczba list",
             "actions": "Akcje"
         },
-        "confirm_delete": "Czy na pewno chcesz usunąć tę grupę? Listy w niej przypisane nie zostaną usunięte."
+        "total_count": "Łącznie: {count} grup",
+        "confirm_delete": "Czy na pewno chcesz usunąć tę grupę? Listy w niej przypisane nie zostaną usunięte, a grupy podrzędne staną się grupami głównymi."
     },
     "tags": {
         "title": "Zarządzanie tagami",

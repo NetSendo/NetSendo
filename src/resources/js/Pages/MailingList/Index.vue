@@ -55,13 +55,13 @@ const availableListsHelper = (currentListId) => {
     if (!props.lists.data) return [];
     // Ideally pass all simple lists for dropdown from backend, but using current page data for now + maybe allLists prop if needed.
     // NOTE: Props only contain paginated lists. For full transfer capability, we might need a separate prop or request.
-    // For now filtering from current view, assuming typical use case. 
+    // For now filtering from current view, assuming typical use case.
     // BETTER: Use 'groups' prop logic but for lists? No, too heavy.
     // Let's use what we have, or maybe filtered lists.
-    // Actually, controler should pass a lightweight list of all lists for the dropdown? 
-    // Let's rely on list passed from props if possible, or filter current lists. 
+    // Actually, controler should pass a lightweight list of all lists for the dropdown?
+    // Let's rely on list passed from props if possible, or filter current lists.
     // LIMITATION: Only lists on current page available for transfer if we strictly use `lists.data`.
-    // Optimization: For now, filter `lists.data`. 
+    // Optimization: For now, filter `lists.data`.
     return props.lists.data.filter(l => l.id !== currentListId);
 };
 
@@ -75,7 +75,7 @@ watch(viewMode, (newMode) => {
 
 <template>
     <Head :title="$t('mailing_lists.title')" />
-    
+
     <DeleteListModal
         :show="confirmingListDeletion"
         :list="listToDelete"
@@ -129,7 +129,7 @@ watch(viewMode, (newMode) => {
                 >
                     <option value="">{{ $t('mailing_lists.all_groups') }}</option>
                     <option v-for="group in groups" :key="group.id" :value="group.id">
-                        {{ group.name }}
+                        {{ '—'.repeat(group.depth) }}{{ group.depth > 0 ? ' ' : '' }}{{ group.name }}
                     </option>
                 </select>
 
@@ -155,7 +155,7 @@ watch(viewMode, (newMode) => {
 
             <div class="flex items-center gap-2">
                 <div class="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
-                    <button 
+                    <button
                         @click="viewMode = 'grid'"
                         class="rounded-md p-1.5 transition-colors"
                         :class="viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'"
@@ -165,7 +165,7 @@ watch(viewMode, (newMode) => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                         </svg>
                     </button>
-                    <button 
+                    <button
                         @click="viewMode = 'list'"
                         class="rounded-md p-1.5 transition-colors"
                         :class="viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'"
@@ -176,7 +176,7 @@ watch(viewMode, (newMode) => {
                         </svg>
                     </button>
                 </div>
-                
+
                 <button
                     v-if="form.search || form.group_id || form.tag_id"
                     @click="reset"
@@ -209,8 +209,8 @@ watch(viewMode, (newMode) => {
 
         <!-- Lists Grid -->
         <div v-else-if="viewMode === 'grid'" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            <div 
-                v-for="list in lists.data" 
+            <div
+                v-for="list in lists.data"
                 :key="list.id"
                 class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
             >
@@ -222,7 +222,7 @@ watch(viewMode, (newMode) => {
                             </svg>
                         </div>
                         <div class="flex items-center gap-1">
-                            <Link 
+                            <Link
                                 :href="route('mailing-lists.edit', list.id)"
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                                 :title="$t('mailing_lists.edit')"
@@ -231,7 +231,7 @@ watch(viewMode, (newMode) => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                             </Link>
-                            <button 
+                            <button
                                 @click="confirmDeleteList(list)"
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                 :title="$t('mailing_lists.delete')"
@@ -242,7 +242,7 @@ watch(viewMode, (newMode) => {
                             </button>
                         </div>
                     </div>
-                    
+
                     <h3 class="mb-1 text-lg font-bold text-slate-900 dark:text-white">
                         <Link :href="route('mailing-lists.edit', list.id)" class="hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none">
                             <span class="absolute inset-0" aria-hidden="true"></span>
@@ -270,8 +270,8 @@ watch(viewMode, (newMode) => {
 
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-1">
-                            <span 
-                                v-for="tag in list.tags" 
+                            <span
+                                v-for="tag in list.tags"
                                 :key="tag.id"
                                 class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
                                 :style="{ backgroundColor: tag.color }"
@@ -331,8 +331,8 @@ watch(viewMode, (newMode) => {
                                         {{ list.group.name }}
                                     </div>
                                     <div class="flex flex-wrap gap-1">
-                                         <span 
-                                            v-for="tag in list.tags" 
+                                         <span
+                                            v-for="tag in list.tags"
                                             :key="tag.id"
                                             class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
                                             :style="{ backgroundColor: tag.color }"
@@ -350,7 +350,7 @@ watch(viewMode, (newMode) => {
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <Link 
+                                    <Link
                                         :href="route('mailing-lists.edit', list.id)"
                                         class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                                         :title="$t('mailing_lists.edit')"
@@ -359,7 +359,7 @@ watch(viewMode, (newMode) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </Link>
-                                    <button 
+                                    <button
                                         @click="confirmDeleteList(list)"
                                         class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                         :title="$t('mailing_lists.delete')"

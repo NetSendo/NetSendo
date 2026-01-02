@@ -40,9 +40,13 @@ class MessageController extends Controller
 
         // Filter by Group
         if ($request->filled('group_id')) {
-            $query->whereHas('contactLists', function ($q) use ($request) {
-                $q->where('contact_list_group_id', $request->input('group_id'));
-            });
+            $group = \App\Models\ContactListGroup::find($request->input('group_id'));
+            if ($group) {
+                $groupIds = array_merge([$group->id], $group->getAllDescendantIds());
+                $query->whereHas('contactLists', function ($q) use ($groupIds) {
+                    $q->whereIn('contact_list_group_id', $groupIds);
+                });
+            }
         }
 
         // Filter by Tag
@@ -113,7 +117,15 @@ class MessageController extends Controller
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
             'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
-            'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
+            'groups' => auth()->user()->contactListGroups()
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => auth()->user()->tags()->select('id', 'name')->orderBy('name')->get(),
             'campaignPlans' => \App\Models\CampaignPlan::forUser(auth()->id())
                 ->whereNotNull('exported_at')
@@ -159,7 +171,15 @@ class MessageController extends Controller
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
-            'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
+            'groups' => auth()->user()->contactListGroups()
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => auth()->user()->tags()->select('id', 'name')->orderBy('name')->get(),
             'timezones' => \DateTimeZone::listIdentifiers(),
             'mailboxes' => auth()->user()->mailboxes()
@@ -386,7 +406,15 @@ class MessageController extends Controller
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
-            'groups' => auth()->user()->contactListGroups()->select('id', 'name')->orderBy('name')->get(),
+            'groups' => auth()->user()->contactListGroups()
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => auth()->user()->tags()->select('id', 'name')->orderBy('name')->get(),
             'timezones' => \DateTimeZone::listIdentifiers(),
             'mailboxes' => auth()->user()->mailboxes()

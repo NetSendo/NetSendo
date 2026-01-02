@@ -20,7 +20,11 @@ class SmsListController extends Controller
         }
 
         if ($request->filled('group_id')) {
-            $query->where('contact_list_group_id', $request->group_id);
+            $group = \App\Models\ContactListGroup::find($request->group_id);
+            if ($group) {
+                $groupIds = array_merge([$group->id], $group->getAllDescendantIds());
+                $query->whereIn('contact_list_group_id', $groupIds);
+            }
         }
 
         if ($request->filled('tag_id')) {
@@ -51,7 +55,15 @@ class SmsListController extends Controller
                     'is_public' => (bool)$list->is_public,
                 ])->withQueryString(),
             'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
         ]);
     }
@@ -59,7 +71,15 @@ class SmsListController extends Controller
     public function create()
     {
         return Inertia::render('SmsList/Create', [
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
         ]);
     }
@@ -120,7 +140,15 @@ class SmsListController extends Controller
                 'max_subscribers' => $smsList->max_subscribers ?? 0,
                 'signups_blocked' => $smsList->signups_blocked ?? false,
             ],
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())->get(),
+            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+                ->with('parent')
+                ->orderBy('name')
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'name' => $g->name,
+                    'depth' => $g->depth,
+                ]),
             'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
             'otherLists' => $otherLists,
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
