@@ -25,6 +25,7 @@
         "yes": "Tak",
         "no": "Nie",
         "saving": "Zapisywanie...",
+        "uploading": "Wgrywanie...",
         "active": "Aktywny",
         "inactive": "Nieaktywny",
         "pending": "Oczekujący",
@@ -2205,7 +2206,11 @@
             "buy": "Kup",
             "currency_fallback": "PLN",
             "drop_block_here": "Upuść blok tutaj"
-        }
+        },
+        "close_preview": "Zamknij podgląd",
+        "image_too_large": "Obraz jest za duży. Maksymalny rozmiar to 5MB.",
+        "image_invalid_format": "Nieprawidłowy format obrazu. Dozwolone: JPEG, PNG, GIF, WebP.",
+        "image_upload_error": "Nie udało się wgrać obrazu. Spróbuj ponownie."
     },
     "mailboxes": {
         "title": "Skrzynki pocztowe",
@@ -3996,6 +4001,53 @@
             "from_number": "Sender ID / Numer nadawcy",
             "daily_limit": "Limit dzienny",
             "daily_limit_placeholder": "np. 1000 (zostaw puste dla braku limitu)"
+    }
+},
+    "external_pages": {
+        "index": {
+            "title": "Strony zewnętrzne",
+            "add_new": "Dodaj nową stronę",
+            "empty": "Nie znaleziono stron zewnętrznych. Utwórz nową, aby rozpocząć."
+        },
+        "create": {
+            "title": "Utwórz stronę zewnętrzną"
+        },
+        "edit": {
+            "title": "Edytuj stronę zewnętrzną"
+        },
+        "labels": {
+            "name": "Nazwa",
+            "target_url": "Adres docelowy",
+            "type": "Typ",
+            "actions": "Akcje"
+        },
+        "types": {
+            "redirect": "Przekierowanie",
+            "proxy": "Proxy treści"
+        },
+        "actions": {
+            "link": "Link",
+            "save": "Zapisz stronę",
+            "saved": "Zapisano"
+        },
+        "fields": {
+            "name": "Nazwa wewnętrzna",
+            "url": "Adres URL strony",
+            "redirect_mode": "Tryb przekierowania (Użytkownik jest przekierowywany)"
+        },
+        "hints": {
+            "url_fetch": "NetSendo pobierze lub przekieruje na ten adres URL.",
+            "proxy_mode": "Jeśli odznaczone, NetSendo pobierze treść i wyświetli ją (Tryb Proxy), umożliwiając podmianę placeholderów.",
+            "custom_fields": "Ponieważ pola własne są dynamiczne, wprowadź klucze które chcesz udostępnić/podmienić (oddzielone przecinkami)."
+        },
+        "sections": {
+            "shared_fields": "Udostępnione pola systemowe",
+            "custom_fields": "Udostępnione pola własne (Opcjonalne)"
+        },
+        "messages": {
+            "confirm_delete": "Czy na pewno chcesz usunąć tę stronę?",
+            "link_copied": "Link skopiowany do schowka!"
+        }
     }
 }
 }

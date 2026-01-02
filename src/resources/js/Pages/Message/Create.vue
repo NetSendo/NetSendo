@@ -11,6 +11,7 @@ import TemplateSelectModal from "@/Components/TemplateSelectModal.vue";
 import MessageAiAssistant from "@/Components/MessageAiAssistant.vue";
 import SubjectAiAssistant from "@/Components/SubjectAiAssistant.vue";
 import InsertPickerModal from "@/Components/InsertPickerModal.vue";
+import ResponsiveTabs from "@/Components/ResponsiveTabs.vue";
 import { computed, ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import mjml2html from "mjml-browser";
@@ -72,6 +73,32 @@ const isEditing = computed(() => !!props.message);
 
 // Active tab
 const activeTab = ref("content"); // content, settings, triggers, ab_testing
+
+// Tab configuration for ResponsiveTabs component
+const messageTabs = computed(() => [
+    {
+        id: 'content',
+        label: t('messages.tabs.content'),
+        emoji: '✏️',
+    },
+    {
+        id: 'settings',
+        label: t('messages.tabs.settings'),
+        emoji: '⚙️',
+    },
+    {
+        id: 'triggers',
+        label: t('messages.tabs.triggers'),
+        emoji: '⚡',
+        indicator: !!form.trigger_type,
+    },
+    {
+        id: 'ab_testing',
+        label: t('messages.tabs.ab_testing'),
+        emoji: '📊',
+        badge: t('common.soon'),
+    },
+]);
 
 // Template modal
 const showTemplateModal = ref(false);
@@ -855,129 +882,12 @@ if (form.contact_list_ids.length > 0) {
         </template>
 
         <div class="rounded-2xl bg-white shadow-sm dark:bg-slate-900">
-            <!-- Tabs -->
-            <div class="border-b border-slate-200 dark:border-slate-700">
-                <nav class="flex gap-1 px-4">
-                    <button
-                        @click="activeTab = 'content'"
-                        :class="
-                            activeTab === 'content'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        "
-                        class="border-b-2 px-4 py-3 text-sm font-medium transition-colors"
-                    >
-                        <span class="flex items-center gap-2">
-                            <svg
-                                class="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                            </svg>
-                            {{ $t("messages.tabs.content") }}
-                        </span>
-                    </button>
-                    <button
-                        @click="activeTab = 'settings'"
-                        :class="
-                            activeTab === 'settings'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        "
-                        class="border-b-2 px-4 py-3 text-sm font-medium transition-colors"
-                    >
-                        <span class="flex items-center gap-2">
-                            <svg
-                                class="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                                />
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            {{ $t("messages.tabs.settings") }}
-                        </span>
-                    </button>
-                    <button
-                        @click="activeTab = 'triggers'"
-                        :class="
-                            activeTab === 'triggers'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        "
-                        class="border-b-2 px-4 py-3 text-sm font-medium transition-colors"
-                    >
-                        <span class="flex items-center gap-2">
-                            <svg
-                                class="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                />
-                            </svg>
-                            {{ $t("messages.tabs.triggers") }}
-                            <span
-                                v-if="form.trigger_type"
-                                class="flex h-2 w-2 rounded-full bg-green-500"
-                            ></span>
-                        </span>
-                    </button>
-                    <button
-                        @click="activeTab = 'ab_testing'"
-                        :class="
-                            activeTab === 'ab_testing'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                        "
-                        class="border-b-2 px-4 py-3 text-sm font-medium transition-colors"
-                    >
-                        <span class="flex items-center gap-2">
-                            <svg
-                                class="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                />
-                            </svg>
-                            {{ $t("messages.tabs.ab_testing") }}
-                            <span
-                                class="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
-                            >
-                                {{ $t("common.soon") }}
-                            </span>
-                        </span>
-                    </button>
-                </nav>
+            <!-- Responsive Tabs -->
+            <div class="px-4 pt-4">
+                <ResponsiveTabs
+                    v-model="activeTab"
+                    :tabs="messageTabs"
+                />
             </div>
 
             <form @submit.prevent="submit()" class="p-6">

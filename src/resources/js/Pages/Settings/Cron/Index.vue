@@ -2,6 +2,7 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ResponsiveTabs from '@/Components/ResponsiveTabs.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -67,6 +68,30 @@ function formatDateTime(dateString) {
 }
 
 const activeTab = ref('settings');
+
+// Tab configuration for ResponsiveTabs component
+const cronTabs = computed(() => [
+    {
+        id: 'settings',
+        label: t('cron.tabs.settings'),
+        emoji: '⚙️',
+    },
+    {
+        id: 'stats',
+        label: t('cron.tabs.stats'),
+        emoji: '📊',
+    },
+    {
+        id: 'logs',
+        label: t('cron.tabs.logs'),
+        emoji: '📋',
+    },
+    {
+        id: 'instructions',
+        label: t('cron.tabs.instructions'),
+        emoji: '📖',
+    },
+]);
 
 // Webhook settings
 const webhookSettings = ref({
@@ -141,7 +166,7 @@ onMounted(() => {
     if (tab && ['settings', 'stats', 'logs', 'instructions'].includes(tab)) {
         activeTab.value = tab;
     }
-    
+
     // Load webhook settings
     fetchWebhookSettings();
 });
@@ -165,7 +190,7 @@ const statusColors = {
 
 <template>
     <Head :title="t('cron.title', 'Ustawienia CRON')" />
-    
+
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
@@ -178,8 +203,8 @@ const statusColors = {
                         'px-3 py-1 rounded-full text-sm font-medium',
                         !isCronConfigured
                             ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : isDispatchAllowed 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : isDispatchAllowed
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                                 : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                     ]">
                         {{ !isCronConfigured ? '🔴 ' + t('cron.status.not_configured') : (isDispatchAllowed ? '🟢 ' + t('cron.status.active') : '🟡 ' + t('cron.status.paused')) }}
@@ -193,54 +218,12 @@ const statusColors = {
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Tabs -->
-                <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-                    <nav class="-mb-px flex space-x-8">
-                            <button
-                                @click="activeTab = 'settings'"
-                                :class="[
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                                    activeTab === 'settings'
-                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                                ]"
-                            >
-                                ⚙️ {{ t('cron.tabs.settings') }}
-                            </button>
-                            <button
-                                @click="activeTab = 'stats'"
-                                :class="[
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                                    activeTab === 'stats'
-                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                                ]"
-                            >
-                                📊 {{ t('cron.tabs.stats') }}
-                            </button>
-                            <button
-                                @click="activeTab = 'logs'"
-                                :class="[
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                                    activeTab === 'logs'
-                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                                ]"
-                            >
-                                📋 {{ t('cron.tabs.logs') }}
-                            </button>
-                            <button
-                                @click="activeTab = 'instructions'"
-                                :class="[
-                                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                                    activeTab === 'instructions'
-                                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                                ]"
-                            >
-                                📖 {{ t('cron.tabs.instructions') }}
-                            </button>
-                    </nav>
+                <!-- Responsive Tabs -->
+                <div class="mb-6">
+                    <ResponsiveTabs
+                        v-model="activeTab"
+                        :tabs="cronTabs"
+                    />
                 </div>
 
                 <!-- Settings Tab -->
@@ -251,14 +234,14 @@ const statusColors = {
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
                                 📧 {{ t('cron.settings.title') }}
                             </h3>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         {{ t('cron.settings.volume_per_minute') }}
                                     </label>
-                                    <input 
-                                        type="number" 
+                                    <input
+                                        type="number"
                                         v-model="form.volume_per_minute"
                                         min="1"
                                         max="10000"
@@ -268,12 +251,12 @@ const statusColors = {
                                         {{ t('cron.settings.volume_help') }}
                                     </p>
                                 </div>
-                                
+
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         {{ t('cron.settings.maintenance_hour') }}
                                     </label>
-                                    <select 
+                                    <select
                                         v-model="form.daily_maintenance_hour"
                                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                                     >
@@ -298,15 +281,15 @@ const statusColors = {
                             </p>
 
                             <div class="space-y-4">
-                                <div 
-                                    v-for="day in days" 
+                                <div
+                                    v-for="day in days"
                                     :key="day.key"
                                     class="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
                                 >
                                     <div class="w-32">
                                         <label class="flex items-center gap-2 cursor-pointer">
-                                            <input 
-                                                type="checkbox" 
+                                            <input
+                                                type="checkbox"
                                                 v-model="form.schedule[day.key].enabled"
                                                 class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                                             />
@@ -316,14 +299,14 @@ const statusColors = {
                                         </label>
                                     </div>
 
-                                    <div 
+                                    <div
                                         v-if="form.schedule[day.key].enabled"
                                         class="flex items-center gap-4 flex-1"
                                     >
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.schedule.from') }}:</label>
-                                            <input 
-                                                type="time" 
+                                            <input
+                                                type="time"
                                                 :value="minutesToTime(form.schedule[day.key].start)"
                                                 @input="form.schedule[day.key].start = timeToMinutes($event.target.value)"
                                                 class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
@@ -331,30 +314,30 @@ const statusColors = {
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <label class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.schedule.to') }}:</label>
-                                            <input 
-                                                type="time" 
+                                            <input
+                                                type="time"
                                                 :value="minutesToTime(form.schedule[day.key].end)"
                                                 @input="form.schedule[day.key].end = timeToMinutes($event.target.value)"
                                                 class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
                                             />
                                         </div>
-                                        
+
                                         <div class="flex gap-1">
-                                            <button 
+                                            <button
                                                 type="button"
                                                 @click="form.schedule[day.key] = { enabled: true, start: 0, end: 1440 }"
                                                 class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                                             >
                                                 {{ t('cron.schedule.preset_24h') }}
                                             </button>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 @click="form.schedule[day.key] = { enabled: true, start: 480, end: 1020 }"
                                                 class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
                                             >
                                                 {{ t('cron.schedule.preset_business') }}
                                             </button>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 @click="form.schedule[day.key] = { enabled: true, start: 540, end: 1080 }"
                                                 class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
@@ -363,8 +346,8 @@ const statusColors = {
                                             </button>
                                         </div>
                                     </div>
-                                    
-                                    <div 
+
+                                    <div
                                         v-else
                                         class="flex-1 text-sm text-gray-400 dark:text-gray-500 italic"
                                     >
@@ -376,7 +359,7 @@ const statusColors = {
 
                         <!-- Submit -->
                         <div class="flex justify-end">
-                            <button 
+                            <button
                                 type="submit"
                                 :disabled="form.processing"
                                 class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
@@ -428,10 +411,10 @@ const statusColors = {
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
                             📋 {{ t('cron.lists.allowed_now') }}
                         </h3>
-                        
+
                         <div v-if="listsAllowedNow.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <div 
-                                v-for="list in listsAllowedNow" 
+                            <div
+                                v-for="list in listsAllowedNow"
                                 :key="list.id"
                                 class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
                             >
@@ -480,7 +463,7 @@ const statusColors = {
                                 📋 {{ t('cron.logs.title') }}
                             </h3>
                         </div>
-                        
+
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-900">
@@ -648,14 +631,14 @@ sudo supervisorctl start netsendo-scheduler</pre>
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                         <div class="mb-4">
                             <!-- Logo - dark mode uses light version, light mode uses dark version -->
-                            <img 
-                                src="/images/integrations/n8n-make-zapier-dark.png" 
-                                alt="n8n, Make, Zapier" 
+                            <img
+                                src="/images/integrations/n8n-make-zapier-dark.png"
+                                alt="n8n, Make, Zapier"
                                 class="h-16 object-contain dark:hidden"
                             />
-                            <img 
-                                src="/images/integrations/n8n-make-zapier-light.png" 
-                                alt="n8n, Make, Zapier" 
+                            <img
+                                src="/images/integrations/n8n-make-zapier-light.png"
+                                alt="n8n, Make, Zapier"
                                 class="h-16 object-contain hidden dark:block"
                             />
                         </div>
@@ -667,28 +650,28 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                 <strong>Webhook / API</strong>
                             </template>
                         </i18n-t>
-                        
+
                         <!-- Webhook Configuration -->
                         <div class="space-y-4">
                             <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
                                 <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
                                     {{ t('cron.webhook.title') }}
                                 </h4>
-                                
+
                                 <!-- Token not generated -->
                                 <div v-if="!webhookSettings.has_token" class="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
                                     <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
                                         {{ t('cron.webhook.no_token') }}
                                     </p>
-                                    <button 
-                                        @click="generateToken" 
+                                    <button
+                                        @click="generateToken"
                                         :disabled="webhookLoading"
                                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors font-medium"
                                     >
                                         {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate') }}
                                     </button>
                                 </div>
-                            
+
                             <!-- Token generated -->
                             <div v-else class="space-y-4">
                                     <div>
@@ -696,8 +679,8 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                             {{ t('cron.webhook.url_label') }}
                                         </label>
                                         <div class="flex gap-2">
-                                            <input 
-                                                readonly 
+                                            <input
+                                                readonly
                                                 :value="webhookSettings.webhook_url"
                                                 class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
                                             />
@@ -709,18 +692,18 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                             {{ t('cron.webhook.token_label') }}
                                         </label>
                                         <div class="flex gap-2">
-                                            <input 
-                                                readonly 
+                                            <input
+                                                readonly
                                                 :value="webhookSettings.token"
                                                 class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
                                             />
                                             <button @click="copyToClipboard(webhookSettings.token)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="flex items-center gap-4 pt-2">
-                                        <button 
-                                            @click="generateToken" 
+                                        <button
+                                            @click="generateToken"
                                             :disabled="webhookLoading"
                                             class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                                         >
@@ -733,7 +716,7 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Instructions -->
                         <div class="space-y-3 text-sm">
                             <div class="border-l-4 border-indigo-500 pl-3">
@@ -767,7 +750,7 @@ sudo supervisorctl start netsendo-scheduler</pre>
                                 </i18n-t>
                             </div>
                         </div>
-                        
+
                         <!-- Example Request -->
                         <div class="mt-4 bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
                             <pre># cURL example

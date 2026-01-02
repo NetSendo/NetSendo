@@ -85,7 +85,7 @@ const onBlockAdded = (event) => {
 const getColumnBlocks = (block) => {
     const columnCount = block.content?.columns || 2;
     const columnBlocks = block.content?.columnBlocks || [];
-    
+
     // Ensure we have an array for each column
     const result = [];
     for (let i = 0; i < columnCount; i++) {
@@ -122,13 +122,13 @@ const stripHtml = (html) => {
 
         <!-- Canvas area -->
         <div class="flex-1 overflow-y-auto p-6">
-            <div 
+            <div
                 class="builder-canvas-content mx-auto rounded-lg border-2 border-dashed bg-white shadow-sm transition-colors dark:bg-slate-900"
                 :class="isDragging ? 'border-indigo-400' : 'border-slate-200 dark:border-slate-700'"
                 :style="{ maxWidth: (settings?.width || 600) + 'px', backgroundColor: settings?.content_background || '#ffffff' }"
             >
                 <!-- Empty state -->
-                <div 
+                <div
                     v-if="blocks.length === 0"
                     class="flex flex-col items-center justify-center py-24 text-slate-400"
                 >
@@ -159,7 +159,7 @@ const stripHtml = (html) => {
                             :class="selectedBlockId === block.id ? 'border-indigo-500 dark:border-indigo-400' : ''"
                         >
                             <!-- Block toolbar (visible on hover or selection) -->
-                            <div 
+                            <div
                                 class="absolute -top-8 left-0 z-10 flex items-center gap-1 rounded-t-lg bg-indigo-500 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
                                 :class="selectedBlockId === block.id ? 'opacity-100' : ''"
                             >
@@ -173,8 +173,8 @@ const stripHtml = (html) => {
                                 <span class="px-1 font-medium">{{ getBlockLabel(block.type) }}</span>
 
                                 <div class="ml-2 flex items-center gap-0.5">
-                                    <button 
-                                        @click="handleMoveUp($event, block.id)" 
+                                    <button
+                                        @click="handleMoveUp($event, block.id)"
                                         :disabled="index === 0"
                                         class="p-1 hover:bg-indigo-600 disabled:opacity-30"
                                         :title="$t('template_builder.move_up')"
@@ -183,8 +183,8 @@ const stripHtml = (html) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                         </svg>
                                     </button>
-                                    <button 
-                                        @click="handleMoveDown($event, block.id)" 
+                                    <button
+                                        @click="handleMoveDown($event, block.id)"
                                         :disabled="index === blocks.length - 1"
                                         class="p-1 hover:bg-indigo-600 disabled:opacity-30"
                                         :title="$t('template_builder.move_down')"
@@ -193,8 +193,8 @@ const stripHtml = (html) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                         </svg>
                                     </button>
-                                    <button 
-                                        @click="handleDuplicate($event, block.id)" 
+                                    <button
+                                        @click="handleDuplicate($event, block.id)"
                                         class="p-1 hover:bg-indigo-600"
                                         :title="$t('template_builder.duplicate')"
                                     >
@@ -202,8 +202,8 @@ const stripHtml = (html) => {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
                                     </button>
-                                    <button 
-                                        @click="handleDelete($event, block.id)" 
+                                    <button
+                                        @click="handleDelete($event, block.id)"
                                         class="p-1 hover:bg-red-600"
                                         :title="$t('template_builder.delete')"
                                     >
@@ -217,7 +217,7 @@ const stripHtml = (html) => {
                             <!-- Block preview -->
                             <div class="relative min-h-[40px] p-2">
                                 <!-- Header Block -->
-                                <div v-if="block.type === 'header'" 
+                                <div v-if="block.type === 'header'"
                                     class="flex items-center justify-center p-6"
                                     :style="{ backgroundColor: block.content?.backgroundColor || '#6366f1' }">
                                     <img v-if="block.content?.logo" :src="block.content.logo" :style="{ width: (block.content?.logoWidth || 150) + 'px' }" alt="Logo" />
@@ -225,14 +225,14 @@ const stripHtml = (html) => {
                                 </div>
 
                                 <!-- Text Block -->
-                                <div v-else-if="block.type === 'text'" 
+                                <div v-else-if="block.type === 'text'"
                                     class="prose prose-sm max-w-none p-4 dark:prose-invert"
                                     v-html="block.content?.html || $t('template_builder.text_placeholder')">
                                 </div>
 
                                 <!-- Image Block -->
-                                <div v-else-if="block.type === 'image'" class="flex justify-center p-2">
-                                    <img v-if="block.content?.src" :src="block.content.src" :alt="block.content?.alt" class="max-w-full" />
+                                <div v-else-if="block.type === 'image'" class="p-2">
+                                    <img v-if="block.content?.src" :src="block.content.src" :alt="block.content?.alt" class="w-full" />
                                     <div v-else class="flex h-32 w-full items-center justify-center bg-slate-100 text-slate-400 dark:bg-slate-800">
                                         <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -242,10 +242,10 @@ const stripHtml = (html) => {
 
                                 <!-- Button Block -->
                                 <div v-else-if="block.type === 'button'" class="flex justify-center p-4" :style="{ textAlign: block.content?.alignment || 'center' }">
-                                    <a 
-                                        href="#" 
+                                    <a
+                                        href="#"
                                         class="inline-block px-6 py-3 font-medium text-white no-underline"
-                                        :style="{ 
+                                        :style="{
                                             backgroundColor: block.content?.backgroundColor || '#6366f1',
                                             color: block.content?.textColor || '#ffffff',
                                             borderRadius: block.content?.borderRadius || '8px',
@@ -270,9 +270,9 @@ const stripHtml = (html) => {
                                 <!-- Columns Block -->
                                 <div v-else-if="block.type === 'columns'" class="p-4">
                                     <div class="flex" :style="{ gap: block.content?.gap || '20px' }">
-                                        <div 
-                                            v-for="(colBlocks, colIndex) in getColumnBlocks(block)" 
-                                            :key="colIndex" 
+                                        <div
+                                            v-for="(colBlocks, colIndex) in getColumnBlocks(block)"
+                                            :key="colIndex"
                                             class="flex-1"
                                         >
                                             <draggable
@@ -285,7 +285,7 @@ const stripHtml = (html) => {
                                                 :class="{ 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20': isDragging }"
                                             >
                                                 <template #item="{ element: nestedBlock }">
-                                                    <div 
+                                                    <div
                                                         class="mb-2 rounded border border-slate-200 bg-white p-2 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-800"
                                                         @click.stop="$emit('select', nestedBlock.id)"
                                                         :class="selectedBlockId === nestedBlock.id ? 'ring-2 ring-indigo-500' : ''"
@@ -294,7 +294,7 @@ const stripHtml = (html) => {
                                                             <span class="font-medium text-slate-600 dark:text-slate-300">
                                                                 {{ getBlockLabel(nestedBlock.type) }}
                                                             </span>
-                                                            <button 
+                                                            <button
                                                                 @click.stop="removeNestedBlock(block.id, colIndex, nestedBlock.id)"
                                                                 class="text-slate-400 hover:text-red-500"
                                                             >
@@ -313,7 +313,7 @@ const stripHtml = (html) => {
                                                             </span>
                                                         </div>
                                                         <div v-else-if="nestedBlock.type === 'image' && nestedBlock.content?.src" class="mt-1">
-                                                            <img :src="nestedBlock.content.src" class="h-8 w-auto rounded" />
+                                                            <img :src="nestedBlock.content.src" class="w-full rounded" />
                                                         </div>
                                                     </div>
                                                 </template>
@@ -359,7 +359,7 @@ const stripHtml = (html) => {
                                 </div>
 
                                 <!-- Footer Block -->
-                                <div v-else-if="block.type === 'footer'" 
+                                <div v-else-if="block.type === 'footer'"
                                     class="p-6 text-center text-sm"
                                     :style="{ backgroundColor: block.content?.backgroundColor || '#1e293b', color: block.content?.textColor || '#94a3b8' }">
                                     <p class="font-medium">{{ block.content?.companyName || $t('template_builder.company_name') }}</p>
@@ -382,7 +382,7 @@ const stripHtml = (html) => {
 
                 <!-- Add block button at bottom -->
                 <div v-if="blocks.length > 0" class="border-t border-dashed border-slate-200 p-4 text-center dark:border-slate-700">
-                    <button 
+                    <button
                         @click="$emit('add-block', 'text')"
                         class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-500"
                     >

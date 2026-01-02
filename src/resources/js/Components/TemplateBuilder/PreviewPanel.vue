@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import mjml2html from 'mjml-browser';
 
@@ -18,7 +18,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:mode', 'update:theme']);
+const emit = defineEmits(['update:mode', 'update:theme', 'close']);
 
 const iframeRef = ref(null);
 const isCompiling = ref(false);
@@ -35,8 +35,8 @@ const deviceDimensions = {
 const blocksToMjml = (blocks, settings, theme) => {
     const s = settings || {};
     const isDark = theme === 'dark';
-    
-    const bgColor = isDark 
+
+    const bgColor = isDark
         ? (s.dark_mode?.background_color || '#1e293b')
         : (s.background_color || '#f4f4f4');
     const contentBg = isDark
@@ -82,7 +82,7 @@ const blockToMjml = (block, options) => {
 
     switch (type) {
         case 'header':
-            const logoHtml = c.logo 
+            const logoHtml = c.logo
                 ? `<mj-image src="${c.logo}" width="${c.logoWidth || 150}px" align="${c.alignment || 'center'}" />`
                 : '';
             return `
@@ -106,7 +106,7 @@ const blockToMjml = (block, options) => {
             return `
     <mj-section padding="0">
       <mj-column>
-        <mj-image src="${c.src}" alt="${c.alt || ''}" width="${c.width || '100%'}" align="${c.alignment || 'center'}" padding="${c.padding || '10px'}" ${hrefAttr} />
+        <mj-image src="${c.src}" alt="${c.alt || ''}" fluid-on-mobile="true" align="${c.alignment || 'center'}" padding="${c.padding || '10px'}" ${hrefAttr} />
       </mj-column>
     </mj-section>`;
 
@@ -141,7 +141,7 @@ const blockToMjml = (block, options) => {
 
         case 'product':
             const productImage = c.image ? `<mj-image src="${c.image}" padding="0 0 10px 0" />` : '';
-            const priceHtml = c.oldPrice 
+            const priceHtml = c.oldPrice
                 ? `<span style="text-decoration: line-through; color: #94a3b8;">${c.oldPrice} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</span> <strong style="color: #ef4444;">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`
                 : `<strong>${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`;
             return `
@@ -249,11 +249,11 @@ const columnsToMjml = (content, options) => {
     for (let i = 0; i < columnsCount; i++) {
         const colBlocks = columnBlocks[i] || [];
         let columnContent = '';
-        
+
         for (const block of colBlocks) {
             columnContent += nestedBlockToMjml(block, options);
         }
-        
+
         if (!columnContent) {
             columnContent = '<mj-text>&nbsp;</mj-text>';
         }
@@ -305,7 +305,7 @@ const generatePreviewHtml = () => {
 // Fallback simple HTML preview
 const generateFallbackHtml = () => {
     const s = props.settings || {};
-    const bgColor = props.theme === 'dark' 
+    const bgColor = props.theme === 'dark'
         ? (s.dark_mode?.background_color || '#1e293b')
         : (s.background_color || '#f4f4f4');
     const contentBg = props.theme === 'dark'
@@ -328,9 +328,9 @@ const generateFallbackHtml = () => {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            background-color: ${bgColor}; 
-            font-family: ${s.font_family || 'Arial, Helvetica, sans-serif'}; 
+        body {
+            background-color: ${bgColor};
+            font-family: ${s.font_family || 'Arial, Helvetica, sans-serif'};
             color: ${textColor};
             padding: 20px;
         }
@@ -355,36 +355,36 @@ const generateFallbackHtml = () => {
 const blockToHtml = (block, textColor) => {
     const c = block.content || {};
     const s = props.settings || {};
-    
+
     switch (block.type) {
         case 'header':
-            const logoHtml = c.logo 
+            const logoHtml = c.logo
                 ? `<img src="${c.logo}" style="width: ${c.logoWidth || 150}px; margin: 0 auto; display: block;" />`
                 : `<div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.5);">${t('template_builder.logo')}</div>`;
             return `<div style="background-color: ${c.backgroundColor || '#6366f1'}; padding: ${c.padding || '20px'}; text-align: ${c.alignment || 'center'};">${logoHtml}</div>`;
-        
+
         case 'text':
             return `<div style="padding: ${c.padding || '20px'}; text-align: ${c.alignment || 'left'}; color: ${textColor};">${c.html || ''}</div>`;
-        
+
         case 'image':
             if (!c.src) return `<div style="background: #f1f5f9; height: 150px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">${t('template_builder.blocks.image')}</div>`;
-            const imgHtml = `<img src="${c.src}" alt="${c.alt || ''}" style="display: block; margin: 0 auto; max-width: 100%;" />`;
+            const imgHtml = `<img src="${c.src}" alt="${c.alt || ''}" style="display: block; width: 100%; height: auto;" />`;
             return c.href ? `<a href="${c.href}">${imgHtml}</a>` : imgHtml;
-        
+
         case 'button':
             return `<div style="padding: 10px 0; text-align: ${c.alignment || 'center'};">
                 <a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: ${c.padding || '12px 24px'}; border-radius: ${c.borderRadius || '8px'}; text-decoration: none; font-weight: 500;">${c.text || t('template_builder.default_button')}</a>
             </div>`;
-        
+
         case 'divider':
             return `<div style="padding: ${c.padding || '10px 0'};"><hr style="border: none; border-top: 1px solid ${c.color || '#e2e8f0'};" /></div>`;
-        
+
         case 'spacer':
             return `<div style="height: ${c.height || '30px'};"></div>`;
 
         case 'columns':
             return columnsToHtml(c, textColor);
-        
+
         case 'product':
             return `<div style="padding: 20px; display: flex; gap: 16px;">
                 <div style="width: 100px; height: 100px; background: #f1f5f9; flex-shrink: 0;"></div>
@@ -394,7 +394,7 @@ const blockToHtml = (block, textColor) => {
                     <p style="font-size: 18px; font-weight: bold; color: ${s?.primary_color || '#6366f1'};">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</p>
                 </div>
             </div>`;
-        
+
         case 'footer':
             return `<div style="background-color: ${c.backgroundColor || '#1e293b'}; color: ${c.textColor || '#94a3b8'}; padding: ${c.padding || '30px 20px'}; text-align: center;">
                 <p style="font-weight: 600;">${c.companyName || t('template_builder.company_name')}</p>
@@ -402,7 +402,7 @@ const blockToHtml = (block, textColor) => {
                 <p style="font-size: 12px; margin-top: 15px;"><a href="${c.unsubscribeUrl || '#'}" style="color: ${c.textColor || '#94a3b8'};">${c.unsubscribeText || t('messages.unsubscribe_link')}</a></p>
                 <p style="font-size: 12px; margin-top: 10px; opacity: 0.5;">${c.copyright || ''}</p>
             </div>`;
-        
+
         default:
             return `<div style="padding: 20px; text-align: center; color: #94a3b8;">${block.type}</div>`;
     }
@@ -413,36 +413,36 @@ const columnsToHtml = (content, textColor) => {
     const columnsCount = content.columns || 2;
     const columnBlocks = content.columnBlocks || [];
     const gap = content.gap || '20px';
-    
+
     let columnsHtml = '';
     for (let i = 0; i < columnsCount; i++) {
         const colBlocks = columnBlocks[i] || [];
         let columnContent = '';
-        
+
         for (const block of colBlocks) {
             columnContent += nestedBlockToHtml(block, textColor);
         }
-        
+
         if (!columnContent) {
             columnContent = `<div style="padding: 10px; color: #94a3b8; font-size: 12px;">${t('template_builder.preview_panel.drop_block_here')}</div>`;
         }
-        
+
         columnsHtml += `<div style="flex: 1; min-width: 0;">${columnContent}</div>`;
     }
-    
+
     return `<div style="display: flex; gap: ${gap}; padding: 20px;">${columnsHtml}</div>`;
 };
 
 // Nested block to HTML for fallback
 const nestedBlockToHtml = (block, textColor) => {
     const c = block.content || {};
-    
+
     switch (block.type) {
         case 'text':
             return `<div style="padding: 10px; color: ${textColor};">${c.html || ''}</div>`;
         case 'image':
             if (!c.src) return '';
-            return `<img src="${c.src}" alt="${c.alt || ''}" style="max-width: 100%;" />`;
+            return `<img src="${c.src}" alt="${c.alt || ''}" style="width: 100%; height: auto;" />`;
         case 'button':
             return `<a href="${c.href || '#'}" style="display: inline-block; background-color: ${c.backgroundColor || '#6366f1'}; color: ${c.textColor || '#ffffff'}; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;">${c.text || t('template_builder.default_button')}</a>`;
         default:
@@ -453,7 +453,7 @@ const nestedBlockToHtml = (block, textColor) => {
 // Update iframe content
 const updatePreview = () => {
     if (!iframeRef.value) return;
-    
+
     const html = generatePreviewHtml();
     const iframe = iframeRef.value;
     const doc = iframe.contentDocument || iframe.contentWindow.document;
@@ -462,9 +462,11 @@ const updatePreview = () => {
     doc.close();
 };
 
-// Watch for changes
-watch([() => props.blocks, () => props.settings, () => props.theme], () => {
-    updatePreview();
+// Watch for changes (including mode to handle device switching)
+watch([() => props.blocks, () => props.settings, () => props.theme, () => props.mode], () => {
+    nextTick(() => {
+        updatePreview();
+    });
 }, { deep: true });
 
 onMounted(() => {
@@ -478,7 +480,7 @@ onMounted(() => {
         <div class="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900">
             <!-- Device selector -->
             <div class="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-                <button 
+                <button
                     @click="$emit('update:mode', 'desktop')"
                     :class="mode === 'desktop' ? 'bg-white shadow dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
                     class="rounded-md px-3 py-1.5 text-xs font-medium transition-all"
@@ -487,7 +489,7 @@ onMounted(() => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                 </button>
-                <button 
+                <button
                     @click="$emit('update:mode', 'tablet')"
                     :class="mode === 'tablet' ? 'bg-white shadow dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
                     class="rounded-md px-3 py-1.5 text-xs font-medium transition-all"
@@ -496,7 +498,7 @@ onMounted(() => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                     </svg>
                 </button>
-                <button 
+                <button
                     @click="$emit('update:mode', 'mobile')"
                     :class="mode === 'mobile' ? 'bg-white shadow dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
                     class="rounded-md px-3 py-1.5 text-xs font-medium transition-all"
@@ -509,7 +511,7 @@ onMounted(() => {
 
             <!-- Theme toggle -->
             <div class="flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-                <button 
+                <button
                     @click="$emit('update:theme', 'light')"
                     :class="theme === 'light' ? 'bg-white shadow dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
                     class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
@@ -519,7 +521,7 @@ onMounted(() => {
                     </svg>
                     {{ $t('template_builder.light') }}
                 </button>
-                <button 
+                <button
                     @click="$emit('update:theme', 'dark')"
                     :class="theme === 'dark' ? 'bg-white shadow dark:bg-slate-700' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'"
                     class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
@@ -530,23 +532,34 @@ onMounted(() => {
                     {{ $t('template_builder.dark') }}
                 </button>
             </div>
+
+            <!-- Close preview button -->
+            <button
+                @click="$emit('close')"
+                class="flex items-center gap-1.5 rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {{ $t('template_builder.close_preview') }}
+            </button>
         </div>
 
         <!-- Preview area -->
         <div class="flex flex-1 items-start justify-center overflow-auto p-6">
-            <div 
+            <div
                 class="relative transition-all duration-300"
                 :style="{ width: deviceDimensions[mode].width, maxWidth: '100%' }"
             >
                 <!-- Device frame for mobile/tablet -->
-                <div 
+                <div
                     v-if="mode !== 'desktop'"
                     class="rounded-3xl border-4 border-slate-800 bg-slate-800 p-2 shadow-xl dark:border-slate-600"
                 >
                     <!-- Notch for mobile -->
                     <div v-if="mode === 'mobile'" class="mx-auto mb-2 h-6 w-24 rounded-full bg-slate-700"></div>
-                    
-                    <iframe 
+
+                    <iframe
                         ref="iframeRef"
                         class="h-[600px] w-full rounded-2xl bg-white"
                         :style="{ height: mode === 'mobile' ? '600px' : '800px' }"
@@ -554,7 +567,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Desktop preview (no frame) -->
-                <iframe 
+                <iframe
                     v-else
                     ref="iframeRef"
                     class="min-h-[600px] w-full rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700"

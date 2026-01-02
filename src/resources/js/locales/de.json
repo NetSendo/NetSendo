@@ -25,6 +25,7 @@
         "yes": "Ja",
         "no": "Nein",
         "saving": "Speichern...",
+        "uploading": "Hochladen...",
         "active": "Aktiv",
         "inactive": "Inaktiv",
         "pending": "Ausstehend",
@@ -1778,7 +1779,11 @@
             "buy": "Kaufen",
             "currency_fallback": "EUR",
             "drop_block_here": "Block hier ablegen"
-        }
+        },
+        "close_preview": "Vorschau schließen",
+        "image_too_large": "Das Bild ist zu groß. Maximale Größe: 5MB.",
+        "image_invalid_format": "Ungültiges Bildformat. Erlaubt: JPEG, PNG, GIF, WebP.",
+        "image_upload_error": "Bild konnte nicht hochgeladen werden. Bitte erneut versuchen."
     },
     "fields": {
         "title": "Feldverwaltung",

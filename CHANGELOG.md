@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Template Builder UX Improvements:**
+  - Added "Close Preview" button in the preview panel for easier navigation back to the editor.
+  - Added comprehensive image upload error handling with user-friendly messages for file size limits and invalid formats.
+  - Added loading state indicators during image uploads.
+  - Added translations for new UI elements in EN, PL, DE, ES.
+
+### Fixed
+
+- **Template Preview Stability:**
+
+  - Fixed issue where template preview would disappear when switching between desktop, tablet, and mobile views.
+  - Implemented proper iframe re-rendering logic using `nextTick`.
+
+- **Template Builder Image Display:**
+  - Fixed images appearing as thumbnails in editor preview (desktop & mobile).
+  - Fixed MJML image rendering to ensure images fill column width automatically.
+  - Implemented `fluid-on-mobile` for better responsive behavior in email clients.
+  - Corrected fallback HTML styles to use `width: 100%` instead of `max-width: 100%`.
+
 ## [1.3.4] – Short Description
 
 **Release date:** 2026-01-02

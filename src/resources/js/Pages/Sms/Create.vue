@@ -10,6 +10,10 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import SmsAiAssistant from "@/Components/SmsAiAssistant.vue";
+import ResponsiveTabs from "@/Components/ResponsiveTabs.vue";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 const props = defineProps({
     sms: Object,
@@ -32,6 +36,20 @@ const form = useForm({
 });
 
 const activeTab = ref("content");
+
+// Tab configuration for ResponsiveTabs component
+const smsTabs = computed(() => [
+    {
+        id: 'content',
+        label: t('sms.tabs.content'),
+        emoji: '✏️',
+    },
+    {
+        id: 'settings',
+        label: t('sms.tabs.settings'),
+        emoji: '⚙️',
+    },
+]);
 
 // List filtering
 const listTypeFilter = ref("");
@@ -257,37 +275,11 @@ const submit = (targetStatus = null) => {
                             />
                         </div>
 
-                        <!-- Tabs -->
-                        <div
-                            class="border-b border-slate-200 dark:border-slate-700"
-                        >
-                            <nav class="-mb-px flex space-x-8">
-                                <button
-                                    type="button"
-                                    @click="activeTab = 'content'"
-                                    :class="[
-                                        activeTab === 'content'
-                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300',
-                                        'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
-                                    ]"
-                                >
-                                    {{ $t("sms.tabs.content") }}
-                                </button>
-                                <button
-                                    type="button"
-                                    @click="activeTab = 'settings'"
-                                    :class="[
-                                        activeTab === 'settings'
-                                            ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                            : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300',
-                                        'whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium',
-                                    ]"
-                                >
-                                    {{ $t("sms.tabs.settings") }}
-                                </button>
-                            </nav>
-                        </div>
+                        <!-- Responsive Tabs -->
+                        <ResponsiveTabs
+                            v-model="activeTab"
+                            :tabs="smsTabs"
+                        />
 
                         <!-- Content Tab -->
                         <div

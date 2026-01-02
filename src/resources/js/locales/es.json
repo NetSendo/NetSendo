@@ -25,6 +25,7 @@
         "yes": "Sí",
         "no": "No",
         "saving": "Guardando...",
+        "uploading": "Subiendo...",
         "active": "Activo",
         "inactive": "Inactivo",
         "pending": "Pendiente",
@@ -1660,7 +1661,11 @@
             "buy": "Comprar",
             "currency_fallback": "EUR",
             "drop_block_here": "Suelta el bloque aquí"
-        }
+        },
+        "close_preview": "Cerrar vista previa",
+        "image_too_large": "La imagen es demasiado grande. Máximo: 5MB.",
+        "image_invalid_format": "Formato de imagen inválido. Permitidos: JPEG, PNG, GIF, WebP.",
+        "image_upload_error": "No se pudo subir la imagen. Inténtelo de nuevo."
     },
     "fields": {
         "title": "Gestión de campos",

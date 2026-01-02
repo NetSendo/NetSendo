@@ -38,7 +38,7 @@ const selectedBlock = computed(() => {
     // First, try to find in top-level blocks
     let block = blocks.value.find(b => b.id === selectedBlockId.value);
     if (block) return block;
-    
+
     // If not found, search in nested column blocks
     for (const parentBlock of blocks.value) {
         if (parentBlock.type === 'columns' && parentBlock.content?.columnBlocks) {
@@ -188,14 +188,14 @@ const updateBlock = (blockId, updates) => {
         scheduleAutoSave();
         return;
     }
-    
+
     // If not found, search in nested column blocks
     for (const parentBlock of blocks.value) {
         if (parentBlock.type === 'columns' && parentBlock.content?.columnBlocks) {
             for (let colIndex = 0; colIndex < parentBlock.content.columnBlocks.length; colIndex++) {
                 const columnBlocks = parentBlock.content.columnBlocks[colIndex];
                 if (!columnBlocks) continue;
-                
+
                 const nestedIndex = columnBlocks.findIndex(b => b.id === blockId);
                 if (nestedIndex !== -1) {
                     columnBlocks[nestedIndex] = { ...columnBlocks[nestedIndex], ...updates };
@@ -314,7 +314,7 @@ const saveTemplate = async (isAutoSave = false) => {
 
     try {
         let templateId = props.template?.id;
-        
+
         if (templateId) {
             // Update existing
             await axios.put(route('templates.update', templateId), data);
@@ -331,9 +331,9 @@ const saveTemplate = async (isAutoSave = false) => {
             }
             templateId = response.data.template_id;
         }
-        
+
         lastSaved.value = new Date();
-        
+
         // Generate thumbnail only for manual saves (not auto-save)
         if (!isAutoSave && templateId) {
             await generateThumbnail(templateId);
@@ -358,7 +358,7 @@ const generateThumbnail = async (templateId) => {
             console.warn('Canvas element not found for thumbnail generation');
             return;
         }
-        
+
         // Generate canvas using html2canvas
         const canvas = await html2canvas(canvasElement, {
             scale: 0.5, // Reduce size for thumbnail
@@ -370,20 +370,20 @@ const generateThumbnail = async (templateId) => {
             height: 450,
             windowWidth: 600,
         });
-        
+
         // Convert to blob
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
         if (!blob) return;
-        
+
         // Upload to server
         const formData = new FormData();
         formData.append('thumbnail', blob, 'thumbnail.jpg');
         formData.append('template_id', templateId);
-        
+
         await axios.post(route('api.templates.upload-thumbnail'), formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
-        
+
         console.log('Thumbnail generated successfully');
     } catch (error) {
         console.error('Thumbnail generation failed:', error);
@@ -532,6 +532,7 @@ onBeforeUnmount(() => {
                     :theme="previewTheme"
                     @update:mode="previewMode = $event"
                     @update:theme="previewTheme = $event"
+                    @close="showPreview = false"
                 />
                 <BuilderCanvas
                     v-else

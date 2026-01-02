@@ -27,7 +27,7 @@ watch(() => props.block, (newBlock) => {
     if (newBlock) {
         localContent.value = { ...newBlock.content };
         localSettings.value = { ...newBlock.settings };
-        
+
         // Only update localTextContent when the selected block CHANGES (not on content updates)
         if (newBlock.id !== currentBlockId.value) {
             currentBlockId.value = newBlock.id;
@@ -40,6 +40,10 @@ watch(() => props.block, (newBlock) => {
 const isGenerating = ref(false);
 const aiPrompt = ref('');
 const aiTone = ref('casual');
+
+// Image upload state
+const isUploading = ref(false);
+const uploadError = ref('');
 
 // Update block content
 const updateContent = (key, value) => {
@@ -103,6 +107,24 @@ const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    uploadError.value = '';
+
+    // Client-side validation
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        uploadError.value = t('template_builder.image_too_large');
+        event.target.value = ''; // Reset input
+        return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        uploadError.value = t('template_builder.image_invalid_format');
+        event.target.value = ''; // Reset input
+        return;
+    }
+
+    isUploading.value = true;
     const formData = new FormData();
     formData.append('image', file);
 
@@ -120,6 +142,15 @@ const handleImageUpload = async (event) => {
         }
     } catch (error) {
         console.error('Image upload failed:', error);
+        if (error.response?.status === 422) {
+            const errors = error.response.data.errors;
+            uploadError.value = errors?.image?.[0] || t('template_builder.image_upload_error');
+        } else {
+            uploadError.value = t('template_builder.image_upload_error');
+        }
+    } finally {
+        isUploading.value = false;
+        event.target.value = ''; // Reset input for next upload
     }
 };
 
@@ -181,7 +212,7 @@ const updateProductsCount = (count) => {
                 {{ $t(`template_builder.blocks.${block.type}`) }}
             </h4>
             <div class="flex gap-1">
-                <button 
+                <button
                     @click="$emit('duplicate')"
                     class="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                     :title="$t('template_builder.duplicate')"
@@ -190,7 +221,7 @@ const updateProductsCount = (count) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                 </button>
-                <button 
+                <button
                     @click="$emit('delete')"
                     class="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                     :title="$t('template_builder.delete')"
@@ -214,21 +245,26 @@ const updateProductsCount = (count) => {
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
-                    <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        {{ $t('template_builder.upload_logo') }}
-                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+                    <label :class="['flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm transition-colors', isUploading ? 'cursor-wait opacity-50' : '', uploadError ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600']">
+                        <svg v-if="isUploading" class="h-5 w-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span :class="uploadError ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">{{ isUploading ? $t('common.uploading') : $t('template_builder.upload_logo') }}</span>
+                        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="handleImageUpload" :disabled="isUploading" />
                     </label>
+                    <p v-if="uploadError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ uploadError }}</p>
                 </div>
 
                 <!-- Logo width -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.logo_width') }}</label>
-                    <input 
-                        type="range" 
-                        :value="localContent.logoWidth" 
+                    <input
+                        type="range"
+                        :value="localContent.logoWidth"
                         @input="updateContent('logoWidth', parseInt($event.target.value))"
-                        min="50" 
+                        min="50"
                         max="300"
                         class="w-full"
                     />
@@ -239,15 +275,15 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
                     <div class="flex gap-2">
-                        <input 
-                            type="color" 
-                            :value="localContent.backgroundColor" 
+                        <input
+                            type="color"
+                            :value="localContent.backgroundColor"
                             @input="updateContent('backgroundColor', $event.target.value)"
                             class="h-10 w-14 cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />
-                        <input 
-                            type="text" 
-                            :value="localContent.backgroundColor" 
+                        <input
+                            type="text"
+                            :value="localContent.backgroundColor"
                             @input="updateContent('backgroundColor', $event.target.value)"
                             class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
@@ -262,7 +298,7 @@ const updateProductsCount = (count) => {
                 <!-- Rich text editor (simplified) -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.content') }}</label>
-                    <textarea 
+                    <textarea
                         v-model="localTextContent"
                         @blur="updateContent('html', '<p>' + localTextContent + '</p>')"
                         rows="6"
@@ -275,8 +311,8 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
                     <div class="flex gap-1">
-                        <button 
-                            v-for="opt in alignmentOptions" 
+                        <button
+                            v-for="opt in alignmentOptions"
                             :key="opt.value"
                             @click="updateContent('alignment', opt.value)"
                             :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
@@ -297,7 +333,7 @@ const updateProductsCount = (count) => {
                         </svg>
                         {{ $t('template_builder.ai_assistant') }}
                     </label>
-                    <textarea 
+                    <textarea
                         v-model="aiPrompt"
                         rows="2"
                         class="mb-2 w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm dark:border-indigo-700 dark:bg-slate-800 dark:text-white"
@@ -309,14 +345,14 @@ const updateProductsCount = (count) => {
                         <option value="persuasive">{{ $t('template_builder.tone_persuasive') }}</option>
                     </select>
                     <div class="flex gap-2">
-                        <button 
+                        <button
                             @click="generateAiContent"
                             :disabled="isGenerating"
                             class="flex-1 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
                         >
                             {{ isGenerating ? $t('template_builder.generating') : $t('template_builder.generate') }}
                         </button>
-                        <button 
+                        <button
                             @click="improveText('improve')"
                             :disabled="isGenerating || !localContent.html"
                             class="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-medium text-indigo-600 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-700 dark:text-indigo-300"
@@ -340,19 +376,24 @@ const updateProductsCount = (count) => {
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
-                    <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        {{ $t('template_builder.upload_image') }}
-                        <input type="file" accept="image/*" class="hidden" @change="handleImageUpload" />
+                    <label :class="['flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm transition-colors', isUploading ? 'cursor-wait opacity-50' : '', uploadError ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-slate-200 bg-slate-50 hover:border-indigo-300 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600']">
+                        <svg v-if="isUploading" class="h-5 w-5 animate-spin text-indigo-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span :class="uploadError ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">{{ isUploading ? $t('common.uploading') : $t('template_builder.upload_image') }}</span>
+                        <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="handleImageUpload" :disabled="isUploading" />
                     </label>
+                    <p v-if="uploadError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ uploadError }}</p>
                 </div>
 
                 <!-- Alt text -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alt_text') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.alt" 
+                    <input
+                        type="text"
+                        :value="localContent.alt"
                         @input="updateContent('alt', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         :placeholder="$t('template_builder.alt_placeholder')"
@@ -362,9 +403,9 @@ const updateProductsCount = (count) => {
                 <!-- Link URL -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.link_url') }}</label>
-                    <input 
-                        type="url" 
-                        :value="localContent.href" 
+                    <input
+                        type="url"
+                        :value="localContent.href"
                         @input="updateContent('href', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         placeholder="https://"
@@ -375,8 +416,8 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
                     <div class="flex gap-1">
-                        <button 
-                            v-for="opt in alignmentOptions" 
+                        <button
+                            v-for="opt in alignmentOptions"
                             :key="opt.value"
                             @click="updateContent('alignment', opt.value)"
                             :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
@@ -397,9 +438,9 @@ const updateProductsCount = (count) => {
                 <!-- Button text -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.text" 
+                    <input
+                        type="text"
+                        :value="localContent.text"
                         @input="updateContent('text', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -408,9 +449,9 @@ const updateProductsCount = (count) => {
                 <!-- Button URL -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.url') }}</label>
-                    <input 
-                        type="url" 
-                        :value="localContent.href" 
+                    <input
+                        type="url"
+                        :value="localContent.href"
                         @input="updateContent('href', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         placeholder="https://"
@@ -421,18 +462,18 @@ const updateProductsCount = (count) => {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
-                        <input 
-                            type="color" 
-                            :value="localContent.backgroundColor" 
+                        <input
+                            type="color"
+                            :value="localContent.backgroundColor"
                             @input="updateContent('backgroundColor', $event.target.value)"
                             class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.text_color') }}</label>
-                        <input 
-                            type="color" 
-                            :value="localContent.textColor" 
+                        <input
+                            type="color"
+                            :value="localContent.textColor"
                             @input="updateContent('textColor', $event.target.value)"
                             class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />
@@ -442,8 +483,8 @@ const updateProductsCount = (count) => {
                 <!-- Border radius -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.border_radius') }}</label>
-                    <select 
-                        :value="localContent.borderRadius" 
+                    <select
+                        :value="localContent.borderRadius"
                         @change="updateContent('borderRadius', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     >
@@ -459,8 +500,8 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.alignment') }}</label>
                     <div class="flex gap-1">
-                        <button 
-                            v-for="opt in alignmentOptions" 
+                        <button
+                            v-for="opt in alignmentOptions"
                             :key="opt.value"
                             @click="updateContent('alignment', opt.value)"
                             :class="localContent.alignment === opt.value ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'"
@@ -481,15 +522,15 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.line_color') }}</label>
                     <div class="flex gap-2">
-                        <input 
-                            type="color" 
-                            :value="localContent.color" 
+                        <input
+                            type="color"
+                            :value="localContent.color"
                             @input="updateContent('color', $event.target.value)"
                             class="h-10 w-14 cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />
-                        <input 
-                            type="text" 
-                            :value="localContent.color" 
+                        <input
+                            type="text"
+                            :value="localContent.color"
                             @input="updateContent('color', $event.target.value)"
                             class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
@@ -503,8 +544,8 @@ const updateProductsCount = (count) => {
             <div class="space-y-4">
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.height') }}</label>
-                    <select 
-                        :value="localContent.height" 
+                    <select
+                        :value="localContent.height"
                         @change="updateContent('height', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     >
@@ -525,8 +566,8 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') }}</label>
                     <div class="flex gap-2">
-                        <button 
-                            v-for="n in [2, 3, 4]" 
+                        <button
+                            v-for="n in [2, 3, 4]"
                             :key="n"
                             @click="updateContent('columns', n)"
                             :class="localContent.columns === n ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'"
@@ -538,8 +579,8 @@ const updateProductsCount = (count) => {
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.gap') }}</label>
-                    <select 
-                        :value="localContent.gap" 
+                    <select
+                        :value="localContent.gap"
                         @change="updateContent('gap', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     >
@@ -571,9 +612,9 @@ const updateProductsCount = (count) => {
                 <!-- Product title -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_title') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.title" 
+                    <input
+                        type="text"
+                        :value="localContent.title"
                         @input="updateContent('title', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -582,8 +623,8 @@ const updateProductsCount = (count) => {
                 <!-- Product description -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.description') }}</label>
-                    <textarea 
-                        :value="localContent.description" 
+                    <textarea
+                        :value="localContent.description"
                         @input="updateContent('description', $event.target.value)"
                         rows="2"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
@@ -594,18 +635,18 @@ const updateProductsCount = (count) => {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.price') }}</label>
-                        <input 
-                            type="text" 
-                            :value="localContent.price" 
+                        <input
+                            type="text"
+                            :value="localContent.price"
                             @input="updateContent('price', $event.target.value)"
                             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.old_price') }}</label>
-                        <input 
-                            type="text" 
-                            :value="localContent.oldPrice" 
+                        <input
+                            type="text"
+                            :value="localContent.oldPrice"
                             @input="updateContent('oldPrice', $event.target.value)"
                             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                             :placeholder="$t('template_builder.optional')"
@@ -616,9 +657,9 @@ const updateProductsCount = (count) => {
                 <!-- Button -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.buttonText" 
+                    <input
+                        type="text"
+                        :value="localContent.buttonText"
                         @input="updateContent('buttonText', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -626,9 +667,9 @@ const updateProductsCount = (count) => {
 
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_url') }}</label>
-                    <input 
-                        type="url" 
-                        :value="localContent.buttonUrl" 
+                    <input
+                        type="url"
+                        :value="localContent.buttonUrl"
                         @input="updateContent('buttonUrl', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         placeholder="https://"
@@ -644,8 +685,8 @@ const updateProductsCount = (count) => {
                     <label class="mb-2 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.social_icons') }}</label>
                     <div class="space-y-2">
                         <div v-for="option in socialOptions" :key="option.type" class="flex items-center gap-3">
-                            <input 
-                                type="checkbox" 
+                            <input
+                                type="checkbox"
                                 :id="`social-${option.type}`"
                                 :checked="(localContent.icons || []).some(i => i.type === option.type)"
                                 @change="toggleSocialIcon(option.type, $event.target.checked)"
@@ -660,8 +701,8 @@ const updateProductsCount = (count) => {
                 <div v-if="(localContent.icons || []).length > 0" class="space-y-3">
                     <div v-for="icon in (localContent.icons || [])" :key="icon.type" class="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                         <label class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">{{ icon.type }} URL</label>
-                        <input 
-                            type="url" 
+                        <input
+                            type="url"
                             :value="icon.url"
                             @input="updateSocialUrl(icon.type, $event.target.value)"
                             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
@@ -678,8 +719,8 @@ const updateProductsCount = (count) => {
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') }}</label>
                     <div class="flex gap-2">
-                        <button 
-                            v-for="n in [2, 3, 4]" 
+                        <button
+                            v-for="n in [2, 3, 4]"
                             :key="n"
                             @click="updateContent('columns', n)"
                             :class="localContent.columns === n ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'"
@@ -691,8 +732,8 @@ const updateProductsCount = (count) => {
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.products_count') }}</label>
-                    <select 
-                        :value="(localContent.products || []).length" 
+                    <select
+                        :value="(localContent.products || []).length"
                         @change="updateProductsCount(parseInt($event.target.value))"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     >
@@ -711,9 +752,9 @@ const updateProductsCount = (count) => {
             <div class="space-y-4">
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.company_name') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.companyName" 
+                    <input
+                        type="text"
+                        :value="localContent.companyName"
                         @input="updateContent('companyName', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -721,9 +762,9 @@ const updateProductsCount = (count) => {
 
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.address') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.address" 
+                    <input
+                        type="text"
+                        :value="localContent.address"
                         @input="updateContent('address', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -731,9 +772,9 @@ const updateProductsCount = (count) => {
 
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.unsubscribe_text') }}</label>
-                    <input 
-                        type="text" 
-                        :value="localContent.unsubscribeText" 
+                    <input
+                        type="text"
+                        :value="localContent.unsubscribeText"
                         @input="updateContent('unsubscribeText', $event.target.value)"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -742,18 +783,18 @@ const updateProductsCount = (count) => {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
-                        <input 
-                            type="color" 
-                            :value="localContent.backgroundColor" 
+                        <input
+                            type="color"
+                            :value="localContent.backgroundColor"
                             @input="updateContent('backgroundColor', $event.target.value)"
                             class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.text_color') }}</label>
-                        <input 
-                            type="color" 
-                            :value="localContent.textColor" 
+                        <input
+                            type="color"
+                            :value="localContent.textColor"
                             @input="updateContent('textColor', $event.target.value)"
                             class="h-10 w-full cursor-pointer rounded border border-slate-200 dark:border-slate-700"
                         />

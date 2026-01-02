@@ -25,6 +25,7 @@
         "yes": "Yes",
         "no": "No",
         "saving": "Saving...",
+        "uploading": "Uploading...",
         "active": "Active",
         "inactive": "Inactive",
         "pending": "Pending",
@@ -1710,7 +1711,11 @@
             "buy": "Buy",
             "currency_fallback": "USD",
             "drop_block_here": "Drop block here"
-        }
+        },
+        "close_preview": "Close Preview",
+        "image_too_large": "Image is too large. Maximum size is 5MB.",
+        "image_invalid_format": "Invalid image format. Allowed: JPEG, PNG, GIF, WebP.",
+        "image_upload_error": "Failed to upload image. Please try again."
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -3859,6 +3864,53 @@
             "from_number": "Sender ID / From Number",
             "daily_limit": "Daily Limit",
             "daily_limit_placeholder": "e.g. 1000 (leave empty for unlimited)"
+    }
+},
+    "external_pages": {
+        "index": {
+            "title": "External Pages",
+            "add_new": "Add New Page",
+            "empty": "No external pages found. Create one to get started."
+        },
+        "create": {
+            "title": "Create External Page"
+        },
+        "edit": {
+            "title": "Edit External Page"
+        },
+        "labels": {
+            "name": "Name",
+            "target_url": "Target URL",
+            "type": "Type",
+            "actions": "Actions"
+        },
+        "types": {
+            "redirect": "Redirect",
+            "proxy": "Content Proxy"
+        },
+        "actions": {
+            "link": "Link",
+            "save": "Save Page",
+            "saved": "Saved."
+        },
+        "fields": {
+            "name": "Internal Name",
+            "url": "Page URL",
+            "redirect_mode": "Redirect Mode (User is redirected to the URL)"
+        },
+        "hints": {
+            "url_fetch": "NetSendo will fetch/redirect to this URL.",
+            "proxy_mode": "If unchecked, NetSendo will fetch the content and display it (Proxy Mode), allowing for placeholder replacement.",
+            "custom_fields": "Since custom fields are dynamic, please enter the keys you wish to share/replace (comma separated)."
+        },
+        "sections": {
+            "shared_fields": "Shared System Fields",
+            "custom_fields": "Shared Custom Fields (Optional)"
+        },
+        "messages": {
+            "confirm_delete": "Are you sure you want to delete this page?",
+            "link_copied": "Link copied to clipboard!"
+        }
     }
 }
 }
