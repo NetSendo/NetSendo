@@ -115,7 +115,7 @@ const toggleCategory = (category) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
                         {{ $t('inserts.title') }}
@@ -147,9 +147,9 @@ const toggleCategory = (category) => {
             </div>
         </template>
 
-        <div class="grid gap-8 lg:grid-cols-2">
+        <div class="grid gap-8 xl:grid-cols-2">
             <!-- System Variables -->
-            <div>
+            <div class="min-w-0">
                 <div class="mb-4 flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
                         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,7 +288,7 @@ const toggleCategory = (category) => {
             </div>
 
             <!-- User Inserts & Signatures -->
-            <div class="space-y-8">
+            <div class="space-y-8 min-w-0">
                 <!-- Inserts -->
                 <div>
                     <div class="mb-4 flex items-center gap-3">
@@ -357,13 +357,13 @@ const toggleCategory = (category) => {
                                 <div class="p-4 text-center">
                                     <p class="mb-3 text-sm text-white">{{ $t('inserts.confirm_delete') }}</p>
                                     <div class="flex justify-center gap-2">
-                                        <button 
+                                        <button
                                             @click="showDeleteConfirm = null"
                                             class="rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-500"
                                         >
                                             {{ $t('common.cancel') }}
                                         </button>
-                                        <button 
+                                        <button
                                             @click="confirmDelete(insert.id)"
                                             class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500"
                                         >
@@ -449,13 +449,13 @@ const toggleCategory = (category) => {
                                 <div class="p-4 text-center">
                                     <p class="mb-3 text-sm text-white">{{ $t('inserts.confirm_delete') }}</p>
                                     <div class="flex justify-center gap-2">
-                                        <button 
+                                        <button
                                             @click="showDeleteConfirm = null"
                                             class="rounded-lg bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-500"
                                         >
                                             {{ $t('common.cancel') }}
                                         </button>
-                                        <button 
+                                        <button
                                             @click="confirmDelete(signature.id)"
                                             class="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500"
                                         >

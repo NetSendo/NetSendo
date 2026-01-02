@@ -72,6 +72,10 @@ class EventServiceProvider extends ServiceProvider
         SubscriptionAnniversary::class => [
             TriggerAutomationsListener::class,
         ],
+        // System events
+        \App\Events\UserTimezoneUpdated::class => [
+            \App\Listeners\SyncWebinarTimezonesOnUserUpdate::class,
+        ],
     ];
 
     /**

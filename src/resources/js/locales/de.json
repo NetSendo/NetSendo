@@ -3178,6 +3178,9 @@
         }
     },
     "webinars": {
+        "timezone": "Zeitzone",
+        "timezone_default": "Standard (von Ihrem Konto)",
+        "timezone_help": "Wählen Sie eine Zeitzone für dieses Webinar. Wenn Standard, wird die Zeitzone Ihres Kontos verwendet.",
         "title": "Webinare",
         "chat": {
             "title": "Chat",
@@ -3503,5 +3506,51 @@
             "daily_limit": "Tageslimit",
             "daily_limit_placeholder": "z.B. 1000 (leer lassen für unbegrenzt)"
     }
-}
+},
+    "external_pages": {
+        "index": {
+            "title": "External Pages",
+            "add_new": "Add New Page",
+            "empty": "No external pages found. Create one to get started."
+        },
+        "create": {
+            "title": "Create External Page"
+        },
+        "edit": {
+            "title": "Edit External Page"
+        },
+        "labels": {
+            "name": "Name",
+            "target_url": "Target URL",
+            "type": "Type",
+            "actions": "Actions"
+        },
+        "types": {
+            "redirect": "Redirect",
+            "proxy": "Content Proxy"
+        },
+        "actions": {
+            "link": "Link",
+            "save": "Save Page",
+            "saved": "Saved."
+        },
+        "fields": {
+            "name": "Internal Name",
+            "url": "Page URL",
+            "redirect_mode": "Redirect Mode (User is redirected to the URL)"
+        },
+        "hints": {
+            "url_fetch": "NetSendo will fetch/redirect to this URL.",
+            "proxy_mode": "If unchecked, NetSendo will fetch the content and display it (Proxy Mode), allowing for placeholder replacement.",
+            "custom_fields": "Since custom fields are dynamic, please enter the keys you wish to share/replace (comma separated)."
+        },
+        "sections": {
+            "shared_fields": "Shared System Fields",
+            "custom_fields": "Shared Custom Fields (Optional)"
+        },
+        "messages": {
+            "confirm_delete": "Are you sure you want to delete this page?",
+            "link_copied": "Link copied to clipboard!"
+        }
+    }
 }

@@ -96,6 +96,14 @@ class AutoWebinarSchedule extends Model
         return true;
     }
 
+    /**
+     * Get effective timezone (schedule's own, or webinar's effective).
+     */
+    public function getEffectiveTimezoneAttribute(): string
+    {
+        return $this->timezone ?? $this->webinar->effective_timezone ?? 'UTC';
+    }
+
     // =====================================
     // Methods
     // =====================================

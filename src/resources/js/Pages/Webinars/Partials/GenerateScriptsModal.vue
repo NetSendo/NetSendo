@@ -39,14 +39,15 @@ const handleSubmit = () => {
                         </label>
                         <div class="flex items-center gap-4">
                             <input
-                                v-model.number="form.density"
+                                :value="form.density"
+                                @input="form.density = parseFloat($event.target.value)"
                                 type="range"
-                                min="0.5"
-                                max="10"
-                                step="0.5"
-                                class="flex-1"
+                                :min="0.5"
+                                :max="10"
+                                :step="0.5"
+                                class="flex-1 accent-purple-600"
                             />
-                            <span class="text-white font-mono w-12 text-right">{{ form.density }}</span>
+                            <span class="text-white font-mono w-12 text-right">{{ form.density.toFixed(1) }}</span>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">
                             Szacowana liczba wiadomości: ~{{ Math.round(form.density * durationMinutes) }}

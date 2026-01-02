@@ -11,6 +11,9 @@ return [
     'error_end' => 'No se pudo finalizar el seminario web.',
     'status_updated' => 'El estado del seminario web ha sido cambiado.',
     'status_change_not_allowed' => 'Este cambio de estado no está permitido.',
+    'timezone' => 'Zona horaria',
+    'timezone_default' => 'Predeterminado (de su cuenta)',
+    'timezone_help' => 'Seleccione una zona horaria para este seminario web. Si se deja predeterminado, se utilizará la zona horaria de su cuenta.',
 
     'edit' => [
         'public_link' => 'Enlace de registro',
@@ -36,6 +39,7 @@ return [
             'closed' => 'El registro para este seminario web está cerrado.',
             'benefits' => '¿Qué aprenderás?',
             'timezone' => 'Tu zona horaria',
+            'times_in_timezone' => 'Horarios en zona horaria :timezone',
         ],
         'registered' => [
             'success_title' => '¡Felicidades, :name estás registrado/a!',
@@ -206,6 +210,8 @@ return [
         'simulated_likes' => 'Me gusta simulados',
         'show_randomly' => 'Mostrar aleatoriamente (70% probabilidad)',
         'duplicate' => 'Duplicar',
+        'delete_confirm' => '¿Estás seguro de que quieres eliminar este seminario web?',
+        'delete_confirm' => '¿Estás seguro de que quieres eliminar este seminario web?',
         'confirm_delete' => '¿Estás seguro de que quieres eliminar este mensaje?',
         'confirm_generate' => 'Esto generará mensajes aleatorios. ¿Continuar?',
         'confirm_clear' => '¿Estás seguro de que quieres eliminar todos los mensajes del escenario?',

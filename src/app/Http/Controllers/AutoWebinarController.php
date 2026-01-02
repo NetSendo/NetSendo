@@ -23,6 +23,9 @@ class AutoWebinarController extends Controller
             'scheduleTypes' => AutoWebinarSchedule::getTypes(),
             'daysOfWeek' => AutoWebinarSchedule::getDaysOfWeek(),
             'chatScriptsPreview' => $this->autoWebinarService->previewChatTimeline($webinar),
+            'userTimezone' => auth()->user()->timezone ?? 'UTC',
+            'webinarTimezone' => $webinar->effective_timezone,
+            'timezones' => \DateTimeZone::listIdentifiers(),
         ]);
     }
 

@@ -259,6 +259,22 @@ class Webinar extends Model
     }
 
     /**
+     * Get effective timezone (webinar's own or inherited from user).
+     */
+    public function getEffectiveTimezoneAttribute(): string
+    {
+        return $this->timezone ?? $this->user->timezone ?? 'UTC';
+    }
+
+    /**
+     * Check if timezone is overridden (not inherited from user).
+     */
+    public function hasCustomTimezone(): bool
+    {
+        return !empty($this->timezone) && $this->timezone !== ($this->user->timezone ?? 'UTC');
+    }
+
+    /**
      * Get the thank you URL (from page or custom).
      */
     public function getThankYouUrlAttribute(): ?string

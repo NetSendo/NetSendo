@@ -20,6 +20,7 @@ class PublicWebinarController extends Controller
     {
         $webinar = Webinar::where('slug', $slug)
             ->whereIn('status', [Webinar::STATUS_SCHEDULED, Webinar::STATUS_LIVE, Webinar::STATUS_PUBLISHED])
+            ->with(['user', 'schedule'])
             ->firstOrFail();
 
         // Track page view
@@ -37,12 +38,16 @@ class PublicWebinarController extends Controller
         // Get webinar's timezone or user's timezone as default
         $defaultTimezone = $webinar->timezone ?? $webinar->user->timezone ?? 'Europe/Warsaw';
 
+        // Schedule timezone for displaying session times
+        $scheduleTimezone = $webinar->schedule?->timezone ?? $webinar->timezone ?? $webinar->user->timezone ?? 'UTC';
+
         return view('webinar.register', [
             'webinar' => $webinar,
             'nextSessions' => $nextSessions,
             'canRegister' => $webinar->canRegister(),
             'timezones' => $timezones,
             'defaultTimezone' => $defaultTimezone,
+            'scheduleTimezone' => $scheduleTimezone,
         ]);
     }
 
@@ -147,6 +152,9 @@ class PublicWebinarController extends Controller
             'products' => $webinar->products()->active()->get(),
             'pinnedProduct' => $webinar->products()->pinned()->first(),
             'sessionStartTime' => $sessionStartTime?->toIso8601String(),
+            'sessionStartTimeFormatted' => $sessionStartTime
+                ? $sessionStartTime->copy()->setTimezone($registrationTimezone)->format('d.m.Y H:i')
+                : null,
             'shouldPlay' => $shouldPlay,
             'sessionEnded' => $sessionEnded,
             'hasReplay' => $hasReplay,

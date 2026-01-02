@@ -11,6 +11,9 @@ return [
     'error_end' => 'Could not end webinar.',
     'status_updated' => 'Webinar status has been changed.',
     'status_change_not_allowed' => 'This status change is not allowed.',
+    'timezone' => 'Timezone',
+    'timezone_default' => 'Default (from your account)',
+    'timezone_help' => 'Select a timezone for this webinar. if left default, the webinar will use your account timezone.',
 
     'edit' => [
         'public_link' => 'Registration Link',
@@ -36,6 +39,7 @@ return [
             'closed' => 'Registration for this webinar is closed.',
             'benefits' => 'What you will learn?',
             'timezone' => 'Your timezone',
+            'times_in_timezone' => 'Times shown in :timezone',
         ],
         'registered' => [
             'success_title' => 'Congratulations, :name you are registered!',
@@ -138,6 +142,8 @@ return [
         'start' => 'Start Webinar',
         'end' => 'End Webinar',
         'confirm_end' => 'Are you sure you want to end the webinar?',
+        'delete_confirm' => 'Are you sure you want to delete this webinar?',
+        'delete_confirm' => 'Are you sure you want to delete this webinar?',
         'video_preview' => 'Video Preview',
         'configure_youtube' => 'Configure YouTube Live ID in webinar settings to see preview',
         'no_attendees' => 'No attendees yet',

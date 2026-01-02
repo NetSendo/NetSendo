@@ -7,26 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.5] – Universal Timezone Management
+
+**Release date:** 2026-01-02
+
 ### Added
 
+- **Universal Webinar Timezone Management:**
+
+  - Implemented "Inherited" timezone logic for Webinars (defaults to User timezone) and Auto-Webinars (defaults to Webinar timezone).
+  - Added `UserTimezoneUpdated` event listener to automatically sync specific webinar timezones when user changes account timezone.
+  - Added `getEffectiveTimezoneAttribute` to models for transparent timezone resolution.
+  - New "Default" option in timezone selectors reflecting the inherited value.
+  - UI updates in Webinar Edit and Auto-Config pages.
+  - Full translations for new timezone features in PL, EN, DE, ES.
+
 - **Template Builder UX Improvements:**
-  - Added "Close Preview" button in the preview panel for easier navigation back to the editor.
-  - Added comprehensive image upload error handling with user-friendly messages for file size limits and invalid formats.
+  - Added "Close Preview" button in the preview panel.
+  - Added comprehensive image upload error handling with user-friendly messages.
   - Added loading state indicators during image uploads.
   - Added translations for new UI elements in EN, PL, DE, ES.
 
 ### Fixed
 
-- **Template Preview Stability:**
+- **Webinar Timezone Logic:**
 
-  - Fixed issue where template preview would disappear when switching between desktop, tablet, and mobile views.
-  - Implemented proper iframe re-rendering logic using `nextTick`.
+  - Fixed migration to correctly handle nullable `timezone` column for inheritance.
+  - Fixed session start times on watch/registration pages to correctly respect timezone.
+  - Fixed issue where changing user timezone wouldn't update relevant webinars.
 
-- **Template Builder Image Display:**
-  - Fixed images appearing as thumbnails in editor preview (desktop & mobile).
-  - Fixed MJML image rendering to ensure images fill column width automatically.
-  - Implemented `fluid-on-mobile` for better responsive behavior in email clients.
-  - Corrected fallback HTML styles to use `width: 100%` instead of `max-width: 100%`.
+- **Frontend & UI Fixes:**
+  - Fixed syntax error in `Edit.vue` (extra closing div).
+  - Fixed missing translation keys for timezone fields in JSON locales.
+  - Fixed Template Preview disappearing on mobile view switch.
+  - Fixed MJML image rendering issues (thumbnails, width).
+  - Fixed layout overlap on Inserts page on small screens.
+  - Fixed Scenario Builder visibility issues in light mode.
+  - Fixed "Generate random scenario" functionality and density slider validation.
 
 ## [1.3.4] – Short Description
 

@@ -58,6 +58,18 @@ class User extends Authenticatable
     }
 
     /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            if ($user->wasChanged('timezone')) {
+                event(new \App\Events\UserTimezoneUpdated($user, $user->getOriginal('timezone')));
+            }
+        });
+    }
+
+    /**
      * Check if user has 2FA enabled
      */
     public function hasTwoFactorEnabled(): bool

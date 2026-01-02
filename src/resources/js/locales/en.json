@@ -3540,6 +3540,9 @@
         }
     },
     "webinars": {
+        "timezone": "Timezone",
+        "timezone_default": "Default (from your account)",
+        "timezone_help": "Select a timezone for this webinar. If left default, the webinar will use your account timezone.",
         "title": "Webinars",
         "chat": {
             "title": "Chat",
@@ -3912,5 +3915,4 @@
             "link_copied": "Link copied to clipboard!"
         }
     }
-}
 }

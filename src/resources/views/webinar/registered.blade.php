@@ -22,13 +22,14 @@
 
         <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
             <p class="text-sm opacity-75 mb-2">{{ __('webinars.public.registered.starts_at') }}</p>
-            @if($registration->session && $registration->session->scheduled_at)
-                <p class="text-2xl font-bold">{{ $registration->session->scheduled_at->format('d.m.Y') }} o {{ $registration->session->scheduled_at->format('H:i') }}</p>
-                @if($registration->timezone)
-                    <p class="text-sm opacity-60 mt-1">({{ $registration->timezone }})</p>
-                @endif
-            @elseif($webinar->scheduled_at)
-                <p class="text-2xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }} o {{ $webinar->scheduled_at->format('H:i') }}</p>
+            @php
+                $displayTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
+                $sessionTime = $registration->session?->scheduled_at ?? $webinar->scheduled_at;
+                $displayTime = $sessionTime ? $sessionTime->copy()->setTimezone($displayTimezone) : null;
+            @endphp
+            @if($displayTime)
+                <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} o {{ $displayTime->format('H:i') }}</p>
+                <p class="text-sm opacity-60 mt-1">({{ $displayTimezone }})</p>
             @else
                 <p class="text-2xl font-bold">{{ __('webinars.public.registered.soon') }}</p>
             @endif

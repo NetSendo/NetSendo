@@ -11,6 +11,9 @@ return [
     'error_end' => 'Webinar konnte nicht beendet werden.',
     'status_updated' => 'Webinar-Status wurde geändert.',
     'status_change_not_allowed' => 'Diese Statusänderung ist nicht erlaubt.',
+    'timezone' => 'Zeitzone',
+    'timezone_default' => 'Standard (von Ihrem Konto)',
+    'timezone_help' => 'Wählen Sie eine Zeitzone für dieses Webinar. Wenn Standard, wird die Zeitzone Ihres Kontos verwendet.',
 
     'edit' => [
         'public_link' => 'Registrierungslink',
@@ -36,6 +39,7 @@ return [
             'closed' => 'Die Registrierung für dieses Webinar ist geschlossen.',
             'benefits' => 'Was Sie lernen werden?',
             'timezone' => 'Ihre Zeitzone',
+            'times_in_timezone' => 'Zeiten in :timezone angegeben',
         ],
         'registered' => [
             'success_title' => 'Herzlichen Glückwunsch, :name Sie sind angemeldet!',

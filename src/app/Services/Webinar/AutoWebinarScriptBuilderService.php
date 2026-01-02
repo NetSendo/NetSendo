@@ -146,7 +146,7 @@ class AutoWebinarScriptBuilderService
     public function generateRandomScript(
         Webinar $webinar,
         int $durationSeconds,
-        int $density = 2,
+        float $density = 2,
         array $options = []
     ): int {
         // Calculate total messages based on density (messages per minute)

@@ -201,8 +201,8 @@ const getTypeColor = (type) => {
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold text-white">{{ $t('webinars.scenario.title') }}</h1>
-                    <p class="text-gray-400">{{ webinar.name }}</p>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $t('webinars.scenario.title') }}</h1>
+                    <p class="text-gray-600 dark:text-gray-400">{{ webinar.name }}</p>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -237,28 +237,28 @@ const getTypeColor = (type) => {
 
             <!-- Stats -->
             <div class="grid grid-cols-4 gap-4 mb-6">
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <p class="text-2xl font-bold text-white">{{ scripts.length }}</p>
-                    <p class="text-sm text-gray-400">{{ $t('webinars.scenario.messages') }}</p>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ scripts.length }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('webinars.scenario.messages') }}</p>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <p class="text-2xl font-bold text-white">{{ Math.round(scripts.length / ((webinar.duration_minutes || 60))) }}/min</p>
-                    <p class="text-sm text-gray-400">{{ $t('webinars.scenario.avg_density') }}</p>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ Math.round(scripts.length / ((webinar.duration_minutes || 60))) }}/min</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('webinars.scenario.avg_density') }}</p>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <p class="text-2xl font-bold text-white">{{ scripts.filter(s => s.message_type === 'question').length }}</p>
-                    <p class="text-sm text-gray-400">{{ $t('webinars.scenario.questions') }}</p>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ scripts.filter(s => s.message_type === 'question').length }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('webinars.scenario.questions') }}</p>
                 </div>
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <p class="text-2xl font-bold text-white">{{ scripts.filter(s => s.message_type === 'testimonial').length }}</p>
-                    <p class="text-sm text-gray-400">{{ $t('webinars.scenario.testimonials') }}</p>
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ scripts.filter(s => s.message_type === 'testimonial').length }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('webinars.scenario.testimonials') }}</p>
                 </div>
             </div>
 
             <!-- Timeline -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm">
                 <div v-if="scripts.length === 0" class="p-12 text-center">
-                    <p class="text-gray-400 mb-4">{{ $t('webinars.scenario.no_messages') }}</p>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.scenario.no_messages') }}</p>
                     <button
                         @click="showAddForm = true"
                         class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors"

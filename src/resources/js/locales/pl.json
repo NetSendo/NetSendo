@@ -3677,6 +3677,9 @@
         }
     },
     "webinars": {
+        "timezone": "Strefa czasowa",
+        "timezone_default": "Domyślna (z Twojego konta)",
+        "timezone_help": "Wybierz strefę czasową dla tego webinaru. Jeśli zostawisz domyślną, webinar będzie używał strefy z Twojego konta.",
         "title": "Webinary",
         "chat": {
             "title": "Czat",
@@ -4049,5 +4052,4 @@
             "link_copied": "Link skopiowany do schowka!"
         }
     }
-}
 }

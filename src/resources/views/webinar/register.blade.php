@@ -31,13 +31,15 @@
                     <p class="text-sm uppercase tracking-wide opacity-75 mb-2">{{ __('webinars.public.register.starts_at') }}</p>
                     <p class="text-3xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }}</p>
                     <p class="text-2xl">{{ __('webinars.public.register.at_hour') }} {{ $webinar->scheduled_at->format('H:i') }}</p>
+                    <p class="text-sm opacity-60 mt-1">({{ $scheduleTimezone }})</p>
                 </div>
             @endif
 
             <!-- Session Times (for auto-webinars) -->
             @if($webinar->isAutoWebinar() && count($nextSessions) > 0)
                 <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
-                    <h3 class="text-lg font-semibold mb-4 text-center">{{ __('webinars.public.register.choose_date') }}</h3>
+                    <h3 class="text-lg font-semibold mb-2 text-center">{{ __('webinars.public.register.choose_date') }}</h3>
+                    <p class="text-sm opacity-60 text-center mb-4">{{ __('webinars.public.register.times_in_timezone', ['timezone' => $scheduleTimezone]) }}</p>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         @foreach($nextSessions as $session)
                             <label class="cursor-pointer">

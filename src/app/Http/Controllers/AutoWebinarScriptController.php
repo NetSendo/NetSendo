@@ -225,7 +225,7 @@ class AutoWebinarScriptController extends Controller
         $this->authorize('update', $webinar);
 
         $validated = $request->validate([
-            'density' => 'sometimes|integer|min:1|max:10', // messages per minute
+            'density' => 'sometimes|numeric|min:0.5|max:10', // messages per minute
             'duration_minutes' => 'sometimes|integer|min:5|max:180',
             'include_questions' => 'boolean',
             'include_testimonials' => 'boolean',

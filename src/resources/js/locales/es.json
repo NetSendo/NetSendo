@@ -3173,6 +3173,9 @@
         }
     },
     "webinars": {
+        "timezone": "Zona horaria",
+        "timezone_default": "Predeterminado (de su cuenta)",
+        "timezone_help": "Seleccione una zona horaria para este seminario web. Si se deja predeterminado, se utilizará la zona horaria de su cuenta.",
         "title": "Seminarios web",
         "chat": {
             "title": "Chat",
@@ -3498,5 +3501,51 @@
             "daily_limit": "Límite diario",
             "daily_limit_placeholder": "p.ej. 1000 (dejar vacío para ilimitado)"
     }
-}
+},
+    "external_pages": {
+        "index": {
+            "title": "External Pages",
+            "add_new": "Add New Page",
+            "empty": "No external pages found. Create one to get started."
+        },
+        "create": {
+            "title": "Create External Page"
+        },
+        "edit": {
+            "title": "Edit External Page"
+        },
+        "labels": {
+            "name": "Name",
+            "target_url": "Target URL",
+            "type": "Type",
+            "actions": "Actions"
+        },
+        "types": {
+            "redirect": "Redirect",
+            "proxy": "Content Proxy"
+        },
+        "actions": {
+            "link": "Link",
+            "save": "Save Page",
+            "saved": "Saved."
+        },
+        "fields": {
+            "name": "Internal Name",
+            "url": "Page URL",
+            "redirect_mode": "Redirect Mode (User is redirected to the URL)"
+        },
+        "hints": {
+            "url_fetch": "NetSendo will fetch/redirect to this URL.",
+            "proxy_mode": "If unchecked, NetSendo will fetch the content and display it (Proxy Mode), allowing for placeholder replacement.",
+            "custom_fields": "Since custom fields are dynamic, please enter the keys you wish to share/replace (comma separated)."
+        },
+        "sections": {
+            "shared_fields": "Shared System Fields",
+            "custom_fields": "Shared Custom Fields (Optional)"
+        },
+        "messages": {
+            "confirm_delete": "Are you sure you want to delete this page?",
+            "link_copied": "Link copied to clipboard!"
+        }
+    }
 }

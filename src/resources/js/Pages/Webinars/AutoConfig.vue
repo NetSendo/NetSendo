@@ -8,6 +8,9 @@ const props = defineProps({
     scheduleTypes: Object,
     daysOfWeek: Object,
     chatScriptsPreview: Array,
+    userTimezone: String,
+    webinarTimezone: String,
+    timezones: Array,
 });
 
 const schedule = props.webinar.schedule || {};
@@ -23,7 +26,7 @@ const form = useForm({
     end_date: schedule.end_date || '',
     max_sessions_per_day: schedule.max_sessions_per_day || null,
     max_attendees_per_session: schedule.max_attendees_per_session || null,
-    timezone: schedule.timezone || 'Europe/Warsaw',
+    timezone: schedule.timezone || null, // null means inherit
     is_active: schedule.is_active !== false,
 });
 
@@ -154,6 +157,23 @@ fetchNextSessions();
                                 <p class="font-medium text-gray-900 dark:text-white">{{ label }}</p>
                             </div>
                         </label>
+                    </div>
+                </div>
+
+                <!-- Timezone Settings -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ $t('webinars.timezone') }}</h3>
+                    <div class="max-w-xl">
+                        <select
+                            v-model="form.timezone"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option :value="null">{{ $t('webinars.timezone_default') }} ({{ webinarTimezone || 'UTC' }})</option>
+                            <option v-for="tz in timezones" :key="tz" :value="tz">
+                                {{ tz }}
+                            </option>
+                        </select>
+                        <p class="mt-2 text-sm text-gray-500">{{ $t('webinars.timezone_help') }}</p>
                     </div>
                 </div>
 

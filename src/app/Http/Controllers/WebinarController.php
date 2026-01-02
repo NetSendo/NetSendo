@@ -81,12 +81,15 @@ class WebinarController extends Controller
 
         $webinarData = $webinar->load(['products', 'ctas', 'schedule', 'targetList'])->toArray();
         $webinarData['registration_url'] = $webinar->registration_url;
+        $webinarData['effective_timezone'] = $webinar->effective_timezone;
+        $webinarData['user_timezone'] = auth()->user()->timezone;
 
         return Inertia::render('Webinars/Edit', [
             'webinar' => $webinarData,
             'types' => Webinar::getTypes(),
             'statuses' => Webinar::getStatuses(),
             'lists' => ContactList::forUser(auth()->id())->get(['id', 'name']),
+            'timezones' => \DateTimeZone::listIdentifiers(),
         ]);
     }
 
@@ -141,6 +144,7 @@ class WebinarController extends Controller
             'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'scheduled_at' => 'nullable|date',
+            'timezone' => 'nullable|string|timezone',
             'target_list_id' => 'nullable|exists:contact_lists,id',
             'clicked_list_id' => 'nullable|exists:contact_lists,id',
             'attended_list_id' => 'nullable|exists:contact_lists,id',

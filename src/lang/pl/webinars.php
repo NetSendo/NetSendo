@@ -11,6 +11,9 @@ return [
     'error_end' => 'Nie można zakończyć webinaru.',
     'status_updated' => 'Status webinaru został zmieniony.',
     'status_change_not_allowed' => 'Ta zmiana statusu nie jest dozwolona.',
+    'timezone' => 'Strefa czasowa',
+    'timezone_default' => 'Domyślna (z Twojego konta)',
+    'timezone_help' => 'Wybierz strefę czasową dla tego webinaru. Jeśli zostawisz domyślną, webinar będzie używał strefy z Twojego konta.',
 
     'edit' => [
         'public_link' => 'Link do rejestracji',
@@ -36,6 +39,7 @@ return [
             'closed' => 'Rejestracja na ten webinar jest zamknięta.',
             'benefits' => 'Co zyskasz?',
             'timezone' => 'Twoja strefa czasowa',
+            'times_in_timezone' => 'Godziny podane w strefie :timezone',
         ],
         'registered' => [
             'success_title' => 'Gratulacje, :name jesteś zarejestrowany/a!',
@@ -137,6 +141,8 @@ return [
         'inactive_badge' => 'OFF AIR',
         'start' => 'Rozpocznij webinar',
         'end' => 'Zakończ webinar',
+        'delete_confirm' => 'Czy na pewno chcesz usunąć ten webinar?',
+        'delete_confirm' => 'Czy na pewno chcesz usunąć ten webinar?',
         'confirm_end' => 'Czy na pewno chcesz zakończyć webinar?',
         'video_preview' => 'Podgląd wideo',
         'configure_youtube' => 'Skonfiguruj YouTube Live ID w ustawieniach webinaru',

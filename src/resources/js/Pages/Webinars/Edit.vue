@@ -8,12 +8,14 @@ const props = defineProps({
     types: Object,
     statuses: Object,
     lists: Array,
+    timezones: Array,
 });
 
 const form = useForm({
     name: props.webinar.name || '',
     description: props.webinar.description || '',
     scheduled_at: props.webinar.scheduled_at ? props.webinar.scheduled_at.slice(0, 16) : '',
+    timezone: props.webinar.timezone || '',
     target_list_id: props.webinar.target_list_id || '',
     clicked_list_id: props.webinar.clicked_list_id || '',
     attended_list_id: props.webinar.attended_list_id || '',
@@ -245,13 +247,29 @@ const getStatusColor = (status) => {
                                 <p v-if="allowedStatusTransitions.length === 0" class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.no_status_change') }}</p>
                             </div>
 
-                            <div v-if="webinar.type === 'live'">
+
+
+                            <div v-if="webinar.type === 'live'" class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.scheduled_at') }}</label>
                                 <input
                                     v-model="form.scheduled_at"
                                     type="datetime-local"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.timezone') }}</label>
+                                <select
+                                    v-model="form.timezone"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <option value="">{{ $t('webinars.timezone_default') }} ({{ webinar.user_timezone || 'UTC' }})</option>
+                                    <option v-for="tz in timezones" :key="tz" :value="tz">
+                                        {{ tz }}
+                                    </option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.timezone_help') }}</p>
                             </div>
                         </div>
                     </div>

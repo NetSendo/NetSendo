@@ -128,7 +128,7 @@
 
                             <p class="text-gray-400 text-sm">
                                 {{ __('webinars.public.watch.session_starts_at') }}
-                                <span id="session-start-local" class="font-semibold text-white">{{ \Carbon\Carbon::parse($sessionStartTime)->format('d.m.Y H:i') }}</span>
+                                <span id="session-start-local" class="font-semibold text-white">{{ $sessionStartTimeFormatted }}</span>
                                 <span class="text-indigo-300 text-xs">({{ $registrationTimezone }})</span>
                             </p>
                         </div>

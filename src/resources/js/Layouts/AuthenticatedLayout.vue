@@ -174,7 +174,7 @@ const toggleMobileMenu = () => {
                 class="sticky top-0 z-20 border-b border-slate-200/50 bg-white/80 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900/80"
             >
                 <div
-                    class="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8"
+                    class="flex min-h-16 py-2 items-center justify-between px-4 sm:px-6 lg:px-8"
                 >
                     <!-- Left side -->
                     <div class="flex items-center gap-4">

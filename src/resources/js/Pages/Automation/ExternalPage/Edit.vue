@@ -9,11 +9,11 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Edit External Page" />
+    <Head :title="$t('external_pages.edit.title')" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Edit External Page</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $t('external_pages.edit.title') }}</h2>
         </template>
 
         <div class="py-12">

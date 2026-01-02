@@ -5,11 +5,11 @@ import ExternalPageForm from './Form.vue';
 </script>
 
 <template>
-    <Head title="Create External Page" />
+    <Head :title="$t('external_pages.create.title')" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Create External Page</h2>
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">{{ $t('external_pages.create.title') }}</h2>
         </template>
 
         <div class="py-12">
