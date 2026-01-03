@@ -121,10 +121,22 @@ class SubscriberPreferencesController extends Controller
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
         }
 
-        $selectedListIds = $pendingChanges['selected_lists'];
+        $selectedListIds = array_map('intval', $pendingChanges['selected_lists']);
+
+        Log::debug('Subscriber preferences confirm - parsing changes', [
+            'subscriber_id' => $subscriber->id,
+            'raw_selected_lists' => $pendingChanges['selected_lists'],
+            'typed_selected_lists' => $selectedListIds,
+        ]);
 
         // Get subscriber's user to find their public lists
         $userId = $this->getSubscriberUserId($subscriber);
+
+        Log::debug('Subscriber preferences confirm - user identification', [
+            'subscriber_id' => $subscriber->id,
+            'resolved_user_id' => $userId,
+            'subscriber_user_id' => $subscriber->user_id,
+        ]);
 
         if (!$userId) {
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
@@ -137,6 +149,12 @@ class SubscriberPreferencesController extends Controller
             ->pluck('id')
             ->toArray();
 
+        Log::debug('Subscriber preferences confirm - public lists found', [
+            'subscriber_id' => $subscriber->id,
+            'user_id' => $userId,
+            'public_list_ids' => $publicListIds,
+        ]);
+
         try {
             // Apply changes only to public lists
             foreach ($publicListIds as $listId) {
@@ -144,6 +162,13 @@ class SubscriberPreferencesController extends Controller
                 $existingPivot = $subscriber->contactLists()
                     ->where('contact_lists.id', $listId)
                     ->first();
+
+                Log::debug('Subscriber preferences confirm - processing list', [
+                    'subscriber_id' => $subscriber->id,
+                    'list_id' => $listId,
+                    'is_selected' => $isSelected,
+                    'existing_pivot_status' => $existingPivot?->pivot->status ?? 'none',
+                ]);
 
                 if ($isSelected) {
                     // Subscribe to the list
@@ -153,10 +178,18 @@ class SubscriberPreferencesController extends Controller
                             'subscribed_at' => now(),
                             'source' => 'preferences',
                         ]);
+                        Log::debug('Subscriber preferences confirm - attached new list', [
+                            'subscriber_id' => $subscriber->id,
+                            'list_id' => $listId,
+                        ]);
                     } elseif ($existingPivot->pivot->status !== 'active') {
                         $subscriber->contactLists()->updateExistingPivot($listId, [
                             'status' => 'active',
                             'subscribed_at' => now(),
+                        ]);
+                        Log::debug('Subscriber preferences confirm - reactivated list', [
+                            'subscriber_id' => $subscriber->id,
+                            'list_id' => $listId,
                         ]);
                     }
                 } else {
@@ -165,6 +198,10 @@ class SubscriberPreferencesController extends Controller
                         $subscriber->contactLists()->updateExistingPivot($listId, [
                             'status' => 'unsubscribed',
                             'unsubscribed_at' => now(),
+                        ]);
+                        Log::debug('Subscriber preferences confirm - unsubscribed from list', [
+                            'subscriber_id' => $subscriber->id,
+                            'list_id' => $listId,
                         ]);
 
                         // Dispatch event for automations

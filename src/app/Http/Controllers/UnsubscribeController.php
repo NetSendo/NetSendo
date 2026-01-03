@@ -95,6 +95,14 @@ class UnsubscribeController extends Controller
      */
     public function process(Request $request, Subscriber $subscriber, ContactList $list)
     {
+        Log::debug('Unsubscribe process started', [
+            'subscriber_id' => $subscriber->id,
+            'subscriber_email' => $subscriber->email,
+            'list_id' => $list->id,
+            'list_name' => $list->name,
+            'has_valid_signature' => $request->hasValidSignature(),
+        ]);
+
         if (!$request->hasValidSignature()) {
             Log::warning('Invalid unsubscribe confirmation signature', [
                 'subscriber_id' => $subscriber->id,
@@ -106,6 +114,13 @@ class UnsubscribeController extends Controller
         try {
             // Check if subscriber is actually in this list
             $pivot = $subscriber->contactLists()->where('contact_lists.id', $list->id)->first();
+
+            Log::debug('Unsubscribe process - pivot check', [
+                'subscriber_id' => $subscriber->id,
+                'list_id' => $list->id,
+                'pivot_found' => $pivot !== null,
+                'pivot_status' => $pivot?->pivot->status ?? 'none',
+            ]);
 
             if (!$pivot) {
                 Log::info('Subscriber not in list during unsubscribe process', [
@@ -119,11 +134,15 @@ class UnsubscribeController extends Controller
 
             if ($currentStatus === 'unsubscribed') {
                 // Already unsubscribed
+                Log::debug('Subscriber already unsubscribed', [
+                    'subscriber_id' => $subscriber->id,
+                    'list_id' => $list->id,
+                ]);
                 return $this->renderSystemPage('unsubscribe_success', $subscriber, $list);
             }
 
             // Update subscription status - this is the actual unsubscribe
-            $subscriber->contactLists()->updateExistingPivot($list->id, [
+            $updateResult = $subscriber->contactLists()->updateExistingPivot($list->id, [
                 'status' => 'unsubscribed',
                 'unsubscribed_at' => now(),
             ]);
@@ -131,6 +150,7 @@ class UnsubscribeController extends Controller
             Log::info('Subscriber unsubscribed from list (confirmed)', [
                 'subscriber_id' => $subscriber->id,
                 'list_id' => $list->id,
+                'update_result' => $updateResult,
             ]);
 
             // Dispatch SubscriberUnsubscribed event for automations and email notification
@@ -143,6 +163,7 @@ class UnsubscribeController extends Controller
                 'subscriber_id' => $subscriber->id,
                 'list_id' => $list->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return $this->renderSystemPage('unsubscribe_error', $subscriber, $list);
         }
