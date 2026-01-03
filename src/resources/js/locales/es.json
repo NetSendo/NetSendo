@@ -1,26 +1,4 @@
 {
-    "template_builder": {
-        "untitled": "Plantilla sin título",
-        "default_text": "Empieza a escribir aquí...",
-        "default_button": "Haz clic aquí",
-        "product_title": "Nombre del producto",
-        "product_description": "Descripción del producto",
-        "buy_now": "Comprar ahora",
-        "company_name": "Nombre de la empresa",
-        "company_address": "Dirección de la empresa",
-        "unsubscribe": "Darse de baja",
-        "all_rights": "Todos los derechos reservados.",
-        "saved_at": "Último guardado:",
-        "preview": "Vista previa",
-        "save_exit": "Guardar y salir",
-        "block_settings": "Configuración de bloque",
-        "global_styles": "Estilos globales",
-        "select_block": "Selecciona un bloque para editar",
-        "save_error": "Error al guardar la plantilla. Por favor inténtalo de nuevo.",
-        "blocks": "Bloques",
-        "edit": "Editar",
-        "styles": "Estilos"
-    },
     "templates": {
         "title": "Plantillas",
         "subtitle": "Administra tus plantillas de correo y SMS",
@@ -1572,6 +1550,9 @@
     },
     "template_builder": {
         "untitled": "Sin título",
+        "mobile_nav_blocks": "Bloques",
+        "mobile_nav_edit": "Editar",
+        "mobile_nav_styles": "Estilos",
         "saved_at": "Guardado a las",
         "preview": "Vista previa",
         "save_exit": "Guardar y salir",

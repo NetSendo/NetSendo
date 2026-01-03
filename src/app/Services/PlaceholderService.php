@@ -29,6 +29,8 @@ class PlaceholderService
     protected array $systemPlaceholders = [
         'unsubscribe_link' => ['label' => 'Link wypisania', 'description' => 'Link do wypisania z listy'],
         'unsubscribe_url' => ['label' => 'URL wypisania', 'description' => 'URL do wypisania (alias)'],
+        'manage' => ['label' => 'Link zarządzania preferencjami', 'description' => 'Link do strony zarządzania subskrypcjami'],
+        'manage_url' => ['label' => 'URL zarządzania', 'description' => 'URL do zarządzania (alias)'],
         'webinar_register_link' => ['label' => 'Link rejestracji na webinar', 'description' => 'Link do strony rejestracji na webinar'],
         'webinar_watch_link' => ['label' => 'Link do webinaru', 'description' => 'Personalny link do oglądania webinaru'],
     ];
@@ -143,23 +145,52 @@ class PlaceholderService
     }
 
     /**
-     * Generate unsubscribe link for a subscriber
+     * Generate unsubscribe link for a subscriber.
+     * If a list is provided, generates a link to unsubscribe from that specific list.
+     * If no list is provided, generates a link to the preferences/manage page.
+     *
+     * @param Subscriber $subscriber
+     * @param \App\Models\ContactList|null $list Specific list to unsubscribe from
+     * @return string
      */
-    public function generateUnsubscribeLink(Subscriber $subscriber): string
+    public function generateUnsubscribeLink(Subscriber $subscriber, ?\App\Models\ContactList $list = null): string
     {
-        return URL::signedRoute('unsubscribe', ['subscriber' => $subscriber->id]);
+        if ($list) {
+            // Unsubscribe from specific list
+            return URL::signedRoute('subscriber.unsubscribe.confirm', [
+                'subscriber' => $subscriber->id,
+                'list' => $list->id,
+            ]);
+        }
+
+        // No specific list - redirect to preferences page
+        return $this->generateManageLink($subscriber);
+    }
+
+    /**
+     * Generate manage/preferences link for a subscriber.
+     */
+    public function generateManageLink(Subscriber $subscriber): string
+    {
+        return URL::signedRoute('subscriber.preferences', ['subscriber' => $subscriber->id]);
     }
 
     /**
      * Replace placeholders in both content and subject
      * Convenience method for email sending
      */
-    public function processEmailContent(string $content, string $subject, Subscriber $subscriber): array
+    public function processEmailContent(string $content, string $subject, Subscriber $subscriber, ?\App\Models\ContactList $list = null): array
     {
         // Generate system links
+        $unsubscribeLink = $this->generateUnsubscribeLink($subscriber, $list);
+        $manageLink = $this->generateManageLink($subscriber);
+
         $additionalData = [
-            'unsubscribe_link' => $this->generateUnsubscribeLink($subscriber),
-            'unsubscribe_url' => $this->generateUnsubscribeLink($subscriber),
+            'unsubscribe_link' => $unsubscribeLink,
+            'unsubscribe_url' => $unsubscribeLink,
+            'unsubscribe' => $unsubscribeLink,
+            'manage' => $manageLink,
+            'manage_url' => $manageLink,
         ];
 
         return [
@@ -177,12 +208,19 @@ class PlaceholderService
         string $subject,
         Subscriber $subscriber,
         ?\App\Models\Webinar $webinar = null,
-        bool $autoRegister = true
+        bool $autoRegister = true,
+        ?\App\Models\ContactList $list = null
     ): array {
         // Generate system links
+        $unsubscribeLink = $this->generateUnsubscribeLink($subscriber, $list);
+        $manageLink = $this->generateManageLink($subscriber);
+
         $additionalData = [
-            'unsubscribe_link' => $this->generateUnsubscribeLink($subscriber),
-            'unsubscribe_url' => $this->generateUnsubscribeLink($subscriber),
+            'unsubscribe_link' => $unsubscribeLink,
+            'unsubscribe_url' => $unsubscribeLink,
+            'unsubscribe' => $unsubscribeLink,
+            'manage' => $manageLink,
+            'manage_url' => $manageLink,
         ];
 
         // Add webinar links if webinar is provided

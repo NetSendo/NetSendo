@@ -110,6 +110,11 @@ class ContactList extends Model
         return $query->where('user_id', $userId);
     }
 
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true);
+    }
+
     /**
      * Relacja do ustawień CRON dla tej listy
      */

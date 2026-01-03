@@ -1,26 +1,4 @@
 {
-    "template_builder": {
-        "untitled": "Unbenannte Vorlage",
-        "default_text": "Hier tippen...",
-        "default_button": "Klick hier",
-        "product_title": "Produktname",
-        "product_description": "Produktbeschreibung",
-        "buy_now": "Jetzt kaufen",
-        "company_name": "Firmenname",
-        "company_address": "Firmenadresse",
-        "unsubscribe": "Abmelden",
-        "all_rights": "Alle Rechte vorbehalten.",
-        "saved_at": "Zuletzt gespeichert:",
-        "preview": "Vorschau",
-        "save_exit": "Speichern & Beenden",
-        "block_settings": "Blockeinstellungen",
-        "global_styles": "Globale Stile",
-        "select_block": "Wählen Sie einen Block zum Bearbeiten",
-        "save_error": "Fehler beim Speichern der Vorlage. Bitte versuchen Sie es erneut.",
-        "blocks": "Blöcke",
-        "edit": "Bearbeiten",
-        "styles": "Stile"
-    },
     "templates": {
         "title": "Vorlagen",
         "subtitle": "Verwalten Sie Ihre E-Mail- und SMS-Vorlagen",
@@ -1690,6 +1668,9 @@
     },
     "template_builder": {
         "untitled": "Unbenannt",
+        "mobile_nav_blocks": "Blöcke",
+        "mobile_nav_edit": "Bearbeiten",
+        "mobile_nav_styles": "Stile",
         "saved_at": "Gespeichert um",
         "preview": "Vorschau",
         "save_exit": "Speichern und Schließen",

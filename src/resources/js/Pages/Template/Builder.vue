@@ -557,6 +557,7 @@ onBeforeUnmount(() => {
                     @duplicate="duplicateBlock"
                     @move="(id, dir) => moveBlock(id, dir)"
                     @add-block="addBlock"
+                    @show-block-library="activeMobileTab = 'blocks'"
                     @update-column-blocks="updateColumnBlocks"
                     @remove-nested-block="removeNestedBlock"
                 />
@@ -621,7 +622,7 @@ onBeforeUnmount(() => {
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span class="text-[10px] font-medium">{{ $t('template_builder.blocks') || 'Blocks' }}</span>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.mobile_nav_blocks') }}</span>
             </button>
 
             <button
@@ -632,7 +633,7 @@ onBeforeUnmount(() => {
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                <span class="text-[10px] font-medium">{{ $t('template_builder.edit') || 'Edit' }}</span>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.mobile_nav_edit') }}</span>
             </button>
 
              <button
@@ -643,19 +644,40 @@ onBeforeUnmount(() => {
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                 </svg>
-                <span class="text-[10px] font-medium">{{ $t('template_builder.styles') || 'Styles' }}</span>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.mobile_nav_styles') }}</span>
             </button>
 
-             <button
+            <!-- Preview button -->
+            <button
                 @click="showPreview = !showPreview"
                 :class="showPreview ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
                 class="flex flex-col items-center gap-1 p-2"
             >
-                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
-                <span class="text-[10px] font-medium">{{ $t('template_builder.preview') || 'Preview' }}</span>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.preview') }}</span>
+            </button>
+
+            <!-- Save status indicator -->
+            <button
+                @click="saveTemplate()"
+                :disabled="isSaving"
+                :class="lastSaved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+                class="flex flex-col items-center gap-1 p-2"
+            >
+                <svg v-if="isSaving" class="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <svg v-else-if="lastSaved" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg v-else class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                <span class="text-[10px] font-medium">{{ isSaving ? $t('common.saving') : (lastSaved ? $t('common.saved') : $t('common.save')) }}</span>
             </button>
         </div>
 
@@ -664,15 +686,30 @@ onBeforeUnmount(() => {
             <!-- Header -->
             <div class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
                 <h3 class="font-bold text-slate-900 dark:text-white">
-                    <span v-if="activeMobileTab === 'blocks'">{{ $t('template_builder.blocks') || 'Blocks' }}</span>
-                    <span v-else-if="activeMobileTab === 'edit'">{{ $t('template_builder.block_settings') || 'Edit Block' }}</span>
-                    <span v-else-if="activeMobileTab === 'styles'">{{ $t('template_builder.global_styles') || 'Global Styles' }}</span>
+                    <span v-if="activeMobileTab === 'blocks'">{{ $t('template_builder.mobile_nav_blocks') }}</span>
+                    <span v-else-if="activeMobileTab === 'edit'">{{ $t('template_builder.mobile_nav_edit') }}</span>
+                    <span v-else-if="activeMobileTab === 'styles'">{{ $t('template_builder.mobile_nav_styles') }}</span>
                 </h3>
-                <button @click="activeMobileTab = null" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Auto-save status indicator -->
+                    <span v-if="lastSaved" class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {{ $t('common.saved') }}
+                    </span>
+                    <span v-else-if="isSaving" class="flex items-center gap-1 text-xs text-slate-400">
+                        <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        {{ $t('common.saving') }}
+                    </span>
+                    <!-- Done button -->
+                    <button @click="activeMobileTab = null" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500">
+                        {{ $t('common.close') }}
+                    </button>
+                </div>
             </div>
 
             <!-- Content -->

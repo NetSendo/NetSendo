@@ -52,8 +52,16 @@ class SendEmailJob implements ShouldQueue
             // Generate HMAC Hash for security
             $hash = hash_hmac('sha256', "{$this->message->id}.{$this->subscriber->id}", config('app.key'));
 
+            // Determine list context for unsubscribe link
+            // If message is sent to exactly one list, unsubscribe from that list
+            // If sent to multiple lists, show preferences page (list = null)
+            $contactLists = $this->message->contactLists;
+            $unsubscribeList = ($contactLists && $contactLists->count() === 1)
+                ? $contactLists->first()
+                : null;
+
             // 1. Variable Replacement using PlaceholderService (supports custom fields)
-            $processed = $placeholderService->processEmailContent($content, $subject, $this->subscriber);
+            $processed = $placeholderService->processEmailContent($content, $subject, $this->subscriber, $unsubscribeList);
             $content = $processed['content'];
             $subject = $processed['subject'];
 
@@ -266,10 +274,19 @@ class SendEmailJob implements ShouldQueue
             return [];
         }
 
+        // Determine list context for unsubscribe link
+        $contactLists = $this->message->contactLists;
+        $unsubscribeList = ($contactLists && $contactLists->count() === 1)
+            ? $contactLists->first()
+            : null;
+
         // Generate placeholders
+        $unsubscribeLink = $placeholderService->generateUnsubscribeLink($this->subscriber, $unsubscribeList);
         $additionalData = [
-            'unsubscribe_link' => $placeholderService->generateUnsubscribeLink($this->subscriber),
-            'unsubscribe_url' => $placeholderService->generateUnsubscribeLink($this->subscriber),
+            'unsubscribe_link' => $unsubscribeLink,
+            'unsubscribe_url' => $unsubscribeLink,
+            'unsubscribe' => $unsubscribeLink,
+            'manage' => $placeholderService->generateManageLink($this->subscriber),
         ];
 
         // Process values

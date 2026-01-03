@@ -7,7 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.7] – Short Description
+
+**Release date:** 2026-01-03
+
 ### Added
+
+- **Template Builder UX:**
+
+  - **Mobile Experience:**
+    - Restored "Preview" button in mobile navigation.
+    - Added visual save status indicator (Saving/Saved) to mobile bottom bar.
+    - Added "Done" button to mobile drawer header for better usability.
+  - **Editor Improvements:**
+    - Changed "+ Add Block" button behavior to open the block library sidebar instead of immediately adding a text block.
+
+- **Subscriber Preference Management:**
+  - **Context-Aware Unsubscribe Flow:**
+    - Unsubscribing from a single list campaign now targets only that specific list.
+    - Unsubscribing from multi-list or broadcast campaigns redirects to the new Preferences Management page.
+  - **Email Confirmation Security:**
+    - Clicking unsubscribe links **never** performs immediate actions.
+    - System now sends a secure, time-limited confirmation email (`unsubscribe_request` or `preference_confirm`).
+    - Actual changes are applied only after clicking the signed link in the confirmation email.
+  - **Preferences Page:**
+    - New public-facing page (`/preferences/{subscriber}`) allowing subscribers to manage their subscriptions.
+    - Lists all public contact lists available for the subscriber.
+    - User selection triggers a confirmation email flow to apply changes.
+  - **New Placeholders:**
+    - `[[manage]]` / `[[manage_url]]`: Generates a signed link to the subscriber's preferences page.
+    - `[[unsubscribe_link]]` / `[[unsubscribe]]`: Context-aware link (single list unsubscribe vs. global preferences).
+  - **System Emails & Pages:**
+    - New `preference_confirm` system email template for preference change confirmation.
+    - New system pages: `unsubscribe_confirm_sent`, `preference_confirm_sent`, `preference_update_success`.
+  - **Backend Improvements:**
+    - `SubscriberPreferencesController` for handling the new preferences flow.
+    - `GenericHtmlMailable` for sending dynamic confirmation emails.
+    - Updated `SendEmailJob` to inject correct list context into placeholders.
+    - Added `scopePublic` to `ContactList` model for filtering visible lists on the preferences page.
+
+### Fixed
+
+- **Template Builder:**
+  - Fixed critical issue with duplicate translation keys causing missing labels in mobile view.
+  - Fixed "Add Block" button confusion by opening library instead of auto-inserting text.
 
 ## [1.3.6] – Short Description
 

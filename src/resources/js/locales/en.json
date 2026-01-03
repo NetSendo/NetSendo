@@ -1,26 +1,4 @@
 {
-    "template_builder": {
-        "untitled": "Untitled Template",
-        "default_text": "Start typing here...",
-        "default_button": "Click Me",
-        "product_title": "Product Name",
-        "product_description": "Product Description",
-        "buy_now": "Buy Now",
-        "company_name": "Company Name",
-        "company_address": "Company Address",
-        "unsubscribe": "Unsubscribe",
-        "all_rights": "All rights reserved.",
-        "saved_at": "Last saved:",
-        "preview": "Preview",
-        "save_exit": "Save & Exit",
-        "block_settings": "Block Settings",
-        "global_styles": "Global Styles",
-        "select_block": "Select a block to edit settings",
-        "save_error": "Failed to save template. Please try again.",
-        "blocks": "Blocks",
-        "edit": "Edit",
-        "styles": "Styles"
-    },
     "templates": {
         "title": "Templates",
         "subtitle": "Manage your email and SMS templates",
@@ -1622,6 +1600,9 @@
     },
     "template_builder": {
         "untitled": "Untitled",
+        "mobile_nav_blocks": "Blocks",
+        "mobile_nav_edit": "Edit",
+        "mobile_nav_styles": "Styles",
         "saved_at": "Saved at",
         "preview": "Preview",
         "save_exit": "Save and Exit",

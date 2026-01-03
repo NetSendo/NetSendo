@@ -568,6 +568,11 @@ Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\Unsubscrib
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
 
+// Subscriber Preferences Management (public, signed URLs)
+Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'show'])->name('subscriber.preferences');
+Route::post('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'update'])->name('subscriber.preferences.update');
+Route::get('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirm'])->name('subscriber.preferences.confirm');
+
 // Subscriber Activation Routes (signed URLs from system emails)
 Route::get('/activate/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'activate'])->name('subscriber.activate');
 Route::get('/resubscribe/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'resubscribe'])->name('subscriber.resubscribe');

@@ -1,26 +1,4 @@
 {
-    "template_builder": {
-        "untitled": "Szablon bez tytułu",
-        "default_text": "Zacznij pisać tutaj...",
-        "default_button": "Kliknij tutaj",
-        "product_title": "Nazwa produktu",
-        "product_description": "Opis produktu",
-        "buy_now": "Kup teraz",
-        "company_name": "Nazwa firmy",
-        "company_address": "Adres firmy",
-        "unsubscribe": "Wypisz się",
-        "all_rights": "Wszelkie prawa zastrzeżone.",
-        "saved_at": "Ostatni zapis:",
-        "preview": "Podgląd",
-        "save_exit": "Zapisz i wyjdź",
-        "block_settings": "Ustawienia bloku",
-        "global_styles": "Style globalne",
-        "select_block": "Wybierz blok, aby edytować ustawienia",
-        "save_error": "Nie udało się zapisać szablonu. Spróbuj ponownie.",
-        "blocks": "Bloki",
-        "edit": "Edytuj",
-        "styles": "Style"
-    },
     "templates": {
         "title": "Szablony",
         "subtitle": "Zarządzaj szablonami wiadomości email i SMS",
@@ -2116,6 +2094,9 @@
     },
     "template_builder": {
         "untitled": "Bez nazwy",
+        "mobile_nav_blocks": "Bloki",
+        "mobile_nav_edit": "Edytuj",
+        "mobile_nav_styles": "Style",
         "saved_at": "Zapisano o",
         "preview": "Podgląd",
         "save_exit": "Zapisz i wyjdź",

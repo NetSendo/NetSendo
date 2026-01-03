@@ -101,6 +101,70 @@ class SystemEmailService
     }
 
     /**
+     * Send a custom email to subscriber (not from template).
+     * Used when content is already prepared (e.g., confirmation emails with dynamic links).
+     */
+    public function sendToSubscriber(
+        Subscriber $subscriber,
+        ContactList $list,
+        string $subject,
+        string $content,
+        ?string $recipientOverride = null
+    ): bool {
+        // Determine recipient
+        $recipient = $recipientOverride ?? $subscriber->email;
+
+        if (!$recipient) {
+            Log::warning("No recipient email for custom email", [
+                'subscriber_id' => $subscriber->id,
+            ]);
+            return false;
+        }
+
+        // Configure the mailbox for sending
+        $mailbox = $this->getMailboxForList($list);
+
+        if (!$mailbox) {
+            Log::warning("No mailbox configured for custom email", [
+                'list_id' => $list->id,
+                'user_id' => $list->user_id,
+            ]);
+
+            // Try to use SystemMailService as fallback
+            if (!$this->systemMailService->prepare()) {
+                Log::error("No mail configuration available for custom email");
+                return false;
+            }
+        } else {
+            // Configure Laravel mailer with the mailbox settings
+            $this->configureMailer($mailbox);
+        }
+
+        try {
+            Mail::to($recipient)->send(
+                new \App\Mail\GenericHtmlMailable($subject, $content)
+            );
+
+            Log::info("Custom email sent to subscriber", [
+                'subscriber_id' => $subscriber->id,
+                'list_id' => $list->id,
+                'recipient' => $recipient,
+                'mailbox_id' => $mailbox?->id,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to send custom email", [
+                'subscriber_id' => $subscriber->id,
+                'list_id' => $list->id,
+                'mailbox_id' => $mailbox?->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Get the appropriate mailbox for a contact list.
      * Priority: List's default mailbox -> User's default mailbox -> Any active system mailbox
      */

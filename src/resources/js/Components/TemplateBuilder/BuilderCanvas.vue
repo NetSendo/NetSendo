@@ -14,7 +14,7 @@ const props = defineProps({
     settings: Object,
 });
 
-const emit = defineEmits(['select', 'reorder', 'delete', 'duplicate', 'move', 'add-block', 'update-column-blocks', 'remove-nested-block']);
+const emit = defineEmits(['select', 'reorder', 'delete', 'duplicate', 'move', 'add-block', 'show-block-library', 'update-column-blocks', 'remove-nested-block']);
 
 const localBlocks = computed({
     get: () => props.blocks,
@@ -383,7 +383,7 @@ const stripHtml = (html) => {
                 <!-- Add block button at bottom -->
                 <div v-if="blocks.length > 0" class="border-t border-dashed border-slate-200 p-4 text-center dark:border-slate-700">
                     <button
-                        @click="$emit('add-block', 'text')"
+                        @click="$emit('show-block-library')"
                         class="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-500"
                     >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
