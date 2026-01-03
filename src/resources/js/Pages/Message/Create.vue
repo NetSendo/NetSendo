@@ -2157,6 +2157,9 @@ if (form.contact_list_ids.length > 0) {
                                                     class="flex-1 text-sm text-slate-700 dark:text-slate-300"
                                                 >
                                                     {{ list.name }}
+                                                    <span class="ml-1 text-xs text-slate-400 dark:text-slate-500">
+                                                        ({{ list.subscribers_count ?? 0 }})
+                                                    </span>
                                                 </span>
                                                 <!-- Show list tags -->
                                                 <span
@@ -2288,6 +2291,9 @@ if (form.contact_list_ids.length > 0) {
                                                 class="flex-1 text-sm text-slate-700 dark:text-slate-300"
                                             >
                                                 {{ list.name }}
+                                                <span class="ml-1 text-xs text-slate-400 dark:text-slate-500">
+                                                    ({{ list.subscribers_count ?? 0 }})
+                                                </span>
                                             </span>
                                         </label>
                                     </div>

@@ -169,6 +169,9 @@ class MessageController extends Controller
         return Inertia::render('Message/Create', [
             'lists' => auth()->user()->contactLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
+                ->withCount(['subscribers' => function ($query) {
+                    $query->where('contact_list_subscriber.status', 'active');
+                }])
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()
@@ -404,6 +407,9 @@ class MessageController extends Controller
             ],
             'lists' => auth()->user()->contactLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
+                ->withCount(['subscribers' => function ($query) {
+                    $query->where('contact_list_subscriber.status', 'active');
+                }])
                 ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()

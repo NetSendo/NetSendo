@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Message Creation:**
+  - Active subscriber count now displayed next to each list name in list selection views (e.g., "My List (42)").
+  - Count reflects only active subscribers (excludes unsubscribed).
+
 ### Fixed
 
 ## [1.3.9] – Short Description
