@@ -2,7 +2,8 @@
     "templates": {
         "title": "Szablony",
         "subtitle": "Zarządzaj szablonami wiadomości email i SMS",
-        "new_template": "Nowy Szablon",
+        "your_templates": "Twoje lub Moje szablony",
+        "new_template": "Dodaj Szablon",
         "starter": {
             "title": "Szablony Startowe",
             "subtitle": "Zacznij od gotowego szablonu",
@@ -27,9 +28,10 @@
         "create_title": "Utwórz Szablon",
         "create_subtitle": "Zaprojektuj nowy szablon od podstaw",
         "back_to_list": "Powrót do listy",
+        "builder_badge": "Kreator",
         "fields": {
             "name": "Nazwa Szablonu",
-            "name_placeholder": "np. Miesięczny Newsletter",
+            "name_placeholder": "Tutaj wpisz nazwę swojego szablonu",
             "content": "Treść"
         },
         "actions": {
@@ -1304,6 +1306,7 @@
         "confirm_delete": "Czy na pewno chcesz usunąć ten tag?"
     },
     "templates": {
+        "builder_badge": "Kreator",
         "title": "Szablony wiadomości",
         "subtitle": "Zarządzaj swoimi szablonami wiadomości email",
         "new_template": "Nowy szablon",
@@ -2093,6 +2096,7 @@
         }
     },
     "template_builder": {
+        "insert_variable": "Wstaw zmienną",
         "untitled": "Bez nazwy",
         "mobile_nav_blocks": "Bloki",
         "mobile_nav_edit": "Edytuj",

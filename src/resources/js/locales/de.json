@@ -1422,6 +1422,7 @@
         "confirm_delete": "Sind Sie sicher, dass Sie dieses Tag löschen möchten?"
     },
     "templates": {
+        "builder_badge": "Builder",
         "title": "E-Mail-Vorlagen",
         "subtitle": "Verwalten Sie Ihre E-Mail-Nachrichtenvorlagen",
         "new_template": "Neue Vorlage",
@@ -1667,6 +1668,7 @@
         }
     },
     "template_builder": {
+        "insert_variable": "Variable einfügen",
         "untitled": "Unbenannt",
         "mobile_nav_blocks": "Blöcke",
         "mobile_nav_edit": "Bearbeiten",

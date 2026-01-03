@@ -1,13 +1,17 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import InsertPickerModal from '@/Components/InsertPickerModal.vue';
 
 const { t } = useI18n();
 
 const props = defineProps({
     block: Object,
     aiAvailable: Boolean,
+    inserts: Array,
+    signatures: Array,
+    systemVariables: Array,
 });
 
 const emit = defineEmits(['update', 'delete', 'duplicate', 'ai-content']);
@@ -201,11 +205,51 @@ const updateProductsCount = (count) => {
         products.push({ id: i + 1 });
     }
     updateContent('products', products);
+    updateContent('products', products);
+};
+
+// Insert Picker state
+const showInsertPicker = ref(false);
+const activeInsertField = ref(null);
+const activeInputCallback = ref(null);
+
+const openInsertPicker = (field, callback = null) => {
+    activeInsertField.value = field;
+    activeInputCallback.value = callback;
+    showInsertPicker.value = true;
+};
+
+const handleInsert = (content) => {
+    if (activeInputCallback.value) {
+        // Custom callback for complex handling
+        activeInputCallback.value(content);
+    } else if (activeInsertField.value === 'localText') {
+        // Special case for main text area
+        localTextContent.value += content;
+        updateContent('html', '<p>' + localTextContent.value + '</p>');
+    } else if (activeInsertField.value) {
+        // Standard field update
+        const current = localContent.value[activeInsertField.value] || '';
+        updateContent(activeInsertField.value, current + content);
+    }
+    showInsertPicker.value = false;
+    activeInsertField.value = null;
+    activeInputCallback.value = null;
 };
 </script>
 
 <template>
     <div class="space-y-6">
+        <InsertPickerModal
+            v-if="showInsertPicker"
+            :show="showInsertPicker"
+            :inserts="inserts"
+            :signatures="signatures"
+            :system-variables="systemVariables"
+            @close="showInsertPicker = false"
+            @insert="handleInsert"
+        />
+
         <!-- Block header -->
         <div class="flex items-center justify-between">
             <h4 class="text-sm font-semibold text-slate-900 dark:text-white">
@@ -297,7 +341,15 @@ const updateProductsCount = (count) => {
             <div class="space-y-4">
                 <!-- Rich text editor (simplified) -->
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.content') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.content') }}</label>
+                        <button
+                            @click="openInsertPicker('localText')"
+                            class="text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        >
+                            {{ $t('template_builder.insert_variable') }}
+                        </button>
+                    </div>
                     <textarea
                         v-model="localTextContent"
                         @blur="updateContent('html', '<p>' + localTextContent + '</p>')"
@@ -437,7 +489,12 @@ const updateProductsCount = (count) => {
             <div class="space-y-4">
                 <!-- Button text -->
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                        <button @click="openInsertPicker('text')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.text"
@@ -611,7 +668,12 @@ const updateProductsCount = (count) => {
 
                 <!-- Product title -->
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_title') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_title') }}</label>
+                        <button @click="openInsertPicker('title')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.title"
@@ -622,7 +684,12 @@ const updateProductsCount = (count) => {
 
                 <!-- Product description -->
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.description') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.description') }}</label>
+                         <button @click="openInsertPicker('description')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <textarea
                         :value="localContent.description"
                         @input="updateContent('description', $event.target.value)"
@@ -656,7 +723,12 @@ const updateProductsCount = (count) => {
 
                 <!-- Button -->
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.button_text') }}</label>
+                        <button @click="openInsertPicker('buttonText')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.buttonText"
@@ -751,7 +823,12 @@ const updateProductsCount = (count) => {
         <template v-else-if="block.type === 'footer'">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.company_name') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.company_name') }}</label>
+                         <button @click="openInsertPicker('companyName')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.companyName"
@@ -761,7 +838,12 @@ const updateProductsCount = (count) => {
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.address') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.address') }}</label>
+                         <button @click="openInsertPicker('address')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.address"
@@ -771,7 +853,12 @@ const updateProductsCount = (count) => {
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.unsubscribe_text') }}</label>
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.unsubscribe_text') }}</label>
+                         <button @click="openInsertPicker('unsubscribeText')" class="text-indigo-600 hover:text-indigo-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
                     <input
                         type="text"
                         :value="localContent.unsubscribeText"

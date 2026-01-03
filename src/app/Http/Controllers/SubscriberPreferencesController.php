@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Events\SubscriberUnsubscribed;
 use App\Models\ContactList;
 use App\Models\Subscriber;
+use App\Models\SuppressionList;
 use App\Models\SystemEmail;
 use App\Models\SystemPage;
 use App\Services\PlaceholderService;
 use App\Services\SystemEmailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
@@ -314,11 +316,15 @@ class SubscriberPreferencesController extends Controller
             $fallbackContent = match($slug) {
                 'preference_confirm_sent' => '<h1>Check Your Email</h1><p>We have sent you a confirmation email. Please click the link in the email to apply your changes.</p>',
                 'preference_update_success' => '<h1>Preferences Updated</h1><p>Your subscription preferences have been successfully updated.</p>',
+                'deletion_confirm_sent' => '<h1>Check Your Email</h1><p>We have sent you a confirmation email. Please click the link in the email to permanently delete your data.</p><p><strong>This action cannot be undone.</strong></p>',
+                'deletion_success' => '<h1>Data Deleted</h1><p>All your personal data has been permanently deleted from our system.</p><p>You will no longer receive any communications from us.</p>',
                 default => '<h1>Page not found</h1>',
             };
             $title = match($slug) {
                 'preference_confirm_sent' => 'Confirmation Email Sent',
                 'preference_update_success' => 'Preferences Updated',
+                'deletion_confirm_sent' => 'Deletion Confirmation',
+                'deletion_success' => 'Data Deleted',
                 default => 'NetSendo',
             };
         } else {
@@ -356,5 +362,134 @@ class SubscriberPreferencesController extends Controller
             'icon' => $icon,
             'systemPage' => $systemPage,
         ]);
+    }
+
+    /**
+     * Request data deletion (GDPR Right to be Forgotten).
+     * Sends confirmation email before actual deletion.
+     */
+    public function requestDeletion(Request $request, Subscriber $subscriber)
+    {
+        // Validate the original signature
+        $originalUrl = $request->input('signed_url');
+        if (!$originalUrl || !URL::hasValidSignature(request()->create($originalUrl))) {
+            return back()->withErrors(['error' => 'Invalid or expired link.']);
+        }
+
+        // Generate deletion confirmation link (valid for 24 hours)
+        $confirmUrl = URL::signedRoute('subscriber.data.delete.confirm', [
+            'subscriber' => $subscriber->id,
+        ], now()->addHours(24));
+
+        // Send confirmation email
+        $this->sendDeletionConfirmationEmail($subscriber, $confirmUrl);
+
+        Log::info('GDPR deletion request initiated', [
+            'subscriber_id' => $subscriber->id,
+            'email' => $subscriber->email,
+        ]);
+
+        return $this->renderSystemPage('deletion_confirm_sent', $subscriber, null);
+    }
+
+    /**
+     * Confirm and process data deletion (GDPR Right to be Forgotten).
+     * This permanently deletes the subscriber and adds email to suppression list.
+     */
+    public function confirmDeletion(Request $request, Subscriber $subscriber)
+    {
+        if (!$request->hasValidSignature()) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+
+        $userId = $subscriber->user_id;
+        $email = $subscriber->email;
+
+        try {
+            DB::transaction(function () use ($subscriber, $userId, $email) {
+                // 1. Add to suppression list (to prevent re-adding)
+                SuppressionList::suppress($userId, $email, 'gdpr_erasure');
+
+                // 2. Delete all related data
+                // - Field values (custom fields)
+                $subscriber->fieldValues()->delete();
+
+                // - Tags
+                $subscriber->tags()->detach();
+
+                // - Contact list relationships
+                $subscriber->contactLists()->detach();
+
+                // - Email tracking data (if exists)
+                if (method_exists($subscriber, 'emailEvents')) {
+                    $subscriber->emailEvents()->delete();
+                }
+
+                // - Funnel subscriptions (if exists)
+                if (method_exists($subscriber, 'funnelSubscriptions')) {
+                    $subscriber->funnelSubscriptions()->delete();
+                }
+
+                // 3. Hard delete the subscriber (not soft delete)
+                $subscriber->forceDelete();
+            });
+
+            Log::info('GDPR deletion completed', [
+                'email' => $email,
+                'user_id' => $userId,
+            ]);
+
+            return $this->renderSystemPage('deletion_success', null, null, [
+                'email' => $email,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('GDPR deletion failed', [
+                'subscriber_id' => $subscriber->id ?? 'deleted',
+                'error' => $e->getMessage(),
+            ]);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+    }
+
+    /**
+     * Send deletion confirmation email.
+     */
+    protected function sendDeletionConfirmationEmail(Subscriber $subscriber, string $confirmUrl): void
+    {
+        $list = $subscriber->contactLists()->first();
+
+        // Use system email template or fallback
+        $systemEmail = SystemEmail::getBySlug('deletion_confirm', $list?->id);
+
+        if (!$systemEmail || !$systemEmail->is_active) {
+            $subject = 'Confirm Data Deletion Request';
+            $content = '<h2>Confirm Data Deletion</h2>
+                <p>We received a request to permanently delete all your data from our system.</p>
+                <p><strong>This action cannot be undone.</strong> All your subscription data, preferences, and history will be permanently removed.</p>
+                <p>Click the link below to confirm deletion:</p>
+                <p><a href="[[confirm-link]]">Yes, delete all my data</a></p>
+                <p>If you did not request this, you can ignore this email.</p>';
+        } else {
+            $subject = $systemEmail->subject;
+            $content = $systemEmail->content;
+        }
+
+        // Replace placeholders
+        $subject = $this->placeholderService->replacePlaceholders($subject, $subscriber);
+        $content = $this->placeholderService->replacePlaceholders($content, $subscriber);
+        $content = str_replace('[[confirm-link]]', $confirmUrl, $content);
+
+        // Send the email
+        if ($list) {
+            $this->systemEmailService->sendToSubscriber($subscriber, $list, $subject, $content);
+        } else {
+            // Fallback: find any mailbox from user
+            $userId = $subscriber->user_id;
+            $firstList = ContactList::where('user_id', $userId)->first();
+            if ($firstList) {
+                $this->systemEmailService->sendToSubscriber($subscriber, $firstList, $subject, $content);
+            }
+        }
     }
 }

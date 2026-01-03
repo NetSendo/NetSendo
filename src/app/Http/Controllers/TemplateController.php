@@ -9,6 +9,7 @@ use App\Services\MjmlService;
 use App\Services\TemplateAiService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Http\Controllers\InsertController;
 
 class TemplateController extends Controller
 {
@@ -139,6 +140,9 @@ class TemplateController extends Controller
             'savedBlocks' => $savedBlocks,
             'aiAvailable' => $aiAvailable,
             'defaultSettings' => Template::defaultSettings(),
+            'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
+            'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
+            'systemVariables' => (new InsertController)->getSystemVariables(),
         ]);
     }
 
@@ -224,6 +228,9 @@ class TemplateController extends Controller
             'savedBlocks' => $savedBlocks,
             'aiAvailable' => $aiAvailable,
             'defaultSettings' => Template::defaultSettings(),
+            'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
+            'signatures' => Template::where('user_id', auth()->id())->signatures()->orderBy('name')->get(),
+            'systemVariables' => (new InsertController)->getSystemVariables(),
         ]);
     }
 

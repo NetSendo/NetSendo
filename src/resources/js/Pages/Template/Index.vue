@@ -96,23 +96,24 @@ const filteredStarterTemplates = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+            <div class="flex flex-row items-center justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                    <h1 class="text-lg font-bold text-slate-900 truncate dark:text-white sm:text-2xl">
                         {{ $t('templates.title') }}
                     </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                     <p class="hidden sm:block text-sm text-slate-500 dark:text-slate-400">
                         {{ $t('templates.subtitle') }}
                     </p>
                 </div>
                 <Link
                     :href="route('templates.create')"
-                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-indigo-500/40 sm:w-auto sm:py-2.5"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-indigo-500/40"
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    {{ $t('templates.new_template') }}
+                    <span class="hidden sm:inline">{{ $t('templates.new_template') }}</span>
+                    <span class="sm:hidden">{{ $t('common.add') }}</span>
                 </Link>
             </div>
         </template>
@@ -265,13 +266,30 @@ const filteredStarterTemplates = computed(() => {
             </Link>
         </div>
 
+        <!-- Templates GridHeader -->
+         <div v-else class="mb-6">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ $t('templates.your_templates') }}</h2>
+         </div>
+
         <!-- Templates Grid -->
-        <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div v-if="templates.data.length > 0" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <div
                 v-for="template in templates.data"
                 :key="template.id"
                 class="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/50 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 dark:bg-slate-900 dark:ring-slate-700/50"
             >
+                <!-- Header (Name & Date) -->
+                <div class="px-4 pt-4 pb-2">
+                     <h3 class="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        <Link :href="route('templates.edit', template.id)">
+                            {{ template.name }}
+                        </Link>
+                    </h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {{ $t('templates.updated_at') }} {{ template.updated_at }}
+                    </p>
+                </div>
+
                 <!-- Thumbnail -->
                 <Link :href="route('templates.edit', template.id)" class="relative block aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900">
                     <TemplatePreviewCard
@@ -284,7 +302,7 @@ const filteredStarterTemplates = computed(() => {
                     <!-- Category badge -->
                     <div v-if="template.category_data" class="absolute left-3 top-3">
                         <span
-                            class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm"
+                            class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm"
                             :style="{ backgroundColor: template.category_data.color + 'dd' }"
                         >
                             {{ template.category_data.name }}
@@ -293,33 +311,22 @@ const filteredStarterTemplates = computed(() => {
 
                     <!-- Builder badge -->
                     <div v-if="template.has_blocks" class="absolute right-3 top-3">
-                        <span class="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                        <span class="flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
-                            Builder
+                            {{ $t('templates.builder_badge') }}
                         </span>
                     </div>
                 </Link>
 
-                <!-- Info -->
-                <div class="flex flex-1 flex-col justify-between p-4">
-                    <div>
-                        <h3 class="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                            <Link :href="route('templates.edit', template.id)">
-                                {{ template.name }}
-                            </Link>
-                        </h3>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {{ $t('templates.updated_at') }} {{ template.updated_at }}
-                        </p>
-                    </div>
-
+                <!-- Actions -->
+                <div class="flex flex-1 flex-col justify-end p-4">
                     <!-- Quick Actions -->
-                    <div class="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
                         <Link
                             :href="route('templates.edit', template.id)"
-                            class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-slate-100 px-3 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-indigo-100 hover:text-indigo-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 sm:py-2 sm:text-xs"
+                            class="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-indigo-100 hover:text-indigo-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400"
                         >
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -328,19 +335,19 @@ const filteredStarterTemplates = computed(() => {
                         </Link>
                         <button
                             @click.prevent="handleDuplicate(template)"
-                            class="flex items-center justify-center rounded-lg bg-slate-100 p-3 text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 sm:p-2"
+                            class="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400"
                             :title="$t('templates.duplicate')"
                         >
-                            <svg class="h-5 w-5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </button>
                         <button
                             @click.prevent="handleDelete(template)"
-                            class="flex items-center justify-center rounded-lg bg-slate-100 p-3 text-slate-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-red-900/30 dark:hover:text-red-400 sm:p-2"
+                            class="flex items-center justify-center rounded-lg bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-red-100 hover:text-red-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-red-900/30 dark:hover:text-red-400 "
                             :title="$t('common.delete')"
                         >
-                            <svg class="h-5 w-5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </button>
@@ -348,7 +355,7 @@ const filteredStarterTemplates = computed(() => {
                 </div>
 
                 <!-- Delete Confirmation -->
-                <div v-if="showDeleteConfirm === template.id" class="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+                <div v-if="showDeleteConfirm === template.id" class="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm z-20">
                     <div class="p-6 text-center">
                         <p class="mb-4 text-sm text-white">{{ $t('templates.confirm_delete') }}</p>
                         <div class="flex justify-center gap-3">

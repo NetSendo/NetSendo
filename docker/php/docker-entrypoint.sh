@@ -72,6 +72,15 @@ if [ $attempt -lt $max_attempts ]; then
     echo "🗄️ Running database migrations..."
     php artisan migrate --force || echo "⚠️ Migration failed or already up to date"
     
+    # Check if starter templates exist and seed if needed
+    STARTER_COUNT=$(php artisan tinker --execute="echo App\Models\Template::whereNull('user_id')->count();" 2>/dev/null | tail -1)
+    if [ "$STARTER_COUNT" = "0" ] || [ -z "$STARTER_COUNT" ]; then
+        echo "🌱 Seeding database with starter templates..."
+        php artisan db:seed --force || echo "⚠️ Seeding failed"
+    else
+        echo "✅ Starter templates already exist ($STARTER_COUNT found), skipping seed"
+    fi
+    
     # Create storage link if it doesn't exist
     if [ ! -L "public/storage" ]; then
         echo "🔗 Creating storage link..."

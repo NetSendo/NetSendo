@@ -7,11 +7,13 @@ use Illuminate\Http\Request;
 
 use App\Models\ContactList;
 use App\Models\Subscriber;
+use App\Models\SuppressionList;
 use App\Models\Tag;
 use App\Events\SubscriberUnsubscribed;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SubscriberController extends Controller
 {
@@ -141,6 +143,18 @@ class SubscriberController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $request, $lists) {
+            // Check if email was previously suppressed (GDPR forgotten)
+            // If so, allow re-subscription and log the consent renewal
+            if (!empty($validated['email'])) {
+                $wasSuppressed = SuppressionList::handleResubscription(auth()->id(), $validated['email'], 'manual');
+                if ($wasSuppressed) {
+                    Log::info('Manually added subscriber was previously GDPR-forgotten', [
+                        'email' => $validated['email'],
+                        'added_by_user_id' => auth()->id(),
+                    ]);
+                }
+            }
+
             // Find existing subscriber by email or phone depending on what was provided
             $subscriber = null;
 

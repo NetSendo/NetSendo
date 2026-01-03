@@ -22,10 +22,13 @@ const props = defineProps({
     savedBlocks: Array,
     aiAvailable: Boolean,
     defaultSettings: Object,
+    inserts: Array,
+    signatures: Array,
+    systemVariables: Array,
 });
 
 // Template state
-const templateName = ref(props.template?.name || props.starterTemplate?.name || t('template_builder.untitled'));
+const templateName = ref(props.template?.name || props.starterTemplate?.name || '');
 const templatePreheader = ref(props.template?.preheader || '');
 const templateCategory = ref(props.template?.category || '');
 const templateCategoryId = ref(props.template?.category_id || null);
@@ -471,7 +474,7 @@ onBeforeUnmount(() => {
                     v-model="templateName"
                     type="text"
                     class="w-32 border-0 bg-transparent text-lg font-medium text-slate-900 focus:outline-none focus:ring-0 dark:text-white sm:w-64"
-                    :placeholder="$t('template_builder.untitled')"
+                    :placeholder="$t('templates.fields.name_placeholder')"
                 />
             </div>
 
@@ -597,6 +600,9 @@ onBeforeUnmount(() => {
                         v-else-if="selectedBlock"
                         :block="selectedBlock"
                         :ai-available="aiAvailable"
+                        :inserts="inserts"
+                        :signatures="signatures"
+                        :system-variables="systemVariables"
                         @update="(updates) => updateBlock(selectedBlockId, updates)"
                         @delete="deleteBlock(selectedBlockId)"
                         @duplicate="duplicateBlock(selectedBlockId)"
@@ -730,6 +736,9 @@ onBeforeUnmount(() => {
                         v-if="selectedBlock"
                         :block="selectedBlock"
                         :ai-available="aiAvailable"
+                        :inserts="inserts"
+                        :signatures="signatures"
+                        :system-variables="systemVariables"
                         @update="(updates) => updateBlock(selectedBlockId, updates)"
                         @delete="deleteBlock(selectedBlockId)"
                         @duplicate="duplicateBlock(selectedBlockId)"

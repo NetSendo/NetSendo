@@ -7,6 +7,7 @@ use App\Models\FormSubmission;
 use App\Models\Subscriber;
 use App\Models\ContactList;
 use App\Models\CustomField;
+use App\Models\SuppressionList;
 use App\Events\SubscriberSignedUp;
 use App\Events\FormSubmitted;
 use App\Services\WebhookDispatcher;
@@ -309,6 +310,18 @@ class FormSubmissionService
     {
         $email = strtolower(trim($data['email']));
         $isNew = false;
+
+        // Check if email was previously suppressed (GDPR forgotten)
+        // If so, allow re-subscription and log the consent renewal
+        $wasSuppressed = SuppressionList::handleResubscription($list->user_id, $email, 'form:' . $form->slug);
+
+        if ($wasSuppressed) {
+            Log::info('Subscriber re-subscribed after GDPR deletion', [
+                'email' => $email,
+                'form_slug' => $form->slug,
+                'list_id' => $list->id,
+            ]);
+        }
 
         // Check if subscriber exists for this user (including soft-deleted ones)
         // This is important because the unique index doesn't exclude soft-deleted records

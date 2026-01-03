@@ -573,6 +573,10 @@ Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPrefere
 Route::post('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'update'])->name('subscriber.preferences.update');
 Route::get('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirm'])->name('subscriber.preferences.confirm');
 
+// GDPR Data Deletion (Right to be Forgotten)
+Route::post('/preferences/{subscriber}/delete', [\App\Http\Controllers\SubscriberPreferencesController::class, 'requestDeletion'])->name('subscriber.data.delete');
+Route::get('/data/delete/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirmDeletion'])->name('subscriber.data.delete.confirm');
+
 // Subscriber Activation Routes (signed URLs from system emails)
 Route::get('/activate/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'activate'])->name('subscriber.activate');
 Route::get('/resubscribe/{subscriber}/{list}', [\App\Http\Controllers\ActivationController::class, 'resubscribe'])->name('subscriber.resubscribe');

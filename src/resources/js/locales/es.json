@@ -1304,6 +1304,7 @@
         "confirm_delete": "¿Está seguro de que desea eliminar esta etiqueta?"
     },
     "templates": {
+        "builder_badge": "Constructor",
         "title": "Plantillas de correo",
         "subtitle": "Administre sus plantillas de mensajes de correo electrónico",
         "new_template": "Nueva plantilla",
@@ -1549,6 +1550,7 @@
         }
     },
     "template_builder": {
+        "insert_variable": "Insertar variable",
         "untitled": "Sin título",
         "mobile_nav_blocks": "Bloques",
         "mobile_nav_edit": "Editar",

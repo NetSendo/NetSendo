@@ -127,7 +127,6 @@ const stripHtml = (html) => {
                 :class="isDragging ? 'border-indigo-400' : 'border-slate-200 dark:border-slate-700'"
                 :style="{ maxWidth: (settings?.width || 600) + 'px', backgroundColor: settings?.content_background || '#ffffff' }"
             >
-                <!-- Empty state -->
                 <div
                     v-if="blocks.length === 0"
                     class="flex flex-col items-center justify-center py-24 text-slate-400"
@@ -136,7 +135,15 @@ const stripHtml = (html) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                     <p class="mt-4 text-sm">{{ $t('template_builder.empty_canvas') }}</p>
-                    <p class="mt-1 text-xs">{{ $t('template_builder.drag_blocks_here') }}</p>
+                    <button
+                        @click="$emit('show-block-library')"
+                        class="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        {{ $t('template_builder.add_block') }}
+                    </button>
                 </div>
 
                 <!-- Blocks list - always show draggable for drop target -->

@@ -177,11 +177,11 @@ const toggleMobileMenu = () => {
                     class="flex min-h-16 py-2 items-center justify-between px-4 sm:px-6 lg:px-8"
                 >
                     <!-- Left side -->
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 min-w-0 flex-1">
                         <!-- Mobile menu button -->
                         <button
                             @click="toggleMobileMenu"
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 lg:hidden dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 lg:hidden dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
                         >
                             <svg
                                 class="h-5 w-5"
@@ -199,13 +199,13 @@ const toggleMobileMenu = () => {
                         </button>
 
                         <!-- Page title slot -->
-                        <div v-if="$slots.header">
+                        <div v-if="$slots.header" class="min-w-0 flex-1">
                             <slot name="header" />
                         </div>
                     </div>
 
                     <!-- Right side -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 shrink-0">
                         <!-- Search -->
                         <div
                             class="hidden items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 sm:flex dark:bg-slate-800"

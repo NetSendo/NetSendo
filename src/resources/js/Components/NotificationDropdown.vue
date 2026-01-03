@@ -253,7 +253,7 @@ const hasUnread = computed(() => unreadCount.value > 0);
         >
             <div
                 v-show="open"
-                class="absolute right-0 z-50 mt-2 w-80 sm:w-96 origin-top-right rounded-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10"
+                class="fixed left-4 right-4 top-20 z-50 origin-top rounded-2xl bg-white shadow-xl ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10 sm:absolute sm:right-0 sm:left-auto sm:top-full sm:mt-2 sm:w-96 sm:origin-top-right"
             >
                 <!-- Header -->
                 <div

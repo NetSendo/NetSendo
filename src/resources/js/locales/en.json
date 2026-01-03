@@ -1557,6 +1557,7 @@
         "confirm_delete": "Are you sure you want to delete this tag?"
     },
     "templates": {
+        "builder_badge": "Builder",
         "title": "Email Templates",
         "subtitle": "Manage your email message templates",
         "new_template": "New Template",
@@ -1599,6 +1600,7 @@
         }
     },
     "template_builder": {
+        "insert_variable": "Insert variable",
         "untitled": "Untitled",
         "mobile_nav_blocks": "Blocks",
         "mobile_nav_edit": "Edit",

@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+## [1.3.9] – Short Description
+
+**Release date:** 2026-01-03
+
+### Added
+
+- **Template Builder:**
+
+  - **Inserts (Placeholders):** Added functionality to insert dynamic placeholders (firstname, email, signatures, etc.) into text blocks, buttons, and other editable fields.
+  - **Variable Picker:** Integrated `InsertPickerModal` into the builder for easy variable selection.
+
+- **Translations:**
+
+  - Added missing translations for `template_builder.insert_variable` and `templates.builder_badge` in all supported languages.
+
+- **GDPR "Right to be Forgotten" (Article 17):**
+
+  - **Data Deletion:** Subscribers can now request permanent deletion of all their data via the preferences page.
+  - **Suppression List:** Deleted subscribers are added to a suppression list to prevent accidental re-adding.
+  - **Re-subscription Flow:** Previously forgotten users can re-subscribe with renewed consent; system logs the event and removes them from the suppression list.
+  - **Frontend:** "Delete all my data" option with confirmation dialog in Subscriber Preferences.
+  - **System Emails:** automated confirmation email flow for data deletion requests.
+
+- **Template UI Improvements:**
+  - **Templates List:** Redesigned template cards (name above thumbnail) and improved header layout for better mobile responsiveness.
+  - **Builder UX:** Added "Add Block" button to empty canvas and improved template name input with proper placeholder behavior.
+  - **Localization:** Updated Polish translations, renaming "Builder" to "Kreator".
+
+### Fixed
+
+- **Starter Templates Missing on New Installations:**
+
+  - Fixed issue where new NetSendo installations had no starter templates in the Templates section.
+  - Docker entrypoint now automatically seeds the database with 6 premium starter templates (Welcome Email, Classic Newsletter, Promo Campaign, Cart Abandonment, Order Confirmation, Password Reset).
+  - Smart seeding logic checks if templates exist before seeding, ensuring existing installations also receive templates on next container restart.
+
+- **Subscription Persistence:**
+
+  - Fixed issue in Admin Panel where `Contact Lists` tab displayed unsubscribed lists as active.
+  - Updated `SubscriberController` to filter contact lists by pivot status `active`.
+
+- **Single-List Unsubscribe:**
+
+  - Fixed issue where unsubscribing from a single list failed to send confirmation emails.
+  - Added comprehensive logging to `UnsubscribeController` and `SystemEmailService` for better traceability.
+
+- **Mobile Notifications:**
+
+  - Fixed issue where notification messages were truncated on mobile devices by adjusting dropdown width.
+
+- **Templates UI:**
+
+  - Fixed mobile layout overflow in Templates view by adjusting header flex properties and title sizing.
+
+- **Mobile Notification Modal:**
+  - Fixed unresponsive and overflowing notification modal on mobile devices by implementing `fixed` positioning for better visibility.
+
 ## [1.3.8] – Subscription Persistence Fix
 
 **Release date:** 2026-01-03

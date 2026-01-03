@@ -177,6 +177,29 @@
             opacity: 0;
             pointer-events: none;
         }
+        /* GDPR Delete Section */
+        .delete-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #E5E7EB;
+            text-align: center;
+        }
+        .delete-text {
+            font-size: 12px;
+            color: #9CA3AF;
+        }
+        .delete-link {
+            background: none;
+            border: none;
+            color: #EF4444;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+        .delete-link:hover {
+            color: #DC2626;
+        }
     </style>
 </head>
 <body>
@@ -243,9 +266,25 @@
                 </p>
             @endif
         </form>
+
+        <!-- GDPR: Right to be Forgotten -->
+        <div class="delete-section">
+            <form method="POST" action="{{ route('subscriber.data.delete', $subscriber) }}" id="deleteForm" onsubmit="return confirmDelete()">
+                @csrf
+                <input type="hidden" name="signed_url" value="{{ $signedUrl }}">
+                <p class="delete-text">
+                    Want to completely remove your data?
+                    <button type="submit" class="delete-link">Delete all my data</button>
+                </p>
+            </form>
+        </div>
     </div>
 
     <script>
+        function confirmDelete() {
+            return confirm('Are you sure you want to permanently delete all your data? This action cannot be undone.');
+        }
+
         // Toggle selected class when clicking on list items
         document.querySelectorAll('.list-item').forEach(item => {
             const checkbox = item.querySelector('input[type="checkbox"]');
