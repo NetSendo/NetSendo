@@ -19,8 +19,9 @@ class SubscriberController extends Controller
     {
         $query = Subscriber::query()
             ->with(['contactLists' => function ($q) {
-                // Optimize loading lists
-                $q->select('contact_lists.id', 'contact_lists.name');
+                // Only load lists where subscriber is actively subscribed (not unsubscribed)
+                $q->select('contact_lists.id', 'contact_lists.name')
+                  ->wherePivot('status', 'active');
             }, 'fieldValues.customField'])
             ->where('user_id', auth()->id());
 
@@ -232,7 +233,9 @@ class SubscriberController extends Controller
             abort(403);
         }
 
-        $subscriber->load(['contactLists', 'fieldValues']);
+        $subscriber->load(['contactLists' => function ($q) {
+            $q->wherePivot('status', 'active');
+        }, 'fieldValues']);
 
         return Inertia::render('Subscriber/Edit', [
             'subscriber' => [

@@ -192,10 +192,22 @@ class UnsubscribeController extends Controller
      */
     protected function sendUnsubscribeConfirmationEmail(Subscriber $subscriber, ContactList $list, string $confirmUrl): void
     {
+        Log::info('Sending unsubscribe confirmation email - START', [
+            'subscriber_id' => $subscriber->id,
+            'subscriber_email' => $subscriber->email,
+            'list_id' => $list->id,
+            'list_name' => $list->name,
+        ]);
+
         // Use system email template
         $systemEmail = SystemEmail::getBySlug('unsubscribe_request', $list->id);
 
         if (!$systemEmail || !$systemEmail->is_active) {
+            Log::info('Unsubscribe confirmation - using fallback template', [
+                'subscriber_id' => $subscriber->id,
+                'system_email_found' => $systemEmail !== null,
+                'is_active' => $systemEmail?->is_active ?? false,
+            ]);
             // Fallback to default template
             $subject = 'Confirm Your Unsubscribe Request';
             $content = '<h2>Confirm Unsubscribe</h2><p>We received a request to unsubscribe from <strong>[[list-name]]</strong>.</p><p>Click the link below to confirm:</p><p><a href="[[unsubscribe-link]]">Yes, unsubscribe me</a></p><p>If you did not request this, you can ignore this email.</p>';
@@ -211,8 +223,17 @@ class UnsubscribeController extends Controller
         $subject = str_replace('[[list-name]]', $list->name, $subject);
         $content = str_replace('[[unsubscribe-link]]', $confirmUrl, $content);
 
+        Log::info('Sending unsubscribe confirmation email - calling sendToSubscriber', [
+            'subscriber_id' => $subscriber->id,
+            'subject' => $subject,
+        ]);
+
         // Send the email
         $this->systemEmailService->sendToSubscriber($subscriber, $list, $subject, $content);
+
+        Log::info('Sending unsubscribe confirmation email - COMPLETED', [
+            'subscriber_id' => $subscriber->id,
+        ]);
     }
 
     /**
