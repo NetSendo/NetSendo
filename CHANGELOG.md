@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **System Emails UI Redesign:**
+  - **Responsive Mobile View:** Replaced table with card-based layout on mobile devices for better usability.
+  - **Modernized UI:** Updated styling with better spacing, typography, and shadows.
+  - **Dark Mode Support:** Fixed styling issues in the list selection dropdown where text was unreadable in dark mode.
+
+### Fixed
+
+- **System Email Sending:**
+  - Fixed critical issue where custom system emails failed with "Connection could not be established" error when using non-SMTP providers (e.g., SendGrid/Gmail API).
+  - Refactored `SystemEmailService` to properly leverage `MailProviderService` for all custom emails, fixing "empty host" errors.
+  - Updated `SendNewSubscriberNotification` listener to use `SystemEmailService`, ensuring reliable delivery of admin notifications using the correct mailbox.
+
 ## [1.3.7] – Short Description
 
 **Release date:** 2026-01-03

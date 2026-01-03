@@ -7,8 +7,8 @@ use App\Models\ContactList;
 use App\Models\Mailbox;
 use App\Models\Subscriber;
 use App\Models\SystemEmail;
+use App\Services\Mail\MailProviderService;
 use App\Services\Mail\SystemMailService;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
@@ -20,10 +20,14 @@ use Illuminate\Support\Facades\URL;
 class SystemEmailService
 {
     protected SystemMailService $systemMailService;
+    protected MailProviderService $mailProviderService;
 
-    public function __construct(SystemMailService $systemMailService)
-    {
+    public function __construct(
+        SystemMailService $systemMailService,
+        MailProviderService $mailProviderService
+    ) {
         $this->systemMailService = $systemMailService;
+        $this->mailProviderService = $mailProviderService;
     }
 
     /**
@@ -58,6 +62,7 @@ class SystemEmailService
 
         // Configure the mailbox for sending
         $mailbox = $this->getMailboxForList($list);
+        $provider = null;
 
         if (!$mailbox) {
             Log::warning("No mailbox configured for system email: {$slug}", [
@@ -71,14 +76,40 @@ class SystemEmailService
                 return false;
             }
         } else {
-            // Configure Laravel mailer with the mailbox settings
-            $this->configureMailer($mailbox);
+            // Get provider for the mailbox
+            try {
+                $provider = $this->mailProviderService->getProvider($mailbox);
+            } catch (\Exception $e) {
+                Log::error("Failed to get mail provider for custom email: {$slug}", [
+                    'mailbox_id' => $mailbox->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fallback to system mail service
+                if (!$this->systemMailService->prepare()) {
+                    return false;
+                }
+            }
         }
 
         try {
-            Mail::to($recipient)->send(
-                new SystemEmailMailable($subscriber, $list, $systemEmail, $extraData)
-            );
+            // Create mailable
+            $mailable = new SystemEmailMailable($subscriber, $list, $systemEmail, $extraData);
+
+            if ($provider) {
+                // Render content and send via provider
+                $htmlContent = $mailable->render();
+                $subject = $mailable->envelope()->subject;
+
+                $provider->send(
+                    $recipient,
+                    $recipient, // Use email as name if name not available
+                    $subject,
+                    $htmlContent
+                );
+            } else {
+                // Send via Laravel default (fallback)
+                Mail::to($recipient)->send($mailable);
+            }
 
             Log::info("System email sent: {$slug}", [
                 'subscriber_id' => $subscriber->id,
@@ -123,6 +154,7 @@ class SystemEmailService
 
         // Configure the mailbox for sending
         $mailbox = $this->getMailboxForList($list);
+        $provider = null;
 
         if (!$mailbox) {
             Log::warning("No mailbox configured for custom email", [
@@ -136,14 +168,37 @@ class SystemEmailService
                 return false;
             }
         } else {
-            // Configure Laravel mailer with the mailbox settings
-            $this->configureMailer($mailbox);
+            // Get provider for the mailbox
+            try {
+                $provider = $this->mailProviderService->getProvider($mailbox);
+            } catch (\Exception $e) {
+                 Log::error("Failed to get mail provider for custom email", [
+                    'mailbox_id' => $mailbox->id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Fallback to system mail service
+                if (!$this->systemMailService->prepare()) {
+                    return false;
+                }
+            }
         }
 
         try {
-            Mail::to($recipient)->send(
-                new \App\Mail\GenericHtmlMailable($subject, $content)
-            );
+            $mailable = new \App\Mail\GenericHtmlMailable($subject, $content);
+
+            if ($provider) {
+                // Render content and send via provider
+                $htmlContent = $mailable->render();
+
+                $provider->send(
+                    $recipient,
+                    $recipient, // Use email as name
+                    $subject,
+                    $htmlContent
+                );
+            } else {
+                Mail::to($recipient)->send($mailable);
+            }
 
             Log::info("Custom email sent to subscriber", [
                 'subscriber_id' => $subscriber->id,
@@ -200,26 +255,7 @@ class SystemEmailService
             ->first();
     }
 
-    /**
-     * Configure Laravel's mail system to use a specific Mailbox.
-     */
-    protected function configureMailer(Mailbox $mailbox): void
-    {
-        $credentials = $mailbox->getDecryptedCredentials();
 
-        Config::set('mail.default', 'smtp');
-        Config::set('mail.mailers.smtp.host', $credentials['host'] ?? '');
-        Config::set('mail.mailers.smtp.port', $credentials['port'] ?? 587);
-        Config::set('mail.mailers.smtp.username', $credentials['username'] ?? '');
-        Config::set('mail.mailers.smtp.password', $credentials['password'] ?? '');
-        Config::set('mail.mailers.smtp.encryption', $credentials['encryption'] ?? 'tls');
-
-        Config::set('mail.from.address', $mailbox->from_email);
-        Config::set('mail.from.name', $mailbox->from_name ?: config('app.name'));
-
-        // Force Laravel to recreate the mailer with new config
-        Mail::purge('smtp');
-    }
 
     /**
      * Send signup confirmation email (double opt-in).

@@ -24,6 +24,10 @@ class SendNewSubscriberNotification implements ShouldQueue
      */
     public string $queue = 'notifications';
 
+    public function __construct(
+        protected \App\Services\SystemEmailService $systemEmailService
+    ) {}
+
     /**
      * Handle the event.
      */
@@ -32,7 +36,7 @@ class SendNewSubscriberNotification implements ShouldQueue
         try {
             // Get notification email address with fallback logic
             $notificationEmail = SystemEmail::getNotificationEmail($event->list);
-            
+
             if (!$notificationEmail) {
                 Log::debug('No notification email configured for list or user, skipping notification.', [
                     'list_id' => $event->list->id,
@@ -40,21 +44,13 @@ class SendNewSubscriberNotification implements ShouldQueue
                 return;
             }
 
-            // Get the system email template
-            $systemEmail = SystemEmail::getBySlug('new_subscriber_notification', $event->list->id);
-            
-            if (!$systemEmail) {
-                Log::warning('System email "new_subscriber_notification" not found.');
-                return;
-            }
-
-            // Send the notification email
-            Mail::to($notificationEmail)->send(
-                new NewSubscriberNotificationMail(
-                    $event->subscriber,
-                    $event->list,
-                    $systemEmail->content
-                )
+            // Send using SystemEmailService which handles provider selection correctly
+            $this->systemEmailService->send(
+                'new_subscriber_notification',
+                $event->subscriber,
+                $event->list,
+                [], // No extra data
+                $notificationEmail // Override recipient
             );
 
             Log::info('New subscriber notification sent.', [
