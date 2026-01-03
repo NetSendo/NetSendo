@@ -123,22 +123,20 @@ class SubscriberPreferencesController extends Controller
 
         $selectedListIds = array_map('intval', $pendingChanges['selected_lists']);
 
-        Log::debug('Subscriber preferences confirm - parsing changes', [
-            'subscriber_id' => $subscriber->id,
-            'raw_selected_lists' => $pendingChanges['selected_lists'],
-            'typed_selected_lists' => $selectedListIds,
-        ]);
-
         // Get subscriber's user to find their public lists
         $userId = $this->getSubscriberUserId($subscriber);
 
-        Log::debug('Subscriber preferences confirm - user identification', [
+        Log::info('Subscriber preferences confirm - starting', [
             'subscriber_id' => $subscriber->id,
+            'selected_lists' => $selectedListIds,
             'resolved_user_id' => $userId,
             'subscriber_user_id' => $subscriber->user_id,
         ]);
 
         if (!$userId) {
+            Log::error('Subscriber preferences confirm - no user ID found', [
+                'subscriber_id' => $subscriber->id,
+            ]);
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
         }
 
@@ -149,25 +147,36 @@ class SubscriberPreferencesController extends Controller
             ->pluck('id')
             ->toArray();
 
-        Log::debug('Subscriber preferences confirm - public lists found', [
+        Log::info('Subscriber preferences confirm - public lists', [
             'subscriber_id' => $subscriber->id,
-            'user_id' => $userId,
             'public_list_ids' => $publicListIds,
+            'public_list_count' => count($publicListIds),
         ]);
 
+        if (empty($publicListIds)) {
+            Log::warning('Subscriber preferences confirm - NO PUBLIC LISTS FOUND! This is likely the issue.', [
+                'subscriber_id' => $subscriber->id,
+                'user_id' => $userId,
+            ]);
+        }
+
         try {
+            $changesApplied = [];
+
             // Apply changes only to public lists
             foreach ($publicListIds as $listId) {
-                $isSelected = in_array($listId, $selectedListIds);
+                $isSelected = in_array($listId, $selectedListIds, true);
                 $existingPivot = $subscriber->contactLists()
                     ->where('contact_lists.id', $listId)
                     ->first();
 
-                Log::debug('Subscriber preferences confirm - processing list', [
+                $pivotStatus = $existingPivot?->pivot->status ?? 'none';
+
+                Log::info('Subscriber preferences confirm - processing list', [
                     'subscriber_id' => $subscriber->id,
                     'list_id' => $listId,
                     'is_selected' => $isSelected,
-                    'existing_pivot_status' => $existingPivot?->pivot->status ?? 'none',
+                    'existing_pivot_status' => $pivotStatus,
                 ]);
 
                 if ($isSelected) {
@@ -178,30 +187,35 @@ class SubscriberPreferencesController extends Controller
                             'subscribed_at' => now(),
                             'source' => 'preferences',
                         ]);
-                        Log::debug('Subscriber preferences confirm - attached new list', [
+                        $changesApplied[] = ['list_id' => $listId, 'action' => 'attached'];
+                        Log::info('Subscriber preferences confirm - attached new list', [
                             'subscriber_id' => $subscriber->id,
                             'list_id' => $listId,
                         ]);
                     } elseif ($existingPivot->pivot->status !== 'active') {
-                        $subscriber->contactLists()->updateExistingPivot($listId, [
+                        $result = $subscriber->contactLists()->updateExistingPivot($listId, [
                             'status' => 'active',
                             'subscribed_at' => now(),
                         ]);
-                        Log::debug('Subscriber preferences confirm - reactivated list', [
+                        $changesApplied[] = ['list_id' => $listId, 'action' => 'reactivated', 'result' => $result];
+                        Log::info('Subscriber preferences confirm - reactivated list', [
                             'subscriber_id' => $subscriber->id,
                             'list_id' => $listId,
+                            'update_result' => $result,
                         ]);
                     }
                 } else {
                     // Unsubscribe from the list
                     if ($existingPivot && $existingPivot->pivot->status === 'active') {
-                        $subscriber->contactLists()->updateExistingPivot($listId, [
+                        $result = $subscriber->contactLists()->updateExistingPivot($listId, [
                             'status' => 'unsubscribed',
                             'unsubscribed_at' => now(),
                         ]);
-                        Log::debug('Subscriber preferences confirm - unsubscribed from list', [
+                        $changesApplied[] = ['list_id' => $listId, 'action' => 'unsubscribed', 'result' => $result];
+                        Log::info('Subscriber preferences confirm - unsubscribed from list', [
                             'subscriber_id' => $subscriber->id,
                             'list_id' => $listId,
+                            'update_result' => $result,
                         ]);
 
                         // Dispatch event for automations
@@ -213,9 +227,19 @@ class SubscriberPreferencesController extends Controller
                 }
             }
 
-            Log::info('Subscriber preferences updated', [
+            // VERIFICATION: Check actual DB state after updates
+            $subscriber->load('contactLists');
+            $finalActiveListIds = $subscriber->contactLists()
+                ->wherePivot('status', 'active')
+                ->pluck('contact_lists.id')
+                ->toArray();
+
+            Log::info('Subscriber preferences updated - FINAL STATE', [
                 'subscriber_id' => $subscriber->id,
-                'selected_lists' => $selectedListIds,
+                'requested_selected_lists' => $selectedListIds,
+                'final_active_list_ids' => $finalActiveListIds,
+                'changes_applied' => $changesApplied,
+                'public_lists_processed' => $publicListIds,
             ]);
 
             return $this->renderSystemPage('preference_update_success', $subscriber, null);
