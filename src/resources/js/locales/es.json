@@ -1,4 +1,64 @@
 {
+    "template_builder": {
+        "untitled": "Plantilla sin título",
+        "default_text": "Empieza a escribir aquí...",
+        "default_button": "Haz clic aquí",
+        "product_title": "Nombre del producto",
+        "product_description": "Descripción del producto",
+        "buy_now": "Comprar ahora",
+        "company_name": "Nombre de la empresa",
+        "company_address": "Dirección de la empresa",
+        "unsubscribe": "Darse de baja",
+        "all_rights": "Todos los derechos reservados.",
+        "saved_at": "Último guardado:",
+        "preview": "Vista previa",
+        "save_exit": "Guardar y salir",
+        "block_settings": "Configuración de bloque",
+        "global_styles": "Estilos globales",
+        "select_block": "Selecciona un bloque para editar",
+        "save_error": "Error al guardar la plantilla. Por favor inténtalo de nuevo.",
+        "blocks": "Bloques",
+        "edit": "Editar",
+        "styles": "Estilos"
+    },
+    "templates": {
+        "title": "Plantillas",
+        "subtitle": "Administra tus plantillas de correo y SMS",
+        "new_template": "Nueva Plantilla",
+        "starter": {
+            "title": "Plantillas de Inicio",
+            "subtitle": "Comienza con una plantilla prediseñada",
+            "use_template": "Usar Plantilla",
+            "show_templates": "Mostrar Plantillas de Inicio",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Bienvenida",
+                "newsletter": "Boletín",
+                "promotional": "Promocional",
+                "ecommerce": "E-commerce",
+                "transactional": "Transaccional",
+                "notification": "Notificación"
+            }
+        },
+        "empty_title": "Sin plantillas todavía",
+        "empty_description": "Crea tu primera plantilla para comenzar",
+        "start": "Crear Plantilla",
+        "updated_at": "Actualizado",
+        "confirm_delete": "¿Seguro que quieres eliminar esta plantilla?",
+        "duplicate": "Duplicar",
+        "create_title": "Crear Plantilla",
+        "create_subtitle": "Diseña una nueva plantilla desde cero",
+        "back_to_list": "Volver a la lista",
+        "fields": {
+            "name": "Nombre de la Plantilla",
+            "name_placeholder": "ej. Boletín Mensual",
+            "content": "Contenido"
+        },
+        "actions": {
+            "create": "Crear Plantilla"
+        },
+        "default_content": "<p>Comienza a editar tu plantilla...</p>"
+    },
     "common": {
         "save": "Guardar",
         "saved": "Guardado",

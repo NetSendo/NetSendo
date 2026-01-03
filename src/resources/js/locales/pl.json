@@ -1,4 +1,64 @@
 {
+    "template_builder": {
+        "untitled": "Szablon bez tytułu",
+        "default_text": "Zacznij pisać tutaj...",
+        "default_button": "Kliknij tutaj",
+        "product_title": "Nazwa produktu",
+        "product_description": "Opis produktu",
+        "buy_now": "Kup teraz",
+        "company_name": "Nazwa firmy",
+        "company_address": "Adres firmy",
+        "unsubscribe": "Wypisz się",
+        "all_rights": "Wszelkie prawa zastrzeżone.",
+        "saved_at": "Ostatni zapis:",
+        "preview": "Podgląd",
+        "save_exit": "Zapisz i wyjdź",
+        "block_settings": "Ustawienia bloku",
+        "global_styles": "Style globalne",
+        "select_block": "Wybierz blok, aby edytować ustawienia",
+        "save_error": "Nie udało się zapisać szablonu. Spróbuj ponownie.",
+        "blocks": "Bloki",
+        "edit": "Edytuj",
+        "styles": "Style"
+    },
+    "templates": {
+        "title": "Szablony",
+        "subtitle": "Zarządzaj szablonami wiadomości email i SMS",
+        "new_template": "Nowy Szablon",
+        "starter": {
+            "title": "Szablony Startowe",
+            "subtitle": "Zacznij od gotowego szablonu",
+            "use_template": "Użyj Szablonu",
+            "show_templates": "Pokaż Szablony Startowe",
+            "premium": "Premium",
+            "categories": {
+                "welcome": "Powitanie",
+                "newsletter": "Newsletter",
+                "promotional": "Promocyjne",
+                "ecommerce": "E-commerce",
+                "transactional": "Transakcyjne",
+                "notification": "Powiadomienia"
+            }
+        },
+        "empty_title": "Brak szablonów",
+        "empty_description": "Utwórz swój pierwszy szablon, aby rozpocząć",
+        "start": "Utwórz Szablon",
+        "updated_at": "Zaktualizowano",
+        "confirm_delete": "Czy na pewno chcesz usunąć ten szablon?",
+        "duplicate": "Duplikuj",
+        "create_title": "Utwórz Szablon",
+        "create_subtitle": "Zaprojektuj nowy szablon od podstaw",
+        "back_to_list": "Powrót do listy",
+        "fields": {
+            "name": "Nazwa Szablonu",
+            "name_placeholder": "np. Miesięczny Newsletter",
+            "content": "Treść"
+        },
+        "actions": {
+            "create": "Utwórz Szablon"
+        },
+        "default_content": "<p>Zacznij edytować swój szablon...</p>"
+    },
     "common": {
         "save": "Zapisz",
         "saved": "Zapisano",

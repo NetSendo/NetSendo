@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+## [1.3.6] – Short Description
+
+**Release date:** 2026-01-03
+
+### Added
+
 - **Multi-level Group Hierarchy:**
+
   - Implemented hierarchical structure for Contact List Groups (parent-child relationships).
   - Updated `ContactListGroup` model with `parent`, `children`, and `allChildren` relationships.
   - New recursive methods `getAllDescendantIds`, `getFullPathAttribute`, and `getDepthAttribute`.
@@ -19,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Group Management:** Added parent selection in create/edit forms with circular dependency prevention.
   - New recursive Vue component `GroupTreeItem.vue` for efficient tree rendering.
   - Full translations for new hierarchy features in PL.
+
+- **Template Builder Translations:**
+  - Added missing keys for `template_builder` and `templates` namespaces (EN, PL, DE, ES).
+  - Fixed JSON syntax errors in locale files which prevented build.
+  - Verified mobile view translations.
 
 ## [1.3.5] – Universal Timezone Management
 

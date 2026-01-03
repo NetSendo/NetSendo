@@ -59,6 +59,14 @@ const showAiPanel = ref(false);
 const showStylePanel = ref(false);
 const previewMode = ref('desktop'); // desktop, tablet, mobile
 const previewTheme = ref('light'); // light, dark
+const activeMobileTab = ref(null); // 'blocks', 'edit', 'styles'
+
+// Watch selection to auto-open edit tab on mobile
+watch(selectedBlockId, (newId) => {
+    if (newId && window.innerWidth < 768) {
+        activeMobileTab.value = 'edit';
+    }
+});
 
 // Auto-save timer
 let autoSaveTimer = null;
@@ -450,33 +458,34 @@ onBeforeUnmount(() => {
                 <button
                     @click="router.visit(route('templates.index'))"
                     class="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    :title="$t('common.back')"
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    {{ $t('common.back') }}
+                    <span class="hidden sm:inline">{{ $t('common.back') }}</span>
                 </button>
 
                 <!-- Template name -->
                 <input
                     v-model="templateName"
                     type="text"
-                    class="w-64 border-0 bg-transparent text-lg font-medium text-slate-900 focus:outline-none focus:ring-0 dark:text-white"
+                    class="w-32 border-0 bg-transparent text-lg font-medium text-slate-900 focus:outline-none focus:ring-0 dark:text-white sm:w-64"
                     :placeholder="$t('template_builder.untitled')"
                 />
             </div>
 
             <div class="flex items-center gap-3">
                 <!-- Last saved indicator -->
-                <span v-if="lastSaved" class="text-xs text-slate-400">
+                <span v-if="lastSaved" class="hidden text-xs text-slate-400 lg:inline">
                     {{ $t('template_builder.saved_at') }} {{ lastSaved.toLocaleTimeString() }}
                 </span>
 
-                <!-- Preview toggle -->
+                <!-- Preview toggle (Desktop only) -->
                 <button
                     @click="showPreview = !showPreview"
                     :class="showPreview ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'"
-                    class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+                    class="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors md:flex"
                 >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -489,20 +498,23 @@ onBeforeUnmount(() => {
                 <button
                     @click="saveTemplate()"
                     :disabled="isSaving"
-                    class="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    class="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:px-4"
                 >
                     <svg v-if="isSaving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    {{ isSaving ? $t('common.saving') : $t('common.save') }}
+                    <svg v-else class="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span class="hidden sm:inline">{{ isSaving ? $t('common.saving') : $t('common.save') }}</span>
                 </button>
 
                 <!-- Save & Exit button -->
                 <button
                     @click="saveAndExit()"
                     :disabled="isSaving"
-                    class="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50"
+                    class="hidden items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:opacity-50 md:flex"
                 >
                     {{ $t('template_builder.save_exit') }}
                 </button>
@@ -519,7 +531,7 @@ onBeforeUnmount(() => {
                 :ai-available="aiAvailable"
                 @add-block="addBlock"
                 @show-ai="showAiPanel = true"
-                class="w-64 shrink-0"
+                class="hidden w-64 shrink-0 md:block"
             />
 
             <!-- Center: Canvas or Preview -->
@@ -551,7 +563,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Right Panel: Block Editor / Style Editor -->
-            <div class="w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <div class="hidden w-80 shrink-0 overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 md:block">
                 <!-- Tabs -->
                 <div class="flex border-b border-slate-200 dark:border-slate-800">
                     <button
@@ -595,6 +607,113 @@ onBeforeUnmount(() => {
                         </svg>
                         <p class="mt-3 text-sm">{{ $t('template_builder.select_block') }}</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Nav -->
+        <div class="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] dark:border-slate-800 dark:bg-slate-900 md:hidden">
+            <button
+                @click="activeMobileTab = activeMobileTab === 'blocks' ? null : 'blocks'"
+                :class="activeMobileTab === 'blocks' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+                class="flex flex-col items-center gap-1 p-2"
+            >
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.blocks') || 'Blocks' }}</span>
+            </button>
+
+            <button
+                @click="activeMobileTab = activeMobileTab === 'edit' ? null : 'edit'"
+                :class="activeMobileTab === 'edit' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+                class="flex flex-col items-center gap-1 p-2"
+            >
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.edit') || 'Edit' }}</span>
+            </button>
+
+             <button
+                @click="activeMobileTab = activeMobileTab === 'styles' ? null : 'styles'"
+                :class="activeMobileTab === 'styles' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+                class="flex flex-col items-center gap-1 p-2"
+            >
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.styles') || 'Styles' }}</span>
+            </button>
+
+             <button
+                @click="showPreview = !showPreview"
+                :class="showPreview ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+                class="flex flex-col items-center gap-1 p-2"
+            >
+                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span class="text-[10px] font-medium">{{ $t('template_builder.preview') || 'Preview' }}</span>
+            </button>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div v-if="activeMobileTab" class="fixed inset-0 z-50 flex flex-col bg-slate-100 dark:bg-slate-950 md:hidden pb-16">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+                <h3 class="font-bold text-slate-900 dark:text-white">
+                    <span v-if="activeMobileTab === 'blocks'">{{ $t('template_builder.blocks') || 'Blocks' }}</span>
+                    <span v-else-if="activeMobileTab === 'edit'">{{ $t('template_builder.block_settings') || 'Edit Block' }}</span>
+                    <span v-else-if="activeMobileTab === 'styles'">{{ $t('template_builder.global_styles') || 'Global Styles' }}</span>
+                </h3>
+                <button @click="activeMobileTab = null" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto">
+                 <BlockLibrary
+                    v-if="activeMobileTab === 'blocks'"
+                    :block-types="blockTypes"
+                    :block-categories="blockCategories"
+                    :saved-blocks="savedBlocks"
+                    :ai-available="aiAvailable"
+                    @add-block="addBlock"
+                    @show-ai="showAiPanel = true"
+                    class="w-full"
+                />
+
+                <div v-else-if="activeMobileTab === 'edit'" class="p-4">
+                     <BlockEditor
+                        v-if="selectedBlock"
+                        :block="selectedBlock"
+                        :ai-available="aiAvailable"
+                        @update="(updates) => updateBlock(selectedBlockId, updates)"
+                        @delete="deleteBlock(selectedBlockId)"
+                        @duplicate="duplicateBlock(selectedBlockId)"
+                        @ai-content="handleAiContent"
+                    />
+                     <div v-else class="py-12 text-center text-slate-400">
+                        <svg class="mx-auto h-12 w-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                        </svg>
+                        <p class="mt-3 text-sm">{{ $t('template_builder.select_block') }}</p>
+                    </div>
+                </div>
+
+                 <div v-else-if="activeMobileTab === 'styles'" class="p-4">
+                    <StyleEditor
+                        v-model:settings="settings"
+                        v-model:preheader="templatePreheader"
+                        :categories="categories"
+                        v-model:category="templateCategory"
+                        v-model:categoryId="templateCategoryId"
+                    />
                 </div>
             </div>
         </div>
