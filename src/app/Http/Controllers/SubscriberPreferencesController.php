@@ -197,8 +197,7 @@ class SubscriberPreferencesController extends Controller
      */
     protected function getSubscriberUserId(Subscriber $subscriber): ?int
     {
-        $list = $subscriber->contactLists()->first();
-        return $list?->user_id;
+        return $subscriber->user_id ?? $subscriber->contactLists()->first()?->user_id;
     }
 
     /**

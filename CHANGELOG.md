@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.8] – Subscription Persistence Fix
+
+**Release date:** 2026-01-03
+
 ### Added
 
 - **System Emails UI Redesign:**
@@ -16,10 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Subscription Persistence:**
+
+  - Fixed critical issue where unchecking lists or unsubscribing in preferences was not persisted due to incorrect user identification in `SubscriberPreferencesController`.
+
 - **System Email Sending:**
+
   - Fixed critical issue where custom system emails failed with "Connection could not be established" error when using non-SMTP providers (e.g., SendGrid/Gmail API).
   - Refactored `SystemEmailService` to properly leverage `MailProviderService` for all custom emails, fixing "empty host" errors.
   - Updated `SendNewSubscriberNotification` listener to use `SystemEmailService`, ensuring reliable delivery of admin notifications using the correct mailbox.
+
+- **Subscription Preferences:**
+  - Fixed issue where users could not uncheck lists on the preferences page due to a JavaScript event conflict.
 
 ## [1.3.7] – Short Description
 
