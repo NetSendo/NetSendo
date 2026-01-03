@@ -250,13 +250,7 @@
         document.querySelectorAll('.list-item').forEach(item => {
             const checkbox = item.querySelector('input[type="checkbox"]');
 
-            item.addEventListener('click', (e) => {
-                // Don't toggle if clicking directly on checkbox (it handles itself)
-                if (e.target.type === 'checkbox') return;
 
-                checkbox.checked = !checkbox.checked;
-                item.classList.toggle('selected', checkbox.checked);
-            });
 
             checkbox.addEventListener('change', () => {
                 item.classList.toggle('selected', checkbox.checked);
