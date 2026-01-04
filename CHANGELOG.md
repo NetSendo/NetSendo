@@ -9,11 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **External Pages:**
+
+  - Added toast notification when copying the external page link to the clipboard.
+  - Added confirmation modal when deleting an external page.
+
+- **Translations:**
+  - Added missing keys for `common` (first_name, last_name, phone) and `external_pages` in EN, PL, DE, ES.
+
 ### Fixed
 
 - **Automation Builder:**
+
   - Fixed issue where mailing lists were not visible in "Then" actions (e.g., Unsubscribe, Move to list) for team members by selecting lists via `accessibleLists()` instead of `forUser()`.
   - Fixed configuration persistence issue where selected options (like list ID) were not saved to the database due to missing validation for `actions.*.config`.
+
+- **External Pages:**
+  - Fixed 403 Forbidden error when editing external pages ensuring correct policy authorization.
 
 ## [1.3.11] – Automation Fixes & Improvements
 

@@ -160,6 +160,12 @@
             "male": "Male",
             "female": "Female",
             "other": "Other"
+        },
+        "first_name": "First Name",
+        "last_name": "Last Name",
+        "phone": "Phone",
+        "messages": {
+            "delete_warning": "Are you sure you want to delete this item? This action cannot be undone."
         }
     },
     "first_run": {
@@ -3957,7 +3963,8 @@
         },
         "messages": {
             "confirm_delete": "Are you sure you want to delete this page?",
-            "link_copied": "Link copied to clipboard!"
+            "link_copied": "Link copied to clipboard!",
+            "deleted": "External page deleted."
         }
     }
 }

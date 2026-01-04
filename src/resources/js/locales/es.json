@@ -154,6 +154,12 @@
             "female": "Femenino",
             "other": "Otro"
         },
+        "first_name": "Nombre",
+        "last_name": "Apellido",
+        "phone": "Teléfono",
+        "messages": {
+            "delete_warning": "¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer."
+        },
         "soon": "Pronto",
         "source_placeholder": "Escriba o pegue el código HTML..."
     },
@@ -3587,8 +3593,9 @@
             "custom_fields": "Shared Custom Fields (Optional)"
         },
         "messages": {
-            "confirm_delete": "Are you sure you want to delete this page?",
-            "link_copied": "Link copied to clipboard!"
+            "confirm_delete": "¿Está seguro de que desea eliminar esta página?",
+            "link_copied": "¡Enlace copiado al portapapeles!",
+            "deleted": "Página externa eliminada."
         }
     }
 }

@@ -161,6 +161,12 @@
             "male": "Mężczyzna",
             "female": "Kobieta",
             "other": "Inna"
+        },
+        "first_name": "Imię",
+        "last_name": "Nazwisko",
+        "phone": "Telefon",
+        "messages": {
+            "delete_warning": "Czy na pewno chcesz usunąć ten element? Tej operacji nie można cofnąć."
         }
     },
     "first_run": {
@@ -4098,7 +4104,8 @@
         },
         "messages": {
             "confirm_delete": "Czy na pewno chcesz usunąć tę stronę?",
-            "link_copied": "Link skopiowany do schowka!"
+            "link_copied": "Link skopiowany do schowka!",
+            "deleted": "Strona zewnętrzna została usunięta."
         }
     }
 }
