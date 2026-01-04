@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Automation Builder:**
+  - Fixed issue where mailing lists were not visible in "Then" actions (e.g., Unsubscribe, Move to list) for team members by selecting lists via `accessibleLists()` instead of `forUser()`.
+  - Fixed configuration persistence issue where selected options (like list ID) were not saved to the database due to missing validation for `actions.*.config`.
+
 ## [1.3.11] – Automation Fixes & Improvements
 
 **Release date:** 2026-01-04

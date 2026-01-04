@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\AutomationRule;
 use App\Models\AutomationRuleLog;
-use App\Models\ContactList;
 use App\Models\Tag;
 use App\Models\Message;
 use App\Models\Funnel;
@@ -73,7 +72,7 @@ class AutomationController extends Controller
             'triggerEvents' => AutomationRule::getTriggerEvents(),
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
-            'lists' => ContactList::forUser(Auth::id())->select('id', 'name')->get(),
+            'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),
             'tags' => Tag::orderBy('name')->select('id', 'name')->get(),
             'messages' => Message::where('user_id', Auth::id())
                 ->where('status', '!=', 'draft')
@@ -99,6 +98,7 @@ class AutomationController extends Controller
             'condition_logic' => 'nullable|in:all,any',
             'actions' => 'required|array|min:1',
             'actions.*.type' => 'required|string',
+            'actions.*.config' => 'nullable|array',
             'is_active' => 'boolean',
             'limit_per_subscriber' => 'boolean',
             'limit_count' => 'nullable|integer|min:1',
@@ -139,7 +139,7 @@ class AutomationController extends Controller
             'triggerEvents' => AutomationRule::getTriggerEvents(),
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
-            'lists' => ContactList::forUser(Auth::id())->select('id', 'name')->get(),
+            'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),
             'tags' => Tag::orderBy('name')->select('id', 'name')->get(),
             'messages' => Message::where('user_id', Auth::id())
                 ->where('status', '!=', 'draft')
@@ -167,6 +167,7 @@ class AutomationController extends Controller
             'condition_logic' => 'nullable|in:all,any',
             'actions' => 'required|array|min:1',
             'actions.*.type' => 'required|string',
+            'actions.*.config' => 'nullable|array',
             'is_active' => 'boolean',
             'limit_per_subscriber' => 'boolean',
             'limit_count' => 'nullable|integer|min:1',
