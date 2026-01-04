@@ -50,8 +50,14 @@ class MailingListController extends Controller
         // Let's use getAdminUser() helper to support team members seeing admin's groups/tags.
         $scopeUser = auth()->user()->getAdminUser();
 
+        if ($request->input('sort') === 'asc') {
+            $query->oldest();
+        } else {
+            $query->latest();
+        }
+
         return Inertia::render('MailingList/Index', [
-            'lists' => $query->latest()
+            'lists' => $query
                 ->paginate(12)
                 ->through(fn ($list) => [
                     'id' => $list->id,
@@ -64,7 +70,7 @@ class MailingListController extends Controller
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
-            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
+            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort']),
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')

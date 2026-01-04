@@ -134,19 +134,23 @@ class SubscriberController extends Controller
         // Check if subscriber already exists (by email OR phone for this user)
         $existing = null;
         if (!empty($validated['email'])) {
-            $existing = Subscriber::where('email', $validated['email'])
+            $existing = Subscriber::withTrashed()->where('email', $validated['email'])
                 ->where('user_id', $user->id)
                 ->first();
         }
 
         // For SMS lists, also check by phone
         if (!$existing && !empty($validated['phone']) && $list->type === 'sms') {
-            $existing = Subscriber::where('phone', $validated['phone'])
+            $existing = Subscriber::withTrashed()->where('phone', $validated['phone'])
                 ->where('user_id', $user->id)
                 ->first();
         }
 
         if ($existing) {
+            if ($existing->trashed()) {
+                $existing->restore();
+            }
+
             // Check if already subscribed to this list
             $existingPivot = $existing->contactLists()
                 ->where('contact_list_id', $validated['contact_list_id'])
@@ -531,12 +535,12 @@ class SubscriberController extends Controller
                 // Find existing subscriber
                 $existing = null;
                 if (!empty($subData['email'])) {
-                    $existing = Subscriber::where('email', $subData['email'])
+                    $existing = Subscriber::withTrashed()->where('email', $subData['email'])
                         ->where('user_id', $user->id)
                         ->first();
                 }
                 if (!$existing && !empty($subData['phone']) && $list->type === 'sms') {
-                    $existing = Subscriber::where('phone', $subData['phone'])
+                    $existing = Subscriber::withTrashed()->where('phone', $subData['phone'])
                         ->where('user_id', $user->id)
                         ->first();
                 }
@@ -546,6 +550,10 @@ class SubscriberController extends Controller
                 $previousStatus = null;
 
                 if ($existing) {
+                    if ($existing->trashed()) {
+                        $existing->restore();
+                    }
+
                     $subscriber = $existing;
                     $existingPivot = $subscriber->contactLists()
                         ->where('contact_list_id', $subData['contact_list_id'])

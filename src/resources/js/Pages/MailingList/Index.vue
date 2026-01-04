@@ -18,6 +18,7 @@ const form = ref({
     group_id: props.filters.group_id || '',
     tag_id: props.filters.tag_id || '',
     visibility: props.filters.visibility || '',
+    sort: props.filters.sort || '',
 });
 
 const reset = () => {
@@ -25,6 +26,7 @@ const reset = () => {
         search: '',
         group_id: '',
         tag_id: '',
+        sort: '',
     };
 };
 
@@ -306,7 +308,19 @@ watch(viewMode, (newMode) => {
                             <th scope="col" class="px-6 py-3">{{ $t('mailing_lists.table.status') }}</th>
                             <th scope="col" class="px-6 py-3">{{ $t('mailing_lists.table.groups_tags') }}</th>
                             <th scope="col" class="px-6 py-3 text-center">{{ $t('mailing_lists.table.subscribers') }}</th>
-                            <th scope="col" class="px-6 py-3">{{ $t('mailing_lists.table.created_at') }}</th>
+                            <th scope="col" class="px-6 py-3 cursor-pointer group" @click="form.sort = form.sort === 'asc' ? 'desc' : 'asc'">
+                                <div class="flex items-center gap-1">
+                                    {{ $t('mailing_lists.table.created_at') }}
+                                    <span class="flex flex-col">
+                                        <svg class="h-2 w-2" :class="form.sort === 'asc' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M5 15l7-7 7 7" />
+                                        </svg>
+                                        <svg class="h-2 w-2" :class="(!form.sort || form.sort === 'desc') ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-300 dark:text-slate-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </th>
                             <th scope="col" class="px-6 py-3 text-right">{{ $t('mailing_lists.table.actions') }}</th>
                         </tr>
                     </thead>

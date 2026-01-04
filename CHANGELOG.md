@@ -9,11 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+## [1.3.10] – Short Description
+
+**Release date:** 2026-01-04
+
+### Added
+
 - **Message Creation:**
+
   - Active subscriber count now displayed next to each list name in list selection views (e.g., "My List (42)").
   - Count reflects only active subscribers (excludes unsubscribed).
 
+- **Mailing Lists Sorting:**
+  - Added sorting functionality to the "Created at" column in the mailing list view.
+  - Users can now toggle between newest (default) and oldest lists.
+  - Visual sort indicators (arrows) added to the column header.
+
 ### Fixed
+
+- **Subscriber Duplication:**
+  - Fixed issue where creating a subscriber via API with a previously soft-deleted email caused a "Duplicate entry" error.
+  - API now correctly restores soft-deleted subscribers instead of attempting to create duplicates.
 
 ## [1.3.9] – Short Description
 
