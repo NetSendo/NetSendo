@@ -6,7 +6,7 @@ use App\Models\AutomationRule;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class AutomationPolicy
+class AutomationRulePolicy
 {
     /**
      * Determine whether the user can view any models.

@@ -143,6 +143,10 @@ const handleImageUpload = async (event) => {
             } else {
                 updateContent('src', response.data.url);
             }
+        } else {
+             // Handle unsuccessful upload (but successful request)
+            uploadError.value = response.data.message || t('template_builder.image_upload_error');
+             // Optionally trigger a toast here if you have a toast library
         }
     } catch (error) {
         console.error('Image upload failed:', error);
@@ -516,7 +520,7 @@ const handleInsert = (content) => {
                 </div>
 
                 <!-- Button colors -->
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.background_color') }}</label>
                         <input
@@ -699,7 +703,7 @@ const handleInsert = (content) => {
                 </div>
 
                 <!-- Prices -->
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.price') }}</label>
                         <input

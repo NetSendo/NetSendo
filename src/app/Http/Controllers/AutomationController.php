@@ -214,8 +214,8 @@ class AutomationController extends Controller
 
         $automation->update(['is_active' => !$automation->is_active]);
 
-        return back()->with('success', 
-            $automation->is_active 
+        return back()->with('success',
+            $automation->is_active
                 ? __('Automatyzacja została włączona.')
                 : __('Automatyzacja została wyłączona.')
         );
@@ -236,7 +236,7 @@ class AutomationController extends Controller
                 return [
                     'id' => $log->id,
                     'subscriber_email' => $log->subscriber?->email ?? '-',
-                    'subscriber_name' => $log->subscriber 
+                    'subscriber_name' => $log->subscriber
                         ? trim($log->subscriber->first_name . ' ' . $log->subscriber->last_name) ?: '-'
                         : '-',
                     'trigger_event' => $log->trigger_event,

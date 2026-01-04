@@ -18,6 +18,11 @@ const filters = ref({
     search: props.filters?.search || '',
 });
 
+// Modal states
+const showDuplicateModal = ref(false);
+const showDeleteModal = ref(false);
+const selectedRule = ref(null);
+
 let searchTimeout = null;
 
 watch(filters, () => {
@@ -41,16 +46,36 @@ const toggleStatus = (rule) => {
     });
 };
 
-const duplicate = (rule) => {
-    if (confirm(t('automations.confirm_duplicate'))) {
-        router.post(route('automations.duplicate', rule.id));
+const openDuplicateModal = (rule) => {
+    selectedRule.value = rule;
+    showDuplicateModal.value = true;
+};
+
+const confirmDuplicate = () => {
+    if (selectedRule.value) {
+        router.post(route('automations.duplicate', selectedRule.value.id));
+        showDuplicateModal.value = false;
+        selectedRule.value = null;
     }
 };
 
-const deleteRule = (rule) => {
-    if (confirm(t('automations.confirm_delete'))) {
-        router.delete(route('automations.destroy', rule.id));
+const openDeleteModal = (rule) => {
+    selectedRule.value = rule;
+    showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+    if (selectedRule.value) {
+        router.delete(route('automations.destroy', selectedRule.value.id));
+        showDeleteModal.value = false;
+        selectedRule.value = null;
     }
+};
+
+const closeModal = () => {
+    showDuplicateModal.value = false;
+    showDeleteModal.value = false;
+    selectedRule.value = null;
 };
 
 const getTriggerIcon = (trigger) => {
@@ -218,7 +243,7 @@ const getTriggerIcon = (trigger) => {
                                             </svg>
                                         </Link>
                                         <button
-                                            @click="duplicate(rule)"
+                                            @click="openDuplicateModal(rule)"
                                             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                             :title="$t('common.duplicate')"
                                         >
@@ -236,7 +261,7 @@ const getTriggerIcon = (trigger) => {
                                             </svg>
                                         </Link>
                                         <button
-                                            @click="deleteRule(rule)"
+                                            @click="openDeleteModal(rule)"
                                             class="text-red-400 hover:text-red-600 dark:hover:text-red-300"
                                             :title="$t('common.delete')"
                                         >
@@ -294,5 +319,99 @@ const getTriggerIcon = (trigger) => {
                 </div>
             </div>
         </div>
+
+        <!-- Duplicate Confirmation Modal -->
+        <teleport to="body">
+            <div v-if="showDuplicateModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeModal"></div>
+                    <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+                    <div class="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+                        <div class="bg-white px-4 pb-4 pt-5 dark:bg-gray-800 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100" id="modal-title">
+                                        {{ $t('common.duplicate') }}
+                                    </h3>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $t('automations.confirm_duplicate') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 dark:bg-gray-900 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button
+                                type="button"
+                                @click="confirmDuplicate"
+                                class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                            >
+                                {{ $t('common.duplicate') }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="closeModal"
+                                class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm"
+                            >
+                                {{ $t('common.cancel') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </teleport>
+
+        <!-- Delete Confirmation Modal -->
+        <teleport to="body">
+            <div v-if="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div class="flex min-h-screen items-end justify-center px-4 pb-20 pt-4 text-center sm:block sm:p-0">
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeModal"></div>
+                    <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
+                    <div class="inline-block transform overflow-hidden rounded-lg bg-white text-left align-bottom shadow-xl transition-all dark:bg-gray-800 sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+                        <div class="bg-white px-4 pb-4 pt-5 dark:bg-gray-800 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-gray-100" id="modal-title">
+                                        {{ $t('common.delete') }}
+                                    </h3>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $t('automations.confirm_delete') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 dark:bg-gray-900 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button
+                                type="button"
+                                @click="confirmDelete"
+                                class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm"
+                            >
+                                {{ $t('common.delete') }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="closeModal"
+                                class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm"
+                            >
+                                {{ $t('common.cancel') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </teleport>
     </AuthenticatedLayout>
 </template>

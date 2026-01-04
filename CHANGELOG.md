@@ -11,9 +11,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-## [1.3.10] – Short Description
+## [1.3.11] – Automation Fixes & Improvements
 
 **Release date:** 2026-01-04
+
+### Added
+
+- **Automations:**
+
+  - Added confirmation modals for duplicate and delete actions with dark mode support.
+
+- **Translations:**
+  - Added new translation key `edit_in_editor` for "Edit in editor" button.
+
+### Changed
+
+- **Template List UI:**
+
+  - Reordered template cards to display the thumbnail at the top for better visual hierarchy.
+  - Increased thumbnail height to `192px` (h-48) for improved visibility.
+  - Renamed "Edit" button to "Edit in editor" for clarity.
+  - Reduced vertical spacing on mobile view (`mb-3` instead of `mb-6`) to minimize empty space.
+
+- **Builder UI/UX:**
+  - **Alignment:** Fixed visual alignment rendering for Text and Image blocks in the canvas (Left, Center, Right).
+  - **Layout:** Changed sidebar block editor to single-column layout to prevent nested input fields from overflowing.
+  - **Scrolling:** Added bottom padding (`pb-40`) to the builder canvas to improve scrolling experience and drag-and-drop usability.
+  - **Header:** Optimized template name input field to utilize full available width, fixing layout issues on both desktop and mobile.
+
+### Removed
+
+- **Template List:**
+  - Removed redundant "Builder" badge from template cards as it duplicated the edit functionality.
+
+### Fixed
+
+- **Automations:**
+
+  - Fixed 403 Forbidden error when accessing automation routes (Policy discovery issue).
+  - Fixed JavaScript error (`TypeError: Cannot read properties of undefined`) in Automation Builder when actions lack configuration.
+  - Fixed 404 error when editing automation rules caused by route model binding issues.
+  - Fixed handling of "Unsubscribe from list" action to correctly show list selection dropdown.
+  - Fixed missing translation for "Create" button in Automation Builder.
+  - Fixed dark mode visibility issues (inputs, dropdowns, radio buttons, and "Cancel" button) in Automation Builder.
+
+- **Template List Layout:**
+
+  - Fixed issue where the page title and "Add Template" button were truncated in the header.
+  - Moved title and actions to the main content area for better visibility and mobile responsiveness.
+  - Reordered template card elements to place action buttons (Edit, Duplicate, Delete) at the top, preventing overlap with the thumbnail link.
+
+- **Image Upload Error Handling:**
+
+  - Fixed silent failures during image uploads in the Template Builder.
+  - Added explicit error messages for failed uploads (e.g., file too large, invalid format).
+
+- **Translations:**
+
+  - Updated Polish translation for "Your templates" to "Twoje szablony" for better clarity.
+    **Release date:** 2026-01-04
 
 ### Added
 

@@ -456,11 +456,11 @@ onBeforeUnmount(() => {
     <div class="flex h-screen flex-col bg-slate-100 dark:bg-slate-950">
         <!-- Header Bar -->
         <header class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex items-center gap-4">
+            <div class="flex flex-1 min-w-0 items-center gap-4">
                 <!-- Back button -->
                 <button
                     @click="router.visit(route('templates.index'))"
-                    class="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    class="flex shrink-0 items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                     :title="$t('common.back')"
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
                 <input
                     v-model="templateName"
                     type="text"
-                    class="w-32 border-0 bg-transparent text-lg font-medium text-slate-900 focus:outline-none focus:ring-0 dark:text-white sm:w-64"
+                    class="flex-1 border-0 bg-transparent min-w-[50px] text-lg font-medium text-slate-900 focus:outline-none focus:ring-0 dark:text-white"
                     :placeholder="$t('templates.fields.name_placeholder')"
                 />
             </div>

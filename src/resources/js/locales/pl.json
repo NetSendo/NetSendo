@@ -2,8 +2,9 @@
     "templates": {
         "title": "Szablony",
         "subtitle": "Zarządzaj szablonami wiadomości email i SMS",
-        "your_templates": "Twoje lub Moje szablony",
+        "your_templates": "Twoje szablony",
         "new_template": "Dodaj Szablon",
+        "edit_in_editor": "Edytuj w edytorze",
         "starter": {
             "title": "Szablony Startowe",
             "subtitle": "Zacznij od gotowego szablonu",

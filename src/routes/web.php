@@ -160,7 +160,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Automations (Triggers & Rules)
     Route::resource('automations', \App\Http\Controllers\AutomationController::class)->parameters([
         'automations' => 'automation'
-    ]);
+    ])->except(['show']);
     Route::post('automations/{automation}/duplicate', [\App\Http\Controllers\AutomationController::class, 'duplicate'])->name('automations.duplicate');
     Route::post('automations/{automation}/toggle-status', [\App\Http\Controllers\AutomationController::class, 'toggleStatus'])->name('automations.toggle-status');
     Route::get('automations/{automation}/logs', [\App\Http\Controllers\AutomationController::class, 'logs'])->name('automations.logs');

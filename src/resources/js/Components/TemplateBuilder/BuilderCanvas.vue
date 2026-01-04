@@ -121,7 +121,7 @@ const stripHtml = (html) => {
         </div>
 
         <!-- Canvas area -->
-        <div class="flex-1 overflow-y-auto p-6">
+        <div class="flex-1 overflow-y-auto p-6 pb-40">
             <div
                 class="builder-canvas-content mx-auto rounded-lg border-2 border-dashed bg-white shadow-sm transition-colors dark:bg-slate-900"
                 :class="isDragging ? 'border-indigo-400' : 'border-slate-200 dark:border-slate-700'"
@@ -234,12 +234,18 @@ const stripHtml = (html) => {
                                 <!-- Text Block -->
                                 <div v-else-if="block.type === 'text'"
                                     class="prose prose-sm max-w-none p-4 dark:prose-invert"
+                                    :style="{ textAlign: block.content?.alignment || 'left' }"
                                     v-html="block.content?.html || $t('template_builder.text_placeholder')">
                                 </div>
 
                                 <!-- Image Block -->
-                                <div v-else-if="block.type === 'image'" class="p-2">
-                                    <img v-if="block.content?.src" :src="block.content.src" :alt="block.content?.alt" class="w-full" />
+                                <div v-else-if="block.type === 'image'" class="p-2 flex"
+                                    :class="{
+                                        'justify-start': block.content?.alignment === 'left',
+                                        'justify-center': !block.content?.alignment || block.content?.alignment === 'center',
+                                        'justify-end': block.content?.alignment === 'right'
+                                    }">
+                                    <img v-if="block.content?.src" :src="block.content.src" :alt="block.content?.alt" class="max-w-full h-auto" />
                                     <div v-else class="flex h-32 w-full items-center justify-center bg-slate-100 text-slate-400 dark:bg-slate-800">
                                         <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
