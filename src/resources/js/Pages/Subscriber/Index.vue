@@ -2,11 +2,14 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted } from "vue";
+import axios from "axios";
 import debounce from "lodash/debounce";
 import { useI18n } from "vue-i18n";
 import BulkActionToolbar from "./Partials/BulkActionToolbar.vue";
 import MoveToListModal from "./Partials/MoveToListModal.vue";
+import CopyToListModal from "./Partials/CopyToListModal.vue";
 import ColumnSettingsDropdown from "./Partials/ColumnSettingsDropdown.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 
 const { t } = useI18n();
 
@@ -14,6 +17,7 @@ const props = defineProps({
     subscribers: Object,
     lists: Array,
     customFields: Array,
+    statistics: Object,
     filters: Object,
 });
 
@@ -21,6 +25,16 @@ const props = defineProps({
 const search = ref(props.filters.search || "");
 const listId = ref(props.filters.list_id || "");
 const listType = ref(props.filters.list_type || "");
+
+// Pagination state
+const loadPerPageSetting = () => {
+    const saved = localStorage.getItem("subscriberPerPage");
+    if (saved && [10, 15, 25, 50, 100, 200].includes(parseInt(saved))) {
+        return parseInt(saved);
+    }
+    return props.filters.per_page || 15;
+};
+const perPage = ref(loadPerPageSetting());
 
 // Sorting state
 const sortBy = ref(props.filters.sort_by || "created_at");
@@ -32,6 +46,15 @@ const processing = ref(false);
 
 // Move modal state
 const showMoveModal = ref(false);
+
+// Copy/Add modal state
+const showCopyModal = ref(false);
+
+// Confirmation modal state
+const showDeleteConfirm = ref(false);
+const showDeleteFromListConfirm = ref(false);
+const showSelectAllConfirm = ref(false);
+const pendingSelectAllCount = ref(0);
 
 // Column visibility state (persisted to localStorage)
 const defaultColumns = {
@@ -109,9 +132,30 @@ const toggleSelect = (id) => {
     }
 };
 
-// Clear selection
+// Clear selection helper
 const clearSelection = () => {
     selectedIds.value = [];
+};
+
+// Select all in current list
+const isSelectingAllInList = ref(false);
+const selectAllInList = async () => {
+    if (!listId.value) return;
+
+    isSelectingAllInList.value = true;
+    try {
+        const response = await axios.get(route("subscribers.list-ids"), {
+            params: { list_id: listId.value },
+        });
+        pendingSelectAllCount.value = response.data.count;
+        selectedIds.value = response.data.ids;
+        // Show confirmation modal with count
+        showSelectAllConfirm.value = true;
+    } catch (error) {
+        console.error("Error fetching all subscriber IDs:", error);
+    } finally {
+        isSelectingAllInList.value = false;
+    }
 };
 
 // Sort handler
@@ -135,12 +179,20 @@ const applyFilters = () => {
             list_type: listType.value,
             sort_by: sortBy.value,
             sort_order: sortOrder.value,
+            per_page: perPage.value,
         },
         {
             preserveState: true,
             replace: true,
         }
     );
+};
+
+// Update per-page preference
+const updatePerPage = (value) => {
+    perPage.value = value;
+    localStorage.setItem("subscriberPerPage", value);
+    applyFilters();
 };
 
 // Watch for search/filter changes
@@ -162,29 +214,27 @@ watch(
 // Bulk delete action
 const bulkDelete = () => {
     if (selectedIds.value.length === 0) return;
+    showDeleteConfirm.value = true;
+};
 
-    if (
-        confirm(
-            t("subscribers.bulk.delete_confirm", {
-                count: selectedIds.value.length,
-            })
-        )
-    ) {
-        processing.value = true;
-        router.post(
-            route("subscribers.bulk-delete"),
-            {
-                ids: selectedIds.value,
+const confirmBulkDelete = () => {
+    if (selectedIds.value.length === 0) return;
+
+    processing.value = true;
+    router.post(
+        route("subscribers.bulk-delete"),
+        {
+            ids: selectedIds.value,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                selectedIds.value = [];
+                showDeleteConfirm.value = false;
             },
-            {
-                preserveScroll: true,
-                onFinish: () => {
-                    processing.value = false;
-                    selectedIds.value = [];
-                },
-            }
-        );
-    }
+        }
+    );
 };
 
 // Bulk move action
@@ -231,6 +281,60 @@ const bulkChangeStatus = (status) => {
     );
 };
 
+// Bulk copy to list action
+const bulkCopy = () => {
+    showCopyModal.value = true;
+};
+
+// Handle copy submit
+const submitCopy = (data) => {
+    if (selectedIds.value.length === 0) return;
+
+    processing.value = true;
+    router.post(
+        route("subscribers.bulk-copy"),
+        {
+            ids: selectedIds.value,
+            target_list_id: data.target_list_id,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                selectedIds.value = [];
+                showCopyModal.value = false;
+            },
+        }
+    );
+};
+
+// Bulk delete from list action
+const bulkDeleteFromList = () => {
+    if (selectedIds.value.length === 0 || !listId.value) return;
+    showDeleteFromListConfirm.value = true;
+};
+
+const confirmBulkDeleteFromList = () => {
+    if (selectedIds.value.length === 0 || !listId.value) return;
+
+    processing.value = true;
+    router.post(
+        route("subscribers.bulk-delete-from-list"),
+        {
+            ids: selectedIds.value,
+            list_id: listId.value,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                selectedIds.value = [];
+                showDeleteFromListConfirm.value = false;
+            },
+        }
+    );
+};
+
 // Single delete action
 const deleteSubscriber = (subscriber) => {
     if (confirm(t("subscribers.confirm_delete", { email: subscriber.email }))) {
@@ -250,7 +354,9 @@ const getSortIcon = (column) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div>
                     <h1
                         class="text-2xl font-bold text-slate-900 dark:text-white"
@@ -261,48 +367,70 @@ const getSortIcon = (column) => {
                         {{ $t("subscribers.subtitle") }}
                     </p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <Link
-                        :href="route('subscribers.import')"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            </div>
+            <div class="flex w-full items-center gap-2 sm:w-auto">
+                <Link
+                    :href="route('subscribers.import')"
+                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:flex-none"
+                >
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                     >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                            />
-                        </svg>
-                        {{ $t("subscribers.import.import_button") }}
-                    </Link>
-                    <Link
-                        :href="route('subscribers.create')"
-                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25"
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                        />
+                    </svg>
+                    {{ $t("subscribers.import.import_button") }}
+                </Link>
+                <Link
+                    :href="route('subscribers.create')"
+                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25 sm:flex-none"
+                >
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                     >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                            />
-                        </svg>
-                        {{ $t("subscribers.add_subscriber") }}
-                    </Link>
-                </div>
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        />
+                    </svg>
+                    {{ $t("subscribers.add_subscriber") }}
+                </Link>
             </div>
         </template>
+
+        <!-- Statistics Display -->
+        <div class="mb-4 text-sm text-slate-600 dark:text-slate-400">
+            <template v-if="statistics.list_name">
+                {{
+                    t("subscribers.stats_list", {
+                        total: statistics.total_in_list,
+                        list: statistics.list_name,
+                        current: subscribers.data.length,
+                    })
+                }}
+            </template>
+            <template v-else>
+                {{
+                    t("subscribers.stats_total", {
+                        total: statistics.total_subscribers,
+                        lists: statistics.total_lists,
+                        current: subscribers.data.length,
+                    })
+                }}
+            </template>
+        </div>
 
         <!-- Filters -->
         <div
@@ -366,7 +494,25 @@ const getSortIcon = (column) => {
                     </option>
                 </select>
             </div>
-            <div class="flex items-center justify-end">
+            <div class="flex flex-wrap items-center gap-3 sm:flex-nowrap">
+                <!-- Per-page selector -->
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-slate-600 dark:text-slate-400"
+                        >{{ $t("subscribers.per_page") }}:</label
+                    >
+                    <select
+                        :value="perPage"
+                        @change="updatePerPage($event.target.value)"
+                        class="rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option :value="10">10</option>
+                        <option :value="15">15</option>
+                        <option :value="25">25</option>
+                        <option :value="50">50</option>
+                        <option :value="100">100</option>
+                        <option :value="200">200</option>
+                    </select>
+                </div>
                 <ColumnSettingsDropdown
                     :columns="visibleColumns"
                     :custom-fields="customFields"
@@ -380,10 +526,15 @@ const getSortIcon = (column) => {
             v-if="selectedIds.length > 0"
             :selected-count="selectedIds.length"
             :processing="processing"
+            :current-list-id="listId"
+            :is-selecting-all-in-list="isSelectingAllInList"
             @delete="bulkDelete"
             @move="showMoveModal = true"
+            @copy="bulkCopy"
+            @delete-from-list="bulkDeleteFromList"
             @change-status="bulkChangeStatus"
             @clear-selection="clearSelection"
+            @select-all-in-list="selectAllInList"
         />
 
         <!-- Table -->
@@ -749,6 +900,60 @@ const getSortIcon = (column) => {
             :processing="processing"
             @close="showMoveModal = false"
             @move="bulkMove"
+        />
+
+        <!-- Copy To List Modal -->
+        <CopyToListModal
+            :show="showCopyModal"
+            :selected-count="selectedIds.length"
+            :lists="lists"
+            :processing="processing"
+            @close="showCopyModal = false"
+            @submit="submitCopy"
+        />
+
+        <!-- Confirmation Modals -->
+        <ConfirmModal
+            :show="showDeleteConfirm"
+            type="danger"
+            :title="t('subscribers.bulk.delete_modal_title')"
+            :message="
+                t('subscribers.bulk.delete_modal_desc', {
+                    count: selectedIds.length,
+                })
+            "
+            :confirm-text="t('subscribers.bulk.delete')"
+            :processing="processing"
+            @close="showDeleteConfirm = false"
+            @confirm="confirmBulkDelete"
+        />
+
+        <ConfirmModal
+            :show="showDeleteFromListConfirm"
+            type="warning"
+            :title="t('subscribers.bulk.delete_from_list_modal_title')"
+            :message="t('subscribers.bulk.delete_from_list_modal_desc')"
+            :confirm-text="t('subscribers.bulk.delete_from_list')"
+            :processing="processing"
+            @close="showDeleteFromListConfirm = false"
+            @confirm="confirmBulkDeleteFromList"
+        />
+
+        <ConfirmModal
+            :show="showSelectAllConfirm"
+            type="info"
+            :title="t('subscribers.bulk.select_all_modal_title')"
+            :message="
+                t('subscribers.bulk.select_all_modal_desc', {
+                    count: pendingSelectAllCount,
+                })
+            "
+            :confirm-text="t('subscribers.confirm_proceed')"
+            @close="
+                showSelectAllConfirm = false;
+                selectedIds = [];
+            "
+            @confirm="showSelectAllConfirm = false"
         />
     </AuthenticatedLayout>
 </template>

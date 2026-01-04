@@ -1,0 +1,108 @@
+    /**
+     * Bulk copy subscribers to another list (keeping them in original list)
+     */
+    public function bulkCopy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'target_list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of target list
+        $targetList = ContactList::where('id', $validated['target_list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$targetList) {
+            abort(403, 'Brak dostępu do docelowej listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Add to target list (without detaching from other lists)
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $validated['target_list_id'] => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]
+            ]);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Skopiowano {$count} subskrybentów do listy \"{$targetList->name}\".");
+    }
+
+    /**
+     * Bulk add subscribers to another list (similar to copy, but more explicit naming)
+     */
+    public function bulkAddToList(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'target_list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of target list
+        $targetList = ContactList::where('id', $validated['target_list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$targetList) {
+            abort(403, 'Brak dostępu do docelowej listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Add to target list
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $validated['target_list_id'] => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]
+            ]);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Dodano {$count} subskrybentów do listy \"{$targetList->name}\".");
+    }
+
+    /**
+     * Bulk delete subscribers from a specific list (without deleting the subscriber record)
+     */
+    public function bulkDeleteFromList(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of list
+        $list = ContactList::where('id', $validated['list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$list) {
+            abort(403, 'Brak dostępu do listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Detach from specific list only
+            $subscriber->contactLists()->detach($validated['list_id']);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Usunięto {$count} subskrybentów z listy \"{$list->name}\".");
+    }

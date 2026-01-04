@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [1.3.12] – Short Description
+
+**Release date:** 2026-01-05
+
+### Added
+
+- **Subscriber Management:**
+
+  - **Advanced Pagination:**
+    - Added per-page selector (10, 15, 25, 50, 100, 200 items) with persistent local storage settings.
+    - Updated backend to support dynamic pagination limits.
+  - **Enhanced Bulk Operations:**
+    - **Select All in List:** Added functionality to select all subscribers in a filtered list (fetching all IDs from backend), not just visible page items.
+    - **Delete from List:** Added specific bulk action to remove subscribers only from the currently filtered list (detach) without deleting them globally.
+    - **Confirmation Modals:** Added comprehensive confirmation modals for all bulk actions (Delete, Delete from List, Select All) to prevent accidental data loss.
+    - **Statistics Display:** Added contextual statistics showing total subscriber counts, list-specific counts, and filtered view details.
+  - **Translations:**
+    - Added full Polish translations for all new bulk operations, modals, and statistics.
+
 - **External Pages:**
 
   - Added toast notification when copying the external page link to the clipboard.
@@ -16,6 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Translations:**
   - Added missing keys for `common` (first_name, last_name, phone) and `external_pages` in EN, PL, DE, ES.
+
+### Changed
+
+- **Subscriber UI:**
+  - **Bulk Actions Toolbar:**
+    - Removed redundant "Add to List" button (consolidated with "Copy to List").
+    - Simplified "Copy to List" modal to single-mode operation.
+  - **UX Improvements:**
+    - "Delete from List" button only appears when a specific list filter is active.
+    - "Select All" button only appears when a specific list filter is active.
 
 ### Fixed
 

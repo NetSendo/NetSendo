@@ -56,10 +56,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'importForm'])->name('subscribers.import');
     Route::post('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'import'])->name('subscribers.import.store');
 
+    // Get all subscriber IDs from a list (for Select All functionality)
+    Route::get('subscribers/list-ids', [\App\Http\Controllers\SubscriberController::class, 'getListSubscriberIds'])->name('subscribers.list-ids');
+
     // Subscriber Bulk Actions (must be before resource to avoid route conflict)
     Route::post('subscribers/bulk-delete', [\App\Http\Controllers\SubscriberController::class, 'bulkDelete'])->name('subscribers.bulk-delete');
     Route::post('subscribers/bulk-move', [\App\Http\Controllers\SubscriberController::class, 'bulkMove'])->name('subscribers.bulk-move');
     Route::post('subscribers/bulk-status', [\App\Http\Controllers\SubscriberController::class, 'bulkChangeStatus'])->name('subscribers.bulk-status');
+    Route::post('subscribers/bulk-copy', [\App\Http\Controllers\SubscriberController::class, 'bulkCopy'])->name('subscribers.bulk-copy');
+    Route::post('subscribers/bulk-add-to-list', [\App\Http\Controllers\SubscriberController::class, 'bulkAddToList'])->name('subscribers.bulk-add-to-list');
+    Route::post('subscribers/bulk-delete-from-list', [\App\Http\Controllers\SubscriberController::class, 'bulkDeleteFromList'])->name('subscribers.bulk-delete-from-list');
 
     Route::resource('subscribers', \App\Http\Controllers\SubscriberController::class);
 

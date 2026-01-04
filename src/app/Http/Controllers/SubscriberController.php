@@ -60,14 +60,49 @@ class SubscriberController extends Controller
 
         $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
 
+        // Pagination
+        $perPage = $request->per_page ?? 15;
+        $allowedPerPage = [10, 15, 25, 50, 100, 200];
+        if (!in_array((int)$perPage, $allowedPerPage)) {
+            $perPage = 15;
+        }
+
         // Get custom fields for column visibility options
         $customFields = \App\Models\CustomField::where('user_id', auth()->id())
             ->orderBy('sort_order')
             ->get(['id', 'name', 'label', 'type']);
 
+        $listId = $request->list_id; // Define listId for statistics calculation
+
+        // Calculate statistics (after listId is defined above)
+        $statistics = [];
+        if ($listId) {
+            // Statistics for specific list
+            $totalInList = DB::table('contact_list_subscriber')
+                ->where('contact_list_id', $listId)
+                ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
+                ->where('subscribers.user_id', auth()->id())
+                ->count();
+
+            $list = ContactList::find($listId);
+            $statistics = [
+                'total_in_list' => $totalInList,
+                'list_name' => $list ? $list->name : null,
+            ];
+        } else {
+            // Global statistics
+            $totalSubscribers = Subscriber::where('user_id', auth()->id())->count();
+            $totalLists = ContactList::where('user_id', auth()->id())->count();
+
+            $statistics = [
+                'total_subscribers' => $totalSubscribers,
+                'total_lists' => $totalLists,
+            ];
+        }
+
         return Inertia::render('Subscriber/Index', [
             'subscribers' => $query
-                ->paginate(15)
+                ->paginate($perPage)
                 ->withQueryString()
                 ->through(fn ($sub) => [
                     'id' => $sub->id,
@@ -85,7 +120,8 @@ class SubscriberController extends Controller
                 ]),
             'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
             'customFields' => $customFields,
-            'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order']),
+            'statistics' => $statistics,
+            'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order', 'per_page']),
         ]);
     }
 
@@ -265,6 +301,34 @@ class SubscriberController extends Controller
             ],
             'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
+        ]);
+    }
+
+    /**
+     * Get all subscriber IDs from a specific list (for Select All functionality)
+     */
+    public function getListSubscriberIds(Request $request)
+    {
+        $validated = $request->validate([
+            'list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify list ownership
+        $list = ContactList::where('id', $validated['list_id'])
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // Get all subscriber IDs from this list
+        $ids = DB::table('contact_list_subscriber')
+            ->where('contact_list_id', $validated['list_id'])
+            ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
+            ->where('subscribers.user_id', auth()->id())
+            ->pluck('subscribers.id')
+            ->toArray();
+
+        return response()->json([
+            'ids' => $ids,
+            'count' => count($ids),
         ]);
     }
 
@@ -628,6 +692,115 @@ class SubscriberController extends Controller
 
         $statusLabel = $validated['status'] === 'active' ? 'aktywnych' : 'nieaktywnych';
         return back()->with('success', "Zmieniono status {$count} subskrybentów na {$statusLabel}.");
+    }
+
+    /**
+     * Bulk copy subscribers to another list (keeping them in original list)
+     */
+    public function bulkCopy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'target_list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of target list
+        $targetList = ContactList::where('id', $validated['target_list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$targetList) {
+            abort(403, 'Brak dostępu do docelowej listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Add to target list (without detaching from other lists)
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $validated['target_list_id'] => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]
+            ]);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Skopiowano {$count} subskrybentów do listy \"{$targetList->name}\".");
+    }
+
+    /**
+     * Bulk add subscribers to another list (similar to copy, but more explicit naming)
+     */
+    public function bulkAddToList(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'target_list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of target list
+        $targetList = ContactList::where('id', $validated['target_list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$targetList) {
+            abort(403, 'Brak dostępu do docelowej listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Add to target list
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $validated['target_list_id'] => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                ]
+            ]);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Dodano {$count} subskrybentów do listy \"{$targetList->name}\".");
+    }
+
+    /**
+     * Bulk delete subscribers from a specific list (without deleting the subscriber record)
+     */
+    public function bulkDeleteFromList(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:subscribers,id',
+            'list_id' => 'required|integer|exists:contact_lists,id',
+        ]);
+
+        // Verify ownership of list
+        $list = ContactList::where('id', $validated['list_id'])
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$list) {
+            abort(403, 'Brak dostępu do listy.');
+        }
+
+        $subscribers = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        foreach ($subscribers as $subscriber) {
+            // Detach from specific list only
+            $subscriber->contactLists()->detach($validated['list_id']);
+        }
+
+        $count = count($subscribers);
+        return back()->with('success', "Usunięto {$count} subskrybentów z listy \"{$list->name}\".");
     }
 }
 
