@@ -17,6 +17,8 @@ const form = ref({
     group_id: props.filters.group_id || "",
     tag_id: props.filters.tag_id || "",
     visibility: props.filters.visibility || "",
+    sort_col: props.filters.sort_col || "created_at",
+    sort_dir: props.filters.sort_dir || "desc",
 });
 
 const reset = () => {
@@ -24,6 +26,8 @@ const reset = () => {
         search: "",
         group_id: "",
         tag_id: "",
+        sort_col: "created_at",
+        sort_dir: "desc",
     };
 };
 
@@ -153,7 +157,9 @@ watch(viewMode, (newMode) => {
                         :key="group.id"
                         :value="group.id"
                     >
-                        {{ '—'.repeat(group.depth || 0) }}{{ (group.depth || 0) > 0 ? ' ' : '' }}{{ group.name }}
+                        {{ "—".repeat(group.depth || 0)
+                        }}{{ (group.depth || 0) > 0 ? " " : ""
+                        }}{{ group.name }}
                     </option>
                 </select>
 
@@ -491,8 +497,61 @@ watch(viewMode, (newMode) => {
                         class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                         <tr>
-                            <th scope="col" class="px-6 py-3">
-                                {{ $t("sms_lists.table.name") }}
+                            <th
+                                scope="col"
+                                class="px-6 py-3 cursor-pointer group"
+                                @click="
+                                    form.sort_col = 'name';
+                                    form.sort_dir =
+                                        form.sort_col === 'name' &&
+                                        form.sort_dir === 'asc'
+                                            ? 'desc'
+                                            : 'asc';
+                                "
+                            >
+                                <div class="flex items-center gap-1">
+                                    {{ $t("sms_lists.table.name") }}
+                                    <span class="flex flex-col">
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'name' &&
+                                                form.sort_dir === 'asc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M5 15l7-7 7 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'name' &&
+                                                form.sort_dir === 'desc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
                             </th>
                             <th scope="col" class="px-6 py-3">
                                 {{ $t("sms_lists.table.status") }}
@@ -503,8 +562,63 @@ watch(viewMode, (newMode) => {
                             <th scope="col" class="px-6 py-3 text-center">
                                 {{ $t("sms_lists.table.subscribers") }}
                             </th>
-                            <th scope="col" class="px-6 py-3">
-                                {{ $t("sms_lists.table.created_at") }}
+                            <th
+                                scope="col"
+                                class="px-6 py-3 cursor-pointer group"
+                                @click="
+                                    form.sort_col = 'created_at';
+                                    form.sort_dir =
+                                        form.sort_col === 'created_at' &&
+                                        form.sort_dir === 'asc'
+                                            ? 'desc'
+                                            : 'asc';
+                                "
+                            >
+                                <div class="flex items-center gap-1">
+                                    {{ $t("sms_lists.table.created_at") }}
+                                    <span class="flex flex-col">
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col ===
+                                                    'created_at' &&
+                                                form.sort_dir === 'asc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M5 15l7-7 7 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col ===
+                                                    'created_at' &&
+                                                form.sort_dir === 'desc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
                             </th>
                             <th scope="col" class="px-6 py-3 text-right">
                                 {{ $t("sms_lists.table.actions") }}

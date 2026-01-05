@@ -15,6 +15,16 @@ class SmsListController extends Controller
             ->sms() // Scope to SMS lists
             ->with(['group', 'tags']);
 
+        // Sorting
+        $sortCol = $request->input('sort_col', 'created_at');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        if (in_array($sortCol, ['name', 'created_at'])) {
+            $query->orderBy($sortCol, $sortDir === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->latest();
+        }
+
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
@@ -54,7 +64,7 @@ class SmsListController extends Controller
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
                 ])->withQueryString(),
-            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility']),
+            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir']),
             'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
                 ->with('parent')
                 ->orderBy('name')

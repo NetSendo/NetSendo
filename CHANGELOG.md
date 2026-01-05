@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **List Sorting:**
+  - Added alphabetical sorting by name for Mailing Lists and SMS Lists.
+  - Implemented interactive table headers with sort direction indicators.
+
 ### Changed
 
 ### Fixed
