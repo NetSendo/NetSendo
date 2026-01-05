@@ -9,18 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **List Sorting:**
-  - Added alphabetical sorting by name for Mailing Lists and SMS Lists.
-  - Implemented interactive table headers with sort direction indicators.
+### Changed
+
+### Fixed
+
+## [Unreleased]
+
+### Added
 
 ### Changed
 
 ### Fixed
 
-- **Double Opt-in Logic:**
-  - Fixed critical bug where double opt-in was enabled by default when no specific setting was found on the form or list.
-  - Implemented correct settings hierarchy: Form > List > Global User Settings > Default (False).
-  - Fixed issue where global user settings were ignored due to missing relationship loading in `PublicFormController`.
+## [1.3.13] – Automation Trigger Fixes
+
+**Release date:** 2026-01-05
+
+### Fixed
+
+- **Automation Triggers:**
+  - Fixed issue where automations were not triggering for subscribers added via Bulk Move, Bulk Copy, or Bulk Add operations.
+  - Fixed issue where manual subscriber creation only triggered automations if "Send Welcome Email" was checked.
+  - **Result:** Automations now reliably trigger for ALL subscriber addition methods, ensuring seamless workflows.
 
 ## [1.3.12] – Short Description
 

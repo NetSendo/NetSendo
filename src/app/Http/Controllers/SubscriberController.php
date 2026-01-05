@@ -10,6 +10,7 @@ use App\Models\Subscriber;
 use App\Models\SuppressionList;
 use App\Models\Tag;
 use App\Events\SubscriberUnsubscribed;
+use App\Events\SubscriberSignedUp;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
@@ -248,18 +249,23 @@ class SubscriberController extends Controller
             }
         });
 
-        // Send Welcome Email if requested
-        if ($validated['send_welcome_email'] ?? false) {
-             $subscriber = Subscriber::where('user_id', auth()->id())
-                ->where('email', $validated['email'])
-                ->first();
+        // Always dispatch SubscriberSignedUp event for automations
+        $subscriber = Subscriber::where('user_id', auth()->id())
+            ->where('email', $validated['email'] ?? null)
+            ->when(empty($validated['email']), function($q) use ($validated) {
+                // For SMS-only lists, find by phone
+                if (!empty($validated['phone'])) {
+                    return $q->orWhere('phone', $validated['phone']);
+                }
+            })
+            ->first();
 
-             $lists = ContactList::whereIn('id', $validated['contact_list_ids'])->get();
-
-             foreach ($lists as $list) {
-                 // Dispatch event which should trigger automation/welcome email
-                 event(new \App\Events\SubscriberSignedUp($subscriber, $list, 'manual'));
-             }
+        if ($subscriber) {
+            $lists = ContactList::whereIn('id', $validated['contact_list_ids'])->get();
+            foreach ($lists as $list) {
+                // Dispatch event for automations
+                event(new SubscriberSignedUp($subscriber, $list, null, 'manual'));
+            }
         }
 
         return redirect()->route('subscribers.index')
@@ -659,6 +665,8 @@ class SubscriberController extends Controller
             ->whereIn('id', $validated['ids'])
             ->get();
 
+        $targetList = ContactList::find($validated['target_list_id']);
+
         foreach ($subscribers as $subscriber) {
             // Remove from source list
             $subscriber->contactLists()->detach($validated['source_list_id']);
@@ -669,6 +677,11 @@ class SubscriberController extends Controller
                     'subscribed_at' => now(),
                 ]
             ]);
+
+            // Dispatch event for automations
+            if ($targetList) {
+                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_move'));
+            }
         }
 
         $count = count($subscribers);
@@ -726,6 +739,9 @@ class SubscriberController extends Controller
                     'subscribed_at' => now(),
                 ]
             ]);
+
+            // Dispatch event for automations
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy'));
         }
 
         $count = count($subscribers);
@@ -764,6 +780,9 @@ class SubscriberController extends Controller
                     'subscribed_at' => now(),
                 ]
             ]);
+
+            // Dispatch event for automations
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add'));
         }
 
         $count = count($subscribers);
