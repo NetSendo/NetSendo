@@ -33,6 +33,7 @@ class SubscriberSignedUp
             'form_id' => $this->form?->id,
             'form_name' => $this->form?->name,
             'source' => $this->source,
+            'user_id' => $this->list->user_id,
         ];
     }
 }

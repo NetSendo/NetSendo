@@ -22,17 +22,22 @@ class AutomationActionExecutor
     {
         $type = $config['type'] ?? '';
 
+        // Merge nested config with main config for backward compatibility
+        // Frontend sends: {type: 'unsubscribe', config: {list_id: 123}}
+        // Action methods expect: {list_id: 123}
+        $actionConfig = array_merge($config, $config['config'] ?? []);
+
         return match ($type) {
-            'send_email' => $this->sendEmail($config, $subscriber, $context),
-            'add_tag' => $this->addTag($config, $subscriber),
-            'remove_tag' => $this->removeTag($config, $subscriber),
-            'move_to_list' => $this->moveToList($config, $subscriber, $context),
-            'copy_to_list' => $this->copyToList($config, $subscriber),
-            'unsubscribe' => $this->unsubscribe($config, $subscriber, $context),
-            'call_webhook' => $this->callWebhook($config, $subscriber, $context),
-            'start_funnel' => $this->startFunnel($config, $subscriber),
-            'update_field' => $this->updateField($config, $subscriber),
-            'notify_admin' => $this->notifyAdmin($config, $subscriber, $context),
+            'send_email' => $this->sendEmail($actionConfig, $subscriber, $context),
+            'add_tag' => $this->addTag($actionConfig, $subscriber),
+            'remove_tag' => $this->removeTag($actionConfig, $subscriber),
+            'move_to_list' => $this->moveToList($actionConfig, $subscriber, $context),
+            'copy_to_list' => $this->copyToList($actionConfig, $subscriber),
+            'unsubscribe' => $this->unsubscribe($actionConfig, $subscriber, $context),
+            'call_webhook' => $this->callWebhook($actionConfig, $subscriber, $context),
+            'start_funnel' => $this->startFunnel($actionConfig, $subscriber),
+            'update_field' => $this->updateField($actionConfig, $subscriber),
+            'notify_admin' => $this->notifyAdmin($actionConfig, $subscriber, $context),
             default => throw new \InvalidArgumentException("Unknown action type: {$type}"),
         };
     }
