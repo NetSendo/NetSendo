@@ -101,7 +101,7 @@ class PublicFormController extends Controller
      */
     public function success(Request $request, string $slug)
     {
-        $form = SubscriptionForm::where('slug', $slug)->with('contactList')->first();
+        $form = SubscriptionForm::where('slug', $slug)->with('contactList.user')->first();
         $listId = $form?->contact_list_id;
 
         // Determine which system page to show based on subscription status
@@ -147,7 +147,7 @@ class PublicFormController extends Controller
      */
     public function error(Request $request, string $slug)
     {
-        $form = SubscriptionForm::where('slug', $slug)->with('contactList')->first();
+        $form = SubscriptionForm::where('slug', $slug)->with('contactList.user')->first();
         $listId = $form?->contact_list_id;
 
         // Get error page from SystemPage
@@ -214,7 +214,7 @@ class PublicFormController extends Controller
     {
         return SubscriptionForm::where('slug', $slug)
             ->where('status', 'active')
-            ->with('contactList')
+            ->with('contactList.user')
             ->first();
     }
 

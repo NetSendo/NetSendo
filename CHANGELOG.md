@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Double Opt-in Logic:**
+  - Fixed critical bug where double opt-in was enabled by default when no specific setting was found on the form or list.
+  - Implemented correct settings hierarchy: Form > List > Global User Settings > Default (False).
+  - Fixed issue where global user settings were ignored due to missing relationship loading in `PublicFormController`.
+
 ## [1.3.12] – Short Description
 
 **Release date:** 2026-01-05

@@ -384,16 +384,34 @@ class SubscriptionForm extends Model
 
     /**
      * Check if double opt-in should be used (form setting or list default)
+     * Priority: form → list → global user settings → false
      */
     public function shouldUseDoubleOptin(): bool
     {
+        // Priority 1: Form-specific setting
         if ($this->double_optin !== null) {
             return $this->double_optin;
         }
 
-        // Inherit from contact list settings
+        // Priority 2: List-specific setting
         $listSettings = $this->contactList->settings ?? [];
-        return $listSettings['double_optin'] ?? true;
+        if (isset($listSettings['subscription']['double_optin'])) {
+            return $listSettings['subscription']['double_optin'];
+        }
+
+        // Legacy list setting structure
+        if (isset($listSettings['double_optin'])) {
+            return $listSettings['double_optin'];
+        }
+
+        // Priority 3: Global user settings
+        $userSettings = $this->contactList->user->settings ?? [];
+        if (isset($userSettings['subscription']['double_optin'])) {
+            return $userSettings['subscription']['double_optin'];
+        }
+
+        // Priority 4: Default (false - single opt-in)
+        return false;
     }
 
     /**
