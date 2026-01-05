@@ -19,19 +19,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class TriggerAutomationsListener implements ShouldQueue
+class TriggerAutomationsListener
 {
-    use InteractsWithQueue;
-
-    /**
-     * The queue connection that should be used.
-     */
-    public string $connection = 'database';
-
-    /**
-     * The queue name.
-     */
-    public string $queue = 'automations';
 
     /**
      * Handle the event.
