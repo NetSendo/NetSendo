@@ -21,8 +21,19 @@ class AutomationService
      */
     public function processEvent(string $triggerEvent, array $context): void
     {
+        Log::info('AutomationService: Processing event', [
+            'trigger_event' => $triggerEvent,
+            'context' => $context,
+        ]);
+
         $subscriber = $this->getSubscriberFromContext($context);
         $rules = $this->findMatchingRules($triggerEvent, $context);
+
+        Log::info('AutomationService: Found matching rules', [
+            'trigger_event' => $triggerEvent,
+            'rules_count' => $rules->count(),
+            'rule_ids' => $rules->pluck('id')->toArray(),
+        ]);
 
         foreach ($rules as $rule) {
             try {
@@ -65,34 +76,44 @@ class AutomationService
             return true;
         }
 
-        // Check list_id filter
+        // Check list_id filter (cast both to int for reliable comparison)
         if (!empty($config['list_id'])) {
-            $listId = $context['list_id'] ?? null;
-            if ($listId !== (int) $config['list_id']) {
+            $contextListId = (int) ($context['list_id'] ?? 0);
+            $configListId = (int) $config['list_id'];
+
+            if ($contextListId !== $configListId) {
+                Log::debug('AutomationService: list_id mismatch', [
+                    'rule_id' => $rule->id,
+                    'context_list_id' => $contextListId,
+                    'config_list_id' => $configListId,
+                ]);
                 return false;
             }
         }
 
         // Check form_id filter
         if (!empty($config['form_id'])) {
-            $formId = $context['form_id'] ?? null;
-            if ($formId !== (int) $config['form_id']) {
+            $contextFormId = (int) ($context['form_id'] ?? 0);
+            $configFormId = (int) $config['form_id'];
+            if ($contextFormId !== $configFormId) {
                 return false;
             }
         }
 
         // Check message_id filter
         if (!empty($config['message_id'])) {
-            $messageId = $context['message_id'] ?? null;
-            if ($messageId !== (int) $config['message_id']) {
+            $contextMessageId = (int) ($context['message_id'] ?? 0);
+            $configMessageId = (int) $config['message_id'];
+            if ($contextMessageId !== $configMessageId) {
                 return false;
             }
         }
 
         // Check tag_id filter
         if (!empty($config['tag_id'])) {
-            $tagId = $context['tag_id'] ?? null;
-            if ($tagId !== (int) $config['tag_id']) {
+            $contextTagId = (int) ($context['tag_id'] ?? 0);
+            $configTagId = (int) $config['tag_id'];
+            if ($contextTagId !== $configTagId) {
                 return false;
             }
         }
@@ -124,6 +145,11 @@ class AutomationService
 
         // Check user_id ownership (security)
         if (!empty($context['user_id']) && $rule->user_id !== (int) $context['user_id']) {
+            Log::debug('AutomationService: user_id ownership mismatch', [
+                'rule_id' => $rule->id,
+                'rule_user_id' => $rule->user_id,
+                'context_user_id' => $context['user_id'],
+            ]);
             return false;
         }
 
@@ -331,7 +357,7 @@ class AutomationService
         if ($hasErrors) {
             $successCount = collect($actionsExecuted)->where('status', 'success')->count();
             $status = $successCount > 0 ? AutomationRuleLog::STATUS_PARTIAL : AutomationRuleLog::STATUS_FAILED;
-            
+
             AutomationRuleLog::create([
                 'automation_rule_id' => $rule->id,
                 'subscriber_id' => $subscriber?->id,

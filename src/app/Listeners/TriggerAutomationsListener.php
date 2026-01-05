@@ -38,12 +38,21 @@ class TriggerAutomationsListener implements ShouldQueue
      */
     public function handle(object $event): void
     {
+        Log::info('TriggerAutomationsListener: Received event', [
+            'event_class' => get_class($event),
+        ]);
+
         try {
             $automationService = app(AutomationService::class);
-            
+
             $triggerEvent = $this->mapEventToTrigger($event);
             $context = $this->getEventContext($event);
-            
+
+            Log::info('TriggerAutomationsListener: Processing', [
+                'trigger_event' => $triggerEvent,
+                'has_context' => !empty($context),
+            ]);
+
             if ($triggerEvent && $context) {
                 $automationService->processEvent($triggerEvent, $context);
             }
