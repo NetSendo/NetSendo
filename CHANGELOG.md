@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Automation System:**
+  - Fixed issue where automation triggers were not active because `EventServiceProvider` was missing from `bootstrap/providers.php`.
+  - Fixed fatal error in automation actions (`AutomationActionExecutor` and `AutomationService`) caused by incorrect relationship method call (`lists()` instead of `contactLists()`).
+
 ## [Unreleased]
 
 ### Added
