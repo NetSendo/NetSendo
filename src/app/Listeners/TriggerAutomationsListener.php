@@ -15,8 +15,6 @@ use App\Events\ReadTimeThresholdReached;
 use App\Events\SubscriberBirthday;
 use App\Events\SubscriptionAnniversary;
 use App\Services\Automation\AutomationService;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 class TriggerAutomationsListener

@@ -263,8 +263,17 @@ class SubscriberController extends Controller
         if ($subscriber) {
             $lists = ContactList::whereIn('id', $validated['contact_list_ids'])->get();
             foreach ($lists as $list) {
+                // Debug: log before dispatching event
+                Log::info('SubscriberController: About to dispatch SubscriberSignedUp', [
+                    'subscriber_id' => $subscriber->id,
+                    'list_id' => $list->id,
+                    'source' => 'manual',
+                ]);
+
                 // Dispatch event for automations
                 event(new SubscriberSignedUp($subscriber, $list, null, 'manual'));
+
+                Log::info('SubscriberController: Event dispatched');
             }
         }
 

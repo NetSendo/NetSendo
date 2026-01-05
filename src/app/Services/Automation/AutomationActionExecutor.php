@@ -143,20 +143,20 @@ class AutomationActionExecutor
 
         // Unsubscribe from source list
         if ($sourceListId) {
-            $subscriber->lists()->updateExistingPivot($sourceListId, [
+            $subscriber->contactLists()->updateExistingPivot($sourceListId, [
                 'status' => 'unsubscribed',
                 'unsubscribed_at' => now(),
             ]);
         }
 
         // Subscribe to target list
-        if (!$subscriber->lists->contains($targetListId)) {
-            $subscriber->lists()->attach($targetListId, [
+        if (!$subscriber->contactLists->contains($targetListId)) {
+            $subscriber->contactLists()->attach($targetListId, [
                 'status' => 'active',
                 'subscribed_at' => now(),
             ]);
         } else {
-            $subscriber->lists()->updateExistingPivot($targetListId, [
+            $subscriber->contactLists()->updateExistingPivot($targetListId, [
                 'status' => 'active',
                 'subscribed_at' => now(),
             ]);
@@ -189,8 +189,8 @@ class AutomationActionExecutor
         }
 
         // Subscribe to target list if not already
-        if (!$subscriber->lists->contains($targetListId)) {
-            $subscriber->lists()->attach($targetListId, [
+        if (!$subscriber->contactLists->contains($targetListId)) {
+            $subscriber->contactLists()->attach($targetListId, [
                 'status' => 'active',
                 'subscribed_at' => now(),
             ]);
@@ -214,7 +214,7 @@ class AutomationActionExecutor
             throw new \InvalidArgumentException('List ID required');
         }
 
-        $subscriber->lists()->updateExistingPivot($listId, [
+        $subscriber->contactLists()->updateExistingPivot($listId, [
             'status' => 'unsubscribed',
             'unsubscribed_at' => now(),
         ]);

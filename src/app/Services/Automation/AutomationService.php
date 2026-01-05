@@ -304,7 +304,7 @@ class AutomationService
             return false;
         }
 
-        $pivot = $subscriber->lists()->where('contact_lists.id', $listId)->first()?->pivot;
+        $pivot = $subscriber->contactLists()->where('contact_lists.id', $listId)->first()?->pivot;
         if (!$pivot || !$pivot->subscribed_at) {
             return false;
         }
