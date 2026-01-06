@@ -434,6 +434,22 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/stats', [\App\Http\Controllers\PixelSettingsController::class, 'stats'])->name('stats');
     });
 
+    // WooCommerce Integration Settings
+    Route::prefix('settings/woocommerce')->name('settings.woocommerce.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'store'])->name('store');
+        Route::post('/test', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'testConnection'])->name('test');
+        Route::post('/disconnect', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'disconnect'])->name('disconnect');
+    });
+
+    // Template Products API (WooCommerce + Pixel)
+    Route::prefix('api/templates/products')->name('api.templates.products.')->group(function () {
+        Route::get('/woocommerce', [\App\Http\Controllers\TemplateProductsController::class, 'woocommerceProducts'])->name('woocommerce');
+        Route::get('/woocommerce/categories', [\App\Http\Controllers\TemplateProductsController::class, 'woocommerceCategories'])->name('woocommerce.categories');
+        Route::get('/woocommerce/{productId}', [\App\Http\Controllers\TemplateProductsController::class, 'getProduct'])->name('woocommerce.get');
+        Route::get('/recently-viewed', [\App\Http\Controllers\TemplateProductsController::class, 'recentlyViewed'])->name('recently-viewed');
+        Route::get('/connection-status', [\App\Http\Controllers\TemplateProductsController::class, 'connectionStatus'])->name('connection-status');
+    });
 
     // Polar Products (Settings)
     Route::prefix('settings/polar-products')->name('settings.polar-products.')->group(function () {

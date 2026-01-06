@@ -149,7 +149,8 @@ const updateOpenGroup = () => {
         isActive("settings.backup.*") ||
         isActive("settings.stripe.*") ||
         isActive("settings.polar.*") ||
-        isActive('settings.pixel.*')
+        isActive('settings.pixel.*') ||
+        isActive('settings.woocommerce.*')
     ) {
         openGroup.value = "settings";
         return;
@@ -1439,6 +1440,19 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("pixel.settings_title") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.woocommerce.index')"
+                    :active="isActive('settings.woocommerce.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
+                            <path d="M23.594 9.25h-.587c-.22 0-.421.124-.52.32l-.872 1.746a.586.586 0 0 1-.52.32h-5.76a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H7.52a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 0 0 16.816v1.932c0 .847.686 1.533 1.533 1.533h20.934c.847 0 1.533-.686 1.533-1.533V9.657a.407.407 0 0 0-.406-.407zM1.533 5.72h20.934c.847 0 1.533.686 1.533 1.532v.47a.407.407 0 0 1-.406.406h-5.01a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H9.767a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 1 0 10.496V7.252c0-.847.686-1.533 1.533-1.533z"/>
+                        </svg>
+                    </template>
+                    {{ $t("settings.woocommerce.title", "WooCommerce") }}
                 </SidebarItem>
 
                 <SidebarItem

@@ -13,6 +13,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+## [1.4.2] – Short Description
+
+**Release date:** 2026-01-06
+
+### Added
+
+- **WooCommerce Product Integration for Templates:**
+  - New WooCommerce Settings page (`/settings/woocommerce`) to connect your WooCommerce store using REST API credentials.
+  - Added `WooCommerceSettings` model with encrypted credential storage.
+  - Added `WooCommerceApiService` for fetching products, categories, and testing connection.
+  - Added `TemplateProductsController` with endpoints for WooCommerce products and recently viewed products (from Pixel data).
+  - New `ProductPickerModal.vue` component for selecting products in the Template Builder.
+  - **Enhanced Product Picker:**
+    - Implemented server-side pagination for WooCommerce products (API-driven).
+    - Added category filtering dropdown fetching categories from WooCommerce.
+    - Added total product count display ("Found: X products").
+    - Added pagination controls (Previous/Next page, "Page X of Y").
+    - Integrated with backend endpoints to fetch pagination metadata (total, total_pages) from WooCommerce API headers.
+  - Updated `BlockEditor.vue` to support importing products from WooCommerce or recently viewed items.
+  - Added sidebar navigation item for WooCommerce Settings.
+  - Full translations for WooCommerce integration in PL, EN, DE, and ES.
+  - Added support for multi-product selection in the "Product Grid" block (Siatka produktów) in the Template Builder, allowing users to populate the grid with selected WooCommerce products.
+
+### Changed
+
+### Fixed
+
 ## [1.4.1] – Short Description
 
 **Release date:** 2026-01-06

@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import InsertPickerModal from '@/Components/InsertPickerModal.vue';
+import ProductPickerModal from '@/Components/ProductPickerModal.vue';
 
 const { t } = useI18n();
 
@@ -48,6 +49,74 @@ const aiTone = ref('casual');
 // Image upload state
 const isUploading = ref(false);
 const uploadError = ref('');
+
+// Product picker state
+const showProductPicker = ref(false);
+const productDataSource = ref('manual'); // manual, woocommerce, dynamic
+
+// Handle product selection from picker
+const handleProductSelect = (products) => {
+    if (props.block.type === 'product_grid') {
+        const mappedProducts = products.map(product => ({
+            id: product.id,
+            image: product.image || '',
+            title: product.name,
+            description: product.description || '',
+            price: formatPrice(product.price, product.currency),
+            oldPrice: product.sale_price && product.regular_price > product.sale_price
+                ? formatPrice(product.regular_price, product.currency)
+                : '',
+            buttonUrl: product.url || '',
+            buttonText: t('template_builder.buy_now'),
+            woocommerce_product_id: product.id,
+        }));
+
+        // If we selected fewer products than current columns, we might Want to adjust columns or just fill available spots?
+        // For now let's just replace the content.
+        // We should probably preserve the grid settings like columns count if possible,
+        // but the current implementation of updateProductsCount just generates empty objects.
+        // Let's replace the products array.
+        updateContent('products', mappedProducts);
+
+        // Auto-update count to match selected
+        // updateContent('products', mappedProducts); // This is array
+        // But the grid also has 'columns' setting.
+    } else if (products.length > 0) {
+        const product = products[0];
+        // Update all product fields with selected product data
+        localContent.value = {
+            ...localContent.value,
+            title: product.name,
+            description: product.description || '',
+            price: formatPrice(product.price, product.currency),
+            oldPrice: product.sale_price && product.regular_price > product.sale_price
+                ? formatPrice(product.regular_price, product.currency)
+                : '',
+            buttonUrl: product.url || '',
+            image: product.image || '',
+            woocommerce_product_id: product.id,
+        };
+        productDataSource.value = 'woocommerce';
+        emit('update', { content: { ...localContent.value } });
+    }
+    showProductPicker.value = false;
+};
+
+// Format price helper
+const formatPrice = (price, currency = 'PLN') => {
+    if (!price) return '';
+    return new Intl.NumberFormat('pl-PL', {
+        style: 'currency',
+        currency: currency,
+    }).format(price);
+};
+
+// Clear WooCommerce link
+const clearProductLink = () => {
+    localContent.value.woocommerce_product_id = null;
+    productDataSource.value = 'manual';
+    emit('update', { content: { ...localContent.value } });
+};
 
 // Update block content
 const updateContent = (key, value) => {
@@ -660,6 +729,54 @@ const handleInsert = (content) => {
         <!-- PRODUCT BLOCK -->
         <template v-else-if="block.type === 'product'">
             <div class="space-y-4">
+                <!-- WooCommerce Product Import -->
+                <div class="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-800">
+                                <svg viewBox="0 0 24 24" fill="#96588a" class="h-5 w-5">
+                                    <path d="M23.594 9.25h-.587c-.22 0-.421.124-.52.32l-.872 1.746a.586.586 0 0 1-.52.32h-5.76a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H7.52a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 0 0 16.816v1.932c0 .847.686 1.533 1.533 1.533h20.934c.847 0 1.533-.686 1.533-1.533V9.657a.407.407 0 0 0-.406-.407z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ $t('template_builder.import_from_woocommerce') }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ $t('template_builder.import_from_woocommerce_desc') }}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            @click="showProductPicker = true"
+                            class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-500"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            {{ $t('template_builder.select_product') }}
+                        </button>
+                    </div>
+
+                    <!-- Connected product indicator -->
+                    <div v-if="localContent.woocommerce_product_id" class="mt-3 flex items-center justify-between rounded-lg bg-white p-2 dark:bg-slate-800">
+                        <div class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                            <span class="text-xs text-slate-600 dark:text-slate-400">
+                                {{ $t('template_builder.linked_to_woocommerce') }} #{{ localContent.woocommerce_product_id }}
+                            </span>
+                        </div>
+                        <button
+                            @click="clearProductLink"
+                            class="text-xs text-red-500 hover:text-red-600"
+                        >
+                            {{ $t('template_builder.unlink') }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Product image -->
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.product_image') }}</label>
@@ -792,6 +909,36 @@ const handleInsert = (content) => {
         <!-- PRODUCT GRID BLOCK -->
         <template v-else-if="block.type === 'product_grid'">
             <div class="space-y-4">
+                <!-- WooCommerce Product Import -->
+                <div class="rounded-xl border-2 border-dashed border-purple-200 bg-purple-50/50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-800">
+                                <svg viewBox="0 0 24 24" fill="#96588a" class="h-5 w-5">
+                                    <path d="M23.594 9.25h-.587c-.22 0-.421.124-.52.32l-.872 1.746a.586.586 0 0 1-.52.32h-5.76a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H7.52a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 0 0 16.816v1.932c0 .847.686 1.533 1.533 1.533h20.934c.847 0 1.533-.686 1.533-1.533V9.657a.407.407 0 0 0-.406-.407zM1.533 5.72h20.934c.847 0 1.533.686 1.533 1.532v.47a.407.407 0 0 1-.406.406h-5.01a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H9.767a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 1 0 10.496V7.252c0-.847.686-1.533 1.533-1.533z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ $t('template_builder.import_from_woocommerce') }}
+                                </p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ $t('template_builder.import_from_woocommerce_desc') }}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            @click="showProductPicker = true"
+                            class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-purple-500"
+                        >
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            {{ $t('template_builder.select_products') || $t('template_builder.select_product') }}
+                        </button>
+                    </div>
+                </div>
+
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">{{ $t('template_builder.columns_count') }}</label>
                     <div class="flex gap-2">
@@ -901,4 +1048,12 @@ const handleInsert = (content) => {
             </div>
         </template>
     </div>
+
+    <!-- Product Picker Modal -->
+    <ProductPickerModal
+        :show="showProductPicker"
+        :multi-select="block.type === 'product_grid'"
+        @close="showProductPicker = false"
+        @select="handleProductSelect"
+    />
 </template>
