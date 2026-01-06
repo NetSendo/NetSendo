@@ -3705,6 +3705,26 @@
         "product_updated": "Produkt został zaktualizowany.",
         "product_deleted": "Produkt został usunięty."
     },
+    "pixel": {
+        "settings_title": "NetSendo Pixel",
+        "settings_subtitle": "Śledzenie zachowań użytkowników na stronach zewnętrznych",
+        "status_active": "Aktywny",
+        "embed_code": "Kod do osadzenia",
+        "embed_code_description": "Skopiuj poniższy kod i wklej go przed znacznikiem </head> na każdej stronie, którą chcesz śledzić.",
+        "tip": "Wskazówka",
+        "embed_tip": "Dla WooCommerce użyj wtyczki NetSendo for WooCommerce, która automatycznie wstrzykuje pixel i śledzi zdarzenia e-commerce.",
+        "page_views": "Odsłony stron",
+        "product_views": "Wyświetlenia produktów",
+        "add_to_cart": "Dodania do koszyka",
+        "unique_visitors": "Unikalni odwiedzający",
+        "events_last_7_days": "Zdarzenia (ostatnie 7 dni)",
+        "device_types": "Typy urządzeń",
+        "top_pages": "Najczęściej odwiedzane strony",
+        "top_products": "Najpopularniejsze produkty",
+        "no_data": "Brak danych",
+        "custom_events_title": "Śledzenie zdarzeń niestandardowych",
+        "custom_events_description": "Możesz wysyłać własne zdarzenia z JavaScript za pomocą API NetSendo Pixel."
+    },
     "sales_funnels": {
         "title": "Tunele sprzedażowe",
         "description": "Skonfiguruj produkty do osadzania na stronach zewnętrznych. Po zakupie klient zostanie zapisany na wybraną listę.",

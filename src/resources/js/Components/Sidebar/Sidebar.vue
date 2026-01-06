@@ -124,7 +124,10 @@ const updateOpenGroup = () => {
     }
 
     // Products
-    if (isActive("settings.stripe-products.*") || isActive("settings.polar-products.*")) {
+    if (
+        isActive("settings.stripe-products.*") ||
+        isActive("settings.polar-products.*")
+    ) {
         openGroup.value = "products";
         return;
     }
@@ -285,10 +288,11 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </svg>
                 </template>
                 <span class="flex items-center gap-2">
-                    {{ $t('navigation.webinars') }}
+                    {{ $t("navigation.webinars") }}
                     <span
                         class="rounded-full bg-gradient-to-r from-red-500 to-pink-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
-                    >{{ $t('navigation.new') }}</span>
+                        >{{ $t("navigation.new") }}</span
+                    >
                 </span>
             </SidebarItem>
 
@@ -1405,6 +1409,35 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("polar.settings_title") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.pixel.index')"
+                    :active="isActive('settings.pixel.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("pixel.settings_title") }}
                 </SidebarItem>
 
                 <SidebarItem

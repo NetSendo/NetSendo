@@ -327,3 +327,253 @@ function netsendo_wc_plugin_action_links($links) {
     return $links;
 }
 add_filter('plugin_action_links_' . NETSENDO_WC_PLUGIN_BASENAME, 'netsendo_wc_plugin_action_links');
+
+// =============================================================================
+// NETSENDO PIXEL TRACKING
+// =============================================================================
+
+/**
+ * Inject NetSendo Pixel script into WooCommerce pages
+ */
+function netsendo_wc_inject_pixel_script() {
+    $settings = NetSendo_WC_Admin_Settings::get_settings();
+    $api_url = isset($settings['api_url']) ? rtrim($settings['api_url'], '/') : '';
+    $user_id = $settings['user_id'] ?? '';
+
+    // Only inject if properly configured
+    if (empty($user_id) || empty($api_url)) {
+        return;
+    }
+
+    ?>
+    <!-- NetSendo Pixel -->
+    <script>
+    (function(n,e,t,s,d,o){n.NetSendo=n.NetSendo||[];
+    n.NetSendo.push(['init',{userId:<?php echo (int)$user_id; ?>,apiUrl:'<?php echo esc_js($api_url); ?>/t/pixel'}]);
+    var a=e.createElement(t);a.async=1;a.src='<?php echo esc_js($api_url); ?>/t/pixel/<?php echo (int)$user_id; ?>';
+    var m=e.getElementsByTagName(t)[0];m.parentNode.insertBefore(a,m);
+    })(window,document,'script');
+    </script>
+    <!-- End NetSendo Pixel -->
+    <?php
+}
+add_action('wp_head', 'netsendo_wc_inject_pixel_script', 1);
+
+/**
+ * Track product views
+ */
+function netsendo_wc_track_product_view() {
+    if (!is_product()) {
+        return;
+    }
+
+    global $product;
+    if (!$product) {
+        return;
+    }
+
+    $categories = wp_get_post_terms($product->get_id(), 'product_cat', ['fields' => 'names']);
+    $category_string = is_array($categories) ? implode(', ', $categories) : '';
+
+    ?>
+    <script>
+    if (typeof NetSendo !== 'undefined') {
+        NetSendo.push(['track', 'product_view', {
+            product_id: '<?php echo esc_js($product->get_id()); ?>',
+            product_name: '<?php echo esc_js($product->get_name()); ?>',
+            product_price: <?php echo (float)$product->get_price(); ?>,
+            product_category: '<?php echo esc_js($category_string); ?>'
+        }]);
+    }
+    </script>
+    <?php
+}
+add_action('woocommerce_after_single_product', 'netsendo_wc_track_product_view');
+
+/**
+ * Track add to cart events (AJAX)
+ */
+function netsendo_wc_track_add_to_cart_script() {
+    if (!is_woocommerce() && !is_cart() && !is_checkout()) {
+        return;
+    }
+
+    ?>
+    <script>
+    jQuery(function($) {
+        // Track AJAX add to cart
+        $(document.body).on('added_to_cart', function(event, fragments, cart_hash, $button) {
+            if (typeof NetSendo === 'undefined') return;
+
+            var productId = $button.data('product_id');
+            var productName = $button.closest('.product').find('.woocommerce-loop-product__title, .product_title').first().text() || '';
+            var productPrice = $button.closest('.product').find('.price .woocommerce-Price-amount').first().text() || '';
+
+            NetSendo.push(['track', 'add_to_cart', {
+                product_id: String(productId),
+                product_name: productName.trim(),
+                product_price: parseFloat(productPrice.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0
+            }]);
+        });
+
+        // Track remove from cart
+        $(document.body).on('removed_from_cart', function(event, fragments, cart_hash, $button) {
+            if (typeof NetSendo === 'undefined') return;
+
+            var productName = $button.closest('tr').find('.product-name a').first().text() || '';
+
+            NetSendo.push(['track', 'remove_from_cart', {
+                product_name: productName.trim()
+            }]);
+        });
+    });
+    </script>
+    <?php
+}
+add_action('wp_footer', 'netsendo_wc_track_add_to_cart_script');
+
+/**
+ * Track single product add to cart (non-AJAX)
+ */
+function netsendo_wc_track_single_add_to_cart($cart_item_key, $product_id, $quantity, $variation_id, $variation, $cart_item_data) {
+    if (wp_doing_ajax()) {
+        return; // Already handled by AJAX tracking
+    }
+
+    $product = wc_get_product($product_id);
+    if (!$product) {
+        return;
+    }
+
+    // Store in session to track on next page load
+    WC()->session->set('netsendo_track_add_to_cart', [
+        'product_id' => $product_id,
+        'product_name' => $product->get_name(),
+        'product_price' => $product->get_price(),
+        'quantity' => $quantity,
+    ]);
+}
+add_action('woocommerce_add_to_cart', 'netsendo_wc_track_single_add_to_cart', 10, 6);
+
+/**
+ * Output tracking for non-AJAX add to cart from session
+ */
+function netsendo_wc_output_session_tracking() {
+    if (!WC()->session) {
+        return;
+    }
+
+    $track_data = WC()->session->get('netsendo_track_add_to_cart');
+    if ($track_data) {
+        WC()->session->set('netsendo_track_add_to_cart', null);
+        ?>
+        <script>
+        if (typeof NetSendo !== 'undefined') {
+            NetSendo.push(['track', 'add_to_cart', {
+                product_id: '<?php echo esc_js($track_data['product_id']); ?>',
+                product_name: '<?php echo esc_js($track_data['product_name']); ?>',
+                product_price: <?php echo (float)$track_data['product_price']; ?>
+            }]);
+        }
+        </script>
+        <?php
+    }
+}
+add_action('wp_footer', 'netsendo_wc_output_session_tracking');
+
+/**
+ * Track checkout page view
+ */
+function netsendo_wc_track_checkout() {
+    if (!is_checkout()) {
+        return;
+    }
+
+    $cart = WC()->cart;
+    if (!$cart) {
+        return;
+    }
+
+    $cart_total = $cart->get_cart_contents_total();
+
+    ?>
+    <script>
+    if (typeof NetSendo !== 'undefined') {
+        NetSendo.push(['track', 'checkout_started', {
+            cart_value: <?php echo (float)$cart_total; ?>,
+            product_currency: '<?php echo esc_js(get_woocommerce_currency()); ?>'
+        }]);
+    }
+    </script>
+    <?php
+}
+add_action('woocommerce_before_checkout_form', 'netsendo_wc_track_checkout');
+
+/**
+ * Identify user on checkout (when email is entered)
+ */
+function netsendo_wc_identify_on_checkout() {
+    if (!is_checkout()) {
+        return;
+    }
+
+    ?>
+    <script>
+    jQuery(function($) {
+        var identifyTimeout;
+        $('#billing_email').on('change blur', function() {
+            var email = $(this).val();
+            if (!email || !email.includes('@')) return;
+
+            clearTimeout(identifyTimeout);
+            identifyTimeout = setTimeout(function() {
+                if (typeof NetSendo !== 'undefined') {
+                    NetSendo.push(['identify', { email: email }]);
+                }
+            }, 500);
+        });
+    });
+    </script>
+    <?php
+}
+add_action('woocommerce_after_checkout_form', 'netsendo_wc_identify_on_checkout');
+
+/**
+ * Track successful purchase
+ */
+function netsendo_wc_track_purchase($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return;
+    }
+
+    $products = [];
+    foreach ($order->get_items() as $item) {
+        $products[] = [
+            'id' => $item->get_product_id(),
+            'name' => $item->get_name(),
+            'price' => $order->get_item_total($item, false, true),
+            'quantity' => $item->get_quantity(),
+        ];
+    }
+
+    ?>
+    <script>
+    if (typeof NetSendo !== 'undefined') {
+        NetSendo.push(['track', 'purchase', {
+            order_id: '<?php echo esc_js($order_id); ?>',
+            cart_value: <?php echo (float)$order->get_total(); ?>,
+            product_currency: '<?php echo esc_js($order->get_currency()); ?>',
+            custom_data: <?php echo json_encode(['products' => $products]); ?>
+        }]);
+
+        // Also identify the customer
+        NetSendo.push(['identify', {
+            email: '<?php echo esc_js($order->get_billing_email()); ?>'
+        }]);
+    }
+    </script>
+    <?php
+}
+add_action('woocommerce_thankyou', 'netsendo_wc_track_purchase', 10, 1);
+

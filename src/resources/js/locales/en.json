@@ -3561,6 +3561,26 @@
         "product_updated": "Product updated.",
         "product_deleted": "Product deleted."
     },
+    "pixel": {
+        "settings_title": "NetSendo Pixel",
+        "settings_subtitle": "Track user behavior on external websites",
+        "status_active": "Active",
+        "embed_code": "Embed Code",
+        "embed_code_description": "Copy the code below and paste it before the </head> tag on every page you want to track.",
+        "tip": "Tip",
+        "embed_tip": "For WooCommerce, use the NetSendo for WooCommerce plugin which automatically injects the pixel and tracks e-commerce events.",
+        "page_views": "Page Views",
+        "product_views": "Product Views",
+        "add_to_cart": "Add to Cart",
+        "unique_visitors": "Unique Visitors",
+        "events_last_7_days": "Events (last 7 days)",
+        "device_types": "Device Types",
+        "top_pages": "Top Pages",
+        "top_products": "Top Products",
+        "no_data": "No data",
+        "custom_events_title": "Custom Event Tracking",
+        "custom_events_description": "You can send custom events from JavaScript using the NetSendo Pixel API."
+    },
     "sales_funnels": {
         "title": "Sales Funnels",
         "description": "Configure products for embedding on external pages. After purchase, the customer will be added to the selected list.",

@@ -189,13 +189,26 @@ class Subscriber extends Model
         $this->update(['last_clicked_at' => now()]);
     }
 
-    /**
-     * Get all tags assigned to this subscriber
-     */
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'subscriber_tag')
             ->withTimestamps();
+    }
+
+    /**
+     * Get all devices linked to this subscriber
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(SubscriberDevice::class);
+    }
+
+    /**
+     * Get all pixel events for this subscriber
+     */
+    public function pixelEvents(): HasMany
+    {
+        return $this->hasMany(PixelEvent::class);
     }
 
     /**

@@ -81,6 +81,12 @@ class FormSubmissionService
             // Link submission to subscriber
             $submission->update(['subscriber_id' => $subscriber->id]);
 
+            // Link visitor device to subscriber (for pixel tracking)
+            $visitorToken = $data['visitor_token'] ?? $request->cookie('ns_visitor') ?? null;
+            if ($visitorToken) {
+                $this->linkVisitorToSubscriber($visitorToken, $subscriber, $form->contactList->user_id);
+            }
+
             // Handle co-registration
             if (!empty($form->coregister_lists)) {
                 $this->handleCoregistration($subscriber, $form->coregister_lists);
@@ -545,5 +551,35 @@ class FormSubmissionService
         }
 
         return $query->get()->toArray();
+    }
+
+    /**
+     * Link visitor device to subscriber for pixel tracking
+     */
+    protected function linkVisitorToSubscriber(string $visitorToken, Subscriber $subscriber, int $userId): void
+    {
+        try {
+            // Link all devices with this visitor token to the subscriber
+            $linkedCount = \App\Models\SubscriberDevice::linkVisitorToSubscriber(
+                $visitorToken,
+                $userId,
+                $subscriber->id
+            );
+
+            if ($linkedCount > 0) {
+                Log::info('Linked visitor devices to subscriber', [
+                    'visitor_token' => $visitorToken,
+                    'subscriber_id' => $subscriber->id,
+                    'devices_linked' => $linkedCount,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Non-critical, log and continue
+            Log::warning('Failed to link visitor to subscriber', [
+                'visitor_token' => $visitorToken,
+                'subscriber_id' => $subscriber->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

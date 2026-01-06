@@ -3209,6 +3209,26 @@
         "product_updated": "Producto actualizado.",
         "product_deleted": "Producto eliminado."
     },
+    "pixel": {
+        "settings_title": "NetSendo Píxel",
+        "settings_subtitle": "Rastrea el comportamiento del usuario en sitios web externos",
+        "status_active": "Activo",
+        "embed_code": "Código de inserción",
+        "embed_code_description": "Copia el siguiente código y pégalo antes de la etiqueta </head> en cada página que quieras rastrear.",
+        "tip": "Consejo",
+        "embed_tip": "Para WooCommerce, usa el plugin NetSendo para WooCommerce que inyecta automáticamente el píxel y rastrea eventos de comercio electrónico.",
+        "page_views": "Vistas de página",
+        "product_views": "Vistas de producto",
+        "add_to_cart": "Añadir al carrito",
+        "unique_visitors": "Visitantes únicos",
+        "events_last_7_days": "Eventos (últimos 7 días)",
+        "device_types": "Tipos de dispositivos",
+        "top_pages": "Páginas principales",
+        "top_products": "Productos principales",
+        "no_data": "Sin datos",
+        "custom_events_title": "Rastreo de eventos personalizados",
+        "custom_events_description": "Puedes enviar eventos personalizados desde JavaScript usando la API de NetSendo Pixel."
+    },
     "sales_funnels": {
         "title": "Embudos de venta",
         "description": "Configure productos para incrustar en páginas externas. Después de la compra, el cliente se añadirá a la lista seleccionada.",

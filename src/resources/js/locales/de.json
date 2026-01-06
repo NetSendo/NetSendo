@@ -3216,6 +3216,26 @@
         "product_updated": "Produkt aktualisiert.",
         "product_deleted": "Produkt gelöscht."
     },
+    "pixel": {
+        "settings_title": "NetSendo Pixel",
+        "settings_subtitle": "Verfolgen Sie das Benutzerverhalten auf externen Websites",
+        "status_active": "Aktiv",
+        "embed_code": "Einbettungscode",
+        "embed_code_description": "Kopieren Sie den folgenden Code und fügen Sie ihn vor dem </head>-Tag auf jeder Seite ein, die Sie verfolgen möchten.",
+        "tip": "Tipp",
+        "embed_tip": "Für WooCommerce verwenden Sie das NetSendo für WooCommerce-Plugin, das das Pixel automatisch einfügt und E-Commerce-Ereignisse verfolgt.",
+        "page_views": "Seitenaufrufe",
+        "product_views": "Produktansichten",
+        "add_to_cart": "In den Warenkorb",
+        "unique_visitors": "Einzigartige Besucher",
+        "events_last_7_days": "Ereignisse (letzte 7 Tage)",
+        "device_types": "Gerätetypen",
+        "top_pages": "Top-Seiten",
+        "top_products": "Top-Produkte",
+        "no_data": "Keine Daten",
+        "custom_events_title": "Benutzerdefiniertes Ereignis-Tracking",
+        "custom_events_description": "Sie können benutzerdefinierte Ereignisse über JavaScript mit der NetSendo Pixel API senden."
+    },
     "sales_funnels": {
         "title": "Verkaufstrichter",
         "description": "Konfigurieren Sie Produkte zum Einbetten auf externen Seiten. Nach dem Kauf wird der Kunde zur ausgewählten Liste hinzugefügt.",

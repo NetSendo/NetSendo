@@ -53,7 +53,7 @@ class AutomationRule extends Model
         'tag_added' => 'Dodanie taga',
         'tag_removed' => 'Usunięcie taga',
         'field_updated' => 'Zmiana pola',
-        // New triggers
+        // Page/Time triggers
         'page_visited' => 'Odwiedziny strony',
         'specific_link_clicked' => 'Kliknięcie w konkretny link',
         'date_reached' => 'Osiągnięcie daty',
@@ -61,6 +61,13 @@ class AutomationRule extends Model
         'subscriber_birthday' => 'Urodziny subskrybenta',
         'subscription_anniversary' => 'Rocznica zapisu',
         'subscriber_inactive' => 'Brak aktywności',
+        // Pixel tracking triggers (e-commerce)
+        'pixel_page_visited' => '🎯 Pixel: Odwiedziny strony',
+        'pixel_product_viewed' => '🎯 Pixel: Wyświetlenie produktu',
+        'pixel_add_to_cart' => '🎯 Pixel: Dodanie do koszyka',
+        'pixel_checkout_started' => '🎯 Pixel: Rozpoczęcie checkout',
+        'pixel_cart_abandoned' => '🎯 Pixel: Porzucony koszyk',
+        'pixel_return_visit' => '🎯 Pixel: Powrót na stronę',
     ];
 
     /**
@@ -213,7 +220,7 @@ class AutomationRule extends Model
     public function getStats(int $days = 7): array
     {
         $since = now()->subDays($days);
-        
+
         return [
             'total_executions' => $this->logs()->where('executed_at', '>=', $since)->count(),
             'successful' => $this->logs()->where('executed_at', '>=', $since)->where('status', 'success')->count(),

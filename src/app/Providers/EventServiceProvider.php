@@ -72,6 +72,22 @@ class EventServiceProvider extends ServiceProvider
         SubscriptionAnniversary::class => [
             TriggerAutomationsListener::class,
         ],
+        // Pixel tracking events
+        \App\Events\PixelPageVisited::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\PixelProductViewed::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\PixelAddToCart::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\PixelCheckoutStarted::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\PixelCartAbandoned::class => [
+            TriggerAutomationsListener::class,
+        ],
         // System events
         \App\Events\UserTimezoneUpdated::class => [
             \App\Listeners\SyncWebinarTimezonesOnUserUpdate::class,

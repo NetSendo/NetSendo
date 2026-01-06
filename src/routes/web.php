@@ -428,6 +428,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/test-connection', [\App\Http\Controllers\PolarSettingsController::class, 'testConnection'])->name('test-connection');
     });
 
+    // Pixel Settings
+    Route::prefix('settings/pixel')->name('settings.pixel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PixelSettingsController::class, 'index'])->name('index');
+        Route::get('/stats', [\App\Http\Controllers\PixelSettingsController::class, 'stats'])->name('stats');
+    });
+
+
     // Polar Products (Settings)
     Route::prefix('settings/polar-products')->name('settings.polar-products.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PolarProductController::class, 'index'])->name('index');
@@ -568,6 +575,14 @@ Route::post('/t/read-end', [\App\Http\Controllers\TrackingController::class, 'en
 Route::post('/t/page', [\App\Http\Controllers\PageVisitController::class, 'track'])->name('tracking.page');
 Route::get('/t/page-script/{user}', [\App\Http\Controllers\PageVisitController::class, 'getTrackingScript'])->name('tracking.page-script');
 Route::post('/t/link-visitor', [\App\Http\Controllers\PageVisitController::class, 'linkVisitor'])->name('tracking.link-visitor');
+
+// NetSendo Pixel Tracking
+Route::prefix('t/pixel')->name('pixel.')->group(function () {
+    Route::get('/{userId}', [\App\Http\Controllers\PixelController::class, 'script'])->name('script');
+    Route::post('/event', [\App\Http\Controllers\PixelController::class, 'trackEvent'])->name('event');
+    Route::post('/identify', [\App\Http\Controllers\PixelController::class, 'identify'])->name('identify');
+    Route::post('/batch', [\App\Http\Controllers\PixelController::class, 'batchEvents'])->name('batch');
+});
 
 // Unsubscribe Routes (signed URLs from emails)
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');

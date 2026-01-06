@@ -13,17 +13,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Automation System:**
-  - Fixed issue where automation triggers were not active because `EventServiceProvider` was missing from `bootstrap/providers.php`.
-  - Fixed fatal error in automation actions (`AutomationActionExecutor` and `AutomationService`) caused by incorrect relationship method call (`lists()` instead of `contactLists()`).
+## [1.4.0] – Short Description
 
-## [Unreleased]
+**Release date:** 2026-01-06
 
 ### Added
+
+- **NetSendo Pixel:**
+  - Implemented comprehensive tracking pixel system for device fingerprinting and behavior tracking.
+  - Added `PixelController` and API endpoints (`/t/pixel/*`) for serving the pixel script and receiving events.
+  - Added `subscriber_devices` and `pixel_events` tables for storing device and event data.
+  - Added `DeviceFingerprintService` for User-Agent parsing and fingerprint generation.
+  - Added visitor-to-subscriber linking on form submissions.
+- **Pixel Admin UI:**
+  - Added Pixel Settings page (`/settings/pixel`) with real-time statistics (views, visitors) and activity charts.
+  - Added Embed Code generator with copy functionality.
+  - Added Sidebar navigation item for Pixel Settings.
+- **E-commerce & Automation:**
+  - Added dedicated Cart Abandonment detection system (`DetectAbandonedCartsCommand`) running as a scheduled job.
+  - Added new automation triggers: `pixel_page_visited`, `pixel_product_viewed`, `pixel_add_to_cart`, `pixel_checkout_started`, `pixel_cart_abandoned`.
+  - Updated WooCommerce plugin to inject pixel script and track product views, cart actions, checkouts, and purchases.
+- **Translations:**
+  - Added full translations for Pixel Settings in PL, EN, DE, ES.
 
 ### Changed
 
 ### Fixed
+
+- **Automation System:**
+  - Fixed issue where automation triggers were not active because `EventServiceProvider` was missing from `bootstrap/providers.php`.
+  - Fixed fatal error in automation actions (`AutomationActionExecutor` and `AutomationService`) caused by incorrect relationship method call (`lists()` instead of `contactLists()`).
 
 ## [1.3.13] – Automation Trigger Fixes
 

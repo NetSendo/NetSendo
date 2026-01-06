@@ -14,6 +14,12 @@ use App\Events\PageVisited;
 use App\Events\ReadTimeThresholdReached;
 use App\Events\SubscriberBirthday;
 use App\Events\SubscriptionAnniversary;
+// Pixel tracking events
+use App\Events\PixelPageVisited;
+use App\Events\PixelProductViewed;
+use App\Events\PixelAddToCart;
+use App\Events\PixelCheckoutStarted;
+use App\Events\PixelCartAbandoned;
 use App\Services\Automation\AutomationService;
 use Illuminate\Support\Facades\Log;
 
@@ -65,11 +71,17 @@ class TriggerAutomationsListener
             FormSubmitted::class => 'form_submitted',
             TagAdded::class => 'tag_added',
             TagRemoved::class => 'tag_removed',
-            // New event mappings
+            // Page/time event mappings
             PageVisited::class => 'page_visited',
             ReadTimeThresholdReached::class => 'read_time_threshold',
             SubscriberBirthday::class => 'subscriber_birthday',
             SubscriptionAnniversary::class => 'subscription_anniversary',
+            // Pixel tracking event mappings
+            PixelPageVisited::class => 'pixel_page_visited',
+            PixelProductViewed::class => 'pixel_product_viewed',
+            PixelAddToCart::class => 'pixel_add_to_cart',
+            PixelCheckoutStarted::class => 'pixel_checkout_started',
+            PixelCartAbandoned::class => 'pixel_cart_abandoned',
             default => null,
         };
     }
