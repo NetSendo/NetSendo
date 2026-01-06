@@ -206,6 +206,7 @@
         "insert": "Insertar",
         "source_placeholder": "Escriba o pegue el código HTML...",
         "full_html_notice": "Esta es una plantilla HTML completa. Utilice el modo \"Código HTML\" para editar.",
+        "full_html_message": "Se detectó contenido HTML completo. Utilice el modo de Código o Vista previa.",
         "full_html_edit_notice": "Está editando una plantilla HTML completa. Utilice la pestaña \"Vista previa\" para comprobar el diseño.",
         "visual_edit_notice": "Haga clic en el texto en la vista previa para editarlo directamente.",
         "emoji": "Emoji",

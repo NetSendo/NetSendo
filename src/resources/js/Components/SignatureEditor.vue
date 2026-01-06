@@ -11,7 +11,10 @@ import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import { FontSize } from 'tiptap-extension-font-size'
 import { watch, ref, onBeforeUnmount, computed, onMounted, nextTick } from 'vue'
+
 import { useI18n } from 'vue-i18n'
+import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table'
+import axios from 'axios'
 
 const { t } = useI18n()
 
@@ -42,6 +45,8 @@ const showLinkModal = ref(false)
 const linkUrl = ref('')
 const showImageModal = ref(false)
 const imageUrl = ref('')
+const activeImageTab = ref('upload')
+const isUploading = ref(false)
 
 // Enhanced image settings
 const imageAlignment = ref('center')
@@ -80,7 +85,6 @@ const isFullHtmlDocument = computed(() => {
     const content = sourceCode.value?.trim().toLowerCase() || ''
     return content.startsWith('<!doctype') ||
            content.startsWith('<html') ||
-           content.includes('<table') ||
            content.includes('<body')
 })
 
@@ -116,7 +120,16 @@ const editor = useEditor({
         Highlight.configure({
             multicolor: true,
         }),
+        Highlight.configure({
+            multicolor: true,
+        }),
         FontSize,
+        Table.configure({
+            resizable: true,
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
     ],
     editorProps: {
         attributes: {
@@ -142,7 +155,6 @@ watch(() => props.modelValue, (value) => {
             const content = (value || '').trim().toLowerCase()
             const isFullHtml = content.startsWith('<!doctype') ||
                                content.startsWith('<html') ||
-                               content.includes('<table') ||
                                content.includes('<body')
             if (isFullHtml && editorMode.value === 'visual') {
                 editorMode.value = 'preview'
@@ -231,6 +243,27 @@ const openImageModal = () => {
     imagePreviewLoaded.value = false
     imagePreviewError.value = false
     showImageModal.value = true
+    activeImageTab.value = 'upload'
+}
+
+const handleImageUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    isUploading.value = true
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+        const response = await axios.post(route('api.templates.upload-image'), formData)
+        imageUrl.value = response.data.url
+        imagePreviewError.value = false
+    } catch (error) {
+        console.error('Image upload failed:', error)
+        alert('Upload failed: ' + (error.response?.data?.message || error.message))
+    } finally {
+        isUploading.value = false
+    }
 }
 
 const onImageUrlChange = () => {
@@ -550,6 +583,49 @@ const btnClass = (isActive = false) => {
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
+                <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                <!-- Table Controls -->
+                <button
+                    type="button"
+                    @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
+                    :class="btnClass()"
+                    :title="$t('editor.insert_table') || 'Wstaw tabelę'"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7-12h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2z" /></svg>
+                </button>
+
+                <div v-if="editor.isActive('table')" class="flex items-center gap-1 border-l border-slate-300 dark:border-slate-600 pl-1 ml-1">
+                    <button type="button" @click="editor.chain().focus().addColumnBefore().run()" :class="btnClass()" :title="$t('editor.add_col_before') || 'Kolumna przed'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </button>
+                    <button type="button" @click="editor.chain().focus().addColumnAfter().run()" :class="btnClass()" :title="$t('editor.add_col_after') || 'Kolumna po'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </button>
+                    <button type="button" @click="editor.chain().focus().deleteColumn().run()" :class="btnClass()" :title="$t('editor.delete_col') || 'Usuń kolumnę'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                    <div class="mx-1 h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+                    <button type="button" @click="editor.chain().focus().addRowBefore().run()" :class="btnClass()" :title="$t('editor.add_row_before') || 'Wiersz przed'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    </button>
+                    <button type="button" @click="editor.chain().focus().addRowAfter().run()" :class="btnClass()" :title="$t('editor.add_row_after') || 'Wiersz po'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" transform="rotate(180 12 12)" /></svg>
+                    </button>
+                    <button type="button" @click="editor.chain().focus().deleteRow().run()" :class="btnClass()" :title="$t('editor.delete_row') || 'Usuń wiersz'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                    <div class="mx-1 h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+                    <button type="button" @click="editor.chain().focus().mergeCells().run()" :class="btnClass()" :title="$t('editor.merge_cells') || 'Scal komórki'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                     <button type="button" @click="editor.chain().focus().deleteTable().run()" :class="btnClass()" :title="$t('editor.delete_table') || 'Usuń tabelę'" class="text-red-500 hover:text-red-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+
+                <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
                 <!-- Link -->
                 <button
                     type="button"
@@ -672,8 +748,53 @@ const btnClass = (isActive = false) => {
                 <div class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
                     <h3 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{{ $t('editor.insert_image') || 'Wstaw obraz' }}</h3>
 
-                    <!-- Image URL -->
-                    <div class="mb-4">
+                    <!-- Tabs -->
+                    <div class="mb-4 flex border-b border-slate-200 dark:border-slate-700">
+                        <button
+                            type="button"
+                            @click="activeImageTab = 'upload'"
+                            :class="['px-4 py-2 text-sm font-medium transition-colors border-b-2', activeImageTab === 'upload' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300']"
+                        >
+                            {{ $t('editor.upload_image') || 'Wgraj plik' }}
+                        </button>
+                        <button
+                            type="button"
+                            @click="activeImageTab = 'url'"
+                            :class="['px-4 py-2 text-sm font-medium transition-colors border-b-2', activeImageTab === 'url' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300']"
+                        >
+                            {{ $t('editor.image_url') || 'Adres URL' }}
+                        </button>
+                    </div>
+
+                    <!-- Upload Tab -->
+                    <div v-if="activeImageTab === 'upload'" class="mb-4">
+                        <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ $t('editor.select_image') || 'Wybierz obraz z dysku' }}
+                        </label>
+                        <div class="flex items-center justify-center w-full">
+                            <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:hover:border-slate-500 dark:hover:bg-slate-600">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <div v-if="isUploading">
+                                        <svg class="animate-spin h-8 w-8 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                    <div v-else class="flex flex-col items-center">
+                                        <svg class="w-8 h-8 mb-4 text-slate-500 dark:text-slate-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                        </svg>
+                                        <p class="mb-2 text-sm text-slate-500 dark:text-slate-400"><span class="font-semibold">{{ $t('editor.click_to_upload') || 'Kliknij, aby wgrać' }}</span></p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">PNG, JPG, GIF (MAX. 5MB)</p>
+                                    </div>
+                                </div>
+                                <input id="dropzone-file" type="file" class="hidden" accept="image/*" @change="handleImageUpload" :disabled="isUploading" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- URL Tab (conditional) -->
+                    <div v-if="activeImageTab === 'url'" class="mb-4">
                         <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('editor.image_url') || 'URL obrazu' }}</label>
                         <input
                             v-model="imageUrl"
@@ -798,11 +919,68 @@ const btnClass = (isActive = false) => {
 }
 
 .ProseMirror pre code {
-    color: inherit;
-    padding: 0;
     background: none;
-    font-size: 0.8rem;
+    color: inherit;
+    font-size: 0.8em;
+    padding: 0;
 }
+
+/* Table styles */
+.ProseMirror table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+    min-width: 1em;
+    border: 2px solid #ced4da;
+    padding: 3px 5px;
+    vertical-align: top;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.ProseMirror th {
+    font-weight: bold;
+    text-align: left;
+    background-color: #f1f3f5;
+}
+
+.ProseMirror .selectedCell:after {
+    z-index: 2;
+    position: absolute;
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: rgba(200, 200, 255, 0.4);
+    pointer-events: none;
+}
+
+.ProseMirror .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: -2px;
+    width: 4px;
+    background-color: #adf;
+    pointer-events: none;
+}
+
+.dark .ProseMirror td,
+.dark .ProseMirror th {
+    border-color: #475569;
+}
+
+.dark .ProseMirror th {
+    background-color: #1e293b;
+}
+
 
 .ProseMirror img {
     max-width: 100%;

@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Signature Editor:**
+  - **Image Upload:** Implemented direct file upload support (drag & drop) in `SignatureEditor.vue`, alongside existing URL insertion.
+  - **Table Support:** Fixed "full HTML" detection logic to correctly identify tables as supported elements in visual mode.
+  - **Dark Mode:** Fixed styling issues in the Image Modal where text was invisible on dark backgrounds.
+  - **Translations:** Added missing translation keys for editor messages (`editor.full_html_message`) and upload UI.
+
 ## [1.4.2] – Short Description
 
 **Release date:** 2026-01-06
@@ -35,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added sidebar navigation item for WooCommerce Settings.
   - Full translations for WooCommerce integration in PL, EN, DE, and ES.
   - Added support for multi-product selection in the "Product Grid" block (Siatka produktów) in the Template Builder, allowing users to populate the grid with selected WooCommerce products.
+  - **Table Support in Editor:**
+    - Enabled table support in `SignatureEditor` for Inserts and Signatures.
+    - Added toolbar buttons for inserting tables and managing rows/columns/cells.
 
 ### Changed
 

@@ -212,6 +212,7 @@
         "insert": "Wstaw",
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "full_html_notice": "To jest pełny szablon HTML. Użyj trybu \"Kod HTML\" aby edytować.",
+        "full_html_message": "Wykryto pełną treść HTML. Użyj trybu kodu źródłowego lub podglądu.",
         "full_html_edit_notice": "Edytujesz pełny szablon HTML. Użyj zakładki \"Podgląd\" aby zobaczyć wygląd.",
         "visual_edit_notice": "Kliknij na tekst w podglądzie, aby go edytować bezpośrednio.",
         "emoji": "Emoji",

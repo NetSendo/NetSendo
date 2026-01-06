@@ -204,6 +204,7 @@
         "insert": "Einfügen",
         "source_placeholder": "HTML-Code eingeben oder einfügen...",
         "full_html_notice": "Dies ist eine vollständige HTML-Vorlage. Verwenden Sie den Modus \"HTML-Code\", um zu bearbeiten.",
+        "full_html_message": "Vollständiger HTML-Inhalt erkannt. Verwenden Sie den Quellcode- oder Vorschaumodus.",
         "full_html_edit_notice": "Sie bearbeiten eine vollständige HTML-Vorlage. Verwenden Sie den Tab \"Vorschau\", um das Aussehen zu prüfen.",
         "visual_edit_notice": "Klicken Sie auf den Text in der Vorschau, um ihn direkt zu bearbeiten.",
         "emoji": "Emoji",

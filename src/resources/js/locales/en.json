@@ -211,6 +211,7 @@
         "insert": "Insert",
         "source_placeholder": "Type or paste HTML code...",
         "full_html_notice": "This is a full HTML template. Use \"HTML Code\" mode to edit.",
+        "full_html_message": "Full HTML content detected. Use Source or Preview mode.",
         "full_html_edit_notice": "You are editing a full HTML template. Use the \"Preview\" tab to see how it looks.",
         "visual_edit_notice": "Click on text in the preview to edit it directly.",
         "emoji": "Emoji",
