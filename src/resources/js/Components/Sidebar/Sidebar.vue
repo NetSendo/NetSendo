@@ -148,7 +148,8 @@ const updateOpenGroup = () => {
         isActive("settings.api-keys.*") ||
         isActive("settings.backup.*") ||
         isActive("settings.stripe.*") ||
-        isActive("settings.polar.*")
+        isActive("settings.polar.*") ||
+        isActive('settings.pixel.*')
     ) {
         openGroup.value = "settings";
         return;

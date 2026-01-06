@@ -3129,6 +3129,7 @@
         },
         "search": "Szukaj...",
         "no_results": "Brak wyników wyszukiwania",
+        "paste_html_hint": "Wklej tutaj kod HTML podpisu lub wpisz ręcznie...",
         "variables": {
             "subscriber_data": "Dane subskrybenta",
             "first_name": "Imię",

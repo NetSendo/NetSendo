@@ -39,7 +39,8 @@ class SubscriberController extends Controller
 
         if ($request->list_id) {
             $query->whereHas('contactLists', function ($q) use ($request) {
-                $q->where('contact_lists.id', $request->list_id);
+                $q->where('contact_lists.id', $request->list_id)
+                  ->where('contact_list_subscriber.status', 'active');
             });
         }
 
@@ -81,6 +82,7 @@ class SubscriberController extends Controller
             // Statistics for specific list
             $totalInList = DB::table('contact_list_subscriber')
                 ->where('contact_list_id', $listId)
+                ->where('status', 'active')
                 ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
                 ->where('subscribers.user_id', auth()->id())
                 ->count();
@@ -336,6 +338,7 @@ class SubscriberController extends Controller
         // Get all subscriber IDs from this list
         $ids = DB::table('contact_list_subscriber')
             ->where('contact_list_id', $validated['list_id'])
+            ->where('status', 'active')
             ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
             ->where('subscribers.user_id', auth()->id())
             ->pluck('subscribers.id')

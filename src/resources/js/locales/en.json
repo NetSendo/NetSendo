@@ -3000,6 +3000,7 @@
         },
         "search": "Search...",
         "no_results": "No results found",
+        "paste_html_hint": "Paste HTML code for your signature here or type manually...",
         "variables": {
             "subscriber_data": "Subscriber Data",
             "first_name": "First Name",

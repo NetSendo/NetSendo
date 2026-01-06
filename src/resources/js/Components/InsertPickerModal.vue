@@ -34,11 +34,11 @@ const searchQuery = ref('')
 // Filtered system variables
 const filteredVariables = computed(() => {
     if (!searchQuery.value) return props.systemVariables
-    
+
     const query = searchQuery.value.toLowerCase()
     return props.systemVariables.map(category => ({
         ...category,
-        variables: category.variables.filter(v => 
+        variables: category.variables.filter(v =>
             v.label.toLowerCase().includes(query) ||
             v.code.toLowerCase().includes(query) ||
             (v.description && v.description.toLowerCase().includes(query))
@@ -49,7 +49,7 @@ const filteredVariables = computed(() => {
 // Filtered inserts
 const filteredInserts = computed(() => {
     if (!searchQuery.value) return props.inserts
-    
+
     const query = searchQuery.value.toLowerCase()
     return props.inserts.filter(insert =>
         insert.name.toLowerCase().includes(query) ||
@@ -60,7 +60,7 @@ const filteredInserts = computed(() => {
 // Filtered signatures
 const filteredSignatures = computed(() => {
     if (!searchQuery.value) return props.signatures
-    
+
     const query = searchQuery.value.toLowerCase()
     return props.signatures.filter(sig =>
         sig.name.toLowerCase().includes(query) ||
@@ -68,22 +68,27 @@ const filteredSignatures = computed(() => {
     )
 })
 
-// Handle insert
-const handleInsert = (content) => {
-    emit('insert', content)
+// Handle insert with type
+const handleInsert = (content, type = 'variable') => {
+    emit('insert', { content, type })
     emit('close')
 }
 
 // Handle variable click
 const insertVariable = (code) => {
-    handleInsert(code)
+    handleInsert(code, 'variable')
 }
 
-// Handle insert/signature click
-const insertTemplate = (template) => {
-    // Use content or content_plain if available
+// Handle insert click (regular inserts)
+const insertInsert = (template) => {
     const content = template.content || template.content_plain || ''
-    handleInsert(content)
+    handleInsert(content, 'insert')
+}
+
+// Handle signature click
+const insertSignature = (signature) => {
+    const content = signature.content || signature.content_plain || ''
+    handleInsert(content, 'signature')
 }
 
 // Reset search when tab changes
@@ -224,7 +229,7 @@ const clearSearch = () => {
                                 </svg>
                                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ $t('inserts.no_results') }}</p>
                             </div>
-                            
+
                             <div v-else class="space-y-6">
                                 <div v-for="category in filteredVariables" :key="category.category">
                                     <h4 class="mb-3 text-sm font-semibold text-slate-900 dark:text-white">
@@ -271,12 +276,12 @@ const clearSearch = () => {
                                     {{ searchQuery ? $t('inserts.no_results') : $t('inserts.no_inserts') }}
                                 </p>
                             </div>
-                            
+
                             <div v-else class="space-y-2">
                                 <button
                                     v-for="insert in filteredInserts"
                                     :key="insert.id"
-                                    @click="insertTemplate(insert)"
+                                    @click="insertInsert(insert)"
                                     class="w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition-all hover:border-indigo-500 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20"
                                 >
                                     <div class="flex items-start justify-between gap-3">
@@ -311,12 +316,12 @@ const clearSearch = () => {
                                     {{ searchQuery ? $t('inserts.no_results') : $t('inserts.no_signatures') }}
                                 </p>
                             </div>
-                            
+
                             <div v-else class="space-y-2">
                                 <button
                                     v-for="signature in filteredSignatures"
                                     :key="signature.id"
-                                    @click="insertTemplate(signature)"
+                                    @click="insertSignature(signature)"
                                     class="w-full rounded-lg border border-slate-200 bg-white p-4 text-left transition-all hover:border-indigo-500 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:bg-indigo-900/20"
                                 >
                                     <div class="flex items-start justify-between gap-3">

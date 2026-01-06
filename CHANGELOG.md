@@ -13,6 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+## [1.4.1] – Short Description
+
+**Release date:** 2026-01-06
+
+### Added
+
+- **Signature Editor:**
+  - Implemented professional WYSIWYG editor (`SignatureEditor.vue`) for signatures and inserts with visual, source (HTML), and preview modes.
+  - Added smart HTML merging logic to seamlessly integrate signatures into email templates (supports full HTML, tables, and simple text).
+  - Added translations for the new editor features in PL and EN.
+
+### Changed
+
+- **Inserts & Signatures:**
+  - Replaced simple `textarea` with `SignatureEditor` in `Inserts.vue` for better user experience.
+  - Increased modal width to `max-w-4xl` to accommodate the new editor.
+  - Updated `InsertPickerModal` to correctly handle signature insertion types.
+
 ## [1.4.0] – Short Description
 
 **Release date:** 2026-01-06

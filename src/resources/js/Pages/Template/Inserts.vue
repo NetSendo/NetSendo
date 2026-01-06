@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SignatureEditor from '@/Components/SignatureEditor.vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -473,7 +474,7 @@ const toggleCategory = (category) => {
         <!-- Create/Edit Modal -->
         <Teleport to="body">
             <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/80 p-4 backdrop-blur-sm">
-                <div class="w-full max-w-2xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+                <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
                         <h3 class="text-lg font-bold text-slate-900 dark:text-white">
@@ -548,12 +549,11 @@ const toggleCategory = (category) => {
                                 <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {{ $t('inserts.content_html') }}
                                 </label>
-                                <textarea
+                                <!-- WYSIWYG Editor for both Inserts and Signatures -->
+                                <SignatureEditor
                                     v-model="form.content"
-                                    rows="6"
-                                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-mono text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    :placeholder="$t('inserts.content_html_placeholder')"
-                                ></textarea>
+                                    min-height="300px"
+                                />
                             </div>
 
                             <!-- Content Plain -->

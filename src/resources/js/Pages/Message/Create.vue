@@ -391,10 +391,56 @@ const handleSubjectSelect = (data) => {
     }
 };
 
-// Handle insert content at cursor position
-const handleInsert = (content) => {
-    if (advancedEditorRef.value?.insertAtCursor) {
-        advancedEditorRef.value.insertAtCursor(content);
+// Merge HTML content intelligently - for signatures, insert before </body> or at end
+const mergeHtmlContent = (template, signatureHtml) => {
+    const lowerTemplate = template.trim().toLowerCase();
+
+    // If template contains </body>, insert signature before it
+    if (lowerTemplate.includes('</body>')) {
+        return template.replace(
+            /<\/body>/i,
+            `\n<!-- Signature Start -->\n${signatureHtml}\n<!-- Signature End -->\n</body>`
+        );
+    }
+
+    // If template contains tables (typical email template), find last content cell
+    if (lowerTemplate.includes('</table>')) {
+        // Find the last </td> before the last </table>
+        const lastTableCloseIndex = template.lastIndexOf('</table>');
+        const lastTdCloseBeforeTable = template.lastIndexOf('</td>', lastTableCloseIndex);
+
+        if (lastTdCloseBeforeTable > -1) {
+            return template.slice(0, lastTdCloseBeforeTable) +
+                   `\n<!-- Signature -->\n${signatureHtml}\n` +
+                   template.slice(lastTdCloseBeforeTable);
+        }
+    }
+
+    // For simple HTML - just append at the end
+    return template + `\n${signatureHtml}`;
+};
+
+// Handle insert content at cursor position or smart merge for signatures
+const handleInsert = (data) => {
+    // Handle new format { content, type } or legacy string format
+    const content = typeof data === 'object' ? data.content : data;
+    const type = typeof data === 'object' ? data.type : 'variable';
+
+    if (type === 'signature') {
+        // For signatures - use smart HTML merging
+        const currentContent = advancedEditorRef.value?.getSourceCode() || form.content;
+        const mergedContent = mergeHtmlContent(currentContent, content);
+        form.content = mergedContent;
+
+        // Update editor's source code
+        if (advancedEditorRef.value?.setSourceCode) {
+            advancedEditorRef.value.setSourceCode(mergedContent);
+        }
+    } else {
+        // For variables and inserts - insert at cursor position
+        if (advancedEditorRef.value?.insertAtCursor) {
+            advancedEditorRef.value.insertAtCursor(content);
+        }
     }
     showInsertPickerModal.value = false;
 };
