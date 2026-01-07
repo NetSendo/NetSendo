@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Services\AffiliateConversionService;
 use App\Services\SalesFunnelService;
 use App\Services\StripeService;
 use App\Services\WebhookDispatcher;
@@ -15,7 +16,8 @@ class StripeController extends Controller
     public function __construct(
         private StripeService $stripeService,
         private WebhookDispatcher $webhookDispatcher,
-        private SalesFunnelService $salesFunnelService
+        private SalesFunnelService $salesFunnelService,
+        private AffiliateConversionService $affiliateConversionService
     ) {}
 
     /**
@@ -82,6 +84,20 @@ class StripeController extends Controller
                             $transaction->customer_name
                         );
                     }
+
+                    // Track affiliate conversion (purchase)
+                    try {
+                        $session = $event->data->object;
+                        $this->affiliateConversionService->processStripeCheckoutSession(
+                            $session,
+                            $transaction->user_id
+                        );
+                    } catch (\Exception $e) {
+                        Log::warning('Affiliate conversion tracking failed', [
+                            'error' => $e->getMessage(),
+                            'session_id' => $event->data->object->id ?? null,
+                        ]);
+                    }
                 }
                 break;
 
@@ -89,6 +105,18 @@ class StripeController extends Controller
                 $transaction = $this->stripeService->handleChargeRefunded($event);
                 if ($transaction) {
                     $this->dispatchNetSendoWebhook('stripe.payment_refunded', $transaction);
+
+                    // Record affiliate refund
+                    try {
+                        $this->affiliateConversionService->recordRefund(
+                            $transaction->stripe_session_id,
+                            $transaction->amount
+                        );
+                    } catch (\Exception $e) {
+                        Log::warning('Affiliate refund tracking failed', [
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
                 break;
 

@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
             '2fa' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
+            'affiliate.auth' => \App\Http\Middleware\AffiliateAuth::class,
         ]);
 
         // Exclude routes from CSRF verification

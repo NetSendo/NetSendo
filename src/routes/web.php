@@ -672,4 +672,89 @@ Route::prefix('funnel/task')->name('funnel.task.')->group(function () {
 
 require __DIR__.'/auth.php';
 
+// ==================== AFFILIATE PROGRAM ROUTES ====================
+
+use App\Http\Controllers\AffiliateController;
+use App\Http\Controllers\AffiliateTrackingController;
+use App\Http\Controllers\PartnerAuthController;
+use App\Http\Controllers\PartnerPortalController;
+
+// Public Tracking Routes
+Route::get('/t/r/{code}', [AffiliateTrackingController::class, 'redirect'])->name('affiliate.redirect');
+Route::post('/api/affiliate/track-click', [AffiliateTrackingController::class, 'trackClick'])->name('affiliate.track-click');
+Route::get('/api/affiliate/tracking-script/{programId}', [AffiliateTrackingController::class, 'trackingScript'])->name('affiliate.tracking-script');
+Route::get('/api/affiliate/verify-coupon/{code}', [AffiliateTrackingController::class, 'verifyCoupon'])->name('affiliate.verify-coupon');
+
+// Affiliate Owner Panel (authenticated NetSendo users)
+Route::middleware(['auth', '2fa'])->prefix('profit/affiliate')->name('affiliate.')->group(function () {
+    // Dashboard
+    Route::get('/', [AffiliateController::class, 'index'])->name('index');
+    Route::get('/api/stats', [AffiliateController::class, 'apiStats'])->name('api.stats');
+
+    // Programs
+    Route::get('/programs', [AffiliateController::class, 'programsIndex'])->name('programs.index');
+    Route::get('/programs/create', [AffiliateController::class, 'programsCreate'])->name('programs.create');
+    Route::post('/programs', [AffiliateController::class, 'programsStore'])->name('programs.store');
+    Route::get('/programs/{program}/edit', [AffiliateController::class, 'programsEdit'])->name('programs.edit');
+    Route::put('/programs/{program}', [AffiliateController::class, 'programsUpdate'])->name('programs.update');
+    Route::delete('/programs/{program}', [AffiliateController::class, 'programsDestroy'])->name('programs.destroy');
+
+    // Offers
+    Route::get('/offers', [AffiliateController::class, 'offersIndex'])->name('offers.index');
+    Route::get('/offers/create', [AffiliateController::class, 'offersCreate'])->name('offers.create');
+    Route::post('/offers', [AffiliateController::class, 'offersStore'])->name('offers.store');
+    Route::get('/offers/{offer}/edit', [AffiliateController::class, 'offersEdit'])->name('offers.edit');
+    Route::put('/offers/{offer}', [AffiliateController::class, 'offersUpdate'])->name('offers.update');
+    Route::delete('/offers/{offer}', [AffiliateController::class, 'offersDestroy'])->name('offers.destroy');
+
+    // Affiliates
+    Route::get('/affiliates', [AffiliateController::class, 'affiliatesIndex'])->name('affiliates.index');
+    Route::get('/affiliates/{affiliate}', [AffiliateController::class, 'affiliatesShow'])->name('affiliates.show');
+    Route::post('/affiliates/{affiliate}/approve', [AffiliateController::class, 'affiliatesApprove'])->name('affiliates.approve');
+    Route::post('/affiliates/{affiliate}/block', [AffiliateController::class, 'affiliatesBlock'])->name('affiliates.block');
+
+    // Conversions
+    Route::get('/conversions', [AffiliateController::class, 'conversionsIndex'])->name('conversions.index');
+
+    // Commissions
+    Route::get('/commissions', [AffiliateController::class, 'commissionsIndex'])->name('commissions.index');
+    Route::post('/commissions/{commission}/approve', [AffiliateController::class, 'commissionsApprove'])->name('commissions.approve');
+    Route::post('/commissions/{commission}/reject', [AffiliateController::class, 'commissionsReject'])->name('commissions.reject');
+    Route::post('/commissions/bulk-approve', [AffiliateController::class, 'commissionsBulkApprove'])->name('commissions.bulk-approve');
+    Route::post('/commissions/make-payable', [AffiliateController::class, 'commissionsMakePayable'])->name('commissions.make-payable');
+
+    // Payouts
+    Route::get('/payouts', [AffiliateController::class, 'payoutsIndex'])->name('payouts.index');
+    Route::get('/payouts/create', [AffiliateController::class, 'payoutsCreate'])->name('payouts.create');
+    Route::post('/payouts', [AffiliateController::class, 'payoutsStore'])->name('payouts.store');
+    Route::post('/payouts/{payout}/complete', [AffiliateController::class, 'payoutsComplete'])->name('payouts.complete');
+    Route::get('/payouts/{payout}/export', [AffiliateController::class, 'payoutsExport'])->name('payouts.export');
+    Route::get('/payouts/export-payable', [AffiliateController::class, 'payoutsExportPayable'])->name('payouts.export-payable');
+});
+
+// Partner Portal Auth (public)
+Route::prefix('partners/{program}')->name('partner.')->group(function () {
+    Route::get('/join', [PartnerAuthController::class, 'showRegister'])->name('register');
+    Route::post('/join', [PartnerAuthController::class, 'register'])->name('register.store');
+    Route::get('/login', [PartnerAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [PartnerAuthController::class, 'login'])->name('login.store');
+});
+
+// Partner Portal (authenticated affiliates)
+Route::middleware(['affiliate.auth'])->prefix('partner')->name('partner.')->group(function () {
+    Route::post('/logout', [PartnerAuthController::class, 'logout'])->name('logout');
+    Route::get('/dashboard', [PartnerPortalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/offers', [PartnerPortalController::class, 'offers'])->name('offers');
+    Route::get('/offers/{offer}', [PartnerPortalController::class, 'offerShow'])->name('offers.show');
+    Route::post('/links/generate', [PartnerPortalController::class, 'generateLink'])->name('links.generate');
+    Route::get('/links', [PartnerPortalController::class, 'links'])->name('links');
+    Route::get('/coupons', [PartnerPortalController::class, 'coupons'])->name('coupons');
+    Route::get('/commissions', [PartnerPortalController::class, 'commissions'])->name('commissions');
+    Route::get('/payouts', [PartnerPortalController::class, 'payouts'])->name('payouts');
+    Route::post('/payouts/settings', [PartnerPortalController::class, 'updatePayoutSettings'])->name('payouts.settings');
+    Route::get('/assets', [PartnerPortalController::class, 'assets'])->name('assets');
+    Route::post('/profile', [PartnerPortalController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/password', [PartnerPortalController::class, 'updatePassword'])->name('password.update');
+});
+
 

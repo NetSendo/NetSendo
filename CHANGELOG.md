@@ -9,15 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+## [1.5.0] – Short Description
+
+**Release date:** 2026-01-07
+
+### Added
+
+- **Affiliate Program Module:**
+  - Implemented complete affiliate marketing system (`AffiliateProgram`, `AffiliateOffer`, `Affiliate`, `AffiliateCommission`).
+  - **Owner Panel:** dedicated section for managing tracking programs, offers, affiliates, and payouts.
+  - **Partner Portal:** separate specialized portal for affiliates (`/partner`) with dashboard, tracking links, and reports.
+  - **Automated Tracking:**
+    - Lead tracking integration with NetSendo Forms (`FormSubmissionService`).
+    - Sales tracking integration with Stripe (`StripeController` webhooks for purchase/refund).
+    - Cookie-based attribution system (`AffiliateTrackingService`) with configurable duration.
+  - **Commission Engine:**
+    - Support for Percentage and Fixed commissions.
+    - Multi-tier commission structures (Silver/Gold/Platinum affiliate levels).
+    - Recurring commissions support.
+  - **Localization:** Full translations for Owner Panel and Partner Portal in EN, PL, DE, ES.
+  - **Documentation:** Added comprehensive guide at `docs/AFFILIATE.md`.
+  - **Affiliate Program Enhancements:**
+    - **Registration Link:** Improved UI with full URL display, copy-to-clipboard button, and open-in-new-tab action.
+
 ### Changed
 
 ### Fixed
 
+- Missing translation keys for Affiliate Program in frontend locales (EN, DE, ES).
+
 - **Signature Editor:**
+
   - **Image Upload:** Implemented direct file upload support (drag & drop) in `SignatureEditor.vue`, alongside existing URL insertion.
   - **Table Support:** Fixed "full HTML" detection logic to correctly identify tables as supported elements in visual mode.
   - **Dark Mode:** Fixed styling issues in the Image Modal where text was invisible on dark backgrounds.
   - **Translations:** Added missing translation keys for editor messages (`editor.full_html_message`) and upload UI.
+
+- **Mailboxes:**
+
+  - Fixed issue where editing a Gmail mailbox caused a validation error due to browser autofill prevention clearing the `from_email` field.
+  - Backend `update` method now correctly handles empty `from_email` for Gmail providers by retaining existing values or setting a default, mirroring the creation logic.
+
+- **Affiliate Program Translations:**
+  - Added missing "open" and "open_in_new_tab" translation keys across all locales.
 
 ## [1.4.2] – Short Description
 

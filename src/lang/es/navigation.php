@@ -19,4 +19,11 @@ return [
     'tags' => 'Etiquetas',
     'import' => 'Importar',
     'export' => 'Exportar',
+    'affiliate_program' => 'Programa de Afiliados',
+    'groups' => [
+        'profit' => 'Ganancias',
+        'statistics' => 'Estadísticas',
+        'settings' => 'Configuración',
+        'products' => 'Productos',
+    ],
 ];

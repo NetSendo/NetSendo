@@ -19,4 +19,11 @@ return [
     'tags' => 'Tagi',
     'import' => 'Importuj',
     'export' => 'Eksportuj',
+    'affiliate_program' => 'Program Partnerski',
+    'groups' => [
+        'profit' => 'Zyski',
+        'statistics' => 'Statystyki',
+        'settings' => 'Ustawienia',
+        'products' => 'Produkty',
+    ],
 ];

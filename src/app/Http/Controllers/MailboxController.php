@@ -83,7 +83,7 @@ class MailboxController extends Controller
     {
         if ($request->provider === Mailbox::PROVIDER_GMAIL && empty($request->from_email)) {
              $defaultEmail = 'pending-auth@gmail.com';
-             
+
              if (!empty($request->google_integration_id)) {
                  $integration = \App\Models\GoogleIntegration::find($request->google_integration_id);
                  if ($integration && filter_var($integration->name, FILTER_VALIDATE_EMAIL)) {
@@ -139,6 +139,59 @@ class MailboxController extends Controller
     {
         $this->authorize('update', $mailbox);
 
+        if ($request->provider === Mailbox::PROVIDER_GMAIL && empty($request->from_email)) {
+             $defaultEmail = 'pending-auth@gmail.com';
+
+             if (!empty($request->google_integration_id)) {
+                 $integration = \App\Models\GoogleIntegration::find($request->google_integration_id);
+                 if ($integration && filter_var($integration->name, FILTER_VALIDATE_EMAIL)) {
+                     $defaultEmail = $integration->name;
+                 }
+             } else {
+                 // Try to keep existing email if we are just updating unrelated fields
+                 // But frontend specifically clears it, so we need a value.
+                 // If we have an existing connected email, use that?
+                 // The store logic uses pending-auth, so let's stick to that or the integration name.
+                 // Actually, if we are editing, we might already have a google_integration_id on the mailbox
+                 // if the request didn't send one (nullable).
+                 // But the request validation rule says 'google_integration_id' is nullable.
+
+                 // Let's stick to the store logic exactly for consistency first.
+                 // Use integration from request if present, otherwise default.
+             }
+
+             // IMPROVEMENT over store: If we have an existing email on the mailbox and we are just updating settings,
+             // maybe we should preserve it if integration hasn't changed?
+             // But the frontend clears it to avoid browser autofill of "admin@example.com" into that field.
+             // If we set it to "pending-auth", it might overwrite the actual email if we don't be careful.
+             // However, the "gmail_email" is stored in credentials, not from_email column primarily?
+             // unique constraint? mailboxes table has from_email.
+
+             // Wait, in `store`, we set `from_email`.
+             // In `update`, we update `from_email`.
+             // If I set it to `pending-auth@gmail.com` here, and I already had `myname@gmail.com`, I will LOSE the email address display in the UI list!
+             // The `store` method is creating NEW, so `pending-auth` is fine until connected.
+             // The `update` logic needs to be smarter:
+             // 1. If request has google_integration_id, try to use that email.
+             // 2. If NOT, and we already have a from_email in the DB for this mailbox, RETAIN IT?
+             //    But the request `from_email` is empty. The validation `required` fails.
+             //    So we must merge a value into the request before validation.
+
+             // Let's check if we can fallback to `$mailbox->from_email` if it's already set and valid?
+
+             if (!empty($request->google_integration_id)) {
+                 $integration = \App\Models\GoogleIntegration::find($request->google_integration_id);
+                 if ($integration && filter_var($integration->name, FILTER_VALIDATE_EMAIL)) {
+                     $defaultEmail = $integration->name;
+                 }
+             } elseif (!empty($mailbox->from_email)) {
+                  // Fallback to existing email if no new integration is being set, to avoid overwriting with "pending-auth"
+                  $defaultEmail = $mailbox->from_email;
+             }
+
+             $request->merge(['from_email' => $defaultEmail]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
@@ -179,7 +232,7 @@ class MailboxController extends Controller
                     $newCredentials['password'] = $currentCredentials['password'];
                 }
             }
-            
+
             // For SendGrid: same logic for api_key if we were masking it, but we usually treat it as password
             // If the user sends empty api_key, we probably should keep old one?
             if ($mailbox->provider === Mailbox::PROVIDER_SENDGRID) {

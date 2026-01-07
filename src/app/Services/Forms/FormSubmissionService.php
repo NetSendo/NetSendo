@@ -10,6 +10,7 @@ use App\Models\CustomField;
 use App\Models\SuppressionList;
 use App\Events\SubscriberSignedUp;
 use App\Events\FormSubmitted;
+use App\Services\AffiliateConversionService;
 use App\Services\WebhookDispatcher;
 use App\Services\SystemEmailService;
 use Illuminate\Http\Request;
@@ -21,11 +22,16 @@ class FormSubmissionService
 {
     protected WebhookDispatcher $webhookDispatcher;
     protected SystemEmailService $emailService;
+    protected AffiliateConversionService $affiliateConversionService;
 
-    public function __construct(WebhookDispatcher $webhookDispatcher, SystemEmailService $emailService)
-    {
+    public function __construct(
+        WebhookDispatcher $webhookDispatcher,
+        SystemEmailService $emailService,
+        AffiliateConversionService $affiliateConversionService
+    ) {
         $this->webhookDispatcher = $webhookDispatcher;
         $this->emailService = $emailService;
+        $this->affiliateConversionService = $affiliateConversionService;
     }
 
     /**
@@ -184,6 +190,25 @@ class FormSubmissionService
                 'form_id' => $form->id,
                 'form_name' => $form->name,
             ]);
+
+            // Track affiliate lead conversion (if applicable)
+            try {
+                $this->affiliateConversionService->recordLeadFromRequest(
+                    $request,
+                    $form->contactList->user_id,
+                    $subscriber->email,
+                    [
+                        'form_id' => $form->id,
+                        'form_slug' => $form->slug,
+                        'subscriber_id' => $subscriber->id,
+                    ]
+                );
+            } catch (\Exception $e) {
+                Log::warning('Affiliate lead tracking failed', [
+                    'error' => $e->getMessage(),
+                    'form_id' => $form->id,
+                ]);
+            }
 
             return $submission;
 
