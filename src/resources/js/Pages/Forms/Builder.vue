@@ -57,21 +57,24 @@ const activeStyleSection = ref("container");
 const showErrorModal = ref(false);
 const errorMessage = ref("");
 
-// Available fields for drag
-const availableStandardFields = computed(() => {
-    const usedIds = formData.fields.map((f) => f.id);
-    return props.availableFields.standard.filter(
-        (f) => !usedIds.includes(f.id) || f.id === "email"
-    );
-});
+// Track which field IDs are already used in the form
+const usedFieldIds = computed(() => formData.fields.map((f) => f.id));
 
-const availableCustomFields = computed(() => {
-    const usedIds = formData.fields.map((f) => f.id);
-    return props.availableFields.custom.filter((f) => !usedIds.includes(f.id));
-});
+// Check if a field is already used in the form
+function isFieldUsed(fieldId) {
+    return usedFieldIds.value.includes(fieldId);
+}
+
+// All available fields (standard and custom)
+const availableStandardFields = computed(() => props.availableFields.standard);
+const availableCustomFields = computed(() => props.availableFields.custom);
 
 // Field management
 function addField(field) {
+    // Prevent adding duplicate fields
+    if (isFieldUsed(field.id)) {
+        return;
+    }
     const newField = {
         ...field,
         order: formData.fields.length + 1,
@@ -325,13 +328,40 @@ const previewContainerStyle = computed(() => {
                     <div
                         v-for="field in availableStandardFields"
                         :key="field.id"
-                        @click="addField(field)"
-                        class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors group"
+                        @click="!isFieldUsed(field.id) && addField(field)"
+                        :class="[
+                            'flex items-center gap-3 p-3 rounded-lg transition-colors group',
+                            isFieldUsed(field.id)
+                                ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                                : 'bg-gray-50 dark:bg-gray-700 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                        ]"
                     >
                         <div
-                            class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400"
+                            :class="[
+                                'w-8 h-8 rounded-lg flex items-center justify-center',
+                                isFieldUsed(field.id)
+                                    ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                                    : 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400'
+                            ]"
                         >
+                            <!-- Check icon if field is used -->
                             <svg
+                                v-if="isFieldUsed(field.id)"
+                                class="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                            <!-- Plus icon if field is available -->
+                            <svg
+                                v-else
                                 class="w-4 h-4"
                                 fill="none"
                                 stroke="currentColor"
@@ -347,7 +377,12 @@ const previewContainerStyle = computed(() => {
                         </div>
                         <div>
                             <p
-                                class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                :class="[
+                                    'text-sm font-medium',
+                                    isFieldUsed(field.id)
+                                        ? 'text-gray-500 dark:text-gray-500'
+                                        : 'text-gray-900 dark:text-gray-100'
+                                ]"
                             >
                                 {{ field.label }}
                             </p>
@@ -369,13 +404,40 @@ const previewContainerStyle = computed(() => {
                         <div
                             v-for="field in availableCustomFields"
                             :key="field.id"
-                            @click="addField(field)"
-                            class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                            @click="!isFieldUsed(field.id) && addField(field)"
+                            :class="[
+                                'flex items-center gap-3 p-3 rounded-lg transition-colors',
+                                isFieldUsed(field.id)
+                                    ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                                    : 'bg-gray-50 dark:bg-gray-700 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                            ]"
                         >
                             <div
-                                class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400"
+                                :class="[
+                                    'w-8 h-8 rounded-lg flex items-center justify-center',
+                                    isFieldUsed(field.id)
+                                        ? 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+                                        : 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400'
+                                ]"
                             >
+                                <!-- Check icon if field is used -->
                                 <svg
+                                    v-if="isFieldUsed(field.id)"
+                                    class="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
+                                <!-- Tag icon if field is available -->
+                                <svg
+                                    v-else
                                     class="w-4 h-4"
                                     fill="none"
                                     stroke="currentColor"
@@ -391,7 +453,12 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <p
-                                    class="text-sm font-medium text-gray-900 dark:text-gray-100"
+                                    :class="[
+                                        'text-sm font-medium',
+                                        isFieldUsed(field.id)
+                                            ? 'text-gray-500 dark:text-gray-500'
+                                            : 'text-gray-900 dark:text-gray-100'
+                                    ]"
                                 >
                                     {{ field.label }}
                                 </p>

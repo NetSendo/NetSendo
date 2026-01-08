@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.2] – Short Description
+
+**Release date:** 2026-01-08
+
+### Fixed
+
+- **Form Builder:**
+  - Fixed issue where the same field could be added multiple times to a form. Fields already added to the form are now displayed as disabled (grayed out with a checkmark icon) in the "Available Fields" sidebar instead of being hidden or clickable. This prevents duplicate field entries and provides clear visual feedback about which fields are already in use.
+
 ## [1.5.1] – Short Description
 
 **Release date:** 2026-01-08
@@ -27,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Fixed Vue template syntax error in Name Database settings page.
 - Fixed `vue-i18n` invalid placeholder syntax error in translation files.
 - Fixed 404 routing error for Name Database by regenerating Ziggy configuration.
+- **Form Embed CSS Protection:** Fixed issue where embedded form styles (button colors, field styles) were being overwritten by target page CSS. Added `!important` declarations to all CSS rules and inline styles to critical elements (buttons, inputs, labels) to ensure consistent appearance when forms are embedded on external websites.
 
 ## [1.5.0] – Short Description
 

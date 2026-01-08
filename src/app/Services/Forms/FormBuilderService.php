@@ -66,11 +66,11 @@ HTML;
 
         return <<<HTML
 <!-- NetSendo Form iFrame -->
-<iframe 
-    src="{$iframeUrl}" 
-    width="{$width}" 
-    height="{$height}" 
-    frameborder="0" 
+<iframe
+    src="{$iframeUrl}"
+    width="{$width}"
+    height="{$height}"
+    frameborder="0"
     scrolling="no"
     style="border: none; overflow: hidden;"
     title="{$form->name}"
@@ -86,7 +86,7 @@ HTML;
     {
         $formHtml = addslashes($this->generateHtmlCode($form));
         $containerId = 'netsendo-form-' . $form->slug;
-        
+
         return <<<JS
 (function() {
     var container = document.getElementById('{$containerId}');
@@ -95,7 +95,7 @@ HTML;
         return;
     }
     container.innerHTML = '{$formHtml}';
-    
+
     // Add form submit handler for AJAX
     var form = container.querySelector('form');
     if (form) {
@@ -104,7 +104,7 @@ HTML;
             var formData = new FormData(form);
             var submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
             var originalText = submitBtn ? submitBtn.textContent || submitBtn.value : '';
-            
+
             if (submitBtn) {
                 submitBtn.disabled = true;
                 if (submitBtn.tagName === 'BUTTON') {
@@ -113,7 +113,7 @@ HTML;
                     submitBtn.value = 'Wysyłanie...';
                 }
             }
-            
+
             fetch(form.action, {
                 method: 'POST',
                 body: formData,
@@ -169,7 +169,7 @@ JS;
 
         // Calculate RGBA background
         $bgColor = $this->hexToRgba($s['bgcolor'], ($s['bgcolor_opacity'] ?? 100) / 100);
-        
+
         // Calculate box shadow
         $boxShadow = 'none';
         if (!empty($s['shadow_enabled'])) {
@@ -179,7 +179,7 @@ JS;
             $shadowBlur = $s['shadow_blur'] ?? 20;
             $boxShadow = "{$shadowX}px {$shadowY}px {$shadowBlur}px {$shadowColor}";
         }
-        
+
         // Calculate background (solid or gradient)
         $background = $bgColor;
         if (!empty($s['gradient_enabled'])) {
@@ -188,14 +188,14 @@ JS;
             $gradientTo = $s['gradient_to'] ?? '#8B5CF6';
             $background = "linear-gradient({$gradientDir}, {$gradientFrom}, {$gradientTo})";
         }
-        
+
         // Animation keyframes
         $animationCss = '';
         if (!empty($s['animation_enabled'])) {
             $animationType = $s['animation_type'] ?? 'fadeIn';
             $animationCss = $this->getAnimationCss($animationType);
         }
-        
+
         // Glassmorphism backdrop filter for transparency
         $backdropFilter = '';
         if (($s['bgcolor_opacity'] ?? 100) < 100) {
@@ -205,112 +205,112 @@ JS;
         return <<<CSS
 {$animationCss}
 .netsendo-form {
-    font-family: {$s['font_family']};
-    background: {$background};
-    border: {$s['border_width']}px solid {$s['border_color']};
-    border-radius: {$s['border_radius']}px;
-    padding: {$s['padding']}px;
-    color: {$s['text_color']};
-    box-sizing: border-box;
-    box-shadow: {$boxShadow};
+    font-family: {$s['font_family']} !important;
+    background: {$background} !important;
+    border: {$s['border_width']}px solid {$s['border_color']} !important;
+    border-radius: {$s['border_radius']}px !important;
+    padding: {$s['padding']}px !important;
+    color: {$s['text_color']} !important;
+    box-sizing: border-box !important;
+    box-shadow: {$boxShadow} !important;
     {$backdropFilter}
 }
 .netsendo-form * {
-    box-sizing: border-box;
+    box-sizing: border-box !important;
 }
 .netsendo-fields {
-    display: flex;
-    flex-direction: column;
-    gap: {$s['fields_vertical_margin']}px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: {$s['fields_vertical_margin']}px !important;
 }
 .netsendo-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
 }
 .netsendo-field label {
-    font-size: {$s['label_font_size']}px;
-    font-weight: {$s['label_font_weight']};
-    color: {$s['text_color']};
+    font-size: {$s['label_font_size']}px !important;
+    font-weight: {$s['label_font_weight']} !important;
+    color: {$s['text_color']} !important;
 }
 .netsendo-field input,
 .netsendo-field select,
 .netsendo-field textarea {
-    height: {$s['field_height']}px;
-    padding: 8px 12px;
-    background-color: {$s['field_bgcolor']};
-    color: {$s['field_text']};
-    border: 1px solid {$s['field_border_color']};
-    border-radius: {$s['field_border_radius']}px;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    width: 100%;
+    height: {$s['field_height']}px !important;
+    padding: 8px 12px !important;
+    background-color: {$s['field_bgcolor']} !important;
+    color: {$s['field_text']} !important;
+    border: 1px solid {$s['field_border_color']} !important;
+    border-radius: {$s['field_border_radius']}px !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
 }
 .netsendo-field input:focus,
 .netsendo-field select:focus,
 .netsendo-field textarea:focus {
-    outline: none;
-    background-color: {$s['field_bgcolor_active']};
-    color: {$s['field_text_active']};
-    border-color: {$s['field_border_color_active']};
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline: none !important;
+    background-color: {$s['field_bgcolor_active']} !important;
+    color: {$s['field_text_active']} !important;
+    border-color: {$s['field_border_color_active']} !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
 }
 .netsendo-field input::placeholder {
-    color: {$s['placeholder_color']};
+    color: {$s['placeholder_color']} !important;
 }
 .netsendo-submit-wrap {
-    margin-top: {$s['fields_vertical_margin']}px;
-    text-align: {$s['submit_align']};
+    margin-top: {$s['fields_vertical_margin']}px !important;
+    text-align: {$s['submit_align']} !important;
 }
 .netsendo-submit {
-    background-color: {$s['submit_color']};
-    color: {$s['submit_text_color']};
-    border: 1px solid {$s['submit_border_color']};
-    border-radius: {$s['submit_border_radius']}px;
-    padding: {$s['submit_padding_v']}px {$s['submit_padding_h']}px;
-    font-size: {$s['submit_font_size']}px;
-    font-weight: {$s['submit_font_weight']};
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: {$this->getSubmitWidth($s)};
+    background-color: {$s['submit_color']} !important;
+    color: {$s['submit_text_color']} !important;
+    border: 1px solid {$s['submit_border_color']} !important;
+    border-radius: {$s['submit_border_radius']}px !important;
+    padding: {$s['submit_padding_v']}px {$s['submit_padding_h']}px !important;
+    font-size: {$s['submit_font_size']}px !important;
+    font-weight: {$s['submit_font_weight']} !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    width: {$this->getSubmitWidth($s)} !important;
 }
 .netsendo-submit:hover {
-    background-color: {$s['submit_hover_color']};
-    transform: translateY(-1px);
+    background-color: {$s['submit_hover_color']} !important;
+    transform: translateY(-1px) !important;
 }
 .netsendo-submit:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
 }
 .netsendo-policy {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: {$s['fields_vertical_margin']}px;
-    font-size: 12px;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    margin-top: {$s['fields_vertical_margin']}px !important;
+    font-size: 12px !important;
 }
 .netsendo-policy input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    margin-top: 2px;
+    width: 16px !important;
+    height: 16px !important;
+    margin-top: 2px !important;
 }
 .netsendo-policy a {
-    color: {$s['submit_color']};
+    color: {$s['submit_color']} !important;
 }
 .netsendo-success {
-    padding: 20px;
-    text-align: center;
-    color: #059669;
-    background-color: #D1FAE5;
-    border-radius: {$s['border_radius']}px;
+    padding: 20px !important;
+    text-align: center !important;
+    color: #059669 !important;
+    background-color: #D1FAE5 !important;
+    border-radius: {$s['border_radius']}px !important;
 }
 .netsendo-honey {
-    position: absolute;
-    left: -9999px;
-    opacity: 0;
-    height: 0;
-    width: 0;
+    position: absolute !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
 }
 CSS;
     }
@@ -331,10 +331,11 @@ CSS;
         $fields = $form->fields ?? [];
         $labelPosition = $form->label_position;
         $showPlaceholders = $form->show_placeholders;
+        $styles = array_merge(SubscriptionForm::$defaultStyles, $form->styles ?? []);
 
         $html = '';
         foreach ($fields as $field) {
-            $html .= $this->buildSingleField($field, $labelPosition, $showPlaceholders);
+            $html .= $this->buildSingleField($field, $labelPosition, $showPlaceholders, $styles);
         }
 
         return $html;
@@ -343,23 +344,43 @@ CSS;
     /**
      * Build HTML for a single field
      */
-    protected function buildSingleField(array $field, string $labelPosition, bool $showPlaceholders): string
+    protected function buildSingleField(array $field, string $labelPosition, bool $showPlaceholders, array $styles = []): string
     {
         $id = htmlspecialchars($field['id']);
         $type = $field['type'] ?? 'text';
         $label = htmlspecialchars($field['label'] ?? '');
         $placeholder = $showPlaceholders ? htmlspecialchars($field['placeholder'] ?? '') : '';
         $required = !empty($field['required']) ? 'required' : '';
-        $requiredMark = !empty($field['required']) ? ' <span style="color: #EF4444;">*</span>' : '';
+        $requiredMark = !empty($field['required']) ? ' <span style="color: #EF4444 !important;">*</span>' : '';
 
-        $labelHtml = $labelPosition !== 'hidden' 
-            ? "<label for=\"field-{$id}\">{$label}{$requiredMark}</label>" 
+        // Generate inline styles for label
+        $labelInlineStyles = implode(' ', [
+            "font-size: {$styles['label_font_size']}px !important;",
+            "font-weight: {$styles['label_font_weight']} !important;",
+            "color: {$styles['text_color']} !important;",
+        ]);
+
+        $labelHtml = $labelPosition !== 'hidden'
+            ? "<label for=\"field-{$id}\" style=\"{$labelInlineStyles}\">{$label}{$requiredMark}</label>"
             : '';
 
         $inputName = $this->getInputName($id);
         $inputType = $this->getInputType($type);
 
-        $inputHtml = "<input type=\"{$inputType}\" id=\"field-{$id}\" name=\"{$inputName}\" placeholder=\"{$placeholder}\" {$required}>";
+        // Generate inline styles for input
+        $inputInlineStyles = implode(' ', [
+            "height: {$styles['field_height']}px !important;",
+            "padding: 8px 12px !important;",
+            "background-color: {$styles['field_bgcolor']} !important;",
+            "color: {$styles['field_text']} !important;",
+            "border: 1px solid {$styles['field_border_color']} !important;",
+            "border-radius: {$styles['field_border_radius']}px !important;",
+            "font-size: 14px !important;",
+            "width: 100% !important;",
+            "box-sizing: border-box !important;",
+        ]);
+
+        $inputHtml = "<input type=\"{$inputType}\" id=\"field-{$id}\" name=\"{$inputName}\" placeholder=\"{$placeholder}\" style=\"{$inputInlineStyles}\" {$required}>";
 
         return <<<HTML
 <div class="netsendo-field">
@@ -368,6 +389,7 @@ CSS;
 </div>
 HTML;
     }
+
 
     /**
      * Get input name for field
@@ -415,13 +437,28 @@ HTML;
     protected function buildSubmitButton(SubscriptionForm $form): string
     {
         $text = htmlspecialchars($form->styles['submit_text'] ?? 'Zapisz się');
+        $s = array_merge(SubscriptionForm::$defaultStyles, $form->styles ?? []);
+
+        // Generate inline styles for maximum CSS protection
+        $inlineStyles = implode(' ', [
+            "background-color: {$s['submit_color']} !important;",
+            "color: {$s['submit_text_color']} !important;",
+            "border: 1px solid {$s['submit_border_color']} !important;",
+            "border-radius: {$s['submit_border_radius']}px !important;",
+            "padding: {$s['submit_padding_v']}px {$s['submit_padding_h']}px !important;",
+            "font-size: {$s['submit_font_size']}px !important;",
+            "font-weight: {$s['submit_font_weight']} !important;",
+            "cursor: pointer !important;",
+            "width: " . ($s['submit_full_width'] ? '100%' : 'auto') . " !important;",
+        ]);
 
         return <<<HTML
 <div class="netsendo-submit-wrap">
-    <button type="submit" class="netsendo-submit">{$text}</button>
+    <button type="submit" class="netsendo-submit" style="{$inlineStyles}">{$text}</button>
 </div>
 HTML;
     }
+
 
     /**
      * Build policy checkbox
@@ -550,19 +587,19 @@ HTML;
     protected function hexToRgba(string $hex, float $alpha = 1): string
     {
         $hex = ltrim($hex, '#');
-        
+
         if (strlen($hex) === 3) {
             $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
         }
-        
+
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));
         $b = hexdec(substr($hex, 4, 2));
-        
+
         if ($alpha >= 1) {
             return "rgb({$r}, {$g}, {$b})";
         }
-        
+
         return "rgba({$r}, {$g}, {$b}, {$alpha})";
     }
 
