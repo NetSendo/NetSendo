@@ -125,6 +125,9 @@ class PlaceholderService
      */
     public function replacePlaceholders(string $content, Subscriber $subscriber, array $additionalData = []): string
     {
+        // Process gender forms first {{male|female}}
+        $content = app(\App\Services\GenderService::class)->processGenderForms($content, $subscriber);
+
         // Get all subscriber placeholder values
         $values = $subscriber->getAllPlaceholderValues();
 

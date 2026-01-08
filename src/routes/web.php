@@ -472,6 +472,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/embed-code', [\App\Http\Controllers\SalesFunnelController::class, 'getEmbedCode'])->name('embed-code');
     });
 
+    // Name Database (Gender Personalization)
+    Route::prefix('settings/names')->name('settings.names.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NameDatabaseController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\NameDatabaseController::class, 'store'])->name('store');
+        Route::put('/{name}', [\App\Http\Controllers\NameDatabaseController::class, 'update'])->name('update');
+        Route::delete('/{name}', [\App\Http\Controllers\NameDatabaseController::class, 'destroy'])->name('destroy');
+        Route::post('/import', [\App\Http\Controllers\NameDatabaseController::class, 'import'])->name('import');
+        Route::get('/export', [\App\Http\Controllers\NameDatabaseController::class, 'export'])->name('export');
+    });
+
     // User Management (Team Members)
     Route::prefix('settings/users')->name('settings.users.')->group(function () {
         Route::get('/', [\App\Http\Controllers\UserManagementController::class, 'index'])->name('index');

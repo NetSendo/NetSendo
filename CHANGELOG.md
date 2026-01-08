@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.1] – Short Description
+
+**Release date:** 2026-01-08
+
 ### Added
+
+- **Name Database (Baza imion):**
+  - New settings page for managing first names with gender assignments for grammatical personalization.
+  - Dynamic grammar syntax `{{male_form|female_form}}` for automatic gender-based word forms in emails and SMS.
+  - `GenderService` for centralized gender detection from name database with pattern-based fallback for Polish names.
+  - Support for country-specific name datasets (PL, DE, CZ, SK, FR, IT).
+  - Import/export functionality for name data (CSV format).
+  - Polish names seeder with 90+ male and 80+ female common first names.
+  - Full translations in EN and PL.
+
+### Fixed
+
+- Fixed Vue template syntax error in Name Database settings page.
+- Fixed `vue-i18n` invalid placeholder syntax error in translation files.
+- Fixed 404 routing error for Name Database by regenerating Ziggy configuration.
 
 ## [1.5.0] – Short Description
 
