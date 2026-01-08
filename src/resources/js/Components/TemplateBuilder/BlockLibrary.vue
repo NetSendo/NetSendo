@@ -298,8 +298,7 @@ const handleAddBlock = (type) => {
 
         <!-- AI Generator button -->
         <div
-            v-if="aiAvailable"
-            class="shrink-0 border-t border-slate-200 p-4 dark:border-slate-800"
+            class="sticky bottom-0 z-10 shrink-0 border-t border-slate-200 bg-white p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] dark:border-slate-800 dark:bg-slate-900"
         >
             <button
                 @click="$emit('show-ai')"

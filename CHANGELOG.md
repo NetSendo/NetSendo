@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Template Builder:**
+  - **AI Button Visibility:** Fixed issue where the "Generuj z AI" button was hidden when AI was not configured or due to scrolling.
+    - Button is now **always visible** (sticky at the bottom), allowing users to access the feature or see configuration prompts.
+    - Fixed mobile layout scrolling to ensure the button remains accessible at the bottom of the drawer.
 - **Team Member Access:**
   - Fixed 403 Forbidden error upon login for team members by hiding the admin-only "User Management" menu item.
   - Fixed visibility of shared SMS and Email lists for team members by updating multiple controllers (`SmsListController`, `MessageController`, `SubscriberController`) to use `accessibleLists()` instead of `contactLists()`.

@@ -1016,7 +1016,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Content -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-hidden">
                 <BlockLibrary
                     v-if="activeMobileTab === 'blocks'"
                     :block-types="blockTypes"
