@@ -315,7 +315,19 @@ class PublicFormController extends Controller
         $type = $pageConfig['type'] ?? 'system';
 
         if ($type === 'external' && !empty($pageConfig['external_page_id'])) {
-            return route('page.show', ['externalPage' => $pageConfig['external_page_id']]);
+            // For external pages in redirect mode, return the external URL directly
+            // This is critical for embedded forms - they need absolute external URLs
+            // because JavaScript redirect would otherwise be relative to the embedding domain
+            $externalPage = \App\Models\ExternalPage::find($pageConfig['external_page_id']);
+            if ($externalPage) {
+                // If it's a redirect type, return the external URL directly
+                if ($externalPage->is_redirect) {
+                    return $externalPage->url;
+                }
+                // For proxy mode, we still need to go through our page handler
+                return route('page.show', ['externalPage' => $externalPage->id]);
+            }
+            return null;
         }
 
         if ($type === 'custom' && !empty($pageConfig['url'])) {

@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Form Builder:**
   - Fixed issue where the same field could be added multiple times to a form. Fields already added to the form are now displayed as disabled (grayed out with a checkmark icon) in the "Available Fields" sidebar instead of being hidden or clickable. This prevents duplicate field entries and provides clear visual feedback about which fields are already in use.
+  - **Template Builder:** Fixed issue where the Block Library sidebar was not scrollable on smaller screens, preventing access to bottom blocks and buttons. Added `min-h-0` class to the sidebar container and updated parent layout in `Builder.vue` from `md:block` to `md:flex` to ensure proper flexbox behavior and scrollable area height.
 
 ## [1.5.1] – Short Description
 

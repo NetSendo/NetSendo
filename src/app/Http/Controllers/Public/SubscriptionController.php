@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\Redirect;
 
 class SubscriptionController extends Controller
 {
-    public function store(Request $request, $listUuid) 
+    public function store(Request $request, $listUuid)
     {
-        // Assuming lists might be identified by UUID in public forms for security, 
+        // Assuming lists might be identified by UUID in public forms for security,
         // but for now let's assume ID or verify if ContactList has UUID.
         // If not, we use ID but locally we should be careful.
         // Let's assume ID for simplicity as per current Model.
-        
+
         $list = ContactList::findOrFail($listUuid); // Or find by uuid if implemented
 
         $validated = $request->validate([
@@ -39,14 +39,14 @@ class SubscriptionController extends Controller
         }
 
         // Determine Redirect Page
-        // Logic: 
+        // Logic:
         // 1. Check if double opt-in is enabled -> 'confirmation' page
         // 2. Else -> 'success' page
         // 3. If subscriber already existed -> 'exists_active' or related
 
         $pageType = 'success';
         $settings = $list->settings;
-        
+
         // Simple logic for now
         $pageConfig = $settings['pages'][$pageType] ?? null;
 
@@ -64,7 +64,52 @@ class SubscriptionController extends Controller
         if ($type === 'external' && !empty($pageConfig['external_page_id'])) {
             $externalPage = ExternalPage::find($pageConfig['external_page_id']);
             if ($externalPage) {
-                // Prepare params for placeholder replacement
+                // For redirect mode, go directly to external URL with query params
+                if ($externalPage->is_redirect) {
+                    $url = $externalPage->url;
+                    $queryParams = [];
+
+                    // Build query params from shared fields
+                    $fieldsData = [
+                        'email' => $subscriber->email,
+                        'first_name' => $subscriber->first_name,
+                        'last_name' => $subscriber->last_name,
+                        'subscriber_id' => $subscriber->id,
+                    ];
+
+                    // Add custom fields if available
+                    if (isset($subscriber->custom_fields) && is_array($subscriber->custom_fields)) {
+                        $fieldsData = array_merge($fieldsData, $subscriber->custom_fields);
+                    }
+
+                    // Only include fields that are in shared_fields list
+                    if ($externalPage->shared_fields) {
+                        foreach ($externalPage->shared_fields as $field) {
+                            if (isset($fieldsData[$field])) {
+                                $queryParams[$field] = $fieldsData[$field];
+                            }
+                        }
+                    }
+
+                    // Also custom fields from page config
+                    if ($externalPage->custom_fields) {
+                        foreach ($externalPage->custom_fields as $field) {
+                            if (isset($fieldsData[$field])) {
+                                $queryParams[$field] = $fieldsData[$field];
+                            }
+                        }
+                    }
+
+                    // Append query params if any
+                    if (!empty($queryParams)) {
+                        $separator = (parse_url($url, PHP_URL_QUERY) == null) ? '?' : '&';
+                        $url .= $separator . http_build_query($queryParams);
+                    }
+
+                    return Redirect::away($url);
+                }
+
+                // For proxy mode, use internal route
                 $params = [
                     'externalPage' => $externalPage->id,
                     'email' => $subscriber->email,
@@ -73,16 +118,12 @@ class SubscriptionController extends Controller
                     'subscriber_id' => $subscriber->id,
                 ];
 
-                // Add custom fields if available
-                // Assuming custom_fields is a JSON attribute on subscriber or related model
-                // For now, if we had them in request, we can pass them
-                // or if defined on subscriber model cast.
                 if (isset($subscriber->custom_fields) && is_array($subscriber->custom_fields)) {
                     foreach ($subscriber->custom_fields as $key => $value) {
                         $params[$key] = $value;
                     }
                 }
-                
+
                 return redirect()->route('page.show', $params);
             }
         } elseif ($type === 'custom' && !empty($pageConfig['url'])) {

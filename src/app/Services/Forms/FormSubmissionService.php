@@ -281,10 +281,17 @@ class FormSubmissionService
             return trim($data[$fieldId]);
         }
 
-        // Check custom fields array
+        // Check custom fields array - form sends fields[custom_123] format
         if (str_starts_with($fieldId, 'custom_') && isset($data['fields'])) {
+            // Form input name is fields[custom_123], so look for the full fieldId
+            if (isset($data['fields'][$fieldId])) {
+                return trim($data['fields'][$fieldId]);
+            }
+            // Also check for just the numeric ID for backwards compatibility
             $customId = str_replace('custom_', '', $fieldId);
-            return trim($data['fields'][$customId] ?? '');
+            if (isset($data['fields'][$customId])) {
+                return trim($data['fields'][$customId]);
+            }
         }
 
         return null;
@@ -436,11 +443,17 @@ class FormSubmissionService
         foreach ($fields as $fieldId => $value) {
             if (empty($value)) continue;
 
-            $customField = CustomField::find($fieldId);
+            // Field IDs come in format "custom_123" from form, extract numeric ID
+            $numericId = $fieldId;
+            if (str_starts_with($fieldId, 'custom_')) {
+                $numericId = str_replace('custom_', '', $fieldId);
+            }
+
+            $customField = CustomField::find($numericId);
             if (!$customField) continue;
 
             $subscriber->fieldValues()->updateOrCreate(
-                ['custom_field_id' => $fieldId],
+                ['custom_field_id' => $numericId],
                 ['value' => $value]
             );
         }
