@@ -116,7 +116,7 @@ class MessageController extends Controller
                         : null,
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
-            'lists' => auth()->user()->contactLists()->select('id', 'name')->orderBy('name')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name')->orderBy('name')->get(),
             'groups' => auth()->user()->contactListGroups()
                 ->with('parent')
                 ->orderBy('name')
@@ -167,7 +167,7 @@ class MessageController extends Controller
         $insertController = new InsertController();
 
         return Inertia::render('Message/Create', [
-            'lists' => auth()->user()->contactLists()
+            'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
                     $query->where('contact_list_subscriber.status', 'active');
@@ -242,17 +242,17 @@ class MessageController extends Controller
             'attachments.*' => 'file|mimes:pdf|max:10240', // 10MB max per file
         ]);
 
-        // Verify ownership of lists
+        // Verify access to lists (including shared lists for team members)
         if (!empty($validated['contact_list_ids'])) {
-            $count = auth()->user()->contactLists()->whereIn('id', $validated['contact_list_ids'])->count();
+            $count = auth()->user()->accessibleLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
                 return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
             }
         }
 
-        // Verify ownership of excluded lists
+        // Verify access to excluded lists
         if (!empty($validated['excluded_list_ids'])) {
-            $count = auth()->user()->contactLists()->whereIn('id', $validated['excluded_list_ids'])->count();
+            $count = auth()->user()->accessibleLists()->whereIn('id', $validated['excluded_list_ids'])->count();
             if ($count !== count($validated['excluded_list_ids'])) {
                 return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
             }
@@ -405,7 +405,7 @@ class MessageController extends Controller
                     'formatted_size' => $a->formatted_size,
                 ]),
             ],
-            'lists' => auth()->user()->contactLists()
+            'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
                     $query->where('contact_list_subscriber.status', 'active');
@@ -486,17 +486,17 @@ class MessageController extends Controller
             'remove_attachment_ids.*' => 'integer',
         ]);
 
-        // Verify ownership
+        // Verify access to lists (including shared lists for team members)
         if (!empty($validated['contact_list_ids'])) {
-            $count = auth()->user()->contactLists()->whereIn('id', $validated['contact_list_ids'])->count();
+            $count = auth()->user()->accessibleLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
                 return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
             }
         }
 
-        // Verify ownership of excluded lists
+        // Verify access to excluded lists
         if (!empty($validated['excluded_list_ids'])) {
-            $count = auth()->user()->contactLists()->whereIn('id', $validated['excluded_list_ids'])->count();
+            $count = auth()->user()->accessibleLists()->whereIn('id', $validated['excluded_list_ids'])->count();
             if ($count !== count($validated['excluded_list_ids'])) {
                 return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
             }

@@ -135,4 +135,33 @@ class GenderService
 
         return $stats;
     }
+
+    /**
+     * Get vocative form for a given first name
+     *
+     * @param string $firstName First name to convert
+     * @param string|null $country Country code (default: PL)
+     * @param int|null $userId User ID for custom names lookup
+     * @return string Vocative form or original name if not found
+     */
+    public function getVocative(string $firstName, ?string $country = 'PL', ?int $userId = null): string
+    {
+        if (empty($firstName)) {
+            return '';
+        }
+
+        // Try to find vocative in database
+        $vocative = Name::findVocative($firstName, $country, $userId);
+
+        if ($vocative) {
+            // Preserve original capitalization
+            if (mb_strtoupper(mb_substr($firstName, 0, 1)) === mb_substr($firstName, 0, 1)) {
+                return mb_strtoupper(mb_substr($vocative, 0, 1)) . mb_substr($vocative, 1);
+            }
+            return $vocative;
+        }
+
+        // Fallback: return original name with first letter capitalized
+        return ucfirst($firstName);
+    }
 }

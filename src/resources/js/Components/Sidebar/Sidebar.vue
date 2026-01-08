@@ -47,6 +47,9 @@ const isActive = (routeName) => {
 const license = computed(() => page.props.license);
 const isGold = computed(() => license.value?.plan === "GOLD");
 
+// Admin check - for hiding admin-only menu items
+const isAdmin = computed(() => page.props.auth?.isAdmin ?? false);
+
 // Accordion Logic
 const openGroup = ref(null);
 
@@ -1330,6 +1333,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 </SidebarItem>
 
                 <SidebarItem
+                    v-if="isAdmin"
                     :href="route('settings.users.index')"
                     :active="isActive('settings.users.*')"
                     :collapsed="collapsed"

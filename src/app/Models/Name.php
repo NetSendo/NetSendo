@@ -9,6 +9,7 @@ class Name extends Model
 {
     protected $fillable = [
         'name',
+        'vocative',
         'gender',
         'country',
         'source',
@@ -125,5 +126,36 @@ class Name extends Model
             ->first();
 
         return $systemName?->gender;
+    }
+
+    /**
+     * Find vocative form for a given name
+     */
+    public static function findVocative(string $firstName, ?string $country = 'PL', ?int $userId = null): ?string
+    {
+        $normalizedName = mb_strtolower(trim($firstName));
+
+        // First check user-defined names if userId provided
+        if ($userId) {
+            $userName = self::where('name', $normalizedName)
+                ->where('country', $country)
+                ->where('source', 'user')
+                ->where('user_id', $userId)
+                ->whereNotNull('vocative')
+                ->first();
+
+            if ($userName) {
+                return $userName->vocative;
+            }
+        }
+
+        // Then check system names
+        $systemName = self::where('name', $normalizedName)
+            ->where('country', $country)
+            ->where('source', 'system')
+            ->whereNotNull('vocative')
+            ->first();
+
+        return $systemName?->vocative;
     }
 }

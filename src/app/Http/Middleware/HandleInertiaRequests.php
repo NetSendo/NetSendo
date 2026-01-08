@@ -35,11 +35,11 @@ class HandleInertiaRequests extends Middleware
         // Get license status directly from database
         $licenseActive = false;
         $licensePlan = null;
-        
+
         try {
             $licenseKey = Setting::where('key', 'license_key')->first();
             $licensePlanSetting = Setting::where('key', 'license_plan')->first();
-            
+
             $licenseActive = $licenseKey !== null;
             $licensePlan = $licensePlanSetting?->value;
         } catch (\Exception $e) {
@@ -50,6 +50,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'isAdmin' => $request->user()?->isAdmin() ?? false,
             ],
             'locale' => [
                 'current' => App::getLocale(),

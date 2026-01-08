@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Vocative Case Support (Polish Names):**
+  - New `vocative` column in `names` table for storing vocative forms.
+  - `[[!fname]]` placeholder now returns the vocative form of subscriber's first name (e.g., "Marzena" → "Marzeno").
+  - `GenderService.getVocative()` method with automatic capitalization matching.
+  - `Name::findVocative()` static method supporting user-defined and system names.
+  - Enhanced Polish Names Database with **~450** common, historical, and less common first names with their vocative forms (~300 names added in this session).
+  - Fixed typo in Polish names seeder for the name "aleksandra" (corrected vocative form to "aleksandro").
+  - Vocative field in Name Database UI (add/edit form and table column).
+  - Full translations in PL and EN.
+
+### Fixed
+
+- **Team Member Access:**
+  - Fixed 403 Forbidden error upon login for team members by hiding the admin-only "User Management" menu item.
+  - Fixed visibility of shared SMS and Email lists for team members by updating multiple controllers (`SmsListController`, `MessageController`, `SubscriberController`) to use `accessibleLists()` instead of `contactLists()`.
+  - Fixed "Unauthorized access" validation error when team members attempt to add subscribers to shared lists or create messages using shared lists.
+  - **API:** Fixed ambiguous `status` column SQL error in `ContactListController` when filtering subscribers by status by using `wherePivot()`.
+- Fixed ambiguous column SQL error in Subscriber statistics calculation.
+  - Fixed subscriber visibility logic to ensure team members can see all subscribers belonging to any list they have access to, regardless of who created the subscriber.
+
 ## [1.5.2] – Short Description
 
 **Release date:** 2026-01-08

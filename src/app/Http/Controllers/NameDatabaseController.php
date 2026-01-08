@@ -69,6 +69,7 @@ class NameDatabaseController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'vocative' => 'nullable|string|max:100',
             'gender' => 'required|in:male,female,neutral',
             'country' => 'required|string|size:2',
         ]);
@@ -87,6 +88,7 @@ class NameDatabaseController extends Controller
 
         Name::create([
             'name' => mb_strtolower(trim($validated['name'])),
+            'vocative' => $validated['vocative'] ? mb_strtolower(trim($validated['vocative'])) : null,
             'gender' => $validated['gender'],
             'country' => $validated['country'],
             'source' => 'user',
@@ -110,12 +112,14 @@ class NameDatabaseController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'vocative' => 'nullable|string|max:100',
             'gender' => 'required|in:male,female,neutral',
             'country' => 'required|string|size:2',
         ]);
 
         $name->update([
             'name' => mb_strtolower(trim($validated['name'])),
+            'vocative' => $validated['vocative'] ? mb_strtolower(trim($validated['vocative'])) : null,
             'gender' => $validated['gender'],
             'country' => $validated['country'],
         ]);

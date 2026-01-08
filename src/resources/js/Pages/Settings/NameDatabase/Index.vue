@@ -29,6 +29,7 @@ const deletingName = ref(null);
 // Form for adding/editing names
 const form = useForm({
     name: "",
+    vocative: "",
     gender: "male",
     country: "PL",
 });
@@ -72,6 +73,7 @@ const openAddModal = () => {
 const openEditModal = (name) => {
     editingName.value = name;
     form.name = name.name;
+    form.vocative = name.vocative || "";
     form.gender = name.gender;
     form.country = name.country;
     showAddModal.value = true;
@@ -311,6 +313,9 @@ const genderBadgeClass = (gender) => {
                                 {{ t("names.column_name") }}
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                {{ t("names.column_vocative") }}
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 {{ t("names.column_gender") }}
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -328,6 +333,9 @@ const genderBadgeClass = (gender) => {
                         <tr v-for="name in names?.data" :key="name.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                             <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900 dark:text-white capitalize">
                                 {{ name.name }}
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400 capitalize">
+                                {{ name.vocative || '—' }}
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm">
                                 <span :class="['inline-flex rounded-full px-2 py-1 text-xs font-medium', genderBadgeClass(name.gender)]">
@@ -364,7 +372,7 @@ const genderBadgeClass = (gender) => {
                             </td>
                         </tr>
                         <tr v-if="!names?.data?.length">
-                            <td colspan="5" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                 {{ t("names.no_names") }}
                             </td>
                         </tr>
@@ -413,6 +421,19 @@ const genderBadgeClass = (gender) => {
                                 class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                             />
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {{ t("names.field_vocative") }}
+                            </label>
+                            <input
+                                v-model="form.vocative"
+                                type="text"
+                                :placeholder="t('names.vocative_placeholder')"
+                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            />
+                            <p class="mt-1 text-xs text-slate-500">{{ t("names.vocative_help") }}</p>
+                            <p v-if="form.errors.vocative" class="mt-1 text-sm text-red-500">{{ form.errors.vocative }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">

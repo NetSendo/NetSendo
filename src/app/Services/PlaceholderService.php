@@ -128,6 +128,17 @@ class PlaceholderService
         // Process gender forms first {{male|female}}
         $content = app(\App\Services\GenderService::class)->processGenderForms($content, $subscriber);
 
+        // Handle special [[!fname]] vocative placeholder
+        if (str_contains($content, '[[!fname]]')) {
+            $genderService = app(\App\Services\GenderService::class);
+            $vocative = $genderService->getVocative(
+                $subscriber->first_name ?? '',
+                'PL', // Default to Polish
+                $subscriber->user_id
+            );
+            $content = str_replace('[[!fname]]', $vocative, $content);
+        }
+
         // Get all subscriber placeholder values
         $values = $subscriber->getAllPlaceholderValues();
 

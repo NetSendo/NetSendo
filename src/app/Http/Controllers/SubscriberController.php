@@ -20,13 +20,21 @@ class SubscriberController extends Controller
 {
     public function index(Request $request)
     {
+        // Get accessible list IDs for the current user (includes shared lists for team members)
+        $accessibleListIds = auth()->user()->accessibleLists()->pluck('id');
+
         $query = Subscriber::query()
-            ->with(['contactLists' => function ($q) {
-                // Only load lists where subscriber is actively subscribed (not unsubscribed)
+            ->with(['contactLists' => function ($q) use ($accessibleListIds) {
+                // Only load lists where subscriber is actively subscribed AND user has access
                 $q->select('contact_lists.id', 'contact_lists.name')
-                  ->wherePivot('status', 'active');
+                  ->wherePivot('status', 'active')
+                  ->whereIn('contact_lists.id', $accessibleListIds);
             }, 'fieldValues.customField'])
-            ->where('user_id', auth()->id());
+            // Show subscribers that belong to at least one accessible list
+            ->whereHas('contactLists', function ($q) use ($accessibleListIds) {
+                $q->whereIn('contact_lists.id', $accessibleListIds)
+                  ->where('contact_list_subscriber.status', 'active');
+            });
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -79,23 +87,31 @@ class SubscriberController extends Controller
         // Calculate statistics (after listId is defined above)
         $statistics = [];
         if ($listId) {
-            // Statistics for specific list
-            $totalInList = DB::table('contact_list_subscriber')
-                ->where('contact_list_id', $listId)
-                ->where('status', 'active')
-                ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
-                ->where('subscribers.user_id', auth()->id())
-                ->count();
+            // Statistics for specific list (only if user has access)
+            if ($accessibleListIds->contains($listId)) {
+                $totalInList = DB::table('contact_list_subscriber')
+                    ->where('contact_list_id', $listId)
+                    ->where('contact_list_subscriber.status', 'active')
+                    ->count();
 
-            $list = ContactList::find($listId);
-            $statistics = [
-                'total_in_list' => $totalInList,
-                'list_name' => $list ? $list->name : null,
-            ];
+                $list = ContactList::find($listId);
+                $statistics = [
+                    'total_in_list' => $totalInList,
+                    'list_name' => $list ? $list->name : null,
+                ];
+            } else {
+                $statistics = [
+                    'total_in_list' => 0,
+                    'list_name' => null,
+                ];
+            }
         } else {
-            // Global statistics
-            $totalSubscribers = Subscriber::where('user_id', auth()->id())->count();
-            $totalLists = ContactList::where('user_id', auth()->id())->count();
+            // Global statistics - count unique subscribers across accessible lists
+            $totalSubscribers = Subscriber::whereHas('contactLists', function ($q) use ($accessibleListIds) {
+                $q->whereIn('contact_lists.id', $accessibleListIds)
+                  ->where('contact_list_subscriber.status', 'active');
+            })->count();
+            $totalLists = $accessibleListIds->count();
 
             $statistics = [
                 'total_subscribers' => $totalSubscribers,
@@ -121,7 +137,7 @@ class SubscriberController extends Controller
                         'cf_' . $fv->custom_field_id => $fv->value
                     ]),
                 ]),
-            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => $customFields,
             'statistics' => $statistics,
             'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order', 'per_page']),
@@ -131,7 +147,7 @@ class SubscriberController extends Controller
     public function create()
     {
         return Inertia::render('Subscriber/Create', [
-            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
         ]);
     }
@@ -144,9 +160,10 @@ class SubscriberController extends Controller
             'contact_list_ids.*' => 'exists:contact_lists,id',
         ]);
 
-        // Check list types to determine validation rules
+        // Check list types to determine validation rules (including shared lists)
+        $accessibleListIds = auth()->user()->accessibleLists()->pluck('id');
         $lists = ContactList::whereIn('id', $request->contact_list_ids)
-            ->where('user_id', auth()->id())
+            ->whereIn('id', $accessibleListIds)
             ->get();
 
         if ($lists->count() !== count($request->contact_list_ids)) {
@@ -316,7 +333,7 @@ class SubscriberController extends Controller
                 'contact_list_ids' => $subscriber->contactLists->pluck('id'),
                 'custom_fields' => $subscriber->fieldValues->mapWithKeys(fn($val) => [$val->custom_field_id => $val->value]),
             ],
-            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
         ]);
     }
@@ -338,7 +355,7 @@ class SubscriberController extends Controller
         // Get all subscriber IDs from this list
         $ids = DB::table('contact_list_subscriber')
             ->where('contact_list_id', $validated['list_id'])
-            ->where('status', 'active')
+            ->where('contact_list_subscriber.status', 'active')
             ->join('subscribers', 'subscribers.id', '=', 'contact_list_subscriber.subscriber_id')
             ->where('subscribers.user_id', auth()->id())
             ->pluck('subscribers.id')
@@ -375,9 +392,10 @@ class SubscriberController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        // Verify ownership of lists
+        // Verify access to lists (including shared lists for team members)
+        $accessibleListIds = auth()->user()->accessibleLists()->pluck('id');
         $count = ContactList::whereIn('id', $validated['contact_list_ids'])
-            ->where('user_id', auth()->id())
+            ->whereIn('id', $accessibleListIds)
             ->count();
 
         if ($count !== count($validated['contact_list_ids'])) {
@@ -432,7 +450,7 @@ class SubscriberController extends Controller
     public function importForm()
     {
         return Inertia::render('Subscriber/Import', [
-            'lists' => auth()->user()->contactLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
         ]);
     }
 

@@ -11,7 +11,7 @@ class SmsListController extends Controller
 {
     public function index(Request $request)
     {
-        $query = auth()->user()->contactLists()
+        $query = auth()->user()->accessibleLists()
             ->sms() // Scope to SMS lists
             ->with(['group', 'tags']);
 
