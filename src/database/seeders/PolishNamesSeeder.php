@@ -215,6 +215,22 @@ class PolishNamesSeeder extends Seeder
             'zachariasz' => 'zachariaszu',
             'zefiryn' => 'zefirynie',
             'zygfryd' => 'zygfrydzie',
+            'tomek' => 'tomku',
+            'bartuś' => 'bartusiu',
+            'antek' => 'antku',
+            'stach' => 'stachu',
+            'franek' => 'franku',
+            'staś' => 'stasiu',
+            'jaś' => 'jasiu',
+            'mietek' => 'mietku',
+            'władek' => 'władku',
+            'kazik' => 'kaziku',
+            'bolko' => 'bolku',
+            'leszko' => 'leszku',
+            'mieszko' => 'mieszku',
+            'zemowit' => 'zemowicie',
+            'ziemek' => 'ziemku',
+
         ];
 
         // Female names with vocative forms: [name => vocative]
@@ -464,6 +480,24 @@ class PolishNamesSeeder extends Seeder
             'xenia' => 'xeniu',
             'zenobia' => 'zenobio',
             'zyta' => 'zyto',
+            'kasia' => 'kasiu',
+            'basia' => 'basiu',
+            'asia' => 'asiu',
+            'zuzia' => 'zuziu',
+            'ania' => 'aniu',
+            'gosia' => 'gosiu',
+            'ola' => 'olu',
+            'magda' => 'magdo',
+            'ewa' => 'ewo',
+            'iza' => 'izo',
+            'aga' => 'ago',
+            'ulka' => 'ulko',
+            'miłka' => 'miłko',
+            'bogda' => 'bogdo',
+            'dobrawa' => 'dobrawo',
+            'świętosława' => 'świętosławo',
+            'nawoja' => 'nawojo',
+
         ];
 
         // Insert male names

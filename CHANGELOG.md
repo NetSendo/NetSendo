@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.3] – Short Description
+
+**Release date:** 2026-01-08
+
 ### Added
 
 - **Vocative Case Support (Polish Names):**
@@ -14,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `[[!fname]]` placeholder now returns the vocative form of subscriber's first name (e.g., "Marzena" → "Marzeno").
   - `GenderService.getVocative()` method with automatic capitalization matching.
   - `Name::findVocative()` static method supporting user-defined and system names.
-  - Enhanced Polish Names Database with **~450** common, historical, and less common first names with their vocative forms (~300 names added in this session).
+  - Enhanced Polish Names Database with **~480** common, historical, and less common first names with their vocative forms (added popular diminutives like "Kasia", "Tomek", "Antek", "Zuzia", etc., and historical names like "Mieszko", "Dobrawa").
   - Fixed typo in Polish names seeder for the name "aleksandra" (corrected vocative form to "aleksandro").
   - Vocative field in Name Database UI (add/edit form and table column).
   - Full translations in PL and EN.
