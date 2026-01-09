@@ -566,6 +566,10 @@
             "bounce_desc": "Automatically mark addresses as inactive after soft or hard bounce.",
             "queue_days_label": "Queue sending days",
             "queue_days_help": "Check days when autoresponder messages can be sent.",
+            "resubscription_behavior": "Resubscription Behavior",
+            "resubscription_behavior_desc": "Defines what happens to the subscription date when an active subscriber tries to subscribe again. Former subscribers (unsubscribed/removed) always have their date reset.",
+            "resubscription_reset_date": "Reset subscription date (autoresponder queue restarts from beginning)",
+            "resubscription_keep_date": "Keep original subscription date",
             "tabs": {
                 "general": "General",
                 "settings": "Settings",

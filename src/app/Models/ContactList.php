@@ -40,6 +40,8 @@ class ContactList extends Model
         'max_subscribers',
         'signups_blocked',
         'required_fields',
+        // Resubscription behavior
+        'resubscription_behavior', // reset_date or keep_original_date
     ];
 
     protected $casts = [

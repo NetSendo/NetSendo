@@ -149,14 +149,25 @@ class AutomationActionExecutor
             ]);
         }
 
-        // Subscribe to target list
-        if (!$subscriber->contactLists->contains($targetListId)) {
-            $subscriber->contactLists()->attach($targetListId, [
+        // Subscribe to target list with resubscription behavior
+        $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetListId)->first();
+
+        if ($existingPivot) {
+            $wasActive = $existingPivot->pivot->status === 'active';
+            $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+            $pivotData = [
                 'status' => 'active',
-                'subscribed_at' => now(),
-            ]);
+                'unsubscribed_at' => null,
+            ];
+
+            if ($shouldResetDate) {
+                $pivotData['subscribed_at'] = now();
+            }
+
+            $subscriber->contactLists()->updateExistingPivot($targetListId, $pivotData);
         } else {
-            $subscriber->contactLists()->updateExistingPivot($targetListId, [
+            $subscriber->contactLists()->attach($targetListId, [
                 'status' => 'active',
                 'subscribed_at' => now(),
             ]);
@@ -188,8 +199,24 @@ class AutomationActionExecutor
             throw new \InvalidArgumentException("Target list not found: {$targetListId}");
         }
 
-        // Subscribe to target list if not already
-        if (!$subscriber->contactLists->contains($targetListId)) {
+        // Subscribe to target list with resubscription behavior
+        $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetListId)->first();
+
+        if ($existingPivot) {
+            $wasActive = $existingPivot->pivot->status === 'active';
+            $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+            $pivotData = [
+                'status' => 'active',
+                'unsubscribed_at' => null,
+            ];
+
+            if ($shouldResetDate) {
+                $pivotData['subscribed_at'] = now();
+            }
+
+            $subscriber->contactLists()->updateExistingPivot($targetListId, $pivotData);
+        } else {
             $subscriber->contactLists()->attach($targetListId, [
                 'status' => 'active',
                 'subscribed_at' => now(),

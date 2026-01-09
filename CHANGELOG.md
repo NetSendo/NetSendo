@@ -9,17 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Autoresponder Queue:** Fixed critical bug where autoresponder messages ignored the `day` offset and sent immediately to all subscribers. Messages now correctly respect the configured delay:
+- **Docker Compose (Development):** Added missing `scheduler` and `queue` services to `docker-compose.dev.yml` to enable cron jobs and queue processing in development environment. Previously, scheduled tasks like autoresponders, abandoned cart detection, and other Laravel schedule commands would not run on dev environment.
 
-  - `day=0`: Sends immediately (at next CRON run)
-  - `day=1`: Sends 1 day after subscription
-  - `day=N`: Sends N days after subscription
-  - Applies to both email and SMS autoresponders.
+- **Autoresponder Queue:** Fixed a bug where autoresponder messages could lose their `scheduled` status and be incorrectly marked as `sent` (a status reserved for broadcast messages), which caused the cron job to ignore them for new subscribers.
 
-- **Subscriber Reactivation:** Fixed issue where manually adding or importing subscribers who were previously unsubscribed would not reactivate them on the list. Now:
-  - Manual subscriber creation (`store()`) correctly sets `status => 'active'` in pivot table.
-  - CSV import correctly reactivates previously unsubscribed subscribers.
-  - Clears `unsubscribed_at` timestamp when reactivating.
+- **Subscriber Management:** Standardized manual subscriber addition to reliably dispatch the `SubscriberSignedUp` event, ensuring all automations and initial queue synchronizations are triggered immediately.
+
+- **Autoresponder Delay:** Fixed critical bug where autoresponder messages ignored the `day` offset and sent immediately to all subscribers. Messages now correctly respect the configured delay (`day=0` for immediate, `day=1` for next day, etc.).
+
+- **Subscriber Reactivation:** Fixed issue where manually adding or importing subscribers who were previously unsubscribed would not reactivate them on the list.
+
+- **SMS List Permissions:** Fixed an issue where team members with `edit` permissions were unable to edit shared SMS lists due to direct ownership checks. The `SmsListController` now correctly uses the `canEditList()` method to validate permissions.
+
+- **List Deletion Security:** Standardized SMS list deletion to allow only the list owner to perform the action.
+
+### Added
+
+- **Subscriber Rejoin Handling:**
+  - New `resubscription_behavior` setting per mailing list to control what happens when active subscribers try to re-subscribe.
+  - **Options:**
+    - `reset_date` (default): Reset `subscribed_at` to now, restarting autoresponder queue from the beginning.
+    - `keep_original_date`: Preserve the original `subscribed_at`, maintaining queue position.
+  - **Former subscribers** (unsubscribed/removed) **always** have their date reset when rejoining.
+  - Applies to all subscription methods: manual creation, CSV import, form signups, API, bulk operations, and automation actions.
+  - New UI toggle in list settings (Subscription tab) with translations in PL and EN.
+
+### Changed
+
+- **List Index Metadata:** Enhanced the SMS list and Email list index views to include a `permission` field (indicating `edit` or `view` access levels) and updated Group/Tag filtering to correctly utilize the admin user's scope for team members.
 
 ## [1.5.3] – Short Description
 

@@ -48,35 +48,43 @@ class LogViewerController extends Controller
         $level = $request->get('level', ''); // ERROR, WARNING, INFO, DEBUG
 
         try {
-            $content = File::get($logPath);
-            $lines = explode("\n", $content);
-
-            // Filter by level if specified
-            if ($level) {
-                $lines = array_filter($lines, function($line) use ($level) {
-                    return stripos($line, ".{$level}:") !== false ||
-                           stripos($line, "[{$level}]") !== false;
-                });
-            }
-
-            // Filter by search term if specified
-            if ($search) {
-                $lines = array_filter($lines, function($line) use ($search) {
-                    return stripos($line, $search) !== false;
-                });
-            }
-
-            // Get last N lines (most recent first)
-            $lines = array_slice(array_reverse(array_values($lines)), 0, $maxLines);
-
-            $stats = File::size($logPath);
+            $fileSize = File::size($logPath);
             $lastModified = File::lastModified($logPath);
+
+            // Use tail-like approach to read last N lines without loading entire file
+            // This prevents memory exhaustion with large log files
+            $lines = $this->tailFile($logPath, $maxLines * 3, $search, $level); // Read more to account for filtering
+
+            // Apply filters if needed
+            if ($level || $search) {
+                $lines = array_filter($lines, function($line) use ($level, $search) {
+                    $matchesLevel = true;
+                    $matchesSearch = true;
+
+                    if ($level) {
+                        $matchesLevel = stripos($line, ".{$level}:") !== false ||
+                                       stripos($line, "[{$level}]") !== false;
+                    }
+
+                    if ($search) {
+                        $matchesSearch = stripos($line, $search) !== false;
+                    }
+
+                    return $matchesLevel && $matchesSearch;
+                });
+
+                // Re-index and limit after filtering
+                $lines = array_values($lines);
+            }
+
+            // Limit to requested number of lines
+            $lines = array_slice($lines, 0, $maxLines);
 
             return response()->json([
                 'lines' => $lines,
-                'total_lines' => count(explode("\n", $content)),
-                'size' => $this->formatBytes($stats),
-                'size_bytes' => $stats,
+                'total_lines' => '~' . number_format($fileSize / 100), // Approximate line count
+                'size' => $this->formatBytes($fileSize),
+                'size_bytes' => $fileSize,
                 'last_modified' => date('Y-m-d H:i:s', $lastModified),
                 'exists' => true,
             ]);
@@ -86,6 +94,55 @@ class LogViewerController extends Controller
                 'exists' => false,
             ], 500);
         }
+    }
+
+    /**
+     * Read last N lines from file (tail-like approach)
+     * Memory-efficient for large files
+     */
+    private function tailFile(string $path, int $lines, string $search = '', string $level = ''): array
+    {
+        $result = [];
+        $handle = fopen($path, 'rb');
+
+        if (!$handle) {
+            return [];
+        }
+
+        // Seek to end of file
+        fseek($handle, 0, SEEK_END);
+        $pos = ftell($handle);
+
+        // Read buffer size (read in chunks from end)
+        $bufferSize = 8192;
+        $buffer = '';
+        $linesFound = 0;
+
+        // Read from end of file backwards
+        while ($pos > 0 && $linesFound < $lines) {
+            // Calculate how much to read
+            $readSize = min($bufferSize, $pos);
+            $pos -= $readSize;
+
+            // Seek and read
+            fseek($handle, $pos, SEEK_SET);
+            $chunk = fread($handle, $readSize);
+
+            // Prepend to buffer
+            $buffer = $chunk . $buffer;
+
+            // Count newlines in buffer
+            $linesFound = substr_count($buffer, "\n");
+        }
+
+        fclose($handle);
+
+        // Split buffer into lines and reverse (most recent first)
+        $allLines = explode("\n", $buffer);
+        $allLines = array_filter($allLines, fn($line) => trim($line) !== '');
+        $allLines = array_reverse(array_values($allLines));
+
+        return array_slice($allLines, 0, $lines);
     }
 
     /**

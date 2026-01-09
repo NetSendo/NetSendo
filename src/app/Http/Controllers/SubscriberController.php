@@ -212,17 +212,20 @@ class SubscriberController extends Controller
             }
 
             // Find existing subscriber by email or phone depending on what was provided
+            // Include soft-deleted subscribers to avoid unique constraint violations
             $subscriber = null;
 
             if (!empty($validated['email'])) {
-                $subscriber = Subscriber::where('user_id', auth()->id())
+                $subscriber = Subscriber::withTrashed()
+                    ->where('user_id', auth()->id())
                     ->where('email', $validated['email'])
                     ->first();
             }
 
             // For SMS-only lists, also try to find by phone if no email match
             if (!$subscriber && !empty($validated['phone']) && $lists->where('type', 'sms')->isNotEmpty()) {
-                $subscriber = Subscriber::where('user_id', auth()->id())
+                $subscriber = Subscriber::withTrashed()
+                    ->where('user_id', auth()->id())
                     ->where('phone', $validated['phone'])
                     ->first();
             }
@@ -238,6 +241,15 @@ class SubscriberController extends Controller
             ];
 
             if ($subscriber) {
+                // If subscriber was soft-deleted, restore it
+                if ($subscriber->trashed()) {
+                    $subscriber->restore();
+                    Log::info('Restored soft-deleted subscriber', [
+                        'subscriber_id' => $subscriber->id,
+                        'email' => $subscriber->email,
+                    ]);
+                }
+
                 // Update existing subscriber, but don't overwrite existing data with null
                 $updateData = array_filter($data, fn($v) => $v !== null);
                 unset($updateData['user_id']); // Don't update user_id
@@ -248,14 +260,39 @@ class SubscriberController extends Controller
 
             // Sync Lists (Attach) with reactivation
             // For each list, ensure the subscriber is active (reactivate if previously unsubscribed)
+            // Respect resubscription_behavior setting for active subscribers
             foreach ($validated['contact_list_ids'] as $listId) {
-                $subscriber->contactLists()->syncWithoutDetaching([
-                    $listId => [
+                $list = ContactList::find($listId);
+                if (!$list) continue;
+
+                // Check if subscriber was previously on this list
+                $existingPivot = $subscriber->contactLists()->where('contact_list_id', $listId)->first();
+
+                if ($existingPivot) {
+                    $wasActive = $existingPivot->pivot->status === 'active';
+
+                    // Determine if we should reset the subscribed_at date
+                    // Former subscribers (not active) always get date reset
+                    // Active subscribers follow list's resubscription_behavior setting
+                    $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                    $pivotData = [
+                        'status' => 'active',
+                        'unsubscribed_at' => null,
+                    ];
+
+                    if ($shouldResetDate) {
+                        $pivotData['subscribed_at'] = now();
+                    }
+
+                    $subscriber->contactLists()->updateExistingPivot($listId, $pivotData);
+                } else {
+                    // New subscription - always set subscribed_at
+                    $subscriber->contactLists()->attach($listId, [
                         'status' => 'active',
                         'subscribed_at' => now(),
-                        'unsubscribed_at' => null,
-                    ]
-                ]);
+                    ]);
+                }
             }
 
             // Handle Custom Fields
@@ -415,8 +452,49 @@ class SubscriberController extends Controller
                 'is_active_global' => $validated['status'] === 'active',
             ]);
 
-            // For update, we SYNC (overwrite) the lists selection
-            $subscriber->contactLists()->sync($validated['contact_list_ids']);
+            // Get current list IDs
+            $currentListIds = $subscriber->contactLists()->pluck('contact_list_id')->toArray();
+            $newListIds = $validated['contact_list_ids'];
+
+            // Lists to remove (detach)
+            $listsToRemove = array_diff($currentListIds, $newListIds);
+            if (!empty($listsToRemove)) {
+                $subscriber->contactLists()->detach($listsToRemove);
+            }
+
+            // Lists to add or update
+            foreach ($newListIds as $listId) {
+                $list = ContactList::find($listId);
+                if (!$list) continue;
+
+                // Check if subscriber was previously on this list
+                $existingPivot = $subscriber->contactLists()->where('contact_list_id', $listId)->first();
+
+                if ($existingPivot) {
+                    $wasActive = $existingPivot->pivot->status === 'active';
+
+                    // Former subscribers (not active) always get date reset
+                    // Active subscribers follow list's resubscription_behavior setting
+                    $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                    $pivotData = [
+                        'status' => 'active',
+                        'unsubscribed_at' => null,
+                    ];
+
+                    if ($shouldResetDate) {
+                        $pivotData['subscribed_at'] = now();
+                    }
+
+                    $subscriber->contactLists()->updateExistingPivot($listId, $pivotData);
+                } else {
+                    // New subscription - always set subscribed_at
+                    $subscriber->contactLists()->attach($listId, [
+                        'status' => 'active',
+                        'subscribed_at' => now(),
+                    ]);
+                }
+            }
 
             // Handle Custom Fields
             if ($request->has('custom_fields')) {
@@ -545,22 +623,34 @@ class SubscriberController extends Controller
             }
 
             // Find existing subscriber by email or phone
+            // Include soft-deleted subscribers to avoid unique constraint violations
             $subscriber = null;
 
             if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $subscriber = Subscriber::where('user_id', auth()->id())
+                $subscriber = Subscriber::withTrashed()
+                    ->where('user_id', auth()->id())
                     ->where('email', $email)
                     ->first();
             }
 
             // For SMS lists, also try to find by phone
             if (!$subscriber && $phone && $list->type === 'sms') {
-                $subscriber = Subscriber::where('user_id', auth()->id())
+                $subscriber = Subscriber::withTrashed()
+                    ->where('user_id', auth()->id())
                     ->where('phone', $phone)
                     ->first();
             }
 
             if ($subscriber) {
+                // If subscriber was soft-deleted, restore it
+                if ($subscriber->trashed()) {
+                    $subscriber->restore();
+                    Log::info('Restored soft-deleted subscriber during import', [
+                        'subscriber_id' => $subscriber->id,
+                        'email' => $subscriber->email,
+                    ]);
+                }
+
                 // Update existing subscriber with new data (if provided)
                 $updateData = [];
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) && !$subscriber->email) {
@@ -590,14 +680,32 @@ class SubscriberController extends Controller
                 ]);
             }
 
-            // Attach to list with reactivation
-            $subscriber->contactLists()->syncWithoutDetaching([
-                $list->id => [
+            // Attach to list with reactivation, respecting resubscription_behavior setting
+            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $list->id)->first();
+
+            if ($existingPivot) {
+                $wasActive = $existingPivot->pivot->status === 'active';
+
+                // Former subscribers always get date reset, active subscribers follow list setting
+                $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                $pivotData = [
+                    'status' => 'active',
+                    'unsubscribed_at' => null,
+                ];
+
+                if ($shouldResetDate) {
+                    $pivotData['subscribed_at'] = now();
+                }
+
+                $subscriber->contactLists()->updateExistingPivot($list->id, $pivotData);
+            } else {
+                // New subscription - always set subscribed_at
+                $subscriber->contactLists()->attach($list->id, [
                     'status' => 'active',
                     'subscribed_at' => now(),
-                    'unsubscribed_at' => null,
-                ]
-            ]);
+                ]);
+            }
 
             $imported++;
         }
@@ -709,13 +817,30 @@ class SubscriberController extends Controller
         foreach ($subscribers as $subscriber) {
             // Remove from source list
             $subscriber->contactLists()->detach($validated['source_list_id']);
-            // Add to target list (without detaching other lists)
-            $subscriber->contactLists()->syncWithoutDetaching([
-                $validated['target_list_id'] => [
+
+            // Add to target list with resubscription behavior
+            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
+
+            if ($existingPivot) {
+                $wasActive = $existingPivot->pivot->status === 'active';
+                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                $pivotData = [
+                    'status' => 'active',
+                    'unsubscribed_at' => null,
+                ];
+
+                if ($shouldResetDate) {
+                    $pivotData['subscribed_at'] = now();
+                }
+
+                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
+            } else {
+                $subscriber->contactLists()->attach($validated['target_list_id'], [
                     'status' => 'active',
                     'subscribed_at' => now(),
-                ]
-            ]);
+                ]);
+            }
 
             // Dispatch event for automations
             if ($targetList) {
@@ -771,13 +896,29 @@ class SubscriberController extends Controller
             ->get();
 
         foreach ($subscribers as $subscriber) {
-            // Add to target list (without detaching from other lists)
-            $subscriber->contactLists()->syncWithoutDetaching([
-                $validated['target_list_id'] => [
+            // Add to target list with resubscription behavior
+            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
+
+            if ($existingPivot) {
+                $wasActive = $existingPivot->pivot->status === 'active';
+                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                $pivotData = [
+                    'status' => 'active',
+                    'unsubscribed_at' => null,
+                ];
+
+                if ($shouldResetDate) {
+                    $pivotData['subscribed_at'] = now();
+                }
+
+                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
+            } else {
+                $subscriber->contactLists()->attach($validated['target_list_id'], [
                     'status' => 'active',
                     'subscribed_at' => now(),
-                ]
-            ]);
+                ]);
+            }
 
             // Dispatch event for automations
             event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy'));
@@ -812,13 +953,29 @@ class SubscriberController extends Controller
             ->get();
 
         foreach ($subscribers as $subscriber) {
-            // Add to target list
-            $subscriber->contactLists()->syncWithoutDetaching([
-                $validated['target_list_id'] => [
+            // Add to target list with resubscription behavior
+            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
+
+            if ($existingPivot) {
+                $wasActive = $existingPivot->pivot->status === 'active';
+                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                $pivotData = [
+                    'status' => 'active',
+                    'unsubscribed_at' => null,
+                ];
+
+                if ($shouldResetDate) {
+                    $pivotData['subscribed_at'] = now();
+                }
+
+                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
+            } else {
+                $subscriber->contactLists()->attach($validated['target_list_id'], [
                     'status' => 'active',
                     'subscribed_at' => now(),
-                ]
-            ]);
+                ]);
+            }
 
             // Dispatch event for automations
             event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add'));

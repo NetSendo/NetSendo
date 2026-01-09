@@ -119,6 +119,13 @@ class ListSubscriptionController extends Controller
             $status = $existing->pivot->status;
 
             if ($status === 'active') {
+                // Already active - check if we should reset date based on list setting
+                if (($list->resubscription_behavior ?? 'reset_date') === 'reset_date') {
+                    $list->subscribers()->updateExistingPivot($subscriber->id, [
+                        'subscribed_at' => now(),
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Already subscribed',
@@ -127,7 +134,7 @@ class ListSubscriptionController extends Controller
                 ], 200);
             }
 
-            // Reactivate if was unsubscribed
+            // Reactivate if was unsubscribed (former subscribers always get date reset)
             $list->subscribers()->updateExistingPivot($subscriber->id, [
                 'status' => 'active',
                 'subscribed_at' => now(),

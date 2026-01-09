@@ -234,6 +234,8 @@ class MailingListController extends Controller
                 'max_subscribers' => $mailingList->max_subscribers ?? 0,
                 'signups_blocked' => $mailingList->signups_blocked ?? false,
                 'required_fields' => $mailingList->required_fields ?? [],
+                // Resubscription behavior
+                'resubscription_behavior' => $mailingList->resubscription_behavior ?? 'reset_date',
             ],
             'defaultSettings' => $scopeUser->settings ?? [],
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
@@ -313,6 +315,9 @@ class MailingListController extends Controller
             'max_subscribers' => 'nullable|integer|min:0',
             'signups_blocked' => 'boolean',
             'required_fields' => 'nullable|array',
+
+            // Resubscription behavior
+            'resubscription_behavior' => 'nullable|in:reset_date,keep_original_date',
         ]);
 
         // Assign default_mailbox_id from settings if present

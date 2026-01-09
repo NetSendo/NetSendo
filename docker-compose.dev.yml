@@ -37,6 +37,52 @@ services:
       redis:
         condition: service_started
 
+  scheduler:
+    image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: netsendo-scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - MAIL_HOST=mailpit
+    networks:
+      - netsendo-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  queue:
+    image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: netsendo-queue
+    restart: unless-stopped
+    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - MAIL_HOST=mailpit
+    networks:
+      - netsendo-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   webserver:
     image: nginx:alpine
     container_name: netsendo-webserver
@@ -69,7 +115,7 @@ services:
     ports:
       - "${DB_PORT:-33006}:3306"
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 5s
       retries: 10
 

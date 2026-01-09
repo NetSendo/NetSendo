@@ -408,11 +408,20 @@ class FormSubmissionService
         }
 
         // Subscribe to list (if not already)
+        // Determine if we should reset the subscribed_at date
+        $wasActive = $previousStatus === 'active';
+        $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
         $pivotData = [
             'status' => $form->shouldUseDoubleOptin() ? 'pending' : 'active',
             'source' => 'form:' . $form->slug,
-            'subscribed_at' => now(),
+            'unsubscribed_at' => null,
         ];
+
+        // Only set subscribed_at if we should reset the date or it's a new subscription
+        if (!$wasSubscribed || $shouldResetDate) {
+            $pivotData['subscribed_at'] = now();
+        }
 
         if (!$wasSubscribed) {
             $subscriber->contactLists()->attach($list->id, $pivotData);

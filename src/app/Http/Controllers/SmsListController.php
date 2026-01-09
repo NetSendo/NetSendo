@@ -51,6 +51,9 @@ class SmsListController extends Controller
             }
         }
 
+        // Use admin scope for groups/tags to support team members
+        $scopeUser = auth()->user()->getAdminUser();
+
         return Inertia::render('SmsList/Index', [
             'lists' => $query->latest()
                 ->paginate(12)
@@ -63,9 +66,10 @@ class SmsListController extends Controller
                     'created_at' => DateHelper::formatDateForUser($list->created_at),
                     'subscribers_count' => $list->subscribers()->count(),
                     'is_public' => (bool)$list->is_public,
+                    'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
             'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir']),
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')
                 ->get()
@@ -73,15 +77,18 @@ class SmsListController extends Controller
                     'id' => $g->id,
                     'name' => $g->name,
                     'depth' => $g->depth,
+                    'full_path' => $g->full_path,
                 ]),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
         ]);
     }
 
     public function create()
     {
+        $scopeUser = auth()->user()->getAdminUser();
+
         return Inertia::render('SmsList/Create', [
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')
                 ->get()
@@ -89,8 +96,9 @@ class SmsListController extends Controller
                     'id' => $g->id,
                     'name' => $g->name,
                     'depth' => $g->depth,
+                    'full_path' => $g->full_path,
                 ]),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
         ]);
     }
 
@@ -120,8 +128,12 @@ class SmsListController extends Controller
 
     public function edit(ContactList $smsList)
     {
-        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
-            abort(403);
+        if (!auth()->user()->canEditList($smsList)) {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if ($smsList->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
         }
 
         // Get other SMS lists for co-registration (exclude current list)
@@ -129,6 +141,8 @@ class SmsListController extends Controller
             ->sms()
             ->where('id', '!=', $smsList->id)
             ->get(['id', 'name']);
+
+        $scopeUser = auth()->user()->getAdminUser();
 
         return Inertia::render('SmsList/Edit', [
             'list' => [
@@ -150,7 +164,7 @@ class SmsListController extends Controller
                 'max_subscribers' => $smsList->max_subscribers ?? 0,
                 'signups_blocked' => $smsList->signups_blocked ?? false,
             ],
-            'groups' => \App\Models\ContactListGroup::where('user_id', auth()->id())
+            'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')
                 ->get()
@@ -158,8 +172,9 @@ class SmsListController extends Controller
                     'id' => $g->id,
                     'name' => $g->name,
                     'depth' => $g->depth,
+                    'full_path' => $g->full_path,
                 ]),
-            'tags' => \App\Models\Tag::where('user_id', auth()->id())->get(),
+            'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
             'otherLists' => $otherLists,
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
         ]);
@@ -167,8 +182,12 @@ class SmsListController extends Controller
 
     public function update(Request $request, ContactList $smsList)
     {
-        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
-            abort(403);
+        if (!auth()->user()->canEditList($smsList)) {
+            abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if ($smsList->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
         }
 
         $validated = $request->validate([
@@ -212,8 +231,13 @@ class SmsListController extends Controller
 
     public function destroy(Request $request, ContactList $smsList)
     {
-        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
-            abort(403);
+        // Only owner can delete list
+        if ($smsList->user_id !== auth()->id()) {
+            abort(403, 'Tylko właściciel listy może ją usunąć.');
+        }
+
+        if ($smsList->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
         }
 
         $subscribersCount = $smsList->subscribers()->count();
@@ -249,8 +273,12 @@ class SmsListController extends Controller
      */
     public function generateApiKey(ContactList $smsList)
     {
-        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
+        if (!auth()->user()->canEditList($smsList)) {
             abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if ($smsList->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
         }
 
         $smsList->generateApiKey();
@@ -263,8 +291,12 @@ class SmsListController extends Controller
      */
     public function testWebhook(ContactList $smsList)
     {
-        if ($smsList->user_id !== auth()->id() || $smsList->type !== 'sms') {
+        if (!auth()->user()->canEditList($smsList)) {
             abort(403, 'Brak uprawnień do edycji tej listy.');
+        }
+
+        if ($smsList->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
         }
 
         if (empty($smsList->webhook_url)) {
