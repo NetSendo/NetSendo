@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.4] – Short Description
+
+**Release date:** 2026-01-09
+
 ### Fixed
 
 - **Docker Compose (Development):** Added missing `scheduler` and `queue` services to `docker-compose.dev.yml` to enable cron jobs and queue processing in development environment. Previously, scheduled tasks like autoresponders, abandoned cart detection, and other Laravel schedule commands would not run on dev environment.
