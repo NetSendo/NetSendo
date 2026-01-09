@@ -291,8 +291,9 @@ class MessageController extends Controller
             'day' => $validated['type'] === 'autoresponder' ? ($validated['day'] ?? 0) : null,
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
-            'status' => $validated['status'],
-            'status' => $validated['status'],
+
+            // Autoresponders cannot be 'sent' (finished) immediately. If status is 'sent' (Active in UI), force 'scheduled'.
+            'status' => ($validated['type'] === 'autoresponder' && $validated['status'] === 'sent') ? 'scheduled' : $validated['status'],
             'send_at' => $sendAt,
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
@@ -535,7 +536,8 @@ class MessageController extends Controller
             'day' => $validated['type'] === 'autoresponder' ? ($validated['day'] ?? 0) : null,
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
-            'status' => $validated['status'],
+            // Autoresponders cannot be 'sent' (finished) immediately. If status is 'sent' (Active in UI), force 'scheduled'.
+            'status' => ($validated['type'] === 'autoresponder' && $validated['status'] === 'sent') ? 'scheduled' : $validated['status'],
             'send_at' => $sendAt,
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,

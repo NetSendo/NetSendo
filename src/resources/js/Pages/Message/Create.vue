@@ -77,26 +77,26 @@ const activeTab = ref("content"); // content, settings, triggers, ab_testing
 // Tab configuration for ResponsiveTabs component
 const messageTabs = computed(() => [
     {
-        id: 'content',
-        label: t('messages.tabs.content'),
-        emoji: '✏️',
+        id: "content",
+        label: t("messages.tabs.content"),
+        emoji: "✏️",
     },
     {
-        id: 'settings',
-        label: t('messages.tabs.settings'),
-        emoji: '⚙️',
+        id: "settings",
+        label: t("messages.tabs.settings"),
+        emoji: "⚙️",
     },
     {
-        id: 'triggers',
-        label: t('messages.tabs.triggers'),
-        emoji: '⚡',
+        id: "triggers",
+        label: t("messages.tabs.triggers"),
+        emoji: "⚡",
         indicator: !!form.trigger_type,
     },
     {
-        id: 'ab_testing',
-        label: t('messages.tabs.ab_testing'),
-        emoji: '📊',
-        badge: t('common.soon'),
+        id: "ab_testing",
+        label: t("messages.tabs.ab_testing"),
+        emoji: "📊",
+        badge: t("common.soon"),
     },
 ]);
 
@@ -396,7 +396,7 @@ const mergeHtmlContent = (template, signatureHtml) => {
     const lowerTemplate = template.trim().toLowerCase();
 
     // If template contains </body>, insert signature before it
-    if (lowerTemplate.includes('</body>')) {
+    if (lowerTemplate.includes("</body>")) {
         return template.replace(
             /<\/body>/i,
             `\n<!-- Signature Start -->\n${signatureHtml}\n<!-- Signature End -->\n</body>`
@@ -404,15 +404,20 @@ const mergeHtmlContent = (template, signatureHtml) => {
     }
 
     // If template contains tables (typical email template), find last content cell
-    if (lowerTemplate.includes('</table>')) {
+    if (lowerTemplate.includes("</table>")) {
         // Find the last </td> before the last </table>
-        const lastTableCloseIndex = template.lastIndexOf('</table>');
-        const lastTdCloseBeforeTable = template.lastIndexOf('</td>', lastTableCloseIndex);
+        const lastTableCloseIndex = template.lastIndexOf("</table>");
+        const lastTdCloseBeforeTable = template.lastIndexOf(
+            "</td>",
+            lastTableCloseIndex
+        );
 
         if (lastTdCloseBeforeTable > -1) {
-            return template.slice(0, lastTdCloseBeforeTable) +
-                   `\n<!-- Signature -->\n${signatureHtml}\n` +
-                   template.slice(lastTdCloseBeforeTable);
+            return (
+                template.slice(0, lastTdCloseBeforeTable) +
+                `\n<!-- Signature -->\n${signatureHtml}\n` +
+                template.slice(lastTdCloseBeforeTable)
+            );
         }
     }
 
@@ -423,12 +428,13 @@ const mergeHtmlContent = (template, signatureHtml) => {
 // Handle insert content at cursor position or smart merge for signatures
 const handleInsert = (data) => {
     // Handle new format { content, type } or legacy string format
-    const content = typeof data === 'object' ? data.content : data;
-    const type = typeof data === 'object' ? data.type : 'variable';
+    const content = typeof data === "object" ? data.content : data;
+    const type = typeof data === "object" ? data.type : "variable";
 
-    if (type === 'signature') {
+    if (type === "signature") {
         // For signatures - use smart HTML merging
-        const currentContent = advancedEditorRef.value?.getSourceCode() || form.content;
+        const currentContent =
+            advancedEditorRef.value?.getSourceCode() || form.content;
         const mergedContent = mergeHtmlContent(currentContent, content);
         form.content = mergedContent;
 
@@ -930,10 +936,7 @@ if (form.contact_list_ids.length > 0) {
         <div class="rounded-2xl bg-white shadow-sm dark:bg-slate-900">
             <!-- Responsive Tabs -->
             <div class="px-4 pt-4">
-                <ResponsiveTabs
-                    v-model="activeTab"
-                    :tabs="messageTabs"
-                />
+                <ResponsiveTabs v-model="activeTab" :tabs="messageTabs" />
             </div>
 
             <form @submit.prevent="submit()" class="p-6">
@@ -1522,17 +1525,25 @@ if (form.contact_list_ids.length > 0) {
                                             v-model="form.webinar_auto_register"
                                             class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                         />
-                                        {{ $t("messages.webinar.auto_register") }}
+                                        {{
+                                            $t("messages.webinar.auto_register")
+                                        }}
                                     </label>
                                     <p
                                         class="text-xs text-slate-500 dark:text-slate-400"
                                     >
-                                        {{ $t("messages.webinar.placeholders_info") }}
+                                        {{
+                                            $t(
+                                                "messages.webinar.placeholders_info"
+                                            )
+                                        }}
                                     </p>
                                     <div
                                         class="mt-2 rounded-lg bg-slate-100 p-2 dark:bg-slate-700"
                                     >
-                                        <p class="text-xs font-mono text-slate-600 dark:text-slate-300">
+                                        <p
+                                            class="text-xs font-mono text-slate-600 dark:text-slate-300"
+                                        >
                                             [[webinar_register_link]]<br />
                                             [[webinar_watch_link]]
                                         </p>
@@ -2203,8 +2214,13 @@ if (form.contact_list_ids.length > 0) {
                                                     class="flex-1 text-sm text-slate-700 dark:text-slate-300"
                                                 >
                                                     {{ list.name }}
-                                                    <span class="ml-1 text-xs text-slate-400 dark:text-slate-500">
-                                                        ({{ list.subscribers_count ?? 0 }})
+                                                    <span
+                                                        class="ml-1 text-xs text-slate-400 dark:text-slate-500"
+                                                    >
+                                                        ({{
+                                                            list.subscribers_count ??
+                                                            0
+                                                        }})
                                                     </span>
                                                 </span>
                                                 <!-- Show list tags -->
@@ -2337,8 +2353,13 @@ if (form.contact_list_ids.length > 0) {
                                                 class="flex-1 text-sm text-slate-700 dark:text-slate-300"
                                             >
                                                 {{ list.name }}
-                                                <span class="ml-1 text-xs text-slate-400 dark:text-slate-500">
-                                                    ({{ list.subscribers_count ?? 0 }})
+                                                <span
+                                                    class="ml-1 text-xs text-slate-400 dark:text-slate-500"
+                                                >
+                                                    ({{
+                                                        list.subscribers_count ??
+                                                        0
+                                                    }})
                                                 </span>
                                             </span>
                                         </label>
@@ -2435,9 +2456,7 @@ if (form.contact_list_ids.length > 0) {
                                     <option
                                         :value="listDefaultMailbox.mailbox.id"
                                     >
-                                        {{
-                                            listDefaultMailbox.mailbox.name
-                                        }}
+                                        {{ listDefaultMailbox.mailbox.name }}
                                         ({{
                                             listDefaultMailbox.mailbox
                                                 .from_email
@@ -3155,7 +3174,7 @@ if (form.contact_list_ids.length > 0) {
                                 {{ $t("messages.actions.save_draft") }}
                             </SecondaryButton>
                             <PrimaryButton
-                                @click="submit('sent')"
+                                @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
                             >
