@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Autoresponder Queue:** Fixed critical bug where autoresponder messages ignored the `day` offset and sent immediately to all subscribers. Messages now correctly respect the configured delay:
+  - `day=0`: Sends immediately (at next CRON run)
+  - `day=1`: Sends 1 day after subscription
+  - `day=N`: Sends N days after subscription
+  - Applies to both email and SMS autoresponders.
+
 ## [1.5.3] – Short Description
 
 **Release date:** 2026-01-08

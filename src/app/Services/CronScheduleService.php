@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Models\MessageQueueEntry;
 use App\Jobs\SendEmailJob;
 use App\Jobs\SendSmsJob;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class CronScheduleService
@@ -240,6 +241,24 @@ class CronScheduleService
                         continue;
                     }
 
+                    // Dla autoresponderów: sprawdź czy minęło wystarczająco dni od subskrypcji
+                    if ($message->type === 'autoresponder' && $message->day !== null) {
+                        $listIds = $message->contactLists->pluck('id')->toArray();
+                        $pivot = $subscriber->contactLists()
+                            ->whereIn('contact_lists.id', $listIds)
+                            ->first()?->pivot;
+
+                        if ($pivot && $pivot->subscribed_at) {
+                            $subscribedAt = Carbon::parse($pivot->subscribed_at);
+                            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($message->day);
+
+                            // Jeśli oczekiwana data wysyłki jest w przyszłości, pomiń na razie
+                            if ($expectedSendDate->gt(now()->startOfDay())) {
+                                continue; // Zostanie przetworzony we właściwym dniu
+                            }
+                        }
+                    }
+
                     // Pobierz listę (pierwszą jeśli wiele)
                     $listId = $message->contactLists->first()?->id;
 
@@ -400,6 +419,24 @@ class CronScheduleService
                         $entry->markAsSkipped('Subscriber inactive or has no phone number');
                         $stats['skipped']++;
                         continue;
+                    }
+
+                    // Dla autoresponderów SMS: sprawdź czy minęło wystarczająco dni od subskrypcji
+                    if ($message->type === 'autoresponder' && $message->day !== null) {
+                        $listIds = $message->contactLists->pluck('id')->toArray();
+                        $pivot = $subscriber->contactLists()
+                            ->whereIn('contact_lists.id', $listIds)
+                            ->first()?->pivot;
+
+                        if ($pivot && $pivot->subscribed_at) {
+                            $subscribedAt = Carbon::parse($pivot->subscribed_at);
+                            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($message->day);
+
+                            // Jeśli oczekiwana data wysyłki jest w przyszłości, pomiń na razie
+                            if ($expectedSendDate->gt(now()->startOfDay())) {
+                                continue; // Zostanie przetworzony we właściwym dniu
+                            }
+                        }
                     }
 
                     $listId = $message->contactLists->first()?->id;
