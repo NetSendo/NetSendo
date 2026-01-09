@@ -149,6 +149,7 @@ class CronScheduleService
     public function processQueue(): array
     {
         $log = CronJobLog::startJob('email_queue_processor');
+        Log::info('CronScheduleService: Starting processQueue');
 
         $stats = [
             'dispatched' => 0,
@@ -179,11 +180,19 @@ class CronScheduleService
                 ->with('contactLists')
                 ->get();
 
+            Log::info('CronScheduleService: Found active messages', ['count' => $activeMessages->count()]);
+
             foreach ($activeMessages as $message) {
                 // Sync only if recipients synchronization is needed or it's a new message
                 // TODO: Consider adding a flag or check to avoid syncing every minute for static lists
                 // For now, we keep it to ensure new subscribers are picked up
                 $syncResult = $message->syncPlannedRecipients();
+                Log::info('CronScheduleService: Message sync result', [
+                    'message_id' => $message->id,
+                    'type' => $message->type,
+                    'day' => $message->day,
+                    'results' => $syncResult
+                ]);
                 $stats['synced'] += $syncResult['added'];
             }
 
@@ -254,6 +263,12 @@ class CronScheduleService
 
                             // Jeśli oczekiwana data wysyłki jest w przyszłości, pomiń na razie
                             if ($expectedSendDate->gt(now()->startOfDay())) {
+                                Log::info('CronScheduleService: Skipping future autoresponder', [
+                                    'entry_id' => $entry->id,
+                                    'subscriber_id' => $subscriber->id,
+                                    'expected_date' => $expectedSendDate->toDateString(),
+                                    'today' => now()->toDateString()
+                                ]);
                                 continue; // Zostanie przetworzony we właściwym dniu
                             }
                         }
@@ -292,6 +307,10 @@ class CronScheduleService
                         // Dispatch job dla konkretnego subskrybenta
                         // Pass entry ID so the job can update status upon completion
                         SendEmailJob::dispatch($message, $subscriber, null, $entry->id);
+                        Log::info('CronScheduleService: Job dispatched', [
+                            'entry_id' => $entry->id,
+                            'subscriber_id' => $subscriber->id
+                        ]);
 
                         // Note: markAsSent() is now called by SendEmailJob after successful delivery
                         // This ensures accurate status tracking

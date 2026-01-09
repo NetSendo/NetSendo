@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Autoresponder Queue:** Fixed critical bug where autoresponder messages ignored the `day` offset and sent immediately to all subscribers. Messages now correctly respect the configured delay:
+
   - `day=0`: Sends immediately (at next CRON run)
   - `day=1`: Sends 1 day after subscription
   - `day=N`: Sends N days after subscription
   - Applies to both email and SMS autoresponders.
+
+- **Subscriber Reactivation:** Fixed issue where manually adding or importing subscribers who were previously unsubscribed would not reactivate them on the list. Now:
+  - Manual subscriber creation (`store()`) correctly sets `status => 'active'` in pivot table.
+  - CSV import correctly reactivates previously unsubscribed subscribers.
+  - Clears `unsubscribed_at` timestamp when reactivating.
 
 ## [1.5.3] – Short Description
 

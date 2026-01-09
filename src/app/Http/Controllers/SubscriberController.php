@@ -246,14 +246,17 @@ class SubscriberController extends Controller
                 $subscriber = Subscriber::create($data);
             }
 
-            // Sync Lists (Attach)
-            // We use syncWithoutDetaching if we want to add, but here "store" might imply "set these lists"
-            // For a "Create" form, we usually just add them to these lists.
-            // If the user already existed and was on List A, and we select List B, should they remain on A?
-            // Usually YES for "Add Subscriber" logic if they already exist.
-            // But if we are "Edit"ing, we might replace.
-            // Let's assume Add = Attach.
-            $subscriber->contactLists()->syncWithoutDetaching($validated['contact_list_ids']);
+            // Sync Lists (Attach) with reactivation
+            // For each list, ensure the subscriber is active (reactivate if previously unsubscribed)
+            foreach ($validated['contact_list_ids'] as $listId) {
+                $subscriber->contactLists()->syncWithoutDetaching([
+                    $listId => [
+                        'status' => 'active',
+                        'subscribed_at' => now(),
+                        'unsubscribed_at' => null,
+                    ]
+                ]);
+            }
 
             // Handle Custom Fields
             if ($request->has('custom_fields')) {
@@ -587,8 +590,14 @@ class SubscriberController extends Controller
                 ]);
             }
 
-            // Attach to list
-            $subscriber->contactLists()->syncWithoutDetaching([$list->id]);
+            // Attach to list with reactivation
+            $subscriber->contactLists()->syncWithoutDetaching([
+                $list->id => [
+                    'status' => 'active',
+                    'subscribed_at' => now(),
+                    'unsubscribed_at' => null,
+                ]
+            ]);
 
             $imported++;
         }
