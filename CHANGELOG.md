@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Variable Insertion:** Fixed `[[!fname]]` (Vocative Name) variable insertion in Template Builder, which was previously inserting `[object Object]`.
+- **System Emails:** Added `[[!fname]]` variable to the list of available placeholders in System Email editor.
+
 ## [1.5.4] – Short Description
 
 **Release date:** 2026-01-09
