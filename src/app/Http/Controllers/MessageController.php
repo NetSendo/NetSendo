@@ -847,9 +847,44 @@ class MessageController extends Controller
             'read_time_histogram' => $readTimeHistogram,
             'top_readers' => $topReaders,
             'queue_stats' => $queueStats,
+            // Show the best queue entry per subscriber email (prioritizing successful statuses)
+            // Uses ROW_NUMBER to pick: sent > failed > queued > planned > skipped
+            // Excludes entries where subscriber was removed from list (they are not real recipients)
             'recipients' => $message->queueEntries()
+                ->select('message_queue_entries.*')
+                ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
                 ->with('subscriber:id,email,first_name,last_name,status')
-                ->orderByRaw("CASE status
+                ->whereIn('message_queue_entries.id', function ($query) use ($message) {
+                    $query->select('id')
+                        ->fromRaw("(
+                            SELECT mq.id, s.email,
+                                   ROW_NUMBER() OVER (
+                                       PARTITION BY s.email
+                                       ORDER BY
+                                           CASE mq.status
+                                               WHEN 'sent' THEN 1
+                                               WHEN 'failed' THEN 2
+                                               WHEN 'queued' THEN 3
+                                               WHEN 'planned' THEN 4
+                                               WHEN 'skipped' THEN 5
+                                               ELSE 6
+                                           END,
+                                           mq.id DESC
+                                   ) as rn
+                            FROM message_queue_entries mq
+                            JOIN subscribers s ON mq.subscriber_id = s.id
+                            WHERE mq.message_id = {$message->id}
+                              AND NOT (mq.status = 'skipped' AND mq.error_message LIKE '%removed from list%')
+                        ) as ranked")
+                        ->where('rn', 1);
+                })
+                // Also filter out any remaining skipped entries for removed subscribers
+                ->where(function ($q) {
+                    $q->where('message_queue_entries.status', '!=', 'skipped')
+                      ->orWhereNull('message_queue_entries.error_message')
+                      ->orWhere('message_queue_entries.error_message', 'NOT LIKE', '%removed from list%');
+                })
+                ->orderByRaw("CASE message_queue_entries.status
                     WHEN 'failed' THEN 1
                     WHEN 'queued' THEN 2
                     WHEN 'planned' THEN 3

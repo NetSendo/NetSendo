@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use App\Traits\LogsActivity;
 
 class Message extends Model
@@ -155,9 +156,41 @@ class Message extends Model
      */
     public function getQueueStats(): array
     {
+        $messageId = $this->id;
         $stats = $this->queueEntries()
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
+            ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
+            ->whereIn('message_queue_entries.id', function ($query) use ($messageId) {
+                $query->select('id')
+                    ->fromRaw("(
+                        SELECT mq.id, s.email,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY s.email
+                                   ORDER BY
+                                       CASE mq.status
+                                           WHEN 'sent' THEN 1
+                                           WHEN 'failed' THEN 2
+                                           WHEN 'queued' THEN 3
+                                           WHEN 'planned' THEN 4
+                                           WHEN 'skipped' THEN 5
+                                           ELSE 6
+                                       END,
+                                       mq.id DESC
+                               ) as rn
+                        FROM message_queue_entries mq
+                        JOIN subscribers s ON mq.subscriber_id = s.id
+                        WHERE mq.message_id = {$messageId}
+                          AND NOT (mq.status = 'skipped' AND mq.error_message LIKE '%removed from list%')
+                    ) as ranked")
+                    ->where('rn', 1);
+            })
+            // Exclude skipped entries for removed subscribers from stats
+            ->where(function ($q) {
+                $q->where('message_queue_entries.status', '!=', 'skipped')
+                  ->orWhereNull('message_queue_entries.error_message')
+                  ->orWhere('message_queue_entries.error_message', 'NOT LIKE', '%removed from list%');
+            })
+            ->selectRaw('message_queue_entries.status, COUNT(*) as count')
+            ->groupBy('message_queue_entries.status')
             ->pluck('count', 'status')
             ->toArray();
 
@@ -232,14 +265,16 @@ class Message extends Model
             }])
             ->get();
 
-        // Get existing queue entries to check sent status
-        $sentSubscriberIds = $this->queueEntries()
-            ->where('status', MessageQueueEntry::STATUS_SENT)
-            ->pluck('subscriber_id')
+        // Get emails that have already been sent (using email for deduplication)
+        $sentEmails = $this->queueEntries()
+            ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
+            ->where('message_queue_entries.status', MessageQueueEntry::STATUS_SENT)
+            ->pluck('subscribers.email')
+            ->unique()
             ->toArray();
 
         $stats = [
-            'sent' => count($sentSubscriberIds),
+            'sent' => count($sentEmails),
             'today' => 0,
             'tomorrow' => 0,
             'day_after_tomorrow' => 0,
@@ -250,8 +285,8 @@ class Message extends Model
         ];
 
         foreach ($subscribers as $subscriber) {
-            // Skip if already sent
-            if (in_array($subscriber->id, $sentSubscriberIds)) {
+            // Skip if already sent (check by email for deduplication)
+            if (in_array($subscriber->email, $sentEmails)) {
                 continue;
             }
 

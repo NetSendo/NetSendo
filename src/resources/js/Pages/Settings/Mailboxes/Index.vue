@@ -586,17 +586,7 @@ const isBroadcastDisabled = computed(() => {
                             : 'border-slate-200'
                     "
                 >
-                    <!-- Default Badge -->
-                    <div
-                        v-if="mailbox.is_default"
-                        class="absolute right-3 top-3"
-                    >
-                        <span
-                            class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                        >
-                            {{ $t("mailboxes.default") }}
-                        </span>
-                    </div>
+
 
                     <!-- Provider Icon & Name -->
                     <div class="flex items-start gap-3">
@@ -649,8 +639,15 @@ const isBroadcastDisabled = computed(() => {
                         </button>
                     </div>
 
-                    <!-- Status Badge -->
-                    <div class="mt-4">
+                    <!-- Status & Default Badge -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <!-- Default Badge -->
+                        <span
+                            v-if="mailbox.is_default"
+                            class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                        >
+                            {{ $t("mailboxes.default") }}
+                        </span>
                         <span
                             class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                             :class="getStatusClass(mailbox)"

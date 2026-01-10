@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Message Statistics:**
+  - Fixed duplicate subscriber display in recipient lists and queue statistics by grouping recipients by email address instead of subscriber ID.
+  - Updated deduplication logic to prioritize `sent` messages over `failed`, `queued`, `planned`, or `skipped` when multiple records exist for the same email.
+  - Excluded "skipped" entries from statistics and recipient lists when the reason is "Subscriber removed from list or unsubscribed".
+- **Mailboxes UI:** Fixed "Default" (Domyślna) label overlapped by the toggle switch. The label is now correctly positioned next to the status badge.
+
 ## [1.5.6] – Short Description
 
 **Release date:** 2026-01-10
