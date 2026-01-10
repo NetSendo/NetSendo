@@ -7,10 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.5] – Short Description
+
+**Release date:** 2026-01-10
+
 ### Fixed
 
 - **Variable Insertion:** Fixed `[[!fname]]` (Vocative Name) variable insertion in Template Builder, which was previously inserting `[object Object]`.
 - **System Emails:** Added `[[!fname]]` variable to the list of available placeholders in System Email editor.
+
+### Added
+
+- **Campaign Auditor Improvements:**
+  - Implemented data-driven revenue loss estimation by integrating real transaction data from `StripeTransaction`, `PolarTransaction`, `StripeProduct`, `PolarProduct`, `Funnel`, and `SalesFunnel`.
+  - Added `calculateRevenueMetrics()` method to `CampaignAuditorService` for fetching and normalizing user revenue data (AOV, monthly revenue, active funnels).
+  - Added new revenue loss indicator in the auditor UI, showing whether estimations are based on "Real transaction data" or "Industry benchmarks".
+  - Added full translations in PL and EN for the new revenue data source indicators.
+  - **List Growth Potential Analysis:** New `CATEGORY_GROWTH` category with `ISSUE_LOW_SUBSCRIBER_COUNT` that penalizes small subscriber bases:
+    - < 50 subscribers: -20 points (critical), 50-249: -12 points (warning), 250-999: -6 points (warning), 1000-4999: -3 points (info), 5000+: no penalty.
+    - Provides actionable recommendations for lead magnets, landing pages, and list-building strategies.
+
+### Changed
+
+- **Campaign Auditor Scoring:**
+  - Updated `calculateOverallScore()` logic to incorporate the estimated revenue loss into the final audit score.
+  - Implemented a dynamic penalty system where each 1% of monthly revenue lost results in a -1 point deduction (up to a maximum of 15 points).
+  - Added fallback penalty logic for users without transaction data based on absolute loss amounts ($100 = -1 point, max -10 points).
 
 ## [1.5.4] – Short Description
 

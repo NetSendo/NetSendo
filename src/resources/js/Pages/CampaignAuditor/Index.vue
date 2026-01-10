@@ -587,6 +587,56 @@ const saveAdvisorSettings = async () => {
                                                 )
                                             }}
                                         </p>
+                                        <!-- Revenue data source indicator -->
+                                        <p
+                                            v-if="
+                                                currentAudit.summary
+                                                    ?.has_revenue_data
+                                            "
+                                            class="mt-1 flex items-center gap-1 text-xs text-green-600 dark:text-green-400"
+                                        >
+                                            <svg
+                                                class="h-3 w-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                            </svg>
+                                            {{
+                                                $t(
+                                                    "campaign_auditor.based_on_real_data"
+                                                )
+                                            }}
+                                        </p>
+                                        <p
+                                            v-else
+                                            class="mt-1 flex items-center gap-1 text-xs text-gray-400"
+                                        >
+                                            <svg
+                                                class="h-3 w-3"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                            </svg>
+                                            {{
+                                                $t(
+                                                    "campaign_auditor.based_on_estimates"
+                                                )
+                                            }}
+                                        </p>
                                     </div>
                                     <button
                                         @click="runAudit('full')"

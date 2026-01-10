@@ -3529,6 +3529,8 @@
         "all_categories": "All Categories",
         "revenue_loss": "Estimated Revenue Loss",
         "estimated_monthly": "per month (estimated)",
+        "based_on_real_data": "Based on real transaction data",
+        "based_on_estimates": "Estimate based on industry benchmarks",
         "ai_executive_summary": "AI Executive Summary",
         "recommendation": "Recommendation",
         "mark_as_fixed": "Mark as Fixed",

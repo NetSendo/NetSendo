@@ -11,6 +11,12 @@ use App\Models\AutomationRule;
 use App\Models\Subscriber;
 use App\Models\EmailOpen;
 use App\Models\EmailClick;
+use App\Models\Funnel;
+use App\Models\SalesFunnel;
+use App\Models\StripeProduct;
+use App\Models\StripeTransaction;
+use App\Models\PolarProduct;
+use App\Models\PolarTransaction;
 use App\Services\AI\AiService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -68,7 +74,10 @@ class CampaignAuditorService
             // 6. Automation analysis
             $this->analyzeAutomations($audit, $user);
 
-            // 7. Revenue optimization opportunities
+            // 7. List growth potential analysis
+            $this->analyzeListGrowth($audit, $user);
+
+            // 8. Revenue optimization opportunities
             $this->analyzeRevenueOpportunities($audit, $user, $lookbackDays);
 
             // 8. AI-powered deep analysis (only for full audit)
@@ -467,6 +476,87 @@ class CampaignAuditorService
     }
 
     /**
+     * Analyze list growth potential - penalize low subscriber counts
+     */
+    protected function analyzeListGrowth(CampaignAudit $audit, User $user): void
+    {
+        // Get subscriber count from audited lists only
+        $auditedListIds = $audit->lists_audited ?? [];
+
+        if (empty($auditedListIds)) {
+            // Fallback: get all user's list IDs and count subscribers
+            $userListIds = ContactList::where('user_id', $user->id)->pluck('id')->toArray();
+
+            if (empty($userListIds)) {
+                $totalSubscribers = 0;
+            } else {
+                $totalSubscribers = \DB::table('contact_list_subscriber')
+                    ->whereIn('contact_list_id', $userListIds)
+                    ->where('status', 'active')
+                    ->distinct('subscriber_id')
+                    ->count('subscriber_id');
+            }
+        } else {
+            // Count unique subscribers in audited lists
+            $totalSubscribers = \DB::table('contact_list_subscriber')
+                ->whereIn('contact_list_id', $auditedListIds)
+                ->where('status', 'active')
+                ->distinct('subscriber_id')
+                ->count('subscriber_id');
+        }
+
+        // Define growth thresholds with corresponding penalties and messages
+        $thresholds = [
+            ['min' => 0, 'max' => 49, 'penalty' => 20, 'severity' => CampaignAuditIssue::SEVERITY_CRITICAL,
+             'message' => 'Very small list ({count} subscribers) - significant growth potential untapped',
+             'recommendation' => 'Create lead magnets (ebooks, checklists, webinars) and landing pages to capture more subscribers. Consider social media campaigns and partnerships to expand reach.'],
+            ['min' => 50, 'max' => 249, 'penalty' => 12, 'severity' => CampaignAuditIssue::SEVERITY_WARNING,
+             'message' => 'Small list ({count} subscribers) - room for growth',
+             'recommendation' => 'Implement opt-in forms on all website pages. Create content upgrades for popular blog posts. Use exit-intent popups and consider running contests or giveaways.'],
+            ['min' => 250, 'max' => 999, 'penalty' => 6, 'severity' => CampaignAuditIssue::SEVERITY_WARNING,
+             'message' => 'Growing list ({count} subscribers) - continue building momentum',
+             'recommendation' => 'Focus on referral programs and influencer partnerships. Optimize your signup forms for better conversion rates. Consider paid advertising to accelerate growth.'],
+            ['min' => 1000, 'max' => 4999, 'penalty' => 3, 'severity' => CampaignAuditIssue::SEVERITY_INFO,
+             'message' => 'Medium list ({count} subscribers) - good progress, keep growing',
+             'recommendation' => 'Maintain consistent list building efforts. Focus on list hygiene and engagement to ensure quality growth. Consider advanced segmentation strategies.'],
+            ['min' => 5000, 'max' => PHP_INT_MAX, 'penalty' => 0, 'severity' => null,
+             'message' => null,
+             'recommendation' => null],
+        ];
+
+        foreach ($thresholds as $threshold) {
+            if ($totalSubscribers >= $threshold['min'] && $totalSubscribers <= $threshold['max']) {
+                if ($threshold['penalty'] > 0 && $threshold['message']) {
+                    $message = str_replace('{count}', number_format($totalSubscribers), $threshold['message']);
+
+                    $audit->issues()->create([
+                        'severity' => $threshold['severity'],
+                        'category' => CampaignAuditIssue::CATEGORY_GROWTH,
+                        'issue_key' => CampaignAuditIssue::ISSUE_LOW_SUBSCRIBER_COUNT,
+                        'message' => $message,
+                        'recommendation' => $threshold['recommendation'],
+                        'impact_score' => $threshold['penalty'],
+                        'context' => [
+                            'subscriber_count' => $totalSubscribers,
+                            'target_count' => 5000,
+                            'growth_needed_percent' => $totalSubscribers > 0
+                                ? round((5000 / $totalSubscribers - 1) * 100, 1)
+                                : 100,
+                        ],
+                        'is_fixable' => false,
+                    ]);
+                }
+                break;
+            }
+        }
+
+        // Store subscriber count in audit summary for frontend display
+        $existingSummary = $audit->summary ?? [];
+        $existingSummary['total_subscribers_audited'] = $totalSubscribers;
+        $audit->update(['summary' => $existingSummary]);
+    }
+
+    /**
      * Analyze revenue opportunities
      */
     protected function analyzeRevenueOpportunities(CampaignAudit $audit, User $user, int $lookbackDays = 30): void
@@ -725,13 +815,191 @@ PROMPT;
     }
 
     /**
-     * Calculate overall score based on issues
+     * Calculate revenue metrics for the user based on real transaction data
+     */
+    protected function calculateRevenueMetrics(User $user, int $lookbackDays = 90): array
+    {
+        // Calculate monthly revenue from Stripe transactions
+        $stripeRevenue = StripeTransaction::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
+            ->sum('amount') / 100; // Convert from cents
+
+        // Calculate monthly revenue from Polar transactions
+        $polarRevenue = PolarTransaction::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
+            ->sum('amount') / 100;
+
+        $totalRevenue = $stripeRevenue + $polarRevenue;
+        $monthlyRevenue = $totalRevenue / ($lookbackDays / 30); // Normalize to monthly
+
+        // Get transaction counts
+        $stripeTransactions = StripeTransaction::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
+            ->count();
+
+        $polarTransactions = PolarTransaction::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subDays($lookbackDays))
+            ->count();
+
+        $totalTransactions = $stripeTransactions + $polarTransactions;
+        $avgOrderValue = $totalTransactions > 0 ? $totalRevenue / $totalTransactions : 0;
+
+        // Count active products
+        $activeStripeProducts = StripeProduct::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->count();
+
+        $activePolarProducts = PolarProduct::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->count();
+
+        // Count active funnels
+        $activeFunnels = Funnel::where('user_id', $user->id)
+            ->where('status', Funnel::STATUS_ACTIVE)
+            ->count();
+
+        $activeSalesFunnels = SalesFunnel::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->count();
+
+        // Get funnel completion rates
+        $funnelStats = Funnel::where('user_id', $user->id)
+            ->where('status', Funnel::STATUS_ACTIVE)
+            ->where('subscribers_count', '>', 0)
+            ->get()
+            ->map(fn ($f) => [
+                'name' => $f->name,
+                'completion_rate' => $f->completion_rate,
+            ]);
+
+        $avgFunnelCompletionRate = $funnelStats->avg('completion_rate') ?? 0;
+
+        // Get subscriber count for fallback calculations
+        $totalSubscribers = Subscriber::whereHas('contactLists', function ($q) use ($user) {
+            $q->where('contact_lists.user_id', $user->id);
+        })->count();
+
+        return [
+            'has_revenue_data' => $totalRevenue > 0,
+            'monthly_revenue' => round($monthlyRevenue, 2),
+            'total_revenue' => round($totalRevenue, 2),
+            'avg_order_value' => round($avgOrderValue, 2),
+            'total_transactions' => $totalTransactions,
+            'active_products' => $activeStripeProducts + $activePolarProducts,
+            'active_funnels' => $activeFunnels,
+            'active_sales_funnels' => $activeSalesFunnels,
+            'avg_funnel_completion_rate' => round($avgFunnelCompletionRate, 1),
+            'total_subscribers' => $totalSubscribers,
+            // Fallback value: estimate subscriber value at $0.50/month
+            'estimated_list_value' => $totalSubscribers * 0.5,
+        ];
+    }
+
+    /**
+     * Calculate estimated revenue loss based on issues and real revenue data
+     */
+    protected function calculateRevenueLoss(CampaignAudit $audit, array $revenueMetrics): float
+    {
+        $issues = $audit->issues()->get();
+        $monthlyRevenue = $revenueMetrics['monthly_revenue'];
+        $hasRevenueData = $revenueMetrics['has_revenue_data'];
+
+        // If no real revenue data, use fallback estimation
+        if (!$hasRevenueData) {
+            $baseValue = $revenueMetrics['estimated_list_value'];
+            $totalImpact = $issues->sum('impact_score');
+            // Conservative estimate: impact_score × $10 per point
+            return $totalImpact * 10;
+        }
+
+        $estimatedLoss = 0;
+
+        foreach ($issues as $issue) {
+            switch ($issue->issue_key) {
+                case CampaignAuditIssue::ISSUE_LOW_OPEN_RATE:
+                    // Low open rate: estimate 10% revenue impact
+                    $estimatedLoss += $monthlyRevenue * 0.10;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_NO_PERSONALIZATION:
+                    // No personalization: 26% lower engagement (research-backed)
+                    $estimatedLoss += $monthlyRevenue * 0.05; // Conservative 5%
+                    break;
+
+                case CampaignAuditIssue::ISSUE_MISSING_PREHEADER:
+                    // Missing preheader: 5-10% open rate boost missed
+                    $estimatedLoss += $monthlyRevenue * 0.02;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_NO_AUTOMATION:
+                    // No automations: automated emails = 320% more revenue
+                    $estimatedLoss += $monthlyRevenue * 0.15;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_INACTIVE_AUTOMATION:
+                    // Inactive automations: potential missed revenue
+                    $inactiveCount = $issue->context['inactive_count'] ?? 1;
+                    $estimatedLoss += $monthlyRevenue * 0.03 * min($inactiveCount, 5);
+                    break;
+
+                case CampaignAuditIssue::ISSUE_SMS_MISSING:
+                    // SMS missing: 12% additional conversion potential
+                    $subscribersWithPhones = $issue->context['subscribers_with_phones'] ?? 0;
+                    $avgOrderValue = $revenueMetrics['avg_order_value'];
+                    $estimatedLoss += $subscribersWithPhones * 0.12 * ($avgOrderValue > 0 ? $avgOrderValue * 0.1 : 5);
+                    break;
+
+                case CampaignAuditIssue::ISSUE_NO_FOLLOW_UP:
+                    // No follow-up on engaged subscribers
+                    $estimatedLoss += $monthlyRevenue * 0.08;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_STALE_LIST:
+                    // Stale list: deliverability issues affect conversions
+                    $estimatedLoss += $monthlyRevenue * 0.05;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_OVER_MAILING:
+                    // Over-mailing: increased unsubscribes = lost future revenue
+                    $estimatedLoss += $monthlyRevenue * 0.10;
+                    break;
+
+                case CampaignAuditIssue::ISSUE_SPAM_CONTENT:
+                    // Spam content: deliverability issues
+                    $estimatedLoss += $monthlyRevenue * 0.08;
+                    break;
+
+                default:
+                    // Other issues: use impact score with smaller multiplier
+                    $estimatedLoss += ($issue->impact_score ?? 0) * 5;
+                    break;
+            }
+        }
+
+        // Cap at 80% of monthly revenue (reasonable maximum)
+        return min($estimatedLoss, $monthlyRevenue * 0.8);
+    }
+
+    /**
+     * Calculate overall score based on issues and revenue impact
      */
     protected function calculateOverallScore(CampaignAudit $audit): void
     {
+        $user = $audit->user;
+
         $criticalCount = $audit->issues()->where('severity', CampaignAuditIssue::SEVERITY_CRITICAL)->count();
         $warningCount = $audit->issues()->where('severity', CampaignAuditIssue::SEVERITY_WARNING)->count();
         $infoCount = $audit->issues()->where('severity', CampaignAuditIssue::SEVERITY_INFO)->count();
+
+        // Calculate revenue metrics
+        $revenueMetrics = $this->calculateRevenueMetrics($user);
+
+        // Calculate revenue loss based on real data
+        $estimatedRevenueLoss = $this->calculateRevenueLoss($audit, $revenueMetrics);
 
         // Start at 100, deduct for issues
         $score = 100;
@@ -739,10 +1007,22 @@ PROMPT;
         $score -= $warningCount * CampaignAuditIssue::SEVERITY_WEIGHTS[CampaignAuditIssue::SEVERITY_WARNING];
         $score -= $infoCount * CampaignAuditIssue::SEVERITY_WEIGHTS[CampaignAuditIssue::SEVERITY_INFO];
 
-        // Calculate estimated revenue loss based on impact scores
-        $totalImpact = $audit->issues()->sum('impact_score');
-        // Simple estimation: impact score * $50 per point
-        $estimatedRevenueLoss = $totalImpact * 50;
+        // NEW: Apply revenue loss penalty to score
+        // If losing money, the score should reflect that
+        $monthlyRevenue = $revenueMetrics['monthly_revenue'];
+        if ($estimatedRevenueLoss > 0) {
+            if ($monthlyRevenue > 0) {
+                // Calculate loss as percentage of revenue
+                $lossPercentage = ($estimatedRevenueLoss / $monthlyRevenue) * 100;
+                // Each 1% loss = -1 point, max -15 points
+                $revenuePenalty = min(15, floor($lossPercentage));
+            } else {
+                // No revenue data: apply penalty based on absolute loss
+                // Every $100 estimated loss = -1 point, max -10 points
+                $revenuePenalty = min(10, floor($estimatedRevenueLoss / 100));
+            }
+            $score -= $revenuePenalty;
+        }
 
         $fixableCount = $audit->issues()->where('is_fixable', true)->count();
 
@@ -751,10 +1031,14 @@ PROMPT;
             'critical_count' => $criticalCount,
             'warning_count' => $warningCount,
             'info_count' => $infoCount,
-            'estimated_revenue_loss' => $estimatedRevenueLoss,
+            'estimated_revenue_loss' => round($estimatedRevenueLoss, 2),
+            'metrics' => [
+                'revenue' => $revenueMetrics,
+            ],
             'summary' => [
                 'total_issues' => $criticalCount + $warningCount + $infoCount,
                 'fixable_issues' => $fixableCount,
+                'has_revenue_data' => $revenueMetrics['has_revenue_data'],
                 'categories' => $audit->issues()
                     ->selectRaw('category, COUNT(*) as count')
                     ->groupBy('category')

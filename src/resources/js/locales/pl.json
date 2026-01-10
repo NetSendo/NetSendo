@@ -3673,6 +3673,8 @@
         "all_categories": "Wszystkie kategorie",
         "revenue_loss": "Szacowana strata przychodów",
         "estimated_monthly": "miesięcznie (szacunek)",
+        "based_on_real_data": "Na podstawie rzeczywistych transakcji",
+        "based_on_estimates": "Szacunek oparty na benchmarkach branżowych",
         "ai_executive_summary": "Podsumowanie AI",
         "recommendation": "Rekomendacja",
         "mark_as_fixed": "Oznacz jako naprawione",

@@ -48,6 +48,7 @@ class CampaignAuditIssue extends Model
     const CATEGORY_DELIVERABILITY = 'deliverability';
     const CATEGORY_REVENUE = 'revenue';
     const CATEGORY_AUTOMATION = 'automation';
+    const CATEGORY_GROWTH = 'growth';
 
     // Issue key constants (for translations)
     const ISSUE_OVER_MAILING = 'over_mailing';
@@ -65,6 +66,7 @@ class CampaignAuditIssue extends Model
     const ISSUE_MISSING_PREHEADER = 'missing_preheader';
     const ISSUE_LONG_SUBJECT = 'long_subject';
     const ISSUE_NO_PERSONALIZATION = 'no_personalization';
+    const ISSUE_LOW_SUBSCRIBER_COUNT = 'low_subscriber_count';
 
     // Severity weights for score calculation
     const SEVERITY_WEIGHTS = [
@@ -82,6 +84,7 @@ class CampaignAuditIssue extends Model
         self::CATEGORY_DELIVERABILITY => 'Deliverability',
         self::CATEGORY_REVENUE => 'Revenue Impact',
         self::CATEGORY_AUTOMATION => 'Automation',
+        self::CATEGORY_GROWTH => 'List Growth',
     ];
 
     // Category icons (for frontend)
@@ -93,6 +96,7 @@ class CampaignAuditIssue extends Model
         self::CATEGORY_DELIVERABILITY => 'shield-check',
         self::CATEGORY_REVENUE => 'currency-dollar',
         self::CATEGORY_AUTOMATION => 'cog',
+        self::CATEGORY_GROWTH => 'chart-bar',
     ];
 
     /**
