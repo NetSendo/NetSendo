@@ -2655,6 +2655,10 @@
             "disconnect": "Desconectar",
             "disconnected": "Cuenta de Google desconectada."
         },
+        "click_for_details": "Haga clic para ver los detalles del error",
+        "error_details": {
+            "title": "Detalles del Error de Conexión"
+        },
         "woocommerce": {
             "title": "Integración de WooCommerce",
             "subtitle": "Conecta tu tienda WooCommerce para importar productos en plantillas de correo",
@@ -3099,7 +3103,8 @@
             "segmentation": "Segmentación de Audiencia",
             "deliverability": "Entregabilidad",
             "revenue": "Impacto en Ingresos",
-            "automation": "Automatización"
+            "automation": "Automatización",
+            "growth": "Crecimiento de la lista"
         }
     },
     "campaign_advisor": {

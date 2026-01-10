@@ -933,6 +933,8 @@
         "status_active": "Aktywna",
         "status_inactive": "Nieaktywna",
         "recipients": "odbiorców",
+        "skipped": "pominięto",
+        "skipped_hint": "Subskrybenci pominięci z powodu upływu czasu wysyłki. Kliknij w statystyki, aby uruchomić ręczną wysyłkę.",
         "resend_button": "Ponów wysyłkę",
         "resending": "Wysyłanie...",
         "resend_confirm_title": "Ponów wysyłkę wiadomości",
@@ -2485,6 +2487,10 @@
             "not_connected": "Nie połączono",
             "disconnect": "Rozłącz",
             "disconnected": "Rozłączono konto Google."
+        },
+        "click_for_details": "Kliknij, aby zobaczyć szczegóły błędu",
+        "error_details": {
+            "title": "Szczegóły błędu połączenia"
         }
     },
     "sms_providers": {
@@ -3703,7 +3709,8 @@
             "segmentation": "Segmentacja odbiorców",
             "deliverability": "Dostarczalność",
             "revenue": "Wpływ na przychód",
-            "automation": "Automatyzacja"
+            "automation": "Automatyzacja",
+            "growth": "Wzrost listy"
         }
     },
     "campaign_advisor": {
@@ -3731,6 +3738,7 @@
         "title": "Statystyki kolejki",
         "day_info": "Ta wiadomość jest ustawiona na dzień {day} po zapisie subskrybenta.",
         "sent": "Wysłane",
+        "today": "Dziś",
         "tomorrow": "Jutro",
         "day_after_tomorrow": "Pojutrze",
         "days_3_7": "3-7 dni",

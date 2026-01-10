@@ -1488,6 +1488,10 @@
             "disconnect": "Trennen",
             "disconnected": "Google-Konto getrennt."
         },
+        "click_for_details": "Klicken Sie, um die Fehlerdetails anzuzeigen",
+        "error_details": {
+            "title": "Details zum Verbindungsfehler"
+        },
         "send_welcome_email": "Willkommens-E-Mail senden",
         "hold_ctrl_to_select_multiple": "Halten Sie Strg/Cmd gedrückt, um mehrere auszuwählen",
         "fields": {
@@ -3106,7 +3110,8 @@
             "segmentation": "Zielgruppensegmentierung",
             "deliverability": "Zustellbarkeit",
             "revenue": "Umsatzauswirkungen",
-            "automation": "Automatisierung"
+            "automation": "Automatisierung",
+            "growth": "Listenwachstum"
         }
     },
     "campaign_advisor": {

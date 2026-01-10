@@ -175,6 +175,13 @@ class Message extends Model
      * Get detailed queue schedule statistics for autoresponder messages.
      * Shows breakdown by scheduled send date and missed recipients.
      *
+     * Logic:
+     * - expectedSendDateTime is calculated as: subscribed_at + day offset
+     * - If time_of_day is set, the time portion is set to that hour
+     * - If time_of_day is not set, the time from subscribed_at is used
+     * - A subscriber is "missed" if their expectedSendDateTime < NOW
+     * - Schedule categories (today, tomorrow, etc.) show future sends only
+     *
      * @return array
      */
     public function getQueueScheduleStats(): array
@@ -184,7 +191,9 @@ class Message extends Model
         }
 
         $dayOffset = $this->day ?? 0;
-        $today = now()->startOfDay();
+        $timeOfDay = $this->time_of_day; // e.g., "15:00" or null
+        $now = now();
+        $today = $now->copy()->startOfDay();
         $tomorrow = $today->copy()->addDay();
         $dayAfterTomorrow = $today->copy()->addDays(2);
         $weekFromNow = $today->copy()->addDays(7);
@@ -196,6 +205,7 @@ class Message extends Model
         if (empty($includedListIds)) {
             return [
                 'sent' => 0,
+                'today' => 0,
                 'tomorrow' => 0,
                 'day_after_tomorrow' => 0,
                 'days_3_7' => 0,
@@ -230,6 +240,7 @@ class Message extends Model
 
         $stats = [
             'sent' => count($sentSubscriberIds),
+            'today' => 0,
             'tomorrow' => 0,
             'day_after_tomorrow' => 0,
             'days_3_7' => 0,
@@ -252,11 +263,26 @@ class Message extends Model
                 continue;
             }
 
-            // Calculate expected send date
-            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($dayOffset);
+            // Calculate expected send datetime
+            // Base: subscribed_at + day offset
+            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
 
-            // Check if this subscriber was "missed" (joined before the offset applies)
-            if ($expectedSendDate->lt($today)) {
+            // If time_of_day is set, use that specific hour on the expected day
+            if ($timeOfDay) {
+                // Parse time_of_day (format: "HH:MM" or "H:i")
+                $timeParts = explode(':', $timeOfDay);
+                $hour = (int) ($timeParts[0] ?? 0);
+                $minute = (int) ($timeParts[1] ?? 0);
+                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+            }
+            // If no time_of_day, keep the original subscribed_at time
+            // This means for day=0: expectedSendDateTime = subscribedAt (immediate)
+
+            // Get just the date portion for category comparison
+            $expectedSendDate = $expectedSendDateTime->copy()->startOfDay();
+
+            // Check if this subscriber was "missed" (expected send datetime is in the past)
+            if ($expectedSendDateTime->lt($now)) {
                 $stats['missed']++;
                 // Store first 100 missed subscribers for display
                 if (count($stats['missed_subscribers']) < 100) {
@@ -264,10 +290,13 @@ class Message extends Model
                         'id' => $subscriber->id,
                         'email' => $subscriber->email,
                         'name' => trim(($subscriber->first_name ?? '') . ' ' . ($subscriber->last_name ?? '')),
-                        'subscribed_at' => $subscribedAt->format('Y-m-d'),
-                        'would_send_at' => $expectedSendDate->format('Y-m-d'),
+                        'subscribed_at' => $subscribedAt->format('Y-m-d H:i'),
+                        'would_send_at' => $expectedSendDateTime->format('Y-m-d H:i'),
                     ];
                 }
+            } elseif ($expectedSendDate->isSameDay($today)) {
+                // Will be sent later today
+                $stats['today']++;
             } elseif ($expectedSendDate->isSameDay($tomorrow)) {
                 $stats['tomorrow']++;
             } elseif ($expectedSendDate->isSameDay($dayAfterTomorrow)) {
@@ -279,7 +308,7 @@ class Message extends Model
             }
         }
 
-        $stats['total_scheduled'] = $stats['tomorrow'] + $stats['day_after_tomorrow'] + $stats['days_3_7'] + $stats['over_7_days'];
+        $stats['total_scheduled'] = $stats['today'] + $stats['tomorrow'] + $stats['day_after_tomorrow'] + $stats['days_3_7'] + $stats['over_7_days'];
 
         return $stats;
     }
@@ -287,6 +316,11 @@ class Message extends Model
     /**
      * Synchronize planned recipients with current active subscribers.
      * This adds new subscribers and marks unsubscribed ones as skipped.
+     *
+     * For autoresponders: Does NOT add all subscribers automatically.
+     * Queue entries are created when subscribers join (SubscriberController)
+     * or manually via "Send to missed" button. This prevents adding
+     * subscribers whose send time has already passed.
      *
      * @return array{added: int, skipped: int}
      */
@@ -310,7 +344,29 @@ class Message extends Model
             ->pluck('subscriber_id')
             ->toArray();
 
-        // Add new subscribers as planned
+        // For autoresponders: DON'T add new subscribers automatically
+        // Queue entries are created:
+        // 1. When subscriber joins the list (in SubscriberController)
+        // 2. Manually via "Send to missed" button
+        // This ensures we don't add subscribers whose send time has already passed
+        if ($this->isQueueType()) {
+            // Only mark removed/unsubscribed subscribers as skipped
+            $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
+            if (!empty($removedSubscriberIds)) {
+                $skipped = $this->queueEntries()
+                    ->whereIn('subscriber_id', $removedSubscriberIds)
+                    ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                    ->update([
+                        'status' => MessageQueueEntry::STATUS_SKIPPED,
+                        'error_message' => 'Subscriber removed from list or unsubscribed',
+                    ]);
+                $result['skipped'] = $skipped;
+            }
+
+            return $result;
+        }
+
+        // For broadcasts: add all new subscribers as planned
         $newSubscriberIds = array_diff($currentSubscriberIds, $existingEntryIds);
         foreach ($newSubscriberIds as $subscriberId) {
             $this->queueEntries()->create([

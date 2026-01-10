@@ -36,6 +36,7 @@ class EventServiceProvider extends ServiceProvider
         SubscriberSignedUp::class => [
             TriggerAutomationsListener::class,
             SendNewSubscriberNotification::class,
+            \App\Listeners\CreateAutoresponderQueueEntries::class,
         ],
         EmailOpened::class => [
             TriggerAutomationsListener::class,

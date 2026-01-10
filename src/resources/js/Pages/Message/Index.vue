@@ -593,6 +593,18 @@ const getAttachmentTooltip = (message, trans) => {
                                             0
                                         }}
                                         {{ $t("messages.recipients") }}
+                                        <span
+                                            v-if="
+                                                message.type ===
+                                                    'autoresponder' &&
+                                                message.skipped_count > 0
+                                            "
+                                            class="text-orange-500 font-medium"
+                                            :title="$t('messages.skipped_hint')"
+                                        >
+                                            ({{ message.skipped_count }}
+                                            {{ $t("messages.skipped") }})
+                                        </span>
                                     </span>
                                 </div>
                             </td>

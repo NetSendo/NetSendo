@@ -236,6 +236,23 @@ const getPercentage = (value) => {
                         </div>
                     </div>
 
+                    <!-- Today -->
+                    <div
+                        v-if="stats.today > 0"
+                        class="flex items-center justify-between rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 p-3"
+                    >
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🚀</span>
+                            <span class="text-green-700 dark:text-green-300">{{
+                                $t("queue_stats.today")
+                            }}</span>
+                        </div>
+                        <span
+                            class="font-semibold text-green-700 dark:text-green-300"
+                            >{{ stats.today }}</span
+                        >
+                    </div>
+
                     <!-- Tomorrow -->
                     <div
                         class="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 p-3"

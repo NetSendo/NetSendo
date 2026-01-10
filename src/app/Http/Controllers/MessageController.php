@@ -110,6 +110,10 @@ class MessageController extends Controller
                     'recipients_count' => $msg->status === 'sent'
                         ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
                         : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
+                    // Skipped count for autoresponder messages (calculated dynamically to match modal stats)
+                    'skipped_count' => $msg->type === 'autoresponder'
+                        ? ($msg->getQueueScheduleStats()['missed'] ?? 0)
+                        : 0,
                     'created_at' => DateHelper::formatForUser($msg->created_at),
                     'scheduled_at' => $msg->scheduled_at
                         ? DateHelper::formatForUser($msg->scheduled_at)

@@ -931,6 +931,8 @@
         "status_active": "Active",
         "status_inactive": "Inactive",
         "recipients": "recipients",
+        "skipped": "skipped",
+        "skipped_hint": "Subscribers skipped due to past send time. Click on statistics to trigger manual sending.",
         "resend_button": "Resend",
         "resending": "Sending...",
         "resend_confirm_title": "Resend Message",
@@ -2623,6 +2625,10 @@
             "not_connected": "Not connected",
             "disconnect": "Disconnect",
             "disconnected": "Google account disconnected."
+        },
+        "click_for_details": "Click to see error details",
+        "error_details": {
+            "title": "Connection Error Details"
         }
     },
     "funnels": {
@@ -3559,7 +3565,8 @@
             "segmentation": "Audience Segmentation",
             "deliverability": "Deliverability",
             "revenue": "Revenue Impact",
-            "automation": "Automation"
+            "automation": "Automation",
+            "growth": "List Growth"
         }
     },
     "campaign_advisor": {
@@ -3587,6 +3594,7 @@
         "title": "Queue Statistics",
         "day_info": "This message is set to day {day} after subscriber signup.",
         "sent": "Sent",
+        "today": "Today",
         "tomorrow": "Tomorrow",
         "day_after_tomorrow": "Day after tomorrow",
         "days_3_7": "3-7 days",

@@ -7,11 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+## [1.5.6] – Short Description
+
+**Release date:** 2026-01-10
+
+### Added
+
+- **Autoresponder Statistics:**
+  - Added display of skipped subscribers count for autoresponder messages on the message list.
+  - Added "skipped" and "skipped_hint" translations in PL and EN.
+  - **Error Detail Modal:**
+    - Modified `Mailboxes/Index.vue` to make truncated error messages clickable.
+    - Implemented a new modal (`Error Details Modal`) to show the complete error message.
+    - Added necessary reactive state and translation keys (`mailboxes.click_for_details`, `mailboxes.error_details.title`) in PL, EN, ES, DE.
+
+### Fixed
+
+- **Queue Statistics Visibility:** Fixed issue where the "Queue Progress" section was hidden for new autoresponder messages that had no processing data yet.
+- **Skipped Subscribers Calculation:** Updated `MessageController` to use dynamic calculation for "missed" subscribers (`getQueueScheduleStats`) instead of relying solely on database records, ensuring the message list reflects the true state shown in the statistics modal.
+- **Database Error:**
+  - Fixed `SQLSTATE[22001]: String data, right truncated` error by changing `last_test_message` column type from `string` to `text` in `mailboxes` table (migration `2026_01_10_195500`).
+
 ## [1.5.5] – Short Description
 
 **Release date:** 2026-01-10
 
 ### Fixed
+
+- **Autoresponder Queue Timing:** Fixed issue where autoresponder messages created with a day offset (e.g., `day=1`) would incorrectly queue messages for subscribers whose sending time had already passed.
+
+  - Implemented logic to skip automatic queue entry creation for "missed" subscribers when creating/updating messages.
+  - Added new listener to properly handle queueing for new subscribers based on their signup time.
+  - "Send to missed" functionality remains available for manual remediation.
 
 - **Variable Insertion:** Fixed `[[!fname]]` (Vocative Name) variable insertion in Template Builder, which was previously inserting `[object Object]`.
 - **System Emails:** Added `[[!fname]]` variable to the list of available placeholders in System Email editor.
