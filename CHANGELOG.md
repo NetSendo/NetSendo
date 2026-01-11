@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Autoresponder Queue Timing:** Fixed critical bug where day=0 autoresponder messages were incorrectly sent to all existing subscribers on the list. The `CronScheduleService` now uses full datetime comparison instead of `startOfDay()`, ensuring messages are only sent to subscribers whose expected send time (subscribed_at + day offset) has actually passed.
+- **Queue Statistics:** Fixed incorrect "skipped" count in message statistics when duplicate subscriber records exist. The `getQueueScheduleStats()` method now deduplicates subscribers by email before counting, ensuring accurate statistics.
 - **Message Statistics:**
   - Fixed duplicate subscriber display in recipient lists and queue statistics by grouping recipients by email address instead of subscriber ID.
   - Updated deduplication logic to prioritize `sent` messages over `failed`, `queued`, `planned`, or `skipped` when multiple records exist for the same email.

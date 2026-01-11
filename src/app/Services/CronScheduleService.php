@@ -259,17 +259,31 @@ class CronScheduleService
 
                         if ($pivot && $pivot->subscribed_at) {
                             $subscribedAt = Carbon::parse($pivot->subscribed_at);
-                            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($message->day);
+                            $dayOffset = $message->day ?? 0;
+                            $timeOfDay = $message->time_of_day;
 
-                            // Jeśli oczekiwana data wysyłki jest w przyszłości, pomiń na razie
-                            if ($expectedSendDate->gt(now()->startOfDay())) {
+                            // Calculate expected send datetime with full time component
+                            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
+
+                            if ($timeOfDay) {
+                                // If time_of_day is set, use that specific hour on the expected day
+                                $timeParts = explode(':', $timeOfDay);
+                                $hour = (int) ($timeParts[0] ?? 0);
+                                $minute = (int) ($timeParts[1] ?? 0);
+                                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+                            }
+                            // If no time_of_day, we keep the original time from subscribed_at
+                            // This means for day=0: expectedSendDateTime = subscribedAt (immediate)
+
+                            // If the expected send datetime is in the future, skip for now
+                            if ($expectedSendDateTime->gt(now())) {
                                 Log::info('CronScheduleService: Skipping future autoresponder', [
                                     'entry_id' => $entry->id,
                                     'subscriber_id' => $subscriber->id,
-                                    'expected_date' => $expectedSendDate->toDateString(),
-                                    'today' => now()->toDateString()
+                                    'expected_datetime' => $expectedSendDateTime->format('Y-m-d H:i'),
+                                    'now' => now()->format('Y-m-d H:i')
                                 ]);
-                                continue; // Zostanie przetworzony we właściwym dniu
+                                continue; // Will be processed at the appropriate time
                             }
                         }
                     }
@@ -449,11 +463,22 @@ class CronScheduleService
 
                         if ($pivot && $pivot->subscribed_at) {
                             $subscribedAt = Carbon::parse($pivot->subscribed_at);
-                            $expectedSendDate = $subscribedAt->copy()->startOfDay()->addDays($message->day);
+                            $dayOffset = $message->day ?? 0;
+                            $timeOfDay = $message->time_of_day;
 
-                            // Jeśli oczekiwana data wysyłki jest w przyszłości, pomiń na razie
-                            if ($expectedSendDate->gt(now()->startOfDay())) {
-                                continue; // Zostanie przetworzony we właściwym dniu
+                            // Calculate expected send datetime with full time component
+                            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
+
+                            if ($timeOfDay) {
+                                $timeParts = explode(':', $timeOfDay);
+                                $hour = (int) ($timeParts[0] ?? 0);
+                                $minute = (int) ($timeParts[1] ?? 0);
+                                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+                            }
+
+                            // If the expected send datetime is in the future, skip for now
+                            if ($expectedSendDateTime->gt(now())) {
+                                continue; // Will be processed at the appropriate time
                             }
                         }
                     }

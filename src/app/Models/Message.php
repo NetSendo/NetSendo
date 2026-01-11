@@ -263,7 +263,8 @@ class Message extends Model
             ->with(['contactLists' => function ($query) use ($includedListIds) {
                 $query->whereIn('contact_lists.id', $includedListIds);
             }])
-            ->get();
+            ->get()
+            ->unique('email'); // Deduplicate by email before counting
 
         // Get emails that have already been sent (using email for deduplication)
         $sentEmails = $this->queueEntries()
