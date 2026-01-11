@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **NetSendo Pixel:** Fixed critical bug where pixel tracking was not working because POST endpoints (`/t/pixel/event`, `/t/pixel/batch`, `/t/pixel/identify`) were blocked by CSRF verification. Added `t/pixel/*` to CSRF exceptions in `bootstrap/app.php`.
+
 ## [1.6.0] – WooCommerce Multi-Store Support
 
 **Release date:** 2026-01-11

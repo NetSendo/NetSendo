@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/cron/webhook',
             'webhooks/bounce/*',
             'subscribe/*',
+            't/pixel/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
