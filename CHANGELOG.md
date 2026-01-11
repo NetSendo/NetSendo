@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **NetSendo Pixel Cross-Origin Tracking:**
+
+  - Added `config/cors.php` with proper CORS configuration for `/t/pixel/*` endpoints, enabling pixel tracking from external websites.
+  - Added `HandleCors` middleware to global middleware stack in `bootstrap/app.php`.
+  - Fixed critical issue where `sendBeacon` requests from browsers were not being recorded despite curl requests working correctly.
+  - Changed pixel JavaScript to use XHR as the primary request method instead of `sendBeacon` for better reliability.
+  - `sendBeacon` is now only used as fallback for `beforeunload` events (page exit tracking).
+  - Added debug logging to `PixelController::trackEvent()` and `batchEvents()` methods for easier troubleshooting.
+
 - **NetSendo Pixel:** Fixed critical bug where pixel tracking was not working because POST endpoints (`/t/pixel/event`, `/t/pixel/batch`, `/t/pixel/identify`) were blocked by CSRF verification. Added `t/pixel/*` to CSRF exceptions in `bootstrap/app.php`.
 - **CRM Deletion Logic:**
   - **Groups:** Fixed 500 server error when deleting a group with children or lists. Now safely moves child groups to the parent group and detaches lists to "Uncategorized" before deletion.

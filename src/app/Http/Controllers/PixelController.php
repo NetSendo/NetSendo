@@ -433,28 +433,36 @@ class PixelController extends Controller
         };
     }
 
-    function sendRequest(endpoint, data, callback) {
+    function sendRequest(endpoint, data, callback, useBeacon) {
         var fullData = Object.assign({
             user_id: config.userId,
             visitor_token: getVisitorToken()
         }, data, getDeviceInfo());
 
-        // Use sendBeacon if available for reliability
-        if (navigator.sendBeacon && endpoint !== '/identify') {
+        // Use sendBeacon only for beforeunload events (when useBeacon is true)
+        if (useBeacon && navigator.sendBeacon) {
             var blob = new Blob([JSON.stringify(fullData)], { type: 'application/json' });
-            navigator.sendBeacon(config.apiUrl + endpoint, blob);
-            if (callback) callback(true);
+            var sent = navigator.sendBeacon(config.apiUrl + endpoint, blob);
+            log('sendBeacon result:', sent);
+            if (callback) callback(sent);
             return;
         }
 
-        // Fallback to XHR
+        // Primary method: XHR (more reliable)
         var xhr = new XMLHttpRequest();
         xhr.open('POST', config.apiUrl + endpoint, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && callback) {
-                callback(xhr.status >= 200 && xhr.status < 300);
+            if (xhr.readyState === 4) {
+                log('XHR response:', xhr.status, xhr.responseText);
+                if (callback) {
+                    callback(xhr.status >= 200 && xhr.status < 300);
+                }
             }
+        };
+        xhr.onerror = function() {
+            log('XHR error');
+            if (callback) callback(false);
         };
         xhr.send(JSON.stringify(fullData));
     }
@@ -478,7 +486,7 @@ class PixelController extends Controller
         }
     }
 
-    function flushEvents() {
+    function flushEvents(useBeacon) {
         if (state.batchTimer) {
             clearTimeout(state.batchTimer);
             state.batchTimer = null;
@@ -489,9 +497,9 @@ class PixelController extends Controller
         var events = state.eventQueue.splice(0, config.batchSize);
 
         if (events.length === 1) {
-            sendRequest('/event', events[0]);
+            sendRequest('/event', events[0], null, useBeacon);
         } else {
-            sendRequest('/batch', { events: events });
+            sendRequest('/batch', { events: events }, null, useBeacon);
         }
     }
 
@@ -508,7 +516,7 @@ class PixelController extends Controller
                 time_on_page: timeOnPage,
                 scroll_depth: state.maxScrollDepth
             });
-            flushEvents();
+            flushEvents(true); // Use sendBeacon for unload events
         }
     }
 
