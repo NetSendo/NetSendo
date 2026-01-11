@@ -86,16 +86,21 @@ class PixelController extends Controller
             'timezone' => 'nullable|string|max:100',
             // Custom data
             'custom_data' => 'nullable|array',
+            // Client IP for proxy scenarios (e.g., n8n)
+            'client_ip' => 'nullable|ip',
         ]);
 
         try {
+            // Use client_ip if provided (for proxy scenarios), otherwise use request IP
+            $clientIp = $validated['client_ip'] ?? $request->ip();
+
             // Build device info
             $deviceInfo = $this->fingerprintService->buildDeviceInfo(
                 $request->userAgent() ?? '',
                 $validated['screen_resolution'] ?? null,
                 $validated['language'] ?? null,
                 $validated['timezone'] ?? null,
-                $request->ip()
+                $clientIp
             );
 
             // Find or create device
@@ -119,7 +124,7 @@ class PixelController extends Controller
                 'time_on_page' => $validated['time_on_page'] ?? null,
                 'scroll_depth' => $validated['scroll_depth'] ?? null,
                 'custom_data' => $validated['custom_data'] ?? null,
-                'ip_address' => $request->ip(),
+                'ip_address' => $clientIp,
             ]);
 
             // Dispatch events for automation triggers if subscriber is identified
@@ -182,16 +187,21 @@ class PixelController extends Controller
             'screen_resolution' => 'nullable|string|max:20',
             'language' => 'nullable|string|max:10',
             'timezone' => 'nullable|string|max:100',
+            // Client IP for proxy scenarios (e.g., n8n)
+            'client_ip' => 'nullable|ip',
         ]);
 
         try {
+            // Use client_ip if provided (for proxy scenarios), otherwise use request IP
+            $clientIp = $validated['client_ip'] ?? $request->ip();
+
             // Build device info
             $deviceInfo = $this->fingerprintService->buildDeviceInfo(
                 $request->userAgent() ?? '',
                 $validated['screen_resolution'] ?? null,
                 $validated['language'] ?? null,
                 $validated['timezone'] ?? null,
-                $request->ip()
+                $clientIp
             );
 
             // Find or create device
@@ -210,7 +220,7 @@ class PixelController extends Controller
                     'product_id' => $eventData['product_id'] ?? null,
                     'product_name' => $eventData['product_name'] ?? null,
                     'time_on_page' => $eventData['time_on_page'] ?? null,
-                    'ip_address' => $request->ip(),
+                    'ip_address' => $clientIp,
                 ]);
 
                 $eventIds[] = $event->id;

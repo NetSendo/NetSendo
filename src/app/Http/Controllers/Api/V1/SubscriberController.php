@@ -129,6 +129,10 @@ class SubscriberController extends Controller
             'tags' => 'nullable|array',
             'tags.*' => 'integer|exists:tags,id',
             'custom_fields' => 'nullable|array',
+            // User data fields (for proxy scenarios like n8n)
+            'ip_address' => 'nullable|ip',
+            'user_agent' => 'nullable|string|max:500',
+            'device' => 'nullable|string|max:50',
         ]);
 
         // Check if subscriber already exists (by email OR phone for this user)
@@ -231,7 +235,9 @@ class SubscriberController extends Controller
             'phone' => $validated['phone'] ?? null,
             'is_active_global' => ($validated['status'] ?? 'active') === 'active',
             'source' => $validated['source'] ?? 'api',
-            'ip_address' => $request->ip(),
+            'ip_address' => $validated['ip_address'] ?? $request->ip(),
+            'user_agent' => $validated['user_agent'] ?? $request->userAgent(),
+            'device' => $validated['device'] ?? null,
             'subscribed_at' => now(),
         ]);
 
@@ -491,6 +497,10 @@ class SubscriberController extends Controller
             'subscribers.*.tags' => 'nullable|array',
             'subscribers.*.tags.*' => 'integer',
             'subscribers.*.custom_fields' => 'nullable|array',
+            // User data fields (for proxy scenarios like n8n)
+            'subscribers.*.ip_address' => 'nullable|ip',
+            'subscribers.*.user_agent' => 'nullable|string|max:500',
+            'subscribers.*.device' => 'nullable|string|max:50',
         ]);
 
         $results = [
@@ -584,7 +594,9 @@ class SubscriberController extends Controller
                         'phone' => $subData['phone'] ?? null,
                         'is_active_global' => ($subData['status'] ?? 'active') === 'active',
                         'source' => $subData['source'] ?? 'api_batch',
-                        'ip_address' => $request->ip(),
+                        'ip_address' => $subData['ip_address'] ?? $request->ip(),
+                        'user_agent' => $subData['user_agent'] ?? $request->userAgent(),
+                        'device' => $subData['device'] ?? null,
                         'subscribed_at' => now(),
                     ]);
 
