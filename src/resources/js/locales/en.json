@@ -1874,7 +1874,10 @@
         "products_found": "Found: {count} products",
         "page_of": "Page {current} of {total}",
         "previous_page": "Previous",
-        "next_page": "Next"
+        "next_page": "Next",
+        "select_store": "Select store",
+        "from_store": "From store",
+        "refresh_product": "Refresh product data"
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -3008,7 +3011,37 @@
             "feature_templates": "Product Templates",
             "feature_templates_desc": "Create beautiful product presentations in emails",
             "feature_sync": "Auto Sync",
-            "feature_sync_desc": "Product data is always up to date"
+            "feature_sync_desc": "Product data is always up to date",
+            "stores_title": "Connected Stores",
+            "stores_empty": "No WooCommerce stores connected",
+            "stores_empty_desc": "Add your first store to import products into email templates",
+            "add_store": "Add Store",
+            "edit_store": "Edit Store",
+            "store_name": "Store Name",
+            "store_name_placeholder": "e.g. My Main Store",
+            "store_name_help": "Friendly name to identify the store",
+            "default_store": "Default",
+            "set_as_default": "Set as Default",
+            "default_set": "Default store has been set",
+            "delete_store": "Delete Store",
+            "confirm_delete_store": "Are you sure you want to delete this store? This operation is irreversible.",
+            "store_added": "Store has been added",
+            "store_updated": "Store has been updated",
+            "store_deleted": "Store has been deleted",
+            "store_not_found": "Store not found",
+            "store_url_exists": "A store with this URL is already connected",
+            "credentials_update_hint": "Leave empty to keep current credentials",
+            "select_store": "Select Store",
+            "reconnect": "Reconnect",
+            "reconnected": "Store has been reconnected",
+            "disconnect_modal_title": "Disconnect Store",
+            "disconnect_modal_message": "Are you sure you want to disconnect the store \"{name}\"? The store will remain saved but the connection will be deactivated.",
+            "delete_modal_title": "Delete Store",
+            "delete_modal_message": "Are you sure you want to delete the store \"{name}\"? This operation is irreversible and will remove all data associated with this store.",
+            "open_store": "Open Store",
+            "test_store": "Test",
+            "test_success": "Connection active",
+            "test_failed": "Connection inactive"
         }
     },
     "tracked_links": {
@@ -3764,7 +3797,13 @@
         "top_products": "Top Products",
         "no_data": "No data",
         "custom_events_title": "Custom Event Tracking",
-        "custom_events_description": "You can send custom events from JavaScript using the NetSendo Pixel API."
+        "custom_events_description": "You can send custom events from JavaScript using the NetSendo Pixel API.",
+        "live_visitors": "Live Visitors",
+        "visitors_now": "people on site now",
+        "no_visitors": "No active visitors",
+        "current_page": "Current page",
+        "time_on_site": "Time on site",
+        "visitor_device": "Device"
     },
     "sales_funnels": {
         "title": "Sales Funnels",

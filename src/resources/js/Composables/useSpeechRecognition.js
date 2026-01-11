@@ -1,154 +1,9 @@
-import { ref, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 /**
- * Composable for Web Speech API voice recognition
- * Provides voice-to-text functionality for AI assistant prompts
+ * Get speech recognition language code based on app locale
  */
-export function useSpeechRecognition() {
-    const isListening = ref(false);
-    const transcript = ref('');
-    const error = ref('');
-    const interimTranscript = ref('');
-
-    // Check browser support
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const isSupported = ref(!!SpeechRecognition);
-
-    let recognition = null;
-
-    const initRecognition = (lang = 'pl-PL') => {
-        if (!SpeechRecognition) return null;
-
-        const rec = new SpeechRecognition();
-        rec.lang = lang;
-        rec.interimResults = true;
-        rec.continuous = false;
-        rec.maxAlternatives = 1;
-
-        rec.onstart = () => {
-            isListening.value = true;
-            error.value = '';
-        };
-
-        rec.onresult = (event) => {
-            let interim = '';
-            let final = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                if (result.isFinal) {
-                    final += result[0].transcript;
-                } else {
-                    interim += result[0].transcript;
-                }
-            }
-
-            interimTranscript.value = interim;
-            if (final) {
-                transcript.value = final;
-            }
-        };
-
-        rec.onerror = (event) => {
-            error.value = event.error;
-            isListening.value = false;
-        };
-
-        rec.onend = () => {
-            isListening.value = false;
-            interimTranscript.value = '';
-        };
-
-        return rec;
-    };
-
-    /**
-     * Start listening for speech input
-     * @param {string} lang - Language code (e.g., 'pl-PL', 'en-US')
-     */
-    const startListening = (lang = 'pl-PL') => {
-        if (!isSupported.value) {
-            error.value = 'not_supported';
-            return;
-        }
-
-        // Stop any existing recognition
-        if (recognition) {
-            try {
-                recognition.stop();
-            } catch (e) {
-                // Ignore errors from stopping
-            }
-        }
-
-        transcript.value = '';
-        interimTranscript.value = '';
-        recognition = initRecognition(lang);
-
-        if (recognition) {
-            try {
-                recognition.start();
-            } catch (e) {
-                error.value = e.message;
-            }
-        }
-    };
-
-    /**
-     * Stop listening and finalize transcript
-     */
-    const stopListening = () => {
-        if (recognition && isListening.value) {
-            try {
-                recognition.stop();
-            } catch (e) {
-                // Ignore errors from stopping
-            }
-        }
-        isListening.value = false;
-    };
-
-    /**
-     * Toggle listening state
-     * @param {string} lang - Language code
-     */
-    const toggleListening = (lang = 'pl-PL') => {
-        if (isListening.value) {
-            stopListening();
-        } else {
-            startListening(lang);
-        }
-    };
-
-    // Cleanup on component unmount
-    onUnmounted(() => {
-        if (recognition) {
-            try {
-                recognition.stop();
-            } catch (e) {
-                // Ignore
-            }
-        }
-    });
-
-    return {
-        isListening,
-        isSupported,
-        transcript,
-        interimTranscript,
-        error,
-        startListening,
-        stopListening,
-        toggleListening,
-    };
-}
-
-/**
- * Get language code for speech recognition based on locale
- * @param {string} locale - App locale (pl, en, de, es)
- * @returns {string} Speech recognition language code
- */
-export function getSpeechLang(locale) {
+export function getSpeechLang(locale = 'pl') {
     const langMap = {
         'pl': 'pl-PL',
         'en': 'en-US',
@@ -157,3 +12,120 @@ export function getSpeechLang(locale) {
     };
     return langMap[locale] || 'en-US';
 }
+
+/**
+ * Speech recognition composable for voice input
+ */
+export function useSpeechRecognition(options = {}) {
+    const isSupported = ref(false);
+    const isListening = ref(false);
+    const transcript = ref('');
+    const error = ref(null);
+
+    let recognition = null;
+
+    onMounted(() => {
+        // Check if browser supports speech recognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            isSupported.value = true;
+            recognition = new SpeechRecognition();
+            recognition.continuous = options.continuous || false;
+            recognition.interimResults = options.interimResults || true;
+            recognition.lang = options.lang || 'pl-PL';
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    if (result.isFinal) {
+                        finalTranscript += result[0].transcript;
+                    } else {
+                        interimTranscript += result[0].transcript;
+                    }
+                }
+
+                transcript.value = finalTranscript || interimTranscript;
+
+                if (finalTranscript && options.onResult) {
+                    options.onResult(finalTranscript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                error.value = event.error;
+                isListening.value = false;
+                if (options.onError) {
+                    options.onError(event.error);
+                }
+            };
+
+            recognition.onend = () => {
+                isListening.value = false;
+                if (options.onEnd) {
+                    options.onEnd();
+                }
+            };
+        }
+    });
+
+    onUnmounted(() => {
+        if (recognition && isListening.value) {
+            recognition.stop();
+        }
+    });
+
+    const start = () => {
+        if (!isSupported.value || isListening.value) return;
+
+        try {
+            transcript.value = '';
+            error.value = null;
+            recognition.start();
+            isListening.value = true;
+        } catch (e) {
+            error.value = e.message;
+        }
+    };
+
+    const stop = () => {
+        if (!recognition || !isListening.value) return;
+
+        try {
+            recognition.stop();
+            isListening.value = false;
+        } catch (e) {
+            error.value = e.message;
+        }
+    };
+
+    const toggle = () => {
+        if (isListening.value) {
+            stop();
+        } else {
+            start();
+        }
+    };
+
+    const setLang = (lang) => {
+        if (recognition) {
+            recognition.lang = lang;
+        }
+    };
+
+    return {
+        isSupported,
+        isListening,
+        transcript,
+        error,
+        start,
+        stop,
+        toggle,
+        setLang,
+    };
+}
+
+export default useSpeechRecognition;

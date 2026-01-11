@@ -83,6 +83,32 @@ services:
       redis:
         condition: service_started
 
+  reverb:
+    image: ghcr.io/netsendo/netsendo:${NETSENDO_VERSION:-latest}
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: netsendo-reverb
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=8085
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "8085:8085"
+    environment:
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REVERB_SERVER_HOST=0.0.0.0
+      - REVERB_SERVER_PORT=8085
+    networks:
+      - netsendo-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   webserver:
     image: nginx:alpine
     container_name: netsendo-webserver

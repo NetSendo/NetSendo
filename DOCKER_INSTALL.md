@@ -6,12 +6,12 @@ Complete guide for deploying NetSendo using Docker.
 
 ## 📋 Prerequisites
 
-| Requirement | Minimum | Recommended |
-|------------|---------|-------------|
-| Docker | 20.10+ | 24.0+ |
-| Docker Compose | v2.0+ | v2.20+ |
-| RAM | 2GB | 4GB |
-| Disk Space | 5GB | 10GB |
+| Requirement    | Minimum | Recommended |
+| -------------- | ------- | ----------- |
+| Docker         | 20.10+  | 24.0+       |
+| Docker Compose | v2.0+   | v2.20+      |
+| RAM            | 2GB     | 4GB         |
+| Disk Space     | 5GB     | 10GB        |
 
 ---
 
@@ -46,6 +46,20 @@ APP_URL=http://localhost:5029
 DB_DATABASE=netsendo_prod
 DB_USERNAME=netsendo_user
 DB_PASSWORD=YOUR_SECURE_PASSWORD   # CHANGE THIS!
+
+# WebSocket Configuration (Required for real-time features)
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=netsendo
+REVERB_APP_KEY=netsendo-reverb-key
+REVERB_APP_SECRET=netsendo-reverb-secret
+REVERB_HOST=reverb
+REVERB_PORT=8085
+REVERB_SCHEME=http
+
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST=localhost
+VITE_REVERB_PORT=8085
+VITE_REVERB_SCHEME=http
 ```
 
 ### 3. Start Services
@@ -56,10 +70,11 @@ docker compose up -d
 
 ### 4. Access Application
 
-| Service | URL |
-|---------|-----|
-| **NetSendo** | http://localhost:5029 |
-| **Mailpit** | http://localhost:5031 |
+| Service                | URL                   |
+| ---------------------- | --------------------- |
+| **NetSendo**           | http://localhost:5029 |
+| **Mailpit**            | http://localhost:5031 |
+| **Reverb (WebSocket)** | http://localhost:8085 |
 
 Note: A background worker (`netsendo-scheduler`) is also started to handle scheduled emails and automation.
 
@@ -92,13 +107,13 @@ NETSENDO_VERSION=1.1.0 docker compose up -d
 
 ## 📁 Data Persistence
 
-| Volume | Purpose | Backed Up? |
-|--------|---------|------------|
-| `dbdata` | MySQL database | ✅ Yes |
-| `redisdata` | Redis cache | ❌ No |
-| `netsendo-storage` | User uploads | ✅ Yes |
-| `netsendo-logs` | App logs | ❌ Optional |
-| `netsendo-public` | Static files (auto-synced) | ❌ No |
+| Volume             | Purpose                    | Backed Up?  |
+| ------------------ | -------------------------- | ----------- |
+| `dbdata`           | MySQL database             | ✅ Yes      |
+| `redisdata`        | Redis cache                | ❌ No       |
+| `netsendo-storage` | User uploads               | ✅ Yes      |
+| `netsendo-logs`    | App logs                   | ❌ Optional |
+| `netsendo-public`  | Static files (auto-synced) | ❌ No       |
 
 ### Backup Commands
 
@@ -116,13 +131,13 @@ docker compose cp app:/var/www/storage/app ./backup-storage/
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NETSENDO_VERSION` | `latest` | Docker image version |
-| `HTTP_PORT` | `5029` | HTTP port |
-| `DB_PORT` | `5030` | MySQL port |
-| `DB_PASSWORD` | `root` | MySQL password |
-| `MAIL_HOST` | `mailpit` | SMTP host |
+| Variable           | Default   | Description          |
+| ------------------ | --------- | -------------------- |
+| `NETSENDO_VERSION` | `latest`  | Docker image version |
+| `HTTP_PORT`        | `5029`    | HTTP port            |
+| `DB_PORT`          | `5030`    | MySQL port           |
+| `DB_PASSWORD`      | `root`    | MySQL password       |
+| `MAIL_HOST`        | `mailpit` | SMTP host            |
 
 ### Production with Reverse Proxy
 
@@ -143,13 +158,38 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # WebSocket proxy for Reverb
+    location /app/ {
+        proxy_pass http://127.0.0.1:8085;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
 }
 ```
 
 Update `.env`:
+
 ```env
 APP_URL=https://netsendo.example.com
+
+# Update WebSocket host for production
+VITE_REVERB_HOST=netsendo.example.com
+VITE_REVERB_SCHEME=https
 ```
+
+> [!IMPORTANT]
+> After changing `VITE_*` variables, rebuild the frontend:
+>
+> ```bash
+> docker compose exec app npm run build
+> ```
 
 ---
 
@@ -184,6 +224,68 @@ docker compose exec app php artisan view:clear
 
 ```bash
 docker compose down -v
+docker compose up -d
+```
+
+### WebSocket Connection Issues
+
+If you see `WebSocket connection failed` errors in the browser console:
+
+**1. Verify Reverb is running:**
+
+```bash
+docker compose ps
+# Look for netsendo-reverb with status "Up"
+```
+
+**2. Check Reverb logs:**
+
+```bash
+docker compose logs reverb
+# Should show: "Starting server on 0.0.0.0:8085"
+```
+
+**3. Verify configuration in `.env`:**
+
+```bash
+docker compose exec app grep -E "BROADCAST|REVERB|VITE_REVERB" .env
+```
+
+Should show:
+
+```env
+BROADCAST_CONNECTION=reverb
+REVERB_PORT=8085
+VITE_REVERB_PORT=8085
+```
+
+**4. Test WebSocket endpoint:**
+
+```bash
+curl http://localhost:8085
+# Should return a response from Reverb
+```
+
+**5. Restart and rebuild:**
+
+```bash
+docker compose restart reverb
+docker compose exec app npm run build
+```
+
+### Port 8085 Already in Use
+
+```bash
+# Find what's using the port
+lsof -i :8085
+
+# Change the port in .env if needed
+REVERB_PORT=8086
+VITE_REVERB_PORT=8086
+
+# Update docker-compose.yml ports mapping
+# Then restart
+docker compose down
 docker compose up -d
 ```
 
@@ -226,6 +328,58 @@ docker compose exec -T db mysql -u root -p netsendo < backup.sql
 
 # Restore uploads
 docker compose cp ./backup-storage/. app:/var/www/storage/app/
+```
+
+---
+
+## ⚠️ Common Issues
+
+### WebSocket Connection Failed
+
+**Symptom:** Browser console shows:
+
+```
+WebSocket connection to 'ws://localhost:8080/app/...' failed
+```
+
+**Cause:** Wrong port configuration or Reverb not running.
+
+**Solution:**
+
+1. Check `.env` has `REVERB_PORT=8085` and `VITE_REVERB_PORT=8085`
+2. Verify Reverb container: `docker compose ps`
+3. Rebuild frontend: `docker compose exec app npm run build`
+
+### Reverb Container Not Starting
+
+**Symptom:** `docker compose ps` shows reverb as "Restarting" or "Exited".
+
+**Solution:**
+
+```bash
+# Check logs for errors
+docker compose logs reverb
+
+# Common issue: database not ready
+# Wait for db to be healthy, then restart
+docker compose restart reverb
+```
+
+### Real-time Features Not Working
+
+**Symptom:** Live Visitors, notifications don't update in real-time.
+
+**Cause:** `BROADCAST_CONNECTION` not set to `reverb`.
+
+**Solution:**
+
+```bash
+# Update .env
+BROADCAST_CONNECTION=reverb
+
+# Clear cache and restart
+docker compose exec app php artisan config:clear
+docker compose restart app reverb
 ```
 
 ---

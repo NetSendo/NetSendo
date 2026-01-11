@@ -432,14 +432,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::prefix('settings/pixel')->name('settings.pixel.')->group(function () {
         Route::get('/', [\App\Http\Controllers\PixelSettingsController::class, 'index'])->name('index');
         Route::get('/stats', [\App\Http\Controllers\PixelSettingsController::class, 'stats'])->name('stats');
+        Route::get('/live-visitors', [\App\Http\Controllers\PixelSettingsController::class, 'liveVisitors'])->name('live-visitors');
     });
 
     // WooCommerce Integration Settings
     Route::prefix('settings/woocommerce')->name('settings.woocommerce.')->group(function () {
         Route::get('/', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'store'])->name('store');
+        Route::put('/{id}', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'destroy'])->name('destroy');
         Route::post('/test', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'testConnection'])->name('test');
-        Route::post('/disconnect', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'disconnect'])->name('disconnect');
+        Route::post('/{id}/disconnect', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'disconnect'])->name('disconnect');
+        Route::post('/{id}/reconnect', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'reconnect'])->name('reconnect');
+        Route::post('/{id}/set-default', [\App\Http\Controllers\WooCommerceIntegrationController::class, 'setDefault'])->name('set-default');
     });
 
     // Template Products API (WooCommerce + Pixel)

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 
 class WooCommerceSettings extends Model
@@ -15,6 +16,7 @@ class WooCommerceSettings extends Model
 
     protected $fillable = [
         'user_id',
+        'name',
         'store_url',
         'consumer_key',
         'consumer_secret',
@@ -22,10 +24,12 @@ class WooCommerceSettings extends Model
         'last_synced_at',
         'connection_verified_at',
         'store_info',
+        'is_default',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
         'last_synced_at' => 'datetime',
         'connection_verified_at' => 'datetime',
         'store_info' => 'array',
@@ -69,11 +73,35 @@ class WooCommerceSettings extends Model
     }
 
     /**
-     * Get settings for a user
+     * Get all stores for a user
      */
-    public static function forUser(int $userId): ?self
+    public static function forUser(int $userId): Collection
     {
-        return static::where('user_id', $userId)->first();
+        return static::where('user_id', $userId)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get default store for a user
+     */
+    public static function getDefaultForUser(int $userId): ?self
+    {
+        return static::where('user_id', $userId)
+            ->where('is_default', true)
+            ->first()
+            ?? static::where('user_id', $userId)->first();
+    }
+
+    /**
+     * Get a specific store by ID for a user
+     */
+    public static function getByIdForUser(int $id, int $userId): ?self
+    {
+        return static::where('id', $id)
+            ->where('user_id', $userId)
+            ->first();
     }
 
     /**
@@ -117,5 +145,27 @@ class WooCommerceSettings extends Model
     public function markSynced(): void
     {
         $this->update(['last_synced_at' => now()]);
+    }
+
+    /**
+     * Set this store as default and unset others for the same user
+     */
+    public function setAsDefault(): void
+    {
+        // Unset other defaults for this user
+        static::where('user_id', $this->user_id)
+            ->where('id', '!=', $this->id)
+            ->update(['is_default' => false]);
+
+        // Set this one as default
+        $this->update(['is_default' => true]);
+    }
+
+    /**
+     * Get display name (name or URL)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->name ?: parse_url($this->store_url, PHP_URL_HOST) ?: $this->store_url;
     }
 }

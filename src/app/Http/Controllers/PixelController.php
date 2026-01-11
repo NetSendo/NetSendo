@@ -11,6 +11,7 @@ use App\Models\Subscriber;
 use App\Models\SubscriberDevice;
 use App\Models\User;
 use App\Services\DeviceFingerprintService;
+use App\Services\LiveVisitorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -18,10 +19,14 @@ use Illuminate\Support\Str;
 class PixelController extends Controller
 {
     protected DeviceFingerprintService $fingerprintService;
+    protected LiveVisitorService $liveVisitorService;
 
-    public function __construct(DeviceFingerprintService $fingerprintService)
-    {
+    public function __construct(
+        DeviceFingerprintService $fingerprintService,
+        LiveVisitorService $liveVisitorService
+    ) {
         $this->fingerprintService = $fingerprintService;
+        $this->liveVisitorService = $liveVisitorService;
     }
 
     /**
@@ -112,6 +117,18 @@ class PixelController extends Controller
             // Dispatch events for automation triggers if subscriber is identified
             if ($device->subscriber_id) {
                 $this->dispatchAutomationEvents($device, $event, $validated);
+            }
+
+            // Broadcast live visitor for real-time dashboard
+            if ($validated['event_type'] === PixelEvent::TYPE_PAGE_VIEW) {
+                $this->liveVisitorService->markActive(
+                    $validated['user_id'],
+                    $validated['visitor_token'],
+                    $validated['page_url'],
+                    $validated['page_title'] ?? null,
+                    $deviceInfo['device_type'] ?? 'desktop',
+                    $deviceInfo['browser'] ?? null
+                );
             }
 
             return response()->json([

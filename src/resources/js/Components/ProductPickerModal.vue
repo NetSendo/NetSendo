@@ -39,6 +39,10 @@ const categories = ref([]);
 const selectedCategory = ref(null);
 const loadingCategories = ref(false);
 
+// Multi-store support
+const stores = ref([]);
+const selectedStore = ref(null);
+
 // Selected products for multi-select
 const selected = ref([...props.selectedProducts]);
 
@@ -46,6 +50,10 @@ const selected = ref([...props.selectedProducts]);
 onMounted(async () => {
     await checkConnection();
     if (connectionStatus.value?.connected) {
+        // Set default store
+        if (stores.value.length > 0) {
+            selectedStore.value = stores.value.find(s => s.is_default)?.id || stores.value[0].id;
+        }
         await Promise.all([loadProducts(), loadCategories()]);
     }
     await loadRecentlyViewed();
@@ -56,8 +64,14 @@ const checkConnection = async () => {
     try {
         const response = await axios.get(route('api.templates.products.connection-status'));
         connectionStatus.value = response.data;
+        stores.value = response.data.stores || [];
+        // Set default store if available
+        if (stores.value.length > 0) {
+            selectedStore.value = stores.value.find(s => s.is_default)?.id || stores.value[0].id;
+        }
     } catch (e) {
         connectionStatus.value = { connected: false };
+        stores.value = [];
     }
 };
 
@@ -67,7 +81,11 @@ const loadCategories = async () => {
 
     loadingCategories.value = true;
     try {
-        const response = await axios.get(route('api.templates.products.woocommerce.categories'));
+        const response = await axios.get(route('api.templates.products.woocommerce.categories'), {
+            params: {
+                store_id: selectedStore.value || undefined,
+            },
+        });
         if (response.data.success) {
             categories.value = response.data.categories;
         }
@@ -92,6 +110,7 @@ const loadProducts = async () => {
                 per_page: 20,
                 search: searchQuery.value || undefined,
                 category: selectedCategory.value || undefined,
+                store_id: selectedStore.value || undefined,
             },
         });
 
@@ -141,6 +160,14 @@ watch(selectedCategory, () => {
     loadProducts();
 });
 
+// Store change - reload products and categories
+watch(selectedStore, () => {
+    page.value = 1;
+    selectedCategory.value = null;
+    loadProducts();
+    loadCategories();
+});
+
 // Tab change
 watch(activeTab, () => {
     searchQuery.value = '';
@@ -180,15 +207,22 @@ const isSelected = (product) => {
 
 // Toggle product selection
 const toggleProduct = (product) => {
+    // Enrich product with store info for multi-store tracking
+    const getEnrichedProduct = (prod) => ({
+        ...prod,
+        store_id: selectedStore.value || null,
+        store_name: stores.value.find(s => s.id === selectedStore.value)?.display_name || null,
+    });
+
     if (props.multiSelect) {
-        const index = selected.value.findIndex(p => p.id === product.id);
+        const index = selected.value.findIndex(p => p.id === product.id && p.store_id === selectedStore.value);
         if (index >= 0) {
             selected.value.splice(index, 1);
         } else {
-            selected.value.push(product);
+            selected.value.push(getEnrichedProduct(product));
         }
     } else {
-        emit('select', [product]);
+        emit('select', [getEnrichedProduct(product)]);
         emit('close');
     }
 };
@@ -308,6 +342,22 @@ const formatPrice = (price, currency = 'PLN') => {
 
                             <!-- Connected - show products -->
                             <template v-else>
+                                <!-- Store Selector (when multiple stores) -->
+                                <div v-if="stores.length > 1" class="mb-4">
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                        {{ $t('template_builder.select_store') }}
+                                    </label>
+                                    <select
+                                        v-model="selectedStore"
+                                        class="w-full sm:w-64 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                    >
+                                        <option v-for="store in stores" :key="store.id" :value="store.id">
+                                            {{ store.display_name || store.name }}
+                                            <span v-if="store.is_default"> ({{ $t('settings.woocommerce.default_store') }})</span>
+                                        </option>
+                                    </select>
+                                </div>
+
                                 <!-- Search and Filters Row -->
                                 <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                                     <!-- Search -->

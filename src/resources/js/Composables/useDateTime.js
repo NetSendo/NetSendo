@@ -1,170 +1,158 @@
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+
+// Get user timezone from page props or default to browser timezone
+const getUserTimezone = () => {
+    // Try to get from Inertia page props
+    if (typeof window !== 'undefined' && window.__page?.props?.auth?.user?.timezone) {
+        return window.__page.props.auth.user.timezone;
+    }
+    // Fallback to browser timezone
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Warsaw';
+};
+
+// Reactive timezone
+const userTimezone = ref(getUserTimezone());
+
+// Clock interval reference
+let clockInterval = null;
 
 /**
- * Composable for timezone-aware date/time formatting
- * Uses the authenticated user's timezone preference
+ * Date/Time formatting composable with clock functionality
  */
 export function useDateTime() {
-    const page = usePage();
-
-    // Get user's timezone from auth props, fallback to browser timezone
-    const userTimezone = computed(() => {
-        return page.props.auth?.user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    });
-
-    // Reactive current time
-    const currentTime = ref(new Date());
-    let intervalId = null;
+    /**
+     * Format date to locale string
+     */
+    const formatDate = (date, locale = 'pl-PL', options = {}) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleDateString(locale, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: userTimezone.value,
+            ...options,
+        });
+    };
 
     /**
-     * Format a date/time string to the user's timezone
-     * @param {string|Date} date - The date to format
-     * @param {object} options - Intl.DateTimeFormat options
-     * @returns {string} Formatted date string
+     * Format time to locale string
      */
-    const formatDateTime = (date, options = {}) => {
-        if (!date) return '-';
-
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-        if (isNaN(dateObj.getTime())) return '-';
-
-        const defaultOptions = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
+    const formatTime = (date, locale = 'pl-PL', options = {}) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: userTimezone.value,
-            hour12: false,
-        };
-
-        return new Intl.DateTimeFormat(
-            page.props.auth?.user?.locale || navigator.language || 'pl-PL',
-            { ...defaultOptions, ...options }
-        ).format(dateObj);
+            ...options,
+        });
     };
 
     /**
-     * Format a date (without time) to the user's timezone
-     * @param {string|Date} date - The date to format
-     * @returns {string} Formatted date string
+     * Format date and time
      */
-    const formatDate = (date, options = {}) => {
-        if (!date) return '-';
-
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-        if (isNaN(dateObj.getTime())) return '-';
-
-        const defaultOptions = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            timeZone: userTimezone.value,
-        };
-
-        return new Intl.DateTimeFormat(
-            page.props.auth?.user?.locale || navigator.language || 'pl-PL',
-            { ...defaultOptions, ...options }
-        ).format(dateObj);
+    const formatDateTime = (date, locale = 'pl-PL') => {
+        if (!date) return '';
+        return `${formatDate(date, locale)} ${formatTime(date, locale)}`;
     };
 
     /**
-     * Format time only (HH:MM)
-     * @param {string|Date} date - The date to format
-     * @returns {string} Formatted time string
+     * Get current time formatted (HH:mm:ss)
      */
-    const formatTime = (date, options = {}) => {
-        if (!date) return '-';
-
-        const dateObj = typeof date === 'string' ? new Date(date) : date;
-
-        if (isNaN(dateObj.getTime())) return '-';
-
-        const defaultOptions = {
+    const getCurrentTimeFormatted = (locale = 'pl-PL') => {
+        return new Date().toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
+            second: '2-digit',
             timeZone: userTimezone.value,
-            hour12: false,
-        };
-
-        return new Intl.DateTimeFormat(
-            page.props.auth?.user?.locale || navigator.language || 'pl-PL',
-            { ...defaultOptions, ...options }
-        ).format(dateObj);
+        });
     };
 
     /**
-     * Get current time formatted in user's timezone
-     * @returns {string} Current time formatted as HH:MM:SS
+     * Get current date formatted
      */
-    const getCurrentTimeFormatted = () => {
-        return new Intl.DateTimeFormat(
-            page.props.auth?.user?.locale || navigator.language || 'pl-PL',
-            {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: userTimezone.value,
-                hour12: false,
-            }
-        ).format(currentTime.value);
+    const getCurrentDateFormatted = (locale = 'pl-PL') => {
+        return new Date().toLocaleDateString(locale, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: userTimezone.value,
+        });
     };
 
     /**
-     * Get current date formatted in user's timezone
-     * @returns {string} Current date formatted
-     */
-    const getCurrentDateFormatted = () => {
-        return new Intl.DateTimeFormat(
-            page.props.auth?.user?.locale || navigator.language || 'pl-PL',
-            {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZone: userTimezone.value,
-            }
-        ).format(currentTime.value);
-    };
-
-    /**
-     * Start updating the current time every second
+     * Start the clock update interval
      */
     const startClock = () => {
-        if (intervalId) return;
-
-        intervalId = setInterval(() => {
-            currentTime.value = new Date();
-        }, 1000);
+        if (clockInterval) {
+            clearInterval(clockInterval);
+        }
+        // Update timezone on each tick in case it changed
+        clockInterval = setInterval(() => {
+            userTimezone.value = getUserTimezone();
+        }, 60000); // Update timezone every minute
     };
 
     /**
-     * Stop updating the current time
+     * Stop the clock interval
      */
     const stopClock = () => {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
+        if (clockInterval) {
+            clearInterval(clockInterval);
+            clockInterval = null;
         }
     };
 
-    // Cleanup on unmount
-    onUnmounted(() => {
-        stopClock();
-    });
+    /**
+     * Get relative time (e.g., "2 hours ago")
+     */
+    const formatRelative = (date, locale = 'pl-PL') => {
+        if (!date) return '';
+        const d = new Date(date);
+        const now = new Date();
+        const diff = now.getTime() - d.getTime();
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 7) {
+            return formatDate(date, locale);
+        } else if (days > 0) {
+            return `${days} ${days === 1 ? 'dzień' : 'dni'} temu`;
+        } else if (hours > 0) {
+            return `${hours} ${hours === 1 ? 'godzinę' : 'godzin'} temu`;
+        } else if (minutes > 0) {
+            return `${minutes} ${minutes === 1 ? 'minutę' : 'minut'} temu`;
+        } else {
+            return 'przed chwilą';
+        }
+    };
+
+    /**
+     * Get current greeting based on time of day
+     */
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Dzień dobry';
+        if (hour < 18) return 'Dzień dobry';
+        return 'Dobry wieczór';
+    };
 
     return {
         userTimezone,
-        currentTime,
-        formatDateTime,
         formatDate,
         formatTime,
+        formatDateTime,
+        formatRelative,
+        getGreeting,
         getCurrentTimeFormatted,
         getCurrentDateFormatted,
         startClock,
         stopClock,
     };
 }
+
+export default useDateTime;

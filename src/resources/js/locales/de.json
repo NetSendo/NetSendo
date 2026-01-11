@@ -1990,7 +1990,10 @@
         "products_found": "Gefunden: {count} Produkte",
         "page_of": "Seite {current} von {total}",
         "previous_page": "Vorherige",
-        "next_page": "Nächste"
+        "next_page": "Nächste",
+        "select_store": "Shop auswählen",
+        "from_store": "Aus Shop",
+        "refresh_product": "Produktdaten aktualisieren"
     },
     "fields": {
         "title": "Feldverwaltung",
@@ -2675,7 +2678,7 @@
             "edit": "Bearbeiten",
             "customize": "Anpassen"
         },
-    "woocommerce": {
+        "woocommerce": {
             "title": "WooCommerce-Integration",
             "subtitle": "Verbinden Sie Ihren WooCommerce-Shop, um Produkte in E-Mail-Vorlagen zu importieren",
             "connected": "Mit WooCommerce verbunden",
@@ -2708,7 +2711,37 @@
             "feature_templates": "Produktvorlagen",
             "feature_templates_desc": "Erstellen Sie schöne Produktpräsentationen in E-Mails",
             "feature_sync": "Auto-Sync",
-            "feature_sync_desc": "Produktdaten sind immer auf dem neuesten Stand"
+            "feature_sync_desc": "Produktdaten sind immer auf dem neuesten Stand",
+            "stores_title": "Verbundene Shops",
+            "stores_empty": "Keine WooCommerce-Shops verbunden",
+            "stores_empty_desc": "Fügen Sie Ihren ersten Shop hinzu, um Produkte in E-Mail-Vorlagen zu importieren",
+            "add_store": "Shop hinzufügen",
+            "edit_store": "Shop bearbeiten",
+            "store_name": "Shop-Name",
+            "store_name_placeholder": "z.B. Mein Hauptshop",
+            "store_name_help": "Freundlicher Name zur Identifikation des Shops",
+            "default_store": "Standard",
+            "set_as_default": "Als Standard festlegen",
+            "default_set": "Standard-Shop wurde festgelegt",
+            "delete_store": "Shop löschen",
+            "confirm_delete_store": "Sind Sie sicher, dass Sie diesen Shop löschen möchten? Dieser Vorgang ist unwiderruflich.",
+            "store_added": "Shop wurde hinzugefügt",
+            "store_updated": "Shop wurde aktualisiert",
+            "store_deleted": "Shop wurde gelöscht",
+            "store_not_found": "Shop nicht gefunden",
+            "store_url_exists": "Ein Shop mit dieser URL ist bereits verbunden",
+            "credentials_update_hint": "Leer lassen, um aktuelle Anmeldedaten zu behalten",
+            "select_store": "Shop auswählen",
+            "reconnect": "Erneut verbinden",
+            "reconnected": "Shop wurde erneut verbunden",
+            "disconnect_modal_title": "Shop trennen",
+            "disconnect_modal_message": "Sind Sie sicher, dass Sie den Shop \"{name}\" trennen möchten? Der Shop bleibt gespeichert, aber die Verbindung wird deaktiviert.",
+            "delete_modal_title": "Shop löschen",
+            "delete_modal_message": "Sind Sie sicher, dass Sie den Shop \"{name}\" löschen möchten? Dieser Vorgang ist unwiderruflich und entfernt alle mit diesem Shop verbundenen Daten.",
+            "open_store": "Shop öffnen",
+            "test_store": "Testen",
+            "test_success": "Verbindung aktiv",
+            "test_failed": "Verbindung inaktiv"
         }
     },
     "tracked_links": {
@@ -3389,7 +3422,13 @@
         "top_products": "Top-Produkte",
         "no_data": "Keine Daten",
         "custom_events_title": "Benutzerdefiniertes Ereignis-Tracking",
-        "custom_events_description": "Sie können benutzerdefinierte Ereignisse über JavaScript mit der NetSendo Pixel API senden."
+        "custom_events_description": "Sie können benutzerdefinierte Ereignisse über JavaScript mit der NetSendo Pixel API senden.",
+        "live_visitors": "Live-Besucher",
+        "visitors_now": "Besucher gerade auf der Seite",
+        "no_visitors": "Keine aktiven Besucher",
+        "current_page": "Aktuelle Seite",
+        "time_on_site": "Zeit auf der Seite",
+        "visitor_device": "Gerät"
     },
     "sales_funnels": {
         "title": "Verkaufstrichter",

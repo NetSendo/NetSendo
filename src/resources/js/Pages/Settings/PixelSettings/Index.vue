@@ -1,18 +1,114 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import { useEcho, usePrivateChannel } from "@/Composables/useEcho";
 
 const props = defineProps({
     stats: Object,
     embedCode: String,
     userId: Number,
     baseUrl: String,
+    liveVisitors: Array,
+    reverbConfig: Object,
 });
 
 const { t } = useI18n();
 const page = usePage();
+
+// Live Visitors State
+const visitors = ref(props.liveVisitors || []);
+const isEchoConnected = ref(false);
+
+// Initialize Echo with Reverb config
+const { isConnected, connectionError, getEcho } = useEcho(props.reverbConfig);
+
+// Subscribe to pixel channel for real-time updates
+onMounted(() => {
+    if (!props.reverbConfig?.key) {
+        console.warn('[PixelSettings] No Reverb config, skipping WebSocket');
+        return;
+    }
+
+    // Wait for Echo to connect, then subscribe
+    const checkConnection = setInterval(() => {
+        const echo = getEcho();
+        if (echo) {
+            clearInterval(checkConnection);
+            isEchoConnected.value = true;
+
+            // Subscribe to private channel
+            echo.private(`pixel.${props.userId}`)
+                .listen('.visitor.active', (event) => {
+                    console.log('[PixelSettings] Visitor active:', event);
+                    handleVisitorActive(event);
+                });
+        }
+    }, 500);
+
+    // Cleanup after 10 seconds if not connected
+    setTimeout(() => clearInterval(checkConnection), 10000);
+});
+
+onUnmounted(() => {
+    const echo = getEcho();
+    if (echo) {
+        echo.leave(`pixel.${props.userId}`);
+    }
+});
+
+// Handle incoming visitor event
+const handleVisitorActive = (event) => {
+    const existingIndex = visitors.value.findIndex(
+        (v) => v.visitor_token === event.visitor_token
+    );
+
+    const visitorData = {
+        visitor_token: event.visitor_token,
+        page_url: event.page_url,
+        page_title: event.page_title,
+        device_type: event.device_type,
+        browser: event.browser,
+        last_seen: event.timestamp,
+        isNew: true, // For animation
+    };
+
+    if (existingIndex >= 0) {
+        visitors.value[existingIndex] = visitorData;
+    } else {
+        visitors.value.unshift(visitorData);
+    }
+
+    // Remove "isNew" flag after animation
+    setTimeout(() => {
+        const idx = visitors.value.findIndex(
+            (v) => v.visitor_token === event.visitor_token
+        );
+        if (idx >= 0) {
+            visitors.value[idx].isNew = false;
+        }
+    }, 2000);
+};
+
+// Format time ago
+const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return "";
+    const seconds = Math.floor(Date.now() / 1000 - timestamp);
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    return `${Math.floor(seconds / 3600)}h`;
+};
+
+// Extract page path from URL
+const getPagePath = (url) => {
+    try {
+        const urlObj = new URL(url);
+        return urlObj.pathname || "/";
+    } catch {
+        return url;
+    }
+};
 
 const copiedCode = ref(false);
 
@@ -103,6 +199,82 @@ const totalDeviceTypeCount = computed(() => {
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <!-- Live Visitors Panel -->
+                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg shadow-lg overflow-hidden">
+                    <div class="px-6 py-5">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="relative">
+                                        <div class="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </div>
+                                        <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-400 animate-ping"></span>
+                                        <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-green-400"></span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-white">{{ t("pixel.live_visitors") }}</h3>
+                                    <p class="text-emerald-100">
+                                        <span class="text-2xl font-bold">{{ visitors.length }}</span>
+                                        <span class="ml-1 text-sm">{{ t("pixel.visitors_now") }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div v-if="isEchoConnected" class="flex items-center text-emerald-100 text-sm">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                                Live
+                            </div>
+                        </div>
+
+                        <!-- Visitors List -->
+                        <div v-if="visitors.length > 0" class="mt-4 space-y-2 max-h-48 overflow-y-auto">
+                            <div
+                                v-for="visitor in visitors.slice(0, 10)"
+                                :key="visitor.visitor_token"
+                                class="flex items-center justify-between bg-white/10 rounded-lg px-3 py-2 transition-all duration-300"
+                                :class="{ 'ring-2 ring-white/50 scale-[1.02]': visitor.isNew }"
+                            >
+                                <div class="flex items-center space-x-3">
+                                    <!-- Device Icon -->
+                                    <div class="flex-shrink-0">
+                                        <svg v-if="visitor.device_type === 'mobile'" class="h-5 w-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else-if="visitor.device_type === 'tablet'" class="h-5 w-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-5 w-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <!-- Page Info -->
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-white truncate max-w-[200px]">
+                                            {{ visitor.page_title || getPagePath(visitor.page_url) }}
+                                        </p>
+                                        <p class="text-xs text-emerald-200 truncate max-w-[200px]">
+                                            {{ getPagePath(visitor.page_url) }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2 text-xs text-emerald-200">
+                                    <span v-if="visitor.browser" class="hidden sm:inline">{{ visitor.browser }}</span>
+                                    <span>{{ formatTimeAgo(visitor.last_seen) }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No Visitors -->
+                        <div v-else class="mt-4 text-center py-4">
+                            <p class="text-emerald-100 text-sm">{{ t("pixel.no_visitors") }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Stats Overview -->
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <!-- Page Views -->

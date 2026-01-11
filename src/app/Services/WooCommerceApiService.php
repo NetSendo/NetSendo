@@ -19,16 +19,30 @@ class WooCommerceApiService
 
     /**
      * Create instance from user ID
+     * @param int $userId User ID
+     * @param int|null $storeId Optional specific store ID, otherwise uses default
      */
-    public static function forUser(int $userId): ?self
+    public static function forUser(int $userId, ?int $storeId = null): ?self
     {
-        $settings = WooCommerceSettings::forUser($userId);
+        if ($storeId) {
+            $settings = WooCommerceSettings::getByIdForUser($storeId, $userId);
+        } else {
+            $settings = WooCommerceSettings::getDefaultForUser($userId);
+        }
 
         if (!$settings || !$settings->isConnected()) {
             return null;
         }
 
         return new self($settings);
+    }
+
+    /**
+     * Get the store ID
+     */
+    public function getStoreId(): int
+    {
+        return $this->settings->id;
     }
 
     /**
@@ -104,7 +118,7 @@ class WooCommerceApiService
      */
     public function getProductsWithMeta(int $page = 1, int $perPage = 20, array $params = []): array
     {
-        $cacheKey = "wc_products_meta_{$this->settings->user_id}_{$page}_{$perPage}_" . md5(json_encode($params));
+        $cacheKey = "wc_products_meta_{$this->settings->id}_{$page}_{$perPage}_" . md5(json_encode($params));
 
         return Cache::remember($cacheKey, 300, function () use ($page, $perPage, $params) {
             $queryParams = array_merge([
@@ -158,7 +172,7 @@ class WooCommerceApiService
      */
     public function getProduct(int $productId): ?array
     {
-        $cacheKey = "wc_product_{$this->settings->user_id}_{$productId}";
+        $cacheKey = "wc_product_{$this->settings->id}_{$productId}";
 
         return Cache::remember($cacheKey, 600, function () use ($productId) {
             try {
@@ -189,7 +203,7 @@ class WooCommerceApiService
      */
     public function getCategories(int $perPage = 100): array
     {
-        $cacheKey = "wc_categories_{$this->settings->user_id}";
+        $cacheKey = "wc_categories_{$this->settings->id}";
 
         return Cache::remember($cacheKey, 3600, function () use ($perPage) {
             return $this->makeRequest('products/categories', [
@@ -266,7 +280,7 @@ class WooCommerceApiService
      */
     public function clearCache(): void
     {
-        Cache::forget("wc_categories_{$this->settings->user_id}");
+        Cache::forget("wc_categories_{$this->settings->id}");
         // Note: Individual product caches will expire naturally
     }
 }

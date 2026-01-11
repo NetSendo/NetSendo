@@ -77,6 +77,8 @@ const handleProductSelect = (products) => {
             buttonUrl: product.url || "",
             buttonText: t("template_builder.buy_now"),
             woocommerce_product_id: product.id,
+            woocommerce_store_id: product.store_id || null,
+            woocommerce_store_name: product.store_name || null,
         }));
 
         // If we selected fewer products than current columns, we might Want to adjust columns or just fill available spots?
@@ -104,6 +106,8 @@ const handleProductSelect = (products) => {
             buttonUrl: product.url || "",
             image: product.image || "",
             woocommerce_product_id: product.id,
+            woocommerce_store_id: product.store_id || null,
+            woocommerce_store_name: product.store_name || null,
         };
         productDataSource.value = "woocommerce";
         emit("update", { content: { ...localContent.value } });
@@ -123,8 +127,46 @@ const formatPrice = (price, currency = "PLN") => {
 // Clear WooCommerce link
 const clearProductLink = () => {
     localContent.value.woocommerce_product_id = null;
+    localContent.value.woocommerce_store_id = null;
+    localContent.value.woocommerce_store_name = null;
     productDataSource.value = "manual";
     emit("update", { content: { ...localContent.value } });
+};
+
+// Refresh product data state
+const refreshingProduct = ref(false);
+
+// Refresh product data from WooCommerce
+const refreshProductData = async () => {
+    if (!localContent.value.woocommerce_product_id) return;
+
+    refreshingProduct.value = true;
+    try {
+        const response = await axios.get(
+            route('api.templates.products.woocommerce.product', localContent.value.woocommerce_product_id),
+            { params: { store_id: localContent.value.woocommerce_store_id } }
+        );
+        if (response.data.success) {
+            const product = response.data.product;
+            localContent.value = {
+                ...localContent.value,
+                title: product.name,
+                description: product.description || "",
+                price: formatPrice(product.price, product.currency),
+                oldPrice:
+                    product.sale_price && product.regular_price > product.sale_price
+                        ? formatPrice(product.regular_price, product.currency)
+                        : "",
+                buttonUrl: product.url || "",
+                image: product.image || localContent.value.image,
+            };
+            emit("update", { content: { ...localContent.value } });
+        }
+    } catch (e) {
+        console.error('Failed to refresh product', e);
+    } finally {
+        refreshingProduct.value = false;
+    }
 };
 
 // Update block content
@@ -1184,37 +1226,73 @@ const handleInsert = (data) => {
                     <!-- Connected product indicator -->
                     <div
                         v-if="localContent.woocommerce_product_id"
-                        class="mt-3 flex items-center justify-between rounded-lg bg-white p-2 dark:bg-slate-800"
+                        class="mt-3 rounded-lg bg-white p-2 dark:bg-slate-800"
                     >
-                        <div class="flex items-center gap-2">
-                            <svg
-                                class="h-4 w-4 text-emerald-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                />
-                            </svg>
-                            <span
-                                class="text-xs text-slate-600 dark:text-slate-400"
-                            >
-                                {{
-                                    $t("template_builder.linked_to_woocommerce")
-                                }}
-                                #{{ localContent.woocommerce_product_id }}
-                            </span>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <svg
+                                    class="h-4 w-4 text-emerald-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                                    />
+                                </svg>
+                                <span
+                                    class="text-xs text-slate-600 dark:text-slate-400"
+                                >
+                                    {{
+                                        $t("template_builder.linked_to_woocommerce")
+                                    }}
+                                    #{{ localContent.woocommerce_product_id }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <!-- Refresh button -->
+                                <button
+                                    @click="refreshProductData"
+                                    :disabled="refreshingProduct"
+                                    class="text-xs text-indigo-500 hover:text-indigo-600 disabled:opacity-50"
+                                    :title="$t('template_builder.refresh_product')"
+                                >
+                                    <svg
+                                        :class="['h-4 w-4', refreshingProduct ? 'animate-spin' : '']"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                        />
+                                    </svg>
+                                </button>
+                                <!-- Unlink button -->
+                                <button
+                                    @click="clearProductLink"
+                                    class="text-xs text-red-500 hover:text-red-600"
+                                >
+                                    {{ $t("template_builder.unlink") }}
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            @click="clearProductLink"
-                            class="text-xs text-red-500 hover:text-red-600"
+                        <!-- Store name indicator -->
+                        <div
+                            v-if="localContent.woocommerce_store_name"
+                            class="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"
                         >
-                            {{ $t("template_builder.unlink") }}
-                        </button>
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            {{ $t("template_builder.from_store") }}: {{ localContent.woocommerce_store_name }}
+                        </div>
                     </div>
                 </div>
 

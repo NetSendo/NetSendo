@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\PixelEvent;
 use App\Models\SubscriberDevice;
+use App\Services\LiveVisitorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class PixelSettingsController extends Controller
 {
+    public function __construct(
+        protected LiveVisitorService $liveVisitorService
+    ) {}
+
     /**
      * Display pixel settings and analytics
      */
@@ -24,11 +29,21 @@ class PixelSettingsController extends Controller
         // Generate embed code
         $embedCode = $this->generateEmbedCode($userId);
 
+        // Get live visitors
+        $liveVisitors = $this->liveVisitorService->getActiveVisitors($userId);
+
         return Inertia::render('Settings/PixelSettings/Index', [
             'stats' => $stats,
             'embedCode' => $embedCode,
             'userId' => $userId,
             'baseUrl' => config('app.url'),
+            'liveVisitors' => $liveVisitors,
+            'reverbConfig' => [
+                'key' => env('VITE_REVERB_APP_KEY', config('broadcasting.connections.reverb.key')),
+                'host' => env('VITE_REVERB_HOST', 'localhost'),
+                'port' => (int) env('VITE_REVERB_PORT', 8085),
+                'scheme' => env('VITE_REVERB_SCHEME', 'http'),
+            ],
         ]);
     }
 
@@ -177,5 +192,17 @@ HTML;
     {
         $stats = $this->getPixelStats(Auth::id());
         return response()->json($stats);
+    }
+
+    /**
+     * API endpoint to get live visitors
+     */
+    public function liveVisitors()
+    {
+        $visitors = $this->liveVisitorService->getActiveVisitors(Auth::id());
+        return response()->json([
+            'visitors' => $visitors,
+            'count' => count($visitors),
+        ]);
     }
 }

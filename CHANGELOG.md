@@ -7,12 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] – WooCommerce Multi-Store Support
+
+**Release date:** 2026-01-11
+
 ### Added
 
+- **Live Visitors (Real-Time Tracking):**
+
+  - Real-time visitor tracking on Pixel Settings page using WebSockets (Laravel Reverb).
+  - New `PixelVisitorActive` broadcast event for live visitor updates.
+  - `LiveVisitorService` for Redis-based active visitor tracking with 5-minute TTL.
+  - New `useEcho.js` composable for WebSocket connection management.
+  - Live Visitors panel with animated visitor cards, device icons, and connection status.
+  - Added Reverb container to Docker Compose (port 8085).
+  - Full translations for live visitors feature in PL, EN, DE, ES.
+
 - **Gender Personalization Placeholder:**
+
   - Added `{{męska|żeńska}}` (e.g., `{{male_form|female_form}}`) placeholder to `quickVariables` in Message Creator (`Create.vue`), allowing one-click insertion into Subject and Preheader fields.
   - Updated `TemplateAiService` to instruct AI on how to use gender-specific forms (`{{male_form|female_form}}`) for personalization.
   - Added translations for the new gender placeholder UI in PL, EN, DE, ES.
+
+- **Documentation:**
+
+  - Added complete WebSocket/Reverb configuration guide to `README.md` and `DOCKER_INSTALL.md`.
+  - Created `.env.example` file with all required environment variables including Reverb settings.
+  - Added Nginx WebSocket proxy configuration for production deployments.
+  - Added troubleshooting steps for "WebSocket connection failed" errors.
+
+- **Multi-Store WooCommerce Integration:**
+
+  - Users can now connect and manage multiple WooCommerce stores from the Integrations tab.
+  - New database migration adding `name` and `is_default` columns to `woocommerce_settings` table.
+  - Updated `WooCommerceSettings` model with methods for multi-store support (`forUser()` returns collection, `getDefaultForUser()`, `getByIdForUser()`, `setAsDefault()`).
+  - Updated `WooCommerceApiService` to accept optional `storeId` parameter and use store-specific cache keys.
+  - Completely redesigned WooCommerce Settings page (`Index.vue`) with store list, add/edit modal, status indicators, and default store management.
+  - Updated `ProductPickerModal.vue` with store selector dropdown when multiple stores are connected.
+  - Updated `BlockEditor.vue` to save and display source store information for selected products.
+  - Added "Refresh Product Data" functionality to WooCommerce product blocks in the Template Builder.
+  - Updated `TemplateProductsController` to accept `store_id` parameter for all product-related endpoints.
+  - New routes for store CRUD operations, set-default, disconnect, and reconnect.
+  - Full translations for multi-store feature in PL, EN, DE, ES.
+
+- **WooCommerce Integration Page Enhancements:**
+  - Added disconnect confirmation modal with store name display, replacing native browser confirm dialog.
+  - Added delete confirmation modal with warning about irreversible action.
+  - Made store URL clickable with external link icon (opens in new browser tab).
+  - Added "Test" button on each connected store for on-demand connection testing.
+  - Added connection test result indicator (green/red badge with success/failure status) next to store URL.
+  - Full translations for new features in PL, EN, DE, ES.
+
+### Fixed
+
+- **Documentation:**
+  - Fixed incorrect port references in development documentation (Reverb 8085, MySQL 3306).
 
 ## [1.5.7] – Short Description
 

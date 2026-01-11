@@ -6,7 +6,7 @@
 
 **Professional Email Marketing & Automation Platform**
 
-[![Version](https://img.shields.io/badge/version-1.5.7-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
+[![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
 [![PHP](https://img.shields.io/badge/PHP-8.5-purple.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org)
@@ -26,6 +26,7 @@ NetSendo is a modern email marketing and automation platform that enables:
 
 - 📧 **Email Marketing** - Create and send email campaigns with advanced MJML editor
 - 🎥 **Webinars & Auto-Webinars** - Host live sessions or schedule automated evergreen webinars with simulated chat
+- 👥 **Live Visitors** - Real-time visitor tracking and analytics using WebSockets
 - 🛍️ **E-commerce & Funnels** - Sell digital products via Stripe, Polar, & Shopify with built-in sales funnels
 - 🤖 **AI Suite** - Campaign Auditor, Advisor, and Smart Content Generation (OpenAI, Claude, Gemini)
 - 📱 **SMS Marketing** - Send SMS messages to your subscribers
@@ -129,6 +130,7 @@ NETSENDO_VERSION=1.0.0 docker compose up -d
 | **NetSendo** | http://localhost:5029 | Main dashboard   |
 | **Mailpit**  | http://localhost:5031 | Test email inbox |
 | **MySQL**    | localhost:5030        | Database         |
+| **Reverb**   | localhost:8085        | WebSocket Server |
 
 > [!TIP]
 > All ports are bound to `127.0.0.1` for security. Use a reverse proxy (nginx, Caddy) for public access.
@@ -156,7 +158,8 @@ On first run, the container will automatically:
 | ------------ | --------------------- | ---------------------- |
 | **NetSendo** | http://localhost:8080 | Main dashboard         |
 | **Mailpit**  | http://localhost:8025 | Test email inbox       |
-| **MySQL**    | localhost:33006       | Database               |
+| **MySQL**    | localhost:3306        | Database               |
+| **Reverb**   | localhost:8085        | WebSocket Server       |
 | **Vite HMR** | http://localhost:5173 | Hot Module Replacement |
 
 ---
@@ -295,6 +298,40 @@ ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_AI_API_KEY=...
 ```
 
+### WebSocket Configuration (Reverb)
+
+> [!IMPORTANT] > **WebSocket server is required** for real-time features like Live Visitors, notifications, and real-time analytics.
+
+NetSendo uses Laravel Reverb as a WebSocket server. The configuration is already included in `docker-compose.yml` and `docker-compose.dev.yml`.
+
+**Required environment variables:**
+
+```env
+# Enable broadcasting via Reverb
+BROADCAST_CONNECTION=reverb
+
+# Backend configuration (for PHP/Laravel)
+REVERB_APP_ID=netsendo
+REVERB_APP_KEY=netsendo-reverb-key
+REVERB_APP_SECRET=netsendo-reverb-secret
+REVERB_HOST=reverb                    # Docker service name
+REVERB_PORT=8085
+REVERB_SCHEME=http
+
+# Frontend configuration (for browser)
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST=localhost             # Or your domain for production
+VITE_REVERB_PORT=8085
+VITE_REVERB_SCHEME=http
+```
+
+**Key points:**
+
+- `REVERB_HOST=reverb` - for backend (Docker internal network)
+- `VITE_REVERB_HOST=localhost` - for browser (external access)
+- Port `8085` is exposed by the `reverb` container
+- After changing `VITE_*` variables, rebuild frontend: `npm run build`
+
 ### Production Configuration
 
 > [!TIP] > **Auto-detected settings**: NetSendo automatically configures these from `APP_URL`:
@@ -420,6 +457,53 @@ If changes don't appear after update:
 
 - Hard refresh: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
 - Clear browser cache or use incognito mode
+
+### WebSocket Connection Failed
+
+If you see errors like:
+
+```
+WebSocket connection to 'ws://localhost:8080/app/...' failed
+```
+
+**Cause:** Reverb is not configured or not running.
+
+**Solution:**
+
+1. **Check Reverb configuration in `.env`:**
+
+   ```env
+   BROADCAST_CONNECTION=reverb
+   REVERB_PORT=8085
+   VITE_REVERB_PORT=8085
+   ```
+
+2. **Verify Reverb container is running:**
+
+   ```bash
+   docker compose ps
+   # Should show netsendo-reverb with status "Up"
+   ```
+
+3. **Check Reverb logs:**
+
+   ```bash
+   docker compose logs reverb
+   # Should show: "Starting server on 0.0.0.0:8085"
+   ```
+
+4. **Restart Reverb and rebuild frontend:**
+
+   ```bash
+   docker compose restart reverb
+   docker compose exec app npm run build
+   ```
+
+5. **Verify port 8085 is accessible:**
+   ```bash
+   curl http://localhost:8085
+   # Should return Reverb response
+   ```
 
 📖 For more troubleshooting, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md#-troubleshooting)
 

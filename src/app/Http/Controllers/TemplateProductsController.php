@@ -21,9 +21,11 @@ class TemplateProductsController extends Controller
             'per_page' => 'nullable|integer|min:1|max:50',
             'search' => 'nullable|string|max:100',
             'category' => 'nullable|integer',
+            'store_id' => 'nullable|integer',
         ]);
 
-        $service = WooCommerceApiService::forUser(Auth::id());
+        $storeId = $validated['store_id'] ?? null;
+        $service = WooCommerceApiService::forUser(Auth::id(), $storeId);
 
         if (!$service) {
             return response()->json([
@@ -63,6 +65,7 @@ class TemplateProductsController extends Controller
                 'total' => $result['total'],
                 'total_pages' => $result['total_pages'],
                 'has_more' => $page < $result['total_pages'],
+                'store_id' => $service->getStoreId(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -77,9 +80,14 @@ class TemplateProductsController extends Controller
     /**
      * Get WooCommerce categories
      */
-    public function woocommerceCategories(): JsonResponse
+    public function woocommerceCategories(Request $request): JsonResponse
     {
-        $service = WooCommerceApiService::forUser(Auth::id());
+        $validated = $request->validate([
+            'store_id' => 'nullable|integer',
+        ]);
+
+        $storeId = $validated['store_id'] ?? null;
+        $service = WooCommerceApiService::forUser(Auth::id(), $storeId);
 
         if (!$service) {
             return response()->json([
@@ -210,9 +218,14 @@ class TemplateProductsController extends Controller
     /**
      * Get single product details
      */
-    public function getProduct(int $productId): JsonResponse
+    public function getProduct(Request $request, int $productId): JsonResponse
     {
-        $service = WooCommerceApiService::forUser(Auth::id());
+        $validated = $request->validate([
+            'store_id' => 'nullable|integer',
+        ]);
+
+        $storeId = $validated['store_id'] ?? null;
+        $service = WooCommerceApiService::forUser(Auth::id(), $storeId);
 
         if (!$service) {
             return response()->json([
@@ -244,16 +257,27 @@ class TemplateProductsController extends Controller
     }
 
     /**
-     * Check WooCommerce connection status
+     * Check WooCommerce connection status - returns all connected stores
      */
     public function connectionStatus(): JsonResponse
     {
-        $settings = WooCommerceSettings::forUser(Auth::id());
+        $stores = WooCommerceSettings::forUser(Auth::id());
+        $connectedStores = $stores->filter(fn($store) => $store->isConnected());
 
+        // Return stores info for the ProductPickerModal
         return response()->json([
-            'connected' => $settings?->isConnected() ?? false,
-            'store_url' => $settings?->store_url,
-            'store_info' => $settings?->store_info,
+            'connected' => $connectedStores->isNotEmpty(),
+            'stores' => $connectedStores->map(fn($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
+                'display_name' => $store->display_name,
+                'store_url' => $store->store_url,
+                'is_default' => $store->is_default,
+                'store_info' => $store->store_info,
+            ])->values(),
+            // Backwards compatibility: return default store info
+            'store_url' => $connectedStores->first()?->store_url,
+            'store_info' => $connectedStores->first()?->store_info,
         ]);
     }
 }

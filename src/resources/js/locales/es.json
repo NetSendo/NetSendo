@@ -1826,7 +1826,10 @@
         "products_found": "Encontrado: {count} productos",
         "page_of": "Página {current} de {total}",
         "previous_page": "Anterior",
-        "next_page": "Siguiente"
+        "next_page": "Siguiente",
+        "select_store": "Seleccionar tienda",
+        "from_store": "De la tienda",
+        "refresh_product": "Actualizar datos del producto"
     },
     "fields": {
         "title": "Gestión de campos",
@@ -2661,7 +2664,37 @@
             "feature_templates": "Plantillas de producto",
             "feature_templates_desc": "Crea hermosas presentaciones de productos en tus correos",
             "feature_sync": "Auto-Sincronización",
-            "feature_sync_desc": "Los datos de productos siempre están actualizados"
+            "feature_sync_desc": "Los datos de productos siempre están actualizados",
+            "stores_title": "Tiendas conectadas",
+            "stores_empty": "No hay tiendas WooCommerce conectadas",
+            "stores_empty_desc": "Añade tu primera tienda para importar productos en plantillas de correo",
+            "add_store": "Añadir tienda",
+            "edit_store": "Editar tienda",
+            "store_name": "Nombre de la tienda",
+            "store_name_placeholder": "ej. Mi tienda principal",
+            "store_name_help": "Nombre amigable para identificar la tienda",
+            "default_store": "Predeterminada",
+            "set_as_default": "Establecer como predeterminada",
+            "default_set": "La tienda predeterminada ha sido establecida",
+            "delete_store": "Eliminar tienda",
+            "confirm_delete_store": "¿Estás seguro de que deseas eliminar esta tienda? Esta operación es irreversible.",
+            "store_added": "La tienda ha sido añadida",
+            "store_updated": "La tienda ha sido actualizada",
+            "store_deleted": "La tienda ha sido eliminada",
+            "store_not_found": "Tienda no encontrada",
+            "store_url_exists": "Una tienda con esta URL ya está conectada",
+            "credentials_update_hint": "Dejar vacío para mantener las credenciales actuales",
+            "select_store": "Seleccionar tienda",
+            "reconnect": "Reconectar",
+            "reconnected": "La tienda ha sido reconectada",
+            "disconnect_modal_title": "Desconectar tienda",
+            "disconnect_modal_message": "¿Estás seguro de que deseas desconectar la tienda \"{name}\"? La tienda permanecerá guardada pero la conexión se desactivará.",
+            "delete_modal_title": "Eliminar tienda",
+            "delete_modal_message": "¿Estás seguro de que deseas eliminar la tienda \"{name}\"? Esta operación es irreversible y eliminará todos los datos asociados con esta tienda.",
+            "open_store": "Abrir tienda",
+            "test_store": "Probar",
+            "test_success": "Conexión activa",
+            "test_failed": "Conexión inactiva"
         }
     },
     "tracked_links": {
@@ -3342,7 +3375,13 @@
         "top_products": "Productos principales",
         "no_data": "Sin datos",
         "custom_events_title": "Rastreo de eventos personalizados",
-        "custom_events_description": "Puedes enviar eventos personalizados desde JavaScript usando la API de NetSendo Pixel."
+        "custom_events_description": "Puedes enviar eventos personalizados desde JavaScript usando la API de NetSendo Pixel.",
+        "live_visitors": "Visitantes en vivo",
+        "visitors_now": "personas en el sitio ahora",
+        "no_visitors": "No hay visitantes activos",
+        "current_page": "Página actual",
+        "time_on_site": "Tiempo en el sitio",
+        "visitor_device": "Dispositivo"
     },
     "sales_funnels": {
         "title": "Embudos de venta",
