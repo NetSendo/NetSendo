@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Gender Personalization Placeholder:**
+  - Added `{{męska|żeńska}}` (e.g., `{{male_form|female_form}}`) placeholder to `quickVariables` in Message Creator (`Create.vue`), allowing one-click insertion into Subject and Preheader fields.
+  - Updated `TemplateAiService` to instruct AI on how to use gender-specific forms (`{{male_form|female_form}}`) for personalization.
+  - Added translations for the new gender placeholder UI in PL, EN, DE, ES.
+
 ## [1.5.7] – Short Description
 
 **Release date:** 2026-01-11

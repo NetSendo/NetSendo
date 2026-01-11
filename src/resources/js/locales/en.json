@@ -1,42 +1,4 @@
 {
-    "templates": {
-        "title": "Templates",
-        "subtitle": "Manage your email and SMS templates",
-        "new_template": "New Template",
-        "starter": {
-            "title": "Starter Templates",
-            "subtitle": "Start with a pre-designed template",
-            "use_template": "Use Template",
-            "show_templates": "Show Starter Templates",
-            "premium": "Premium",
-            "categories": {
-                "welcome": "Welcome",
-                "newsletter": "Newsletter",
-                "promotional": "Promotional",
-                "ecommerce": "E-commerce",
-                "transactional": "Transactional",
-                "notification": "Notification"
-            }
-        },
-        "empty_title": "No templates yet",
-        "empty_description": "Create your first template to get started",
-        "start": "Create Template",
-        "updated_at": "Updated",
-        "confirm_delete": "Are you sure you want to delete this template?",
-        "duplicate": "Duplicate",
-        "create_title": "Create Template",
-        "create_subtitle": "Design a new template from scratch",
-        "back_to_list": "Back to list",
-        "fields": {
-            "name": "Template Name",
-            "name_placeholder": "e.g. Monthly Newsletter",
-            "content": "Content"
-        },
-        "actions": {
-            "create": "Create Template"
-        },
-        "default_content": "<p>Start editing your template...</p>"
-    },
     "affiliate": {
         "title": "Affiliate Program",
         "programs": "Programs",
@@ -862,6 +824,7 @@
             "placeholders": {
                 "section_title": "Personalization (placeholders)",
                 "standard_title": "Standard fields (always active)",
+                "special_title": "Special placeholders",
                 "custom_title": "Custom fields (select)",
                 "no_custom": "No custom fields."
             },
@@ -1048,6 +1011,7 @@
                 "section_title": "Personalization snippets",
                 "loading": "Loading snippets...",
                 "standard_title": "Standard fields (always active)",
+                "special_title": "Special placeholders",
                 "custom_title": "Custom fields (select)",
                 "empty_custom": "No custom fields.",
                 "add_fields": "Add fields"
@@ -1138,7 +1102,8 @@
             "excluded_count": "Excluded {count} list(s)",
             "insert_variable": "Insert variable",
             "insert_fname": "First name",
-            "insert_fname_vocative": "First name (vocative)"
+            "insert_fname_vocative": "First name (vocative)",
+            "insert_gender_form": "Gender {{m|f}}"
         },
         "actions": {
             "save_draft": "Save as draft",
@@ -1677,6 +1642,8 @@
         "confirm_delete": "Are you sure you want to delete this tag?"
     },
     "templates": {
+        "your_templates": "Your templates",
+        "edit_in_editor": "Edit in editor",
         "builder_badge": "Builder",
         "title": "Email Templates",
         "subtitle": "Manage your email message templates",

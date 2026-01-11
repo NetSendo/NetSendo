@@ -36,6 +36,17 @@ class PlaceholderService
     ];
 
     /**
+     * Special placeholders with different syntax (e.g., {{male|female}})
+     */
+    protected array $specialPlaceholders = [
+        'gender_form' => [
+            'label' => 'Odmiana przez płeć',
+            'description' => 'Odmiana przez płeć, np. {{Byłeś|Byłaś}}, {{Drogi|Droga}}',
+            'placeholder' => '{{męska|żeńska}}',
+        ],
+    ];
+
+    /**
      * Get list of all standard fields
      */
     public function getStandardFields(): array
@@ -63,6 +74,7 @@ class PlaceholderService
         $result = [
             'standard' => [],
             'system' => [],
+            'special' => [],
             'custom' => [],
         ];
 
@@ -81,6 +93,16 @@ class PlaceholderService
             $result['system'][] = [
                 'name' => $name,
                 'placeholder' => '[[' . $name . ']]',
+                'label' => $info['label'],
+                'description' => $info['description'],
+            ];
+        }
+
+        // Special placeholders (different syntax like {{male|female}})
+        foreach ($this->specialPlaceholders as $name => $info) {
+            $result['special'][] = [
+                'name' => $name,
+                'placeholder' => $info['placeholder'],
                 'label' => $info['label'],
                 'description' => $info['description'],
             ];

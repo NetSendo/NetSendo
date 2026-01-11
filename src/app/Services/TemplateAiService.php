@@ -214,7 +214,8 @@ PROMPT;
     {
         $lines = [];
         $lines[] = "   Używaj wstawek w formacie [[nazwa_pola]] do personalizacji treści.";
-        $lines[] = "   NIGDY nie używaj nawiasów klamrowych {}, tylko podwójne kwadratowe [[]]!";
+        $lines[] = "   Większość wstawek używa podwójnych nawiasów kwadratowych [[]].";
+        $lines[] = "   WYJĄTEK: Odmiana przez płeć używa formatu {{meska|zenska}}.";
         $lines[] = "";
         $lines[] = "   DOSTĘPNE WSTAWKI:";
 
@@ -231,6 +232,7 @@ PROMPT;
             $desc = $p['description'] ?? $p['label'];
             $lines[] = "   - [[{$p['name']}]] - {$desc}";
         }
+        $lines[] = "   - {{meska|zenska}} - Odmiana przez płeć (np. {{Byłeś|Byłaś}}, {{Zrobiłeś|Zrobiłaś}})";
 
         // Add custom placeholders if any
         if (!empty($customPlaceholders)) {
@@ -534,7 +536,8 @@ PROMPT;
         $lines = [];
         $lines[] = "PERSONALIZACJA (wstawki):";
         $lines[] = "   Używaj wstawek w formacie [[nazwa_pola]] do personalizacji.";
-        $lines[] = "   NIGDY nie używaj nawiasów klamrowych {}, tylko podwójne kwadratowe [[]]!";
+        $lines[] = "   Większość wstawek używa podwójnych nawiasów kwadratowych [[]].";
+        $lines[] = "   WYJĄTEK: Odmiana przez płeć używa formatu {{meska|zenska}}.";
         $lines[] = "";
         $lines[] = "   DOSTĘPNE WSTAWKI:";
 
@@ -548,6 +551,7 @@ PROMPT;
         foreach ($standardPlaceholders as $p) {
             $lines[] = "   - [[{$p['name']}]] - {$p['description']}";
         }
+        $lines[] = "   - {{meska|zenska}} - Odmiana przez płeć (np. {{Byłeś|Byłaś}})";
 
         // Add custom placeholders if any
         if (!empty($customPlaceholders)) {

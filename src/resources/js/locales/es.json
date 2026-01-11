@@ -1,42 +1,4 @@
 {
-    "templates": {
-        "title": "Plantillas",
-        "subtitle": "Administra tus plantillas de correo y SMS",
-        "new_template": "Nueva Plantilla",
-        "starter": {
-            "title": "Plantillas de Inicio",
-            "subtitle": "Comienza con una plantilla prediseñada",
-            "use_template": "Usar Plantilla",
-            "show_templates": "Mostrar Plantillas de Inicio",
-            "premium": "Premium",
-            "categories": {
-                "welcome": "Bienvenida",
-                "newsletter": "Boletín",
-                "promotional": "Promocional",
-                "ecommerce": "E-commerce",
-                "transactional": "Transaccional",
-                "notification": "Notificación"
-            }
-        },
-        "empty_title": "Sin plantillas todavía",
-        "empty_description": "Crea tu primera plantilla para comenzar",
-        "start": "Crear Plantilla",
-        "updated_at": "Actualizado",
-        "confirm_delete": "¿Seguro que quieres eliminar esta plantilla?",
-        "duplicate": "Duplicar",
-        "create_title": "Crear Plantilla",
-        "create_subtitle": "Diseña una nueva plantilla desde cero",
-        "back_to_list": "Volver a la lista",
-        "fields": {
-            "name": "Nombre de la Plantilla",
-            "name_placeholder": "ej. Boletín Mensual",
-            "content": "Contenido"
-        },
-        "actions": {
-            "create": "Crear Plantilla"
-        },
-        "default_content": "<p>Comienza a editar tu plantilla...</p>"
-    },
     "affiliate": {
         "title": "Programa de Afiliados",
         "programs": "Programas",
@@ -1143,6 +1105,7 @@
                 "section_title": "Fragmentos de personalización",
                 "loading": "Cargando fragmentos...",
                 "standard_title": "Campos estándar (siempre activos)",
+                "special_title": "Marcadores especiales",
                 "custom_title": "Campos personalizados (seleccionar)",
                 "empty_custom": "No hay campos personalizados.",
                 "add_fields": "Añadir campos"
@@ -1233,7 +1196,8 @@
             "excluded_count": "{count} lista(s) excluida(s)",
             "insert_variable": "Insertar variable",
             "insert_fname": "Nombre",
-            "insert_fname_vocative": "Nombre (vocativo)"
+            "insert_fname_vocative": "Nombre (vocativo)",
+            "insert_gender_form": "Género {{m|f}}"
         },
         "actions": {
             "save_draft": "Guardar como borrador",
@@ -1435,6 +1399,8 @@
         "confirm_delete": "¿Está seguro de que desea eliminar esta etiqueta?"
     },
     "templates": {
+        "your_templates": "Tus plantillas",
+        "edit_in_editor": "Editar en el editor",
         "builder_badge": "Constructor",
         "title": "Plantillas de correo",
         "subtitle": "Administre sus plantillas de mensajes de correo electrónico",

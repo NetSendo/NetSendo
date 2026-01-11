@@ -2,7 +2,9 @@
     "templates": {
         "title": "Vorlagen",
         "subtitle": "Verwalten Sie Ihre E-Mail- und SMS-Vorlagen",
+        "your_templates": "Ihre Vorlagen",
         "new_template": "Neue Vorlage",
+        "edit_in_editor": "Im Editor bearbeiten",
         "starter": {
             "title": "Startvorlagen",
             "subtitle": "Beginnen Sie mit einer vorgefertigten Vorlage",
@@ -1183,6 +1185,7 @@
                 "section_title": "Personalisierungs-Snippets",
                 "loading": "Lade Snippets...",
                 "standard_title": "Standardfelder (immer aktiv)",
+                "special_title": "Spezielle Platzhalter",
                 "custom_title": "Benutzerdefinierte Felder (auswählen)",
                 "empty_custom": "Keine benutzerdefinierten Felder.",
                 "add_fields": "Felder hinzufügen"
@@ -1273,7 +1276,8 @@
             "excluded_count": "{count} Liste(n) ausgeschlossen",
             "insert_variable": "Variable einfügen",
             "insert_fname": "Vorname",
-            "insert_fname_vocative": "Vorname (Vokativ)"
+            "insert_fname_vocative": "Vorname (Vokativ)",
+            "insert_gender_form": "Geschlecht {{m|w}}"
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",
@@ -1557,6 +1561,8 @@
         "confirm_delete": "Sind Sie sicher, dass Sie dieses Tag löschen möchten?"
     },
     "templates": {
+        "your_templates": "Ihre Vorlagen",
+        "edit_in_editor": "Im Editor bearbeiten",
         "builder_badge": "Builder",
         "title": "E-Mail-Vorlagen",
         "subtitle": "Verwalten Sie Ihre E-Mail-Nachrichtenvorlagen",

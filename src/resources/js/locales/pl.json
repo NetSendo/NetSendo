@@ -1,45 +1,5 @@
 {
-    "templates": {
-        "title": "Szablony",
-        "subtitle": "Zarządzaj szablonami wiadomości email i SMS",
-        "your_templates": "Twoje szablony",
-        "new_template": "Dodaj Szablon",
-        "edit_in_editor": "Edytuj w edytorze",
-        "starter": {
-            "title": "Szablony Startowe",
-            "subtitle": "Zacznij od gotowego szablonu",
-            "use_template": "Użyj Szablonu",
-            "show_templates": "Pokaż Szablony Startowe",
-            "premium": "Premium",
-            "categories": {
-                "welcome": "Powitanie",
-                "newsletter": "Newsletter",
-                "promotional": "Promocyjne",
-                "ecommerce": "E-commerce",
-                "transactional": "Transakcyjne",
-                "notification": "Powiadomienia"
-            }
-        },
-        "empty_title": "Brak szablonów",
-        "empty_description": "Utwórz swój pierwszy szablon, aby rozpocząć",
-        "start": "Utwórz Szablon",
-        "updated_at": "Zaktualizowano",
-        "confirm_delete": "Czy na pewno chcesz usunąć ten szablon?",
-        "duplicate": "Duplikuj",
-        "create_title": "Utwórz Szablon",
-        "create_subtitle": "Zaprojektuj nowy szablon od podstaw",
-        "back_to_list": "Powrót do listy",
-        "builder_badge": "Kreator",
-        "fields": {
-            "name": "Nazwa Szablonu",
-            "name_placeholder": "Tutaj wpisz nazwę swojego szablonu",
-            "content": "Treść"
-        },
-        "actions": {
-            "create": "Utwórz Szablon"
-        },
-        "default_content": "<p>Zacznij edytować swój szablon...</p>"
-    },
+
     "affiliate": {
         "title": "Program Partnerski",
         "programs": "Programy",
@@ -864,6 +824,7 @@
             "placeholders": {
                 "section_title": "Personalizacja (wstawki)",
                 "standard_title": "Pola standardowe (zawsze aktywne)",
+                "special_title": "Wstawki specjalne",
                 "custom_title": "Pola niestandardowe (wybierz)",
                 "no_custom": "Brak pól niestandardowych."
             },
@@ -1076,6 +1037,7 @@
                 "section_title": "Wstawki do personalizacji",
                 "loading": "Ładowanie wstawek...",
                 "standard_title": "Pola standardowe (zawsze aktywne)",
+                "special_title": "Wstawki specjalne",
                 "custom_title": "Pola niestandardowe (wybierz)",
                 "empty_custom": "Brak pól niestandardowych.",
                 "add_fields": "Dodaj pola"
@@ -1166,7 +1128,8 @@
             "excluded_count": "Wykluczono {count} list(y)",
             "insert_variable": "Wstaw zmienną",
             "insert_fname": "Imię",
-            "insert_fname_vocative": "Imię w wołaczu"
+            "insert_fname_vocative": "Imię w wołaczu",
+            "insert_gender_form": "Odmiana {{m|ż}}"
         },
         "attachments": {
             "title": "Załączniki PDF",
@@ -1430,6 +1393,8 @@
         "confirm_delete": "Czy na pewno chcesz usunąć ten tag?"
     },
     "templates": {
+        "your_templates": "Twoje szablony",
+        "edit_in_editor": "Edytuj w edytorze",
         "builder_badge": "Kreator",
         "title": "Szablony wiadomości",
         "subtitle": "Zarządzaj swoimi szablonami wiadomości email",

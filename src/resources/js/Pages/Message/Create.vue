@@ -125,6 +125,7 @@ const showPreheaderVariablePicker = ref(false);
 const quickVariables = [
     { code: '[[fname]]', label: 'messages.fields.insert_fname' },
     { code: '[[!fname]]', label: 'messages.fields.insert_fname_vocative' },
+    { code: '{{męska|żeńska}}', label: 'messages.fields.insert_gender_form' },
 ];
 
 // Common emojis for subject

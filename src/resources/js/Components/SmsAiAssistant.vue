@@ -45,6 +45,7 @@ const loadingModels = ref(false);
 
 // Placeholder selection state
 const standardPlaceholders = ref([]);
+const specialPlaceholders = ref([]);
 const customPlaceholders = ref([]);
 const selectedCustomPlaceholders = ref([]); // IDs of selected custom placeholders
 const showPlaceholderSection = ref(false);
@@ -100,6 +101,7 @@ onMounted(async () => {
         const data = placeholderResponse.data;
 
         standardPlaceholders.value = data.standard || [];
+        specialPlaceholders.value = data.special || [];
         customPlaceholders.value = data.custom || [];
     } catch (err) {
         console.error("Failed to fetch placeholders:", err);
@@ -600,6 +602,26 @@ const copyToClipboard = async (content) => {
                                     >
                                         [[first_name]], [[last_name]],
                                         [[phone]], [[email]]
+                                    </p>
+                                </div>
+
+                                <!-- Special placeholders (e.g., gender form) -->
+                                <div v-if="specialPlaceholders.length > 0" class="mb-3">
+                                    <p
+                                        class="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            $t(
+                                                "sms.ai_assistant.placeholders.special_title"
+                                            )
+                                        }}
+                                    </p>
+                                    <p
+                                        class="text-xs text-slate-400 dark:text-slate-500"
+                                    >
+                                        <span v-for="(p, index) in specialPlaceholders" :key="p.name">
+                                            {{ p.placeholder }}<span v-if="index < specialPlaceholders.length - 1">, </span>
+                                        </span>
                                     </p>
                                 </div>
 

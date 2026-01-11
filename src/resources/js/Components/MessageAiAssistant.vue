@@ -12,8 +12,8 @@ const { isListening, isSupported, transcript, interimTranscript, toggleListening
 // Append transcript to prompt when voice recognition completes
 watch(transcript, (newTranscript) => {
     if (newTranscript) {
-        prompt.value = prompt.value 
-            ? prompt.value.trim() + ' ' + newTranscript 
+        prompt.value = prompt.value
+            ? prompt.value.trim() + ' ' + newTranscript
             : newTranscript;
     }
 });
@@ -48,6 +48,7 @@ const loadingModels = ref(false);
 
 // Placeholder selection state
 const standardPlaceholders = ref([]);
+const specialPlaceholders = ref([]);
 const customPlaceholders = ref([]);
 const selectedCustomPlaceholders = ref([]); // IDs of selected custom placeholders
 const showPlaceholderSection = ref(false);
@@ -67,12 +68,12 @@ const availableModels = computed(() => {
 onMounted(async () => {
     loadingModels.value = true;
     loadingPlaceholders.value = true;
-    
+
     try {
         // Fetch AI integrations
         const response = await axios.get(route('api.ai.active-models'));
         integrations.value = response.data.integrations || [];
-        
+
         // Auto-select first integration and its default model
         if (integrations.value.length > 0) {
             selectedIntegrationId.value = integrations.value[0].id;
@@ -84,13 +85,14 @@ onMounted(async () => {
     } finally {
         loadingModels.value = false;
     }
-    
+
     try {
         // Fetch available placeholders
         const placeholderResponse = await axios.get(route('api.placeholders'));
         const data = placeholderResponse.data;
-        
+
         standardPlaceholders.value = data.standard || [];
+        specialPlaceholders.value = data.special || [];
         customPlaceholders.value = data.custom || [];
     } catch (error) {
         console.error('Failed to fetch placeholders:', error);
@@ -118,14 +120,14 @@ const toneOptions = computed(() => [
 
 // Mode options (computed for reactivity to language changes)
 const modeOptions = computed(() => [
-    { 
-        value: 'text', 
+    {
+        value: 'text',
         label: t('messages.ai_assistant.modes.text'),
         description: t('messages.ai_assistant.modes.text_desc'),
         icon: '📝'
     },
-    { 
-        value: 'template', 
+    {
+        value: 'template',
         label: t('messages.ai_assistant.modes.template'),
         description: t('messages.ai_assistant.modes.template_desc'),
         icon: '🎨'
@@ -186,7 +188,7 @@ const generateContent = async () => {
                 type: 'content',
                 html: response.data.content,
             };
-            
+
             // For template mode, show comparison modal
             if (activeMode.value === 'template' && props.currentContent) {
                 showComparisonModal.value = true;
@@ -215,13 +217,13 @@ const generateContent = async () => {
 // Copy to clipboard
 const copyToClipboard = async () => {
     if (!generatedContent.value || generatedContent.value.type === 'error') return;
-    
+
     try {
         // Copy as plain text or HTML based on formatting preference
-        const textToCopy = withFormatting.value 
-            ? generatedContent.value.html 
+        const textToCopy = withFormatting.value
+            ? generatedContent.value.html
             : generatedContent.value.html.replace(/<[^>]*>/g, '');
-        
+
         await navigator.clipboard.writeText(textToCopy);
         copySuccess.value = true;
         setTimeout(() => { copySuccess.value = false; }, 2000);
@@ -294,12 +296,12 @@ const acceptComparison = () => {
                             {{ $t('messages.ai_assistant.select_mode') }}
                         </label>
                         <div class="grid grid-cols-2 gap-2">
-                            <button 
-                                v-for="mode in modeOptions" 
+                            <button
+                                v-for="mode in modeOptions"
                                 :key="mode.value"
                                 @click="activeMode = mode.value; generatedContent = null"
-                                :class="activeMode === mode.value 
-                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                                :class="activeMode === mode.value
+                                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-500 dark:bg-indigo-900/30 dark:text-indigo-300'
                                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'"
                                 class="flex flex-col items-center gap-1 rounded-lg border p-3 text-center transition-all"
                             >
@@ -317,7 +319,7 @@ const acceptComparison = () => {
                         <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
                             {{ $t('messages.ai_assistant.select_model') }}
                         </label>
-                        
+
                         <!-- Loading state -->
                         <div v-if="loadingModels" class="flex items-center gap-2 text-sm text-slate-500">
                             <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -326,7 +328,7 @@ const acceptComparison = () => {
                             </svg>
                             {{ $t('common.loading') }}
                         </div>
-                        
+
                         <!-- No integrations -->
                         <div v-else-if="integrations.length === 0" class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                             <div class="flex items-center gap-2">
@@ -336,7 +338,7 @@ const acceptComparison = () => {
                                 {{ $t('messages.ai_assistant.no_models_available') }}
                             </div>
                         </div>
-                        
+
                         <!-- Integration & Model selectors -->
                         <div v-else class="space-y-2">
                             <!-- Integration selector -->
@@ -348,7 +350,7 @@ const acceptComparison = () => {
                                     {{ integration.name }}
                                 </option>
                             </select>
-                            
+
                             <!-- Model selector -->
                             <select
                                 v-model="selectedModelId"
@@ -376,14 +378,14 @@ const acceptComparison = () => {
                                     @click="toggleListening(getSpeechLang(locale))"
                                     :title="isListening ? $t('messages.ai_assistant.voice.stop') : $t('messages.ai_assistant.voice.start')"
                                     class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium transition-all"
-                                    :class="isListening 
-                                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' 
+                                    :class="isListening
+                                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                                         : 'bg-slate-100 text-slate-600 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400'"
                                 >
-                                    <svg 
-                                        class="h-4 w-4" 
+                                    <svg
+                                        class="h-4 w-4"
                                         :class="{ 'animate-pulse': isListening }"
-                                        fill="currentColor" 
+                                        fill="currentColor"
                                         viewBox="0 0 24 24"
                                     >
                                         <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -396,15 +398,15 @@ const acceptComparison = () => {
                                 </span>
                             </div>
                             <div class="relative">
-                                <textarea 
+                                <textarea
                                     v-model="prompt"
                                     rows="4"
                                     class="w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-800 dark:text-white custom-scrollbar"
-                                    :class="isListening 
-                                        ? 'border-red-300 dark:border-red-700' 
+                                    :class="isListening
+                                        ? 'border-red-300 dark:border-red-700'
                                         : 'border-slate-200 dark:border-slate-700'"
-                                    :placeholder="activeMode === 'text' 
-                                        ? $t('messages.ai_assistant.prompts.text_placeholder') 
+                                    :placeholder="activeMode === 'text'
+                                        ? $t('messages.ai_assistant.prompts.text_placeholder')
                                         : $t('messages.ai_assistant.prompts.template_placeholder')"
                                 ></textarea>
                                 <!-- Interim transcript indicator -->
@@ -420,8 +422,8 @@ const acceptComparison = () => {
                                 {{ $t('messages.ai_assistant.quick_prompts') }}
                             </label>
                             <div class="flex flex-wrap gap-2">
-                                <button 
-                                    v-for="qp in quickPrompts" 
+                                <button
+                                    v-for="qp in quickPrompts"
                                     :key="qp"
                                     @click="prompt = qp"
                                     class="rounded-full bg-slate-100 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:bg-indigo-100 hover:text-indigo-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-indigo-900/50"
@@ -437,8 +439,8 @@ const acceptComparison = () => {
                                 {{ $t('messages.ai_assistant.select_tone') }}
                             </label>
                             <div class="grid grid-cols-3 gap-2">
-                                <button 
-                                    v-for="opt in toneOptions" 
+                                <button
+                                    v-for="opt in toneOptions"
                                     :key="opt.value"
                                     @click="tone = opt.value"
                                     :class="tone === opt.value ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'"
@@ -452,7 +454,7 @@ const acceptComparison = () => {
 
                         <!-- Placeholder Selection Section -->
                         <div class="mb-4">
-                            <button 
+                            <button
                                 @click="showPlaceholderSection = !showPlaceholderSection"
                                 class="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white p-3 text-left transition-colors hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600"
                             >
@@ -467,15 +469,15 @@ const acceptComparison = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <svg 
-                                    class="h-4 w-4 text-slate-400 transition-transform" 
+                                <svg
+                                    class="h-4 w-4 text-slate-400 transition-transform"
                                     :class="{ 'rotate-180': showPlaceholderSection }"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            
+
                             <!-- Expandable content -->
                             <div v-if="showPlaceholderSection" class="mt-2 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
                                 <!-- Loading state -->
@@ -486,7 +488,7 @@ const acceptComparison = () => {
                                     </svg>
                                     {{ $t('messages.ai_assistant.placeholders.loading') }}
                                 </div>
-                                
+
                                 <template v-else>
                                     <!-- Standard placeholders (always active) -->
                                     <div>
@@ -494,8 +496,8 @@ const acceptComparison = () => {
                                             {{ $t('messages.ai_assistant.placeholders.standard_title') }}
                                         </h4>
                                         <div class="space-y-1">
-                                            <div 
-                                                v-for="p in standardPlaceholders" 
+                                            <div
+                                                v-for="p in standardPlaceholders"
                                                 :key="p.name"
                                                 class="flex items-center gap-2 rounded bg-white px-2 py-1.5 text-xs dark:bg-slate-700"
                                             >
@@ -505,20 +507,38 @@ const acceptComparison = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
+                                    <!-- Special placeholders (e.g., gender form) -->
+                                    <div v-if="specialPlaceholders.length > 0" class="mt-3">
+                                        <h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            {{ $t('messages.ai_assistant.placeholders.special_title') }}
+                                        </h4>
+                                        <div class="space-y-1">
+                                            <div
+                                                v-for="p in specialPlaceholders"
+                                                :key="p.name"
+                                                class="flex items-center gap-2 rounded bg-white px-2 py-1.5 text-xs dark:bg-slate-700"
+                                            >
+                                                <span class="text-emerald-500">✓</span>
+                                                <code class="font-mono text-purple-600 dark:text-purple-400">{{ p.placeholder }}</code>
+                                                <span class="text-slate-500 dark:text-slate-400">- {{ p.description || p.label }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Custom placeholders (selectable) -->
                                     <div v-if="customPlaceholders.length > 0">
                                         <h4 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {{ $t('messages.ai_assistant.placeholders.custom_title') }}
                                         </h4>
                                         <div class="space-y-1">
-                                            <label 
-                                                v-for="p in customPlaceholders" 
+                                            <label
+                                                v-for="p in customPlaceholders"
                                                 :key="p.id"
                                                 class="flex cursor-pointer items-center gap-2 rounded bg-white px-2 py-1.5 text-xs transition-colors hover:bg-indigo-50 dark:bg-slate-700 dark:hover:bg-slate-600"
                                             >
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     :value="p.id"
                                                     v-model="selectedCustomPlaceholders"
                                                     class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
@@ -528,10 +548,10 @@ const acceptComparison = () => {
                                             </label>
                                         </div>
                                     </div>
-                                    
+
                                     <!-- Empty state for custom placeholders -->
                                     <div v-else class="text-center text-xs text-slate-400">
-                                        {{ $t('messages.ai_assistant.placeholders.empty_custom') }} 
+                                        {{ $t('messages.ai_assistant.placeholders.empty_custom') }}
                                         <a href="/settings/fields" class="text-indigo-500 hover:underline">{{ $t('messages.ai_assistant.placeholders.add_fields') }}</a>
                                     </div>
                                 </template>
@@ -541,8 +561,8 @@ const acceptComparison = () => {
                         <!-- Formatting toggle (for text mode) -->
                         <div v-if="activeMode === 'text'" class="mb-4">
                             <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:border-indigo-300 dark:border-slate-700 dark:hover:border-indigo-600">
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     v-model="withFormatting"
                                     class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                 />
@@ -573,7 +593,7 @@ const acceptComparison = () => {
                         </div>
 
                         <!-- Generate button -->
-                        <button 
+                        <button
                             @click="generateContent"
                             :disabled="!prompt || isGenerating"
                             class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 text-sm font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
@@ -594,7 +614,7 @@ const acceptComparison = () => {
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {{ $t('messages.ai_assistant.generated_content') }}
                                 </label>
-                                <button 
+                                <button
                                     @click="generatedContent = null"
                                     class="text-xs text-slate-400 hover:text-slate-600"
                                 >
@@ -616,7 +636,7 @@ const acceptComparison = () => {
 
                             <!-- Action buttons for TEXT mode -->
                             <div v-if="generatedContent.type !== 'error' && activeMode === 'text'" class="mt-3 grid grid-cols-2 gap-2">
-                                <button 
+                                <button
                                     @click="insertContent"
                                     class="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
                                 >
@@ -625,7 +645,7 @@ const acceptComparison = () => {
                                     </svg>
                                     {{ $t('messages.ai_assistant.actions.insert') }}
                                 </button>
-                                <button 
+                                <button
                                     @click="copyToClipboard"
                                     class="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                                 >
@@ -641,7 +661,7 @@ const acceptComparison = () => {
 
                             <!-- Action buttons for TEMPLATE mode -->
                             <div v-if="generatedContent.type !== 'error' && activeMode === 'template'" class="mt-3 flex gap-2">
-                                <button 
+                                <button
                                     @click="showComparisonModal = true"
                                     class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
                                 >
@@ -660,8 +680,8 @@ const acceptComparison = () => {
 
     <!-- Comparison Modal (for template mode) -->
     <Teleport to="body">
-        <div 
-            v-if="showComparisonModal && generatedContent && generatedContent.type !== 'error'" 
+        <div
+            v-if="showComparisonModal && generatedContent && generatedContent.type !== 'error'"
             class="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-black/60 backdrop-blur-sm"
         >
             <div class="m-4 flex h-[90vh] w-full max-w-7xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
@@ -717,7 +737,7 @@ const acceptComparison = () => {
 
                 <!-- Modal Actions -->
                 <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-800">
-                    <button 
+                    <button
                         @click="rejectComparison"
                         class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                     >
@@ -727,7 +747,7 @@ const acceptComparison = () => {
                         {{ $t('messages.ai_assistant.comparison.reject') }}
                     </button>
                     <div class="flex gap-3">
-                        <button 
+                        <button
                             @click="copyToClipboard"
                             class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                         >
@@ -739,7 +759,7 @@ const acceptComparison = () => {
                             </svg>
                             {{ copySuccess ? $t('messages.ai_assistant.actions.copied') : $t('messages.ai_assistant.comparison.copy_new') }}
                         </button>
-                        <button 
+                        <button
                             @click="acceptComparison"
                             class="flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-500"
                         >
