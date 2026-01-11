@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import GroupTreeItem from '@/Components/GroupTreeItem.vue';
+import DeleteGroupModal from './DeleteGroupModal.vue';
 
 const props = defineProps({
     groups: Array,
@@ -74,10 +75,20 @@ const cancelEdit = () => {
     form.value.parent_id = '';
 };
 
-const destroy = (id) => {
-    if (confirm($t('groups.confirm_delete'))) {
-        router.delete(route('groups.destroy', id));
-    }
+// Modal state
+const confirmingGroupDeletion = ref(false);
+const groupToDelete = ref(null);
+
+const confirmDelete = (group) => {
+    groupToDelete.value = group;
+    confirmingGroupDeletion.value = true;
+};
+
+const closeDeleteModal = () => {
+    confirmingGroupDeletion.value = false;
+    setTimeout(() => {
+        groupToDelete.value = null;
+    }, 300);
 };
 
 // Count all groups (including nested)
@@ -184,7 +195,7 @@ const totalGroupsCount = computed(() => {
                                     :group="group"
                                     :depth="0"
                                     @edit="edit"
-                                    @delete="destroy"
+                                    @delete="confirmDelete"
                                 />
                             </div>
                         </div>
@@ -198,5 +209,11 @@ const totalGroupsCount = computed(() => {
                 </div>
             </div>
         </div>
+
+        <DeleteGroupModal
+            :show="confirmingGroupDeletion"
+            :group="groupToDelete"
+            @close="closeDeleteModal"
+        />
     </AuthenticatedLayout>
 </template>

@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Trust all proxies for HTTPS behind reverse proxy (nginx, Cloudflare, etc.)
         $middleware->trustProxies(at: '*');
 
+        // Add CORS middleware globally for cross-origin pixel tracking
+        $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,

@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import DeleteTagModal from './DeleteTagModal.vue';
 
 const props = defineProps({
     tags: Array,
@@ -45,10 +46,24 @@ const cancelEdit = () => {
     form.value.color = '#3b82f6';
 };
 
-const destroy = (id) => {
-    if (confirm($t('tags.confirm_delete'))) {
-        router.delete(route('tags.destroy', id));
-    }
+const destroy = (tag) => {
+    confirmDelete(tag);
+};
+
+// Modal state
+const confirmingTagDeletion = ref(false);
+const tagToDelete = ref(null);
+
+const confirmDelete = (tag) => {
+    tagToDelete.value = tag;
+    confirmingTagDeletion.value = true;
+};
+
+const closeDeleteModal = () => {
+    confirmingTagDeletion.value = false;
+    setTimeout(() => {
+        tagToDelete.value = null;
+    }, 300);
 };
 </script>
 
@@ -65,7 +80,7 @@ const destroy = (id) => {
         <div class="py-12">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                    
+
                     <!-- Form -->
                     <div class="rounded-lg bg-slate-800 p-6 shadow-xl border border-slate-700">
                         <h3 class="mb-4 text-lg font-medium text-white">
@@ -125,8 +140,8 @@ const destroy = (id) => {
 
                         <div v-else class="rounded-lg bg-slate-800 p-6 border border-slate-700">
                              <div class="flex flex-wrap gap-2">
-                                <div 
-                                    v-for="tag in tags" 
+                                <div
+                                    v-for="tag in tags"
                                     :key="tag.id"
                                     class="group relative inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white transition-transform hover:scale-105"
                                     :style="{ backgroundColor: tag.color }"
@@ -136,7 +151,7 @@ const destroy = (id) => {
                                         <button @click="edit(tag)" class="opacity-70 hover:opacity-100" :title="$t('common.edit')">
                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         </button>
-                                        <button @click="destroy(tag.id)" class="opacity-70 hover:opacity-100" :title="$t('common.delete')">
+                                        <button @click="destroy(tag)" class="opacity-70 hover:opacity-100" :title="$t('common.delete')">
                                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                         </button>
                                     </div>
@@ -151,5 +166,11 @@ const destroy = (id) => {
                 </div>
             </div>
         </div>
+
+        <DeleteTagModal
+            :show="confirmingTagDeletion"
+            :tag="tagToDelete"
+            @close="closeDeleteModal"
+        />
     </AuthenticatedLayout>
 </template>

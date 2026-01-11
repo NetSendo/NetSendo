@@ -131,9 +131,15 @@ class ContactListGroupController extends Controller
             abort(403);
         }
 
+        // Move children groups to current group's parent (or root)
+        $group->children()->update(['parent_id' => $group->parent_id]);
+
+        // Move contact lists to null group (uncategorized)
+        $group->contactLists()->update(['contact_list_group_id' => null]);
+
         $group->delete();
 
-        return redirect()->route('groups.index')
-            ->with('success', 'Grupa została usunięta.');
+        return redirect()->back()
+            ->with('success', 'Grupa została usunięta. Listy i podgrupy zostały przeniesione.');
     }
 }

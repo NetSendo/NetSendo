@@ -55,6 +55,14 @@ class PixelController extends Controller
      */
     public function trackEvent(Request $request)
     {
+        // Debug logging for pixel requests
+        Log::debug('Pixel trackEvent called', [
+            'content_type' => $request->header('Content-Type'),
+            'request_data' => $request->all(),
+            'raw_content' => $request->getContent(),
+            'ip' => $request->ip(),
+        ]);
+
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'visitor_token' => 'required|string|max:64',
@@ -152,6 +160,14 @@ class PixelController extends Controller
      */
     public function batchEvents(Request $request)
     {
+        // Debug logging for batch pixel requests
+        Log::debug('Pixel batchEvents called', [
+            'content_type' => $request->header('Content-Type'),
+            'request_data' => $request->all(),
+            'raw_content' => substr($request->getContent(), 0, 1000),
+            'ip' => $request->ip(),
+        ]);
+
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'visitor_token' => 'required|string|max:64',

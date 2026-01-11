@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CRM Deletion Confirmations:**
+  - Implemented secure deletion modals for Contact Groups, Mailing Lists, and Tags, preventing accidental data loss.
+  - **Mailing Lists:** Deletion now supports transferring subscribers to ANY accessible list (previously limited to the current pagination page).
+  - **Groups/Tags:** Added specific confirmation dialogs explaining the impact on related data (e.g., child groups, tagged items).
+
 ### Fixed
 
 - **NetSendo Pixel:** Fixed critical bug where pixel tracking was not working because POST endpoints (`/t/pixel/event`, `/t/pixel/batch`, `/t/pixel/identify`) were blocked by CSRF verification. Added `t/pixel/*` to CSRF exceptions in `bootstrap/app.php`.
+- **CRM Deletion Logic:**
+  - **Groups:** Fixed 500 server error when deleting a group with children or lists. Now safely moves child groups to the parent group and detaches lists to "Uncategorized" before deletion.
+  - **Tags:** Fixed backend logic to safely detach tags from all associated contacts and lists before deletion.
+  - **Tag UI:** Fixed invalid HTML nesting in `Tag/Index.vue` causing potential rendering issues.
 
 ## [1.6.0] – WooCommerce Multi-Store Support
 

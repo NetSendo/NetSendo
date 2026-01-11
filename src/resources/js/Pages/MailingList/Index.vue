@@ -11,6 +11,7 @@ const props = defineProps({
     filters: Object,
     groups: Array,
     tags: Array,
+    allLists: Array,
 });
 
 const form = ref({
@@ -60,17 +61,8 @@ const closeDeleteModal = () => {
 };
 
 const availableListsHelper = (currentListId) => {
-    if (!props.lists.data) return [];
-    // Ideally pass all simple lists for dropdown from backend, but using current page data for now + maybe allLists prop if needed.
-    // NOTE: Props only contain paginated lists. For full transfer capability, we might need a separate prop or request.
-    // For now filtering from current view, assuming typical use case.
-    // BETTER: Use 'groups' prop logic but for lists? No, too heavy.
-    // Let's use what we have, or maybe filtered lists.
-    // Actually, controler should pass a lightweight list of all lists for the dropdown?
-    // Let's rely on list passed from props if possible, or filter current lists.
-    // LIMITATION: Only lists on current page available for transfer if we strictly use `lists.data`.
-    // Optimization: For now, filter `lists.data`.
-    return props.lists.data.filter((l) => l.id !== currentListId);
+    if (!props.allLists) return [];
+    return props.allLists.filter((l) => l.id !== currentListId);
 };
 
 // View Mode Logic

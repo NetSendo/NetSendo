@@ -86,7 +86,7 @@ const toggleExpand = () => {
                         </svg>
                     </button>
                     <button
-                        @click="emit('delete', group.id)"
+                        @click="emit('delete', group)"
                         class="text-red-400 hover:text-red-300 p-1.5 rounded hover:bg-slate-700 transition-colors"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -86,6 +86,9 @@ class MailingListController extends Controller
                     'full_path' => $g->full_path,
                 ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
+            'allLists' => auth()->user()->accessibleLists()
+                ->email()
+                ->get(['id', 'name']),
         ]);
     }
 
