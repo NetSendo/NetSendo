@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.7] – Short Description
+
+**Release date:** 2026-01-11
+
 ### Added
 
 - **Personalization Placeholders:**
