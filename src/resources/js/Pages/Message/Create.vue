@@ -113,6 +113,20 @@ const showSubjectEmojiPicker = ref(false);
 const subjectInputRef = ref(null);
 const subjectCursorPos = ref(0);
 
+// Subject variable picker
+const showSubjectVariablePicker = ref(false);
+
+// Preheader cursor tracking and variable picker
+const preheaderInputRef = ref(null);
+const preheaderCursorPos = ref(0);
+const showPreheaderVariablePicker = ref(false);
+
+// Available quick variables for subject/preheader
+const quickVariables = [
+    { code: '[[fname]]', label: 'messages.fields.insert_fname' },
+    { code: '[[!fname]]', label: 'messages.fields.insert_fname_vocative' },
+];
+
 // Common emojis for subject
 const subjectEmojis = [
     "😀",
@@ -166,6 +180,45 @@ const insertSubjectEmoji = (emoji) => {
 // Track cursor position in subject
 const updateSubjectCursor = (event) => {
     subjectCursorPos.value = event.target.selectionStart;
+};
+
+// Track cursor position in preheader
+const updatePreheaderCursor = (event) => {
+    preheaderCursorPos.value = event.target.selectionStart;
+};
+
+// Insert variable into subject field
+const insertSubjectVariable = (code) => {
+    const input = subjectInputRef.value?.$el || subjectInputRef.value;
+    if (input) {
+        const start = subjectCursorPos.value;
+        const text = form.subject || "";
+        form.subject = text.substring(0, start) + code + text.substring(start);
+        showSubjectVariablePicker.value = false;
+        nextTick(() => {
+            input.focus();
+            const newPos = start + code.length;
+            input.setSelectionRange(newPos, newPos);
+            subjectCursorPos.value = newPos;
+        });
+    }
+};
+
+// Insert variable into preheader field
+const insertPreheaderVariable = (code) => {
+    const input = preheaderInputRef.value?.$el || preheaderInputRef.value;
+    if (input) {
+        const start = preheaderCursorPos.value;
+        const text = form.preheader || "";
+        form.preheader = text.substring(0, start) + code + text.substring(start);
+        showPreheaderVariablePicker.value = false;
+        nextTick(() => {
+            input.focus();
+            const newPos = start + code.length;
+            input.setSelectionRange(newPos, newPos);
+            preheaderCursorPos.value = newPos;
+        });
+    }
 };
 
 const form = useForm({
@@ -1031,7 +1084,7 @@ if (form.contact_list_ids.length > 0) {
                                     for="subject"
                                     :value="$t('messages.fields.subject')"
                                 />
-                                <div class="relative mt-1">
+                                <div class="relative mt-1 z-20">
                                     <TextInput
                                         ref="subjectInputRef"
                                         id="subject"
@@ -1046,6 +1099,37 @@ if (form.contact_list_ids.length > 0) {
                                         @click="updateSubjectCursor"
                                         @keyup="updateSubjectCursor"
                                     />
+                                    <!-- Variable Button for Subject -->
+                                    <div
+                                        class="absolute right-16 top-1/2 -translate-y-1/2"
+                                    >
+                                        <button
+                                            type="button"
+                                            @click="showSubjectVariablePicker = !showSubjectVariablePicker"
+                                            class="p-1 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                                            :title="$t('messages.fields.insert_variable')"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </button>
+                                        <!-- Variable Dropdown for Subject -->
+                                        <div
+                                            v-if="showSubjectVariablePicker"
+                                            class="absolute right-0 top-full mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[180px]"
+                                        >
+                                            <button
+                                                v-for="variable in quickVariables"
+                                                :key="variable.code"
+                                                type="button"
+                                                @click="insertSubjectVariable(variable.code)"
+                                                class="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                                            >
+                                                <code class="text-xs text-indigo-600 dark:text-indigo-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{{ variable.code }}</code>
+                                                <span class="text-slate-700 dark:text-slate-300">{{ $t(variable.label) }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <!-- AI Button for Subject -->
                                     <div
                                         class="absolute right-8 top-1/2 -translate-y-1/2"
@@ -1102,17 +1186,53 @@ if (form.contact_list_ids.length > 0) {
                                         >({{ $t("common.optional") }})</span
                                     >
                                 </InputLabel>
-                                <TextInput
-                                    id="preheader"
-                                    type="text"
-                                    class="mt-1 block w-full"
-                                    v-model="form.preheader"
-                                    :placeholder="
-                                        $t(
-                                            'messages.fields.preheader_placeholder'
-                                        )
-                                    "
-                                />
+                                <div class="relative mt-1">
+                                    <TextInput
+                                        ref="preheaderInputRef"
+                                        id="preheader"
+                                        type="text"
+                                        class="block w-full pr-10"
+                                        v-model="form.preheader"
+                                        :placeholder="
+                                            $t(
+                                                'messages.fields.preheader_placeholder'
+                                            )
+                                        "
+                                        @click="updatePreheaderCursor"
+                                        @keyup="updatePreheaderCursor"
+                                    />
+                                    <!-- Variable Button for Preheader -->
+                                    <div
+                                        class="absolute right-2 top-1/2 -translate-y-1/2"
+                                    >
+                                        <button
+                                            type="button"
+                                            @click="showPreheaderVariablePicker = !showPreheaderVariablePicker"
+                                            class="p-1 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                                            :title="$t('messages.fields.insert_variable')"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                        </button>
+                                        <!-- Variable Dropdown for Preheader -->
+                                        <div
+                                            v-if="showPreheaderVariablePicker"
+                                            class="absolute right-0 top-full mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[180px]"
+                                        >
+                                            <button
+                                                v-for="variable in quickVariables"
+                                                :key="variable.code"
+                                                type="button"
+                                                @click="insertPreheaderVariable(variable.code)"
+                                                class="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                                            >
+                                                <code class="text-xs text-indigo-600 dark:text-indigo-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">{{ variable.code }}</code>
+                                                <span class="text-slate-700 dark:text-slate-300">{{ $t(variable.label) }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                                 <p
                                     class="mt-1 text-xs text-slate-500 dark:text-slate-400"
                                 >

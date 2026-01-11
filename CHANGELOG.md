@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Personalization Placeholders:**
+  - Added new variable picker (user icon 👤) to **Subject** and **Preheader** fields in Message Creator (`Create.vue`).
+  - Implemented support for `[[fname]]` (First Name) and `[[!fname]]` (Vocative First Name) variables in subject/preheader.
+  - Updated `TemplateAiService` prompt to encourage AI usage of personalization placeholders.
+  - Added translations for new UI elements in PL, EN, DE, ES.
+
 ### Fixed
+
+- **Variable Picker UI:** Fixed z-index stacking context for Subject field to ensure the variable dropdown appears above the Preheader input.
 
 - **Autoresponder Queue Timing:** Fixed critical bug where day=0 autoresponder messages were incorrectly sent to all existing subscribers on the list. The `CronScheduleService` now uses full datetime comparison instead of `startOfDay()`, ensuring messages are only sent to subscribers whose expected send time (subscribed_at + day offset) has actually passed.
 - **Queue Statistics:** Fixed incorrect "skipped" count in message statistics when duplicate subscriber records exist. The `getQueueScheduleStats()` method now deduplicates subscribers by email before counting, ensuring accurate statistics.

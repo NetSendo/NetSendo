@@ -1135,7 +1135,10 @@
             "no_group": "No group",
             "excluded_lists": "Don't send to subscribers from lists",
             "excluded_lists_help": "Subscribers on excluded lists will not receive the message, even if they are on the sending lists.",
-            "excluded_count": "Excluded {count} list(s)"
+            "excluded_count": "Excluded {count} list(s)",
+            "insert_variable": "Insert variable",
+            "insert_fname": "First name",
+            "insert_fname_vocative": "First name (vocative)"
         },
         "actions": {
             "save_draft": "Save as draft",

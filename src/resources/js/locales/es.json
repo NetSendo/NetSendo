@@ -1230,7 +1230,10 @@
             "no_group": "Sin grupo",
             "excluded_lists": "No enviar a suscriptores de estas listas",
             "excluded_lists_help": "Los suscriptores en las listas excluidas no recibirán el mensaje, aunque estén en las listas de envío.",
-            "excluded_count": "{count} lista(s) excluida(s)"
+            "excluded_count": "{count} lista(s) excluida(s)",
+            "insert_variable": "Insertar variable",
+            "insert_fname": "Nombre",
+            "insert_fname_vocative": "Nombre (vocativo)"
         },
         "actions": {
             "save_draft": "Guardar como borrador",

@@ -1163,7 +1163,10 @@
             "no_group": "Bez grupy",
             "excluded_lists": "Nie wysyłaj do subskrybentów z list",
             "excluded_lists_help": "Subskrybenci znajdujący się na wykluczonych listach nie otrzymają wiadomości, nawet jeśli są na listach wysyłkowych.",
-            "excluded_count": "Wykluczono {count} list(y)"
+            "excluded_count": "Wykluczono {count} list(y)",
+            "insert_variable": "Wstaw zmienną",
+            "insert_fname": "Imię",
+            "insert_fname_vocative": "Imię w wołaczu"
         },
         "attachments": {
             "title": "Załączniki PDF",

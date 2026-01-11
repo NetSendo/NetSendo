@@ -611,12 +611,17 @@ WYMAGANIA DLA KAŻDEGO TEMATU (subject):
 ✅ DODAJ 1-2 emotikony (emoji) na początku lub końcu - to zwiększa open rate!
 ✅ Bez clickbaitu i fałszywych obietnic
 ✅ Każdy temat MUSI się znacząco różnić od pozostałych
+✅ MOŻESZ użyć wstawek personalizacyjnych dla większego zaangażowania:
+   - [[fname]] - imię odbiorcy (np. "Anna")
+   - [[!fname]] - imię w wołaczu (np. "Anno")
+   Przykład: "[[fname]], odkryj naszą ofertę! 🎁" lub "Cześć [[!fname]]! ✨"
 
 WYMAGANIA DLA KAŻDEGO PREHEADERA:
 ✅ Maksymalnie 100 znaków
 ✅ BEZ EMOTIKONÓW (emoji) - preheader musi być tylko tekstem
 ✅ Uzupełnia temat, dodaje kontekst lub zachętę
 ✅ Krótkie zdanie lub fraza
+✅ MOŻESZ użyć wstawek [[fname]] lub [[!fname]] dla personalizacji
 {$hintSection}
 
 TREŚĆ EMAILA DO ANALIZY:

@@ -1270,7 +1270,10 @@
             "no_group": "Keine Gruppe",
             "excluded_lists": "Nicht an Abonnenten dieser Listen senden",
             "excluded_lists_help": "Abonnenten auf ausgeschlossenen Listen erhalten die Nachricht nicht, auch wenn sie auf den Versandlisten stehen.",
-            "excluded_count": "{count} Liste(n) ausgeschlossen"
+            "excluded_count": "{count} Liste(n) ausgeschlossen",
+            "insert_variable": "Variable einfügen",
+            "insert_fname": "Vorname",
+            "insert_fname_vocative": "Vorname (Vokativ)"
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",
