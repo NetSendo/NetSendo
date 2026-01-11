@@ -229,15 +229,33 @@ class WooCommerceApiService
     {
         $url = $this->settings->getApiUrl() . '/' . ltrim($endpoint, '/');
 
-        $response = Http::withBasicAuth(
-            $this->settings->consumer_key,
-            $this->settings->consumer_secret
-        )
+        // Validate credentials are available
+        $consumerKey = $this->settings->consumer_key;
+        $consumerSecret = $this->settings->consumer_secret;
+
+        if (empty($consumerKey) || empty($consumerSecret)) {
+            Log::error('WooCommerce API: Missing credentials', [
+                'store_id' => $this->settings->id,
+                'store_url' => $this->settings->store_url,
+                'has_consumer_key' => !empty($consumerKey),
+                'has_consumer_secret' => !empty($consumerSecret),
+            ]);
+            throw new \Exception('WooCommerce API Error: Invalid or missing credentials. Please re-enter your API credentials.');
+        }
+
+        $response = Http::withBasicAuth($consumerKey, $consumerSecret)
             ->timeout($this->timeout)
             ->get($url, $params);
 
         if ($response->failed()) {
             $error = $response->json('message') ?? $response->body();
+            Log::warning('WooCommerce API request failed', [
+                'store_id' => $this->settings->id,
+                'store_url' => $this->settings->store_url,
+                'endpoint' => $endpoint,
+                'status' => $response->status(),
+                'error' => $error,
+            ]);
             throw new \Exception("WooCommerce API Error: {$error}");
         }
 

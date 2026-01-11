@@ -8,6 +8,7 @@ use App\Services\WooCommerceApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TemplateProductsController extends Controller
 {
@@ -68,6 +69,13 @@ class TemplateProductsController extends Controller
                 'store_id' => $service->getStoreId(),
             ]);
         } catch (\Exception $e) {
+            Log::error('WooCommerce products fetch failed', [
+                'user_id' => Auth::id(),
+                'store_id' => $storeId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'connected' => true,
@@ -108,9 +116,17 @@ class TemplateProductsController extends Controller
                 ], $categories),
             ]);
         } catch (\Exception $e) {
+            Log::error('WooCommerce categories fetch failed', [
+                'user_id' => Auth::id(),
+                'store_id' => $storeId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'categories' => [],
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

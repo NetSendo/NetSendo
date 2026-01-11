@@ -9,10 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+## [1.6.1] – Advanced Subscriber Card
+
+**Release date:** 2026-01-11
+
+### Added
+
+- **Advanced Subscriber Card (Karta Subskrybenta):**
+
+  - New comprehensive subscriber profile page accessible at `/subscribers/{id}` with a professional tabbed interface.
+  - **Overview Tab:** Profile information, engagement score ring, tags, custom fields, and active subscriptions.
+  - **Message History Tab:** Table of all messages sent to the subscriber with status, opens, and clicks.
+  - **List History Tab:** Timeline visualization of subscription/unsubscription events across all lists.
+  - **Pixel Data Tab:** Sub-tabs for page visits, custom events, and device information from NetSendo Pixel.
+  - **Forms Tab:** History of all forms submitted by the subscriber.
+  - **Activity Log Tab:** Comprehensive log of all subscriber-related activities.
+  - **Quick Stats Row:** Key metrics displayed at the top (messages sent, open rate, click rate, engagement, active lists, devices).
+  - Backend helper methods in `SubscriberController` for data aggregation (`getSubscriberStatistics`, `getListHistory`, `getMessageHistory`, `getPixelData`, `getFormSubmissions`, `getActivityLog`).
+  - Full translations in PL, EN, DE, ES.
+
 - **CRM Deletion Confirmations:**
+
   - Implemented secure deletion modals for Contact Groups, Mailing Lists, and Tags, preventing accidental data loss.
   - **Mailing Lists:** Deletion now supports transferring subscribers to ANY accessible list (previously limited to the current pagination page).
   - **Groups/Tags:** Added specific confirmation dialogs explaining the impact on related data (e.g., child groups, tagged items).
+
+- **Pixel Custom Events Documentation:**
+
+  - Expanded custom events help section on Pixel Settings page with comprehensive documentation.
+  - Added visual overview of all supported event types (`page_view`, `product_view`, `add_to_cart`, `checkout_started`, `purchase`, `custom`).
+  - Added copy-to-clipboard code examples for key tracking events.
+  - Added documentation for `identify` command (linking anonymous visitors to known subscribers).
+  - Added documentation for `debug` mode (enabling console logging for debugging).
+  - Added reference table of available data fields (`product_id`, `product_name`, `product_price`, etc.).
+  - Added translations for all new documentation text in PL, EN, DE, and ES.
+
+- **WooCommerce Debugging:**
+  - Added detailed error logging to `TemplateProductsController` for WooCommerce product and category fetch failures.
+  - Added credentials validation in `WooCommerceApiService` to detect missing or corrupted API credentials before making requests.
+  - Improved error messages when WooCommerce API calls fail (includes store_id, store_url, endpoint, and error details).
 
 ### Fixed
 

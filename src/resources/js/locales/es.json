@@ -1831,6 +1831,99 @@
         "from_store": "De la tienda",
         "refresh_product": "Actualizar datos del producto"
     },
+    "subscriber_card": {
+        "title": "Ficha del Suscriptor",
+        "tabs": {
+            "overview": "Resumen",
+            "messages": "Historial de Mensajes",
+            "lists": "Historial de Listas",
+            "pixel": "Datos de Pixel",
+            "forms": "Formularios",
+            "activity": "Registro de Actividad"
+        },
+        "stats": {
+            "messages_sent": "Mensajes Enviados",
+            "open_rate": "Tasa de Apertura",
+            "click_rate": "Tasa de Clics",
+            "engagement": "Interacción",
+            "active_lists": "Listas Activas",
+            "devices": "Dispositivos"
+        },
+        "profile": {
+            "created": "Creado",
+            "last_open": "Última Apertura",
+            "last_click": "Último Clic",
+            "source": "Fuente",
+            "ip": "Dirección IP"
+        },
+        "engagement": {
+            "title": "Interacción",
+            "total_opens": "Aperturas Totales",
+            "total_clicks": "Clics Totales",
+            "open_rate": "Tasa de Apertura",
+            "click_rate": "Tasa de Clics"
+        },
+        "tags": {
+            "title": "Etiquetas",
+            "none": "Sin etiquetas asignadas"
+        },
+        "custom_fields": {
+            "title": "Campos Personalizados"
+        },
+        "lists": {
+            "active_title": "Listas Activas",
+            "subscribed": "Suscrito",
+            "none": "Sin suscripciones activas"
+        },
+        "messages": {
+            "subject": "Asunto",
+            "type": "Tipo",
+            "status": "Estado",
+            "sent_at": "Enviado",
+            "opens": "Aperturas",
+            "clicks": "Clics",
+            "empty": "Sin mensajes enviados"
+        },
+        "list_history": {
+            "title": "Historial de Suscripciones",
+            "subscribed": "Suscrito",
+            "unsubscribed": "Dado de baja",
+            "source": "Fuente",
+            "empty": "Sin historial de suscripciones"
+        },
+        "pixel": {
+            "total_events": "Eventos Totales",
+            "page_views": "Vistas de Página",
+            "custom_events": "Eventos Personalizados",
+            "devices": "Dispositivos",
+            "visits_tab": "Visitas",
+            "events_tab": "Eventos",
+            "devices_tab": "Dispositivos",
+            "page_url": "URL de Página",
+            "page_title": "Título de Página",
+            "referrer": "Referencia",
+            "visited_at": "Visitado",
+            "event_type": "Tipo de Evento",
+            "event_category": "Categoría",
+            "event_data": "Datos",
+            "event_date": "Fecha",
+            "first_seen": "Primera Vista",
+            "last_seen": "Última Vista",
+            "no_visits": "Sin visitas registradas",
+            "no_events": "Sin eventos",
+            "no_devices": "Sin dispositivos registrados"
+        },
+        "forms": {
+            "form_name": "Nombre del Formulario",
+            "status": "Estado",
+            "source": "Fuente",
+            "submitted_at": "Enviado",
+            "empty": "Sin formularios enviados"
+        },
+        "activity": {
+            "empty": "Sin actividad registrada"
+        }
+    },
     "fields": {
         "title": "Gestión de campos",
         "add_new": "Añadir campo",
@@ -3381,7 +3474,33 @@
         "no_visitors": "No hay visitantes activos",
         "current_page": "Página actual",
         "time_on_site": "Tiempo en el sitio",
-        "visitor_device": "Dispositivo"
+        "visitor_device": "Dispositivo",
+        "event_types_title": "Tipos de eventos soportados",
+        "event_type_page_view": "Vista de página",
+        "event_type_product_view": "Vista de producto",
+        "event_type_add_to_cart": "Añadir al carrito",
+        "event_type_checkout": "Checkout iniciado",
+        "event_type_purchase": "Compra",
+        "event_type_custom": "Evento personalizado",
+        "code_examples_title": "Ejemplos de código",
+        "example_product_view": "Rastrear vista de producto:",
+        "example_add_to_cart": "Rastrear añadir al carrito:",
+        "example_purchase": "Rastrear compra:",
+        "identify_title": "Identificación de usuario",
+        "identify_description": "Vincula un visitante anónimo con un suscriptor conocido. Usa después del login o envío de formulario con email.",
+        "debug_title": "Modo de depuración",
+        "debug_description": "Habilita el registro en consola del navegador (F12) para ver todos los eventos enviados por el píxel.",
+        "available_fields_title": "Campos de datos disponibles",
+        "field_name": "Nombre del campo",
+        "field_type": "Tipo",
+        "field_description": "Descripción",
+        "field_product_id": "Identificador único del producto",
+        "field_product_name": "Nombre visible del producto",
+        "field_product_price": "Precio del producto",
+        "field_product_category": "Categoría del producto",
+        "field_product_currency": "Moneda (default PLN)",
+        "field_cart_value": "Valor total del carrito",
+        "field_custom_data": "Cualquier dato personalizado (objeto)"
     },
     "sales_funnels": {
         "title": "Embudos de venta",

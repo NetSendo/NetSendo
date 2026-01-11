@@ -1292,6 +1292,99 @@
             "desc": "Descending"
         }
     },
+    "subscriber_card": {
+        "title": "Subscriber Card",
+        "tabs": {
+            "overview": "Overview",
+            "messages": "Message History",
+            "lists": "List History",
+            "pixel": "Pixel Data",
+            "forms": "Forms",
+            "activity": "Activity Log"
+        },
+        "stats": {
+            "messages_sent": "Messages Sent",
+            "open_rate": "Open Rate",
+            "click_rate": "Click Rate",
+            "engagement": "Engagement",
+            "active_lists": "Active Lists",
+            "devices": "Devices"
+        },
+        "profile": {
+            "created": "Created",
+            "last_open": "Last Open",
+            "last_click": "Last Click",
+            "source": "Source",
+            "ip": "IP Address"
+        },
+        "engagement": {
+            "title": "Engagement",
+            "total_opens": "Total Opens",
+            "total_clicks": "Total Clicks",
+            "open_rate": "Open Rate",
+            "click_rate": "Click Rate"
+        },
+        "tags": {
+            "title": "Tags",
+            "none": "No tags assigned"
+        },
+        "custom_fields": {
+            "title": "Custom Fields"
+        },
+        "lists": {
+            "active_title": "Active Lists",
+            "subscribed": "Subscribed",
+            "none": "No active subscriptions"
+        },
+        "messages": {
+            "subject": "Subject",
+            "type": "Type",
+            "status": "Status",
+            "sent_at": "Sent At",
+            "opens": "Opens",
+            "clicks": "Clicks",
+            "empty": "No messages sent"
+        },
+        "list_history": {
+            "title": "Subscription History",
+            "subscribed": "Subscribed",
+            "unsubscribed": "Unsubscribed",
+            "source": "Source",
+            "empty": "No subscription history"
+        },
+        "pixel": {
+            "total_events": "Total Events",
+            "page_views": "Page Views",
+            "custom_events": "Custom Events",
+            "devices": "Devices",
+            "visits_tab": "Visits",
+            "events_tab": "Events",
+            "devices_tab": "Devices",
+            "page_url": "Page URL",
+            "page_title": "Page Title",
+            "referrer": "Referrer",
+            "visited_at": "Visited At",
+            "event_type": "Event Type",
+            "event_category": "Category",
+            "event_data": "Data",
+            "event_date": "Date",
+            "first_seen": "First Seen",
+            "last_seen": "Last Seen",
+            "no_visits": "No visits recorded",
+            "no_events": "No events",
+            "no_devices": "No devices recorded"
+        },
+        "forms": {
+            "form_name": "Form Name",
+            "status": "Status",
+            "source": "Source",
+            "submitted_at": "Submitted At",
+            "empty": "No forms submitted"
+        },
+        "activity": {
+            "empty": "No activity recorded"
+        }
+    },
     "fields": {
         "title": "Field Management",
         "add_new": "Add Field",
@@ -3803,7 +3896,33 @@
         "no_visitors": "No active visitors",
         "current_page": "Current page",
         "time_on_site": "Time on site",
-        "visitor_device": "Device"
+        "visitor_device": "Device",
+        "event_types_title": "Supported Event Types",
+        "event_type_page_view": "Page View",
+        "event_type_product_view": "Product View",
+        "event_type_add_to_cart": "Add to Cart",
+        "event_type_checkout": "Checkout Started",
+        "event_type_purchase": "Purchase",
+        "event_type_custom": "Custom Event",
+        "code_examples_title": "Code Examples",
+        "example_product_view": "Track product view:",
+        "example_add_to_cart": "Track add to cart:",
+        "example_purchase": "Track purchase:",
+        "identify_title": "User Identification",
+        "identify_description": "Link an anonymous visitor to a known subscriber. Use after login or after form submission with email.",
+        "debug_title": "Debug Mode",
+        "debug_description": "Enable browser console logging (F12) to see all events sent by the pixel.",
+        "available_fields_title": "Available Data Fields",
+        "field_name": "Field Name",
+        "field_type": "Type",
+        "field_description": "Description",
+        "field_product_id": "Unique product identifier",
+        "field_product_name": "Product display name",
+        "field_product_price": "Product price",
+        "field_product_category": "Product category",
+        "field_product_currency": "Currency (default PLN)",
+        "field_cart_value": "Total cart value",
+        "field_custom_data": "Any custom data (object)"
     },
     "sales_funnels": {
         "title": "Sales Funnels",

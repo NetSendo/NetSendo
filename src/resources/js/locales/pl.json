@@ -1357,6 +1357,99 @@
             "desc": "Malejąco"
         }
     },
+    "subscriber_card": {
+        "title": "Karta Subskrybenta",
+        "tabs": {
+            "overview": "Przegląd",
+            "messages": "Historia wiadomości",
+            "lists": "Historia list",
+            "pixel": "Dane Pixela",
+            "forms": "Formularze",
+            "activity": "Dziennik aktywności"
+        },
+        "stats": {
+            "messages_sent": "Wysłane wiadomości",
+            "open_rate": "Wskaźnik otwarć",
+            "click_rate": "Wskaźnik kliknięć",
+            "engagement": "Zaangażowanie",
+            "active_lists": "Aktywne listy",
+            "devices": "Urządzenia"
+        },
+        "profile": {
+            "created": "Utworzony",
+            "last_open": "Ostatnie otwarcie",
+            "last_click": "Ostatnie kliknięcie",
+            "source": "Źródło",
+            "ip": "Adres IP"
+        },
+        "engagement": {
+            "title": "Zaangażowanie",
+            "total_opens": "Łącznie otwarć",
+            "total_clicks": "Łącznie kliknięć",
+            "open_rate": "Wskaźnik otwarć",
+            "click_rate": "Wskaźnik kliknięć"
+        },
+        "tags": {
+            "title": "Tagi",
+            "none": "Brak przypisanych tagów"
+        },
+        "custom_fields": {
+            "title": "Pola dodatkowe"
+        },
+        "lists": {
+            "active_title": "Aktywne listy",
+            "subscribed": "Zapisany",
+            "none": "Brak aktywnych subskrypcji"
+        },
+        "messages": {
+            "subject": "Temat",
+            "type": "Typ",
+            "status": "Status",
+            "sent_at": "Wysłano",
+            "opens": "Otwarcia",
+            "clicks": "Kliknięcia",
+            "empty": "Brak wysłanych wiadomości"
+        },
+        "list_history": {
+            "title": "Historia subskrypcji",
+            "subscribed": "Zapisany",
+            "unsubscribed": "Wypisany",
+            "source": "Źródło",
+            "empty": "Brak historii subskrypcji"
+        },
+        "pixel": {
+            "total_events": "Łącznie zdarzeń",
+            "page_views": "Odsłony stron",
+            "custom_events": "Zdarzenia własne",
+            "devices": "Urządzenia",
+            "visits_tab": "Wizyty",
+            "events_tab": "Zdarzenia",
+            "devices_tab": "Urządzenia",
+            "page_url": "URL strony",
+            "page_title": "Tytuł strony",
+            "referrer": "Źródło",
+            "visited_at": "Data wizyty",
+            "event_type": "Typ zdarzenia",
+            "event_category": "Kategoria",
+            "event_data": "Dane",
+            "event_date": "Data",
+            "first_seen": "Pierwsza wizyta",
+            "last_seen": "Ostatnia wizyta",
+            "no_visits": "Brak zarejestrowanych wizyt",
+            "no_events": "Brak zdarzeń",
+            "no_devices": "Brak zarejestrowanych urządzeń"
+        },
+        "forms": {
+            "form_name": "Nazwa formularza",
+            "status": "Status",
+            "source": "Źródło",
+            "submitted_at": "Data przesłania",
+            "empty": "Brak przesłanych formularzy"
+        },
+        "activity": {
+            "empty": "Brak zarejestrowanej aktywności"
+        }
+    },
     "groups": {
         "title": "Grupy list adresowych",
         "add_new": "Dodaj nową grupę",
@@ -3945,7 +4038,33 @@
         "no_visitors": "Brak aktywnych odwiedzających",
         "current_page": "Aktualna strona",
         "time_on_site": "Czas na stronie",
-        "visitor_device": "Urządzenie"
+        "visitor_device": "Urządzenie",
+        "event_types_title": "Obsługiwane typy zdarzeń",
+        "event_type_page_view": "Wyświetlenie strony",
+        "event_type_product_view": "Wyświetlenie produktu",
+        "event_type_add_to_cart": "Dodanie do koszyka",
+        "event_type_checkout": "Rozpoczęcie checkout",
+        "event_type_purchase": "Zakup",
+        "event_type_custom": "Zdarzenie własne",
+        "code_examples_title": "Przykłady kodu",
+        "example_product_view": "Śledzenie wyświetlenia produktu:",
+        "example_add_to_cart": "Śledzenie dodania do koszyka:",
+        "example_purchase": "Śledzenie zakupu:",
+        "identify_title": "Identyfikacja użytkownika",
+        "identify_description": "Połącz anonimowego odwiedzającego ze znanym subskrybentem. Użyj po zalogowaniu lub po przesłaniu formularza z adresem email.",
+        "debug_title": "Tryb debugowania",
+        "debug_description": "Włącz logowanie do konsoli przeglądarki (F12), aby zobaczyć wszystkie zdarzenia wysyłane przez pixel.",
+        "available_fields_title": "Dostępne pola danych",
+        "field_name": "Nazwa pola",
+        "field_type": "Typ",
+        "field_description": "Opis",
+        "field_product_id": "Unikalny identyfikator produktu",
+        "field_product_name": "Nazwa produktu do wyświetlenia",
+        "field_product_price": "Cena produktu",
+        "field_product_category": "Kategoria produktu",
+        "field_product_currency": "Waluta (domyślnie PLN)",
+        "field_cart_value": "Całkowita wartość koszyka",
+        "field_custom_data": "Dowolne dane własne (obiekt)"
     },
     "sales_funnels": {
         "title": "Tunele sprzedażowe",

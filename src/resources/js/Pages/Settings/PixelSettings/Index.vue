@@ -168,6 +168,65 @@ const totalDeviceTypeCount = computed(() => {
         0
     );
 });
+
+// Custom Events Documentation State
+const docsExpanded = ref(false);
+const copiedCodeId = ref(null);
+
+// Event types data
+const eventTypes = computed(() => [
+    { type: 'page_view', label: t('pixel.event_type_page_view'), iconColor: 'text-blue-500', icon: 'svg' },
+    { type: 'product_view', label: t('pixel.event_type_product_view'), iconColor: 'text-purple-500', icon: 'svg' },
+    { type: 'add_to_cart', label: t('pixel.event_type_add_to_cart'), iconColor: 'text-green-500', icon: 'svg' },
+    { type: 'checkout_started', label: t('pixel.event_type_checkout'), iconColor: 'text-orange-500', icon: 'svg' },
+    { type: 'purchase', label: t('pixel.event_type_purchase'), iconColor: 'text-emerald-500', icon: 'svg' },
+    { type: 'custom', label: t('pixel.event_type_custom'), iconColor: 'text-indigo-500', icon: 'svg' },
+]);
+
+// Available fields for tracking
+const availableFields = computed(() => [
+    { name: 'product_id', type: 'string', description: t('pixel.field_product_id') },
+    { name: 'product_name', type: 'string', description: t('pixel.field_product_name') },
+    { name: 'product_price', type: 'number', description: t('pixel.field_product_price') },
+    { name: 'product_category', type: 'string', description: t('pixel.field_product_category') },
+    { name: 'product_currency', type: 'string', description: t('pixel.field_product_currency') },
+    { name: 'cart_value', type: 'number', description: t('pixel.field_cart_value') },
+    { name: 'custom_data', type: 'object', description: t('pixel.field_custom_data') },
+]);
+
+// Code examples for copy functionality
+const codeExamples = {
+    product_view: `NetSendo.push(['track', 'product_view', {
+  product_id: '123',
+  product_name: 'Premium Course',
+  product_price: 299.00,
+  product_category: 'Courses'
+}]);`,
+    add_to_cart: `NetSendo.push(['track', 'add_to_cart', {
+  product_id: '123',
+  product_name: 'Premium Course',
+  product_price: 299.00,
+  cart_value: 598.00
+}]);`,
+    purchase: `NetSendo.push(['track', 'purchase', {
+  product_id: 'order-456',
+  cart_value: 598.00,
+  product_currency: 'PLN'
+}]);`,
+    identify: `NetSendo.push(['identify', { email: 'user@example.com' }]);`,
+    debug: `NetSendo.push(['debug']);`,
+};
+
+const copyCode = (codeId) => {
+    const code = codeExamples[codeId];
+    if (code) {
+        navigator.clipboard.writeText(code);
+        copiedCodeId.value = codeId;
+        setTimeout(() => {
+            copiedCodeId.value = null;
+        }, 2000);
+    }
+};
 </script>
 
 <template>
@@ -727,15 +786,16 @@ const totalDeviceTypeCount = computed(() => {
                     </div>
                 </div>
 
-                <!-- Custom Events Help -->
-                <div
-                    class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg overflow-hidden"
-                >
-                    <div class="px-6 py-8 sm:px-8 sm:py-10 text-white">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">
+                <!-- Custom Events Documentation -->
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                    <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                        <button
+                            @click="docsExpanded = !docsExpanded"
+                            class="w-full flex items-center justify-between text-left"
+                        >
+                            <div class="flex items-center">
                                 <svg
-                                    class="h-8 w-8 text-indigo-200"
+                                    class="h-6 w-6 text-indigo-500 mr-3"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -747,21 +807,197 @@ const totalDeviceTypeCount = computed(() => {
                                         d="M13 10V3L4 14h7v7l9-11h-7z"
                                     />
                                 </svg>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                        {{ t("pixel.custom_events_title") }}
+                                    </h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        {{ t("pixel.custom_events_description") }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="ml-4">
-                                <h3 class="text-lg font-medium">
-                                    {{ t("pixel.custom_events_title") }}
-                                </h3>
-                                <p class="mt-1 text-sm text-indigo-100">
-                                    {{ t("pixel.custom_events_description") }}
-                                </p>
-                                <pre
-                                    class="mt-4 p-3 bg-black/20 rounded-lg text-xs text-indigo-100 overflow-x-auto"
-                                ><code>NetSendo.push(['track', 'product_view', {
+                            <svg
+                                :class="{ 'rotate-180': docsExpanded }"
+                                class="h-5 w-5 text-gray-500 transition-transform duration-200"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div v-show="docsExpanded" class="px-6 py-5 space-y-6">
+                        <!-- Event Types -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                                {{ t("pixel.event_types_title") }}
+                            </h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                <div
+                                    v-for="eventType in eventTypes"
+                                    :key="eventType.type"
+                                    class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 text-center"
+                                >
+                                    <div :class="eventType.iconColor" class="mx-auto mb-2">
+                                        <component :is="eventType.icon" class="h-6 w-6 mx-auto" />
+                                    </div>
+                                    <p class="text-xs font-medium text-gray-900 dark:text-white">{{ eventType.label }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ eventType.type }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Code Examples -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                                {{ t("pixel.code_examples_title") }}
+                            </h4>
+                            <div class="space-y-4">
+                                <!-- Product View -->
+                                <div class="relative">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ t("pixel.example_product_view") }}</p>
+                                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto font-mono"><code>NetSendo.push(['track', 'product_view', {
   product_id: '123',
   product_name: 'Premium Course',
-  product_price: 299.00
+  product_price: 299.00,
+  product_category: 'Courses'
 }]);</code></pre>
+                                    <button
+                                        @click="copyCode('product_view')"
+                                        class="absolute top-8 right-2 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                                    >
+                                        <svg v-if="copiedCodeId !== 'product_view'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Add to Cart -->
+                                <div class="relative">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ t("pixel.example_add_to_cart") }}</p>
+                                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto font-mono"><code>NetSendo.push(['track', 'add_to_cart', {
+  product_id: '123',
+  product_name: 'Premium Course',
+  product_price: 299.00,
+  cart_value: 598.00
+}]);</code></pre>
+                                    <button
+                                        @click="copyCode('add_to_cart')"
+                                        class="absolute top-8 right-2 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                                    >
+                                        <svg v-if="copiedCodeId !== 'add_to_cart'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Purchase -->
+                                <div class="relative">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ t("pixel.example_purchase") }}</p>
+                                    <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg text-xs overflow-x-auto font-mono"><code>NetSendo.push(['track', 'purchase', {
+  product_id: 'order-456',
+  cart_value: 598.00,
+  product_currency: 'PLN'
+}]);</code></pre>
+                                    <button
+                                        @click="copyCode('purchase')"
+                                        class="absolute top-8 right-2 p-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                                    >
+                                        <svg v-if="copiedCodeId !== 'purchase'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Identify Command -->
+                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2 flex items-center">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {{ t("pixel.identify_title") }}
+                            </h4>
+                            <p class="text-xs text-blue-700 dark:text-blue-300 mb-3">
+                                {{ t("pixel.identify_description") }}
+                            </p>
+                            <div class="relative">
+                                <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto font-mono"><code>NetSendo.push(['identify', { email: 'user@example.com' }]);</code></pre>
+                                <button
+                                    @click="copyCode('identify')"
+                                    class="absolute top-2 right-2 p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                                >
+                                    <svg v-if="copiedCodeId !== 'identify'" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <svg v-else class="h-3.5 w-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Debug Mode -->
+                        <div class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                            <h4 class="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2 flex items-center">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                </svg>
+                                {{ t("pixel.debug_title") }}
+                            </h4>
+                            <p class="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                                {{ t("pixel.debug_description") }}
+                            </p>
+                            <div class="relative">
+                                <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto font-mono"><code>NetSendo.push(['debug']);</code></pre>
+                                <button
+                                    @click="copyCode('debug')"
+                                    class="absolute top-2 right-2 p-1.5 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                                >
+                                    <svg v-if="copiedCodeId !== 'debug'" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    <svg v-else class="h-3.5 w-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Available Fields -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                                {{ t("pixel.available_fields_title") }}
+                            </h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                                    <thead class="bg-gray-50 dark:bg-gray-900">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("pixel.field_name") }}</th>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("pixel.field_type") }}</th>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("pixel.field_description") }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                        <tr v-for="field in availableFields" :key="field.name">
+                                            <td class="px-3 py-2 font-mono text-indigo-600 dark:text-indigo-400">{{ field.name }}</td>
+                                            <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ field.type }}</td>
+                                            <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ field.description }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

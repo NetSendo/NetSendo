@@ -730,7 +730,13 @@ const getSortIcon = (column) => {
                                 v-if="visibleColumns.email"
                                 class="px-6 py-4 font-medium text-slate-900 dark:text-white"
                             >
-                                {{ subscriber.email }}
+                                <Link
+                                    :href="route('subscribers.show', subscriber.id)"
+                                    class="text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    :title="$t('subscriber_card.title')"
+                                >
+                                    {{ subscriber.email }}
+                                </Link>
                             </td>
                             <!-- Name -->
                             <td v-if="visibleColumns.name" class="px-6 py-4">
@@ -800,6 +806,27 @@ const getSortIcon = (column) => {
                                 <div
                                     class="flex items-center justify-end gap-2"
                                 >
+                                    <!-- View Card -->
+                                    <Link
+                                        :href="route('subscribers.show', subscriber.id)"
+                                        class="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+                                        :title="$t('subscriber_card.title')"
+                                    >
+                                        <svg
+                                            class="h-5 w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+                                            />
+                                        </svg>
+                                    </Link>
+                                    <!-- Edit -->
                                     <Link
                                         :href="
                                             route(

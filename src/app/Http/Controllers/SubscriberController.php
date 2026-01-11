@@ -341,11 +341,256 @@ class SubscriberController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource - Advanced Subscriber Card.
      */
     public function show(Subscriber $subscriber)
     {
-        return redirect()->route('subscribers.edit', $subscriber);
+        if ($subscriber->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Load relationships
+        $subscriber->load([
+            'contactLists',
+            'tags',
+            'devices',
+            'fieldValues.customField'
+        ]);
+
+        return Inertia::render('Subscriber/Show', [
+            'subscriber' => [
+                'id' => $subscriber->id,
+                'email' => $subscriber->email,
+                'phone' => $subscriber->phone,
+                'first_name' => $subscriber->first_name,
+                'last_name' => $subscriber->last_name,
+                'gender' => $subscriber->gender,
+                'status' => $subscriber->is_active_global ? 'active' : 'inactive',
+                'source' => $subscriber->source,
+                'device' => $subscriber->device,
+                'ip_address' => $subscriber->ip_address,
+                'subscribed_at' => $subscriber->subscribed_at?->format('Y-m-d H:i:s'),
+                'confirmed_at' => $subscriber->confirmed_at?->format('Y-m-d H:i:s'),
+                'created_at' => $subscriber->created_at?->format('Y-m-d H:i:s'),
+                'updated_at' => $subscriber->updated_at?->format('Y-m-d H:i:s'),
+                'last_opened_at' => $subscriber->last_opened_at?->format('Y-m-d H:i:s'),
+                'last_clicked_at' => $subscriber->last_clicked_at?->format('Y-m-d H:i:s'),
+                'opens_count' => $subscriber->opens_count,
+                'clicks_count' => $subscriber->clicks_count,
+                'tags' => ($subscriber->tags ?? collect())->map(fn($tag) => [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                ]),
+                'custom_fields' => ($subscriber->fieldValues ?? collect())->map(fn($fv) => [
+                    'id' => $fv->custom_field_id,
+                    'name' => $fv->customField?->name,
+                    'label' => $fv->customField?->label,
+                    'value' => $fv->value,
+                ]),
+            ],
+            'statistics' => $this->getSubscriberStatistics($subscriber),
+            'listHistory' => $this->getListHistory($subscriber),
+            'messageHistory' => $this->getMessageHistory($subscriber),
+            'pixelData' => $this->getPixelData($subscriber),
+            'formSubmissions' => $this->getFormSubmissions($subscriber),
+            'activityLog' => $this->getActivityLog($subscriber),
+            'allTags' => Tag::where('user_id', auth()->id())->get(['id', 'name']),
+        ]);
+    }
+
+    /**
+     * Get subscriber statistics for Overview tab
+     */
+    private function getSubscriberStatistics(Subscriber $subscriber): array
+    {
+        $totalSent = \App\Models\MessageQueueEntry::where('subscriber_id', $subscriber->id)
+            ->where('status', 'sent')
+            ->count();
+
+        $totalOpens = \App\Models\EmailOpen::where('subscriber_id', $subscriber->id)->count();
+        $totalClicks = \App\Models\EmailClick::where('subscriber_id', $subscriber->id)->count();
+
+        // Calculate engagement score (0-100)
+        $engagementScore = 0;
+        if ($totalSent > 0) {
+            $openRate = min(100, ($totalOpens / $totalSent) * 100);
+            $clickRate = min(100, ($totalClicks / max(1, $totalOpens)) * 100);
+            $engagementScore = round(($openRate * 0.6) + ($clickRate * 0.4));
+        }
+
+        return [
+            'total_messages_sent' => $totalSent,
+            'total_opens' => $totalOpens,
+            'total_clicks' => $totalClicks,
+            'unique_opens' => $subscriber->opens_count ?? 0,
+            'unique_clicks' => $subscriber->clicks_count ?? 0,
+            'open_rate' => $totalSent > 0 ? round(($totalOpens / $totalSent) * 100, 1) : 0,
+            'click_rate' => $totalOpens > 0 ? round(($totalClicks / $totalOpens) * 100, 1) : 0,
+            'engagement_score' => $engagementScore,
+            'lists_count' => $subscriber->contactLists->count(),
+            'active_lists_count' => $subscriber->contactLists->where('pivot.status', 'active')->count(),
+            'devices_count' => $subscriber->devices->count(),
+        ];
+    }
+
+    /**
+     * Get list subscription/unsubscription history
+     */
+    private function getListHistory(Subscriber $subscriber): array
+    {
+        return $subscriber->contactLists->map(fn($list) => [
+            'list_id' => $list->id,
+            'list_name' => $list->name,
+            'list_type' => $list->type,
+            'status' => $list->pivot->status,
+            'subscribed_at' => $list->pivot->subscribed_at,
+            'unsubscribed_at' => $list->pivot->unsubscribed_at,
+            'source' => $list->pivot->source ?? null,
+        ])->toArray();
+    }
+
+    /**
+     * Get message history (sent emails/SMS)
+     */
+    private function getMessageHistory(Subscriber $subscriber): array
+    {
+        $entries = \App\Models\MessageQueueEntry::with(['message' => function($q) {
+                $q->select('id', 'subject', 'type', 'status', 'channel');
+            }])
+            ->where('subscriber_id', $subscriber->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        // Get opens and clicks for these messages
+        $messageIds = $entries->pluck('message_id')->unique();
+
+        $opens = \App\Models\EmailOpen::where('subscriber_id', $subscriber->id)
+            ->whereIn('message_id', $messageIds)
+            ->get()
+            ->groupBy('message_id');
+
+        $clicks = \App\Models\EmailClick::where('subscriber_id', $subscriber->id)
+            ->whereIn('message_id', $messageIds)
+            ->get()
+            ->groupBy('message_id');
+
+        return $entries->map(fn($entry) => [
+            'id' => $entry->id,
+            'message_id' => $entry->message_id,
+            'subject' => $entry->message?->subject ?? '-',
+            'type' => $entry->message?->channel ?? $entry->message?->type ?? 'email',
+            'status' => $entry->status,
+            'sent_at' => $entry->sent_at?->format('Y-m-d H:i:s'),
+            'planned_at' => $entry->planned_at?->format('Y-m-d H:i:s'),
+            'error_message' => $entry->error_message,
+            'opens_count' => isset($opens[$entry->message_id]) ? $opens[$entry->message_id]->count() : 0,
+            'clicks_count' => isset($clicks[$entry->message_id]) ? $clicks[$entry->message_id]->count() : 0,
+            'first_opened_at' => isset($opens[$entry->message_id])
+                ? $opens[$entry->message_id]->sortBy('opened_at')->first()?->opened_at?->format('Y-m-d H:i:s')
+                : null,
+        ])->toArray();
+    }
+
+    /**
+     * Get pixel tracking data
+     */
+    private function getPixelData(Subscriber $subscriber): array
+    {
+        // Recent page visits
+        $pageVisits = \App\Models\PixelEvent::where('subscriber_id', $subscriber->id)
+            ->where('event_type', 'page_view')
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get(['id', 'page_url', 'page_title', 'referrer', 'created_at']);
+
+        // Custom events
+        $customEvents = \App\Models\PixelEvent::where('subscriber_id', $subscriber->id)
+            ->where('event_type', '!=', 'page_view')
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get(['id', 'event_type', 'event_category', 'custom_data', 'created_at']);
+
+        // Devices information
+        $devices = ($subscriber->devices ?? collect())->map(fn($device) => [
+            'id' => $device->id,
+            'device_type' => $device->device_type,
+            'browser' => $device->browser,
+            'browser_version' => $device->browser_version ?? null,
+            'os' => $device->os,
+            'os_version' => $device->os_version ?? null,
+            'first_seen_at' => $device->created_at?->format('Y-m-d H:i:s'),
+            'last_seen_at' => $device->updated_at?->format('Y-m-d H:i:s'),
+            'device_label' => $device->device_type ?? 'Unknown',
+        ]);
+
+        // Stats summary
+        $totalEvents = \App\Models\PixelEvent::where('subscriber_id', $subscriber->id)->count();
+        $totalPageViews = \App\Models\PixelEvent::where('subscriber_id', $subscriber->id)
+            ->where('event_type', 'page_view')
+            ->count();
+
+        return [
+            'total_events' => $totalEvents,
+            'total_page_views' => $totalPageViews,
+            'page_visits' => $pageVisits->map(fn($e) => [
+                'id' => $e->id,
+                'url' => $e->page_url,
+                'title' => $e->page_title,
+                'referrer' => $e->referrer,
+                'visited_at' => $e->created_at?->format('Y-m-d H:i:s'),
+            ])->toArray(),
+            'custom_events' => $customEvents->map(fn($e) => [
+                'id' => $e->id,
+                'type' => $e->event_type,
+                'category' => $e->event_category,
+                'data' => $e->custom_data,
+                'created_at' => $e->created_at?->format('Y-m-d H:i:s'),
+            ])->toArray(),
+            'devices' => $devices->toArray(),
+        ];
+    }
+
+    /**
+     * Get form submissions
+     */
+    private function getFormSubmissions(Subscriber $subscriber): array
+    {
+        return \App\Models\FormSubmission::with(['form:id,name'])
+            ->where('subscriber_id', $subscriber->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(30)
+            ->get()
+            ->map(fn($sub) => [
+                'id' => $sub->id,
+                'form_id' => $sub->subscription_form_id,
+                'form_name' => $sub->form?->name,
+                'status' => $sub->status,
+                'source' => $sub->source,
+                'referrer' => $sub->referrer,
+                'ip_address' => $sub->ip_address,
+                'created_at' => $sub->created_at?->format('Y-m-d H:i:s'),
+            ])->toArray();
+    }
+
+    /**
+     * Get activity log for subscriber
+     */
+    private function getActivityLog(Subscriber $subscriber): array
+    {
+        return \App\Models\ActivityLog::where('model_type', Subscriber::class)
+            ->where('model_id', $subscriber->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(fn($log) => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'action_name' => $log->action_name,
+                'properties' => $log->properties,
+                'ip_address' => $log->ip_address,
+                'created_at' => $log->created_at?->format('Y-m-d H:i:s'),
+            ])->toArray();
     }
 
     /**

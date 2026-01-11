@@ -1995,6 +1995,99 @@
         "from_store": "Aus Shop",
         "refresh_product": "Produktdaten aktualisieren"
     },
+    "subscriber_card": {
+        "title": "Abonnentenkarte",
+        "tabs": {
+            "overview": "Übersicht",
+            "messages": "Nachrichtenverlauf",
+            "lists": "Listenverlauf",
+            "pixel": "Pixel-Daten",
+            "forms": "Formulare",
+            "activity": "Aktivitätsprotokoll"
+        },
+        "stats": {
+            "messages_sent": "Gesendete Nachrichten",
+            "open_rate": "Öffnungsrate",
+            "click_rate": "Klickrate",
+            "engagement": "Engagement",
+            "active_lists": "Aktive Listen",
+            "devices": "Geräte"
+        },
+        "profile": {
+            "created": "Erstellt",
+            "last_open": "Letzte Öffnung",
+            "last_click": "Letzter Klick",
+            "source": "Quelle",
+            "ip": "IP-Adresse"
+        },
+        "engagement": {
+            "title": "Engagement",
+            "total_opens": "Öffnungen gesamt",
+            "total_clicks": "Klicks gesamt",
+            "open_rate": "Öffnungsrate",
+            "click_rate": "Klickrate"
+        },
+        "tags": {
+            "title": "Tags",
+            "none": "Keine Tags zugewiesen"
+        },
+        "custom_fields": {
+            "title": "Benutzerdefinierte Felder"
+        },
+        "lists": {
+            "active_title": "Aktive Listen",
+            "subscribed": "Abonniert",
+            "none": "Keine aktiven Abonnements"
+        },
+        "messages": {
+            "subject": "Betreff",
+            "type": "Typ",
+            "status": "Status",
+            "sent_at": "Gesendet am",
+            "opens": "Öffnungen",
+            "clicks": "Klicks",
+            "empty": "Keine Nachrichten gesendet"
+        },
+        "list_history": {
+            "title": "Abonnementverlauf",
+            "subscribed": "Abonniert",
+            "unsubscribed": "Abgemeldet",
+            "source": "Quelle",
+            "empty": "Kein Abonnementverlauf"
+        },
+        "pixel": {
+            "total_events": "Ereignisse gesamt",
+            "page_views": "Seitenaufrufe",
+            "custom_events": "Benutzerdefinierte Ereignisse",
+            "devices": "Geräte",
+            "visits_tab": "Besuche",
+            "events_tab": "Ereignisse",
+            "devices_tab": "Geräte",
+            "page_url": "Seiten-URL",
+            "page_title": "Seitentitel",
+            "referrer": "Referrer",
+            "visited_at": "Besucht am",
+            "event_type": "Ereignistyp",
+            "event_category": "Kategorie",
+            "event_data": "Daten",
+            "event_date": "Datum",
+            "first_seen": "Erstmals gesehen",
+            "last_seen": "Zuletzt gesehen",
+            "no_visits": "Keine Besuche erfasst",
+            "no_events": "Keine Ereignisse",
+            "no_devices": "Keine Geräte erfasst"
+        },
+        "forms": {
+            "form_name": "Formularname",
+            "status": "Status",
+            "source": "Quelle",
+            "submitted_at": "Eingereicht am",
+            "empty": "Keine Formulare eingereicht"
+        },
+        "activity": {
+            "empty": "Keine Aktivität erfasst"
+        }
+    },
     "fields": {
         "title": "Feldverwaltung",
         "add_new": "Feld hinzufügen",
@@ -3428,7 +3521,33 @@
         "no_visitors": "Keine aktiven Besucher",
         "current_page": "Aktuelle Seite",
         "time_on_site": "Zeit auf der Seite",
-        "visitor_device": "Gerät"
+        "visitor_device": "Gerät",
+        "event_types_title": "Unterstützte Ereignistypen",
+        "event_type_page_view": "Seitenaufruf",
+        "event_type_product_view": "Produktansicht",
+        "event_type_add_to_cart": "In den Warenkorb",
+        "event_type_checkout": "Checkout gestartet",
+        "event_type_purchase": "Kauf",
+        "event_type_custom": "Benutzerdefiniertes Ereignis",
+        "code_examples_title": "Code-Beispiele",
+        "example_product_view": "Produktansicht verfolgen:",
+        "example_add_to_cart": "In den Warenkorb verfolgen:",
+        "example_purchase": "Kauf verfolgen:",
+        "identify_title": "Benutzeridentifikation",
+        "identify_description": "Verknüpfen Sie einen anonymen Besucher mit einem bekannten Abonnenten. Verwenden Sie nach Login oder Formularübermittlung mit E-Mail.",
+        "debug_title": "Debug-Modus",
+        "debug_description": "Aktivieren Sie Browser-Konsolen-Logging (F12), um alle vom Pixel gesendeten Ereignisse zu sehen.",
+        "available_fields_title": "Verfügbare Datenfelder",
+        "field_name": "Feldname",
+        "field_type": "Typ",
+        "field_description": "Beschreibung",
+        "field_product_id": "Eindeutige Produkt-ID",
+        "field_product_name": "Produktanzeigename",
+        "field_product_price": "Produktpreis",
+        "field_product_category": "Produktkategorie",
+        "field_product_currency": "Währung (Standard PLN)",
+        "field_cart_value": "Gesamter Warenkorbwert",
+        "field_custom_data": "Beliebige benutzerdefinierte Daten (Objekt)"
     },
     "sales_funnels": {
         "title": "Verkaufstrichter",
