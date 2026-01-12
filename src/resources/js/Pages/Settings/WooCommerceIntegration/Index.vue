@@ -307,6 +307,34 @@ const connectedCount = computed(() => props.stores.filter(s => s.is_connected).l
                                         <span v-if="store.store_info.currency">{{ $t('settings.woocommerce.currency') }}: {{ store.store_info.currency }}</span>
                                         <span v-if="store.store_info.wc_version">WooCommerce: {{ store.store_info.wc_version }}</span>
                                     </div>
+                                    <!-- Plugin Version Info -->
+                                    <div v-if="store.plugin_version" class="mt-2 flex flex-wrap items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                                            </svg>
+                                            {{ $t('settings.woocommerce.plugin_version') }}: v{{ store.plugin_version }}
+                                        </span>
+                                        <span
+                                            v-if="store.update_available"
+                                            class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                        >
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            {{ $t('settings.woocommerce.update_to') }} v{{ store.latest_version }}
+                                        </span>
+                                        <span
+                                            v-if="store.plugin_is_stale"
+                                            class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                            :title="$t('settings.woocommerce.stale_plugin_hint')"
+                                        >
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            {{ $t('settings.woocommerce.stale_connection') }}
+                                        </span>
+                                    </div>
                                     <p v-if="store.connection_verified_at" class="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                         {{ $t('settings.woocommerce.verified_at') }}: {{ store.connection_verified_at }}
                                     </p>

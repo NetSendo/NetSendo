@@ -2554,6 +2554,47 @@
         }
     },
     "settings": {
+        "updates": {
+            "title": "Actualizaciones",
+            "description": "Historial de versiones y actualizaciones disponibles para NetSendo",
+            "tabs": {
+                "check_updates": "Buscar actualizaciones",
+                "changelog": "Registro de cambios",
+                "how_to_update": "Cómo actualizar"
+            },
+            "current_version": "Versión actual",
+            "up_to_date": "Actualizado",
+            "check_for_updates": "Buscar actualizaciones",
+            "checking": "Buscando actualizaciones...",
+            "new_version_available": "¡Nueva versión disponible!",
+            "new_versions_count": "{count} nueva(s) versión(es) disponible(s). Última: {version}",
+            "update_instructions": "Instrucciones de actualización",
+            "version_history": "Historial de versiones",
+            "loading_changelog": "Cargando desde GitHub...",
+            "refresh": "Actualizar",
+            "view_on_github": "Ver en GitHub",
+            "view_all_releases": "Ver todas las versiones en GitHub",
+            "docker_update": {
+                "title": "🐳 Actualización Docker (Recomendado)",
+                "description": "Si ejecuta NetSendo con Docker, la actualización es sencilla:",
+                "step_stop": "# Detener contenedores actuales",
+                "step_pull": "# Obtener últimas imágenes",
+                "step_start": "# Iniciar con nueva versión",
+                "specific_version": "Para actualizar a una versión específica, establezca la variable de entorno NETSENDO_VERSION:"
+            },
+            "manual_update": {
+                "title": "📦 Actualización Manual (Desde fuente)",
+                "description": "Si clonó el repositorio y compila localmente:",
+                "step_pull": "# Obtener últimos cambios",
+                "step_build": "# Reconstruir y reiniciar"
+            },
+            "warning": {
+                "title": "Antes de actualizar",
+                "backup": "• Siempre haga una copia de seguridad de su base de datos antes de actualizaciones importantes",
+                "release_notes": "• Revise las notas de la versión para cambios importantes",
+                "staging": "• Pruebe en un entorno de prueba si es posible"
+            }
+        },
         "global_stats": "Estadísticas globales",
         "activity_logs": "Registros de actividad",
         "stats": {

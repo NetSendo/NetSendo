@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.3] – Plugin Version Tracking
+
+**Release date:** 2026-01-12
+
+### Added
+
+- **Plugin Version & Update System:**
+
+  - Implemented version tracking for WordPress and WooCommerce integrations.
+  - New `plugin_connections` database table for storing plugin metadata (version, site URL, WP/WC versions).
+  - New API endpoints:
+    - `POST /api/v1/plugin/heartbeat`: Plugin heartbeat to report active status and version.
+    - `GET /api/v1/plugin/check-version`: Endpoint for plugins to check for updates.
+  - **Models:** Added `PluginConnection` model with `needsUpdate()` and `isStale()` logic.
+  - **Backend:** Updated `WooCommerceIntegrationController` to verify plugin connectivity and versions.
+  - **Frontend:**
+    - Added plugin version badge to WooCommerce store cards in Settings.
+    - Added "Update Available" notification (amber badge) when a new plugin version is released.
+    - Added "Stale Connection" warning (red badge) if plugin hasn't communicated for >7 days.
+  - **Translations:** Added full translations for plugin status messages in EN, PL.
+
+- **Developer Experience:**
+  - Added `UPDATE_GUIDE.md` for both WordPress and WooCommerce plugins with step-by-step update instructions.
+  - Rebuilt plugin zip packages with heartbeat functionality.
+
 ## [1.6.2] – Tracked Links & Quick Actions
 
 **Release date:** 2026-01-12

@@ -2698,6 +2698,47 @@
         }
     },
     "settings": {
+        "updates": {
+            "title": "Updates",
+            "description": "Versionsverlauf und verfügbare Updates für NetSendo",
+            "tabs": {
+                "check_updates": "Updates prüfen",
+                "changelog": "Änderungsprotokoll",
+                "how_to_update": "Wie aktualisieren"
+            },
+            "current_version": "Aktuelle Version",
+            "up_to_date": "Auf dem neuesten Stand",
+            "check_for_updates": "Nach Updates suchen",
+            "checking": "Suche nach Updates...",
+            "new_version_available": "Neue Version verfügbar!",
+            "new_versions_count": "{count} neue Version(en) verfügbar. Neueste: {version}",
+            "update_instructions": "Update-Anleitung",
+            "version_history": "Versionsverlauf",
+            "loading_changelog": "Laden von GitHub...",
+            "refresh": "Aktualisieren",
+            "view_on_github": "Auf GitHub ansehen",
+            "view_all_releases": "Alle Veröffentlichungen auf GitHub ansehen",
+            "docker_update": {
+                "title": "🐳 Docker Update (Empfohlen)",
+                "description": "Wenn Sie NetSendo mit Docker ausführen, ist das Update einfach:",
+                "step_stop": "# Container stoppen",
+                "step_pull": "# Neueste Images ziehen",
+                "step_start": "# Mit neuer Version starten",
+                "specific_version": "Um auf eine bestimmte Version zu aktualisieren, setzen Sie die Umgebungsvariable NETSENDO_VERSION:"
+            },
+            "manual_update": {
+                "title": "📦 Manuelles Update (Vom Quellcode)",
+                "description": "Wenn Sie das Repository geklont haben und lokal bauen:",
+                "step_pull": "# Neueste Änderungen ziehen",
+                "step_build": "# Neu bauen und starten"
+            },
+            "warning": {
+                "title": "Vor dem Aktualisieren",
+                "backup": "• Sichern Sie immer Ihre Datenbank vor großen Updates",
+                "release_notes": "• Prüfen Sie die Versionshinweise auf bahnbrechende Änderungen",
+                "staging": "• Testen Sie wenn möglich in einer Staging-Umgebung"
+            }
+        },
         "global_stats": "Global Statistiken",
         "activity_logs": "Aktivitätsprotokolle",
         "stats": {

@@ -2987,6 +2987,47 @@
         "info_text": "The backup contains the database and configuration files. Regular backups are recommended."
     },
     "settings": {
+        "updates": {
+            "title": "Updates",
+            "description": "Version history and available updates for NetSendo",
+            "tabs": {
+                "check_updates": "Check Updates",
+                "changelog": "Changelog",
+                "how_to_update": "How to Update"
+            },
+            "current_version": "Current Version",
+            "up_to_date": "Up to date",
+            "check_for_updates": "Check for Updates",
+            "checking": "Checking for updates...",
+            "new_version_available": "New version available!",
+            "new_versions_count": "{count} new version(s) available. Latest: {version}",
+            "update_instructions": "Update Instructions",
+            "version_history": "Version History",
+            "loading_changelog": "Loading from GitHub...",
+            "refresh": "Refresh",
+            "view_on_github": "View on GitHub",
+            "view_all_releases": "View all releases on GitHub",
+            "docker_update": {
+                "title": "🐳 Docker Update (Recommended)",
+                "description": "If you're running NetSendo with Docker, updating is simple:",
+                "step_stop": "# Stop current containers",
+                "step_pull": "# Pull latest images",
+                "step_start": "# Start with new version",
+                "specific_version": "To update to a specific version, set the NETSENDO_VERSION environment variable:"
+            },
+            "manual_update": {
+                "title": "📦 Manual Update (From Source)",
+                "description": "If you cloned the repository and build locally:",
+                "step_pull": "# Pull latest changes",
+                "step_build": "# Rebuild and restart"
+            },
+            "warning": {
+                "title": "Before Updating",
+                "backup": "• Always backup your database before major updates",
+                "release_notes": "• Check the release notes for breaking changes",
+                "staging": "• Test in a staging environment if possible"
+            }
+        },
         "global_stats": "Global Statistics",
         "activity_logs": "Activity Logs",
         "stats": {
@@ -3156,7 +3197,11 @@
             "open_store": "Open Store",
             "test_store": "Test",
             "test_success": "Connection active",
-            "test_failed": "Connection inactive"
+            "test_failed": "Connection inactive",
+            "plugin_version": "Plugin",
+            "update_to": "Update to",
+            "stale_connection": "Inactive plugin",
+            "stale_plugin_hint": "Plugin has not communicated for over 7 days. Please check if the plugin is properly installed and configured."
         }
     },
     "tracked_links": {

@@ -3436,6 +3436,47 @@
         }
     },
     "settings": {
+        "updates": {
+            "title": "Aktualizacje",
+            "description": "Historia wersji i dostępne aktualizacje NetSendo",
+            "tabs": {
+                "check_updates": "Sprawdź aktualizacje",
+                "changelog": "Dziennik zmian",
+                "how_to_update": "Jak zaktualizować"
+            },
+            "current_version": "Obecna wersja",
+            "up_to_date": "Aktualna",
+            "check_for_updates": "Sprawdź dostępność aktualizacji",
+            "checking": "Sprawdzanie aktualizacji...",
+            "new_version_available": "Dostępna nowa wersja!",
+            "new_versions_count": "Dostępnych {count} nowych wersji. Najnowsza: {version}",
+            "update_instructions": "Instrukcja aktualizacji",
+            "version_history": "Historia wersji",
+            "loading_changelog": "Pobieranie z GitHub...",
+            "refresh": "Odśwież",
+            "view_on_github": "Zobacz na GitHub",
+            "view_all_releases": "Zobacz wszystkie wydania na GitHub",
+            "docker_update": {
+                "title": "🐳 Aktualizacja Docker (Zalecana)",
+                "description": "Jeśli uruchamiasz NetSendo przez Docker, aktualizacja jest prosta:",
+                "step_stop": "# Zatrzymaj obecne kontenery",
+                "step_pull": "# Pobierz najnowsze obrazy",
+                "step_start": "# Uruchom nową wersję",
+                "specific_version": "Aby zaktualizować do konkretnej wersji, ustaw zmienną środowiskową NETSENDO_VERSION:"
+            },
+            "manual_update": {
+                "title": "📦 Aktualizacja Ręczna (Ze źródła)",
+                "description": "Jeśli sklonowałeś repozytorium i budujesz lokalnie:",
+                "step_pull": "# Pobierz najnowsze zmiany",
+                "step_build": "# Przebuduj i zrestartuj"
+            },
+            "warning": {
+                "title": "Przed aktualizacją",
+                "backup": "• Zawsze wykonaj kopię zapasową bazy danych przed dużą aktualizacją",
+                "release_notes": "• Sprawdź notatki do wydania pod kątem zmian łamiących",
+                "staging": "• Testuj w środowisku testowym jeśli to możliwe"
+            }
+        },
         "global_stats": "Statystyki globalne",
         "activity_logs": "Dziennik aktywności",
         "stats": {

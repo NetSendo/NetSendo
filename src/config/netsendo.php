@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '1.6.2',
+    'version' => '1.6.3',
 
     /*
     |--------------------------------------------------------------------------
@@ -84,6 +84,32 @@ return [
                 'Dostęp API',
                 'White-label',
             ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plugin Versions
+    |--------------------------------------------------------------------------
+    |
+    | Plugin version configuration for WordPress and WooCommerce integrations.
+    | Update these values when releasing new plugin versions.
+    |
+    */
+
+    'plugins' => [
+        'wordpress' => [
+            'version' => '1.0.0',
+            'download_url' => '/plugins/wordpress/netsendo-wordpress.zip',
+            'min_wp_version' => '5.8',
+            'min_php_version' => '7.4',
+        ],
+        'woocommerce' => [
+            'version' => '1.0.0',
+            'download_url' => '/plugins/woocommerce/netsendo-woocommerce.zip',
+            'min_wp_version' => '5.8',
+            'min_wc_version' => '5.0',
+            'min_php_version' => '7.4',
         ],
     ],
 

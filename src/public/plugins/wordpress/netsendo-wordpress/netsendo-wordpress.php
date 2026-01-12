@@ -83,6 +83,10 @@ final class NetSendo_WordPress {
         // AJAX handlers
         add_action('wp_ajax_netsendo_wp_subscribe', [$this, 'ajax_subscribe']);
         add_action('wp_ajax_nopriv_netsendo_wp_subscribe', [$this, 'ajax_subscribe']);
+
+        // Heartbeat and update notifications
+        add_action('admin_init', [$this, 'maybe_send_heartbeat']);
+        add_action('admin_notices', [$this, 'show_update_notice']);
     }
 
     /**
@@ -222,6 +226,98 @@ final class NetSendo_WordPress {
                 'message' => __('Subscription failed. Please try again.', 'netsendo-wordpress'),
             ]);
         }
+    }
+
+    /**
+     * Check if we should send heartbeat and send if needed
+     */
+    public function maybe_send_heartbeat() {
+        $last_heartbeat = get_option('netsendo_wp_last_heartbeat', 0);
+        // Send heartbeat once per day
+        if (time() - $last_heartbeat > 86400) {
+            $this->send_heartbeat();
+            update_option('netsendo_wp_last_heartbeat', time());
+        }
+    }
+
+    /**
+     * Send heartbeat to NetSendo API
+     */
+    public function send_heartbeat() {
+        $settings = NetSendo_WP_Admin_Settings::get_settings();
+        if (empty($settings['api_key']) || empty($settings['api_url'])) {
+            return;
+        }
+
+        $response = wp_remote_post(
+            rtrim($settings['api_url'], '/') . '/api/v1/plugin/heartbeat',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $settings['api_key'],
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'body' => json_encode([
+                    'plugin_type' => 'wordpress',
+                    'site_url' => home_url(),
+                    'site_name' => get_bloginfo('name'),
+                    'plugin_version' => NETSENDO_WP_VERSION,
+                    'wp_version' => get_bloginfo('version'),
+                    'php_version' => phpversion(),
+                ]),
+                'timeout' => 10,
+            ]
+        );
+
+        if (!is_wp_error($response)) {
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            if (!empty($body['update_available']) && !empty($body['latest_version'])) {
+                update_option('netsendo_wp_update_available', [
+                    'version' => $body['latest_version'],
+                    'download_url' => $body['download_url'] ?? '',
+                    'checked_at' => time(),
+                ]);
+            } else {
+                delete_option('netsendo_wp_update_available');
+            }
+        }
+    }
+
+    /**
+     * Show update notice in admin
+     */
+    public function show_update_notice() {
+        $update = get_option('netsendo_wp_update_available');
+        if (!$update) {
+            return;
+        }
+
+        // Refresh if older than 24 hours
+        if (time() - ($update['checked_at'] ?? 0) > 86400) {
+            $this->send_heartbeat();
+            $update = get_option('netsendo_wp_update_available');
+            if (!$update) {
+                return;
+            }
+        }
+
+        $settings = NetSendo_WP_Admin_Settings::get_settings();
+        $panel_url = !empty($settings['api_url'])
+            ? rtrim($settings['api_url'], '/') . '/marketplace/wordpress'
+            : '#';
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p>
+                <strong>NetSendo for WordPress:</strong>
+                <?php printf(
+                    /* translators: %1$s: new version number, %2$s: link to download */
+                    __('Dostępna jest nowa wersja wtyczki (v%1$s). <a href="%2$s" target="_blank">Pobierz aktualizację</a> z panelu NetSendo.', 'netsendo-wordpress'),
+                    esc_html($update['version']),
+                    esc_url($panel_url)
+                ); ?>
+            </p>
+        </div>
+        <?php
     }
 }
 

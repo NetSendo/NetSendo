@@ -102,6 +102,18 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
     // External Pages (read-only, for integrations like WooCommerce)
     Route::get('external-pages', [\App\Http\Controllers\Api\V1\ExternalPageController::class, 'index'])
         ->name('api.v1.external-pages.index');
+
+    // Plugin Version Management
+    Route::get('plugin/check-version', [\App\Http\Controllers\Api\V1\PluginVersionController::class, 'check'])
+        ->name('api.v1.plugin.check-version');
+    Route::post('plugin/heartbeat', [\App\Http\Controllers\Api\V1\PluginVersionController::class, 'heartbeat'])
+        ->name('api.v1.plugin.heartbeat');
+    Route::get('plugin/connections', [\App\Http\Controllers\Api\V1\PluginVersionController::class, 'connections'])
+        ->name('api.v1.plugin.connections');
+    Route::delete('plugin/connections/{id}', [\App\Http\Controllers\Api\V1\PluginVersionController::class, 'destroy'])
+        ->name('api.v1.plugin.connections.destroy');
+    Route::post('plugin/connections/{id}/disconnect', [\App\Http\Controllers\Api\V1\PluginVersionController::class, 'disconnect'])
+        ->name('api.v1.plugin.connections.disconnect');
 });
 
 // Public Download Route (Signed)

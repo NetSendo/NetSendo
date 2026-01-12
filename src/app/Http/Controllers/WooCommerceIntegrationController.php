@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PluginConnection;
 use App\Models\WooCommerceSettings;
 use App\Services\WooCommerceApiService;
 use Illuminate\Http\JsonResponse;
@@ -17,21 +18,46 @@ class WooCommerceIntegrationController extends Controller
      */
     public function index(): Response
     {
-        $stores = WooCommerceSettings::forUser(Auth::id());
+        $userId = Auth::id();
+        $stores = WooCommerceSettings::forUser($userId);
+
+        // Get plugin connections for this user's WooCommerce sites
+        $pluginConnections = PluginConnection::where('user_id', $userId)
+            ->where('plugin_type', 'woocommerce')
+            ->where('is_active', true)
+            ->get()
+            ->keyBy(fn($conn) => rtrim($conn->site_url, '/'));
 
         return Inertia::render('Settings/WooCommerceIntegration/Index', [
-            'stores' => $stores->map(fn($store) => [
-                'id' => $store->id,
-                'name' => $store->name,
-                'display_name' => $store->display_name,
-                'store_url' => $store->store_url,
-                'consumer_key' => $store->consumer_key ? '••••••••' . substr($store->consumer_key, -4) : null,
-                'is_connected' => $store->isConnected(),
-                'is_default' => $store->is_default,
-                'last_synced_at' => $store->last_synced_at?->format('Y-m-d H:i'),
-                'connection_verified_at' => $store->connection_verified_at?->format('Y-m-d H:i'),
-                'store_info' => $store->store_info,
-            ]),
+            'stores' => $stores->map(function($store) use ($pluginConnections) {
+                $storeUrl = rtrim($store->store_url, '/');
+                $pluginConn = $pluginConnections->get($storeUrl);
+
+                return [
+                    'id' => $store->id,
+                    'name' => $store->name,
+                    'display_name' => $store->display_name,
+                    'store_url' => $store->store_url,
+                    'consumer_key' => $store->consumer_key ? '••••••••' . substr($store->consumer_key, -4) : null,
+                    'is_connected' => $store->isConnected(),
+                    'is_default' => $store->is_default,
+                    'last_synced_at' => $store->last_synced_at?->format('Y-m-d H:i'),
+                    'connection_verified_at' => $store->connection_verified_at?->format('Y-m-d H:i'),
+                    'store_info' => $store->store_info,
+                    // Plugin version info from heartbeat
+                    'plugin_version' => $pluginConn?->plugin_version,
+                    'plugin_last_heartbeat' => $pluginConn?->last_heartbeat_at?->format('Y-m-d H:i'),
+                    'update_available' => $pluginConn?->update_available ?? false,
+                    'latest_version' => $pluginConn?->latest_version,
+                    'plugin_is_stale' => $pluginConn?->is_stale ?? false,
+                ];
+            }),
+            'plugin_config' => [
+                'woocommerce' => [
+                    'version' => config('netsendo.plugins.woocommerce.version'),
+                    'download_url' => url(config('netsendo.plugins.woocommerce.download_url')),
+                ],
+            ],
         ]);
     }
 

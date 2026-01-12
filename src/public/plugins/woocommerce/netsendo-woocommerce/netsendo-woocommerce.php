@@ -70,6 +70,10 @@ function netsendo_wc_init() {
 
     // Thank you page redirect hook
     add_action('woocommerce_thankyou', 'netsendo_wc_handle_thank_you_redirect', 5, 1);
+
+    // Heartbeat and update notifications
+    add_action('admin_init', 'netsendo_wc_maybe_send_heartbeat');
+    add_action('admin_notices', 'netsendo_wc_show_update_notice');
 }
 add_action('plugins_loaded', 'netsendo_wc_init');
 
@@ -577,3 +581,99 @@ function netsendo_wc_track_purchase($order_id) {
 }
 add_action('woocommerce_thankyou', 'netsendo_wc_track_purchase', 10, 1);
 
+// =============================================================================
+// HEARTBEAT AND UPDATE NOTIFICATIONS
+// =============================================================================
+
+/**
+ * Check if we should send heartbeat and send if needed
+ */
+function netsendo_wc_maybe_send_heartbeat() {
+    $last_heartbeat = get_option('netsendo_wc_last_heartbeat', 0);
+    // Send heartbeat once per day
+    if (time() - $last_heartbeat > 86400) {
+        netsendo_wc_send_heartbeat();
+        update_option('netsendo_wc_last_heartbeat', time());
+    }
+}
+
+/**
+ * Send heartbeat to NetSendo API
+ */
+function netsendo_wc_send_heartbeat() {
+    $settings = NetSendo_WC_Admin_Settings::get_settings();
+    if (empty($settings['api_key']) || empty($settings['api_url'])) {
+        return;
+    }
+
+    $response = wp_remote_post(
+        rtrim($settings['api_url'], '/') . '/api/v1/plugin/heartbeat',
+        [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $settings['api_key'],
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ],
+            'body' => json_encode([
+                'plugin_type' => 'woocommerce',
+                'site_url' => home_url(),
+                'site_name' => get_bloginfo('name'),
+                'plugin_version' => NETSENDO_WC_VERSION,
+                'wp_version' => get_bloginfo('version'),
+                'wc_version' => defined('WC_VERSION') ? WC_VERSION : null,
+                'php_version' => phpversion(),
+            ]),
+            'timeout' => 10,
+        ]
+    );
+
+    if (!is_wp_error($response)) {
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!empty($body['update_available']) && !empty($body['latest_version'])) {
+            update_option('netsendo_wc_update_available', [
+                'version' => $body['latest_version'],
+                'download_url' => $body['download_url'] ?? '',
+                'checked_at' => time(),
+            ]);
+        } else {
+            delete_option('netsendo_wc_update_available');
+        }
+    }
+}
+
+/**
+ * Show update notice in admin
+ */
+function netsendo_wc_show_update_notice() {
+    $update = get_option('netsendo_wc_update_available');
+    if (!$update) {
+        return;
+    }
+
+    // Refresh if older than 24 hours
+    if (time() - ($update['checked_at'] ?? 0) > 86400) {
+        netsendo_wc_send_heartbeat();
+        $update = get_option('netsendo_wc_update_available');
+        if (!$update) {
+            return;
+        }
+    }
+
+    $settings = NetSendo_WC_Admin_Settings::get_settings();
+    $panel_url = !empty($settings['api_url'])
+        ? rtrim($settings['api_url'], '/') . '/marketplace/woocommerce'
+        : '#';
+    ?>
+    <div class="notice notice-warning is-dismissible">
+        <p>
+            <strong>NetSendo for WooCommerce:</strong>
+            <?php printf(
+                /* translators: %1$s: new version number, %2$s: link to download */
+                __('Dostępna jest nowa wersja wtyczki (v%1$s). <a href="%2$s" target="_blank">Pobierz aktualizację</a> z panelu NetSendo.', 'netsendo-woocommerce'),
+                esc_html($update['version']),
+                esc_url($panel_url)
+            ); ?>
+        </p>
+    </div>
+    <?php
+}
