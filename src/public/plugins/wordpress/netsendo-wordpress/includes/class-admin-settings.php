@@ -137,6 +137,22 @@ class NetSendo_WP_Admin_Settings {
             'netsendo-wordpress',
             'netsendo_wp_gate_section'
         );
+
+        // Pixel Tracking Section
+        add_settings_section(
+            'netsendo_wp_pixel_section',
+            __('Pixel Tracking', 'netsendo-wordpress'),
+            [__CLASS__, 'render_pixel_section'],
+            'netsendo-wordpress'
+        );
+
+        add_settings_field(
+            'enable_pixel',
+            __('Enable Pixel Tracking', 'netsendo-wordpress'),
+            [__CLASS__, 'render_enable_pixel_field'],
+            'netsendo-wordpress',
+            'netsendo_wp_pixel_section'
+        );
     }
 
     /**
@@ -308,6 +324,48 @@ class NetSendo_WP_Admin_Settings {
     }
 
     /**
+     * Render Pixel section description
+     */
+    public static function render_pixel_section() {
+        echo '<p>' . __('NetSendo Pixel tracks visitor behavior on your website for marketing automation and analytics.', 'netsendo-wordpress') . '</p>';
+
+        // Show info if WooCommerce plugin is also active
+        if (defined('NETSENDO_WC_VERSION')) {
+            echo '<div class="notice notice-info inline" style="margin: 10px 0; padding: 10px;">';
+            echo '<p><strong>' . __('Note:', 'netsendo-wordpress') . '</strong> ';
+            echo __('NetSendo for WooCommerce is also installed. The Pixel will be managed by this WordPress plugin to prevent duplicates. WooCommerce plugin will add e-commerce specific tracking events.', 'netsendo-wordpress');
+            echo '</p></div>';
+        }
+    }
+
+    /**
+     * Render Enable Pixel field
+     */
+    public static function render_enable_pixel_field() {
+        $settings = self::get_settings();
+        $enable_pixel = isset($settings['enable_pixel']) ? (bool) $settings['enable_pixel'] : true;
+        $user_id = $settings['user_id'] ?? '';
+        ?>
+        <label>
+            <input type="checkbox"
+                   name="<?php echo self::OPTION_NAME; ?>[enable_pixel]"
+                   value="1"
+                   <?php checked($enable_pixel); ?>>
+            <?php _e('Enable visitor tracking on all pages', 'netsendo-wordpress'); ?>
+        </label>
+        <?php if ($user_id): ?>
+            <p class="description" style="color: #00a32a;">
+                <?php printf(__('✓ Pixel configured (User ID: %s)', 'netsendo-wordpress'), esc_html($user_id)); ?>
+            </p>
+        <?php else: ?>
+            <p class="description" style="color: #d63638;">
+                <?php _e('⚠ User ID not set. Please test the API connection to automatically configure Pixel.', 'netsendo-wordpress'); ?>
+            </p>
+        <?php endif; ?>
+        <?php
+    }
+
+    /**
      * Render settings page
      */
     public static function render_settings_page() {
@@ -382,6 +440,13 @@ class NetSendo_WP_Admin_Settings {
         $sanitized['gdpr_text'] = isset($input['gdpr_text']) ? sanitize_text_field($input['gdpr_text']) : '';
         $sanitized['gate_percentage'] = isset($input['gate_percentage']) ? min(90, max(10, intval($input['gate_percentage']))) : 30;
         $sanitized['gate_message'] = isset($input['gate_message']) ? sanitize_text_field($input['gate_message']) : '';
+        $sanitized['enable_pixel'] = isset($input['enable_pixel']) ? (bool) $input['enable_pixel'] : false;
+
+        // Preserve user_id if it was set by API (not editable by user)
+        $existing = get_option(self::OPTION_NAME, []);
+        if (!empty($existing['user_id'])) {
+            $sanitized['user_id'] = (int) $existing['user_id'];
+        }
 
         // Clear cached data when settings change
         delete_transient('netsendo_wp_lists');
@@ -398,12 +463,14 @@ class NetSendo_WP_Admin_Settings {
         return get_option(self::OPTION_NAME, [
             'api_key' => '',
             'api_url' => '',
+            'user_id' => '',
             'default_list_id' => '',
             'form_style' => 'card',
             'show_gdpr' => true,
             'gdpr_text' => __('I agree to receive email updates and accept the privacy policy.', 'netsendo-wordpress'),
             'gate_percentage' => 30,
             'gate_message' => __('Subscribe to continue reading', 'netsendo-wordpress'),
+            'enable_pixel' => true,
         ]);
     }
 

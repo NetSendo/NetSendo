@@ -3,7 +3,7 @@
  * Plugin Name: NetSendo for WordPress
  * Plugin URI: https://netsendo.com/integrations/wordpress
  * Description: Professional newsletter subscription forms, content gating, and email marketing integration for WordPress bloggers and content creators.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NetSendo
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('NETSENDO_WP_VERSION', '1.0.0');
+define('NETSENDO_WP_VERSION', '1.1.0');
 define('NETSENDO_WP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('NETSENDO_WP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('NETSENDO_WP_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -337,12 +337,14 @@ function netsendo_wp_activate() {
         update_option('netsendo_wp_settings', [
             'api_key' => '',
             'api_url' => '',
+            'user_id' => '',
             'default_list_id' => '',
             'gate_percentage' => 30,
             'gate_message' => __('Subscribe to continue reading', 'netsendo-wordpress'),
             'form_style' => 'card',
             'show_gdpr' => true,
             'gdpr_text' => __('I agree to receive email updates and accept the privacy policy.', 'netsendo-wordpress'),
+            'enable_pixel' => true,
         ]);
     }
 }
@@ -366,3 +368,91 @@ function netsendo_wp_plugin_action_links($links) {
     return $links;
 }
 add_filter('plugin_action_links_' . NETSENDO_WP_PLUGIN_BASENAME, 'netsendo_wp_plugin_action_links');
+
+// =============================================================================
+// NETSENDO PIXEL TRACKING
+// =============================================================================
+
+/**
+ * Inject NetSendo Pixel script into WordPress pages
+ * This plugin acts as PRIMARY pixel injector when both WordPress and WooCommerce plugins are active
+ */
+function netsendo_wp_inject_pixel_script() {
+    $settings = NetSendo_WP_Admin_Settings::get_settings();
+
+    // Check if Pixel is enabled
+    if (empty($settings['enable_pixel'])) {
+        return;
+    }
+
+    $api_url = isset($settings['api_url']) ? rtrim($settings['api_url'], '/') : '';
+    $user_id = $settings['user_id'] ?? '';
+
+    // Only inject if properly configured
+    if (empty($user_id) || empty($api_url)) {
+        return;
+    }
+
+    // Mark that WordPress plugin is handling the Pixel (for WooCommerce collision detection)
+    if (!defined('NETSENDO_PIXEL_LOADED')) {
+        define('NETSENDO_PIXEL_LOADED', true);
+    }
+
+    ?>
+    <!-- NetSendo Pixel -->
+    <script>
+    (function(n,e,t,s,d,o){n.NetSendo=n.NetSendo||[];
+    n.NetSendo.push(['init',{userId:<?php echo (int)$user_id; ?>,apiUrl:'<?php echo esc_js($api_url); ?>/t/pixel'}]);
+    var a=e.createElement(t);a.async=1;a.src='<?php echo esc_js($api_url); ?>/t/pixel/<?php echo (int)$user_id; ?>';
+    var m=e.getElementsByTagName(t)[0];m.parentNode.insertBefore(a,m);
+    })(window,document,'script');
+    </script>
+    <!-- End NetSendo Pixel -->
+    <?php
+}
+add_action('wp_head', 'netsendo_wp_inject_pixel_script', 1);
+
+/**
+ * Track page views on all pages
+ */
+function netsendo_wp_track_page_view() {
+    $settings = NetSendo_WP_Admin_Settings::get_settings();
+
+    // Only track if Pixel is enabled and configured
+    if (empty($settings['enable_pixel']) || empty($settings['user_id'])) {
+        return;
+    }
+
+    // Get page info
+    $page_title = wp_title('|', false, 'right');
+    if (empty($page_title)) {
+        $page_title = get_bloginfo('name');
+    }
+
+    $page_type = 'page';
+    if (is_front_page()) {
+        $page_type = 'home';
+    } elseif (is_single()) {
+        $page_type = 'post';
+    } elseif (is_page()) {
+        $page_type = 'page';
+    } elseif (is_archive()) {
+        $page_type = 'archive';
+    } elseif (is_search()) {
+        $page_type = 'search';
+    }
+
+    ?>
+    <script>
+    if (typeof NetSendo !== 'undefined') {
+        NetSendo.push(['track', 'page_view', {
+            page_title: '<?php echo esc_js(trim($page_title)); ?>',
+            page_type: '<?php echo esc_js($page_type); ?>',
+            page_url: window.location.href
+        }]);
+    }
+    </script>
+    <?php
+}
+add_action('wp_footer', 'netsendo_wp_track_page_view');
+

@@ -356,6 +356,12 @@ class NetSendo_WC_Admin_Settings {
         $sanitized['default_external_page_id'] = isset($input['default_external_page_id']) ? sanitize_text_field($input['default_external_page_id']) : '';
         $sanitized['default_redirect_url'] = isset($input['default_redirect_url']) ? esc_url_raw($input['default_redirect_url']) : '';
 
+        // Preserve user_id if it was set by API (not editable by user)
+        $existing = get_option(self::OPTION_NAME, []);
+        if (!empty($existing['user_id'])) {
+            $sanitized['user_id'] = (int) $existing['user_id'];
+        }
+
         // Clear cached data when settings change
         delete_transient('netsendo_wc_lists');
         delete_transient('netsendo_wc_external_pages');
@@ -372,6 +378,7 @@ class NetSendo_WC_Admin_Settings {
         return get_option(self::OPTION_NAME, [
             'api_key' => '',
             'api_url' => '',
+            'user_id' => '',
             'default_purchase_list_id' => '',
             'default_purchase_list_manual' => '',
             'default_pending_list_id' => '',

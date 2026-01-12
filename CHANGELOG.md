@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **NetSendo Pixel for WordPress Plugin:**
+
+  - Implemented Pixel tracking script injection in WordPress plugin (`netsendo-wordpress.php`).
+  - Added `page_view` tracking with page type detection (home, post, page, archive, search).
+  - Added new "Pixel Tracking" settings section with `enable_pixel` toggle in admin panel.
+  - Auto-retrieval of `user_id` from API during connection test for automatic Pixel configuration.
+  - Collision detection constant `NETSENDO_PIXEL_LOADED` to prevent duplicate Pixel injection.
+  - Info notice in settings when both WordPress and WooCommerce plugins are active.
+
+- **Pixel Collision Detection (WooCommerce Plugin):**
+  - Added `netsendo_wc_is_wordpress_plugin_handling_pixel()` function to detect if WordPress plugin is managing Pixel.
+  - WooCommerce plugin now skips base Pixel injection when WordPress plugin handles it.
+  - E-commerce tracking events (product_view, add_to_cart, checkout, purchase) continue to work regardless of which plugin injects the base Pixel.
+  - Updated API `test_connection()` to use `/api/v1/account` endpoint and save `user_id` for Pixel.
+
+### Changed
+
+- **Plugin Architecture:**
+  - WordPress plugin now acts as PRIMARY Pixel injector when both plugins are active.
+  - WooCommerce plugin acts as SECONDARY, adding only e-commerce-specific events.
+  - Both plugins now preserve `user_id` in settings sanitization.
+
 ## [1.6.4] – Short Description
 
 **Release date:** 2026-01-12

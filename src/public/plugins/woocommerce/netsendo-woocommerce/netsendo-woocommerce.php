@@ -3,7 +3,7 @@
  * Plugin Name: NetSendo for WooCommerce
  * Plugin URI: https://netsendo.com/integrations/woocommerce
  * Description: Integracja WooCommerce z NetSendo - automatyczne zapisywanie klientów na listy mailingowe po zakupie lub próbie zakupu.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NetSendo
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('NETSENDO_WC_VERSION', '1.0.0');
+define('NETSENDO_WC_VERSION', '1.1.0');
 define('NETSENDO_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('NETSENDO_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('NETSENDO_WC_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -337,9 +337,37 @@ add_filter('plugin_action_links_' . NETSENDO_WC_PLUGIN_BASENAME, 'netsendo_wc_pl
 // =============================================================================
 
 /**
+ * Check if WordPress plugin is handling Pixel
+ *
+ * @return bool
+ */
+function netsendo_wc_is_wordpress_plugin_handling_pixel() {
+    // Check if WordPress plugin already loaded Pixel via constant
+    if (defined('NETSENDO_PIXEL_LOADED') && NETSENDO_PIXEL_LOADED) {
+        return true;
+    }
+
+    // Check if WordPress plugin is active and has Pixel enabled
+    if (class_exists('NetSendo_WP_Admin_Settings')) {
+        $wp_settings = NetSendo_WP_Admin_Settings::get_settings();
+        if (!empty($wp_settings['enable_pixel']) && !empty($wp_settings['user_id'])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Inject NetSendo Pixel script into WooCommerce pages
+ * Only injects if WordPress plugin is NOT handling the Pixel
  */
 function netsendo_wc_inject_pixel_script() {
+    // Skip if WordPress plugin is handling the Pixel (collision detection)
+    if (netsendo_wc_is_wordpress_plugin_handling_pixel()) {
+        return;
+    }
+
     $settings = NetSendo_WC_Admin_Settings::get_settings();
     $api_url = isset($settings['api_url']) ? rtrim($settings['api_url'], '/') : '';
     $user_id = $settings['user_id'] ?? '';

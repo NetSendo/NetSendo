@@ -150,7 +150,8 @@ class NetSendo_WC_API {
             ];
         }
 
-        $endpoint = $this->api_url . '/api/v1/lists';
+        // Use account info endpoint to get user_id
+        $endpoint = $this->api_url . '/api/v1/account';
 
         $response = wp_remote_get($endpoint, [
             'headers' => [
@@ -168,11 +169,19 @@ class NetSendo_WC_API {
         }
 
         $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($code === 200) {
+            // Extract and save user_id for Pixel tracking
+            $user_id = $body['data']['id'] ?? $body['id'] ?? null;
+            if ($user_id) {
+                $this->save_user_id($user_id);
+            }
+
             return [
                 'success' => true,
                 'message' => __('Connection successful! NetSendo API is working.', 'netsendo-woocommerce'),
+                'user_id' => $user_id,
             ];
         } elseif ($code === 401) {
             return [
@@ -185,6 +194,17 @@ class NetSendo_WC_API {
                 'message' => sprintf(__('API returned error code: %d', 'netsendo-woocommerce'), $code),
             ];
         }
+    }
+
+    /**
+     * Save user_id to settings for Pixel tracking
+     *
+     * @param int $user_id
+     */
+    private function save_user_id($user_id) {
+        $settings = get_option(NetSendo_WC_Admin_Settings::OPTION_NAME, []);
+        $settings['user_id'] = (int) $user_id;
+        update_option(NetSendo_WC_Admin_Settings::OPTION_NAME, $settings);
     }
 
     /**

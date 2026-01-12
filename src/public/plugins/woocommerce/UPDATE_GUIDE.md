@@ -1,11 +1,12 @@
 # NetSendo for WooCommerce - Update & Version Guide
 
-## Current Version: 1.0.0
+## Current Version: 1.1.0
 
 ## Version History
 
 | Version | Date       | Changes                                                                              |
 | ------- | ---------- | ------------------------------------------------------------------------------------ |
+| 1.1.0   | 2026-01-12 | Added Pixel collision detection, auto user_id retrieval from API                     |
 | 1.0.0   | 2026-01-12 | Initial release with order tracking, heartbeat, update notifications, pixel tracking |
 
 ---
@@ -88,6 +89,7 @@ netsendo-woocommerce/
 -   **Product-Specific Settings**: Override lists per product
 -   **External Page Redirects**: Send to sales funnels after purchase
 -   **Pixel Tracking**: Track product views, add to cart, checkout, purchase
+-   **Collision Detection**: Skips base Pixel when WordPress plugin is active
 -   **Heartbeat System**: Reports version (including WC version) to NetSendo daily
 -   **Update Notifications**: Shows update banner in WP admin
 
@@ -98,6 +100,7 @@ netsendo-woocommerce/
 | Endpoint                   | Method | Purpose                 |
 | -------------------------- | ------ | ----------------------- |
 | `/api/v1/plugin/heartbeat` | POST   | Send version info daily |
+| `/api/v1/account`          | GET    | Get user_id for Pixel   |
 | `/webhooks/woocommerce`    | POST   | Receive order events    |
 | `/t/pixel/{user_id}`       | GET    | Pixel tracking script   |
 

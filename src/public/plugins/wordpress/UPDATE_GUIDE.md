@@ -1,12 +1,13 @@
 # NetSendo for WordPress - Update & Version Guide
 
-## Current Version: 1.0.0
+## Current Version: 1.1.0
 
 ## Version History
 
-| Version | Date       | Changes                                                                     |
-| ------- | ---------- | --------------------------------------------------------------------------- |
-| 1.0.0   | 2026-01-12 | Initial release with heartbeat, update notifications, forms, content gating |
+| Version | Date       | Changes                                                                          |
+| ------- | ---------- | -------------------------------------------------------------------------------- |
+| 1.1.0   | 2026-01-12 | Added Pixel tracking with page_view events, collision detection with WooCommerce |
+| 1.0.0   | 2026-01-12 | Initial release with heartbeat, update notifications, forms, content gating      |
 
 ---
 
@@ -93,6 +94,7 @@ netsendo-wordpress/
 -   **Content Gating**: Show X% of content, rest for subscribers
 -   **Gutenberg Blocks**: Native WP block editor support
 -   **GDPR Compliance**: Built-in consent checkbox
+-   **Pixel Tracking**: Page views with type detection (Primary injector when both plugins active)
 -   **Heartbeat System**: Reports version to NetSendo daily
 -   **Update Notifications**: Shows update banner in WP admin
 
@@ -103,7 +105,9 @@ netsendo-wordpress/
 | Endpoint                   | Method | Purpose                 |
 | -------------------------- | ------ | ----------------------- |
 | `/api/v1/plugin/heartbeat` | POST   | Send version info daily |
+| `/api/v1/account`          | GET    | Get user_id for Pixel   |
 | `/api/v1/subscribers`      | POST   | Add new subscriber      |
+| `/t/pixel/{user_id}`       | GET    | Pixel tracking script   |
 
 ---
 
