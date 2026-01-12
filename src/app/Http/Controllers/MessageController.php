@@ -25,7 +25,7 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->messages()->with(['contactLists', 'attachments']);
+        $query = auth()->user()->messages()->with(['contactLists', 'attachments', 'abTest']);
 
         // Filter by Type
         if ($request->filled('type')) {
@@ -119,6 +119,12 @@ class MessageController extends Controller
                     'scheduled_at' => $msg->scheduled_at
                         ? DateHelper::formatForUser($msg->scheduled_at)
                         : null,
+                    // A/B Test status for indicator
+                    'ab_test' => $msg->abTest ? [
+                        'id' => $msg->abTest->id,
+                        'status' => $msg->abTest->status,
+                        'variants_count' => $msg->abTest->variants_count ?? $msg->abTest->variants()->count(),
+                    ] : null,
                 ]),
             'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
             'lists' => auth()->user()->accessibleLists()->select('id', 'name')->orderBy('name')->get(),

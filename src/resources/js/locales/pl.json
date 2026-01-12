@@ -242,7 +242,12 @@
             "subject_placeholder": "Wprowadź temat dla tego wariantu...",
             "preheader": "Preheader",
             "preheader_placeholder": "Wprowadź preheader dla tego wariantu...",
-            "minimum_required": "Wymagane są co najmniej 2 warianty do testów A/B"
+            "minimum_required": "Wymagane są co najmniej 2 warianty do testów A/B",
+            "control_readonly": "Dane z zakładki Treść",
+            "control_empty_warning": "Uzupełnij Tytuł i Preheader w zakładce Treść",
+            "ai_generate": "Generuj z AI",
+            "ai_generating": "Generowanie...",
+            "ai_context_info": "Tworzysz alternatywną wersję dla testu A/B"
         },
         "settings": {
             "title": "Konfiguracja testu",
@@ -986,6 +991,15 @@
         "recipients": "odbiorców",
         "skipped": "pominięto",
         "skipped_hint": "Subskrybenci pominięci z powodu upływu czasu wysyłki. Kliknij w statystyki, aby uruchomić ręczną wysyłkę.",
+        "ab_test_badge": "A/B Test",
+        "ab_test_tooltip": "Ta wiadomość ma test A/B ({status})",
+        "ab_test_status": {
+            "draft": "Szkic",
+            "running": "W trakcie",
+            "paused": "Wstrzymany",
+            "completed": "Zakończony",
+            "cancelled": "Anulowany"
+        },
         "resend_button": "Ponów wysyłkę",
         "resending": "Wysyłanie...",
         "resend_confirm_title": "Ponów wysyłkę wiadomości",

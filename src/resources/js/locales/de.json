@@ -272,7 +272,12 @@
             "subject_placeholder": "Betreff für diese Variante eingeben...",
             "preheader": "Preheader",
             "preheader_placeholder": "Preheader für diese Variante eingeben...",
-            "minimum_required": "Mindestens 2 Varianten sind für A/B-Tests erforderlich"
+            "minimum_required": "Mindestens 2 Varianten sind für A/B-Tests erforderlich",
+            "control_readonly": "Daten aus Inhalts-Tab",
+            "control_empty_warning": "Betreff und Preheader im Inhalts-Tab ausfüllen",
+            "ai_generate": "Mit KI generieren",
+            "ai_generating": "Generiere...",
+            "ai_context_info": "Alternative Version für A/B-Test erstellen"
         },
         "settings": {
             "title": "Testkonfiguration",
@@ -1441,6 +1446,15 @@
             "field_email": "E-Mail",
             "field_phone": "Telefon",
             "field_gender": "Geschlecht"
+        },
+        "ab_test_badge": "A/B-Test",
+        "ab_test_tooltip": "Diese Nachricht hat einen A/B-Test ({status})",
+        "ab_test_status": {
+            "draft": "Entwurf",
+            "running": "Läuft",
+            "paused": "Pausiert",
+            "completed": "Abgeschlossen",
+            "cancelled": "Abgebrochen"
         }
     },
     "subscribers": {

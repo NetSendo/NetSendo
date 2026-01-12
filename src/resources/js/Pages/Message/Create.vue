@@ -3163,6 +3163,7 @@ if (form.contact_list_ids.length > 0) {
                         v-model="form.ab_test_config"
                         :original-subject="form.subject"
                         :original-preheader="form.preheader"
+                        :message-content="form.content"
                         :disabled="form.processing"
                     />
                 </div>

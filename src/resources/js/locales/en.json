@@ -243,7 +243,12 @@
             "subject_placeholder": "Enter subject for this variant...",
             "preheader": "Preheader",
             "preheader_placeholder": "Enter preheader for this variant...",
-            "minimum_required": "At least 2 variants are required for A/B testing"
+            "minimum_required": "At least 2 variants are required for A/B testing",
+            "control_readonly": "Data from Content tab",
+            "control_empty_warning": "Fill in Subject and Preheader in Content tab",
+            "ai_generate": "Generate with AI",
+            "ai_generating": "Generating...",
+            "ai_context_info": "Creating alternative version for A/B test"
         },
         "settings": {
             "title": "Test Configuration",
@@ -984,6 +989,15 @@
         "recipients": "recipients",
         "skipped": "skipped",
         "skipped_hint": "Subscribers skipped due to past send time. Click on statistics to trigger manual sending.",
+        "ab_test_badge": "A/B Test",
+        "ab_test_tooltip": "This message has an A/B test ({status})",
+        "ab_test_status": {
+            "draft": "Draft",
+            "running": "Running",
+            "paused": "Paused",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        },
         "resend_button": "Resend",
         "resending": "Sending...",
         "resend_confirm_title": "Resend Message",

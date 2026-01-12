@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
+import SubjectAiAssistant from "@/Components/SubjectAiAssistant.vue";
 
 const { t } = useI18n();
 
@@ -25,6 +26,10 @@ const props = defineProps({
         default: "",
     },
     originalPreheader: {
+        type: String,
+        default: "",
+    },
+    messageContent: {
         type: String,
         default: "",
     },
@@ -120,6 +125,25 @@ const updateVariant = (index, field, value) => {
 // Computed
 const canAddVariant = computed(() => localConfig.value.variants.length < 5);
 const hasMinimumVariants = computed(() => localConfig.value.variants.length >= 2);
+
+// AI generation state per variant
+const generatingVariantAI = ref({});
+
+// Handle AI selection for a variant
+const handleVariantAISelect = (variantIndex, { subject, preheader }) => {
+    updateVariant(variantIndex, 'subject', subject);
+    updateVariant(variantIndex, 'preheader', preheader);
+};
+
+// Get control variant data for AI context
+const controlVariant = computed(() => {
+    return localConfig.value.variants.find(v => v.is_control) || { subject: '', preheader: '' };
+});
+
+// Check if control variant has empty data
+const controlVariantEmpty = computed(() => {
+    return !props.originalSubject && !props.originalPreheader;
+});
 
 // Options
 const testTypeOptions = [
@@ -253,28 +277,73 @@ ensureVariantA();
                         </div>
 
                         <div class="space-y-3">
-                            <div>
-                                <InputLabel :value="$t('ab_tests.variants.subject')" class="mb-1" />
-                                <TextInput
-                                    type="text"
-                                    :model-value="variant.subject"
-                                    @update:model-value="updateVariant(index, 'subject', $event)"
-                                    :placeholder="variant.is_control ? originalSubject : $t('ab_tests.variants.subject_placeholder')"
-                                    class="w-full"
-                                    :disabled="disabled"
-                                />
-                            </div>
-                            <div>
-                                <InputLabel :value="$t('ab_tests.variants.preheader')" class="mb-1" />
-                                <TextInput
-                                    type="text"
-                                    :model-value="variant.preheader"
-                                    @update:model-value="updateVariant(index, 'preheader', $event)"
-                                    :placeholder="variant.is_control ? originalPreheader : $t('ab_tests.variants.preheader_placeholder')"
-                                    class="w-full"
-                                    :disabled="disabled"
-                                />
-                            </div>
+                            <!-- Control Variant: Read-only with info -->
+                            <template v-if="variant.is_control">
+                                <div>
+                                    <InputLabel :value="$t('ab_tests.variants.subject')" class="mb-1" />
+                                    <TextInput
+                                        type="text"
+                                        :model-value="originalSubject"
+                                        :placeholder="$t('ab_tests.variants.subject_placeholder')"
+                                        class="w-full bg-slate-50 dark:bg-slate-700/50"
+                                        disabled
+                                    />
+                                </div>
+                                <div>
+                                    <InputLabel :value="$t('ab_tests.variants.preheader')" class="mb-1" />
+                                    <TextInput
+                                        type="text"
+                                        :model-value="originalPreheader"
+                                        :placeholder="$t('ab_tests.variants.preheader_placeholder')"
+                                        class="w-full bg-slate-50 dark:bg-slate-700/50"
+                                        disabled
+                                    />
+                                </div>
+                                <!-- Info message for control variant -->
+                                <p v-if="!controlVariantEmpty" class="text-xs text-emerald-600 dark:text-emerald-400">
+                                    ℹ️ {{ $t('ab_tests.variants.control_readonly') }}
+                                </p>
+                                <!-- Warning if control is empty -->
+                                <p v-else class="text-xs text-amber-600 dark:text-amber-400">
+                                    ⚠️ {{ $t('ab_tests.variants.control_empty_warning') }}
+                                </p>
+                            </template>
+
+                            <!-- Other Variants: Editable with AI Assistant -->
+                            <template v-else>
+                                <div>
+                                    <div class="mb-1 flex items-center justify-between">
+                                        <InputLabel :value="$t('ab_tests.variants.subject')" />
+                                        <SubjectAiAssistant
+                                            :current-content="messageContent"
+                                            :control-subject="controlVariant.subject || originalSubject"
+                                            :control-preheader="controlVariant.preheader || originalPreheader"
+                                            :is-variant="true"
+                                            @select="handleVariantAISelect(index, $event)"
+                                            button-size="sm"
+                                        />
+                                    </div>
+                                    <TextInput
+                                        type="text"
+                                        :model-value="variant.subject"
+                                        @update:model-value="updateVariant(index, 'subject', $event)"
+                                        :placeholder="$t('ab_tests.variants.subject_placeholder')"
+                                        class="w-full"
+                                        :disabled="disabled"
+                                    />
+                                </div>
+                                <div>
+                                    <InputLabel :value="$t('ab_tests.variants.preheader')" class="mb-1" />
+                                    <TextInput
+                                        type="text"
+                                        :model-value="variant.preheader"
+                                        @update:model-value="updateVariant(index, 'preheader', $event)"
+                                        :placeholder="$t('ab_tests.variants.preheader_placeholder')"
+                                        class="w-full"
+                                        :disabled="disabled"
+                                    />
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>

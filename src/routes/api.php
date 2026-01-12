@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () {
 
+    // Account Info (for plugin connection testing)
+    Route::get('account', [\App\Http\Controllers\Api\V1\AccountController::class, 'show'])
+        ->name('api.v1.account');
+
     // Subscribers (CRUD)
     Route::post('subscribers/batch', [SubscriberController::class, 'batch'])
         ->name('api.v1.subscribers.batch');

@@ -158,6 +158,14 @@ class Message extends Model
     }
 
     /**
+     * Get the A/B test for this message.
+     */
+    public function abTest()
+    {
+        return $this->hasOne(AbTest::class);
+    }
+
+    /**
      * Get aggregated queue statistics.
      *
      * @return array{planned: int, queued: int, sent: int, failed: int, skipped: int, total: int}

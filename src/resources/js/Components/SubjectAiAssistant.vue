@@ -12,6 +12,26 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    // Control variant subject (for A/B testing)
+    controlSubject: {
+        type: String,
+        default: '',
+    },
+    // Control variant preheader (for A/B testing)
+    controlPreheader: {
+        type: String,
+        default: '',
+    },
+    // Whether this is being used for A/B variant generation
+    isVariant: {
+        type: Boolean,
+        default: false,
+    },
+    // Button size: 'sm' or default
+    buttonSize: {
+        type: String,
+        default: '',
+    },
 });
 
 const emit = defineEmits(['select-subject', 'select', 'close']);
@@ -29,8 +49,8 @@ const { isListening, isSupported, transcript, toggleListening } = useSpeechRecog
 // Append transcript to hint when voice recognition completes
 watch(transcript, (newTranscript) => {
     if (newTranscript) {
-        hint.value = hint.value 
-            ? hint.value.trim() + ' ' + newTranscript 
+        hint.value = hint.value
+            ? hint.value.trim() + ' ' + newTranscript
             : newTranscript;
     }
 });
@@ -76,12 +96,12 @@ const selectedKey = computed({
 // Fetch active integrations
 const fetchModels = async () => {
     if (integrations.value.length > 0) return; // Already fetched
-    
+
     loadingModels.value = true;
     try {
         const response = await axios.get(route('api.ai.active-models'));
         integrations.value = response.data.integrations || [];
-        
+
         // Auto-select first model
         if (integrations.value.length > 0) {
             const first = integrations.value[0];
@@ -107,10 +127,17 @@ const generateSubjects = async () => {
     suggestions.value = [];
 
     try {
+        // Build enhanced hint for A/B variants
+        let enhancedHint = hint.value || '';
+        if (props.isVariant && props.controlSubject) {
+            const variantContext = t('ab_tests.variants.ai_context_info');
+            enhancedHint = [variantContext, `Wersja kontrolna: "${props.controlSubject}"`, enhancedHint].filter(Boolean).join('. ');
+        }
+
         const response = await axios.post(route('api.templates.ai.subject'), {
             content: props.currentContent,
             count: 3,
-            hint: hint.value || null,
+            hint: enhancedHint || null,
             integration_id: selectedIntegrationId.value,
             model_id: selectedModelId.value,
         });
@@ -131,12 +158,12 @@ const selectSubject = (suggestion) => {
     // Handle both old format (string) and new format (object with subject and preheader)
     const subject = typeof suggestion === 'string' ? suggestion : suggestion.subject;
     const preheader = typeof suggestion === 'object' ? (suggestion.preheader || '') : '';
-    
+
     // Emit for backward compatibility
     emit('select-subject', subject);
     // Emit new format with both subject and preheader
     emit('select', { subject, preheader });
-    
+
     isOpen.value = false;
     suggestions.value = [];
     hint.value = '';
@@ -150,17 +177,17 @@ const dropdownStyle = ref({});
 
 const updateDropdownPosition = () => {
     if (!triggerRef.value) return;
-    
+
     const rect = triggerRef.value.getBoundingClientRect();
     const windowWidth = window.innerWidth;
-    
+
     // Default position (right aligned to trigger)
     let left = rect.right - 320; // 320px is width (w-80)
     let top = rect.bottom + 8;
-    
+
     // Check if goes off screen left
     if (left < 10) left = 10;
-    
+
     // Check if goes off screen right
     if (left + 320 > windowWidth) left = windowWidth - 330;
 
@@ -179,11 +206,11 @@ const toggle = () => {
         suggestions.value = [];
         fetchModels();
         updateDropdownPosition();
-        
+
         // Add scroll listener to update position (not close)
         window.addEventListener('scroll', updateDropdownPosition, { capture: true, passive: true });
         window.addEventListener('resize', updateDropdownPosition);
-        
+
         // Add click-outside listener after a small delay to prevent immediate close
         setTimeout(() => {
             document.addEventListener('click', handleClickOutside);
@@ -203,7 +230,7 @@ const handleClickOutside = (e) => {
     // Check if click is outside both trigger and dropdown
     const clickedTrigger = triggerRef.value && triggerRef.value.contains(e.target);
     const clickedDropdown = dropdownRef.value && dropdownRef.value.contains(e.target);
-    
+
     if (!clickedTrigger && !clickedDropdown) {
         close();
     }
@@ -227,17 +254,18 @@ onBeforeUnmount(() => {
             ref="triggerRef"
             type="button"
             @click="toggle"
-            class="flex items-center justify-center p-1.5 text-purple-500 transition-colors rounded-md hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+            class="flex items-center justify-center transition-colors rounded-md hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+            :class="buttonSize === 'sm' ? 'p-1 text-purple-500' : 'p-1.5 text-purple-500'"
             :title="$t('messages.ai_assistant.subject_assistant')"
         >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg :class="buttonSize === 'sm' ? 'h-4 w-4' : 'h-5 w-5'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         </button>
 
         <!-- Dropdown -->
         <Teleport to="body">
-            <div 
+            <div
                 v-if="isOpen"
                 ref="dropdownRef"
                 :style="dropdownStyle"
@@ -262,8 +290,8 @@ onBeforeUnmount(() => {
                         type="text"
                         maxlength="500"
                         class="flex-1 rounded-md border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white"
-                        :class="isListening 
-                            ? 'border-red-300 dark:border-red-600' 
+                        :class="isListening
+                            ? 'border-red-300 dark:border-red-600'
                             : 'border-slate-200 dark:border-slate-600'"
                         :placeholder="$t('messages.ai_assistant.subject_hint_placeholder')"
                         @keyup.enter="generateSubjects"
@@ -275,14 +303,14 @@ onBeforeUnmount(() => {
                         @click="toggleListening(getSpeechLang(locale))"
                         :title="isListening ? $t('messages.ai_assistant.voice.stop') : $t('messages.ai_assistant.voice.start')"
                         class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md transition-all"
-                        :class="isListening 
-                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400' 
+                        :class="isListening
+                            ? 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
                             : 'bg-slate-100 text-slate-500 hover:bg-indigo-100 hover:text-indigo-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400'"
                     >
-                        <svg 
-                            class="h-4 w-4" 
+                        <svg
+                            class="h-4 w-4"
                             :class="{ 'animate-pulse': isListening }"
-                            fill="currentColor" 
+                            fill="currentColor"
                             viewBox="0 0 24 24"
                         >
                             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -295,7 +323,7 @@ onBeforeUnmount(() => {
                     <span v-if="isListening" class="text-red-500 animate-pulse">{{ $t('messages.ai_assistant.voice.listening') }}</span>
                 </div>
             </div>
-            
+
             <!-- Content status indicator -->
             <div class="mb-3 text-xs">
                 <div v-if="currentContent && currentContent.length >= 20" class="flex items-center gap-1 text-emerald-500">
@@ -311,7 +339,7 @@ onBeforeUnmount(() => {
                     {{ $t('messages.ai_assistant.content_status_error', { count: currentContent ? currentContent.length : 0 }) }}
                 </div>
             </div>
-            
+
             <!-- Model selector (compact) -->
             <div class="mb-3">
                 <select
@@ -362,7 +390,7 @@ onBeforeUnmount(() => {
                             {{ typeof suggestion === 'string' ? suggestion : suggestion.subject }}
                         </span>
                     </div>
-                    <div 
+                    <div
                         v-if="typeof suggestion === 'object' && suggestion.preheader"
                         class="ml-5 text-xs text-slate-500 dark:text-slate-400 italic"
                     >

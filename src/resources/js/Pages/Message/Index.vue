@@ -658,6 +658,29 @@ const getAttachmentTooltip = (message, trans) => {
                                 >
                                     📅 {{ message.scheduled_at }}
                                 </div>
+                                <!-- A/B Test indicator -->
+                                <div
+                                    v-if="message.ab_test"
+                                    class="mt-1"
+                                >
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                                        :class="{
+                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400':
+                                                message.ab_test.status === 'running',
+                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400':
+                                                message.ab_test.status === 'draft' || message.ab_test.status === 'paused',
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400':
+                                                message.ab_test.status === 'completed',
+                                            'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400':
+                                                message.ab_test.status === 'cancelled',
+                                        }"
+                                        :title="$t('messages.ab_test_tooltip', { status: $t('messages.ab_test_status.' + message.ab_test.status) })"
+                                    >
+                                        🧪 {{ $t('messages.ab_test_badge') }}
+                                        <span v-if="message.ab_test.status === 'running'" class="animate-pulse">●</span>
+                                    </span>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 {{ message.created_at }}

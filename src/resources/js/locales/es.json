@@ -234,7 +234,12 @@
             "subject_placeholder": "Ingrese el asunto para esta variante...",
             "preheader": "Pre encabezado",
             "preheader_placeholder": "Ingrese el pre encabezado para esta variante...",
-            "minimum_required": "Se requieren al menos 2 variantes para las pruebas A/B"
+            "minimum_required": "Se requieren al menos 2 variantes para las pruebas A/B",
+            "control_readonly": "Datos de la pestaña Contenido",
+            "control_empty_warning": "Complete el Asunto y Pre encabezado en la pestaña Contenido",
+            "ai_generate": "Generar con IA",
+            "ai_generating": "Generando...",
+            "ai_context_info": "Creando versión alternativa para prueba A/B"
         },
         "settings": {
             "title": "Configuración de la prueba",
@@ -1361,6 +1366,15 @@
             "field_email": "Correo electrónico",
             "field_phone": "Teléfono",
             "field_gender": "Género"
+        },
+        "ab_test_badge": "Prueba A/B",
+        "ab_test_tooltip": "Este mensaje tiene una prueba A/B ({status})",
+        "ab_test_status": {
+            "draft": "Borrador",
+            "running": "En ejecución",
+            "paused": "Pausado",
+            "completed": "Completado",
+            "cancelled": "Cancelado"
         }
     },
     "subscribers": {

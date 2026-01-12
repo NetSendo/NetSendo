@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **A/B Testing System:**
+
   - **Enterprise-Grade Testing:** Implemented a comprehensive A/B testing solution for email marketing.
   - **Multi-Variant Support:** Support for up to 5 variants (A-E) per test, exceeding industry standards.
   - **Flexible Test Types:** Test different Subjects, Preheaders, Content, Sender Names, or Send Times.
@@ -26,12 +27,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Frontend:**
     - `ABTestingPanel.vue` fully integrated into the Message Creator.
     - Real-time validation and variant management.
-  - **Localization:** Full translations in EN and PL.
+  - **Localization:** Full translations in EN, PL, DE, and ES.
+
+- **Message List A/B Test Indicator:**
+  - Added visual badge indicator (🧪) on the Messages list page showing when a message has an associated A/B test.
+  - Badge displays with color-coded status: purple (running with animated pulse), amber (draft/paused), green (completed), gray (cancelled).
+  - Hover tooltip shows the current A/B test status.
+  - Added `abTest` hasOne relation to Message model.
+  - Updated `MessageController` to eager-load A/B test data for the message index view.
+  - Translations in EN, PL, DE, and ES.
+
+### Changed
+
+- **A/B Testing Panel:**
+  - **Control Variant Locking:** The Control Variant (A) is now read-only and mirrors the main message content to ensure consistency. Added warning indicators when main content is empty.
+  - **AI Integration:** Added AI Assistant support for all non-control variants. The AI prompt now accepts the control variant's content to generate context-aware alternatives.
 
 ### Fixed
 
 - **Scheduler:** Fixed `RuntimeException` caused by using `runInBackground()` with `Schedule::job()`.
 - **ABTestingPanel:** Fixed infinite recursion loop in watcher that caused performance degradation on the message creation page.
+- **API Connection:** Fixed `404 Not Found` error during connection testing in WordPress and WooCommerce plugins. Implemented the missing `/api/v1/account` endpoint to return authenticated user details and valid `user_id` for Pixel tracking.
 
 ## [1.6.5] – Unique Subscriber Counting
 
