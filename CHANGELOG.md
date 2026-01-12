@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.5] – Unique Subscriber Counting
+
+**Release date:** 2026-01-12
+
 ### Added
 
 - **NetSendo Pixel for WordPress Plugin:**
@@ -30,6 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - WordPress plugin now acts as PRIMARY Pixel injector when both plugins are active.
   - WooCommerce plugin acts as SECONDARY, adding only e-commerce-specific events.
   - Both plugins now preserve `user_id` in settings sanitization.
+
+### Fixed
+
+- **CRM Subscriber Counting:**
+  - Fixed issue where subscriber counts in Email/SMS lists included unsubscribed/removed users.
+  - Updated counting logic to only include **unique active** subscribers (`status = 'active'`).
+  - Affected areas: Mailing Lists view, SMS Lists view, API `subscribers_count`, and Dashboard Global Stats (`Total Subscribers`).
 
 ## [1.6.4] – Short Description
 

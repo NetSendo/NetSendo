@@ -54,8 +54,10 @@ class GlobalStatsController extends Controller
         $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
         $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
 
-        // Current month stats
-        $subscribersCount = Subscriber::count();
+        // Current month stats - count unique subscribers with at least one active list subscription
+        $subscribersCount = Subscriber::whereHas('contactLists', function ($q) {
+            $q->where('contact_list_subscriber.status', 'active');
+        })->count();
         $contactListsCount = ContactList::count();
         $aiIntegrationsCount = AiIntegration::count();
         $mailboxesCount = Mailbox::count();

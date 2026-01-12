@@ -14,7 +14,9 @@ class SmsListController extends Controller
         $query = auth()->user()->accessibleLists()
             ->sms() // Scope to SMS lists
             ->with(['group', 'tags'])
-            ->withCount('subscribers');
+            ->withCount(['subscribers' => function ($query) {
+                $query->where('contact_list_subscriber.status', 'active');
+            }]);
 
         // Sorting
         $sortCol = $request->input('sort_col', 'created_at');
@@ -69,7 +71,7 @@ class SmsListController extends Controller
                     'group' => $list->group,
                     'tags' => $list->tags,
                     'created_at' => DateHelper::formatDateForUser($list->created_at),
-                    'subscribers_count' => $list->subscribers()->count(),
+                    'subscribers_count' => $list->subscribers()->wherePivot('status', 'active')->count(),
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
@@ -245,7 +247,7 @@ class SmsListController extends Controller
             abort(404, 'Lista nie jest listą SMS.');
         }
 
-        $subscribersCount = $smsList->subscribers()->count();
+        $subscribersCount = $smsList->subscribers()->wherePivot('status', 'active')->count();
 
         if ($subscribersCount > 0) {
             if ($request->has('transfer_to_id')) {

@@ -20,7 +20,9 @@ class ContactListController extends Controller
         $user = $request->user();
 
         $query = ContactList::forUser($user->id)
-            ->withCount('subscribers')
+            ->withCount(['subscribers' => function ($query) {
+                $query->where('contact_list_subscriber.status', 'active');
+            }])
             ->with('group');
 
         // Filter by type
@@ -56,7 +58,9 @@ class ContactListController extends Controller
         $user = $request->user();
 
         $list = ContactList::forUser($user->id)
-            ->withCount('subscribers')
+            ->withCount(['subscribers' => function ($query) {
+                $query->where('contact_list_subscriber.status', 'active');
+            }])
             ->with('group')
             ->find($id);
 

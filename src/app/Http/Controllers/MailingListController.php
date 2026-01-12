@@ -17,7 +17,9 @@ class MailingListController extends Controller
         $query = auth()->user()->accessibleLists()
             ->email()
             ->with(['group', 'tags'])
-            ->withCount('subscribers');
+            ->withCount(['subscribers' => function ($query) {
+                $query->where('contact_list_subscriber.status', 'active');
+            }]);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -75,7 +77,7 @@ class MailingListController extends Controller
                     'group' => $list->group,
                     'tags' => $list->tags,
                     'created_at' => DateHelper::formatDateForUser($list->created_at),
-                    'subscribers_count' => $list->subscribers()->count(),
+                    'subscribers_count' => $list->subscribers()->wherePivot('status', 'active')->count(),
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
@@ -201,7 +203,7 @@ class MailingListController extends Controller
                 'tags' => $mailingList->tags,
                 'created_at' => DateHelper::formatDateForUser($mailingList->created_at),
                 'is_public' => $mailingList->is_public,
-                'subscribers_count' => $mailingList->subscribers->count(),
+                'subscribers_count' => $mailingList->subscribers->where('pivot.status', 'active')->count(),
                 'permission' => auth()->user()->canEditList($mailingList) ? 'edit' : 'view',
             ]
         ]);
@@ -350,7 +352,7 @@ class MailingListController extends Controller
             abort(403, 'Tylko właściciel listy może ją usunąć.');
         }
 
-        $subscribersCount = $mailingList->subscribers()->count();
+        $subscribersCount = $mailingList->subscribers()->wherePivot('status', 'active')->count();
 
         if ($subscribersCount > 0) {
             if ($request->has('transfer_to_id')) {
