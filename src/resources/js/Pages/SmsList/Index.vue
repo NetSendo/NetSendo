@@ -497,6 +497,9 @@ watch(viewMode, (newMode) => {
                         class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                         <tr>
+                            <th scope="col" class="px-6 py-3">
+                                {{ $t("sms_lists.table.list_id") }}
+                            </th>
                             <th
                                 scope="col"
                                 class="px-6 py-3 cursor-pointer group"
@@ -633,6 +636,9 @@ watch(viewMode, (newMode) => {
                             :key="list.id"
                             class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         >
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                                {{ list.id }}
+                            </td>
                             <td
                                 class="px-6 py-4 font-medium text-slate-900 dark:text-white"
                             >

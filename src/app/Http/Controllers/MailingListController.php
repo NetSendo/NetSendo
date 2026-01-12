@@ -19,7 +19,11 @@ class MailingListController extends Controller
             ->with(['group', 'tags']);
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('id', $search);
+            });
         }
 
         if ($request->filled('group_id')) {

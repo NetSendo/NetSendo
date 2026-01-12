@@ -10,10 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **API User Data Passthrough:**
+
   - Added optional `ip_address`, `user_agent`, and `device` fields to Subscriber API (`POST /api/v1/subscribers`, `POST /api/v1/subscribers/batch`).
   - Added optional `client_ip` field to Pixel API (`POST /t/pixel/event`, `POST /t/pixel/batch`).
   - Enables passing real user data when API calls come from proxies (e.g., n8n, Zapier) instead of recording proxy server IP.
   - If fields are not provided, system falls back to automatically detected values from the HTTP request.
+
+- **List ID in CRM Lists:**
+  - Added "ID LISTY" column to Mailing Lists and SMS Lists table views for easier reference.
+  - Enhanced search functionality in Mailing Lists and SMS Lists to support searching by exact List ID in addition to list name.
 
 ### Fixed
 

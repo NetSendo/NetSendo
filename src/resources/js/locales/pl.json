@@ -430,7 +430,7 @@
         "title": "Listy e-mail",
         "subtitle": "Zarządzaj swoimi listami mailingowymi",
         "new_list": "Nowa lista",
-        "search_placeholder": "Szukaj listy...",
+        "search_placeholder": "Szukaj po nazwie lub ID...",
         "all_groups": "Wszystkie grupy",
         "all_tags": "Wszystkie tagi",
         "status": "Status",
@@ -467,6 +467,7 @@
         "edit": "Edytuj",
         "delete": "Usuń",
         "table": {
+            "list_id": "ID listy",
             "name": "Nazwa",
             "status": "Status",
             "groups_tags": "Grupa / Tagi",
@@ -618,7 +619,7 @@
         "title": "Listy SMS",
         "subtitle": "Zarządzaj swoimi listami odbiorców SMS",
         "new_list": "Nowa lista SMS",
-        "search_placeholder": "Szukaj listy...",
+        "search_placeholder": "Szukaj po nazwie lub ID...",
         "all_groups": "Wszystkie grupy",
         "all_tags": "Wszystkie tagi",
         "status": "Status",
@@ -654,6 +655,7 @@
         "edit": "Edytuj",
         "delete": "Usuń",
         "table": {
+            "list_id": "ID listy",
             "name": "Nazwa",
             "status": "Status",
             "groups_tags": "Grupa / Tagi",
