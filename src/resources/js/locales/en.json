@@ -106,7 +106,7 @@
         "actions": "Actions",
         "yes": "Yes",
         "no": "No",
-        "saving": "Saving...",
+
         "uploading": "Uploading...",
         "active": "Active",
         "inactive": "Inactive",
@@ -130,7 +130,7 @@
         "previous": "Previous",
         "next": "Next",
         "select": "Select",
-        "all": "All",
+
         "none": "None",
         "filter": "Filter",
         "sort": "Sort",
@@ -209,12 +209,94 @@
             "female": "Female",
             "other": "Other"
         },
+        "hour": "hour",
+        "hours": "hours",
         "first_name": "First Name",
         "last_name": "Last Name",
         "phone": "Phone",
         "messages": {
             "delete_warning": "Are you sure you want to delete this item? This action cannot be undone."
         }
+    },
+    "ab_tests": {
+        "enable_testing": "Enable A/B Testing",
+        "enable_description": "Test different variants to optimize your email performance",
+        "info_banner": "A/B testing will send each variant to a sample of your audience, then send the winner to everyone else.",
+        "test_types": {
+            "subject": "Subject Line",
+            "content": "Email Content",
+            "sender": "Sender Name",
+            "send_time": "Send Time",
+            "full": "Full Email"
+        },
+        "metrics": {
+            "open_rate": "Open Rate",
+            "click_rate": "Click Rate",
+            "conversion_rate": "Conversion Rate"
+        },
+        "variants": {
+            "title": "Test Variants",
+            "variant": "Variant",
+            "control": "Control",
+            "add": "Add Variant",
+            "subject": "Subject",
+            "subject_placeholder": "Enter subject for this variant...",
+            "preheader": "Preheader",
+            "preheader_placeholder": "Enter preheader for this variant...",
+            "minimum_required": "At least 2 variants are required for A/B testing"
+        },
+        "settings": {
+            "title": "Test Configuration",
+            "winning_metric": "Winner Metric",
+            "sample_percentage": "Sample Size",
+            "sample_help": "Percentage of audience that receives test variants",
+            "test_duration": "Test Duration",
+            "duration_help": "Time to collect data before selecting a winner",
+            "auto_winner": "Auto-select winner",
+            "auto_winner_help": "Automatically send winner to remaining audience",
+            "confidence_threshold": "Confidence Threshold",
+            "confidence_help": "Statistical confidence required to declare a winner"
+        },
+        "status": {
+            "draft": "Draft",
+            "running": "Running",
+            "paused": "Paused",
+            "completed": "Completed",
+            "cancelled": "Cancelled"
+        },
+        "actions": {
+            "start": "Start Test",
+            "pause": "Pause Test",
+            "resume": "Resume Test",
+            "select_winner": "Select Winner",
+            "end_test": "End Test"
+        },
+        "results": {
+            "title": "Test Results",
+            "winner": "Winner",
+            "statistical_significance": "Statistical Significance",
+            "confidence": "Confidence",
+            "sent": "Sent",
+            "opens": "Opens",
+            "clicks": "Clicks",
+            "no_winner_yet": "No winner yet"
+        },
+        "created": "A/B test created successfully",
+        "updated": "A/B test updated",
+        "deleted": "A/B test deleted",
+        "started": "A/B test started",
+        "paused": "A/B test paused",
+        "resumed": "A/B test resumed",
+        "winner_selected": "Winner selected and sent to remaining audience",
+        "cannot_update_running": "Cannot update a running test",
+        "cannot_delete_running": "Cannot delete a running test",
+        "cannot_add_variant_running": "Cannot add variants to a running test",
+        "max_variants_reached": "Maximum of 5 variants allowed",
+        "variant_added": "Variant added",
+        "variant_updated": "Variant updated",
+        "variant_deleted": "Variant deleted",
+        "cannot_delete_variant_running": "Cannot delete variants from a running test",
+        "min_variants_required": "At least 2 variants are required"
     },
     "first_run": {
         "modal_title": "Welcome to NetSendo! 🚀",
@@ -952,6 +1034,42 @@
                 "custom": "Custom action"
             }
         },
+        "triggers": {
+            "title": "Triggers & Automations",
+            "coming_soon": "This feature will be available soon. You will be able to trigger messages based on actions like link clicks, page visits, or specific dates.",
+            "info": "Set a trigger to send this message automatically when a specific event occurs. The message will be attached to the automation system.",
+            "select_type": "Select trigger type",
+            "config_title": "Trigger configuration",
+            "advanced_link": "Need more advanced conditions?",
+            "advanced_link_desc": "Configure detailed conditions and actions in the automation editor.",
+            "go_to_automations": "Go to automations",
+            "types": {
+                "none": "No trigger",
+                "signup": "List subscription",
+                "anniversary": "Subscription anniversary",
+                "birthday": "Subscriber birthday",
+                "inactivity": "Inactivity",
+                "page_visit": "Page visit",
+                "custom": "Custom action (tag)"
+            },
+            "desc": {
+                "none": "The message will not be triggered automatically",
+                "signup": "Send when subscriber signs up for the list",
+                "anniversary": "Send on subscriber's subscription anniversary",
+                "birthday": "Send on subscriber's birthday",
+                "inactivity": "Send when subscriber is inactive",
+                "page_visit": "Send when subscriber visits a page",
+                "custom": "Send when a specific tag is added"
+            },
+            "config": {
+                "inactive_days": "Inactivity days",
+                "url_pattern": "Page URL pattern",
+                "url_pattern_help": "Use * as wildcard, e.g. */pricing or https://site.com/offer/*",
+                "tag": "Trigger tag",
+                "select_tag": "-- Select tag --",
+                "no_config_needed": "This trigger requires no additional configuration"
+            }
+        },
         "ab_testing": {
             "title": "A/B Testing",
             "coming_soon": "Test different subjects and content to see what works best for your audience.",
@@ -1111,6 +1229,17 @@
             "insert_fname_vocative": "First name (vocative)",
             "insert_gender_form": "Gender (m|f)"
         },
+        "attachments": {
+            "title": "PDF Attachments",
+            "dropzone": "Drag PDF files here or click to select",
+            "info": "Max {max} files, up to {size} each",
+            "existing": "Saved attachments",
+            "new": "New attachments (to upload)",
+            "ready": "Ready to upload",
+            "max_files": "You can add up to {count} attachments",
+            "only_pdf": "Only PDF files are allowed",
+            "max_size": "Maximum file size is {size}"
+        },
         "actions": {
             "save_draft": "Save as draft",
             "send_now": "Send immediately",
@@ -1199,7 +1328,8 @@
             "field_lname": "Last name",
             "field_email": "Email",
             "field_phone": "Phone",
-            "field_gender": "Gender"
+            "field_gender": "Gender",
+            "no_email_lists": "No email lists available."
         }
     },
     "subscribers": {
@@ -4398,8 +4528,8 @@
             "from_number": "Sender ID / From Number",
             "daily_limit": "Daily Limit",
             "daily_limit_placeholder": "e.g. 1000 (leave empty for unlimited)"
-    }
-},
+        }
+    },
     "external_pages": {
         "index": {
             "title": "External Pages",

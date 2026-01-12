@@ -13,6 +13,7 @@ import SubjectAiAssistant from "@/Components/SubjectAiAssistant.vue";
 import InsertPickerModal from "@/Components/InsertPickerModal.vue";
 import ResponsiveTabs from "@/Components/ResponsiveTabs.vue";
 import TrackedLinksSection from "@/Components/TrackedLinksSection.vue";
+import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
 import { computed, ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import mjml2html from "mjml-browser";
@@ -101,7 +102,7 @@ const messageTabs = computed(() => [
         id: "ab_testing",
         label: t("messages.tabs.ab_testing"),
         emoji: "📊",
-        badge: t("common.soon"),
+        indicator: form.ab_test_config?.enabled,
     },
 ]);
 
@@ -247,6 +248,17 @@ const form = useForm({
     ab_variant_subject: props.message?.ab_variant_subject || "",
     ab_variant_content: props.message?.ab_variant_content || "",
     ab_split_percentage: props.message?.ab_split_percentage || 50,
+    // New A/B Testing Config
+    ab_test_config: props.message?.ab_test_config || {
+        enabled: false,
+        test_type: "subject",
+        winning_metric: "open_rate",
+        sample_percentage: 20,
+        test_duration_hours: 4,
+        auto_select_winner: true,
+        confidence_threshold: 95,
+        variants: [],
+    },
     trigger_type: props.message?.trigger_type || null,
     trigger_config: props.message?.trigger_config || {},
     // PDF Attachments
@@ -3147,104 +3159,12 @@ if (form.contact_list_ids.length > 0) {
 
                 <!-- TAB: A/B Testing -->
                 <div v-show="activeTab === 'ab_testing'" class="space-y-6">
-                    <div
-                        class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center dark:border-amber-800 dark:bg-amber-900/20"
-                    >
-                        <svg
-                            class="mx-auto h-12 w-12 text-amber-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                            />
-                        </svg>
-                        <h3
-                            class="mt-4 text-lg font-semibold text-amber-800 dark:text-amber-200"
-                        >
-                            {{ $t("messages.ab_testing.title") }}
-                        </h3>
-                        <p
-                            class="mt-2 text-sm text-amber-700 dark:text-amber-300"
-                        >
-                            {{ $t("messages.ab_testing.coming_soon") }}
-                        </p>
-                    </div>
-
-                    <!-- A/B Testing Preview (disabled) -->
-                    <div class="opacity-50 pointer-events-none space-y-4">
-                        <label
-                            class="flex items-center gap-3 rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <input
-                                type="checkbox"
-                                disabled
-                                class="rounded border-slate-300 text-indigo-600"
-                            />
-                            <span
-                                class="text-sm font-medium text-slate-900 dark:text-white"
-                                >{{ $t("messages.ab_testing.enable") }}</span
-                            >
-                        </label>
-
-                        <div class="grid gap-4 lg:grid-cols-2">
-                            <div
-                                class="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                            >
-                                <h4
-                                    class="mb-3 text-sm font-semibold text-slate-900 dark:text-white"
-                                >
-                                    {{ $t("messages.ab_testing.variant_a") }}
-                                </h4>
-                                <p class="text-sm text-slate-500">
-                                    {{
-                                        $t("messages.ab_testing.variant_a_desc")
-                                    }}
-                                </p>
-                            </div>
-                            <div
-                                class="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                            >
-                                <h4
-                                    class="mb-3 text-sm font-semibold text-slate-900 dark:text-white"
-                                >
-                                    {{ $t("messages.ab_testing.variant_b") }}
-                                </h4>
-                                <TextInput
-                                    type="text"
-                                    class="w-full"
-                                    :placeholder="
-                                        $t(
-                                            'messages.ab_testing.variant_b_placeholder'
-                                        )
-                                    "
-                                    disabled
-                                />
-                            </div>
-                        </div>
-
-                        <div
-                            class="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <label
-                                class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                            >
-                                {{ $t("messages.ab_testing.split") }}: 50%
-                            </label>
-                            <input
-                                type="range"
-                                min="10"
-                                max="90"
-                                value="50"
-                                disabled
-                                class="w-full"
-                            />
-                        </div>
-                    </div>
+                    <ABTestingPanel
+                        v-model="form.ab_test_config"
+                        :original-subject="form.subject"
+                        :original-preheader="form.preheader"
+                        :disabled="form.processing"
+                    />
                 </div>
 
                 <!-- Actions Footer -->

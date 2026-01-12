@@ -572,6 +572,26 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{webinar}/scripts/clear', [\App\Http\Controllers\AutoWebinarScriptController::class, 'clear'])->name('scripts.clear');
         Route::delete('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'destroy'])->name('scripts.destroy');
     });
+
+    // A/B Testing
+    Route::prefix('ab-tests')->name('ab-tests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AbTestController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\AbTestController::class, 'store'])->name('store');
+        Route::get('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'show'])->name('show');
+        Route::put('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'update'])->name('update');
+        Route::delete('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'destroy'])->name('destroy');
+        Route::post('/{abTest}/start', [\App\Http\Controllers\AbTestController::class, 'start'])->name('start');
+        Route::post('/{abTest}/pause', [\App\Http\Controllers\AbTestController::class, 'pause'])->name('pause');
+        Route::post('/{abTest}/resume', [\App\Http\Controllers\AbTestController::class, 'resume'])->name('resume');
+        Route::post('/{abTest}/select-winner', [\App\Http\Controllers\AbTestController::class, 'selectWinner'])->name('select-winner');
+        Route::get('/{abTest}/results', [\App\Http\Controllers\AbTestController::class, 'getResults'])->name('results');
+        Route::post('/{abTest}/variants', [\App\Http\Controllers\AbTestController::class, 'addVariant'])->name('variants.add');
+        Route::put('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'updateVariant'])->name('variants.update');
+        Route::delete('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'deleteVariant'])->name('variants.delete');
+    });
+
+    // A/B Testing API
+    Route::get('/api/messages/{message}/recommended-sample-size', [\App\Http\Controllers\AbTestController::class, 'getRecommendedSampleSize'])->name('api.ab-tests.sample-size');
 });
 
 // Public Webinar Routes (no auth)

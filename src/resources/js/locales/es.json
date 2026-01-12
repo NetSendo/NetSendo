@@ -204,8 +204,90 @@
         "messages": {
             "delete_warning": "¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer."
         },
+        "hour": "hora",
+        "hours": "horas",
         "soon": "Pronto",
         "source_placeholder": "Escriba o pegue el código HTML..."
+    },
+    "ab_tests": {
+        "enable_testing": "Habilitar pruebas A/B",
+        "enable_description": "Pruebe diferentes variantes para optimizar el rendimiento de su correo electrónico",
+        "info_banner": "Las pruebas A/B enviarán cada variante a una muestra de su audiencia, luego enviarán la ganadora al resto.",
+        "test_types": {
+            "subject": "Asunto",
+            "content": "Contenido del correo",
+            "sender": "Nombre del remitente",
+            "send_time": "Hora de envío",
+            "full": "Correo completo"
+        },
+        "metrics": {
+            "open_rate": "Tasa de apertura",
+            "click_rate": "Tasa de clics",
+            "conversion_rate": "Tasa de conversión"
+        },
+        "variants": {
+            "title": "Variantes de prueba",
+            "variant": "Variante",
+            "control": "Control",
+            "add": "Añadir variante",
+            "subject": "Asunto",
+            "subject_placeholder": "Ingrese el asunto para esta variante...",
+            "preheader": "Pre encabezado",
+            "preheader_placeholder": "Ingrese el pre encabezado para esta variante...",
+            "minimum_required": "Se requieren al menos 2 variantes para las pruebas A/B"
+        },
+        "settings": {
+            "title": "Configuración de la prueba",
+            "winning_metric": "Métrica ganadora",
+            "sample_percentage": "Tamaño de la muestra",
+            "sample_help": "Porcentaje de la audiencia que recibe variantes de prueba",
+            "test_duration": "Duración de la prueba",
+            "duration_help": "Tiempo para recopilar datos antes de elegir un ganador",
+            "auto_winner": "Seleccionar ganador automáticamente",
+            "auto_winner_help": "Enviar automáticamente la ganadora al resto de la audiencia",
+            "confidence_threshold": "Umbral de confianza",
+            "confidence_help": "Significancia estadística requerida para declarar un ganador"
+        },
+        "status": {
+            "draft": "Borrador",
+            "running": "En ejecución",
+            "paused": "Pausado",
+            "completed": "Completado",
+            "cancelled": "Cancelado"
+        },
+        "actions": {
+            "start": "Iniciar prueba",
+            "pause": "Pausar prueba",
+            "resume": "Reanudar prueba",
+            "select_winner": "Seleccionar ganador",
+            "end_test": "Finalizar prueba"
+        },
+        "results": {
+            "title": "Resultados de la prueba",
+            "winner": "Ganador",
+            "statistical_significance": "Significancia estadística",
+            "confidence": "Confianza",
+            "sent": "Enviado",
+            "opens": "Aperturas",
+            "clicks": "Clics",
+            "no_winner_yet": "Aún no hay ganador"
+        },
+        "created": "Prueba A/B creada con éxito",
+        "updated": "Prueba A/B actualizada",
+        "deleted": "Prueba A/B eliminada",
+        "started": "Prueba A/B iniciada",
+        "paused": "Prueba A/B pausada",
+        "resumed": "Prueba A/B reanudada",
+        "winner_selected": "Ganador seleccionado y enviado al resto de la audiencia",
+        "cannot_update_running": "No se puede actualizar una prueba en ejecución",
+        "cannot_delete_running": "No se puede eliminar una prueba en ejecución",
+        "cannot_add_variant_running": "No se pueden añadir variantes a una prueba en ejecución",
+        "max_variants_reached": "Máximo de 5 variantes permitidas",
+        "variant_added": "Variante añadida",
+        "variant_updated": "Variante actualizada",
+        "variant_deleted": "Variante eliminada",
+        "cannot_delete_variant_running": "No se pueden eliminar variantes de una prueba en ejecución",
+        "min_variants_required": "Se requieren al menos 2 variantes"
     },
     "first_run": {
         "modal_title": "¡Bienvenido a NetSendo! 🚀",

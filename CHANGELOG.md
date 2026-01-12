@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **A/B Testing System:**
+  - **Enterprise-Grade Testing:** Implemented a comprehensive A/B testing solution for email marketing.
+  - **Multi-Variant Support:** Support for up to 5 variants (A-E) per test, exceeding industry standards.
+  - **Flexible Test Types:** Test different Subjects, Preheaders, Content, Sender Names, or Send Times.
+  - **Advanced Configuration:**
+    - Configurable sample size (5-50%).
+    - Automatic winner selection based on Open Rate, Click Rate, or Conversion Rate.
+    - Configurable test duration (1-72 hours).
+    - Statistical confidence threshold settings (80-99%).
+  - **Backend Architecture:**
+    - New `ab_tests` and `ab_test_variants` tables.
+    - `AbTestService` for lifecycle management (start, pause, resume, complete).
+    - `AbTestStatisticsService` using Bayesian and Frequentist (Z-test) methods for result calculation.
+    - `ProcessAbTestsJob` scheduled job (every 5 mins) for automatic winner evaluation.
+  - **Frontend:**
+    - `ABTestingPanel.vue` fully integrated into the Message Creator.
+    - Real-time validation and variant management.
+  - **Localization:** Full translations in EN and PL.
+
+### Fixed
+
+- **Scheduler:** Fixed `RuntimeException` caused by using `runInBackground()` with `Schedule::job()`.
+- **ABTestingPanel:** Fixed infinite recursion loop in watcher that caused performance degradation on the message creation page.
+
 ## [1.6.5] – Unique Subscriber Counting
 
 **Release date:** 2026-01-12

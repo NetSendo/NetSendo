@@ -95,4 +95,8 @@ Schedule::command('logs:clean')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/log-cleanup.log'));
 
+// A/B Testing - Ewaluacja testów i automatyczny wybór zwycięzcy
+Schedule::job(new \App\Jobs\ProcessAbTestsJob)
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
 

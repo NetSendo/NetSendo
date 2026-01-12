@@ -208,12 +208,94 @@
             "female": "Kobieta",
             "other": "Inna"
         },
+        "hour": "godzina",
+        "hours": "godzin",
         "first_name": "Imię",
         "last_name": "Nazwisko",
         "phone": "Telefon",
         "messages": {
             "delete_warning": "Czy na pewno chcesz usunąć ten element? Tej operacji nie można cofnąć."
         }
+    },
+    "ab_tests": {
+        "enable_testing": "Włącz testy A/B",
+        "enable_description": "Testuj różne warianty, aby zoptymalizować skuteczność e-maili",
+        "info_banner": "Testy A/B wyślą każdy wariant do próbki odbiorców, a następnie wyślą zwycięzcę do pozostałych.",
+        "test_types": {
+            "subject": "Temat wiadomości",
+            "content": "Treść e-maila",
+            "sender": "Nazwa nadawcy",
+            "send_time": "Czas wysyłki",
+            "full": "Cała wiadomość"
+        },
+        "metrics": {
+            "open_rate": "Współczynnik otwarć",
+            "click_rate": "Współczynnik kliknięć",
+            "conversion_rate": "Współczynnik konwersji"
+        },
+        "variants": {
+            "title": "Warianty testu",
+            "variant": "Wariant",
+            "control": "Kontrolny",
+            "add": "Dodaj wariant",
+            "subject": "Temat",
+            "subject_placeholder": "Wprowadź temat dla tego wariantu...",
+            "preheader": "Preheader",
+            "preheader_placeholder": "Wprowadź preheader dla tego wariantu...",
+            "minimum_required": "Wymagane są co najmniej 2 warianty do testów A/B"
+        },
+        "settings": {
+            "title": "Konfiguracja testu",
+            "winning_metric": "Metryka zwycięzcy",
+            "sample_percentage": "Wielkość próbki",
+            "sample_help": "Procent odbiorców otrzymujących warianty testowe",
+            "test_duration": "Czas trwania testu",
+            "duration_help": "Czas zbierania danych przed wyborem zwycięzcy",
+            "auto_winner": "Automatyczny wybór zwycięzcy",
+            "auto_winner_help": "Automatycznie wyślij zwycięzcę do pozostałych odbiorców",
+            "confidence_threshold": "Próg pewności",
+            "confidence_help": "Wymagana istotność statystyczna do ogłoszenia zwycięzcy"
+        },
+        "status": {
+            "draft": "Szkic",
+            "running": "W trakcie",
+            "paused": "Wstrzymany",
+            "completed": "Zakończony",
+            "cancelled": "Anulowany"
+        },
+        "actions": {
+            "start": "Rozpocznij test",
+            "pause": "Wstrzymaj test",
+            "resume": "Wznów test",
+            "select_winner": "Wybierz zwycięzcę",
+            "end_test": "Zakończ test"
+        },
+        "results": {
+            "title": "Wyniki testu",
+            "winner": "Zwycięzca",
+            "statistical_significance": "Istotność statystyczna",
+            "confidence": "Pewność",
+            "sent": "Wysłano",
+            "opens": "Otwarcia",
+            "clicks": "Kliknięcia",
+            "no_winner_yet": "Brak zwycięzcy"
+        },
+        "created": "Test A/B został utworzony",
+        "updated": "Test A/B zaktualizowany",
+        "deleted": "Test A/B usunięty",
+        "started": "Test A/B rozpoczęty",
+        "paused": "Test A/B wstrzymany",
+        "resumed": "Test A/B wznowiony",
+        "winner_selected": "Zwycięzca wybrany i wysłany do pozostałych odbiorców",
+        "cannot_update_running": "Nie można aktualizować trwającego testu",
+        "cannot_delete_running": "Nie można usunąć trwającego testu",
+        "cannot_add_variant_running": "Nie można dodawać wariantów do trwającego testu",
+        "max_variants_reached": "Maksymalnie 5 wariantów",
+        "variant_added": "Wariant dodany",
+        "variant_updated": "Wariant zaktualizowany",
+        "variant_deleted": "Wariant usunięty",
+        "cannot_delete_variant_running": "Nie można usuwać wariantów z trwającego testu",
+        "min_variants_required": "Wymagane są co najmniej 2 warianty"
     },
     "first_run": {
         "modal_title": "Witaj w NetSendo! 🚀",

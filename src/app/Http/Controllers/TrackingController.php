@@ -6,6 +6,7 @@ use App\Models\EmailClick;
 use App\Models\EmailOpen;
 use App\Models\EmailReadSession;
 use App\Models\Message;
+use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Subscriber;
 use App\Events\EmailOpened;
@@ -24,9 +25,15 @@ class TrackingController extends Controller
         }
 
         try {
+            // Get variant ID from queue entry if this is an A/B test
+            $variantId = MessageQueueEntry::where('message_id', $messageId)
+                ->where('subscriber_id', $subscriberId)
+                ->value('ab_test_variant_id');
+
             EmailOpen::create([
                 'message_id' => $messageId,
                 'subscriber_id' => $subscriberId,
+                'ab_test_variant_id' => $variantId,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'opened_at' => now(),
@@ -67,9 +74,15 @@ class TrackingController extends Controller
         // Usually, the browser handles decoding, but if we encoded it in the email link, we get the raw URL.
 
         try {
+            // Get variant ID from queue entry if this is an A/B test
+            $variantId = MessageQueueEntry::where('message_id', $messageId)
+                ->where('subscriber_id', $subscriberId)
+                ->value('ab_test_variant_id');
+
             EmailClick::create([
                 'message_id' => $messageId,
                 'subscriber_id' => $subscriberId,
+                'ab_test_variant_id' => $variantId,
                 'url' => $url,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),

@@ -5,35 +5,35 @@
  * Displays a section for managing tracked links detected in message content.
  * Allows configuring per-link tracking, data sharing, and list actions.
  */
-import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
 const props = defineProps({
     modelValue: {
         type: Array,
-        default: () => []
+        default: () => [],
     },
     content: {
         type: String,
-        default: ''
+        default: "",
     },
     lists: {
         type: Array,
-        default: () => []
-    }
+        default: () => [],
+    },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
 // Available fields for sharing (matching External Pages)
 const shareableFields = [
-    { value: 'fname', label: 'messages.tracked_links.field_fname' },
-    { value: 'lname', label: 'messages.tracked_links.field_lname' },
-    { value: 'email', label: 'messages.tracked_links.field_email' },
-    { value: 'phone', label: 'messages.tracked_links.field_phone' },
-    { value: 'sex', label: 'messages.tracked_links.field_gender' },
+    { value: "fname", label: "messages.tracked_links.field_fname" },
+    { value: "lname", label: "messages.tracked_links.field_lname" },
+    { value: "email", label: "messages.tracked_links.field_email" },
+    { value: "phone", label: "messages.tracked_links.field_phone" },
+    { value: "sex", label: "messages.tracked_links.field_gender" },
 ];
 
 // Collapse state for each link
@@ -51,17 +51,18 @@ const extractLinksFromContent = (html) => {
         const url = match[1];
 
         // Skip special links
-        if (url.startsWith('mailto:') ||
-            url.startsWith('tel:') ||
-            url.startsWith('#') ||
-            url.includes('unsubscribe') ||
-            url.includes('[[') // Skip variable placeholders
+        if (
+            url.startsWith("mailto:") ||
+            url.startsWith("tel:") ||
+            url.startsWith("#") ||
+            url.includes("unsubscribe") ||
+            url.includes("[[") // Skip variable placeholders
         ) {
             continue;
         }
 
         // Avoid duplicates
-        if (!links.some(l => l.url === url)) {
+        if (!links.some((l) => l.url === url)) {
             links.push({ url });
         }
     }
@@ -76,10 +77,10 @@ const detectedLinks = computed(() => extractLinksFromContent(props.content));
 const trackedLinks = computed({
     get() {
         // Start with existing configuration
-        const existingByUrl = new Map(props.modelValue.map(l => [l.url, l]));
+        const existingByUrl = new Map(props.modelValue.map((l) => [l.url, l]));
 
         // Merge with detected links
-        return detectedLinks.value.map(detected => {
+        return detectedLinks.value.map((detected) => {
             const existing = existingByUrl.get(detected.url);
             return {
                 url: detected.url,
@@ -87,20 +88,21 @@ const trackedLinks = computed({
                 share_data_enabled: existing?.share_data_enabled ?? false,
                 shared_fields: existing?.shared_fields ?? [],
                 subscribe_to_list_ids: existing?.subscribe_to_list_ids ?? [],
-                unsubscribe_from_list_ids: existing?.unsubscribe_from_list_ids ?? [],
+                unsubscribe_from_list_ids:
+                    existing?.unsubscribe_from_list_ids ?? [],
             };
         });
     },
     set(value) {
-        emit('update:modelValue', value);
-    }
+        emit("update:modelValue", value);
+    },
 });
 
 // Update a specific link's property
 const updateLink = (index, field, value) => {
     const updated = [...trackedLinks.value];
     updated[index] = { ...updated[index], [field]: value };
-    emit('update:modelValue', updated);
+    emit("update:modelValue", updated);
 };
 
 // Toggle a field in shared_fields array
@@ -108,9 +110,9 @@ const toggleSharedField = (index, fieldValue) => {
     const link = trackedLinks.value[index];
     const currentFields = link.shared_fields || [];
     const newFields = currentFields.includes(fieldValue)
-        ? currentFields.filter(f => f !== fieldValue)
+        ? currentFields.filter((f) => f !== fieldValue)
         : [...currentFields, fieldValue];
-    updateLink(index, 'shared_fields', newFields);
+    updateLink(index, "shared_fields", newFields);
 };
 
 // Toggle a list in subscribe/unsubscribe array
@@ -118,7 +120,7 @@ const toggleListSelection = (index, field, listId) => {
     const link = trackedLinks.value[index];
     const currentIds = link[field] || [];
     const newIds = currentIds.includes(listId)
-        ? currentIds.filter(id => id !== listId)
+        ? currentIds.filter((id) => id !== listId)
         : [...currentIds, listId];
     updateLink(index, field, newIds);
 };
@@ -136,115 +138,221 @@ const isExpanded = (index) => {
 // Format URL for display (truncate if too long)
 const formatUrl = (url, maxLength = 50) => {
     if (url.length <= maxLength) return url;
-    return url.substring(0, maxLength) + '...';
+    return url.substring(0, maxLength) + "...";
 };
 
 // Get only email lists
 const emailLists = computed(() =>
-    props.lists.filter(l => l.type === 'email')
+    props.lists.filter((l) => l.type === "email")
 );
 
 // Watch content changes and emit updated tracked links
-watch(() => props.content, () => {
-    // Re-emit current tracked links to sync with new detected links
-    emit('update:modelValue', trackedLinks.value);
-}, { immediate: false });
+watch(
+    () => props.content,
+    () => {
+        // Re-emit current tracked links to sync with new detected links
+        emit("update:modelValue", trackedLinks.value);
+    },
+    { immediate: false }
+);
 </script>
 
 <template>
-    <div class="tracked-links-section">
-        <div class="section-header" v-if="trackedLinks.length > 0">
-            <h3 class="section-title">
-                <span class="emoji">🔗</span>
-                {{ t('messages.tracked_links.title') }}
+    <div
+        class="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
+    >
+        <div class="mb-4" v-if="trackedLinks.length > 0">
+            <h3
+                class="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white"
+            >
+                <span>🔗</span>
+                {{ t("messages.tracked_links.title") }}
             </h3>
-            <p class="section-subtitle">
-                {{ t('messages.tracked_links.subtitle') }}
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {{ t("messages.tracked_links.subtitle") }}
             </p>
         </div>
 
         <!-- No links message -->
-        <div v-if="trackedLinks.length === 0" class="no-links">
-            <span class="emoji">📭</span>
-            <p>{{ t('messages.tracked_links.no_links') }}</p>
+        <div
+            v-if="trackedLinks.length === 0"
+            class="py-8 text-center text-slate-500 dark:text-slate-400"
+        >
+            <span class="mb-2 block text-2xl">📭</span>
+            <p>{{ t("messages.tracked_links.no_links") }}</p>
         </div>
 
         <!-- Links list -->
-        <div v-else class="links-list">
+        <div v-else class="flex flex-col gap-3">
             <div
                 v-for="(link, index) in trackedLinks"
                 :key="link.url"
-                class="link-card"
-                :class="{ 'expanded': isExpanded(index), 'tracking-disabled': !link.tracking_enabled }"
+                class="rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:border-indigo-500/50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-400/50"
+                :class="{
+                    'ring-2 ring-indigo-500/10 dark:ring-indigo-400/10':
+                        isExpanded(index),
+                    'opacity-75': !link.tracking_enabled,
+                }"
             >
                 <!-- Link header (always visible) -->
-                <div class="link-header" @click="toggleExpand(index)">
-                    <div class="link-info">
-                        <span class="link-icon">
-                            {{ link.tracking_enabled ? '📊' : '🚫' }}
+                <div
+                    class="flex cursor-pointer items-center gap-3 p-3"
+                    @click="toggleExpand(index)"
+                >
+                    <div class="flex min-w-0 flex-1 items-center gap-2">
+                        <span class="flex-shrink-0 text-xl">
+                            {{ link.tracking_enabled ? "📊" : "🚫" }}
                         </span>
-                        <span class="link-url" :title="link.url">
+                        <span
+                            class="truncate font-mono text-sm text-slate-900 dark:text-slate-200"
+                            :title="link.url"
+                        >
                             {{ formatUrl(link.url) }}
                         </span>
                     </div>
-                    <div class="link-badges">
-                        <span v-if="link.share_data_enabled" class="badge badge-share">
-                            {{ t('messages.tracked_links.badge_share') }}
+                    <div class="flex flex-shrink-0 gap-2">
+                        <span
+                            v-if="link.share_data_enabled"
+                            class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                        >
+                            {{ t("messages.tracked_links.badge_share") }}
                         </span>
-                        <span v-if="link.subscribe_to_list_ids?.length" class="badge badge-subscribe">
+                        <span
+                            v-if="link.subscribe_to_list_ids?.length"
+                            class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                        >
                             +{{ link.subscribe_to_list_ids.length }}
                         </span>
-                        <span v-if="link.unsubscribe_from_list_ids?.length" class="badge badge-unsubscribe">
+                        <span
+                            v-if="link.unsubscribe_from_list_ids?.length"
+                            class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                        >
                             -{{ link.unsubscribe_from_list_ids.length }}
                         </span>
                     </div>
-                    <button type="button" class="expand-btn">
-                        <span :class="{ 'rotated': isExpanded(index) }">▼</span>
+                    <button
+                        type="button"
+                        class="p-1 text-slate-400 transition-transform dark:text-slate-500"
+                    >
+                        <span
+                            class="inline-block transition-transform duration-200"
+                            :class="{ 'rotate-180': isExpanded(index) }"
+                            >▼</span
+                        >
                     </button>
                 </div>
 
                 <!-- Link options (collapsible) -->
-                <transition name="slide">
-                    <div v-if="isExpanded(index)" class="link-options">
+                <transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="opacity-0 -translate-y-2 scale-95"
+                    enter-to-class="opacity-100 translate-y-0 scale-100"
+                    leave-active-class="transition duration-150 ease-in"
+                    leave-from-class="opacity-100 translate-y-0 scale-100"
+                    leave-to-class="opacity-0 -translate-y-2 scale-95"
+                >
+                    <div
+                        v-if="isExpanded(index)"
+                        class="border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+                    >
                         <!-- Tracking checkbox -->
-                        <label class="option-row checkbox-row">
+                        <label
+                            class="mb-4 flex cursor-pointer items-start gap-3"
+                        >
                             <input
                                 type="checkbox"
                                 :checked="link.tracking_enabled"
-                                @change="updateLink(index, 'tracking_enabled', $event.target.checked)"
+                                @change="
+                                    updateLink(
+                                        index,
+                                        'tracking_enabled',
+                                        $event.target.checked
+                                    )
+                                "
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                             />
-                            <div class="option-content">
-                                <span class="option-label">{{ t('messages.tracked_links.tracking_enabled') }}</span>
-                                <span class="option-desc">{{ t('messages.tracked_links.tracking_enabled_desc') }}</span>
+                            <div class="flex flex-col gap-0.5">
+                                <span
+                                    class="text-sm font-medium text-slate-900 dark:text-slate-200"
+                                    >{{
+                                        t(
+                                            "messages.tracked_links.tracking_enabled"
+                                        )
+                                    }}</span
+                                >
+                                <span
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                    >{{
+                                        t(
+                                            "messages.tracked_links.tracking_enabled_desc"
+                                        )
+                                    }}</span
+                                >
                             </div>
                         </label>
 
                         <!-- Share data checkbox -->
-                        <label class="option-row checkbox-row">
+                        <label
+                            class="mb-4 flex cursor-pointer items-start gap-3"
+                        >
                             <input
                                 type="checkbox"
                                 :checked="link.share_data_enabled"
-                                @change="updateLink(index, 'share_data_enabled', $event.target.checked)"
+                                @change="
+                                    updateLink(
+                                        index,
+                                        'share_data_enabled',
+                                        $event.target.checked
+                                    )
+                                "
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                             />
-                            <div class="option-content">
-                                <span class="option-label">{{ t('messages.tracked_links.share_data') }}</span>
-                                <span class="option-desc">{{ t('messages.tracked_links.share_data_desc') }}</span>
+                            <div class="flex flex-col gap-0.5">
+                                <span
+                                    class="text-sm font-medium text-slate-900 dark:text-slate-200"
+                                    >{{
+                                        t("messages.tracked_links.share_data")
+                                    }}</span
+                                >
+                                <span
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                    >{{
+                                        t(
+                                            "messages.tracked_links.share_data_desc"
+                                        )
+                                    }}</span
+                                >
                             </div>
                         </label>
 
                         <!-- Shared fields (visible when share_data_enabled) -->
-                        <div v-if="link.share_data_enabled" class="option-row">
-                            <label class="option-label">{{ t('messages.tracked_links.shared_fields') }}</label>
-                            <div class="checkbox-grid">
+                        <div v-if="link.share_data_enabled" class="mb-4 ml-7">
+                            <label
+                                class="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                                >{{
+                                    t("messages.tracked_links.shared_fields")
+                                }}</label
+                            >
+                            <div class="flex flex-wrap gap-x-4 gap-y-2">
                                 <label
                                     v-for="field in shareableFields"
                                     :key="field.value"
-                                    class="checkbox-item"
+                                    class="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
                                 >
                                     <input
                                         type="checkbox"
-                                        :checked="link.shared_fields?.includes(field.value)"
-                                        @change="toggleSharedField(index, field.value)"
+                                        :checked="
+                                            link.shared_fields?.includes(
+                                                field.value
+                                            )
+                                        "
+                                        @change="
+                                            toggleSharedField(
+                                                index,
+                                                field.value
+                                            )
+                                        "
+                                        class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                                     />
                                     <span>{{ t(field.label) }}</span>
                                 </label>
@@ -252,49 +360,102 @@ watch(() => props.content, () => {
                         </div>
 
                         <!-- Subscribe to lists -->
-                        <div class="option-row">
-                            <label class="option-label">
-                                <span class="emoji">➕</span>
-                                {{ t('messages.tracked_links.subscribe_on_click') }}
+                        <div class="mb-4 ml-7">
+                            <label
+                                class="mb-2 flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-200"
+                            >
+                                <span>➕</span>
+                                {{
+                                    t(
+                                        "messages.tracked_links.subscribe_on_click"
+                                    )
+                                }}
                             </label>
-                            <div class="checkbox-grid list-grid">
-                                <label
-                                    v-for="list in emailLists"
-                                    :key="list.id"
-                                    class="checkbox-item"
+                            <div
+                                class="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-slate-700/50"
+                            >
+                                <div class="grid gap-2">
+                                    <label
+                                        v-for="list in emailLists"
+                                        :key="list.id"
+                                        class="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :checked="
+                                                link.subscribe_to_list_ids?.includes(
+                                                    list.id
+                                                )
+                                            "
+                                            @change="
+                                                toggleListSelection(
+                                                    index,
+                                                    'subscribe_to_list_ids',
+                                                    list.id
+                                                )
+                                            "
+                                            class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                                        />
+                                        <span class="truncate">{{
+                                            list.name
+                                        }}</span>
+                                    </label>
+                                </div>
+                                <p
+                                    v-if="emailLists.length === 0"
+                                    class="py-2 text-center text-xs italic text-slate-500 dark:text-slate-400"
                                 >
-                                    <input
-                                        type="checkbox"
-                                        :checked="link.subscribe_to_list_ids?.includes(list.id)"
-                                        @change="toggleListSelection(index, 'subscribe_to_list_ids', list.id)"
-                                    />
-                                    <span>{{ list.name }}</span>
-                                </label>
+                                    {{
+                                        t(
+                                            "messages.tracked_links.no_email_lists"
+                                        )
+                                    }}
+                                </p>
                             </div>
-                            <p v-if="emailLists.length === 0" class="empty-hint">
-                                {{ t('messages.tracked_links.no_email_lists') }}
-                            </p>
                         </div>
 
                         <!-- Unsubscribe from lists -->
-                        <div class="option-row">
-                            <label class="option-label">
-                                <span class="emoji">➖</span>
-                                {{ t('messages.tracked_links.unsubscribe_on_click') }}
+                        <div class="ml-7">
+                            <label
+                                class="mb-2 flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-slate-200"
+                            >
+                                <span>➖</span>
+                                {{
+                                    t(
+                                        "messages.tracked_links.unsubscribe_on_click"
+                                    )
+                                }}
                             </label>
-                            <div class="checkbox-grid list-grid">
-                                <label
-                                    v-for="list in emailLists"
-                                    :key="list.id"
-                                    class="checkbox-item"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        :checked="link.unsubscribe_from_list_ids?.includes(list.id)"
-                                        @change="toggleListSelection(index, 'unsubscribe_from_list_ids', list.id)"
-                                    />
-                                    <span>{{ list.name }}</span>
-                                </label>
+                            <div
+                                class="max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-slate-700/50"
+                            >
+                                <div class="grid gap-2">
+                                    <label
+                                        v-for="list in emailLists"
+                                        :key="list.id"
+                                        class="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :checked="
+                                                link.unsubscribe_from_list_ids?.includes(
+                                                    list.id
+                                                )
+                                            "
+                                            @change="
+                                                toggleListSelection(
+                                                    index,
+                                                    'unsubscribe_from_list_ids',
+                                                    list.id
+                                                )
+                                            "
+                                            class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                                        />
+                                        <span class="truncate">{{
+                                            list.name
+                                        }}</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -303,293 +464,3 @@ watch(() => props.content, () => {
         </div>
     </div>
 </template>
-
-<style scoped>
-.tracked-links-section {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background: var(--color-bg-secondary, #f8fafc);
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-border, #e2e8f0);
-}
-
-.section-header {
-    margin-bottom: 1rem;
-}
-
-.section-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-text-primary, #1e293b);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.section-subtitle {
-    font-size: 0.875rem;
-    color: var(--color-text-secondary, #64748b);
-    margin-top: 0.25rem;
-}
-
-.no-links {
-    text-align: center;
-    padding: 2rem;
-    color: var(--color-text-secondary, #64748b);
-}
-
-.no-links .emoji {
-    font-size: 2rem;
-    display: block;
-    margin-bottom: 0.5rem;
-}
-
-.links-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.link-card {
-    background: var(--color-bg-primary, #ffffff);
-    border: 1px solid var(--color-border, #e2e8f0);
-    border-radius: 0.5rem;
-    overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.link-card:hover {
-    border-color: var(--color-primary, #3b82f6);
-}
-
-.link-card.expanded {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.link-card.tracking-disabled {
-    opacity: 0.75;
-}
-
-.link-header {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    gap: 0.75rem;
-}
-
-.link-info {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 0;
-}
-
-.link-icon {
-    font-size: 1.25rem;
-    flex-shrink: 0;
-}
-
-.link-url {
-    font-size: 0.875rem;
-    color: var(--color-text-primary, #1e293b);
-    font-family: monospace;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.link-badges {
-    display: flex;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-weight: 500;
-}
-
-.badge-share {
-    background: #dbeafe;
-    color: #1d4ed8;
-}
-
-.badge-subscribe {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.badge-unsubscribe {
-    background: #fee2e2;
-    color: #b91c1c;
-}
-
-.expand-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.25rem;
-    color: var(--color-text-secondary, #64748b);
-    transition: transform 0.2s;
-}
-
-.expand-btn span {
-    display: inline-block;
-    transition: transform 0.2s;
-}
-
-.expand-btn span.rotated {
-    transform: rotate(180deg);
-}
-
-.link-options {
-    padding: 1rem;
-    background: var(--color-bg-secondary, #f8fafc);
-    border-top: 1px solid var(--color-border, #e2e8f0);
-}
-
-.option-row {
-    margin-bottom: 1rem;
-}
-
-.option-row:last-child {
-    margin-bottom: 0;
-}
-
-.checkbox-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    cursor: pointer;
-}
-
-.checkbox-row input[type="checkbox"] {
-    margin-top: 0.25rem;
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--color-primary, #3b82f6);
-}
-
-.option-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-}
-
-.option-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-text-primary, #1e293b);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
-}
-
-.option-desc {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary, #64748b);
-}
-
-.checkbox-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    margin-top: 0.5rem;
-}
-
-.list-grid {
-    max-height: 150px;
-    overflow-y: auto;
-    padding: 0.5rem;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.375rem;
-}
-
-.checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    color: var(--color-text-primary, #1e293b);
-}
-
-.checkbox-item input[type="checkbox"] {
-    width: 0.875rem;
-    height: 0.875rem;
-    accent-color: var(--color-primary, #3b82f6);
-}
-
-.empty-hint {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary, #64748b);
-    font-style: italic;
-    margin-top: 0.5rem;
-}
-
-.emoji {
-    font-style: normal;
-}
-
-/* Slide transition */
-.slide-enter-active,
-.slide-leave-active {
-    transition: all 0.2s ease;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-    opacity: 0;
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-.slide-enter-to,
-.slide-leave-from {
-    opacity: 1;
-    max-height: 500px;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .tracked-links-section {
-        background: #1e293b;
-        border-color: #334155;
-    }
-
-    .link-card {
-        background: #0f172a;
-        border-color: #334155;
-    }
-
-    .link-options {
-        background: #1e293b;
-        border-color: #334155;
-    }
-
-    .list-grid {
-        background: #0f172a;
-        border-color: #334155;
-    }
-
-    .section-title,
-    .link-url,
-    .option-label,
-    .checkbox-item {
-        color: #f1f5f9;
-    }
-
-    .section-subtitle,
-    .option-desc,
-    .empty-hint {
-        color: #94a3b8;
-    }
-}
-</style>

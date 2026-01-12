@@ -25,5 +25,11 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::define('viewApiDocs', function ($user = null) {
             return true;
         });
+
+        // Register AbTest policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\AbTest::class,
+            \App\Policies\AbTestPolicy::class
+        );
     }
 }

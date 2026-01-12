@@ -243,7 +243,89 @@
         "phone": "Telefon",
         "messages": {
             "delete_warning": "Sind Sie sicher, dass Sie dieses Element löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden."
-        }
+        },
+        "hour": "Stunde",
+        "hours": "Stunden"
+    },
+    "ab_tests": {
+        "enable_testing": "A/B-Tests aktivieren",
+        "enable_description": "Testen Sie verschiedene Varianten, um die E-Mail-Performance zu optimieren",
+        "info_banner": "A/B-Tests senden jede Variante an eine Stichprobe Ihrer Zielgruppe und dann den Gewinner an den Rest.",
+        "test_types": {
+            "subject": "Betreffzeile",
+            "content": "E-Mail-Inhalt",
+            "sender": "Absendername",
+            "send_time": "Sendezeit",
+            "full": "Vollständige E-Mail"
+        },
+        "metrics": {
+            "open_rate": "Öffnungsrate",
+            "click_rate": "Klickrate",
+            "conversion_rate": "Konversionsrate"
+        },
+        "variants": {
+            "title": "Testvarianten",
+            "variant": "Variante",
+            "control": "Kontrolle",
+            "add": "Variante hinzufügen",
+            "subject": "Betreff",
+            "subject_placeholder": "Betreff für diese Variante eingeben...",
+            "preheader": "Preheader",
+            "preheader_placeholder": "Preheader für diese Variante eingeben...",
+            "minimum_required": "Mindestens 2 Varianten sind für A/B-Tests erforderlich"
+        },
+        "settings": {
+            "title": "Testkonfiguration",
+            "winning_metric": "Gewinnermetrik",
+            "sample_percentage": "Stichprobengröße",
+            "sample_help": "Prozentsatz der Zielgruppe, der Testvarianten erhält",
+            "test_duration": "Testdauer",
+            "duration_help": "Zeit zur Datensammlung vor der Gewinnerwahl",
+            "auto_winner": "Gewinner automatisch auswählen",
+            "auto_winner_help": "Gewinner automatisch an den Rest der Zielgruppe senden",
+            "confidence_threshold": "Konfidenzschwelle",
+            "confidence_help": "Erforderliche statistische Signifikanz zur Gewinnerermittlung"
+        },
+        "status": {
+            "draft": "Entwurf",
+            "running": "Läuft",
+            "paused": "Pausiert",
+            "completed": "Abgeschlossen",
+            "cancelled": "Abgebrochen"
+        },
+        "actions": {
+            "start": "Test starten",
+            "pause": "Test pausieren",
+            "resume": "Test fortsetzen",
+            "select_winner": "Gewinner auswählen",
+            "end_test": "Test beenden"
+        },
+        "results": {
+            "title": "Testergebnisse",
+            "winner": "Gewinner",
+            "statistical_significance": "Statistische Signifikanz",
+            "confidence": "Konfidenz",
+            "sent": "Gesendet",
+            "opens": "Öffnungen",
+            "clicks": "Klicks",
+            "no_winner_yet": "Noch kein Gewinner"
+        },
+        "created": "A/B-Test erfolgreich erstellt",
+        "updated": "A/B-Test aktualisiert",
+        "deleted": "A/B-Test gelöscht",
+        "started": "A/B-Test gestartet",
+        "paused": "A/B-Test pausiert",
+        "resumed": "A/B-Test fortgesetzt",
+        "winner_selected": "Gewinner ausgewählt und an den Rest der Zielgruppe gesendet",
+        "cannot_update_running": "Laufender Test kann nicht aktualisiert werden",
+        "cannot_delete_running": "Laufender Test kann nicht gelöscht werden",
+        "cannot_add_variant_running": "Varianten können nicht zu einem laufenden Test hinzugefügt werden",
+        "max_variants_reached": "Maximal 5 Varianten erlaubt",
+        "variant_added": "Variante hinzugefügt",
+        "variant_updated": "Variante aktualisiert",
+        "variant_deleted": "Variante gelöscht",
+        "cannot_delete_variant_running": "Varianten können nicht aus einem laufenden Test gelöscht werden",
+        "min_variants_required": "Mindestens 2 Varianten erforderlich"
     },
     "first_run": {
         "modal_title": "Willkommen bei NetSendo! 🚀",
