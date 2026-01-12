@@ -467,6 +467,7 @@
         "no_description": "No description provided.",
         "edit": "Edit",
         "delete": "Delete",
+        "create_message": "Create email",
         "table": {
             "name": "Name",
             "status": "Status",
@@ -653,6 +654,7 @@
         "no_description": "No description provided.",
         "edit": "Edit",
         "delete": "Delete",
+        "create_sms": "Create SMS",
         "table": {
             "name": "Name",
             "status": "Status",
@@ -1103,7 +1105,7 @@
             "insert_variable": "Insert variable",
             "insert_fname": "First name",
             "insert_fname_vocative": "First name (vocative)",
-            "insert_gender_form": "Gender {{m|f}}"
+            "insert_gender_form": "Gender (m|f)"
         },
         "actions": {
             "save_draft": "Save as draft",
@@ -1174,6 +1176,26 @@
                 "failed": "Failed",
                 "skipped": "Skipped"
             }
+        },
+        "tracked_links": {
+            "title": "Tracked Links",
+            "subtitle": "Manage link tracking in your message content",
+            "no_links": "No links found in message content",
+            "badge_share": "Data",
+            "tracking_enabled": "Track link",
+            "tracking_enabled_desc": "Record clicks on this link for statistics",
+            "share_data": "Share data",
+            "share_data_desc": "Pass subscriber data to the destination page (for dynamic inserts)",
+            "shared_fields": "Shared fields",
+            "select_fields": "Select fields...",
+            "subscribe_on_click": "Subscribe to lists on click",
+            "unsubscribe_on_click": "Unsubscribe from lists on click",
+            "select_lists": "Select lists...",
+            "field_fname": "First name",
+            "field_lname": "Last name",
+            "field_email": "Email",
+            "field_phone": "Phone",
+            "field_gender": "Gender"
         }
     },
     "subscribers": {

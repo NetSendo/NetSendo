@@ -466,6 +466,7 @@
         "no_description": "Brak opisu listy.",
         "edit": "Edytuj",
         "delete": "Usuń",
+        "create_message": "Utwórz wiadomość",
         "table": {
             "list_id": "ID listy",
             "name": "Nazwa",
@@ -663,6 +664,7 @@
             "created_at": "Utworzono",
             "actions": "Akcje"
         },
+        "create_sms": "Utwórz SMS",
         "delete_modal": {
             "title": "Usuń listę SMS \"{name}\"",
             "has_subscribers": "Ta lista zawiera <strong>{count}</strong> numerów/subskrybentów. Co chcesz z nimi zrobić?",
@@ -1131,7 +1133,7 @@
             "insert_variable": "Wstaw zmienną",
             "insert_fname": "Imię",
             "insert_fname_vocative": "Imię w wołaczu",
-            "insert_gender_form": "Odmiana {{m|ż}}"
+            "insert_gender_form": "Odmiana (m|ż)"
         },
         "attachments": {
             "title": "Załączniki PDF",
@@ -1238,6 +1240,26 @@
                     "skipped": "Pominięty"
                 }
             }
+        },
+        "tracked_links": {
+            "title": "Śledzone linki",
+            "subtitle": "Zarządzaj śledzeniem linków w treści wiadomości",
+            "no_links": "Brak linków w treści wiadomości",
+            "badge_share": "Dane",
+            "tracking_enabled": "Śledź link",
+            "tracking_enabled_desc": "Rejestruj kliknięcia w ten link do statystyk",
+            "share_data": "Udostępnij dane",
+            "share_data_desc": "Przekaż dane subskrybenta na stronę docelową (dla wstawek dynamicznych)",
+            "shared_fields": "Udostępniane pola",
+            "select_fields": "Wybierz pola...",
+            "subscribe_on_click": "Po kliknięciu zapisz na listy",
+            "unsubscribe_on_click": "Po kliknięciu wypisz z list",
+            "select_lists": "Wybierz listy...",
+            "field_fname": "Imię",
+            "field_lname": "Nazwisko",
+            "field_email": "Email",
+            "field_phone": "Telefon",
+            "field_gender": "Płeć"
         }
     },
     "subscribers": {

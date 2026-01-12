@@ -42,7 +42,7 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ## ⚡ Rate Limiting
 
-- **Limit:** 60 żądań na minutę na klucz API
+- **Limit:** 3000 żądań na minutę na klucz API
 - **Nagłówki odpowiedzi:** `X-RateLimit-Limit`, `X-RateLimit-Remaining`
 - **Status przy przekroczeniu:** `429 Too Many Requests`
 

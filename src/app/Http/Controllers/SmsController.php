@@ -72,13 +72,17 @@ class SmsController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
         // Get all lists (both email and SMS) for SMS campaigns
         $lists = ContactList::query()->get(['id', 'name', 'type']);
 
+        // Get optional pre-selected list ID from query parameter
+        $preselectedListId = $request->query('list_id') ? (int) $request->query('list_id') : null;
+
         return Inertia::render('Sms/Create', [
             'lists' => $lists,
+            'preselectedListId' => $preselectedListId,
         ]);
     }
 

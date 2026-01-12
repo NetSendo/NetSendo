@@ -6,6 +6,8 @@ use App\Models\EmailClick;
 use App\Models\EmailOpen;
 use App\Models\EmailReadSession;
 use App\Models\Message;
+use App\Models\MessageTrackedLink;
+use App\Models\Subscriber;
 use App\Events\EmailOpened;
 use App\Events\EmailClicked;
 use App\Events\ReadTimeThresholdReached;
@@ -43,7 +45,7 @@ class TrackingController extends Controller
 
         // Return 1x1 transparent GIF
         $content = base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==');
-        
+
         return response($content)
             ->header('Content-Type', 'image/gif')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -63,7 +65,7 @@ class TrackingController extends Controller
 
         // Decode URL if it was encoded (it should be allowed in query params, but just in case)
         // Usually, the browser handles decoding, but if we encoded it in the email link, we get the raw URL.
-        
+
         try {
             EmailClick::create([
                 'message_id' => $messageId,
@@ -86,7 +88,76 @@ class TrackingController extends Controller
             Log::error('Failed to track click: ' . $e->getMessage());
         }
 
-        return redirect()->away($url);
+        // Process tracked link actions (subscribe/unsubscribe to lists, data sharing)
+        $finalUrl = $this->processTrackedLinkActions($messageId, $subscriberId, $url);
+
+        return redirect()->away($finalUrl);
+    }
+
+    /**
+     * Process tracked link actions: subscribe/unsubscribe to lists and data sharing.
+     */
+    protected function processTrackedLinkActions(int $messageId, int $subscriberId, string $url): string
+    {
+        try {
+            // Find the tracked link configuration for this URL
+            $trackedLink = MessageTrackedLink::findByUrl($messageId, $url);
+
+            if (!$trackedLink) {
+                return $url;
+            }
+
+            $subscriber = Subscriber::find($subscriberId);
+            if (!$subscriber) {
+                return $url;
+            }
+
+            // Handle subscribe to lists
+            if (!empty($trackedLink->subscribe_to_list_ids)) {
+                foreach ($trackedLink->subscribe_to_list_ids as $listId) {
+                    // Check if subscriber is already on this list
+                    $existing = $subscriber->contactLists()->where('contact_lists.id', $listId)->first();
+
+                    if (!$existing) {
+                        // Add subscriber to list
+                        $subscriber->contactLists()->attach($listId, [
+                            'status' => 'active',
+                            'subscribed_at' => now(),
+                            'source' => 'tracked_link_click',
+                        ]);
+                        Log::info("Subscriber {$subscriberId} added to list {$listId} via tracked link click");
+                    } elseif ($existing->pivot->status !== 'active') {
+                        // Reactivate if previously unsubscribed
+                        $subscriber->contactLists()->updateExistingPivot($listId, [
+                            'status' => 'active',
+                            'subscribed_at' => now(),
+                        ]);
+                        Log::info("Subscriber {$subscriberId} reactivated on list {$listId} via tracked link click");
+                    }
+                }
+            }
+
+            // Handle unsubscribe from lists
+            if (!empty($trackedLink->unsubscribe_from_list_ids)) {
+                foreach ($trackedLink->unsubscribe_from_list_ids as $listId) {
+                    $subscriber->contactLists()->updateExistingPivot($listId, [
+                        'status' => 'unsubscribed',
+                        'unsubscribed_at' => now(),
+                    ]);
+                    Log::info("Subscriber {$subscriberId} unsubscribed from list {$listId} via tracked link click");
+                }
+            }
+
+            // Handle data sharing - append subscriber data to URL
+            if ($trackedLink->share_data_enabled) {
+                $url = $trackedLink->buildUrlWithSharedData($subscriber);
+            }
+
+            return $url;
+        } catch (\Exception $e) {
+            Log::error('Failed to process tracked link actions: ' . $e->getMessage());
+            return $url;
+        }
     }
 
     /**
@@ -210,7 +281,7 @@ class TrackingController extends Controller
     {
         try {
             $message = Message::find($session->message_id);
-            
+
             if (!$message) {
                 return;
             }

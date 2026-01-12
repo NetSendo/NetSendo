@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.2] – Tracked Links & Quick Actions
+
+**Release date:** 2026-01-12
+
 ### Added
+
+- **Quick Create Actions:**
+
+  - Added "Create email" (envelope icon) and "Create SMS" (message icon) buttons to "Actions" column in Email and SMS List views.
+  - Clicking the button automatically navigates to the message creator with the corresponding list pre-selected.
+  - Supported in both Grid and Table views for seamless workflow.
+  - Backend controllers (`MessageController`, `SmsController`) updated to handle `list_id` query parameter for pre-selection.
 
 - **API User Data Passthrough:**
 
@@ -17,10 +28,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - If fields are not provided, system falls back to automatically detected values from the HTTP request.
 
 - **List ID in CRM Lists:**
+
   - Added "ID LISTY" column to Mailing Lists and SMS Lists table views for easier reference.
   - Enhanced search functionality in Mailing Lists and SMS Lists to support searching by exact List ID in addition to list name.
 
+- **Tracked Links Feature:**
+
+  - Implemented "Tracked Links" functionality for email messages, allowing per-link configuration.
+  - **Features:**
+    - Enable/disable tracking for individual links.
+    - Share subscriber data with the destination URL (dynamic inserts).
+    - Automatically subscribe users to selected mailing lists upon clicking a link.
+    - Automatically unsubscribe users from selected mailing lists upon clicking a link.
+  - **Frontend:**
+    - New `TrackedLinksSection.vue` component integrated into the Message Creator (`Create.vue`).
+    - Automatic detection of links in message content with real-time updates.
+  - **Backend:**
+    - New `message_tracked_links` table and `MessageTrackedLink` model.
+    - Updated `MessageController`, `SendEmailJob`, and `TrackingController` to handle storage, conditional tracking, and click actions.
+  - Full translations in PL, EN, DE, ES.
+
+- **CRM List Sorting:**
+  - Added sorting by "List ID" and "Subscribers" count in Email and SMS list views.
+
 ### Fixed
+
+- Fixed pagination visibility in Email and SMS list views to allow navigating through all lists when count exceeds 12.
 
 ## [1.6.1] – Advanced Subscriber Card
 

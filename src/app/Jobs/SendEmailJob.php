@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\MessageQueueEntry;
+use App\Models\MessageTrackedLink;
 use App\Models\Subscriber;
 use App\Services\Mail\MailProviderService;
 use App\Services\PlaceholderService;
@@ -104,11 +105,25 @@ class SendEmailJob implements ShouldQueue
             }
 
             // 3. Link Tracking Replacement
-            $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash) {
+            // Load tracked links configuration for this message
+            $trackedLinksConfig = $this->message->trackedLinks()->get()->keyBy(function ($link) {
+                return $link->url_hash;
+            });
+
+            $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash, $trackedLinksConfig) {
                 $url = $matches[1];
 
                 // Skip special links
                 if (str_starts_with($url, 'mailto:') || str_starts_with($url, 'tel:') || str_starts_with($url, '#') || str_contains($url, 'unsubscribe')) {
+                    return 'href="' . $url . '"';
+                }
+
+                // Check if this URL has custom tracking configuration
+                $urlHash = MessageTrackedLink::generateUrlHash($url);
+                $linkConfig = $trackedLinksConfig->get($urlHash);
+
+                // If tracking is explicitly disabled for this link, skip
+                if ($linkConfig && !$linkConfig->tracking_enabled) {
                     return 'href="' . $url . '"';
                 }
 

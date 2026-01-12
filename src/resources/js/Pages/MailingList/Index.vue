@@ -334,6 +334,25 @@ watch(viewMode, (newMode) => {
                         </div>
                         <div class="flex items-center gap-1">
                             <Link
+                                :href="route('messages.create', { list_id: list.id })"
+                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+                                :title="$t('mailing_lists.create_message')"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                    />
+                                </svg>
+                            </Link>
+                            <Link
                                 :href="route('mailing-lists.edit', list.id)"
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                                 :title="$t('mailing_lists.edit')"
@@ -504,8 +523,61 @@ watch(viewMode, (newMode) => {
                         class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
                         <tr>
-                            <th scope="col" class="px-6 py-3">
-                                {{ $t("mailing_lists.table.list_id") }}
+                            <th
+                                scope="col"
+                                class="px-6 py-3 cursor-pointer group"
+                                @click="
+                                    form.sort_col = 'id';
+                                    form.sort_dir =
+                                        form.sort_col === 'id' &&
+                                        form.sort_dir === 'asc'
+                                            ? 'desc'
+                                            : 'asc';
+                                "
+                            >
+                                <div class="flex items-center gap-1">
+                                    {{ $t("mailing_lists.table.list_id") }}
+                                    <span class="flex flex-col">
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'id' &&
+                                                form.sort_dir === 'asc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M5 15l7-7 7 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'id' &&
+                                                form.sort_dir === 'desc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
                             </th>
                             <th
                                 scope="col"
@@ -569,8 +641,61 @@ watch(viewMode, (newMode) => {
                             <th scope="col" class="px-6 py-3">
                                 {{ $t("mailing_lists.table.groups_tags") }}
                             </th>
-                            <th scope="col" class="px-6 py-3 text-center">
-                                {{ $t("mailing_lists.table.subscribers") }}
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-center cursor-pointer group"
+                                @click="
+                                    form.sort_col = 'subscribers_count';
+                                    form.sort_dir =
+                                        form.sort_col === 'subscribers_count' &&
+                                        form.sort_dir === 'desc'
+                                            ? 'asc'
+                                            : 'desc';
+                                "
+                            >
+                                <div class="flex items-center justify-center gap-1">
+                                    {{ $t("mailing_lists.table.subscribers") }}
+                                    <span class="flex flex-col">
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'subscribers_count' &&
+                                                form.sort_dir === 'asc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M5 15l7-7 7 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            class="h-2 w-2"
+                                            :class="
+                                                form.sort_col === 'subscribers_count' &&
+                                                form.sort_dir === 'desc'
+                                                    ? 'text-indigo-600 dark:text-indigo-400'
+                                                    : 'text-slate-300 dark:text-slate-600'
+                                            "
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="4"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
                             </th>
                             <th
                                 scope="col"
@@ -743,6 +868,25 @@ watch(viewMode, (newMode) => {
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2">
                                     <Link
+                                        :href="route('messages.create', { list_id: list.id })"
+                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
+                                        :title="$t('mailing_lists.create_message')"
+                                    >
+                                        <svg
+                                            class="h-5 w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                    </Link>
+                                    <Link
                                         :href="
                                             route('mailing-lists.edit', list.id)
                                         "
@@ -787,6 +931,34 @@ watch(viewMode, (newMode) => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div
+            v-if="lists.links.length > 3"
+            class="mt-6 flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm dark:bg-slate-900"
+        >
+            <div class="text-sm text-slate-500 dark:text-slate-400">
+                {{ $t("common.showing") }} {{ lists.from }} -
+                {{ lists.to }} {{ $t("common.of") }}
+                {{ lists.total }}
+            </div>
+            <div class="flex gap-1">
+                <Link
+                    v-for="(link, i) in lists.links"
+                    :key="i"
+                    :href="link.url || '#'"
+                    class="rounded-lg px-3 py-1 text-sm"
+                    :class="{
+                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
+                            link.active,
+                        'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800':
+                            !link.active && link.url,
+                        'opacity-50 cursor-not-allowed': !link.url,
+                    }"
+                    v-html="link.label"
+                />
             </div>
         </div>
     </AuthenticatedLayout>

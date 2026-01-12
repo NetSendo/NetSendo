@@ -1197,7 +1197,7 @@
             "insert_variable": "Insertar variable",
             "insert_fname": "Nombre",
             "insert_fname_vocative": "Nombre (vocativo)",
-            "insert_gender_form": "Género {{m|f}}"
+            "insert_gender_form": "Género (m|f)"
         },
         "actions": {
             "save_draft": "Guardar como borrador",
@@ -1259,6 +1259,26 @@
                 "time": "Tiempo",
                 "url": "URL"
             }
+        },
+        "tracked_links": {
+            "title": "Enlaces rastreados",
+            "subtitle": "Administre el seguimiento de enlaces en el contenido del mensaje",
+            "no_links": "No se encontraron enlaces en el contenido del mensaje",
+            "badge_share": "Datos",
+            "tracking_enabled": "Rastrear enlace",
+            "tracking_enabled_desc": "Registrar clics en este enlace para estadísticas",
+            "share_data": "Compartir datos",
+            "share_data_desc": "Pasar datos del suscriptor a la página de destino (para inserciones dinámicas)",
+            "shared_fields": "Campos compartidos",
+            "select_fields": "Seleccionar campos...",
+            "subscribe_on_click": "Suscribir a listas al hacer clic",
+            "unsubscribe_on_click": "Cancelar suscripción de listas al hacer clic",
+            "select_lists": "Seleccionar listas...",
+            "field_fname": "Nombre",
+            "field_lname": "Apellido",
+            "field_email": "Correo electrónico",
+            "field_phone": "Teléfono",
+            "field_gender": "Género"
         }
     },
     "subscribers": {

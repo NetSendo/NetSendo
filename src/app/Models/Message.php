@@ -150,6 +150,14 @@ class Message extends Model
     }
 
     /**
+     * Get all tracked links configuration for this message.
+     */
+    public function trackedLinks()
+    {
+        return $this->hasMany(MessageTrackedLink::class);
+    }
+
+    /**
      * Get aggregated queue statistics.
      *
      * @return array{planned: int, queued: int, sent: int, failed: int, skipped: int, total: int}

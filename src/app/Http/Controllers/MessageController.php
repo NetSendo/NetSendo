@@ -11,6 +11,7 @@ use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\MessageQueueEntry;
+use App\Models\MessageTrackedLink;
 use App\Models\Template;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -165,12 +166,16 @@ class MessageController extends Controller
         return response()->json($messages);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
+        // Get optional pre-selected list ID from query parameter
+        $preselectedListId = $request->query('list_id') ? (int) $request->query('list_id') : null;
+
         return Inertia::render('Message/Create', [
+            'preselectedListId' => $preselectedListId,
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
@@ -244,6 +249,17 @@ class MessageController extends Controller
             // PDF Attachments
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:pdf|max:10240', // 10MB max per file
+            // Tracked Links
+            'tracked_links' => 'nullable|array',
+            'tracked_links.*.url' => 'required_with:tracked_links|string|max:2048',
+            'tracked_links.*.tracking_enabled' => 'nullable|boolean',
+            'tracked_links.*.share_data_enabled' => 'nullable|boolean',
+            'tracked_links.*.shared_fields' => 'nullable|array',
+            'tracked_links.*.shared_fields.*' => 'string',
+            'tracked_links.*.subscribe_to_list_ids' => 'nullable|array',
+            'tracked_links.*.subscribe_to_list_ids.*' => 'integer|exists:contact_lists,id',
+            'tracked_links.*.unsubscribe_from_list_ids' => 'nullable|array',
+            'tracked_links.*.unsubscribe_from_list_ids.*' => 'integer|exists:contact_lists,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -353,6 +369,9 @@ class MessageController extends Controller
             $message->syncPlannedRecipients();
         }
 
+        // Sync tracked links configuration
+        $this->syncTrackedLinks($message, $request->input('tracked_links', []));
+
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
         try {
             $this->syncMessageTrigger($message, $validated);
@@ -373,7 +392,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments']);
+        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments', 'trackedLinks']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -408,6 +427,16 @@ class MessageController extends Controller
                     'name' => $a->original_name,
                     'size' => $a->size,
                     'formatted_size' => $a->formatted_size,
+                ]),
+                // Tracked links configuration
+                'tracked_links' => $message->trackedLinks->map(fn($tl) => [
+                    'id' => $tl->id,
+                    'url' => $tl->url,
+                    'tracking_enabled' => $tl->tracking_enabled,
+                    'share_data_enabled' => $tl->share_data_enabled,
+                    'shared_fields' => $tl->shared_fields ?? [],
+                    'subscribe_to_list_ids' => $tl->subscribe_to_list_ids ?? [],
+                    'unsubscribe_from_list_ids' => $tl->unsubscribe_from_list_ids ?? [],
                 ]),
             ],
             'lists' => auth()->user()->accessibleLists()
@@ -489,6 +518,17 @@ class MessageController extends Controller
             'attachments.*' => 'file|mimes:pdf|max:10240', // 10MB max per file
             'remove_attachment_ids' => 'nullable|array',
             'remove_attachment_ids.*' => 'integer',
+            // Tracked Links
+            'tracked_links' => 'nullable|array',
+            'tracked_links.*.url' => 'required_with:tracked_links|string|max:2048',
+            'tracked_links.*.tracking_enabled' => 'nullable|boolean',
+            'tracked_links.*.share_data_enabled' => 'nullable|boolean',
+            'tracked_links.*.shared_fields' => 'nullable|array',
+            'tracked_links.*.shared_fields.*' => 'string',
+            'tracked_links.*.subscribe_to_list_ids' => 'nullable|array',
+            'tracked_links.*.subscribe_to_list_ids.*' => 'integer|exists:contact_lists,id',
+            'tracked_links.*.unsubscribe_from_list_ids' => 'nullable|array',
+            'tracked_links.*.unsubscribe_from_list_ids.*' => 'integer|exists:contact_lists,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -608,6 +648,9 @@ class MessageController extends Controller
         if ($isImmediateSend) {
             $message->syncPlannedRecipients();
         }
+
+        // Sync tracked links configuration
+        $this->syncTrackedLinks($message, $request->input('tracked_links', []));
 
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
         try {
@@ -1269,6 +1312,54 @@ class MessageController extends Controller
                 'is_active' => in_array($message->status, ['sent', 'scheduled']),
             ]
         );
+    }
+
+    /**
+     * Sync tracked links configuration for the message.
+     * Creates/updates/deletes MessageTrackedLink records based on form data.
+     */
+    protected function syncTrackedLinks(Message $message, array $trackedLinks): void
+    {
+        // Get existing tracked links for this message (by URL hash for comparison)
+        $existingLinks = $message->trackedLinks()->get()->keyBy(function ($link) {
+            return $link->url_hash;
+        });
+
+        $processedHashes = [];
+
+        foreach ($trackedLinks as $linkData) {
+            if (empty($linkData['url'])) {
+                continue;
+            }
+
+            $urlHash = MessageTrackedLink::generateUrlHash($linkData['url']);
+            $processedHashes[] = $urlHash;
+
+            // Check if this link already exists
+            $existingLink = $existingLinks->get($urlHash);
+
+            $data = [
+                'message_id' => $message->id,
+                'url' => $linkData['url'],
+                'url_hash' => $urlHash,
+                'tracking_enabled' => $linkData['tracking_enabled'] ?? true,
+                'share_data_enabled' => $linkData['share_data_enabled'] ?? false,
+                'shared_fields' => !empty($linkData['shared_fields']) ? $linkData['shared_fields'] : null,
+                'subscribe_to_list_ids' => !empty($linkData['subscribe_to_list_ids']) ? $linkData['subscribe_to_list_ids'] : null,
+                'unsubscribe_from_list_ids' => !empty($linkData['unsubscribe_from_list_ids']) ? $linkData['unsubscribe_from_list_ids'] : null,
+            ];
+
+            if ($existingLink) {
+                $existingLink->update($data);
+            } else {
+                MessageTrackedLink::create($data);
+            }
+        }
+
+        // Delete links that are no longer in the content
+        $message->trackedLinks()
+            ->whereNotIn('url_hash', $processedHashes)
+            ->delete();
     }
 
     /**

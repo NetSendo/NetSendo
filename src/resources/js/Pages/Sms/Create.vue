@@ -18,6 +18,10 @@ const { t } = useI18n();
 const props = defineProps({
     sms: Object,
     lists: Array,
+    preselectedListId: {
+        type: Number,
+        default: null,
+    },
 });
 
 const isEditing = computed(() => !!props.sms);
@@ -25,7 +29,7 @@ const isEditing = computed(() => !!props.sms);
 const form = useForm({
     subject: props.sms?.subject || "",
     content: props.sms?.content || "",
-    list_id: props.sms?.list_id || "",
+    list_id: props.sms?.list_id || props.preselectedListId || "",
     type: props.sms?.type || "broadcast",
     day: props.sms?.day || 0,
     time: props.sms?.time || "09:00",

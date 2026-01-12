@@ -13,13 +13,14 @@ class SmsListController extends Controller
     {
         $query = auth()->user()->accessibleLists()
             ->sms() // Scope to SMS lists
-            ->with(['group', 'tags']);
+            ->with(['group', 'tags'])
+            ->withCount('subscribers');
 
         // Sorting
         $sortCol = $request->input('sort_col', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
 
-        if (in_array($sortCol, ['name', 'created_at'])) {
+        if (in_array($sortCol, ['name', 'created_at', 'id', 'subscribers_count'])) {
             $query->orderBy($sortCol, $sortDir === 'asc' ? 'asc' : 'desc');
         } else {
             $query->latest();

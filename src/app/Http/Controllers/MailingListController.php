@@ -16,7 +16,8 @@ class MailingListController extends Controller
         // Filter to only show email lists in mailing list view
         $query = auth()->user()->accessibleLists()
             ->email()
-            ->with(['group', 'tags']);
+            ->with(['group', 'tags'])
+            ->withCount('subscribers');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -58,7 +59,7 @@ class MailingListController extends Controller
         $sortCol = $request->input('sort_col', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
 
-        if (in_array($sortCol, ['name', 'created_at'])) {
+        if (in_array($sortCol, ['name', 'created_at', 'id', 'subscribers_count'])) {
             $query->orderBy($sortCol, $sortDir === 'asc' ? 'asc' : 'desc');
         } else {
             $query->latest();
