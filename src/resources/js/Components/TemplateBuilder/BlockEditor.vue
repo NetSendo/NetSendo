@@ -143,7 +143,7 @@ const refreshProductData = async () => {
     refreshingProduct.value = true;
     try {
         const response = await axios.get(
-            route('api.templates.products.woocommerce.product', localContent.value.woocommerce_product_id),
+            route('api.templates.products.woocommerce.get', localContent.value.woocommerce_product_id),
             { params: { store_id: localContent.value.woocommerce_store_id } }
         );
         if (response.data.success) {

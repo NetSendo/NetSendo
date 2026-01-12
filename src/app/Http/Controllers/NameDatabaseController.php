@@ -277,4 +277,88 @@ class NameDatabaseController extends Controller
             'by_country' => $byCountry,
         ];
     }
+
+    /**
+     * Get gender matching statistics/preview
+     */
+    public function genderMatchingStats(Request $request)
+    {
+        $user = auth()->user();
+        $country = $request->get('country', 'PL');
+
+        $genderService = app(\App\Services\GenderService::class);
+        $preview = $genderService->getMatchingPreview($user->id, $country);
+        $subscriberStats = $genderService->getGenderStats($user->id);
+
+        // Check for running job
+        $progressKey = \App\Jobs\MatchSubscriberGendersJob::getProgressKey($user->id);
+        $progress = \Illuminate\Support\Facades\Cache::get($progressKey);
+
+        return response()->json([
+            'preview' => $preview,
+            'subscriber_stats' => $subscriberStats,
+            'job_progress' => $progress,
+        ]);
+    }
+
+    /**
+     * Run gender matching for all subscribers
+     */
+    public function matchGenders(Request $request)
+    {
+        $user = auth()->user();
+        $country = $request->get('country', 'PL');
+        $async = $request->boolean('async', true);
+
+        $genderService = app(\App\Services\GenderService::class);
+
+        if ($async) {
+            // Run as background job
+            \App\Jobs\MatchSubscriberGendersJob::dispatch($user->id, $country);
+
+            return response()->json([
+                'message' => __('names.gender_matching.job_started'),
+                'status' => 'queued',
+            ]);
+        }
+
+        // Run synchronously (for small datasets)
+        $results = $genderService->matchGenderForAllSubscribers($user->id, $country, false);
+
+        return response()->json([
+            'message' => __('names.gender_matching.completed'),
+            'results' => $results,
+        ]);
+    }
+
+    /**
+     * Get progress of running gender matching job
+     */
+    public function matchGendersProgress()
+    {
+        $user = auth()->user();
+        $progressKey = \App\Jobs\MatchSubscriberGendersJob::getProgressKey($user->id);
+        $progress = \Illuminate\Support\Facades\Cache::get($progressKey);
+
+        if (!$progress) {
+            return response()->json([
+                'status' => 'no_job',
+            ]);
+        }
+
+        return response()->json($progress);
+    }
+
+    /**
+     * Clear gender matching progress cache
+     */
+    public function clearMatchGendersProgress()
+    {
+        $user = auth()->user();
+        $progressKey = \App\Jobs\MatchSubscriberGendersJob::getProgressKey($user->id);
+        \Illuminate\Support\Facades\Cache::forget($progressKey);
+
+        return response()->json(['status' => 'cleared']);
+    }
 }
+

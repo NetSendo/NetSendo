@@ -164,4 +164,136 @@ class GenderService
         // Fallback: return original name with first letter capitalized
         return ucfirst($firstName);
     }
+
+    /**
+     * Get preview/statistics for gender matching operation
+     * Shows how many subscribers can be matched without making changes
+     *
+     * @param int $userId User ID
+     * @param string $country Country code for name lookup (default: PL)
+     * @return array Preview statistics
+     */
+    public function getMatchingPreview(int $userId, string $country = 'PL'): array
+    {
+        $subscribers = Subscriber::where('user_id', $userId)
+            ->whereNull('gender')
+            ->whereNotNull('first_name')
+            ->where('first_name', '!=', '')
+            ->get();
+
+        $matchable = [];
+        $unmatchable = [];
+
+        foreach ($subscribers as $subscriber) {
+            $detectedGender = $this->detectGender(
+                $subscriber->first_name,
+                $country,
+                $userId
+            );
+
+            if ($detectedGender) {
+                $matchable[] = [
+                    'id' => $subscriber->id,
+                    'email' => $subscriber->email,
+                    'first_name' => $subscriber->first_name,
+                    'detected_gender' => $detectedGender,
+                ];
+            } else {
+                $unmatchable[] = [
+                    'id' => $subscriber->id,
+                    'email' => $subscriber->email,
+                    'first_name' => $subscriber->first_name,
+                ];
+            }
+        }
+
+        return [
+            'total_without_gender' => $subscribers->count(),
+            'matchable_count' => count($matchable),
+            'unmatchable_count' => count($unmatchable),
+            'matchable' => array_slice($matchable, 0, 50), // Preview first 50
+            'unmatchable' => array_slice($unmatchable, 0, 20), // Preview first 20
+            'by_gender' => [
+                'male' => count(array_filter($matchable, fn($s) => $s['detected_gender'] === 'male')),
+                'female' => count(array_filter($matchable, fn($s) => $s['detected_gender'] === 'female')),
+                'neutral' => count(array_filter($matchable, fn($s) => $s['detected_gender'] === 'neutral')),
+            ],
+        ];
+    }
+
+    /**
+     * Match gender for all subscribers without gender
+     *
+     * @param int $userId User ID
+     * @param string $country Country code for name lookup (default: PL)
+     * @param bool $dryRun If true, only simulate without making changes
+     * @return array Results with counts and details
+     */
+    public function matchGenderForAllSubscribers(
+        int $userId,
+        string $country = 'PL',
+        bool $dryRun = false
+    ): array {
+        $subscribers = Subscriber::where('user_id', $userId)
+            ->whereNull('gender')
+            ->whereNotNull('first_name')
+            ->where('first_name', '!=', '')
+            ->get();
+
+        $matched = [];
+        $unmatched = [];
+        $errors = [];
+
+        foreach ($subscribers as $subscriber) {
+            try {
+                $detectedGender = $this->detectGender(
+                    $subscriber->first_name,
+                    $country,
+                    $userId
+                );
+
+                if ($detectedGender) {
+                    if (!$dryRun) {
+                        $subscriber->gender = $detectedGender;
+                        $subscriber->save();
+                    }
+
+                    $matched[] = [
+                        'id' => $subscriber->id,
+                        'email' => $subscriber->email,
+                        'first_name' => $subscriber->first_name,
+                        'gender' => $detectedGender,
+                    ];
+                } else {
+                    $unmatched[] = [
+                        'id' => $subscriber->id,
+                        'email' => $subscriber->email,
+                        'first_name' => $subscriber->first_name,
+                    ];
+                }
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'id' => $subscriber->id,
+                    'email' => $subscriber->email,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'dry_run' => $dryRun,
+            'total_processed' => $subscribers->count(),
+            'matched_count' => count($matched),
+            'unmatched_count' => count($unmatched),
+            'error_count' => count($errors),
+            'matched' => $matched,
+            'unmatched' => $unmatched,
+            'errors' => $errors,
+            'by_gender' => [
+                'male' => count(array_filter($matched, fn($s) => $s['gender'] === 'male')),
+                'female' => count(array_filter($matched, fn($s) => $s['gender'] === 'female')),
+                'neutral' => count(array_filter($matched, fn($s) => $s['gender'] === 'neutral')),
+            ],
+        ];
+    }
 }

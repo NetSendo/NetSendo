@@ -153,6 +153,10 @@
         "view_messages": "View Messages",
         "show_details": "Show details",
         "hide_details": "Hide details",
+        "show": "Show",
+        "hide": "Hide",
+        "errors": "Errors",
+        "email": "Email",
         "notifications": {
             "saved": "Saved successfully.",
             "created": "Created successfully.",
@@ -3414,6 +3418,32 @@
             "already_exists": "This name already exists for the selected country",
             "cannot_edit_system": "System names cannot be edited",
             "cannot_delete_system": "System names cannot be deleted"
+        },
+        "gender_matching": {
+            "title": "Automatic Gender Matching",
+            "description": "Automatically detect and assign gender based on subscriber names",
+            "country_label": "Country for name detection",
+            "stat_total": "Total Subscribers",
+            "stat_without_gender": "Without Gender",
+            "stat_matchable": "Can Be Matched",
+            "stat_unmatchable": "Cannot Match",
+            "breakdown": "Breakdown",
+            "processing": "Processing",
+            "matched": "Matched",
+            "unmatched": "Not Matched",
+            "run_matching": "Run Gender Matching",
+            "preview": "Preview",
+            "no_subscribers": "No subscribers can be matched",
+            "preview_title": "Gender Matching Preview",
+            "preview_desc": "{count} subscribers will be updated",
+            "detected_gender": "Detected Gender",
+            "showing_first_50": "Showing first 50 entries",
+            "results_title": "Gender Matching Complete",
+            "results_desc": "Gender matching has been completed successfully",
+            "job_started": "Gender matching started in background",
+            "completed": "Gender matching completed",
+            "notification_title": "Gender Matching Complete",
+            "notification_message": "Matched {matched} subscribers, {unmatched} could not be matched"
         }
     },
     "users": {

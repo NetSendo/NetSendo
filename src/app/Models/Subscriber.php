@@ -141,6 +141,8 @@ class Subscriber extends Model
             'email' => $this->email ?? '',
             'first_name' => $this->first_name ?? '',
             'last_name' => $this->last_name ?? '',
+            'fname' => $this->first_name ?? '', // Alias for first_name
+            'lname' => $this->last_name ?? '',  // Alias for last_name
             'phone' => $this->phone ?? '',
             'device' => $this->device ?? '',
             'ip_address' => $this->ip_address ?? '',

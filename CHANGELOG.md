@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.4] – Short Description
+
+**Release date:** 2026-01-12
+
+### Added
+
+- **Automatic Gender Matching:**
+  - **Feature:** New system to automatically detect and assign gender to subscribers based on their first name.
+  - **Backend:**
+    - `MatchSubscriberGendersJob`: Background job for bulk processing subscribers.
+    - `GenderService`: Enhanced with `getMatchingPreview` and `matchGenderForAllSubscribers` methods.
+    - `NameDatabaseController`: New endpoints for matching stats, running the job, and progress tracking.
+    - `GenderMatchingCompleted`: Notification sent upon job completion.
+  - **Frontend:**
+    - New "Automatic Gender Matching" section in Name Database settings (`/settings/names`).
+    - Preview modal showing matchable subscribers.
+    - Progress bar for background job tracking.
+    - Results modal with detailed statistics (matched, unmatched, errors).
+  - **International Support:**
+    - Added name database seeders for 8 additional countries (DE, CZ, SK, FR, IT, ES, UK, US).
+    - Populated database with ~500 common first names for international gender detection.
+  - **Translations:** Full support for EN and PL.
+
+### Fixed
+
+- **Message Preview:** Fixed 422 error when previewing messages with an empty subject line.
+- **Placeholders:**
+  - Added `[[fname]]` and `[[lname]]` aliases for `[[first_name]]` and `[[last_name]]` to ensure consistent behavior across the application.
+  - Fixed issue where `[[!fname]]` (vocative) and other placeholders were not processed in the Preheader field for emails and test sends.
+- **Template Products:** Fixed HTTP 500 error when refreshing product data in Template Builder by correcting the API route name in `BlockEditor.vue`.
+
 ## [1.6.3] – Plugin Version Tracking
 
 **Release date:** 2026-01-12

@@ -485,6 +485,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{name}', [\App\Http\Controllers\NameDatabaseController::class, 'destroy'])->name('destroy');
         Route::post('/import', [\App\Http\Controllers\NameDatabaseController::class, 'import'])->name('import');
         Route::get('/export', [\App\Http\Controllers\NameDatabaseController::class, 'export'])->name('export');
+
+        // Gender matching API
+        Route::get('/gender-matching/stats', [\App\Http\Controllers\NameDatabaseController::class, 'genderMatchingStats'])->name('gender-matching.stats');
+        Route::post('/gender-matching/run', [\App\Http\Controllers\NameDatabaseController::class, 'matchGenders'])->name('gender-matching.run');
+        Route::get('/gender-matching/progress', [\App\Http\Controllers\NameDatabaseController::class, 'matchGendersProgress'])->name('gender-matching.progress');
+        Route::post('/gender-matching/clear', [\App\Http\Controllers\NameDatabaseController::class, 'clearMatchGendersProgress'])->name('gender-matching.clear');
     });
 
     // User Management (Team Members)

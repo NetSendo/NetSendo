@@ -20,5 +20,9 @@ class DatabaseSeeder extends Seeder
 
         // Seed default system messages
         $this->call(SystemMessageSeeder::class);
+
+        // Seed name databases for gender detection
+        $this->call(PolishNamesSeeder::class);
+        $this->call(InternationalNamesSeeder::class);
     }
 }

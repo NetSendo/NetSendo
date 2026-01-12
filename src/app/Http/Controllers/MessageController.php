@@ -1082,6 +1082,10 @@ class MessageController extends Controller
             // Inject preheader if provided
             $preheader = $validated['preheader'] ?? null;
             if (!empty($preheader)) {
+                // Process placeholders in preheader if subscriber is available
+                if ($subscriber) {
+                    $preheader = $placeholderService->replacePlaceholders($preheader, $subscriber);
+                }
                 $content = $this->injectPreheader($content, $preheader);
             }
 
@@ -1108,7 +1112,7 @@ class MessageController extends Controller
     public function preview(Request $request, \App\Services\PlaceholderService $placeholderService)
     {
         $validated = $request->validate([
-            'subject' => 'required|string|max:255',
+            'subject' => 'nullable|string|max:255',
             'content' => 'required|string',
             'preheader' => 'nullable|string|max:500',
             'subscriber_id' => 'nullable|exists:subscribers,id',
@@ -1116,7 +1120,7 @@ class MessageController extends Controller
 
         try {
             $content = $validated['content'];
-            $subject = $validated['subject'];
+            $subject = $validated['subject'] ?? '';
             $subscriberId = $validated['subscriber_id'] ?? null;
 
             if ($subscriberId) {
@@ -1133,6 +1137,10 @@ class MessageController extends Controller
             // Inject preheader if provided
             $preheader = $validated['preheader'] ?? null;
             if (!empty($preheader)) {
+                // Process placeholders in preheader if subscriber is selected
+                if (isset($subscriber) && $subscriber) {
+                    $preheader = $placeholderService->replacePlaceholders($preheader, $subscriber);
+                }
                 $content = $this->injectPreheader($content, $preheader);
             }
 

@@ -69,6 +69,12 @@ class SendEmailJob implements ShouldQueue
             // 2. Preheader Processing - use preheader from Message field, not from HTML content
             $preheader = $this->message->preheader;
             if (!empty($preheader)) {
+                // Process placeholders in preheader (including [[!fname]] vocative)
+                $preheader = $placeholderService->replacePlaceholders($preheader, $this->subscriber, [
+                    'unsubscribe_link' => $placeholderService->generateUnsubscribeLink($this->subscriber, $unsubscribeList),
+                    'unsubscribe_url' => $placeholderService->generateUnsubscribeLink($this->subscriber, $unsubscribeList),
+                ]);
+
                 // Remove existing preheader div from HTML content (if present)
                 // Match pattern: <!-- Preheader text --> followed by hidden div
                 $content = preg_replace(

@@ -152,6 +152,10 @@
         "view_messages": "Zobacz Wiadomości",
         "show_details": "Pokaż szczegóły",
         "hide_details": "Ukryj szczegóły",
+        "show": "Pokaż",
+        "hide": "Ukryj",
+        "errors": "Błędy",
+        "email": "Email",
         "notifications": {
             "saved": "Zapisano pomyślnie.",
             "created": "Utworzono pomyślnie.",
@@ -3433,6 +3437,32 @@
             "already_exists": "To imię już istnieje dla wybranego kraju",
             "cannot_edit_system": "Imiona systemowe nie mogą być edytowane",
             "cannot_delete_system": "Imiona systemowe nie mogą być usunięte"
+        },
+        "gender_matching": {
+            "title": "Automatyczne dopasowywanie płci",
+            "description": "Automatycznie wykryj i przypisz płeć na podstawie imion subskrybentów",
+            "country_label": "Kraj dla wykrywania imion",
+            "stat_total": "Wszystkich subskrybentów",
+            "stat_without_gender": "Bez płci",
+            "stat_matchable": "Do dopasowania",
+            "stat_unmatchable": "Nie można dopasować",
+            "breakdown": "Podział",
+            "processing": "Przetwarzanie",
+            "matched": "Dopasowanych",
+            "unmatched": "Niedopasowanych",
+            "run_matching": "Uruchom dopasowywanie",
+            "preview": "Podgląd",
+            "no_subscribers": "Brak subskrybentów do dopasowania",
+            "preview_title": "Podgląd dopasowywania płci",
+            "preview_desc": "{count} subskrybentów zostanie zaktualizowanych",
+            "detected_gender": "Wykryta płeć",
+            "showing_first_50": "Pokazuję pierwsze 50 pozycji",
+            "results_title": "Dopasowywanie płci zakończone",
+            "results_desc": "Dopasowywanie płci zostało zakończone pomyślnie",
+            "job_started": "Dopasowywanie płci uruchomione w tle",
+            "completed": "Dopasowywanie płci zakończone",
+            "notification_title": "Dopasowywanie płci zakończone",
+            "notification_message": "Dopasowano {matched} subskrybentów, {unmatched} nie można było dopasować"
         }
     },
     "settings": {
