@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.8] – Short Description
+
+**Release date:** 2026-01-13
+
+### Added
+
+- **WYSIWYG Editor - Enhanced Link Editing:**
+
+  - Link editing modal (`AdvancedEditor.vue`) now includes a **Link Text** field alongside the URL field, allowing users to modify both the display text and the destination URL.
+  - **Extended Link Options:** Added **Title** field (for tooltips/accessibility) and **Target** dropdown (Same window / New window) - matching previous NetSendo functionality.
+  - **Click-to-Edit Links:** Clicking on any link in the editor now opens the edit modal with pre-filled values, allowing quick modifications.
+  - Selected text is automatically pre-filled in the text field when opening the modal.
+  - Updated translations for link editing in PL, EN, DE, ES.
+
+- **WYSIWYG Editor - Image Upload & Advanced Formatting:**
+  - **Direct Image Upload:** Added file upload support to the image modal with drag-and-drop zone, allowing users to upload images directly to NetSendo storage instead of only pasting external URLs.
+  - **Click-to-Edit Images:** Clicking on any image in the editor opens the edit modal with current settings pre-loaded, allowing easy resizing and reformatting.
+  - **Text Wrapping (Float):** New option to set image float (None, Left, Right) for text wrapping around images.
+  - **Margin Control:** Added slider to control image margin (0-50px).
+  - **Border Radius:** Added slider to control image border-radius (0-50px) for rounded corners.
+  - Visual feedback with hover outline on clickable images.
+  - Client-side validation for file size (max 5MB) and format (JPG, PNG, GIF, WEBP).
+  - Updated translations for all new image features in PL, EN, DE, ES.
+
+### Fixed
+
+- **Template Builder - Link Click Prevention:**
+
+  - Fixed issue where clicking on links within text blocks in the Template Builder canvas (`BuilderCanvas.vue`) would navigate to the link URL instead of allowing editing.
+  - Added CSS to disable pointer events on anchor tags within text content in edit mode.
+
+- **Template Builder - WooCommerce Product Visibility:**
+
+  - **Dark Mode Support:** Fixed visibility issues where product titles and prices were white/invisible on white product block backgrounds when the app was in Dark Mode.
+  - **Product Grid:** Fixed "Product Grid" blocks turning dark gray in the editor when in Dark Mode, ensuring they remain white to match the email canvas for proper contrast.
+  - **Preview Panel:** Updated MJML preview generation to correctly render product blocks with dynamic background and text colors, respecting the selected Light/Dark preview mode.
+
+- **WordPress Plugin - Pixel User ID Configuration (v1.1.1):**
+
+  - Fixed critical issue where "User ID not set" warning persisted after successful API connection test.
+  - Updated `ajax_test_connection` to accept `api_url` and `api_key` from form fields, enabling testing before saving.
+  - Modified `NetSendo_WP_API` constructor to accept optional parameters for on-the-fly testing.
+  - Enhanced `save_user_id` to also persist `api_url` and `api_key` after successful test, auto-saving settings.
+  - Updated JavaScript to pass current form values during test and dynamically update Pixel status UI when `user_id` is received.
+
+- **WooCommerce Plugin - Pixel User ID Configuration (v1.1.1):**
+
+  - Applied identical fixes to WooCommerce plugin for consistent behavior.
+  - Updated `NetSendo_WC_API` constructor, `ajax_test_connection`, and `save_user_id` methods.
+  - Updated JavaScript to send form values during connection test.
+
+- **A/B Testing - Draft Saving:**
+
+  - Fixed critical issue where A/B test variants were not being saved when saving a message as a draft.
+  - Implemented `ab_test_config` validation and processing in `MessageController`.
+  - Added `syncAbTest` method to correctly synchronize A/B test configuration and variants with the database during save/update operations.
+  - Updated `edit` method to correctly load existing A/B test configuration when editing a message.
+
 ## [1.6.7] – Short Description
 
 **Release date:** 2026-01-13

@@ -14,6 +14,10 @@
         var $button = $(this);
         var $status = $('#netsendo_connection_status');
 
+        // Get current form values
+        var apiUrl = $('#netsendo_api_url').val();
+        var apiKey = $('#netsendo_api_key').val();
+
         $button.prop('disabled', true);
         $status
             .removeClass('success error')
@@ -25,7 +29,9 @@
             type: 'POST',
             data: {
                 action: 'netsendo_wp_test_connection',
-                nonce: netsendoWPAdmin.nonce
+                nonce: netsendoWPAdmin.nonce,
+                api_url: apiUrl,
+                api_key: apiKey
             },
             success: function(response) {
                 if (response.success) {
@@ -33,6 +39,16 @@
                         .removeClass('loading error')
                         .addClass('success')
                         .text(response.data.message);
+
+                    // Update Pixel status section if user_id was returned
+                    if (response.data.user_id) {
+                        var $pixelStatus = $('input[name="netsendo_wp_settings[enable_pixel]"]').closest('td').find('.description');
+                        if ($pixelStatus.length) {
+                            $pixelStatus
+                                .css('color', '#00a32a')
+                                .html('✓ Pixel configured (User ID: ' + response.data.user_id + ')');
+                        }
+                    }
                 } else {
                     $status
                         .removeClass('loading success')

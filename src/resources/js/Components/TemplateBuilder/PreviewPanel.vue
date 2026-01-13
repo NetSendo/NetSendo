@@ -51,7 +51,7 @@ const blocksToMjml = (blocks, settings, theme) => {
 
     let blocksContent = '';
     for (const block of (blocks || [])) {
-        blocksContent += blockToMjml(block, { textColor, primaryColor });
+        blocksContent += blockToMjml(block, { textColor, primaryColor, contentBg });
     }
 
     return `
@@ -78,7 +78,7 @@ const blocksToMjml = (blocks, settings, theme) => {
 const blockToMjml = (block, options) => {
     const type = block.type;
     const c = block.content || {};
-    const { textColor, primaryColor } = options;
+    const { textColor, primaryColor, contentBg } = options;
 
     switch (type) {
         case 'header':
@@ -153,7 +153,7 @@ const blockToMjml = (block, options) => {
                 ? `<span style="text-decoration: line-through; color: #94a3b8;">${c.oldPrice} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</span> <strong style="color: #ef4444;">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`
                 : `<strong>${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`;
             return `
-    <mj-section background-color="#ffffff" padding="20px" border-radius="8px">
+    <mj-section background-color="${contentBg}" padding="20px" border-radius="8px">
       <mj-column>
         ${productImage}
         <mj-text font-size="18px" font-weight="bold" padding="10px 0 5px 0">
@@ -218,9 +218,9 @@ const blockToMjml = (block, options) => {
                     : `<mj-image src="https://via.placeholder.com/150x150/f1f5f9/94a3b8?text=Produkt" width="${imageSize}" height="${imageSize}" padding="15px 10px 10px 10px" border-radius="8px" />`;
 
                 gridProductsHtml += `
-      <mj-column width="${colWidth}" padding="8px" background-color="#ffffff" border-radius="12px" border="1px solid #e2e8f0">
+      <mj-column width="${colWidth}" padding="8px" background-color="${contentBg}" border-radius="12px" border="1px solid #e2e8f0">
         ${prodImage}
-        <mj-text font-weight="600" align="center" font-size="${fontSize}" line-height="1.3" padding="5px 10px" color="#1e293b">
+        <mj-text font-weight="600" align="center" font-size="${fontSize}" line-height="1.3" padding="5px 10px" color="${textColor}">
           ${displayTitle}
         </mj-text>
         <mj-text align="center" font-size="${priceFontSize}" font-weight="700" color="${primaryColor}" padding="5px 10px 10px 10px">

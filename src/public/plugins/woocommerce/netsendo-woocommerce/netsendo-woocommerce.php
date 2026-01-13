@@ -3,7 +3,7 @@
  * Plugin Name: NetSendo for WooCommerce
  * Plugin URI: https://netsendo.com/integrations/woocommerce
  * Description: Integracja WooCommerce z NetSendo - automatyczne zapisywanie klientów na listy mailingowe po zakupie lub próbie zakupu.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: NetSendo
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('NETSENDO_WC_VERSION', '1.1.0');
+define('NETSENDO_WC_VERSION', '1.1.1');
 define('NETSENDO_WC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('NETSENDO_WC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('NETSENDO_WC_PLUGIN_BASENAME', plugin_basename(__FILE__));

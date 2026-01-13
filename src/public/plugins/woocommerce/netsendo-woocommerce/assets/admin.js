@@ -14,6 +14,10 @@
             var $button = $(this);
             var $status = $('#netsendo_connection_status');
 
+            // Get current form values
+            var apiUrl = $('#netsendo_api_url').val();
+            var apiKey = $('#netsendo_api_key').val();
+
             $button.prop('disabled', true);
             $status.removeClass('success error').addClass('loading').text(netsendoWC.strings.testing);
 
@@ -22,7 +26,9 @@
                 type: 'POST',
                 data: {
                     action: 'netsendo_wc_test_connection',
-                    nonce: netsendoWC.nonce
+                    nonce: netsendoWC.nonce,
+                    api_url: apiUrl,
+                    api_key: apiKey
                 },
                 success: function(response) {
                     $button.prop('disabled', false);
@@ -30,6 +36,11 @@
 
                     if (response.success) {
                         $status.addClass('success').text(response.data.message);
+
+                        // Log user_id for debugging (WooCommerce doesn't show Pixel status)
+                        if (response.data.user_id) {
+                            console.log('[NetSendo WooCommerce] Pixel User ID configured:', response.data.user_id);
+                        }
                     } else {
                         $status.addClass('error').text(response.data.message);
                     }

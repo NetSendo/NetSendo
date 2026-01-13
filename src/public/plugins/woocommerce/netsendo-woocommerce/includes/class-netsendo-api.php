@@ -27,11 +27,21 @@ class NetSendo_WC_API {
 
     /**
      * Constructor
+     *
+     * @param string|null $api_url Optional API URL (uses saved settings if null)
+     * @param string|null $api_key Optional API Key (uses saved settings if null)
      */
-    public function __construct() {
-        $settings = NetSendo_WC_Admin_Settings::get_settings();
-        $this->api_url = rtrim($settings['api_url'] ?? '', '/');
-        $this->api_key = $settings['api_key'] ?? '';
+    public function __construct(?string $api_url = null, ?string $api_key = null) {
+        if ($api_url !== null && $api_key !== null) {
+            // Use provided values (for testing before saving)
+            $this->api_url = rtrim($api_url, '/');
+            $this->api_key = $api_key;
+        } else {
+            // Load from saved settings
+            $settings = NetSendo_WC_Admin_Settings::get_settings();
+            $this->api_url = rtrim($settings['api_url'] ?? '', '/');
+            $this->api_key = $settings['api_key'] ?? '';
+        }
     }
 
     /**
@@ -197,14 +207,28 @@ class NetSendo_WC_API {
     }
 
     /**
-     * Save user_id to settings for Pixel tracking
+     * Save user_id and API settings for Pixel tracking
+     * This is called after successful connection test to persist settings
      *
      * @param int $user_id
      */
     private function save_user_id($user_id) {
         $settings = get_option(NetSendo_WC_Admin_Settings::OPTION_NAME, []);
         $settings['user_id'] = (int) $user_id;
+
+        // Also save api_url and api_key if they differ from saved values
+        // This auto-saves settings after successful test
+        if (!empty($this->api_url) && $this->api_url !== ($settings['api_url'] ?? '')) {
+            $settings['api_url'] = $this->api_url;
+        }
+        if (!empty($this->api_key) && $this->api_key !== ($settings['api_key'] ?? '')) {
+            $settings['api_key'] = $this->api_key;
+        }
+
         update_option(NetSendo_WC_Admin_Settings::OPTION_NAME, $settings);
+
+        // Log for debugging
+        $this->log('Saved user_id: ' . $user_id . ' and API settings');
     }
 
     /**

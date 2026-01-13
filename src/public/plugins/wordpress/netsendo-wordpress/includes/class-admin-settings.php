@@ -503,6 +503,7 @@ class NetSendo_WP_Admin_Settings {
 
     /**
      * AJAX: Test API connection
+     * Accepts api_url and api_key from form to test before saving
      */
     public static function ajax_test_connection() {
         check_ajax_referer('netsendo_wp_admin_nonce', 'nonce');
@@ -511,11 +512,27 @@ class NetSendo_WP_Admin_Settings {
             wp_send_json_error(['message' => __('Permission denied', 'netsendo-wordpress')]);
         }
 
-        $api = new NetSendo_WP_API();
+        // Get values from POST (form) or fall back to saved settings
+        $api_url = isset($_POST['api_url']) ? esc_url_raw(rtrim($_POST['api_url'], '/')) : '';
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
+
+        // If not provided in POST, use saved settings
+        if (empty($api_url) || empty($api_key)) {
+            $settings = self::get_settings();
+            if (empty($api_url)) $api_url = $settings['api_url'] ?? '';
+            if (empty($api_key)) $api_key = $settings['api_key'] ?? '';
+        }
+
+        // Create API instance with custom URL and key
+        $api = new NetSendo_WP_API($api_url, $api_key);
         $result = $api->test_connection();
 
         if ($result['success']) {
-            wp_send_json_success($result);
+            // Return user_id so JavaScript can update the UI
+            wp_send_json_success([
+                'message' => $result['message'],
+                'user_id' => $result['user_id'] ?? null,
+            ]);
         } else {
             wp_send_json_error($result);
         }

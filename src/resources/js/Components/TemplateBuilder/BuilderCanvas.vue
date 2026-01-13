@@ -233,7 +233,7 @@ const stripHtml = (html) => {
 
                                 <!-- Text Block -->
                                 <div v-else-if="block.type === 'text'"
-                                    class="prose prose-sm max-w-none p-4 dark:prose-invert"
+                                    class="prose prose-sm max-w-none p-4 dark:prose-invert builder-text-content"
                                     :style="{ textAlign: block.content?.alignment || 'left' }"
                                     v-html="block.content?.html || $t('template_builder.text_placeholder')">
                                 </div>
@@ -343,11 +343,11 @@ const stripHtml = (html) => {
                                 <!-- Product Block -->
                                 <div v-else-if="block.type === 'product'" class="p-4">
                                     <div class="flex gap-4">
-                                        <div class="h-24 w-24 shrink-0 rounded bg-slate-100 dark:bg-slate-800">
+                                        <div class="h-24 w-24 shrink-0 rounded bg-slate-100">
                                             <img v-if="block.content?.image" :src="block.content.image" class="h-full w-full object-cover" />
                                         </div>
                                         <div class="flex-1">
-                                            <h4 class="font-bold text-slate-900 dark:text-white">{{ block.content?.title || $t('template_builder.product_title') }}</h4>
+                                            <h4 class="font-bold text-slate-900">{{ block.content?.title || $t('template_builder.product_title') }}</h4>
                                             <p class="mt-1 text-sm text-slate-500 line-clamp-2">{{ block.content?.description }}</p>
                                             <p class="mt-2 font-bold text-indigo-600">
                                                 <span v-if="block.content?.oldPrice" class="mr-2 text-sm text-slate-400 line-through">{{ block.content.oldPrice }} {{ block.content?.currency || $t('template_builder.default_currency') }}</span>
@@ -367,20 +367,20 @@ const stripHtml = (html) => {
                                     <!-- Show actual products if available -->
                                     <template v-if="block.content?.products?.length > 0">
                                         <div v-for="(product, index) in block.content.products" :key="product.id || index"
-                                            class="rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                                            class="rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm">
                                             <!-- Product Image -->
-                                            <div class="mx-auto mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-700">
+                                            <div class="mx-auto mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-slate-50">
                                                 <img v-if="product.image" :src="product.image" :alt="product.title || ''" class="h-full w-full object-contain" />
                                                 <svg v-else class="h-10 w-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                             </div>
                                             <!-- Product Title -->
-                                            <h4 class="mb-1 line-clamp-2 text-xs font-medium text-slate-800 dark:text-slate-200">
+                                            <h4 class="mb-1 line-clamp-2 text-xs font-medium text-slate-800">
                                                 {{ product.title || $t('template_builder.product') }}
                                             </h4>
                                             <!-- Product Price -->
-                                            <p class="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                            <p class="text-sm font-bold text-indigo-600">
                                                 {{ product.price || '0.00' }} {{ product.currency || 'zł' }}
                                             </p>
                                         </div>
@@ -443,3 +443,11 @@ const stripHtml = (html) => {
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Disable link navigation in editor mode - links should only be clickable in preview */
+.builder-text-content :deep(a) {
+    pointer-events: none;
+    cursor: text;
+}
+</style>

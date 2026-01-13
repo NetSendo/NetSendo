@@ -266,6 +266,20 @@ class MessageController extends Controller
             'tracked_links.*.subscribe_to_list_ids.*' => 'integer|exists:contact_lists,id',
             'tracked_links.*.unsubscribe_from_list_ids' => 'nullable|array',
             'tracked_links.*.unsubscribe_from_list_ids.*' => 'integer|exists:contact_lists,id',
+            // A/B Test Configuration
+            'ab_test_config' => 'nullable|array',
+            'ab_test_config.enabled' => 'nullable|boolean',
+            'ab_test_config.test_type' => 'nullable|string|in:subject,content,sender,send_time,full',
+            'ab_test_config.winning_metric' => 'nullable|string|in:open_rate,click_rate,conversion_rate',
+            'ab_test_config.sample_percentage' => 'nullable|integer|min:5|max:50',
+            'ab_test_config.test_duration_hours' => 'nullable|integer|min:1|max:72',
+            'ab_test_config.auto_select_winner' => 'nullable|boolean',
+            'ab_test_config.confidence_threshold' => 'nullable|integer|min:80|max:99',
+            'ab_test_config.variants' => 'nullable|array',
+            'ab_test_config.variants.*.variant_letter' => 'required_with:ab_test_config.variants|string|max:1',
+            'ab_test_config.variants.*.subject' => 'nullable|string|max:255',
+            'ab_test_config.variants.*.preheader' => 'nullable|string|max:500',
+            'ab_test_config.variants.*.is_control' => 'nullable|boolean',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -378,6 +392,9 @@ class MessageController extends Controller
         // Sync tracked links configuration
         $this->syncTrackedLinks($message, $request->input('tracked_links', []));
 
+        // Sync A/B test configuration
+        $this->syncAbTest($message, $request->input('ab_test_config', []));
+
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
         try {
             $this->syncMessageTrigger($message, $validated);
@@ -444,6 +461,8 @@ class MessageController extends Controller
                     'subscribe_to_list_ids' => $tl->subscribe_to_list_ids ?? [],
                     'unsubscribe_from_list_ids' => $tl->unsubscribe_from_list_ids ?? [],
                 ]),
+                // A/B test configuration
+                'ab_test_config' => $this->formatAbTestConfig($message),
             ],
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
@@ -535,6 +554,20 @@ class MessageController extends Controller
             'tracked_links.*.subscribe_to_list_ids.*' => 'integer|exists:contact_lists,id',
             'tracked_links.*.unsubscribe_from_list_ids' => 'nullable|array',
             'tracked_links.*.unsubscribe_from_list_ids.*' => 'integer|exists:contact_lists,id',
+            // A/B Test Configuration
+            'ab_test_config' => 'nullable|array',
+            'ab_test_config.enabled' => 'nullable|boolean',
+            'ab_test_config.test_type' => 'nullable|string|in:subject,content,sender,send_time,full',
+            'ab_test_config.winning_metric' => 'nullable|string|in:open_rate,click_rate,conversion_rate',
+            'ab_test_config.sample_percentage' => 'nullable|integer|min:5|max:50',
+            'ab_test_config.test_duration_hours' => 'nullable|integer|min:1|max:72',
+            'ab_test_config.auto_select_winner' => 'nullable|boolean',
+            'ab_test_config.confidence_threshold' => 'nullable|integer|min:80|max:99',
+            'ab_test_config.variants' => 'nullable|array',
+            'ab_test_config.variants.*.variant_letter' => 'required_with:ab_test_config.variants|string|max:1',
+            'ab_test_config.variants.*.subject' => 'nullable|string|max:255',
+            'ab_test_config.variants.*.preheader' => 'nullable|string|max:500',
+            'ab_test_config.variants.*.is_control' => 'nullable|boolean',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -657,6 +690,9 @@ class MessageController extends Controller
 
         // Sync tracked links configuration
         $this->syncTrackedLinks($message, $request->input('tracked_links', []));
+
+        // Sync A/B test configuration
+        $this->syncAbTest($message, $request->input('ab_test_config', []));
 
         // Sync trigger with automation rule (non-blocking - log errors but don't fail)
         try {
@@ -1412,6 +1448,134 @@ class MessageController extends Controller
         $message->trackedLinks()
             ->whereNotIn('url_hash', $processedHashes)
             ->delete();
+    }
+
+    /**
+     * Sync A/B test configuration for the message.
+     * Creates/updates/deletes AbTest and AbTestVariant records based on form data.
+     */
+    protected function syncAbTest(Message $message, array $config): void
+    {
+        $enabled = $config['enabled'] ?? false;
+        $variants = $config['variants'] ?? [];
+
+        // If A/B testing is disabled, delete any existing test
+        if (!$enabled || count($variants) < 2) {
+            $existingTest = $message->abTest;
+            if ($existingTest) {
+                // Only delete if test is still in draft status
+                if ($existingTest->status === \App\Models\AbTest::STATUS_DRAFT) {
+                    $existingTest->variants()->delete();
+                    $existingTest->delete();
+                }
+            }
+            return;
+        }
+
+        // Get or create the A/B test
+        $test = $message->abTest;
+        if (!$test) {
+            $test = \App\Models\AbTest::create([
+                'message_id' => $message->id,
+                'user_id' => $message->user_id,
+                'name' => $message->subject . ' - A/B Test',
+                'status' => \App\Models\AbTest::STATUS_DRAFT,
+                'test_type' => $config['test_type'] ?? 'subject',
+                'winning_metric' => $config['winning_metric'] ?? 'open_rate',
+                'sample_percentage' => $config['sample_percentage'] ?? 20,
+                'test_duration_hours' => $config['test_duration_hours'] ?? 4,
+                'auto_select_winner' => $config['auto_select_winner'] ?? true,
+                'confidence_threshold' => $config['confidence_threshold'] ?? 95,
+            ]);
+        } else {
+            // Update existing test (only if draft)
+            if ($test->status === \App\Models\AbTest::STATUS_DRAFT) {
+                $test->update([
+                    'test_type' => $config['test_type'] ?? 'subject',
+                    'winning_metric' => $config['winning_metric'] ?? 'open_rate',
+                    'sample_percentage' => $config['sample_percentage'] ?? 20,
+                    'test_duration_hours' => $config['test_duration_hours'] ?? 4,
+                    'auto_select_winner' => $config['auto_select_winner'] ?? true,
+                    'confidence_threshold' => $config['confidence_threshold'] ?? 95,
+                ]);
+            }
+        }
+
+        // Sync variants (only if test is draft)
+        if ($test->status === \App\Models\AbTest::STATUS_DRAFT) {
+            $existingVariants = $test->variants()->get()->keyBy('variant_letter');
+            $processedLetters = [];
+
+            foreach ($variants as $variantData) {
+                $letter = $variantData['variant_letter'];
+                $processedLetters[] = $letter;
+
+                $existingVariant = $existingVariants->get($letter);
+                $data = [
+                    'ab_test_id' => $test->id,
+                    'variant_letter' => $letter,
+                    'subject' => $variantData['subject'] ?? null,
+                    'preheader' => $variantData['preheader'] ?? null,
+                    'is_control' => $variantData['is_control'] ?? false,
+                ];
+
+                // For control variant, use message's subject/preheader
+                if ($data['is_control']) {
+                    $data['subject'] = $message->subject;
+                    $data['preheader'] = $message->preheader;
+                }
+
+                if ($existingVariant) {
+                    $existingVariant->update($data);
+                } else {
+                    \App\Models\AbTestVariant::create($data);
+                }
+            }
+
+            // Delete variants that were removed
+            $test->variants()
+                ->whereNotIn('variant_letter', $processedLetters)
+                ->delete();
+        }
+    }
+
+    /**
+     * Format existing A/B test as ab_test_config for frontend.
+     */
+    protected function formatAbTestConfig(Message $message): array
+    {
+        $message->load(['abTest.variants']);
+
+        if (!$message->abTest) {
+            return [
+                'enabled' => false,
+                'test_type' => 'subject',
+                'winning_metric' => 'open_rate',
+                'sample_percentage' => 20,
+                'test_duration_hours' => 4,
+                'auto_select_winner' => true,
+                'confidence_threshold' => 95,
+                'variants' => [],
+            ];
+        }
+
+        $test = $message->abTest;
+
+        return [
+            'enabled' => true,
+            'test_type' => $test->test_type ?? 'subject',
+            'winning_metric' => $test->winning_metric ?? 'open_rate',
+            'sample_percentage' => $test->sample_percentage ?? 20,
+            'test_duration_hours' => $test->test_duration_hours ?? 4,
+            'auto_select_winner' => $test->auto_select_winner ?? true,
+            'confidence_threshold' => $test->confidence_threshold ?? 95,
+            'variants' => $test->variants->map(fn($v) => [
+                'variant_letter' => $v->variant_letter,
+                'subject' => $v->subject,
+                'preheader' => $v->preheader,
+                'is_control' => $v->is_control,
+            ])->values()->toArray(),
+        ];
     }
 
     /**

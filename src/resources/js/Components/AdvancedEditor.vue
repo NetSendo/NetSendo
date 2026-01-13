@@ -44,8 +44,14 @@ const sourceCode = ref(props.modelValue || '')
 
 const showLinkModal = ref(false)
 const linkUrl = ref('')
+const linkText = ref('')
+const linkTitle = ref('') // For accessibility/tooltip
+const linkTarget = ref('_blank') // _self or _blank
+const isEditingLink = ref(false) // Track if editing existing link
 const showImageModal = ref(false)
 const imageUrl = ref('')
+const isEditingImage = ref(false) // Track if editing existing image
+const editingImageElement = ref(null) // Reference to image being edited
 
 // Enhanced image settings
 const imageAlignment = ref('center') // left, center, right
@@ -53,6 +59,15 @@ const imageWidth = ref('100') // percentage
 const imageLink = ref('')
 const imagePreviewLoaded = ref(false)
 const imagePreviewError = ref(false)
+
+// Image upload state
+const isUploadingImage = ref(false)
+const imageUploadError = ref('')
+
+// Advanced image formatting
+const imageFloat = ref('none') // none, left, right (for text wrapping)
+const imageMargin = ref('10') // margin in pixels
+const imageBorderRadius = ref('0') // border-radius in pixels
 
 // Content width control (default 600px for email compatibility)
 const contentWidth = ref(600)
@@ -177,12 +192,15 @@ const editor = useEditor({
         Link.configure({
             openOnClick: false,
             HTMLAttributes: {
-                class: 'text-indigo-600 hover:text-indigo-800 underline',
+                class: 'text-indigo-600 hover:text-indigo-800 underline cursor-pointer',
             },
         }),
         Image.configure({
             inline: true,
             allowBase64: true,
+            HTMLAttributes: {
+                class: 'cursor-pointer hover:outline hover:outline-2 hover:outline-indigo-500',
+            },
         }),
         Underline,
         TextAlign.configure({
@@ -203,6 +221,23 @@ const editor = useEditor({
     editorProps: {
         attributes: {
             class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none dark:prose-invert min-h-[150px] text-slate-900 dark:text-white p-4',
+        },
+        handleClick: (view, pos, event) => {
+            // Check if clicked on an image
+            const target = event.target
+            if (target.tagName === 'IMG') {
+                event.preventDefault()
+                openImageEditModal(target)
+                return true
+            }
+            // Check if clicked on a link
+            if (target.tagName === 'A' || target.closest('a')) {
+                event.preventDefault()
+                const linkElement = target.tagName === 'A' ? target : target.closest('a')
+                openLinkEditModal(linkElement)
+                return true
+            }
+            return false
         },
     },
     editable: props.editable,
@@ -299,19 +334,74 @@ const formatSource = () => {
 
 // Link handling
 const openLinkModal = () => {
-    const previousUrl = editor.value?.getAttributes('link').href
-    linkUrl.value = previousUrl || ''
+    const attrs = editor.value?.getAttributes('link') || {}
+    linkUrl.value = attrs.href || ''
+    linkTitle.value = attrs.title || ''
+    linkTarget.value = attrs.target || '_blank'
+    isEditingLink.value = !!attrs.href
+
+    // Get the selected text or existing link text
+    const { from, to } = editor.value?.state.selection || {}
+    const selectedText = editor.value?.state.doc.textBetween(from, to, '') || ''
+    linkText.value = selectedText
+
+    showLinkModal.value = true
+}
+
+// Open link edit modal when clicking on existing link
+const openLinkEditModal = (linkElement) => {
+    linkUrl.value = linkElement.getAttribute('href') || ''
+    linkText.value = linkElement.textContent || ''
+    linkTitle.value = linkElement.getAttribute('title') || ''
+    linkTarget.value = linkElement.getAttribute('target') || '_blank'
+    isEditingLink.value = true
+
+    // Select the link in editor
+    editor.value?.chain().focus().extendMarkRange('link').run()
+
     showLinkModal.value = true
 }
 
 const setLink = () => {
     if (linkUrl.value) {
-        editor.value?.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
+        const { from, to } = editor.value?.state.selection || {}
+        const currentText = editor.value?.state.doc.textBetween(from, to, '') || ''
+
+        // Build link attributes
+        const linkAttrs = {
+            href: linkUrl.value,
+            target: linkTarget.value || '_blank',
+        }
+        if (linkTitle.value) {
+            linkAttrs.title = linkTitle.value
+        }
+
+        // If text has changed, replace the selection with new text and link
+        if (linkText.value && linkText.value !== currentText) {
+            const targetAttr = linkTarget.value ? ` target="${linkTarget.value}"` : ''
+            const titleAttr = linkTitle.value ? ` title="${linkTitle.value}"` : ''
+            editor.value?.chain()
+                .focus()
+                .deleteSelection()
+                .insertContent(`<a href="${linkUrl.value}"${targetAttr}${titleAttr}>${linkText.value}</a>`)
+                .run()
+        } else {
+            // Just update the link attributes on existing text
+            editor.value?.chain().focus().extendMarkRange('link').setLink(linkAttrs).run()
+        }
     } else {
         editor.value?.chain().focus().extendMarkRange('link').unsetLink().run()
     }
+    closeLinkModal()
+}
+
+const closeLinkModal = () => {
     showLinkModal.value = false
     linkUrl.value = ''
+    linkText.value = ''
+    linkTitle.value = ''
+    linkTarget.value = '_blank'
+    isEditingLink.value = false
 }
 
 // Image handling
@@ -320,8 +410,69 @@ const openImageModal = () => {
     imageAlignment.value = 'center'
     imageWidth.value = '100'
     imageLink.value = ''
+    imageFloat.value = 'none'
+    imageMargin.value = '10'
+    imageBorderRadius.value = '0'
     imagePreviewLoaded.value = false
     imagePreviewError.value = false
+    isUploadingImage.value = false
+    imageUploadError.value = ''
+    isEditingImage.value = false
+    editingImageElement.value = null
+    showImageModal.value = true
+}
+
+// Open image edit modal when clicking on existing image
+const openImageEditModal = (imgElement) => {
+    isEditingImage.value = true
+    editingImageElement.value = imgElement
+
+    // Extract current image properties
+    imageUrl.value = imgElement.getAttribute('src') || ''
+    imagePreviewLoaded.value = true
+    imagePreviewError.value = false
+    isUploadingImage.value = false
+    imageUploadError.value = ''
+
+    // Parse style attribute
+    const style = imgElement.getAttribute('style') || ''
+
+    // Extract width (e.g., "width: 50%;")
+    const widthMatch = style.match(/width:\s*(\d+)%/)
+    imageWidth.value = widthMatch ? widthMatch[1] : '100'
+
+    // Extract float
+    if (style.includes('float: left')) {
+        imageFloat.value = 'left'
+    } else if (style.includes('float: right')) {
+        imageFloat.value = 'right'
+    } else {
+        imageFloat.value = 'none'
+    }
+
+    // Extract alignment from margin
+    if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) {
+        imageAlignment.value = 'center'
+    } else if (style.includes('margin-left: auto')) {
+        imageAlignment.value = 'right'
+    } else if (style.includes('margin-right: auto')) {
+        imageAlignment.value = 'left'
+    } else {
+        imageAlignment.value = 'center'
+    }
+
+    // Extract margin (e.g., "margin: 10px;")
+    const marginMatch = style.match(/margin:\s*(\d+)px/)
+    imageMargin.value = marginMatch ? marginMatch[1] : '10'
+
+    // Extract border-radius (e.g., "border-radius: 8px;")
+    const borderRadiusMatch = style.match(/border-radius:\s*(\d+)px/)
+    imageBorderRadius.value = borderRadiusMatch ? borderRadiusMatch[1] : '0'
+
+    // Check if image is wrapped in a link
+    const parentLink = imgElement.closest('a')
+    imageLink.value = parentLink ? parentLink.getAttribute('href') || '' : ''
+
     showImageModal.value = true
 }
 
@@ -340,17 +491,88 @@ const onImageError = () => {
     imagePreviewError.value = true
 }
 
+// Handle image file upload
+const handleImageUpload = async (event) => {
+    const file = event.target.files[0]
+    if (!file) return
+
+    imageUploadError.value = ''
+
+    // Client-side validation
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+        imageUploadError.value = t('editor.image_too_large')
+        event.target.value = ''
+        return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+        imageUploadError.value = t('editor.image_invalid_format')
+        event.target.value = ''
+        return
+    }
+
+    isUploadingImage.value = true
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+        const response = await axios.post(
+            route('api.templates.upload-image'),
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        )
+
+        if (response.data.success) {
+            imageUrl.value = response.data.url
+            imagePreviewLoaded.value = true
+            imagePreviewError.value = false
+        } else {
+            imageUploadError.value = response.data.message || t('editor.image_upload_error')
+        }
+    } catch (error) {
+        console.error('Image upload failed:', error)
+        if (error.response?.status === 422) {
+            const errors = error.response.data.errors
+            imageUploadError.value = errors?.image?.[0] || t('editor.image_upload_error')
+        } else {
+            imageUploadError.value = t('editor.image_upload_error')
+        }
+    } finally {
+        isUploadingImage.value = false
+        event.target.value = ''
+    }
+}
+
 const insertImage = () => {
     if (imageUrl.value) {
-        // Build image HTML with alignment and width
-        const alignStyle = {
-            'left': 'margin-right: auto;',
-            'center': 'margin-left: auto; margin-right: auto;',
-            'right': 'margin-left: auto;'
-        }[imageAlignment.value] || 'margin-left: auto; margin-right: auto;'
+        // Build image HTML with alignment, width, and advanced formatting
+        let alignStyle = ''
+        let floatStyle = ''
+
+        // Handle float (text wrapping)
+        if (imageFloat.value === 'left') {
+            floatStyle = 'float: left;'
+            alignStyle = ''
+        } else if (imageFloat.value === 'right') {
+            floatStyle = 'float: right;'
+            alignStyle = ''
+        } else {
+            // No float - use block alignment
+            alignStyle = {
+                'left': 'margin-right: auto;',
+                'center': 'margin-left: auto; margin-right: auto;',
+                'right': 'margin-left: auto;'
+            }[imageAlignment.value] || 'margin-left: auto; margin-right: auto;'
+        }
 
         const widthStyle = `width: ${imageWidth.value}%; max-width: 100%; height: auto;`
-        const style = `display: block; ${alignStyle} ${widthStyle}`
+        const marginStyle = `margin: ${imageMargin.value}px;`
+        const borderRadiusStyle = imageBorderRadius.value > 0 ? `border-radius: ${imageBorderRadius.value}px;` : ''
+        const displayStyle = imageFloat.value === 'none' ? 'display: block;' : ''
+
+        const style = `${displayStyle} ${floatStyle} ${alignStyle} ${widthStyle} ${marginStyle} ${borderRadiusStyle}`.trim()
 
         let imgHtml = `<img src="${imageUrl.value}" alt="" style="${style}" />`
 
@@ -359,14 +581,48 @@ const insertImage = () => {
             imgHtml = `<a href="${imageLink.value}" target="_blank">${imgHtml}</a>`
         }
 
-        // Insert as HTML
-        editor.value?.chain().focus().insertContent(imgHtml).run()
+        if (isEditingImage.value && editingImageElement.value) {
+            // Update existing image - get position and replace
+            // Find the image in the editor by its old src
+            const oldSrc = editingImageElement.value.getAttribute('src')
+            const html = editor.value?.getHTML() || ''
+
+            // Check if image was wrapped in link
+            const parentLink = editingImageElement.value.closest('a')
+            if (parentLink) {
+                // Replace the entire link+img structure
+                const oldLinkHtml = parentLink.outerHTML
+                const newHtml = html.replace(oldLinkHtml, imgHtml)
+                editor.value?.commands.setContent(newHtml, false)
+            } else {
+                // Replace just the image
+                const newHtml = html.replace(editingImageElement.value.outerHTML, imgHtml)
+                editor.value?.commands.setContent(newHtml, false)
+            }
+
+            // Emit update
+            const updatedHtml = editor.value?.getHTML() || ''
+            sourceCode.value = updatedHtml
+            emit('update:modelValue', updatedHtml)
+        } else {
+            // Insert as new HTML
+            editor.value?.chain().focus().insertContent(imgHtml).run()
+        }
     }
+    closeImageModal()
+}
+
+const closeImageModal = () => {
     showImageModal.value = false
     imageUrl.value = ''
     imageAlignment.value = 'center'
     imageWidth.value = '100'
     imageLink.value = ''
+    imageFloat.value = 'none'
+    imageMargin.value = '10'
+    imageBorderRadius.value = '0'
+    isEditingImage.value = false
+    editingImageElement.value = null
 }
 
 // Computed for preview content
@@ -1435,18 +1691,66 @@ const btnClass = (isActive = false) => {
         <div v-if="showLinkModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-md shadow-xl">
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    {{ $t('editor.insert_link') }}
+                    {{ isEditingLink ? $t('editor.update_link') : $t('editor.insert_link') }}
                 </h3>
-                <input
-                    v-model="linkUrl"
-                    type="url"
-                    class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    :placeholder="$t('editor.link_placeholder')"
-                    @keydown.enter="setLink"
-                />
-                <div class="mt-4 flex justify-end gap-3">
+
+                <!-- Link Text Field -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ $t('editor.link_text') }}
+                    </label>
+                    <input
+                        v-model="linkText"
+                        type="text"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        :placeholder="$t('editor.link_text_placeholder')"
+                    />
+                </div>
+
+                <!-- Link URL Field -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ $t('editor.link_url_label') }}
+                    </label>
+                    <input
+                        v-model="linkUrl"
+                        type="url"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        :placeholder="$t('editor.link_placeholder')"
+                        @keydown.enter="setLink"
+                    />
+                </div>
+
+                <!-- Link Title Field (for accessibility/tooltip) -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ $t('editor.link_title') }}
+                    </label>
+                    <input
+                        v-model="linkTitle"
+                        type="text"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        :placeholder="$t('editor.link_title_placeholder')"
+                    />
+                </div>
+
+                <!-- Link Target Field -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        {{ $t('editor.link_target') }}
+                    </label>
+                    <select
+                        v-model="linkTarget"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="_blank">{{ $t('editor.link_target_blank') }}</option>
+                        <option value="_self">{{ $t('editor.link_target_self') }}</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3">
                     <button
-                        @click="showLinkModal = false"
+                        @click="closeLinkModal"
                         class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     >
                         {{ $t('common.cancel') }}
@@ -1455,18 +1759,67 @@ const btnClass = (isActive = false) => {
                         @click="setLink"
                         class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                     >
-                        {{ linkUrl ? $t('editor.update_link') : $t('editor.remove_link') }}
+                        {{ linkUrl ? $t('common.save') : $t('editor.remove_link') }}
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Image Modal -->
-        <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="showImageModal = false">
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-lg shadow-xl" @click.stop>
+        <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="closeImageModal">
+            <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto" @click.stop>
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    {{ $t('editor.insert_image') }}
+                    {{ isEditingImage ? $t('editor.edit_image') : $t('editor.insert_image') }}
                 </h3>
+
+                <!-- Image Upload Section -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.upload_image') }}</label>
+                    <label
+                        :class="[
+                            'flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4 text-sm transition-colors',
+                            isUploadingImage ? 'cursor-wait opacity-50' : '',
+                            imageUploadError
+                                ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20'
+                                : 'border-slate-300 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-indigo-500'
+                        ]"
+                    >
+                        <svg
+                            v-if="isUploadingImage"
+                            class="h-5 w-5 animate-spin text-indigo-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <svg v-else class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <span :class="imageUploadError ? 'text-red-600 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">
+                            {{ isUploadingImage ? $t('common.uploading') : $t('editor.click_to_upload') }}
+                        </span>
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
+                            class="hidden"
+                            @change="handleImageUpload"
+                            :disabled="isUploadingImage"
+                        />
+                    </label>
+                    <p v-if="imageUploadError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ imageUploadError }}</p>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $t('editor.image_upload_hint') }}</p>
+                </div>
+
+                <!-- Separator -->
+                <div class="relative mb-4">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-slate-300 dark:border-slate-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="bg-white dark:bg-slate-800 px-2 text-slate-500 dark:text-slate-400">{{ $t('editor.or_paste_url') }}</span>
+                    </div>
+                </div>
 
                 <!-- Image URL Input -->
                 <div class="mb-4">
@@ -1593,6 +1946,90 @@ const btnClass = (isActive = false) => {
                             class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             placeholder="https://example.com"
                         />
+                    </div>
+
+                    <!-- Text Wrapping (Float) -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_float') }}</label>
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                @click="imageFloat = 'none'"
+                                :class="[
+                                    'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+                                    imageFloat === 'none'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                                        : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ]"
+                            >
+                                {{ $t('editor.float_none') }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="imageFloat = 'left'"
+                                :class="[
+                                    'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+                                    imageFloat === 'left'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                                        : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ]"
+                            >
+                                {{ $t('editor.float_left') }}
+                            </button>
+                            <button
+                                type="button"
+                                @click="imageFloat = 'right'"
+                                :class="[
+                                    'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+                                    imageFloat === 'right'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                                        : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+                                ]"
+                            >
+                                {{ $t('editor.float_right') }}
+                            </button>
+                        </div>
+                        <p class="mt-1 text-xs text-slate-500">{{ $t('editor.float_hint') }}</p>
+                    </div>
+
+                    <!-- Margin -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {{ $t('editor.image_margin') }}: {{ imageMargin }}px
+                        </label>
+                        <input
+                            v-model="imageMargin"
+                            type="range"
+                            min="0"
+                            max="50"
+                            step="5"
+                            class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0px</span>
+                            <span>25px</span>
+                            <span>50px</span>
+                        </div>
+                    </div>
+
+                    <!-- Border Radius -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                            {{ $t('editor.image_border_radius') }}: {{ imageBorderRadius }}px
+                        </label>
+                        <input
+                            v-model="imageBorderRadius"
+                            type="range"
+                            min="0"
+                            max="50"
+                            step="5"
+                            class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                        />
+                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                            <span>0px</span>
+                            <span>25px</span>
+                            <span>50px</span>
+                        </div>
                     </div>
                 </div>
 
