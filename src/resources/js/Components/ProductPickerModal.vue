@@ -46,6 +46,11 @@ const selectedStore = ref(null);
 // Selected products for multi-select
 const selected = ref([...props.selectedProducts]);
 
+// Variant support
+const expandedProductId = ref(null);
+const productVariations = ref({});
+const loadingVariations = ref({});
+
 // Check connection status on mount
 onMounted(async () => {
     await checkConnection();
@@ -141,6 +146,61 @@ const loadRecentlyViewed = async () => {
         }
     } catch (e) {
         console.error('Failed to load recently viewed products', e);
+    }
+};
+
+// Load variations for a product
+const loadVariations = async (productId) => {
+    if (loadingVariations.value[productId]) return;
+
+    loadingVariations.value[productId] = true;
+    try {
+        const response = await axios.get(
+            route('api.templates.products.woocommerce.variations', productId),
+            { params: { store_id: selectedStore.value } }
+        );
+        if (response.data.success) {
+            productVariations.value[productId] = response.data.variations;
+        }
+    } catch (e) {
+        console.error('Failed to load variations', e);
+    } finally {
+        loadingVariations.value[productId] = false;
+    }
+};
+
+// Toggle product expansion (for variable products)
+const toggleExpand = async (product) => {
+    if (expandedProductId.value === product.id) {
+        expandedProductId.value = null;
+    } else {
+        expandedProductId.value = product.id;
+        if (!productVariations.value[product.id]) {
+            await loadVariations(product.id);
+        }
+    }
+};
+
+// Select a specific variation
+const selectVariation = (variation, parentProduct) => {
+    const enrichedVariation = {
+        ...variation,
+        parent_name: parentProduct.name,
+        variant_attributes: variation.attributes,
+        store_id: selectedStore.value || null,
+        store_name: stores.value.find(s => s.id === selectedStore.value)?.display_name || null,
+    };
+
+    if (props.multiSelect) {
+        const index = selected.value.findIndex(p => p.id === variation.id && p.is_variation);
+        if (index >= 0) {
+            selected.value.splice(index, 1);
+        } else {
+            selected.value.push(enrichedVariation);
+        }
+    } else {
+        emit('select', [enrichedVariation]);
+        emit('close');
     }
 };
 
@@ -432,7 +492,7 @@ const formatPrice = (price, currency = 'PLN') => {
                                                 </svg>
                                             </div>
 
-                                            <!-- Selection indicator -->
+                                                <!-- Selection indicator -->
                                             <div
                                                 v-if="isSelected(product)"
                                                 class="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white"
@@ -441,6 +501,14 @@ const formatPrice = (price, currency = 'PLN') => {
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                                 </svg>
                                             </div>
+
+                                            <!-- Variable product badge -->
+                                            <div
+                                                v-if="product.has_variations"
+                                                class="absolute left-2 top-2 rounded bg-blue-500 px-1.5 py-0.5 text-[10px] font-medium text-white"
+                                            >
+                                                {{ product.variations_count || '?' }} {{ $t('template_builder.variants') }}
+                                            </div>
                                         </div>
 
                                         <!-- Info -->
@@ -448,12 +516,71 @@ const formatPrice = (price, currency = 'PLN') => {
                                             {{ product.name }}
                                         </h4>
                                         <div class="mt-1 flex items-baseline gap-2">
-                                            <span class="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                            <!-- Price range for variable products -->
+                                            <span v-if="product.has_variations && product.price_range" class="text-sm font-semibold text-purple-600 dark:text-purple-400">
+                                                {{ $t('template_builder.from') }} {{ formatPrice(product.price_range.min, product.currency) }}
+                                            </span>
+                                            <!-- Normal price for simple products -->
+                                            <span v-else class="text-sm font-semibold text-purple-600 dark:text-purple-400">
                                                 {{ formatPrice(product.price, product.currency) }}
                                             </span>
                                             <span v-if="product.sale_price && product.regular_price > product.sale_price" class="text-xs text-slate-400 line-through">
                                                 {{ formatPrice(product.regular_price, product.currency) }}
                                             </span>
+                                        </div>
+
+                                        <!-- Expand button for variable products -->
+                                        <button
+                                            v-if="product.has_variations"
+                                            @click.stop="toggleExpand(product)"
+                                            class="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                        >
+                                            <svg :class="['h-3 w-3 transition-transform', expandedProductId === product.id ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                            {{ expandedProductId === product.id ? $t('template_builder.hide_variants') : $t('template_builder.show_variants') }}
+                                        </button>
+
+                                        <!-- Variations list (expanded) -->
+                                        <div v-if="expandedProductId === product.id" class="mt-3 border-t border-slate-200 pt-3 dark:border-slate-600">
+                                            <!-- Loading -->
+                                            <div v-if="loadingVariations[product.id]" class="flex items-center justify-center py-3">
+                                                <svg class="h-5 w-5 animate-spin text-purple-600" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                </svg>
+                                            </div>
+                                            <!-- Variations -->
+                                            <div v-else-if="productVariations[product.id]?.length > 0" class="max-h-40 space-y-1.5 overflow-y-auto">
+                                                <div
+                                                    v-for="variation in productVariations[product.id]"
+                                                    :key="variation.id"
+                                                    @click.stop="selectVariation(variation, product)"
+                                                    class="flex cursor-pointer items-center gap-2 rounded-lg p-2 transition-colors hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                                >
+                                                    <img v-if="variation.image" :src="variation.image" class="h-8 w-8 rounded object-cover" />
+                                                    <div v-else class="flex h-8 w-8 items-center justify-center rounded bg-slate-100 dark:bg-slate-600">
+                                                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <div class="min-w-0 flex-1">
+                                                        <p class="truncate text-xs font-medium text-slate-700 dark:text-slate-300">
+                                                            {{ variation.attributes?.map(a => a.option).join(', ') || variation.name }}
+                                                        </p>
+                                                        <p class="text-xs font-semibold text-purple-600 dark:text-purple-400">
+                                                            {{ formatPrice(variation.price, variation.currency) }}
+                                                        </p>
+                                                    </div>
+                                                    <svg class="h-4 w-4 flex-shrink-0 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <!-- No variations found -->
+                                            <p v-else class="py-2 text-center text-xs text-slate-400">
+                                                {{ $t('template_builder.no_variants_found') }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

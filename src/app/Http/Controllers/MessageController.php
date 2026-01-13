@@ -806,7 +806,7 @@ class MessageController extends Controller
             ->with('success', 'Wiadomość została usunięta.');
     }
 
-    public function stats(Message $message)
+    public function stats(Request $request, Message $message)
     {
         if ($message->user_id !== auth()->id()) {
             abort(403);
@@ -864,6 +864,67 @@ class MessageController extends Controller
                 'read_time' => $session->read_time_formatted,
                 'read_time_seconds' => $session->read_time_seconds,
                 'read_at' => DateHelper::formatForUser($session->started_at),
+            ]);
+
+        // Process recent opens with sorting and pagination
+        $opensQuery = EmailOpen::where('message_id', $message->id)
+            ->with('subscriber:id,email,first_name,last_name');
+
+        if ($request->input('sort_opens_by') && $request->input('sort_opens_dir')) {
+            $sortBy = $request->input('sort_opens_by'); // 'email' or 'time'
+            $dir = $request->input('sort_opens_dir') === 'asc' ? 'asc' : 'desc';
+
+            if ($sortBy === 'email') {
+                $opensQuery->join('subscribers', 'email_opens.subscriber_id', '=', 'subscribers.id')
+                    ->orderBy('subscribers.email', $dir)
+                    ->select('email_opens.*'); // Avoid column collision
+            } else {
+                $opensQuery->orderBy('opened_at', $dir);
+            }
+        } else {
+            $opensQuery->latest('opened_at');
+        }
+
+        $recentOpens = $opensQuery->paginate(10, ['*'], 'opens_page')
+            ->withQueryString()
+            ->through(fn($open) => [
+                'id' => $open->id,
+                'email' => $open->subscriber?->email ?? 'Nieznany',
+                'name' => trim(($open->subscriber?->first_name ?? '') . ' ' . ($open->subscriber?->last_name ?? '')),
+                'ip' => $open->ip_address,
+                'occurred_at' => DateHelper::formatForUser($open->opened_at),
+            ]);
+
+        // Process recent clicks with sorting and pagination
+        $clicksQuery = EmailClick::where('message_id', $message->id)
+            ->with('subscriber:id,email,first_name,last_name');
+
+        if ($request->input('sort_clicks_by') && $request->input('sort_clicks_dir')) {
+            $sortBy = $request->input('sort_clicks_by'); // 'email', 'url', 'time'
+            $dir = $request->input('sort_clicks_dir') === 'asc' ? 'asc' : 'desc';
+
+            if ($sortBy === 'email') {
+                $clicksQuery->join('subscribers', 'email_clicks.subscriber_id', '=', 'subscribers.id')
+                    ->orderBy('subscribers.email', $dir)
+                    ->select('email_clicks.*');
+            } elseif ($sortBy === 'url') {
+                $clicksQuery->orderBy('url', $dir);
+            } else {
+                $clicksQuery->orderBy('clicked_at', $dir);
+            }
+        } else {
+            $clicksQuery->latest('clicked_at');
+        }
+
+        $recentClicks = $clicksQuery->paginate(10, ['*'], 'clicks_page')
+            ->withQueryString()
+            ->through(fn($click) => [
+                'id' => $click->id,
+                'email' => $click->subscriber?->email ?? 'Nieznany',
+                'name' => trim(($click->subscriber?->first_name ?? '') . ' ' . ($click->subscriber?->last_name ?? '')),
+                'url' => $click->url,
+                'ip' => $click->ip_address,
+                'occurred_at' => DateHelper::formatForUser($click->clicked_at),
             ]);
 
         return Inertia::render('Message/Stats', [
@@ -954,31 +1015,8 @@ class MessageController extends Controller
                     'error' => $entry->error_message,
                 ]),
             'recent_activity' => [
-                'opens' => EmailOpen::where('message_id', $message->id)
-                    ->with('subscriber:id,email,first_name,last_name')
-                    ->latest('opened_at')
-                    ->limit(20)
-                    ->get()
-                    ->map(fn($open) => [
-                        'id' => $open->id,
-                        'email' => $open->subscriber?->email ?? 'Nieznany',
-                        'name' => trim(($open->subscriber?->first_name ?? '') . ' ' . ($open->subscriber?->last_name ?? '')),
-                        'ip' => $open->ip_address,
-                        'occurred_at' => DateHelper::formatForUser($open->opened_at),
-                    ]),
-                'clicks' => EmailClick::where('message_id', $message->id)
-                    ->with('subscriber:id,email,first_name,last_name')
-                    ->latest('clicked_at')
-                    ->limit(20)
-                    ->get()
-                    ->map(fn($click) => [
-                        'id' => $click->id,
-                        'email' => $click->subscriber?->email ?? 'Nieznany',
-                        'name' => trim(($click->subscriber?->first_name ?? '') . ' ' . ($click->subscriber?->last_name ?? '')),
-                        'url' => $click->url,
-                        'ip' => $click->ip_address,
-                        'occurred_at' => DateHelper::formatForUser($click->clicked_at),
-                    ]),
+                'opens' => $recentOpens,
+                'clicks' => $recentClicks,
             ]
         ]);
     }

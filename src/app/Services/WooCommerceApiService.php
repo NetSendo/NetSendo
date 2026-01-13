@@ -276,8 +276,9 @@ class WooCommerceApiService
         $image = $product['images'][0]['src'] ?? null;
         $regularPrice = (float) ($product['regular_price'] ?? 0);
         $salePrice = (float) ($product['sale_price'] ?? 0);
+        $isVariable = ($product['type'] ?? 'simple') === 'variable';
 
-        return [
+        $formatted = [
             'id' => $product['id'],
             'sku' => $product['sku'] ?? '',
             'name' => $product['name'],
@@ -290,7 +291,93 @@ class WooCommerceApiService
             'url' => $product['permalink'] ?? '',
             'in_stock' => $product['in_stock'] ?? true,
             'categories' => array_map(fn($cat) => $cat['name'], $product['categories'] ?? []),
+            'type' => $product['type'] ?? 'simple',
+            'has_variations' => $isVariable,
         ];
+
+        // Add variation-specific data for variable products
+        if ($isVariable) {
+            $variations = $product['variations'] ?? [];
+            $formatted['variations_count'] = count($variations);
+            $formatted['attributes'] = $product['attributes'] ?? [];
+
+            // Calculate price range from variation prices if available
+            if (!empty($product['price'])) {
+                // WooCommerce returns price as the minimum price for variable products
+                $minPrice = (float) ($product['price'] ?? 0);
+                $maxPrice = (float) ($product['price'] ?? 0);
+
+                // Try to get actual range from price_html or calculate
+                if (isset($product['variations']) && is_array($product['variations'])) {
+                    $prices = array_filter(array_map(fn($v) => (float) ($v['price'] ?? 0), $product['variations']));
+                    if (!empty($prices)) {
+                        $minPrice = min($prices);
+                        $maxPrice = max($prices);
+                    }
+                }
+
+                $formatted['price_range'] = [
+                    'min' => $minPrice,
+                    'max' => $maxPrice,
+                ];
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Get variations for a variable product
+     */
+    public function getProductVariations(int $productId, int $perPage = 100): array
+    {
+        $cacheKey = "wc_variations_{$this->settings->id}_{$productId}";
+
+        return Cache::remember($cacheKey, 600, function () use ($productId, $perPage) {
+            return $this->makeRequest("products/{$productId}/variations", [
+                'per_page' => $perPage,
+                'status' => 'publish',
+            ]);
+        });
+    }
+
+    /**
+     * Format a single variation for template use
+     */
+    public function formatVariationForTemplate(array $variation, array $parentProduct): array
+    {
+        $image = $variation['image']['src'] ?? ($parentProduct['images'][0]['src'] ?? null);
+        $regularPrice = (float) ($variation['regular_price'] ?? 0);
+        $salePrice = (float) ($variation['sale_price'] ?? 0);
+
+        return [
+            'id' => $variation['id'],
+            'parent_id' => $parentProduct['id'],
+            'sku' => $variation['sku'] ?? '',
+            'name' => $this->buildVariationName($parentProduct['name'], $variation['attributes'] ?? []),
+            'attributes' => $variation['attributes'] ?? [],
+            'price' => $salePrice > 0 ? $salePrice : $regularPrice,
+            'regular_price' => $regularPrice,
+            'sale_price' => $salePrice > 0 ? $salePrice : null,
+            'currency' => $this->settings->store_info['currency'] ?? 'PLN',
+            'image' => $image,
+            'url' => $variation['permalink'] ?? $parentProduct['permalink'] ?? '',
+            'in_stock' => $variation['in_stock'] ?? ($variation['stock_status'] ?? 'instock') === 'instock',
+            'is_variation' => true,
+        ];
+    }
+
+    /**
+     * Build variation name from parent name and attributes
+     */
+    protected function buildVariationName(string $parentName, array $attributes): string
+    {
+        if (empty($attributes)) {
+            return $parentName;
+        }
+
+        $attrStr = implode(', ', array_map(fn($a) => $a['option'] ?? '', $attributes));
+        return $attrStr ? "{$parentName} - {$attrStr}" : $parentName;
     }
 
     /**

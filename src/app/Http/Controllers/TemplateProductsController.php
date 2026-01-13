@@ -232,6 +232,70 @@ class TemplateProductsController extends Controller
     }
 
     /**
+     * Get variations for a specific product
+     */
+    public function getProductVariations(Request $request, int $productId): JsonResponse
+    {
+        $validated = $request->validate([
+            'store_id' => 'nullable|integer',
+        ]);
+
+        $storeId = $validated['store_id'] ?? null;
+        $service = WooCommerceApiService::forUser(Auth::id(), $storeId);
+
+        if (!$service) {
+            return response()->json([
+                'success' => false,
+                'message' => __('template_builder.woocommerce_not_connected'),
+            ], 400);
+        }
+
+        try {
+            $product = $service->getProduct($productId);
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('template_builder.product_not_found'),
+                ], 404);
+            }
+
+            if (($product['type'] ?? 'simple') !== 'variable') {
+                return response()->json([
+                    'success' => true,
+                    'variations' => [],
+                    'is_variable' => false,
+                ]);
+            }
+
+            $variations = $service->getProductVariations($productId);
+            $formatted = array_map(
+                fn($v) => $service->formatVariationForTemplate($v, $product),
+                $variations
+            );
+
+            return response()->json([
+                'success' => true,
+                'variations' => $formatted,
+                'is_variable' => true,
+                'attributes' => $product['attributes'] ?? [],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('WooCommerce variations fetch failed', [
+                'user_id' => Auth::id(),
+                'product_id' => $productId,
+                'store_id' => $storeId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Get single product details
      */
     public function getProduct(Request $request, int $productId): JsonResponse

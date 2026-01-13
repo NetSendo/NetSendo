@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **WooCommerce Product Variants Support:**
+
+  - **Backend:**
+
+    - Extended `WooCommerceApiService` to fetch and cache product variations.
+    - Updated `TemplateProductsController` with new endpoint `getProductVariations` for fetching variations.
+    - Added support for variant data structure (price ranges, attributes, image overrides) in API responses.
+
+  - **Frontend (Template Builder):**
+
+    - **Variable Product Support:** Product Picker now identifies variable products with a specific badge and variant count.
+    - **Variant Selection:** Added UI to expand variable products in the picker and select individual variants or the parent product.
+    - **Block Editor Integration:** Product blocks now display selected variant attributes (e.g., Size: XL, Color: Red).
+    - **Preview Rendering:** Email preview now correctly renders selected variant attributes with styled tags.
+
+  - **Translations:**
+    - Added full translations for all variant-related features in PL, EN, DE, ES.
+
+### Changed
+
+- **Improved Statistics Display:**
+  - **Enhanced Charts:**
+    - Improved readability of "Effectiveness" and "Conversion Funnel" charts.
+    - Added value labels (opens, clicks, etc.) directly on chart segments using `chartjs-plugin-datalabels` for better visibility without hovering.
+    - Increased chart container height to prevent overflow and ensure legend visibility.
+  - **Recent Activity Pagination & Sorting:**
+    - Implemented full server-side pagination for "Recent Opens" and "Recent Clicks" lists (replacing the previous 20-item limit).
+    - Added column sorting functionality (by Email, Time, and URL) for both activity lists.
+    - Added sort direction indicators (⇅).
+    - Made URLs in the "Recent Clicks" list clickable (opens in new tab) for easier access.
+  - **UI/UX Improvements:**
+    - Fixed "Previous" pagination button color to be visible in dark mode (was black on dark background).
+    - Optimized table layouts for better responsiveness.
+    - Added missing translations for Recipient List columns and statuses in Statistics view (EN, DE, ES).
+
 ## [1.6.6] – Short Description
 
 **Release date:** 2026-01-13
@@ -59,6 +96,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Scheduler:** Fixed `RuntimeException` caused by using `runInBackground()` with `Schedule::job()`.
 - **ABTestingPanel:** Fixed infinite recursion loop in watcher that caused performance degradation on the message creation page.
 - **API Connection:** Fixed `404 Not Found` error during connection testing in WordPress and WooCommerce plugins. Implemented the missing `/api/v1/account` endpoint to return authenticated user details and valid `user_id` for Pixel tracking.
+- **Template Builder - Product Grid:**
+  - **Data Display:** Fixed issue where the "Product Grid" block in the editor showed placeholders instead of actual product data (image, title, price) when products were selected from WooCommerce.
+  - **Column Layout:** Fixed the editor preview to correctly respect the column configuration (2, 3, or 4 columns) instead of defaulting to 2 columns.
+  - **Email Preview:** Fixed broken layout for 4-column product grids in the preview panel and MJML generation.
+  - **Visual Design:** Completely redesigned the "Product Grid" email template output to feature professional product cards with rounded corners, proper image sizing, truncated titles, clean pricing, and styled CTA buttons.
 
 ## [1.6.5] – Unique Subscriber Counting
 

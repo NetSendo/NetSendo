@@ -1353,6 +1353,31 @@
                 "email": "Correo electrónico",
                 "time": "Tiempo",
                 "url": "URL"
+            },
+            "queue": {
+                "title": "Progreso de la cola",
+                "last_sync": "Última sincronización",
+                "planned": "Planificado",
+                "queued": "En cola",
+                "sent": "Enviado",
+                "failed": "Fallido",
+                "skipped": "Omitido"
+            },
+            "recipients": {
+                "title": "Lista de destinatarios",
+                "total": "Total: {count} destinatarios",
+                "email": "Correo electrónico",
+                "name": "Nombre",
+                "queue_status": "Estado",
+                "sent_at": "Enviado el",
+                "error": "Error",
+                "status": {
+                    "planned": "Planificado",
+                    "queued": "En cola",
+                    "sent": "Enviado",
+                    "failed": "Fallido",
+                    "skipped": "Omitido"
+                }
             }
         },
         "tracked_links": {
@@ -1953,7 +1978,16 @@
         "next_page": "Siguiente",
         "select_store": "Seleccionar tienda",
         "from_store": "De la tienda",
-        "refresh_product": "Actualizar datos del producto"
+        "refresh_product": "Actualizar datos del producto",
+        "variants": "variantes",
+        "variant": "variante",
+        "show_variants": "Mostrar variantes",
+        "hide_variants": "Ocultar variantes",
+        "from": "desde",
+        "select_variant": "Seleccionar variante",
+        "variable_product": "Producto variable",
+        "selected_variant": "Variante seleccionada",
+        "no_variants_found": "No se encontraron variantes"
     },
     "subscriber_card": {
         "title": "Ficha del Suscriptor",

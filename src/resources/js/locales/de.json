@@ -1433,6 +1433,31 @@
                 "email": "E-Mail",
                 "time": "Zeit",
                 "url": "URL"
+            },
+            "queue": {
+                "title": "Warteschlangen-Fortschritt",
+                "last_sync": "Letzte Synchronisierung",
+                "planned": "Geplant",
+                "queued": "In Warteschlange",
+                "sent": "Gesendet",
+                "failed": "Fehlgeschlagen",
+                "skipped": "Übersprungen"
+            },
+            "recipients": {
+                "title": "Empfängerliste",
+                "total": "Gesamt: {count} Empfänger",
+                "email": "E-Mail",
+                "name": "Name",
+                "queue_status": "Status",
+                "sent_at": "Gesendet am",
+                "error": "Fehler",
+                "status": {
+                    "planned": "Geplant",
+                    "queued": "In Warteschlange",
+                    "sent": "Gesendet",
+                    "failed": "Fehlgeschlagen",
+                    "skipped": "Übersprungen"
+                }
             }
         },
         "tracked_links": {
@@ -2117,7 +2142,16 @@
         "next_page": "Nächste",
         "select_store": "Shop auswählen",
         "from_store": "Aus Shop",
-        "refresh_product": "Produktdaten aktualisieren"
+        "refresh_product": "Produktdaten aktualisieren",
+        "variants": "Varianten",
+        "variant": "Variante",
+        "show_variants": "Varianten anzeigen",
+        "hide_variants": "Varianten ausblenden",
+        "from": "ab",
+        "select_variant": "Variante auswählen",
+        "variable_product": "Produkt mit Varianten",
+        "selected_variant": "Ausgewählte Variante",
+        "no_variants_found": "Keine Varianten gefunden"
     },
     "subscriber_card": {
         "title": "Abonnentenkarte",

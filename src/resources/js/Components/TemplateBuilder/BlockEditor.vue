@@ -67,7 +67,7 @@ const handleProductSelect = (products) => {
         const mappedProducts = products.map((product) => ({
             id: product.id,
             image: product.image || "",
-            title: product.name,
+            title: product.name || product.parent_name || "",
             description: product.description || "",
             price: formatPrice(product.price, product.currency),
             oldPrice:
@@ -76,27 +76,21 @@ const handleProductSelect = (products) => {
                     : "",
             buttonUrl: product.url || "",
             buttonText: t("template_builder.buy_now"),
-            woocommerce_product_id: product.id,
+            woocommerce_product_id: product.parent_id || product.id,
+            woocommerce_variation_id: product.is_variation ? product.id : null,
             woocommerce_store_id: product.store_id || null,
             woocommerce_store_name: product.store_name || null,
+            variant_attributes: product.variant_attributes || product.attributes || null,
         }));
 
-        // If we selected fewer products than current columns, we might Want to adjust columns or just fill available spots?
-        // For now let's just replace the content.
-        // We should probably preserve the grid settings like columns count if possible,
-        // but the current implementation of updateProductsCount just generates empty objects.
-        // Let's replace the products array.
         updateContent("products", mappedProducts);
 
-        // Auto-update count to match selected
-        // updateContent('products', mappedProducts); // This is array
-        // But the grid also has 'columns' setting.
     } else if (products.length > 0) {
         const product = products[0];
         // Update all product fields with selected product data
         localContent.value = {
             ...localContent.value,
-            title: product.name,
+            title: product.name || product.parent_name || "",
             description: product.description || "",
             price: formatPrice(product.price, product.currency),
             oldPrice:
@@ -105,9 +99,11 @@ const handleProductSelect = (products) => {
                     : "",
             buttonUrl: product.url || "",
             image: product.image || "",
-            woocommerce_product_id: product.id,
+            woocommerce_product_id: product.parent_id || product.id,
+            woocommerce_variation_id: product.is_variation ? product.id : null,
             woocommerce_store_id: product.store_id || null,
             woocommerce_store_name: product.store_name || null,
+            variant_attributes: product.variant_attributes || product.attributes || null,
         };
         productDataSource.value = "woocommerce";
         emit("update", { content: { ...localContent.value } });
@@ -1292,6 +1288,19 @@ const handleInsert = (data) => {
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
                             {{ $t("template_builder.from_store") }}: {{ localContent.woocommerce_store_name }}
+                        </div>
+                        <!-- Variant attributes indicator -->
+                        <div
+                            v-if="localContent.variant_attributes && localContent.variant_attributes.length > 0"
+                            class="mt-2 flex flex-wrap gap-1"
+                        >
+                            <span
+                                v-for="attr in localContent.variant_attributes"
+                                :key="attr.name"
+                                class="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            >
+                                {{ attr.name || attr.slug }}: {{ attr.option }}
+                            </span>
                         </div>
                     </div>
                 </div>

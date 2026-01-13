@@ -2602,7 +2602,16 @@
         "next_page": "Następna",
         "select_store": "Wybierz sklep",
         "from_store": "Ze sklepu",
-        "refresh_product": "Odśwież dane produktu"
+        "refresh_product": "Odśwież dane produktu",
+        "variants": "wariantów",
+        "variant": "wariant",
+        "show_variants": "Pokaż warianty",
+        "hide_variants": "Ukryj warianty",
+        "from": "od",
+        "select_variant": "Wybierz wariant",
+        "variable_product": "Produkt z wariantami",
+        "selected_variant": "Wybrany wariant",
+        "no_variants_found": "Nie znaleziono wariantów"
     },
     "mailboxes": {
         "title": "Skrzynki pocztowe",

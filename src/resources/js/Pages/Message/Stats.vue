@@ -13,6 +13,8 @@ import {
 } from "chart.js";
 import { Doughnut, Bar } from "vue-chartjs";
 import { useI18n } from "vue-i18n";
+import { router } from "@inertiajs/vue3";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
 ChartJS.register(
     ArcElement,
@@ -21,7 +23,9 @@ ChartJS.register(
     CategoryScale,
     LinearScale,
     BarElement,
-    Title
+    BarElement,
+    Title,
+    ChartDataLabels
 );
 
 const { t } = useI18n();
@@ -66,6 +70,26 @@ const getStatusClass = (status) => {
             "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
+    return colors[status] || "bg-gray-100 text-gray-800";
+};
+
+const handleSort = (type, field) => {
+    const params = new URLSearchParams(window.location.search);
+    const currentSortBy = params.get(`sort_${type}_by`);
+    const currentDir = params.get(`sort_${type}_dir`) || 'desc';
+
+    let newDir = 'desc';
+    if (currentSortBy === field && currentDir === 'desc') {
+        newDir = 'asc';
+    }
+
+    params.set(`sort_${type}_by`, field);
+    params.set(`sort_${type}_dir`, newDir);
+
+    router.visit(`${window.location.pathname}?${params.toString()}`, {
+        preserveScroll: true,
+        preserveState: true,
+    });
 };
 
 const doughnutData = {
@@ -118,6 +142,24 @@ const readTimeChartData = {
 const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom',
+        },
+        datalabels: {
+            color: '#fff',
+            font: {
+                weight: 'bold',
+                size: 12
+            },
+            formatter: (value, ctx) => {
+                if (value === 0) return '';
+                return value;
+            },
+            textShadowBlur: 4,
+            textShadowColor: 'rgba(0, 0, 0, 0.5)'
+        }
+    }
 };
 
 // Format seconds to human readable
@@ -633,7 +675,7 @@ const formatReadTime = (seconds) => {
                                         link.active,
                                     'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800':
                                         !link.active && link.url,
-                                    'opacity-50 cursor-not-allowed': !link.url,
+                                    'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
                                 }"
                                 v-html="link.label"
                                 preserve-scroll
@@ -645,7 +687,7 @@ const formatReadTime = (seconds) => {
                 <!-- Charts -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-80"
+                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-96"
                     >
                         <h3
                             class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
@@ -787,19 +829,25 @@ const formatReadTime = (seconds) => {
                                     class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
                                 >
                                     <tr>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            @click="handleSort('opens', 'email')"
+                                        >
                                             {{
                                                 $t(
                                                     "messages.stats.activity.email"
                                                 )
-                                            }}
+                                            }} ⇅
                                         </th>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            @click="handleSort('opens', 'time')"
+                                        >
                                             {{
                                                 $t(
                                                     "messages.stats.activity.time"
                                                 )
-                                            }}
+                                            }} ⇅
                                         </th>
                                     </tr>
                                 </thead>
@@ -807,7 +855,7 @@ const formatReadTime = (seconds) => {
                                     <tr
                                         v-for="(
                                             log, i
-                                        ) in recent_activity.opens"
+                                        ) in recent_activity.opens.data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
                                     >
@@ -815,12 +863,12 @@ const formatReadTime = (seconds) => {
                                             {{ log.email }}
                                         </td>
                                         <td class="px-4 py-2">
-                                            {{ log.time }}
+                                            {{ log.occurred_at }}
                                         </td>
                                     </tr>
                                     <tr
                                         v-if="
-                                            recent_activity.opens.length === 0
+                                            !recent_activity.opens.data || recent_activity.opens.data.length === 0
                                         "
                                     >
                                         <td
@@ -836,6 +884,29 @@ const formatReadTime = (seconds) => {
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <!-- Pagination for Opens -->
+                        <div
+                            v-if="recent_activity.opens.links && recent_activity.opens.links.length > 3"
+                            class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
+                        >
+                            <div class="flex gap-1 flex-wrap justify-center">
+                                <Link
+                                    v-for="(link, i) in recent_activity.opens.links"
+                                    :key="i"
+                                    :href="link.url || '#'"
+                                    class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
+                                    :class="{
+                                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
+                                            link.active,
+                                        'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
+                                            !link.active && link.url,
+                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
+                                    }"
+                                    v-html="link.label"
+                                    preserve-scroll
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -856,26 +927,35 @@ const formatReadTime = (seconds) => {
                                     class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
                                 >
                                     <tr>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            @click="handleSort('clicks', 'email')"
+                                        >
                                             {{
                                                 $t(
                                                     "messages.stats.activity.email"
                                                 )
-                                            }}
+                                            }} ⇅
                                         </th>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            @click="handleSort('clicks', 'url')"
+                                        >
                                             {{
                                                 $t(
                                                     "messages.stats.activity.url"
                                                 )
-                                            }}
+                                            }} ⇅
                                         </th>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            @click="handleSort('clicks', 'time')"
+                                        >
                                             {{
                                                 $t(
                                                     "messages.stats.activity.time"
                                                 )
-                                            }}
+                                            }} ⇅
                                         </th>
                                     </tr>
                                 </thead>
@@ -883,7 +963,7 @@ const formatReadTime = (seconds) => {
                                     <tr
                                         v-for="(
                                             log, i
-                                        ) in recent_activity.clicks"
+                                        ) in recent_activity.clicks.data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
                                     >
@@ -891,15 +971,21 @@ const formatReadTime = (seconds) => {
                                             {{ log.email }}
                                         </td>
                                         <td class="px-4 py-2 truncate max-w-xs">
-                                            {{ log.url }}
+                                            <a
+                                                :href="log.url"
+                                                target="_blank"
+                                                class="text-blue-600 hover:underline dark:text-blue-400"
+                                            >
+                                                {{ log.url }}
+                                            </a>
                                         </td>
                                         <td class="px-4 py-2">
-                                            {{ log.time }}
+                                            {{ log.occurred_at }}
                                         </td>
                                     </tr>
                                     <tr
                                         v-if="
-                                            recent_activity.clicks.length === 0
+                                            !recent_activity.clicks.data || recent_activity.clicks.data.length === 0
                                         "
                                     >
                                         <td
@@ -915,6 +1001,29 @@ const formatReadTime = (seconds) => {
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <!-- Pagination for Clicks -->
+                        <div
+                            v-if="recent_activity.clicks.links && recent_activity.clicks.links.length > 3"
+                            class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
+                        >
+                            <div class="flex gap-1 flex-wrap justify-center">
+                                <Link
+                                    v-for="(link, i) in recent_activity.clicks.links"
+                                    :key="i"
+                                    :href="link.url || '#'"
+                                    class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
+                                    :class="{
+                                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
+                                            link.active,
+                                        'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
+                                            !link.active && link.url,
+                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
+                                    }"
+                                    v-html="link.label"
+                                    preserve-scroll
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

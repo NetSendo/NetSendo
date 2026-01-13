@@ -451,6 +451,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::prefix('api/templates/products')->name('api.templates.products.')->group(function () {
         Route::get('/woocommerce', [\App\Http\Controllers\TemplateProductsController::class, 'woocommerceProducts'])->name('woocommerce');
         Route::get('/woocommerce/categories', [\App\Http\Controllers\TemplateProductsController::class, 'woocommerceCategories'])->name('woocommerce.categories');
+        Route::get('/woocommerce/{productId}/variations', [\App\Http\Controllers\TemplateProductsController::class, 'getProductVariations'])->name('woocommerce.variations');
         Route::get('/woocommerce/{productId}', [\App\Http\Controllers\TemplateProductsController::class, 'getProduct'])->name('woocommerce.get');
         Route::get('/recently-viewed', [\App\Http\Controllers\TemplateProductsController::class, 'recentlyViewed'])->name('recently-viewed');
         Route::get('/connection-status', [\App\Http\Controllers\TemplateProductsController::class, 'connectionStatus'])->name('connection-status');

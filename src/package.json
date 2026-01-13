@@ -37,6 +37,7 @@
         "@tiptap/starter-kit": "^3.13.0",
         "@tiptap/vue-3": "^3.13.0",
         "chart.js": "^4.5.1",
+        "chartjs-plugin-datalabels": "^2.2.0",
         "html2canvas": "^1.4.1",
         "laravel-echo": "^2.2.7",
         "lodash": "^4.17.21",

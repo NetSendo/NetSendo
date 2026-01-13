@@ -141,6 +141,14 @@ const blockToMjml = (block, options) => {
 
         case 'product':
             const productImage = c.image ? `<mj-image src="${c.image}" padding="0 0 10px 0" />` : '';
+
+            // Build variant attributes display
+            let variantAttrHtml = '';
+            if (c.variant_attributes && c.variant_attributes.length > 0) {
+                const attrLabels = c.variant_attributes.map(a => `${a.name || a.slug}: ${a.option}`).join(' • ');
+                variantAttrHtml = `<mj-text font-size="12px" color="#3b82f6" padding="5px 0 10px 0"><span style="background:#eff6ff;padding:4px 8px;border-radius:4px;">${attrLabels}</span></mj-text>`;
+            }
+
             const priceHtml = c.oldPrice
                 ? `<span style="text-decoration: line-through; color: #94a3b8;">${c.oldPrice} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</span> <strong style="color: #ef4444;">${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`
                 : `<strong>${c.price || t('template_builder.default_price')} ${c.currency || t('template_builder.preview_panel.currency_fallback')}</strong>`;
@@ -151,6 +159,7 @@ const blockToMjml = (block, options) => {
         <mj-text font-size="18px" font-weight="bold" padding="10px 0 5px 0">
           ${c.title || t('template_builder.preview_panel.product_name_fallback')}
         </mj-text>
+        ${variantAttrHtml}
         <mj-text padding="0 0 10px 0">
           ${c.description || ''}
         </mj-text>
@@ -189,20 +198,41 @@ const blockToMjml = (block, options) => {
       </mj-column>
     </mj-section>`;
             }
-            const colWidth = gridColumns === 2 ? '50%' : '33.33%';
+            const colWidth = gridColumns === 2 ? '50%' : (gridColumns === 3 ? '33.33%' : '25%');
+            const imageSize = gridColumns === 4 ? '100px' : (gridColumns === 3 ? '120px' : '150px');
+            const fontSize = gridColumns === 4 ? '12px' : (gridColumns === 3 ? '13px' : '14px');
+            const priceFontSize = gridColumns === 4 ? '14px' : (gridColumns === 3 ? '15px' : '16px');
+            const buttonPadding = gridColumns === 4 ? '8px 16px' : '10px 20px';
+
             let gridProductsHtml = '';
             for (const product of products) {
-                const prodImage = product.image ? `<mj-image src="${product.image}" padding="0 0 10px 0" />` : `<mj-image src="https://via.placeholder.com/150x150?text=${t('template_builder.blocks.product')}" padding="0 0 10px 0" />`;
+                // Truncate title to reasonable length
+                const maxTitleLength = gridColumns === 4 ? 30 : (gridColumns === 3 ? 40 : 50);
+                let displayTitle = product.title || t('template_builder.blocks.product');
+                if (displayTitle.length > maxTitleLength) {
+                    displayTitle = displayTitle.substring(0, maxTitleLength) + '...';
+                }
+
+                const prodImage = product.image
+                    ? `<mj-image src="${product.image}" width="${imageSize}" height="${imageSize}" padding="15px 10px 10px 10px" border-radius="8px" alt="${displayTitle}" />`
+                    : `<mj-image src="https://via.placeholder.com/150x150/f1f5f9/94a3b8?text=Produkt" width="${imageSize}" height="${imageSize}" padding="15px 10px 10px 10px" border-radius="8px" />`;
+
                 gridProductsHtml += `
-      <mj-column width="${colWidth}" padding="10px">
+      <mj-column width="${colWidth}" padding="8px" background-color="#ffffff" border-radius="12px" border="1px solid #e2e8f0">
         ${prodImage}
-        <mj-text font-weight="bold" align="center">${product.title || t('template_builder.blocks.product')}</mj-text>
-        <mj-text align="center">${product.price || t('template_builder.default_price')} ${product.currency || t('template_builder.preview_panel.currency_fallback')}</mj-text>
-        <mj-button href="${product.buttonUrl || '#'}" background-color="${primaryColor}" font-size="14px">${t('template_builder.preview_panel.buy')}</mj-button>
+        <mj-text font-weight="600" align="center" font-size="${fontSize}" line-height="1.3" padding="5px 10px" color="#1e293b">
+          ${displayTitle}
+        </mj-text>
+        <mj-text align="center" font-size="${priceFontSize}" font-weight="700" color="${primaryColor}" padding="5px 10px 10px 10px">
+          ${product.price || '0.00'} ${product.currency || 'zł'}
+        </mj-text>
+        <mj-button href="${product.buttonUrl || '#'}" background-color="${primaryColor}" color="#ffffff" border-radius="8px" font-size="13px" font-weight="600" inner-padding="${buttonPadding}" padding="0 10px 15px 10px">
+          ${t('template_builder.preview_panel.buy')}
+        </mj-button>
       </mj-column>`;
             }
             return `
-    <mj-section padding="20px">
+    <mj-section padding="15px 10px" background-color="#f8fafc">
       ${gridProductsHtml}
     </mj-section>`;
 

@@ -1330,6 +1330,22 @@
                 "sent": "Sent",
                 "failed": "Failed",
                 "skipped": "Skipped"
+            },
+            "recipients": {
+                "title": "Recipients List",
+                "total": "Total: {count} recipients",
+                "email": "Email",
+                "name": "Name",
+                "queue_status": "Queue Status",
+                "sent_at": "Sent At",
+                "error": "Error",
+                "status": {
+                    "planned": "Planned",
+                    "queued": "Queued",
+                    "sent": "Sent",
+                    "failed": "Failed",
+                    "skipped": "Skipped"
+                }
             }
         },
         "tracked_links": {
@@ -2148,7 +2164,16 @@
         "next_page": "Next",
         "select_store": "Select store",
         "from_store": "From store",
-        "refresh_product": "Refresh product data"
+        "refresh_product": "Refresh product data",
+        "variants": "variants",
+        "variant": "variant",
+        "show_variants": "Show variants",
+        "hide_variants": "Hide variants",
+        "from": "from",
+        "select_variant": "Select variant",
+        "variable_product": "Variable product",
+        "selected_variant": "Selected variant",
+        "no_variants_found": "No variants found"
     },
     "setup": {
         "title": "NetSendo Installation",

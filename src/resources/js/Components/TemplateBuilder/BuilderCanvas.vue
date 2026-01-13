@@ -358,11 +358,45 @@ const stripHtml = (html) => {
                                 </div>
 
                                 <!-- Product Grid Block -->
-                                <div v-else-if="block.type === 'product_grid'" class="grid grid-cols-2 gap-4 p-4">
-                                    <div v-for="i in (block.content?.products?.length || 4)" :key="i" class="rounded border border-slate-200 p-3 text-center dark:border-slate-700">
-                                        <div class="mx-auto mb-2 h-16 w-16 rounded bg-slate-100 dark:bg-slate-800"></div>
-                                        <div class="text-xs text-slate-500">{{ $t('template_builder.product') }} {{ i }}</div>
-                                    </div>
+                                <div v-else-if="block.type === 'product_grid'" class="grid gap-4 p-4"
+                                    :class="{
+                                        'grid-cols-2': (block.content?.columns || 2) === 2,
+                                        'grid-cols-3': block.content?.columns === 3,
+                                        'grid-cols-4': block.content?.columns === 4
+                                    }">
+                                    <!-- Show actual products if available -->
+                                    <template v-if="block.content?.products?.length > 0">
+                                        <div v-for="(product, index) in block.content.products" :key="product.id || index"
+                                            class="rounded-lg border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                                            <!-- Product Image -->
+                                            <div class="mx-auto mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg bg-slate-50 dark:bg-slate-700">
+                                                <img v-if="product.image" :src="product.image" :alt="product.title || ''" class="h-full w-full object-contain" />
+                                                <svg v-else class="h-10 w-10 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <!-- Product Title -->
+                                            <h4 class="mb-1 line-clamp-2 text-xs font-medium text-slate-800 dark:text-slate-200">
+                                                {{ product.title || $t('template_builder.product') }}
+                                            </h4>
+                                            <!-- Product Price -->
+                                            <p class="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                                {{ product.price || '0.00' }} {{ product.currency || 'zł' }}
+                                            </p>
+                                        </div>
+                                    </template>
+                                    <!-- Show placeholders if no products selected -->
+                                    <template v-else>
+                                        <div v-for="i in (block.content?.columns || 2)" :key="i"
+                                            class="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800/50">
+                                            <div class="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700">
+                                                <svg class="h-8 w-8 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                </svg>
+                                            </div>
+                                            <div class="text-xs text-slate-400 dark:text-slate-500">{{ $t('template_builder.product') }} {{ i }}</div>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <!-- Social Block -->
