@@ -75,6 +75,23 @@ const showSizePicker = ref(false)
 const showColorPicker = ref(false)
 const showHighlightPicker = ref(false)
 
+// Text editing modal for full HTML documents
+const showTextEditModal = ref(false)
+const editingElement = ref(null)
+const editingText = ref('')
+const editingElementTag = ref('')
+const textEditCursorPos = ref(0)
+
+// Common variables for insertion
+const commonVariables = [
+    { code: '[[first_name]]', label: 'placeholders.first_name' },
+    { code: '[[last_name]]', label: 'placeholders.last_name' },
+    { code: '[[email]]', label: 'placeholders.email' },
+    { code: '[[phone]]', label: 'placeholders.phone' },
+    { code: '[[company]]', label: 'placeholders.company' },
+    { code: '[[unsubscribe_link]]', label: 'placeholders.unsubscribe_link' },
+]
+
 // Available fonts
 const fontOptions = [
     { name: 'Arial', value: 'Arial, sans-serif' },
@@ -143,7 +160,7 @@ const emojiPickerStyle = computed(() => {
 // Check if content is a full HTML document (email template with tables, doctype, etc.)
 const isFullHtmlDocument = computed(() => {
     const content = sourceCode.value?.trim().toLowerCase() || ''
-    return content.startsWith('<!doctype') || 
+    return content.startsWith('<!doctype') ||
            content.startsWith('<html') ||
            content.includes('<table') ||
            content.includes('<body')
@@ -204,11 +221,11 @@ watch(() => props.modelValue, (value) => {
     // Always update sourceCode - it's the source of truth
     if (value !== sourceCode.value) {
         sourceCode.value = value || ''
-        
+
         // If it's now a full HTML document, switch to preview mode
         nextTick(() => {
             const content = (value || '').trim().toLowerCase()
-            const isFullHtml = content.startsWith('<!doctype') || 
+            const isFullHtml = content.startsWith('<!doctype') ||
                                content.startsWith('<html') ||
                                content.includes('<table') ||
                                content.includes('<body')
@@ -217,7 +234,7 @@ watch(() => props.modelValue, (value) => {
             }
         })
     }
-    
+
     // Only update Tiptap if NOT full HTML document and in visual mode
     if (!isFullHtmlDocument.value && editorMode.value === 'visual') {
         const isSame = editor.value?.getHTML() === value
@@ -230,7 +247,7 @@ watch(() => props.modelValue, (value) => {
 // Initialize on mount
 onMounted(() => {
     sourceCode.value = props.modelValue || ''
-    
+
     // If full HTML document, start in preview mode (not source)
     if (isFullHtmlDocument.value) {
         editorMode.value = 'preview'
@@ -240,7 +257,7 @@ onMounted(() => {
 // Switch between modes - sourceCode is ALWAYS the source of truth
 const switchMode = (mode) => {
     const previousMode = editorMode.value
-    
+
     // When leaving visual mode (and content is NOT full HTML), save Tiptap to sourceCode
     if (previousMode === 'visual' && !isFullHtmlDocument.value) {
         const tiptapHtml = editor.value?.getHTML()
@@ -248,17 +265,17 @@ const switchMode = (mode) => {
             sourceCode.value = tiptapHtml
         }
     }
-    
+
     // When entering visual mode (and content is NOT full HTML), load sourceCode into Tiptap
     if (mode === 'visual' && !isFullHtmlDocument.value) {
         nextTick(() => {
             editor.value?.commands.setContent(sourceCode.value || '', false)
         })
     }
-    
+
     // Always emit the current sourceCode
     emit('update:modelValue', sourceCode.value)
-    
+
     editorMode.value = mode
 }
 
@@ -331,17 +348,17 @@ const insertImage = () => {
             'center': 'margin-left: auto; margin-right: auto;',
             'right': 'margin-left: auto;'
         }[imageAlignment.value] || 'margin-left: auto; margin-right: auto;'
-        
+
         const widthStyle = `width: ${imageWidth.value}%; max-width: 100%; height: auto;`
         const style = `display: block; ${alignStyle} ${widthStyle}`
-        
+
         let imgHtml = `<img src="${imageUrl.value}" alt="" style="${style}" />`
-        
+
         // Wrap in link if provided
         if (imageLink.value) {
             imgHtml = `<a href="${imageLink.value}" target="_blank">${imgHtml}</a>`
         }
-        
+
         // Insert as HTML
         editor.value?.chain().focus().insertContent(imgHtml).run()
     }
@@ -389,7 +406,7 @@ const getPreviewSrcdoc = computed(() => {
     // Use externalPreviewContent if available (e.g., from live preview with substituted placeholders)
     const baseContent = props.externalPreviewContent || sourceCode.value
     const content = isFullHtmlDocument.value ? baseContent : wrapInDocument(baseContent)
-    
+
     if (previewDevice.value === 'mobile' && isFullHtmlDocument.value) {
         // Inject CSS to scale content for mobile preview
         const mobileScaleCSS = `<style>
@@ -413,31 +430,105 @@ const visualEditorIframe = ref(null)
 // Generate editable version of HTML content for visual editing
 const getEditableSrcdoc = computed(() => {
     const content = isFullHtmlDocument.value ? sourceCode.value : wrapInDocument(sourceCode.value)
-    
-    // Add contenteditable to text elements and styling for editable elements
+
+    // Add click handlers and styling for editable elements
     // Note: script tags are split to avoid Vue parser issues
     const editableCSS = '<sty' + 'le>' +
-        '[data-editable]:hover { outline: 2px solid #6366f1 !important; outline-offset: 2px !important; cursor: text !important; }' +
-        '[data-editable]:focus { outline: 2px solid #10b981 !important; outline-offset: 2px !important; background-color: rgba(16, 185, 129, 0.05) !important; }' +
-        '[data-editable] { transition: outline 0.2s ease; }' +
+        '[data-edit-id] { cursor: pointer !important; transition: all 0.2s ease !important; }' +
+        '[data-edit-id]:hover { outline: 2px solid #6366f1 !important; outline-offset: 2px !important; background-color: rgba(99, 102, 241, 0.05) !important; }' +
+        '[data-edit-id].editing-active { outline: 2px solid #10b981 !important; outline-offset: 2px !important; background-color: rgba(16, 185, 129, 0.1) !important; }' +
+        '.netsendo-edit-hint { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 9999; opacity: 0.9; pointer-events: none; }' +
     '</sty' + 'le>' +
     '<scr' + 'ipt>' +
         'document.addEventListener("DOMContentLoaded", function() {' +
-            'var editableSelectors = "h1, h2, h3, h4, h5, h6, p, span, a, td, th, li";' +
-            'document.querySelectorAll(editableSelectors).forEach(function(el) {' +
-                'if (el.textContent.trim() && (el.children.length === 0 || el.tagName === "A")) {' +
-                    'el.setAttribute("contenteditable", "true");' +
-                    'el.setAttribute("data-editable", "true");' +
+            'var editableSelectors = "h1, h2, h3, h4, h5, h6, p, span, a, td, th, li, strong, em, b, i, u, div";' +
+            'var elementIndex = 0;' +
+            'var elements = document.querySelectorAll(editableSelectors);' +
+
+            // Create hint element
+            'var hint = document.createElement("div");' +
+            'hint.className = "netsendo-edit-hint";' +
+            'hint.textContent = "Kliknij, aby edytować tekst";' +
+            'hint.style.display = "none";' +
+            'document.body.appendChild(hint);' +
+
+            // Process elements
+            'elements.forEach(function(el) {' +
+                // Only make elements with actual text content editable
+                'var hasDirectText = false;' +
+                'for (var i = 0; i < el.childNodes.length; i++) {' +
+                    'if (el.childNodes[i].nodeType === Node.TEXT_NODE && el.childNodes[i].textContent.trim()) {' +
+                        'hasDirectText = true;' +
+                        'break;' +
+                    '}' +
+                '}' +
+
+                // Also include elements with no children but with text
+                'if (hasDirectText || (el.children.length === 0 && el.textContent.trim())) {' +
+                    'var dataId = "edit-" + (elementIndex++);' +
+                    'el.setAttribute("data-edit-id", dataId);' +
+
+                    // Click handler to select element for editing
+                    'el.addEventListener("click", function(e) {' +
+                        'e.preventDefault();' +
+                        'e.stopPropagation();' +
+
+                        // Remove active class from all elements
+                        'document.querySelectorAll(".editing-active").forEach(function(active) {' +
+                            'active.classList.remove("editing-active");' +
+                        '});' +
+
+                        // Add active class to clicked element
+                        'this.classList.add("editing-active");' +
+
+                        // Send message to parent
+                        'window.parent.postMessage({' +
+                            'type: "elementClicked",' +
+                            'editId: this.getAttribute("data-edit-id"),' +
+                            'text: this.innerHTML,' +
+                            'tagName: this.tagName.toLowerCase()' +
+                        '}, "*");' +
+                    '});' +
+
+                    // Show hint on hover
+                    'el.addEventListener("mouseenter", function() {' +
+                        'hint.style.display = "block";' +
+                    '});' +
+                    'el.addEventListener("mouseleave", function() {' +
+                        'hint.style.display = "none";' +
+                    '});' +
                 '}' +
             '});' +
-            'document.addEventListener("input", function(e) {' +
-                'if (e.target.hasAttribute && e.target.hasAttribute("data-editable")) {' +
-                    'window.parent.postMessage({ type: "htmlUpdate", html: document.documentElement.outerHTML }, "*");' +
+
+            // Listen for update from parent (after saving edit)
+            'window.addEventListener("message", function(e) {' +
+                'if (e.data && e.data.type === "updateElement" && e.data.editId && e.data.newContent !== undefined) {' +
+                    'var el = document.querySelector("[data-edit-id=\\"" + e.data.editId + "\\"]");' +
+                    'if (el) {' +
+                        'el.innerHTML = e.data.newContent;' +
+                        'el.classList.remove("editing-active");' +
+                        // Send updated HTML back
+                        'window.parent.postMessage({ type: "htmlUpdate", html: document.documentElement.outerHTML }, "*");' +
+                    '}' +
+                '}' +
+                // Handle scroll to element request
+                'if (e.data && e.data.type === "scrollToElement" && e.data.editId) {' +
+                    'var el = document.querySelector("[data-edit-id=\\"" + e.data.editId + "\\"]");' +
+                    'if (el) {' +
+                        // Scroll element into view with smooth behavior
+                        'el.scrollIntoView({ behavior: "smooth", block: "center" });' +
+                        // Add temporary highlight effect
+                        'el.style.transition = "background-color 0.3s ease";' +
+                        'el.style.backgroundColor = "rgba(99, 102, 241, 0.2)";' +
+                        'setTimeout(function() {' +
+                            'el.style.backgroundColor = "";' +
+                        '}, 1500);' +
+                    '}' +
                 '}' +
             '});' +
         '});' +
     '</scr' + 'ipt>'
-    
+
     // Insert the script and CSS before closing </head> or at the end
     if (content.toLowerCase().includes('</head>')) {
         return content.replace(/<\/head>/i, editableCSS + '</head>')
@@ -452,27 +543,106 @@ const getEditableSrcdoc = computed(() => {
 const setupEditableIframe = () => {
     // Listen for messages from the editable iframe
     const handleMessage = (event) => {
+        // Handle element click - open edit modal
+        if (event.data?.type === 'elementClicked') {
+            editingElement.value = event.data.editId
+            editingText.value = event.data.text
+            editingElementTag.value = event.data.tagName
+            showTextEditModal.value = true
+            return
+        }
+
+        // Handle HTML update from iframe
         if (event.data?.type === 'htmlUpdate' && event.data.html) {
             // Extract just the content we care about (remove our injected scripts/styles)
             let newHtml = event.data.html
-            
-            // Clean up our added attributes and scripts
-            newHtml = newHtml.replace(/\s*data-editable="true"/g, '')
-            newHtml = newHtml.replace(/\s*contenteditable="true"/g, '')
-            
+
+            // Clean up our added attributes
+            newHtml = newHtml.replace(/\s*data-edit-id="[^"]*"/g, '')
+            newHtml = newHtml.replace(/\s*class="editing-active"/g, '')
+
             // Remove our injected style and script blocks
-            newHtml = newHtml.replace(/<style>\s*\[data-editable\][\s\S]*?<\/style>/gi, '')
-            newHtml = newHtml.replace(/<script>\s*document\.addEventListener\('DOMContentLoaded'[\s\S]*?<\/script>/gi, '')
-            
+            newHtml = newHtml.replace(/<style>\s*\[data-edit-id\][\s\S]*?<\/style>/gi, '')
+            newHtml = newHtml.replace(/<script>\s*document\.addEventListener\("DOMContentLoaded"[\s\S]*?<\/script>/gi, '')
+
+            // Remove hint element
+            newHtml = newHtml.replace(/<div class="netsendo-edit-hint"[^>]*>[\s\S]*?<\/div>/gi, '')
+
             // Update sourceCode with cleaned HTML
             sourceCode.value = newHtml.trim()
             emit('update:modelValue', sourceCode.value)
         }
     }
-    
+
     window.addEventListener('message', handleMessage)
-    
+
     // Cleanup on unmount will be handled in onBeforeUnmount
+}
+
+// Save edited text and update iframe
+const saveTextEdit = () => {
+    if (!editingElement.value || !visualEditorIframe.value) return
+
+    const editedElementId = editingElement.value
+
+    // Send update message to iframe
+    visualEditorIframe.value.contentWindow?.postMessage({
+        type: 'updateElement',
+        editId: editedElementId,
+        newContent: editingText.value
+    }, '*')
+
+    // Scroll to the edited element after a short delay to allow DOM update
+    setTimeout(() => {
+        visualEditorIframe.value?.contentWindow?.postMessage({
+            type: 'scrollToElement',
+            editId: editedElementId
+        }, '*')
+    }, 100)
+
+    // Close modal
+    showTextEditModal.value = false
+    editingElement.value = null
+    editingText.value = ''
+    editingElementTag.value = ''
+}
+
+// Cancel text editing
+const cancelTextEdit = () => {
+    showTextEditModal.value = false
+    editingElement.value = null
+    editingText.value = ''
+    editingElementTag.value = ''
+
+    // Remove active class from iframe element
+    if (visualEditorIframe.value?.contentWindow) {
+        visualEditorIframe.value.contentWindow.postMessage({
+            type: 'updateElement',
+            editId: editingElement.value,
+            newContent: editingText.value
+        }, '*')
+    }
+}
+
+// Insert variable at cursor position in text edit textarea
+const insertVariableInTextEdit = (variable) => {
+    const textarea = document.getElementById('textEditTextarea')
+    if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const text = editingText.value
+        editingText.value = text.substring(0, start) + variable + text.substring(end)
+
+        // Restore cursor position after variable
+        nextTick(() => {
+            textarea.focus()
+            const newPos = start + variable.length
+            textarea.setSelectionRange(newPos, newPos)
+        })
+    } else {
+        // Fallback: append to end
+        editingText.value += variable
+    }
 }
 
 // Insert emoji at cursor position in Tiptap editor
@@ -502,8 +672,8 @@ const insertEmoji = (emoji) => {
 defineExpose({
     switchMode,
     getSourceCode: () => sourceCode.value,
-    setSourceCode: (code) => { 
-        sourceCode.value = code 
+    setSourceCode: (code) => {
+        sourceCode.value = code
         emit('update:modelValue', code)
     },
     getCurrentMode: () => editorMode.value,
@@ -540,13 +710,13 @@ defineExpose({
     getWrappedContent: () => {
         const content = sourceCode.value || ''
         // Don't wrap if already a full HTML document
-        if (content.trim().toLowerCase().startsWith('<!doctype') || 
+        if (content.trim().toLowerCase().startsWith('<!doctype') ||
             content.trim().toLowerCase().startsWith('<html')) {
             return content
         }
         // Wrap with container div for proper email layout
-        const alignStyle = contentAlign.value === 'center' 
-            ? 'margin: 0 auto;' 
+        const alignStyle = contentAlign.value === 'center'
+            ? 'margin: 0 auto;'
             : 'margin: 0;'
         return `<div style="max-width: ${contentWidth.value}px; ${alignStyle} font-family: system-ui, -apple-system, sans-serif; line-height: 1.6;">${content}</div>`
     },
@@ -575,8 +745,8 @@ const btnClass = (isActive = false) => {
                         @click="switchMode('visual')"
                         :class="[
                             'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                            editorMode === 'visual' 
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                            editorMode === 'visual'
+                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         ]"
                     >
@@ -592,8 +762,8 @@ const btnClass = (isActive = false) => {
                         @click="switchMode('source')"
                         :class="[
                             'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                            editorMode === 'source' 
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                            editorMode === 'source'
+                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         ]"
                     >
@@ -609,8 +779,8 @@ const btnClass = (isActive = false) => {
                         @click="switchMode('preview')"
                         :class="[
                             'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                            editorMode === 'preview' 
-                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                            editorMode === 'preview'
+                                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         ]"
                     >
@@ -640,7 +810,7 @@ const btnClass = (isActive = false) => {
             <!-- Visual Mode Toolbar - only show for simple content, not full HTML documents -->
             <div v-if="editorMode === 'visual' && editor && !isFullHtmlDocument" class="flex flex-wrap items-center gap-1 p-2">
                 <!-- Text formatting -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleBold().run()"
                     :disabled="!editor.can().chain().focus().toggleBold().run()"
@@ -649,7 +819,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleItalic().run()"
                     :disabled="!editor.can().chain().focus().toggleItalic().run()"
@@ -658,7 +828,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4m-2 0v16m-6-4h12" transform="skewX(-12)" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleUnderline().run()"
                     :class="btnClass(editor.isActive('underline'))"
@@ -666,7 +836,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8v4a5 5 0 0010 0V8M5 20h14" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleStrike().run()"
                     :disabled="!editor.can().chain().focus().toggleStrike().run()"
@@ -680,7 +850,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Font Family Picker -->
                 <div class="relative">
-                    <button 
+                    <button
                         type="button"
                         @click="showFontPicker = !showFontPicker; showSizePicker = false; showColorPicker = false; showHighlightPicker = false"
                         :class="btnClass(showFontPicker)"
@@ -688,8 +858,8 @@ const btnClass = (isActive = false) => {
                     >
                         <span class="text-xs font-medium">Aa</span>
                     </button>
-                    <div 
-                        v-if="showFontPicker" 
+                    <div
+                        v-if="showFontPicker"
                         class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[140px]"
                     >
                         <button
@@ -715,7 +885,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Font Size Picker -->
                 <div class="relative">
-                    <button 
+                    <button
                         type="button"
                         @click="showSizePicker = !showSizePicker; showFontPicker = false; showColorPicker = false; showHighlightPicker = false"
                         :class="btnClass(showSizePicker)"
@@ -725,8 +895,8 @@ const btnClass = (isActive = false) => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
                         </svg>
                     </button>
-                    <div 
-                        v-if="showSizePicker" 
+                    <div
+                        v-if="showSizePicker"
                         class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[80px]"
                     >
                         <button
@@ -743,7 +913,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Text Color Picker -->
                 <div class="relative">
-                    <button 
+                    <button
                         type="button"
                         @click="showColorPicker = !showColorPicker; showFontPicker = false; showSizePicker = false; showHighlightPicker = false"
                         :class="btnClass(showColorPicker)"
@@ -754,8 +924,8 @@ const btnClass = (isActive = false) => {
                         </svg>
                         <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded" :style="{ backgroundColor: editor.getAttributes('textStyle')?.color || '#000' }"></span>
                     </button>
-                    <div 
-                        v-if="showColorPicker" 
+                    <div
+                        v-if="showColorPicker"
                         class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[156px]"
                     >
                         <div class="grid grid-cols-6 gap-1">
@@ -782,7 +952,7 @@ const btnClass = (isActive = false) => {
 
                 <!-- Highlight Color Picker -->
                 <div class="relative">
-                    <button 
+                    <button
                         type="button"
                         @click="showHighlightPicker = !showHighlightPicker; showFontPicker = false; showSizePicker = false; showColorPicker = false"
                         :class="btnClass(showHighlightPicker || editor.isActive('highlight'))"
@@ -793,8 +963,8 @@ const btnClass = (isActive = false) => {
                         </svg>
                         <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 rounded" :style="{ backgroundColor: editor.getAttributes('highlight')?.color || '#FFCC00' }"></span>
                     </button>
-                    <div 
-                        v-if="showHighlightPicker" 
+                    <div
+                        v-if="showHighlightPicker"
                         class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[156px]"
                     >
                         <div class="grid grid-cols-6 gap-1">
@@ -820,7 +990,7 @@ const btnClass = (isActive = false) => {
                 </div>
 
                 <!-- Headings -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 1 }))"
@@ -828,7 +998,7 @@ const btnClass = (isActive = false) => {
                 >
                     <span class="font-bold text-xs">H1</span>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 2 }))"
@@ -836,7 +1006,7 @@ const btnClass = (isActive = false) => {
                 >
                     <span class="font-bold text-xs">H2</span>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
                     :class="btnClass(editor.isActive('heading', { level: 3 }))"
@@ -848,7 +1018,7 @@ const btnClass = (isActive = false) => {
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Text alignment -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().setTextAlign('left').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'left' }))"
@@ -856,7 +1026,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().setTextAlign('center').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'center' }))"
@@ -864,7 +1034,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().setTextAlign('right').run()"
                     :class="btnClass(editor.isActive({ textAlign: 'right' }))"
@@ -876,7 +1046,7 @@ const btnClass = (isActive = false) => {
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Lists -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleBulletList().run()"
                     :class="btnClass(editor.isActive('bulletList'))"
@@ -884,7 +1054,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleOrderedList().run()"
                     :class="btnClass(editor.isActive('orderedList'))"
@@ -896,7 +1066,7 @@ const btnClass = (isActive = false) => {
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Blockquote & Code -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleBlockquote().run()"
                     :class="btnClass(editor.isActive('blockquote'))"
@@ -904,7 +1074,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().toggleCodeBlock().run()"
                     :class="btnClass(editor.isActive('codeBlock'))"
@@ -916,7 +1086,7 @@ const btnClass = (isActive = false) => {
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Link & Image -->
-                <button 
+                <button
                     type="button"
                     @click="openLinkModal"
                     :class="btnClass(editor.isActive('link'))"
@@ -924,7 +1094,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="openImageModal"
                     :class="btnClass()"
@@ -932,10 +1102,10 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </button>
-                
+
                 <!-- Emoji Picker -->
                 <div class="relative">
-                    <button 
+                    <button
                         ref="emojiButtonRef"
                         type="button"
                         @click="showEmojiPicker = !showEmojiPicker"
@@ -945,10 +1115,10 @@ const btnClass = (isActive = false) => {
                         <span class="text-lg">😀</span>
                     </button>
                 </div>
-                
+
                 <Teleport to="body">
-                    <div 
-                        v-if="showEmojiPicker" 
+                    <div
+                        v-if="showEmojiPicker"
                         ref="emojiPickerRef"
                         class="fixed p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-[9999] w-[320px]"
                         :style="emojiPickerStyle"
@@ -962,8 +1132,8 @@ const btnClass = (isActive = false) => {
                                 @click="activeEmojiCategory = key"
                                 :class="[
                                     'p-1.5 rounded transition-colors text-lg',
-                                    activeEmojiCategory === key 
-                                        ? 'bg-indigo-100 dark:bg-indigo-900/50' 
+                                    activeEmojiCategory === key
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/50'
                                         : 'hover:bg-slate-100 dark:hover:bg-slate-700'
                                 ]"
                                 :title="$t('editor.emoji_categories.' + key) || key"
@@ -985,9 +1155,9 @@ const btnClass = (isActive = false) => {
                         </div>
                     </div>
                     <!-- Backdrop to close emoji picker -->
-                    <div 
-                        v-if="showEmojiPicker" 
-                        class="fixed inset-0 z-[9998]" 
+                    <div
+                        v-if="showEmojiPicker"
+                        class="fixed inset-0 z-[9998]"
                         @click="showEmojiPicker = false"
                     ></div>
                 </Teleport>
@@ -995,7 +1165,7 @@ const btnClass = (isActive = false) => {
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
                 <!-- Horizontal rule -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().setHorizontalRule().run()"
                     :class="btnClass()"
@@ -1031,8 +1201,8 @@ const btnClass = (isActive = false) => {
                         @click="contentAlign = 'left'"
                         :class="[
                             'rounded px-2 py-1 text-xs transition-colors',
-                            contentAlign === 'left' 
-                                ? 'bg-indigo-600 text-white' 
+                            contentAlign === 'left'
+                                ? 'bg-indigo-600 text-white'
                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                         ]"
                         :title="$t('editor.align_left')"
@@ -1046,8 +1216,8 @@ const btnClass = (isActive = false) => {
                         @click="contentAlign = 'center'"
                         :class="[
                             'rounded px-2 py-1 text-xs transition-colors',
-                            contentAlign === 'center' 
-                                ? 'bg-indigo-600 text-white' 
+                            contentAlign === 'center'
+                                ? 'bg-indigo-600 text-white'
                                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                         ]"
                         :title="$t('editor.align_center')"
@@ -1061,7 +1231,7 @@ const btnClass = (isActive = false) => {
                 <div class="flex-1"></div>
 
                 <!-- Undo/Redo -->
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().undo().run()"
                     :disabled="!editor.can().chain().focus().undo().run()"
@@ -1070,7 +1240,7 @@ const btnClass = (isActive = false) => {
                 >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
                 </button>
-                <button 
+                <button
                     type="button"
                     @click="editor.chain().focus().redo().run()"
                     :disabled="!editor.can().chain().focus().redo().run()"
@@ -1108,7 +1278,7 @@ const btnClass = (isActive = false) => {
             </div>
             <!-- For simple content, show Tiptap editor with width control -->
             <div v-else class="bg-slate-100 dark:bg-slate-900 p-4">
-                <div 
+                <div
                     :class="[
                         'bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden',
                         contentAlign === 'center' ? 'mx-auto' : 'mr-auto'
@@ -1135,13 +1305,13 @@ const btnClass = (isActive = false) => {
         <div v-show="editorMode === 'preview'" :style="{ minHeight }" class="bg-white">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 <div class="flex items-center justify-center gap-2">
-                    <button 
+                    <button
                         type="button"
                         @click="previewDevice = 'desktop'"
                         :class="[
                             'flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors',
-                            previewDevice === 'desktop' 
-                                ? 'bg-indigo-600 text-white shadow-sm' 
+                            previewDevice === 'desktop'
+                                ? 'bg-indigo-600 text-white shadow-sm'
                                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
                         ]"
                     >
@@ -1150,13 +1320,13 @@ const btnClass = (isActive = false) => {
                         </svg>
                         Desktop
                     </button>
-                    <button 
+                    <button
                         type="button"
                         @click="previewDevice = 'mobile'"
                         :class="[
                             'flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors',
-                            previewDevice === 'mobile' 
-                                ? 'bg-indigo-600 text-white shadow-sm' 
+                            previewDevice === 'mobile'
+                                ? 'bg-indigo-600 text-white shadow-sm'
                                 : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'
                         ]"
                     >
@@ -1168,7 +1338,7 @@ const btnClass = (isActive = false) => {
                 </div>
             </div>
             <div class="p-4 flex justify-center bg-slate-100 dark:bg-slate-900">
-                <div 
+                <div
                     class="bg-white shadow-lg rounded-lg overflow-hidden transition-all duration-300"
                     :class="previewDevice === 'mobile' ? 'w-[375px]' : 'w-full max-w-2xl'"
                 >
@@ -1182,6 +1352,81 @@ const btnClass = (isActive = false) => {
                         :style="previewDevice === 'mobile' ? 'transform-origin: top center;' : ''"
                         sandbox="allow-same-origin allow-scripts"
                     ></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Edit Modal for Full HTML Documents -->
+        <div v-if="showTextEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="cancelTextEdit">
+            <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-xl shadow-2xl" @click.stop>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="h-5 w-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        {{ $t('editor.edit_text_modal.title') || 'Edytuj tekst' }}
+                    </h3>
+                    <span class="text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-full font-mono">
+                        {{ editingElementTag }}
+                    </span>
+                </div>
+
+                <!-- Content Textarea -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        {{ $t('editor.edit_text_modal.content_label') || 'Zawartość' }}
+                    </label>
+                    <textarea
+                        id="textEditTextarea"
+                        v-model="editingText"
+                        rows="6"
+                        class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm resize-y"
+                        :placeholder="$t('editor.edit_text_modal.placeholder') || 'Wprowadź treść...'"
+                    ></textarea>
+                </div>
+
+                <!-- Variable Insertion -->
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                        </svg>
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ $t('editor.edit_text_modal.insert_variable') || 'Wstaw zmienną' }}
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="variable in commonVariables"
+                            :key="variable.code"
+                            type="button"
+                            @click="insertVariableInTextEdit(variable.code)"
+                            class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors border border-slate-200 dark:border-slate-600"
+                        >
+                            <code class="text-indigo-600 dark:text-indigo-400">{{ variable.code }}</code>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        @click="cancelTextEdit"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    >
+                        {{ $t('common.cancel') }}
+                    </button>
+                    <button
+                        type="button"
+                        @click="saveTextEdit"
+                        class="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {{ $t('common.save') }}
+                    </button>
                 </div>
             </div>
         </div>
@@ -1222,7 +1467,7 @@ const btnClass = (isActive = false) => {
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                     {{ $t('editor.insert_image') }}
                 </h3>
-                
+
                 <!-- Image URL Input -->
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ $t('editor.image_properties.url') }}</label>
@@ -1255,9 +1500,9 @@ const btnClass = (isActive = false) => {
                             {{ $t('editor.image_properties.load_error') }}
                         </div>
                         <!-- Image preview with alignment -->
-                        <img 
-                            :src="imageUrl" 
-                            @load="onImageLoad" 
+                        <img
+                            :src="imageUrl"
+                            @load="onImageLoad"
                             @error="onImageError"
                             :class="[
                                 'max-h-[150px] rounded transition-opacity',
@@ -1282,8 +1527,8 @@ const btnClass = (isActive = false) => {
                                 @click="imageAlignment = 'left'"
                                 :class="[
                                     'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
-                                    imageAlignment === 'left' 
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                                    imageAlignment === 'left'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
                                         : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 ]"
                             >
@@ -1295,8 +1540,8 @@ const btnClass = (isActive = false) => {
                                 @click="imageAlignment = 'center'"
                                 :class="[
                                     'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
-                                    imageAlignment === 'center' 
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                                    imageAlignment === 'center'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
                                         : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 ]"
                             >
@@ -1308,8 +1553,8 @@ const btnClass = (isActive = false) => {
                                 @click="imageAlignment = 'right'"
                                 :class="[
                                     'flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors',
-                                    imageAlignment === 'right' 
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' 
+                                    imageAlignment === 'right'
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
                                         : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                 ]"
                             >

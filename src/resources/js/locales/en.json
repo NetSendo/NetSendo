@@ -376,6 +376,14 @@
             "right": "Right",
             "width": "Width",
             "link": "Link (optional)"
+        },
+        "edit_text_modal": {
+            "title": "Edit text",
+            "content_label": "Content",
+            "placeholder": "Enter content...",
+            "insert_variable": "Insert variable",
+            "save": "Save",
+            "cancel": "Cancel"
         }
     },
     "navigation": {

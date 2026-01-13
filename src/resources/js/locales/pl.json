@@ -375,6 +375,14 @@
             "right": "Prawo",
             "width": "Szerokość",
             "link": "Link (opcjonalnie)"
+        },
+        "edit_text_modal": {
+            "title": "Edytuj tekst",
+            "content_label": "Zawartość",
+            "placeholder": "Wprowadź treść...",
+            "insert_variable": "Wstaw zmienną",
+            "save": "Zapisz",
+            "cancel": "Anuluj"
         }
     },
     "navigation": {

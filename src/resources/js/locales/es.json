@@ -352,6 +352,14 @@
             "right": "Derecha",
             "width": "Ancho",
             "link": "Enlace (opcional)"
+        },
+        "edit_text_modal": {
+            "title": "Editar texto",
+            "content_label": "Contenido",
+            "placeholder": "Introduzca el contenido...",
+            "insert_variable": "Insertar variable",
+            "save": "Guardar",
+            "cancel": "Cancelar"
         }
     },
     "marketplace": {

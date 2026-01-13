@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.6] – Short Description
+
+**Release date:** 2026-01-13
+
 ### Added
+
+- **Full HTML Visual Editing:**
+
+  - **Text Editing:** Implemented direct text editing for full HTML templates in visual mode with click-to-edit functionality.
+  - **Modal Interface:** Added text editing modal (`AdvancedEditor.vue`) with textarea and variable insertion support.
+  - **UX Improvements:** Added hover highlights for editable elements and auto-scroll to element after saving.
+  - **Translations:** Added translations for text editing features in PL, EN, DE, ES.
 
 - **A/B Testing System:**
 

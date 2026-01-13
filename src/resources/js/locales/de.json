@@ -390,6 +390,14 @@
             "right": "Rechts",
             "width": "Breite",
             "link": "Link (optional)"
+        },
+        "edit_text_modal": {
+            "title": "Text bearbeiten",
+            "content_label": "Inhalt",
+            "placeholder": "Inhalt eingeben...",
+            "insert_variable": "Variable einfügen",
+            "save": "Speichern",
+            "cancel": "Abbrechen"
         }
     },
     "marketplace": {
