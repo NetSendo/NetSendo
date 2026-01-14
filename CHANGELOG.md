@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Template Builder - Image Upload on Production:**
+  - Fixed 404 errors for uploaded images in production (`/storage/templates/images/*` not found).
+  - Implemented automatic storage symlink creation in `AppServiceProvider` that runs on every application boot.
+  - Added automatic directory creation for `templates/images` and `templates/thumbnails`.
+  - Added `storage:link --force` to composer setup script for initial installation.
+  - No manual intervention required on production after deployment - symlinks and directories are created automatically.
+
 ## [1.6.8] – Short Description
 
 **Release date:** 2026-01-13
