@@ -9,13 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Template Builder - Image Upload on Production:**
+- **Template Builder - Image Upload on Production (Docker):**
   - Fixed 404 errors for uploaded images in production (`/storage/templates/images/*` not found).
-  - Implemented automatic storage symlink creation in `AppServiceProvider` that runs on every HTTP request.
-  - Fixed initial bug where method had inverted logic (was running during console commands instead of web requests).
+  - **Root cause:** Docker uses separate volumes for `public` and `storage/app` - symlinks don't work between volumes.
+  - **Solution:** Updated `docker/nginx/default.conf` with location block to serve `/storage` files directly from storage volume using `alias` directive.
+  - Updated `docker-compose.yml` to mount `netsendo-storage` volume to nginx webserver container (read-only).
+  - Implemented automatic storage symlink creation in `AppServiceProvider` for non-Docker environments.
   - Added automatic directory creation for `templates/images` and `templates/thumbnails`.
-  - Added `storage:link --force` to composer setup script for initial installation.
-  - No manual intervention required on production after deployment - symlinks and directories are created automatically on first web request.
+  - Added `storage:link --force` to composer setup script.
+  - **Deploy instructions:** After updating, restart nginx container: `docker compose restart webserver`
 
 ## [1.6.8] – Short Description
 
