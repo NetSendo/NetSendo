@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **List Management - View Subscribers Action:**
+  - Added "View Subscribers" button to Email and SMS list actions (Grid and Table views), allowing direct navigation to the filtered subscriber list.
+  - Added translations for the new action in PL, EN, DE, ES.
+
 ### Fixed
+
+- **WYSIWYG Editor - Image Style Options:**
+
+  - Fixed issue where image formatting options (width, alignment, float, margin, border-radius) were not being preserved after saving.
+  - Created custom `CustomImage` extension for Tiptap that properly preserves inline `style` attribute during HTML parsing/serialization.
+  - Applied fix to both `AdvancedEditor.vue` and `SignatureEditor.vue`.
+  - Removed CSS override that was forcing default `border-radius` on all images.
 
 - **Template Builder - Image Upload 404 on Production (Docker):**
   - Fixed 404 errors when accessing uploaded images in Template Builder (`/storage/templates/images/*` not found).

@@ -588,6 +588,7 @@
         "no_description": "Brak opisu listy.",
         "edit": "Edytuj",
         "delete": "Usuń",
+        "view_subscribers": "Zobacz subskrybentów",
         "create_message": "Utwórz wiadomość",
         "table": {
             "list_id": "ID listy",
@@ -786,6 +787,7 @@
             "created_at": "Utworzono",
             "actions": "Akcje"
         },
+        "view_subscribers": "Zobacz subskrybentów",
         "create_sms": "Utwórz SMS",
         "delete_modal": {
             "title": "Usuń listę SMS \"{name}\"",

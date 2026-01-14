@@ -900,6 +900,7 @@
         "no_description": "Keine Beschreibung vorhanden.",
         "edit": "Bearbeiten",
         "delete": "Löschen",
+        "view_subscribers": "Abonnenten anzeigen",
         "table": {
             "name": "Name",
             "status": "Status",
@@ -1078,6 +1079,7 @@
         "no_description": "Keine Beschreibung vorhanden.",
         "edit": "Bearbeiten",
         "delete": "Löschen",
+        "view_subscribers": "Abonnenten anzeigen",
         "table": {
             "name": "Name",
             "status": "Status",

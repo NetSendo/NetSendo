@@ -589,6 +589,7 @@
         "no_description": "No description provided.",
         "edit": "Edit",
         "delete": "Delete",
+        "view_subscribers": "View subscribers",
         "create_message": "Create email",
         "table": {
             "name": "Name",
@@ -776,6 +777,7 @@
         "no_description": "No description provided.",
         "edit": "Edit",
         "delete": "Delete",
+        "view_subscribers": "View subscribers",
         "create_sms": "Create SMS",
         "table": {
             "name": "Name",

@@ -3,6 +3,114 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+
+// Custom Image extension that preserves style properties via data attributes and generates inline styles
+const CustomImage = Image.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            // Store style as data attributes for reliable parsing
+            'data-width': {
+                default: '100',
+                parseHTML: element => element.getAttribute('data-width') || element.style?.width?.replace('%', '') || '100',
+                renderHTML: attributes => {
+                    return { 'data-width': attributes['data-width'] || '100' }
+                },
+            },
+            'data-align': {
+                default: 'center',
+                parseHTML: element => {
+                    const dataAlign = element.getAttribute('data-align')
+                    if (dataAlign) return dataAlign
+                    const style = element.getAttribute('style') || ''
+                    if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) return 'center'
+                    if (style.includes('margin-left: auto') && !style.includes('margin-right: auto')) return 'right'
+                    if (style.includes('margin-right: auto') && !style.includes('margin-left: auto')) return 'left'
+                    return 'center'
+                },
+                renderHTML: attributes => {
+                    return { 'data-align': attributes['data-align'] || 'center' }
+                },
+            },
+            'data-float': {
+                default: 'none',
+                parseHTML: element => {
+                    const dataFloat = element.getAttribute('data-float')
+                    if (dataFloat) return dataFloat
+                    const style = element.getAttribute('style') || ''
+                    if (style.includes('float: left')) return 'left'
+                    if (style.includes('float: right')) return 'right'
+                    return 'none'
+                },
+                renderHTML: attributes => {
+                    return { 'data-float': attributes['data-float'] || 'none' }
+                },
+            },
+            'data-margin': {
+                default: '10',
+                parseHTML: element => {
+                    const dataMargin = element.getAttribute('data-margin')
+                    if (dataMargin) return dataMargin
+                    const style = element.getAttribute('style') || ''
+                    const match = style.match(/margin:\s*(\d+)px/)
+                    return match ? match[1] : '10'
+                },
+                renderHTML: attributes => {
+                    return { 'data-margin': attributes['data-margin'] || '10' }
+                },
+            },
+            'data-border-radius': {
+                default: '0',
+                parseHTML: element => {
+                    const dataBr = element.getAttribute('data-border-radius')
+                    if (dataBr) return dataBr
+                    const style = element.getAttribute('style') || ''
+                    const match = style.match(/border-radius:\s*(\d+)px/)
+                    return match ? match[1] : '0'
+                },
+                renderHTML: attributes => {
+                    return { 'data-border-radius': attributes['data-border-radius'] || '0' }
+                },
+            },
+            style: {
+                default: null,
+                parseHTML: element => element.getAttribute('style'),
+                renderHTML: attributes => {
+                    // Generate style from data attributes
+                    const width = attributes['data-width'] || '100'
+                    const align = attributes['data-align'] || 'center'
+                    const float = attributes['data-float'] || 'none'
+                    const margin = attributes['data-margin'] || '10'
+                    const borderRadius = attributes['data-border-radius'] || '0'
+
+                    let styleStr = `width: ${width}%; max-width: 100%; height: auto;`
+                    styleStr += ` margin: ${margin}px;`
+
+                    if (float === 'left') {
+                        styleStr += ' float: left;'
+                    } else if (float === 'right') {
+                        styleStr += ' float: right;'
+                    } else {
+                        styleStr += ' display: block;'
+                        if (align === 'center') {
+                            styleStr += ' margin-left: auto; margin-right: auto;'
+                        } else if (align === 'right') {
+                            styleStr += ' margin-left: auto;'
+                        } else if (align === 'left') {
+                            styleStr += ' margin-right: auto;'
+                        }
+                    }
+
+                    if (parseInt(borderRadius) > 0) {
+                        styleStr += ` border-radius: ${borderRadius}px;`
+                    }
+
+                    return { style: styleStr }
+                },
+            },
+        }
+    },
+})
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import { FontFamily } from '@tiptap/extension-font-family'
@@ -195,7 +303,7 @@ const editor = useEditor({
                 class: 'text-indigo-600 hover:text-indigo-800 underline cursor-pointer',
             },
         }),
-        Image.configure({
+        CustomImage.configure({
             inline: true,
             allowBase64: true,
             HTMLAttributes: {
@@ -437,12 +545,21 @@ const openImageEditModal = (imgElement) => {
     // Parse style attribute
     const style = imgElement.getAttribute('style') || ''
 
-    // Extract width (e.g., "width: 50%;")
-    const widthMatch = style.match(/width:\s*(\d+)%/)
-    imageWidth.value = widthMatch ? widthMatch[1] : '100'
+    // Read from data attributes first (from CustomImage extension), fallback to style parsing
+    // Extract width
+    const dataWidth = imgElement.getAttribute('data-width')
+    if (dataWidth) {
+        imageWidth.value = dataWidth
+    } else {
+        const widthMatch = style.match(/width:\s*(\d+)%/)
+        imageWidth.value = widthMatch ? widthMatch[1] : '100'
+    }
 
     // Extract float
-    if (style.includes('float: left')) {
+    const dataFloat = imgElement.getAttribute('data-float')
+    if (dataFloat) {
+        imageFloat.value = dataFloat
+    } else if (style.includes('float: left')) {
         imageFloat.value = 'left'
     } else if (style.includes('float: right')) {
         imageFloat.value = 'right'
@@ -450,8 +567,11 @@ const openImageEditModal = (imgElement) => {
         imageFloat.value = 'none'
     }
 
-    // Extract alignment from margin
-    if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) {
+    // Extract alignment
+    const dataAlign = imgElement.getAttribute('data-align')
+    if (dataAlign) {
+        imageAlignment.value = dataAlign
+    } else if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) {
         imageAlignment.value = 'center'
     } else if (style.includes('margin-left: auto')) {
         imageAlignment.value = 'right'
@@ -461,13 +581,23 @@ const openImageEditModal = (imgElement) => {
         imageAlignment.value = 'center'
     }
 
-    // Extract margin (e.g., "margin: 10px;")
-    const marginMatch = style.match(/margin:\s*(\d+)px/)
-    imageMargin.value = marginMatch ? marginMatch[1] : '10'
+    // Extract margin
+    const dataMargin = imgElement.getAttribute('data-margin')
+    if (dataMargin) {
+        imageMargin.value = dataMargin
+    } else {
+        const marginMatch = style.match(/margin:\s*(\d+)px/)
+        imageMargin.value = marginMatch ? marginMatch[1] : '10'
+    }
 
-    // Extract border-radius (e.g., "border-radius: 8px;")
-    const borderRadiusMatch = style.match(/border-radius:\s*(\d+)px/)
-    imageBorderRadius.value = borderRadiusMatch ? borderRadiusMatch[1] : '0'
+    // Extract border-radius
+    const dataBorderRadius = imgElement.getAttribute('data-border-radius')
+    if (dataBorderRadius) {
+        imageBorderRadius.value = dataBorderRadius
+    } else {
+        const borderRadiusMatch = style.match(/border-radius:\s*(\d+)px/)
+        imageBorderRadius.value = borderRadiusMatch ? borderRadiusMatch[1] : '0'
+    }
 
     // Check if image is wrapped in a link
     const parentLink = imgElement.closest('a')
@@ -547,34 +677,33 @@ const handleImageUpload = async (event) => {
 
 const insertImage = () => {
     if (imageUrl.value) {
-        // Build image HTML with alignment, width, and advanced formatting
-        let alignStyle = ''
-        let floatStyle = ''
+        // Build data attributes that will be parsed by CustomImage extension
+        const dataAttrs = `data-width="${imageWidth.value}" data-align="${imageAlignment.value}" data-float="${imageFloat.value}" data-margin="${imageMargin.value}" data-border-radius="${imageBorderRadius.value}"`
 
-        // Handle float (text wrapping)
+        // Build inline style for immediate visual feedback and email compatibility
+        let styleStr = `width: ${imageWidth.value}%; max-width: 100%; height: auto;`
+        styleStr += ` margin: ${imageMargin.value}px;`
+
         if (imageFloat.value === 'left') {
-            floatStyle = 'float: left;'
-            alignStyle = ''
+            styleStr += ' float: left;'
         } else if (imageFloat.value === 'right') {
-            floatStyle = 'float: right;'
-            alignStyle = ''
+            styleStr += ' float: right;'
         } else {
-            // No float - use block alignment
-            alignStyle = {
-                'left': 'margin-right: auto;',
-                'center': 'margin-left: auto; margin-right: auto;',
-                'right': 'margin-left: auto;'
-            }[imageAlignment.value] || 'margin-left: auto; margin-right: auto;'
+            styleStr += ' display: block;'
+            if (imageAlignment.value === 'center') {
+                styleStr += ' margin-left: auto; margin-right: auto;'
+            } else if (imageAlignment.value === 'right') {
+                styleStr += ' margin-left: auto;'
+            } else if (imageAlignment.value === 'left') {
+                styleStr += ' margin-right: auto;'
+            }
         }
 
-        const widthStyle = `width: ${imageWidth.value}%; max-width: 100%; height: auto;`
-        const marginStyle = `margin: ${imageMargin.value}px;`
-        const borderRadiusStyle = imageBorderRadius.value > 0 ? `border-radius: ${imageBorderRadius.value}px;` : ''
-        const displayStyle = imageFloat.value === 'none' ? 'display: block;' : ''
+        if (parseInt(imageBorderRadius.value) > 0) {
+            styleStr += ` border-radius: ${imageBorderRadius.value}px;`
+        }
 
-        const style = `${displayStyle} ${floatStyle} ${alignStyle} ${widthStyle} ${marginStyle} ${borderRadiusStyle}`.trim()
-
-        let imgHtml = `<img src="${imageUrl.value}" alt="" style="${style}" />`
+        let imgHtml = `<img src="${imageUrl.value}" alt="" ${dataAttrs} style="${styleStr}" />`
 
         // Wrap in link if provided
         if (imageLink.value) {
@@ -582,22 +711,33 @@ const insertImage = () => {
         }
 
         if (isEditingImage.value && editingImageElement.value) {
-            // Update existing image - get position and replace
-            // Find the image in the editor by its old src
-            const oldSrc = editingImageElement.value.getAttribute('src')
-            const html = editor.value?.getHTML() || ''
+            // For editing, we need to find and replace the image in the document
+            // Use a more reliable approach - delete and reinsert at current position
+            const editorInstance = editor.value
 
-            // Check if image was wrapped in link
-            const parentLink = editingImageElement.value.closest('a')
-            if (parentLink) {
-                // Replace the entire link+img structure
-                const oldLinkHtml = parentLink.outerHTML
-                const newHtml = html.replace(oldLinkHtml, imgHtml)
-                editor.value?.commands.setContent(newHtml, false)
-            } else {
-                // Replace just the image
-                const newHtml = html.replace(editingImageElement.value.outerHTML, imgHtml)
-                editor.value?.commands.setContent(newHtml, false)
+            // Find all images and locate the one we're editing
+            const state = editorInstance?.state
+            if (state) {
+                let foundPos = null
+                state.doc.descendants((node, pos) => {
+                    if (node.type.name === 'image' && node.attrs.src === editingImageElement.value.getAttribute('src')) {
+                        foundPos = pos
+                        return false // stop searching
+                    }
+                })
+
+                if (foundPos !== null) {
+                    // Delete old image and insert new one at the same position
+                    editorInstance.chain()
+                        .focus()
+                        .setNodeSelection(foundPos)
+                        .deleteSelection()
+                        .insertContent(imgHtml)
+                        .run()
+                } else {
+                    // Fallback: just insert at current cursor
+                    editorInstance.chain().focus().insertContent(imgHtml).run()
+                }
             }
 
             // Emit update
@@ -2120,7 +2260,6 @@ const btnClass = (isActive = false) => {
 .ProseMirror img {
     max-width: 100%;
     height: auto;
-    border-radius: 0.5rem;
 }
 
 .ProseMirror blockquote {

@@ -3,6 +3,56 @@ import { useEditor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+
+// Custom Image extension that preserves style properties via data attributes
+const CustomImage = Image.extend({
+    addAttributes() {
+        return {
+            ...this.parent?.(),
+            'data-width': {
+                default: '100',
+                parseHTML: element => element.getAttribute('data-width') || element.style?.width?.replace('%', '') || '100',
+                renderHTML: attributes => {
+                    return { 'data-width': attributes['data-width'] || '100' }
+                },
+            },
+            'data-align': {
+                default: 'center',
+                parseHTML: element => {
+                    const dataAlign = element.getAttribute('data-align')
+                    if (dataAlign) return dataAlign
+                    const style = element.getAttribute('style') || ''
+                    if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) return 'center'
+                    if (style.includes('margin-left: auto')) return 'right'
+                    if (style.includes('margin-right: auto')) return 'left'
+                    return 'center'
+                },
+                renderHTML: attributes => {
+                    return { 'data-align': attributes['data-align'] || 'center' }
+                },
+            },
+            style: {
+                default: null,
+                parseHTML: element => element.getAttribute('style'),
+                renderHTML: attributes => {
+                    const width = attributes['data-width'] || '100'
+                    const align = attributes['data-align'] || 'center'
+
+                    let styleStr = `width: ${width}%; max-width: 100%; height: auto; display: block;`
+                    if (align === 'center') {
+                        styleStr += ' margin-left: auto; margin-right: auto;'
+                    } else if (align === 'right') {
+                        styleStr += ' margin-left: auto;'
+                    } else if (align === 'left') {
+                        styleStr += ' margin-right: auto;'
+                    }
+
+                    return { style: styleStr }
+                },
+            },
+        }
+    },
+})
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import { FontFamily } from "@tiptap/extension-font-family";
@@ -140,7 +190,7 @@ const editor = useEditor({
                 class: "text-indigo-600 hover:text-indigo-800 underline",
             },
         }),
-        Image.configure({
+        CustomImage.configure({
             inline: true,
             allowBase64: true,
         }),
@@ -336,17 +386,20 @@ const onImageError = () => {
 
 const insertImage = () => {
     if (imageUrl.value) {
-        const alignStyle =
-            {
-                left: "margin-right: auto;",
-                center: "margin-left: auto; margin-right: auto;",
-                right: "margin-left: auto;",
-            }[imageAlignment.value] || "margin-left: auto; margin-right: auto;";
+        // Build data attributes for CustomImage extension
+        const dataAttrs = `data-width="${imageWidth.value}" data-align="${imageAlignment.value}"`;
 
-        const widthStyle = `width: ${imageWidth.value}%; max-width: 100%; height: auto;`;
-        const style = `display: block; ${alignStyle} ${widthStyle}`;
+        // Build inline style for visual feedback and email compatibility
+        let styleStr = `width: ${imageWidth.value}%; max-width: 100%; height: auto; display: block;`;
+        if (imageAlignment.value === 'center') {
+            styleStr += ' margin-left: auto; margin-right: auto;';
+        } else if (imageAlignment.value === 'right') {
+            styleStr += ' margin-left: auto;';
+        } else if (imageAlignment.value === 'left') {
+            styleStr += ' margin-right: auto;';
+        }
 
-        const imgHtml = `<img src="${imageUrl.value}" alt="" style="${style}" />`;
+        const imgHtml = `<img src="${imageUrl.value}" alt="" ${dataAttrs} style="${styleStr}" />`;
 
         editor.value?.chain().focus().insertContent(imgHtml).run();
     }
