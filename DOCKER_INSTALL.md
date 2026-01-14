@@ -103,6 +103,44 @@ docker compose up -d
 NETSENDO_VERSION=1.1.0 docker compose up -d
 ```
 
+### ⚠️ Manual Update Required (v1.6.9+)
+
+If you manually maintain Docker configuration files (instead of using `git pull`), you need to apply these changes for **storage file serving** to work:
+
+**1. Update `docker/nginx/default.conf`** - Add this location block:
+
+```nginx
+server {
+    # ... existing config ...
+
+    # Add this block to serve uploaded files
+    location /storage {
+        alias /var/www/storage/app/public;
+        try_files $uri $uri/ =404;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # ... rest of config ...
+}
+```
+
+**2. Update `docker-compose.yml`** - Add storage volume to webserver:
+
+```yaml
+webserver:
+  volumes:
+    - netsendo-public:/var/www/public:ro
+    - netsendo-storage:/var/www/storage/app:ro # ADD THIS LINE
+    - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+```
+
+**3. Restart with recreate:**
+
+```bash
+docker compose down && docker compose up -d
+```
+
 ---
 
 ## 📁 Data Persistence

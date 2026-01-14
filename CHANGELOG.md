@@ -9,15 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Template Builder - Image Upload on Production (Docker):**
-  - Fixed 404 errors for uploaded images in production (`/storage/templates/images/*` not found).
-  - **Root cause:** Docker uses separate volumes for `public` and `storage/app` - symlinks don't work between volumes.
-  - **Solution:** Updated `docker/nginx/default.conf` with location block to serve `/storage` files directly from storage volume using `alias` directive.
-  - Updated `docker-compose.yml` to mount `netsendo-storage` volume to nginx webserver container (read-only).
-  - Implemented automatic storage symlink creation in `AppServiceProvider` for non-Docker environments.
+- **Template Builder - Image Upload 404 on Production (Docker):**
+  - Fixed 404 errors when accessing uploaded images in Template Builder (`/storage/templates/images/*` not found).
+  - **Root cause:** Docker uses separate volumes for `public` and `storage/app` - symlinks between volumes don't work.
+  - **Solution:**
+    - Updated `docker/nginx/default.conf` with `/storage` location block using `alias` directive.
+    - Updated `docker-compose.yml` to mount `netsendo-storage` volume to nginx webserver (read-only).
+  - Added automatic storage symlink creation in `AppServiceProvider` for non-Docker environments.
   - Added automatic directory creation for `templates/images` and `templates/thumbnails`.
   - Added `storage:link --force` to composer setup script.
-  - **Deploy instructions:** After updating, restart nginx container: `docker compose restart webserver`
+  - **Upgrade:** See `DOCKER_INSTALL.md` for manual update instructions if not using `git pull`.
 
 ## [1.6.8] – Short Description
 
