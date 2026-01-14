@@ -593,6 +593,49 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     // A/B Testing API
     Route::get('/api/messages/{message}/recommended-sample-size', [\App\Http\Controllers\AbTestController::class, 'getRecommendedSampleSize'])->name('api.ab-tests.sample-size');
+
+    // ==================== MEDIA LIBRARY ====================
+
+    // Media Library
+    Route::prefix('media')->name('media.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\MediaController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\MediaController::class, 'store'])->name('store');
+        Route::post('/bulk', [\App\Http\Controllers\MediaController::class, 'bulkStore'])->name('bulk-store');
+        Route::get('/search', [\App\Http\Controllers\MediaController::class, 'search'])->name('search');
+        Route::get('/{media}', [\App\Http\Controllers\MediaController::class, 'show'])->name('show');
+        Route::put('/{media}', [\App\Http\Controllers\MediaController::class, 'update'])->name('update');
+        Route::delete('/{media}', [\App\Http\Controllers\MediaController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [\App\Http\Controllers\MediaController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/{media}/move', [\App\Http\Controllers\MediaController::class, 'move'])->name('move');
+        Route::get('/{media}/colors', [\App\Http\Controllers\MediaController::class, 'colors'])->name('colors');
+    });
+
+    // Media Folders
+    Route::resource('media-folders', \App\Http\Controllers\MediaFolderController::class)->except(['show', 'create', 'edit']);
+
+    // Brand Management
+    Route::prefix('brands')->name('brands.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BrandController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\BrandController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\BrandController::class, 'store'])->name('store');
+        Route::get('/{brand}', [\App\Http\Controllers\BrandController::class, 'show'])->name('show');
+        Route::get('/{brand}/edit', [\App\Http\Controllers\BrandController::class, 'edit'])->name('edit');
+        Route::put('/{brand}', [\App\Http\Controllers\BrandController::class, 'update'])->name('update');
+        Route::delete('/{brand}', [\App\Http\Controllers\BrandController::class, 'destroy'])->name('destroy');
+
+        // Brand Palettes
+        Route::post('/{brand}/palettes', [\App\Http\Controllers\BrandController::class, 'storePalette'])->name('palettes.store');
+        Route::put('/{brand}/palettes/{palette}', [\App\Http\Controllers\BrandController::class, 'updatePalette'])->name('palettes.update');
+        Route::delete('/{brand}/palettes/{palette}', [\App\Http\Controllers\BrandController::class, 'destroyPalette'])->name('palettes.destroy');
+        Route::get('/{brand}/colors', [\App\Http\Controllers\BrandController::class, 'allColors'])->name('colors');
+        Route::post('/{brand}/extract-colors', [\App\Http\Controllers\BrandController::class, 'extractLogoColors'])->name('extract-colors');
+    });
+
+    // Media Library API for WYSIWYG
+    Route::prefix('api/media')->name('api.media.')->group(function () {
+        Route::get('/browse', [\App\Http\Controllers\MediaController::class, 'search'])->name('browse');
+        Route::get('/colors', [\App\Http\Controllers\MediaController::class, 'allUserColors'])->name('colors');
+    });
 });
 
 // Public Webinar Routes (no auth)

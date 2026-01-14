@@ -247,6 +247,11 @@ class User extends Authenticatable
         return $this->hasMany(ExternalPage::class);
     }
 
+    public function brands()
+    {
+        return $this->hasMany(Brand::class);
+    }
+
     /**
      * Send the password reset notification.
      * Overrides default to use SystemMailService for ENV/Mailbox fallback.

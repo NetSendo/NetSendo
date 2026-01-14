@@ -7,7 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.9] – Short Description
+
+**Release date:** 2026-01-14
+
 ### Added
+
+- **Enterprise Media Library:**
+
+  - **Media Library Page (`/media`):** Centralized asset management with drag-and-drop upload, filtering by brand/type/folder, search functionality, bulk selection, and grid display.
+  - **Brand Management Page (`/brands`):** Create and manage brands with logos, descriptions, and color palettes.
+  - **Automatic Color Extraction:** Native GD library k-means clustering algorithm extracts 8 dominant colors from uploaded images automatically.
+  - **WYSIWYG Components (Prepared):**
+    - `MediaBrowser.vue`: Modal component for selecting images from the library within the WYSIWYG editor.
+    - `ColorPalettePicker.vue`: Color picker with tabs for brand colors, media-extracted colors, and custom color input.
+  - **Database Schema:** New tables: `media_folders`, `brands`, `media`, `media_colors`, `brand_palettes`.
+  - **Models:** `Brand`, `Media`, `MediaColor`, `MediaFolder`, `BrandPalette` with full Eloquent relationships.
+  - **Controllers:** `MediaController`, `BrandController`, `MediaFolderController` with CRUD and color extraction.
+  - **Services:** `ColorExtractionService` with k-means algorithm for color detection.
+  - **Authorization:** `MediaPolicy` and `BrandPolicy` for user-scoped access control.
+  - **Navigation:** Added "Media Library" group to sidebar with links to Media and Brands pages.
+  - **Translations:** Full localization in EN, PL, DE, ES for all media, brands, and colors features.
+
+  - **Media Library Enhancements:**
+
+    - **Detailed View:** Added dedicated media view page (`/media/{id}`) displaying full image preview, metadata (size, dimensions, type), and extracted color palette.
+    - **Type Management:** implemented functionality to change media type (Image, Logo, Icon, Document) and update Alt Text directly from the detailed view.
+    - **Upload Improvements:** Fixed 500 Internal Server Error during bulk upload by resolving GD library namespace conflicts. Added better error handling and automatic page reload on success.
+
+  - **WYSIWYG Editor - Media Integration:**
+    - **Browse Media Library:** Added "Browse media library" button to the image insertion modal.
+    - **Logo Selection:** Added specialized "Insert logo from library" button that filters the view to show only media items marked as "Logo".
+    - **Visual Browser:** efficient grid-based media selection modal directly within the editor interface.
 
 - **List Management - View Subscribers Action:**
   - Added "View Subscribers" button to Email and SMS list actions (Grid and Table views), allowing direct navigation to the filtered subscriber list.

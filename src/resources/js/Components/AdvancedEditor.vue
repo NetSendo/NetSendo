@@ -177,6 +177,11 @@ const imageFloat = ref('none') // none, left, right (for text wrapping)
 const imageMargin = ref('10') // margin in pixels
 const imageBorderRadius = ref('0') // border-radius in pixels
 
+// Media browser state
+const showMediaBrowser = ref(false)
+const mediaLibrary = ref([])
+const isLoadingMedia = ref(false)
+
 // Content width control (default 600px for email compatibility)
 const contentWidth = ref(600)
 
@@ -675,6 +680,55 @@ const handleImageUpload = async (event) => {
     }
 }
 
+// Load media from library
+const openMediaBrowser = async (filterType = null) => {
+    showMediaBrowser.value = true
+    showLogoBrowser.value = false
+    isLoadingMedia.value = true
+    try {
+        const response = await axios.get(route('media.search'))
+        let media = response.data.media || []
+        // Filter by type if specified
+        if (filterType) {
+            media = media.filter(m => m.type === filterType)
+        }
+        mediaLibrary.value = media
+    } catch (error) {
+        console.error('Failed to load media:', error)
+        mediaLibrary.value = []
+    } finally {
+        isLoadingMedia.value = false
+    }
+}
+
+// Load logos from library
+const showLogoBrowser = ref(false)
+const openLogoBrowser = async () => {
+    showLogoBrowser.value = true
+    showMediaBrowser.value = false
+    isLoadingMedia.value = true
+    try {
+        const response = await axios.get(route('media.search'))
+        let media = response.data.media || []
+        // Filter only logos
+        media = media.filter(m => m.type === 'logo')
+        mediaLibrary.value = media
+    } catch (error) {
+        console.error('Failed to load logos:', error)
+        mediaLibrary.value = []
+    } finally {
+        isLoadingMedia.value = false
+    }
+}
+
+// Select image from media browser
+const selectFromMediaBrowser = (media) => {
+    imageUrl.value = media.url
+    imagePreviewLoaded.value = true
+    imagePreviewError.value = false
+    showMediaBrowser.value = false
+    showLogoBrowser.value = false
+}
 const insertImage = () => {
     if (imageUrl.value) {
         // Build data attributes that will be parsed by CustomImage extension
@@ -763,6 +817,43 @@ const closeImageModal = () => {
     imageBorderRadius.value = '0'
     isEditingImage.value = false
     editingImageElement.value = null
+}
+
+// Delete the currently editing image from the editor
+const deleteImage = () => {
+    if (!isEditingImage.value || !editingImageElement.value) {
+        closeImageModal()
+        return
+    }
+
+    const editorInstance = editor.value
+    const state = editorInstance?.state
+
+    if (state) {
+        let foundPos = null
+        state.doc.descendants((node, pos) => {
+            if (node.type.name === 'image' && node.attrs.src === editingImageElement.value.getAttribute('src')) {
+                foundPos = pos
+                return false // stop searching
+            }
+        })
+
+        if (foundPos !== null) {
+            // Delete the image at the found position
+            editorInstance.chain()
+                .focus()
+                .setNodeSelection(foundPos)
+                .deleteSelection()
+                .run()
+
+            // Emit update
+            const updatedHtml = editor.value?.getHTML() || ''
+            sourceCode.value = updatedHtml
+            emit('update:modelValue', updatedHtml)
+        }
+    }
+
+    closeImageModal()
 }
 
 // Computed for preview content
@@ -1951,6 +2042,82 @@ const btnClass = (isActive = false) => {
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $t('editor.image_upload_hint') }}</p>
                 </div>
 
+                <!-- Browse Media Library Button -->
+                <div class="mb-4">
+                    <button
+                        type="button"
+                        @click="openMediaBrowser"
+                        class="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-indigo-300 bg-indigo-50 p-4 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 transition-colors"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {{ $t('common.browse_media') }}
+                    </button>
+                </div>
+
+                <!-- Media Browser Dropdown -->
+                <div v-if="showMediaBrowser" class="mb-4 border rounded-lg p-3 bg-slate-50 dark:bg-slate-900 max-h-48 overflow-y-auto">
+                    <div v-if="isLoadingMedia" class="flex items-center justify-center py-4">
+                        <svg class="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </div>
+                    <div v-else-if="mediaLibrary.length === 0" class="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">
+                        {{ $t('media.no_media_found') }}
+                    </div>
+                    <div v-else class="grid grid-cols-4 gap-2">
+                        <button
+                            v-for="media in mediaLibrary"
+                            :key="media.id"
+                            type="button"
+                            @click="selectFromMediaBrowser(media)"
+                            class="aspect-square overflow-hidden rounded-lg border-2 border-transparent hover:border-indigo-500 transition-colors"
+                        >
+                            <img :src="media.url" :alt="media.name" class="h-full w-full object-cover" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Browse Logos Button -->
+                <div class="mb-4">
+                    <button
+                        type="button"
+                        @click="openLogoBrowser"
+                        class="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-purple-300 bg-purple-50 p-4 text-sm font-medium text-purple-700 hover:bg-purple-100 dark:border-purple-600 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 transition-colors"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        {{ $t('common.browse_logos') }}
+                    </button>
+                </div>
+
+                <!-- Logo Browser Dropdown -->
+                <div v-if="showLogoBrowser" class="mb-4 border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20 max-h-48 overflow-y-auto">
+                    <div v-if="isLoadingMedia" class="flex items-center justify-center py-4">
+                        <svg class="animate-spin h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </div>
+                    <div v-else-if="mediaLibrary.length === 0" class="text-center py-4 text-purple-600 dark:text-purple-400 text-sm">
+                        {{ $t('media.no_logos_found') }}
+                    </div>
+                    <div v-else class="grid grid-cols-4 gap-2">
+                        <button
+                            v-for="media in mediaLibrary"
+                            :key="media.id"
+                            type="button"
+                            @click="selectFromMediaBrowser(media)"
+                            class="aspect-square overflow-hidden rounded-lg border-2 border-transparent hover:border-purple-500 bg-white dark:bg-slate-800 transition-colors"
+                        >
+                            <img :src="media.url" :alt="media.name" class="h-full w-full object-contain p-1" />
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Separator -->
                 <div class="relative mb-4">
                     <div class="absolute inset-0 flex items-center">
@@ -2174,27 +2341,41 @@ const btnClass = (isActive = false) => {
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-6 flex justify-end gap-3">
-                    <button
-                        type="button"
-                        @click="showImageModal = false"
-                        class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    >
-                        {{ $t('common.cancel') }}
-                    </button>
-                    <button
-                        type="button"
-                        @click="insertImage"
-                        :disabled="!imageUrl || !imagePreviewLoaded"
-                        :class="[
-                            'px-4 py-2 text-sm rounded-lg transition-colors',
-                            (!imageUrl || !imagePreviewLoaded)
-                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        ]"
-                    >
-                        {{ $t('editor.insert') }}
-                    </button>
+                <div class="mt-6 flex justify-between">
+                    <!-- Delete button (only shows when editing existing image) -->
+                    <div>
+                        <button
+                            v-if="isEditingImage"
+                            type="button"
+                            @click="deleteImage"
+                            class="px-4 py-2 text-sm rounded-lg transition-colors bg-red-600 text-white hover:bg-red-700"
+                        >
+                            {{ $t('editor.delete_image') }}
+                        </button>
+                    </div>
+                    <!-- Cancel and Insert buttons -->
+                    <div class="flex gap-3">
+                        <button
+                            type="button"
+                            @click="showImageModal = false"
+                            class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        >
+                            {{ $t('common.cancel') }}
+                        </button>
+                        <button
+                            type="button"
+                            @click="insertImage"
+                            :disabled="!imageUrl || !imagePreviewLoaded"
+                            :class="[
+                                'px-4 py-2 text-sm rounded-lg transition-colors',
+                                (!imageUrl || !imagePreviewLoaded)
+                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                            ]"
+                        >
+                            {{ $t('editor.insert') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
