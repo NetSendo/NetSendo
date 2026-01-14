@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
-import { ref, watch, reactive } from "vue";
+import { ref, watch, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import Modal from "@/Components/Modal.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import DangerButton from "@/Components/DangerButton.vue";
@@ -29,6 +29,52 @@ const form = reactive({
 
 const messageToDelete = ref(null);
 const togglingMessages = ref(new Set()); // Track which messages are being toggled
+
+// List filter search
+const listSearch = ref("");
+const listDropdownOpen = ref(false);
+const listDropdownRef = ref(null);
+
+const filteredLists = computed(() => {
+    if (!listSearch.value) return props.lists;
+    const search = listSearch.value.toLowerCase();
+    return props.lists.filter(list =>
+        list.name.toLowerCase().includes(search) ||
+        String(list.id).includes(search)
+    );
+});
+
+const selectedListName = computed(() => {
+    if (!form.list_id) return null;
+    const list = props.lists.find(l => l.id == form.list_id);
+    return list ? list.name : null;
+});
+
+const selectList = (list) => {
+    form.list_id = list.id;
+    listSearch.value = "";
+    listDropdownOpen.value = false;
+};
+
+const clearListFilter = () => {
+    form.list_id = "";
+    listSearch.value = "";
+    listDropdownOpen.value = false;
+};
+
+const handleClickOutsideListDropdown = (event) => {
+    if (listDropdownRef.value && !listDropdownRef.value.contains(event.target)) {
+        listDropdownOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutsideListDropdown);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutsideListDropdown);
+});
 
 // Reactive local state for is_active (to update UI immediately)
 const localActiveStates = reactive({});
@@ -171,18 +217,64 @@ const toggleActive = async (message) => {
                 />
             </div>
 
-            <!-- List Filter -->
-            <select
-                v-model="form.list_id"
-                class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-            >
-                <option value="">{{ $t("sms.all_lists") }}</option>
-                <option v-for="list in lists" :key="list.id" :value="list.id">
-                    {{ list.name }} ({{
-                        list.type === "sms" ? "SMS" : "Email"
-                    }})
-                </option>
-            </select>
+            <!-- List Filter (Searchable Dropdown) -->
+            <div class="relative" ref="listDropdownRef">
+                <div
+                    @click="listDropdownOpen = !listDropdownOpen"
+                    class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer min-w-[180px] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                    <span v-if="selectedListName" class="flex-1 truncate">{{ selectedListName }}</span>
+                    <span v-else class="flex-1 text-slate-500 dark:text-slate-400">{{ $t("sms.all_lists") }}</span>
+                    <button
+                        v-if="form.list_id"
+                        @click.stop="clearListFilter"
+                        class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div
+                    v-if="listDropdownOpen"
+                    class="absolute z-50 mt-1 w-full min-w-[250px] rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                >
+                    <div class="p-2">
+                        <input
+                            v-model="listSearch"
+                            type="text"
+                            :placeholder="$t('sms.list_filter_placeholder')"
+                            class="block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            @click.stop
+                        />
+                    </div>
+                    <div class="max-h-60 overflow-y-auto">
+                        <button
+                            @click="clearListFilter"
+                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30': !form.list_id }"
+                        >
+                            {{ $t("sms.all_lists") }}
+                        </button>
+                        <button
+                            v-for="list in filteredLists"
+                            :key="list.id"
+                            @click="selectList(list)"
+                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30': form.list_id == list.id }"
+                        >
+                            <span class="font-medium">{{ list.name }}</span>
+                            <span class="ml-2 text-xs text-slate-400 dark:text-slate-500">#{{ list.id }} ({{ list.type === "sms" ? "SMS" : "Email" }})</span>
+                        </button>
+                        <div v-if="filteredLists.length === 0 && listSearch" class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                            {{ $t("common.no_results") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Group Filter -->
             <select
@@ -252,6 +344,18 @@ const toggleActive = async (message) => {
                             <th
                                 scope="col"
                                 class="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
+                                @click="sort('id')"
+                            >
+                                <div class="flex items-center gap-1">
+                                    {{ $t("sms.table.message_id") }}
+                                    <span v-if="form.sort === 'id'">{{
+                                        form.direction === "asc" ? "↑" : "↓"
+                                    }}</span>
+                                </div>
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700"
                                 @click="sort('subject')"
                             >
                                 <div class="flex items-center gap-1">
@@ -313,6 +417,9 @@ const toggleActive = async (message) => {
                             :key="message.id"
                             class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         >
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                                {{ message.id }}
+                            </td>
                             <td
                                 class="px-6 py-4 font-medium text-slate-900 dark:text-white"
                             >
@@ -517,7 +624,7 @@ const toggleActive = async (message) => {
                         </tr>
                         <tr v-if="messages.data.length === 0">
                             <td
-                                colspan="6"
+                                colspan="7"
                                 class="px-6 py-8 text-center text-slate-500 dark:text-slate-400"
                             >
                                 {{ $t("sms.empty_title") }}

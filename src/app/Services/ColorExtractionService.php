@@ -55,7 +55,9 @@ class ColorExtractionService
         // Extract colors using quantization
         $colors = $this->quantizeColors($image, $count);
 
-        \imagedestroy($image);
+        if (function_exists('imagedestroy')) {
+            \imagedestroy($image);
+        }
 
         return $colors;
     }
@@ -67,12 +69,24 @@ class ColorExtractionService
     {
         switch ($type) {
             case IMAGETYPE_JPEG:
+                if (!function_exists('imagecreatefromjpeg')) {
+                    return false;
+                }
                 return @\imagecreatefromjpeg($path);
             case IMAGETYPE_PNG:
+                if (!function_exists('imagecreatefrompng')) {
+                    return false;
+                }
                 return @\imagecreatefrompng($path);
             case IMAGETYPE_GIF:
+                if (!function_exists('imagecreatefromgif')) {
+                    return false;
+                }
                 return @\imagecreatefromgif($path);
             case IMAGETYPE_WEBP:
+                if (!function_exists('imagecreatefromwebp')) {
+                    return false;
+                }
                 return @\imagecreatefromwebp($path);
             default:
                 return false;
@@ -84,6 +98,11 @@ class ColorExtractionService
      */
     protected function quantizeColors($image, int $count): array
     {
+        // Check if required GD functions are available
+        if (!function_exists('imagesx') || !function_exists('imagesy') || !function_exists('imagecolorat')) {
+            return [];
+        }
+
         $width = \imagesx($image);
         $height = \imagesy($image);
 

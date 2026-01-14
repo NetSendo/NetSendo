@@ -20,6 +20,7 @@ export function useSpeechRecognition(options = {}) {
     const isSupported = ref(false);
     const isListening = ref(false);
     const transcript = ref('');
+    const interimTranscript = ref('');
     const error = ref(null);
 
     let recognition = null;
@@ -36,22 +37,29 @@ export function useSpeechRecognition(options = {}) {
             recognition.lang = options.lang || 'pl-PL';
 
             recognition.onresult = (event) => {
-                let finalTranscript = '';
-                let interimTranscript = '';
+                let finalTranscriptText = '';
+                let interimTranscriptText = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
                     if (result.isFinal) {
-                        finalTranscript += result[0].transcript;
+                        finalTranscriptText += result[0].transcript;
                     } else {
-                        interimTranscript += result[0].transcript;
+                        interimTranscriptText += result[0].transcript;
                     }
                 }
 
-                transcript.value = finalTranscript || interimTranscript;
+                // Update interim transcript for live display
+                interimTranscript.value = interimTranscriptText;
 
-                if (finalTranscript && options.onResult) {
-                    options.onResult(finalTranscript);
+                // Only set final transcript when we have one
+                if (finalTranscriptText) {
+                    transcript.value = finalTranscriptText;
+                    interimTranscript.value = ''; // Clear interim when final is ready
+                }
+
+                if (finalTranscriptText && options.onResult) {
+                    options.onResult(finalTranscriptText);
                 }
             };
 
@@ -110,6 +118,17 @@ export function useSpeechRecognition(options = {}) {
         }
     };
 
+    /**
+     * Toggle listening with optional language setting
+     * This is the main function used by components
+     */
+    const toggleListening = (lang) => {
+        if (lang && recognition) {
+            recognition.lang = lang;
+        }
+        toggle();
+    };
+
     const setLang = (lang) => {
         if (recognition) {
             recognition.lang = lang;
@@ -120,10 +139,12 @@ export function useSpeechRecognition(options = {}) {
         isSupported,
         isListening,
         transcript,
+        interimTranscript,
         error,
         start,
         stop,
         toggle,
+        toggleListening,
         setLang,
     };
 }

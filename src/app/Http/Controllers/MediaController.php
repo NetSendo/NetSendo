@@ -302,8 +302,8 @@ class MediaController extends Controller
      */
     public function search(Request $request)
     {
-        $query = Media::where('user_id', auth()->id())
-            ->where('type', '!=', 'document');
+        // All media are shared across all users
+        $query = Media::where('type', '!=', 'document');
 
         if ($request->filled('search')) {
             $query->search($request->search);

@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Message ID Search:**
+
+  - Extended search functionality in email and SMS message lists to support searching by message ID in addition to subject.
+  - Updated `MessageController.php` and `SmsController.php` to include ID in search query.
+
+- **Searchable List Filter:**
+
+  - Replaced static dropdown with searchable list picker in email and SMS message filters.
+  - Users can now filter lists by name or ID, making it easier to find specific lists when managing many.
+  - Added list ID display (#ID) next to each list name in the dropdown.
+  - Full translations in PL, EN, DE, ES.
+
+- **WYSIWYG Editor - Image Resize Drag Handles:**
+
+  - Added drag-to-resize functionality for images in the WYSIWYG editor.
+  - Users can click on an image to select it and drag the corner handles to resize proportionally.
+  - Width percentage indicator displayed during resize.
+  - Double-click on image opens the edit modal with current settings (synced with drag-resized width).
+  - Implemented custom `ResizableImageView` NodeView component with full CSS styling for resize handles.
+
+- **WYSIWYG Editor - Text Case Formatting:**
+
+  - Added text-transform functionality (uppercase, lowercase, capitalize) to the WYSIWYG editor.
+  - New toolbar button with dropdown menu for selecting text case options.
+  - Custom `TextTransform` Tiptap extension using CSS `text-transform` property.
+  - Full translations in PL, EN, DE, ES.
+
+- **WYSIWYG Editor - Font Size Support:**
+  - Enhanced font size picker to display the currently selected size directly on the toolbar button.
+  - Added "Default" option to easily reset font size to the default value.
+  - Improved visual feedback with highlighting for the active font size in the dropdown.
+  - Added translations for the new "Default" option in PL, EN, DE, ES.
+
+### Fixed
+
+- **Media Library - Bulk Upload 500 Error:**
+
+  - Fixed critical 500 Internal Server Error when uploading images to the Media Library on servers without PHP GD extension.
+  - Added `function_exists()` checks for all GD functions (`imagecreatefromjpeg`, `imagecreatefrompng`, `imagecreatefromgif`, `imagecreatefromwebp`, `imagesx`, `imagesy`, `imagecolorat`, `imagedestroy`) in `ColorExtractionService.php`.
+  - Image uploads now work gracefully without GD extension - color extraction is simply skipped if GD is unavailable.
+
+- **AI Assistant - Microphone Support:**
+  - Fixed `TypeError: i(...) is not a function` when using voice dictation in AI Assistants (Message, Subject, SMS, Template Builder).
+  - Updated `useSpeechRecognition.js` composable to correctly export `toggleListening` function and `interimTranscript` ref, which were missing but expected by consumer components.
+
+### Changed
+
+- **Documentation:**
+  - Added PHP GD extension to README.md requirements section with note explaining it's optional for color extraction feature.
+
 ## [1.6.9] – Short Description
 
 **Release date:** 2026-01-14

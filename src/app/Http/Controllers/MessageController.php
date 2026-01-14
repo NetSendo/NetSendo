@@ -59,10 +59,13 @@ class MessageController extends Controller
             });
         }
 
-        // Search by Subject
+        // Search by Subject or ID
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('subject', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('subject', 'like', '%' . $search . '%')
+                  ->orWhere('id', 'like', '%' . $search . '%');
+            });
         }
 
         // Filter by Campaign Plan
@@ -75,7 +78,7 @@ class MessageController extends Controller
         $sortDirection = $request->input('direction', 'desc');
 
         // Allow sorting by valid fields
-        if (in_array($sortField, ['subject', 'status', 'created_at', 'type', 'day'])) {
+        if (in_array($sortField, ['id', 'subject', 'status', 'created_at', 'type', 'day'])) {
             $query->orderBy($sortField, $sortDirection);
         } else {
              $query->latest();

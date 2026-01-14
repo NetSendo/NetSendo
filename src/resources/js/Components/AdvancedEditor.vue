@@ -1,11 +1,185 @@
 <script setup>
-import { useEditor, EditorContent } from '@tiptap/vue-3'
+import { useEditor, EditorContent, NodeViewWrapper, VueNodeViewRenderer } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { defineComponent, ref, computed, onMounted, onBeforeUnmount, h, watch, nextTick } from 'vue'
+
+// Resizable Image NodeView Component
+const ResizableImageView = defineComponent({
+    name: 'ResizableImageView',
+    props: {
+        node: { type: Object, required: true },
+        updateAttributes: { type: Function, required: true },
+        selected: { type: Boolean, default: false },
+    },
+    setup(props) {
+        const containerRef = ref(null)
+        const isResizing = ref(false)
+        const startX = ref(0)
+        const startWidth = ref(0)
+        const currentWidthPercent = ref(parseInt(props.node.attrs['data-width']) || 100)
+
+        // Computed style for the image - basic styling only (float/align handled by wrapper)
+        const imageStyle = computed(() => {
+            const margin = props.node.attrs['data-margin'] || '10'
+            const borderRadius = props.node.attrs['data-border-radius'] || '0'
+
+            // Image fills 100% of wrapper - wrapper controls actual size
+            let styleStr = `width: 100%; max-width: 100%; height: auto; display: block;`
+
+            if (parseInt(margin) > 0) {
+                styleStr += ` margin-bottom: ${margin}px;`
+            }
+
+            if (parseInt(borderRadius) > 0) {
+                styleStr += ` border-radius: ${borderRadius}px;`
+            }
+
+            return styleStr
+        })
+
+        // Handle resize start
+        const onResizeStart = (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            isResizing.value = true
+            startX.value = e.clientX
+
+            // Get the container width as reference (containerRef is a component, so use $el)
+            const el = containerRef.value?.$el || containerRef.value
+            const container = el?.closest?.('.ProseMirror')
+            if (container) {
+                startWidth.value = container.offsetWidth * (currentWidthPercent.value / 100)
+            }
+
+            document.addEventListener('mousemove', onResizeMove)
+            document.addEventListener('mouseup', onResizeEnd)
+        }
+
+        // Handle resize move
+        const onResizeMove = (e) => {
+            if (!isResizing.value) return
+
+            // containerRef is a component, so use $el to get the DOM element
+            const el = containerRef.value?.$el || containerRef.value
+            const container = el?.closest?.('.ProseMirror')
+            if (!container) return
+
+            const containerWidth = container.offsetWidth
+            const deltaX = e.clientX - startX.value
+            const newWidth = startWidth.value + deltaX
+            const newPercent = Math.round(Math.min(100, Math.max(10, (newWidth / containerWidth) * 100)))
+
+            currentWidthPercent.value = newPercent
+        }
+
+        // Handle resize end
+        const onResizeEnd = () => {
+            if (!isResizing.value) return
+            isResizing.value = false
+
+            // Update the node attributes
+            props.updateAttributes({
+                'data-width': String(currentWidthPercent.value)
+            })
+
+            document.removeEventListener('mousemove', onResizeMove)
+            document.removeEventListener('mouseup', onResizeEnd)
+        }
+
+        // Cleanup on unmount
+        onBeforeUnmount(() => {
+            document.removeEventListener('mousemove', onResizeMove)
+            document.removeEventListener('mouseup', onResizeEnd)
+        })
+
+        // Update local state when node changes
+        const updateFromNode = () => {
+            currentWidthPercent.value = parseInt(props.node.attrs['data-width']) || 100
+        }
+
+        onMounted(updateFromNode)
+
+        // Watch for external changes to node attributes (e.g., from modal slider)
+        watch(() => props.node.attrs['data-width'], (newWidth) => {
+            if (!isResizing.value) {
+                currentWidthPercent.value = parseInt(newWidth) || 100
+            }
+        })
+
+        // Computed style for the wrapper - handles float and alignment
+        const wrapperStyle = computed(() => {
+            const float = props.node.attrs['data-float'] || 'none'
+            const align = props.node.attrs['data-align'] || 'center'
+
+            let style = {
+                width: `${currentWidthPercent.value}%`,
+                maxWidth: '100%'
+            }
+
+            if (float === 'left') {
+                style.float = 'left'
+                style.marginRight = '10px'
+            } else if (float === 'right') {
+                style.float = 'right'
+                style.marginLeft = '10px'
+            } else {
+                // No float - use block display with margin for alignment
+                style.display = 'block'
+                if (align === 'center') {
+                    style.marginLeft = 'auto'
+                    style.marginRight = 'auto'
+                } else if (align === 'right') {
+                    style.marginLeft = 'auto'
+                } else if (align === 'left') {
+                    style.marginRight = 'auto'
+                }
+            }
+
+            return style
+        })
+
+        return () => h(NodeViewWrapper, {
+            class: 'resizable-image-wrapper',
+            ref: containerRef,
+            style: wrapperStyle.value
+        }, [
+            h('div', {
+                class: ['resizable-image-container', { 'is-selected': props.selected, 'is-resizing': isResizing.value }],
+                style: { display: 'block', position: 'relative', width: '100%' }
+            }, [
+                h('img', {
+                    src: props.node.attrs.src,
+                    alt: props.node.attrs.alt || '',
+                    title: props.node.attrs.title || '',
+                    style: imageStyle.value,
+                    class: 'resizable-image',
+                    draggable: false
+                }),
+                // Resize handles - only show when selected
+                props.selected ? h('div', {
+                    class: 'resize-handle resize-handle-se',
+                    onMousedown: onResizeStart
+                }) : null,
+                props.selected ? h('div', {
+                    class: 'resize-handle resize-handle-sw',
+                    onMousedown: onResizeStart
+                }) : null,
+                // Width indicator during resize
+                isResizing.value ? h('div', {
+                    class: 'resize-width-indicator'
+                }, `${currentWidthPercent.value}%`) : null
+            ])
+        ])
+    }
+})
 
 // Custom Image extension that preserves style properties via data attributes and generates inline styles
 const CustomImage = Image.extend({
+    addNodeView() {
+        return VueNodeViewRenderer(ResizableImageView)
+    },
     addAttributes() {
         return {
             ...this.parent?.(),
@@ -118,8 +292,73 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import { FontSize } from 'tiptap-extension-font-size'
-import { watch, ref, onBeforeUnmount, computed, onMounted, nextTick } from 'vue'
+import { Mark, mergeAttributes } from '@tiptap/core'
 import { useI18n } from 'vue-i18n'
+
+// Custom TextTransform Extension for text-transform CSS property
+const TextTransform = Mark.create({
+    name: 'textTransform',
+
+    addOptions() {
+        return {
+            types: ['textStyle'],
+        }
+    },
+
+    addAttributes() {
+        return {
+            textTransform: {
+                default: null,
+                parseHTML: element => element.style.textTransform || null,
+                renderHTML: attributes => {
+                    if (!attributes.textTransform) {
+                        return {}
+                    }
+                    return {
+                        style: `text-transform: ${attributes.textTransform}`,
+                    }
+                },
+            },
+        }
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'span',
+                getAttrs: element => {
+                    const hasTextTransform = element.style.textTransform
+                    if (!hasTextTransform) {
+                        return false
+                    }
+                    return { textTransform: element.style.textTransform }
+                },
+            },
+        ]
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['span', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    },
+
+    addCommands() {
+        return {
+            setTextTransform: textTransform => ({ chain }) => {
+                return chain().setMark(this.name, { textTransform }).run()
+            },
+            unsetTextTransform: () => ({ chain }) => {
+                return chain().unsetMark(this.name).run()
+            },
+            toggleTextTransform: textTransform => ({ chain, editor }) => {
+                const currentTransform = editor.getAttributes(this.name)?.textTransform
+                if (currentTransform === textTransform) {
+                    return chain().unsetMark(this.name).run()
+                }
+                return chain().setMark(this.name, { textTransform }).run()
+            },
+        }
+    },
+})
 
 const { t } = useI18n()
 
@@ -202,6 +441,7 @@ const showFontPicker = ref(false)
 const showSizePicker = ref(false)
 const showColorPicker = ref(false)
 const showHighlightPicker = ref(false)
+const showTextTransformPicker = ref(false)
 
 // Text editing modal for full HTML documents
 const showTextEditModal = ref(false)
@@ -330,24 +570,35 @@ const editor = useEditor({
             multicolor: true,
         }),
         FontSize,
+        TextTransform,
     ],
     editorProps: {
         attributes: {
             class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none dark:prose-invert min-h-[150px] text-slate-900 dark:text-white p-4',
         },
         handleClick: (view, pos, event) => {
-            // Check if clicked on an image
+            // Check if clicked on an image (including through NodeView wrapper)
             const target = event.target
-            if (target.tagName === 'IMG') {
-                event.preventDefault()
-                openImageEditModal(target)
-                return true
-            }
+            const imgElement = target.tagName === 'IMG' ? target : target.closest('.resizable-image-container')?.querySelector('img')
+
+            // For images in NodeView, single click is handled by NodeView for selection
             // Check if clicked on a link
             if (target.tagName === 'A' || target.closest('a')) {
                 event.preventDefault()
                 const linkElement = target.tagName === 'A' ? target : target.closest('a')
                 openLinkEditModal(linkElement)
+                return true
+            }
+            return false
+        },
+        handleDoubleClick: (view, pos, event) => {
+            // Check if double-clicked on an image (opens edit modal)
+            const target = event.target
+            const imgElement = target.tagName === 'IMG' ? target : target.closest('.resizable-image-container')?.querySelector('img')
+
+            if (imgElement) {
+                event.preventDefault()
+                openImageEditModal(imgElement)
                 return true
             }
             return false
@@ -540,68 +791,110 @@ const openImageEditModal = (imgElement) => {
     isEditingImage.value = true
     editingImageElement.value = imgElement
 
-    // Extract current image properties
+    // Extract current image properties from the image element
     imageUrl.value = imgElement.getAttribute('src') || ''
     imagePreviewLoaded.value = true
     imagePreviewError.value = false
     isUploadingImage.value = false
     imageUploadError.value = ''
 
-    // Parse style attribute
+    // Try to get attributes from the currently selected node in Tiptap (works with NodeView)
+    const editorInstance = editor.value
+    let nodeAttrs = null
+
+    if (editorInstance) {
+        const { from } = editorInstance.state.selection
+        const resolvedPos = editorInstance.state.doc.resolve(from)
+        const node = resolvedPos.nodeAfter || resolvedPos.nodeBefore
+
+        if (node && node.type.name === 'image' && node.attrs.src === imgElement.getAttribute('src')) {
+            nodeAttrs = node.attrs
+        } else {
+            // Search for the image node with matching src
+            editorInstance.state.doc.descendants((n, pos) => {
+                if (n.type.name === 'image' && n.attrs.src === imgElement.getAttribute('src')) {
+                    nodeAttrs = n.attrs
+                    return false // stop searching
+                }
+            })
+        }
+    }
+
+    // Parse style attribute as fallback
     const style = imgElement.getAttribute('style') || ''
 
-    // Read from data attributes first (from CustomImage extension), fallback to style parsing
+    // Read from node attrs first (when using NodeView), then data attributes, then style parsing
     // Extract width
-    const dataWidth = imgElement.getAttribute('data-width')
-    if (dataWidth) {
-        imageWidth.value = dataWidth
+    if (nodeAttrs?.['data-width']) {
+        imageWidth.value = nodeAttrs['data-width']
     } else {
-        const widthMatch = style.match(/width:\s*(\d+)%/)
-        imageWidth.value = widthMatch ? widthMatch[1] : '100'
+        const dataWidth = imgElement.getAttribute('data-width')
+        if (dataWidth) {
+            imageWidth.value = dataWidth
+        } else {
+            const widthMatch = style.match(/width:\s*(\d+)%/)
+            imageWidth.value = widthMatch ? widthMatch[1] : '100'
+        }
     }
 
     // Extract float
-    const dataFloat = imgElement.getAttribute('data-float')
-    if (dataFloat) {
-        imageFloat.value = dataFloat
-    } else if (style.includes('float: left')) {
-        imageFloat.value = 'left'
-    } else if (style.includes('float: right')) {
-        imageFloat.value = 'right'
+    if (nodeAttrs?.['data-float']) {
+        imageFloat.value = nodeAttrs['data-float']
     } else {
-        imageFloat.value = 'none'
+        const dataFloat = imgElement.getAttribute('data-float')
+        if (dataFloat) {
+            imageFloat.value = dataFloat
+        } else if (style.includes('float: left')) {
+            imageFloat.value = 'left'
+        } else if (style.includes('float: right')) {
+            imageFloat.value = 'right'
+        } else {
+            imageFloat.value = 'none'
+        }
     }
 
     // Extract alignment
-    const dataAlign = imgElement.getAttribute('data-align')
-    if (dataAlign) {
-        imageAlignment.value = dataAlign
-    } else if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) {
-        imageAlignment.value = 'center'
-    } else if (style.includes('margin-left: auto')) {
-        imageAlignment.value = 'right'
-    } else if (style.includes('margin-right: auto')) {
-        imageAlignment.value = 'left'
+    if (nodeAttrs?.['data-align']) {
+        imageAlignment.value = nodeAttrs['data-align']
     } else {
-        imageAlignment.value = 'center'
+        const dataAlign = imgElement.getAttribute('data-align')
+        if (dataAlign) {
+            imageAlignment.value = dataAlign
+        } else if (style.includes('margin-left: auto') && style.includes('margin-right: auto')) {
+            imageAlignment.value = 'center'
+        } else if (style.includes('margin-left: auto')) {
+            imageAlignment.value = 'right'
+        } else if (style.includes('margin-right: auto')) {
+            imageAlignment.value = 'left'
+        } else {
+            imageAlignment.value = 'center'
+        }
     }
 
     // Extract margin
-    const dataMargin = imgElement.getAttribute('data-margin')
-    if (dataMargin) {
-        imageMargin.value = dataMargin
+    if (nodeAttrs?.['data-margin']) {
+        imageMargin.value = nodeAttrs['data-margin']
     } else {
-        const marginMatch = style.match(/margin:\s*(\d+)px/)
-        imageMargin.value = marginMatch ? marginMatch[1] : '10'
+        const dataMargin = imgElement.getAttribute('data-margin')
+        if (dataMargin) {
+            imageMargin.value = dataMargin
+        } else {
+            const marginMatch = style.match(/margin:\s*(\d+)px/)
+            imageMargin.value = marginMatch ? marginMatch[1] : '10'
+        }
     }
 
     // Extract border-radius
-    const dataBorderRadius = imgElement.getAttribute('data-border-radius')
-    if (dataBorderRadius) {
-        imageBorderRadius.value = dataBorderRadius
+    if (nodeAttrs?.['data-border-radius']) {
+        imageBorderRadius.value = nodeAttrs['data-border-radius']
     } else {
-        const borderRadiusMatch = style.match(/border-radius:\s*(\d+)px/)
-        imageBorderRadius.value = borderRadiusMatch ? borderRadiusMatch[1] : '0'
+        const dataBorderRadius = imgElement.getAttribute('data-border-radius')
+        if (dataBorderRadius) {
+            imageBorderRadius.value = dataBorderRadius
+        } else {
+            const borderRadiusMatch = style.match(/border-radius:\s*(\d+)px/)
+            imageBorderRadius.value = borderRadiusMatch ? borderRadiusMatch[1] : '0'
+        }
     }
 
     // Check if image is wrapped in a link
@@ -681,7 +974,11 @@ const handleImageUpload = async (event) => {
 }
 
 // Load media from library
-const openMediaBrowser = async (filterType = null) => {
+// Load media from library
+const openMediaBrowser = async (arg = null) => {
+    // Handle potential Event object from @click
+    const filterType = (typeof arg === 'string') ? arg : null
+
     showMediaBrowser.value = true
     showLogoBrowser.value = false
     isLoadingMedia.value = true
@@ -1376,15 +1673,20 @@ const btnClass = (isActive = false) => {
                         type="button"
                         @click="showSizePicker = !showSizePicker; showFontPicker = false; showColorPicker = false; showHighlightPicker = false"
                         :class="btnClass(showSizePicker)"
-                        :title="$t('editor.font_size') || 'Rozmiar'"
+                        :title="$t('editor.font_size') || 'Rozmiar czcionki'"
+                        class="flex items-center gap-1"
                     >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16" />
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7V5a2 2 0 012-2h4m6 0h4a2 2 0 012 2v2M3 17v2a2 2 0 002 2h4m6 0h4a2 2 0 002-2v-2" />
+                        </svg>
+                        <span class="text-xs font-medium min-w-[28px]">{{ editor.getAttributes('textStyle')?.fontSize || '16px' }}</span>
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
                     <div
                         v-if="showSizePicker"
-                        class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[80px]"
+                        class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[100px]"
                     >
                         <button
                             v-for="size in fontSizeOptions"
@@ -1392,8 +1694,17 @@ const btnClass = (isActive = false) => {
                             type="button"
                             @click="editor.chain().focus().setFontSize(size).run(); showSizePicker = false"
                             class="w-full text-center px-2 py-1 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300': editor.getAttributes('textStyle')?.fontSize === size }"
                         >
                             {{ size }}
+                        </button>
+                        <hr class="my-1 border-slate-200 dark:border-slate-700" />
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().unsetFontSize().run(); showSizePicker = false"
+                            class="w-full text-center px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                            {{ $t('editor.clear_size') || 'Domyślny' }}
                         </button>
                     </div>
                 </div>
@@ -1472,6 +1783,55 @@ const btnClass = (isActive = false) => {
                             class="w-full text-center px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
                         >
                             {{ $t('editor.clear_highlight') || 'Usuń podświetlenie' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Text Transform Picker -->
+                <div class="relative">
+                    <button
+                        type="button"
+                        @click="showTextTransformPicker = !showTextTransformPicker; showFontPicker = false; showSizePicker = false; showColorPicker = false; showHighlightPicker = false"
+                        :class="btnClass(showTextTransformPicker || editor.isActive('textTransform'))"
+                        :title="$t('editor.text_transform') || 'Wielkość liter'"
+                    >
+                        <span class="text-xs font-bold">Aa</span>
+                    </button>
+                    <div
+                        v-if="showTextTransformPicker"
+                        class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[140px]"
+                    >
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().setTextTransform('uppercase').run(); showTextTransformPicker = false"
+                            class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                            :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'uppercase' }"
+                        >
+                            <span class="uppercase">{{ $t('editor.text_transform_uppercase') || 'WIELKIE LITERY' }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().setTextTransform('lowercase').run(); showTextTransformPicker = false"
+                            class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                            :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'lowercase' }"
+                        >
+                            <span class="lowercase">{{ $t('editor.text_transform_lowercase') || 'małe litery' }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().setTextTransform('capitalize').run(); showTextTransformPicker = false"
+                            class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300"
+                            :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'capitalize' }"
+                        >
+                            <span class="capitalize">{{ $t('editor.text_transform_capitalize') || 'Pierwsza Wielka' }}</span>
+                        </button>
+                        <hr class="my-1 border-slate-200 dark:border-slate-700" />
+                        <button
+                            type="button"
+                            @click="editor.chain().focus().unsetTextTransform().run(); showTextTransformPicker = false"
+                            class="w-full text-left px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors"
+                        >
+                            {{ $t('editor.clear_text_transform') || 'Normalne' }}
                         </button>
                     </div>
                 </div>
@@ -2488,5 +2848,89 @@ const btnClass = (isActive = false) => {
 
 .dark .ProseMirror blockquote {
     color: #94a3b8;
+}
+
+/* Resizable Image Styles */
+.resizable-image-wrapper {
+    display: inline-block;
+    max-width: 100%;
+}
+
+.resizable-image-container {
+    position: relative;
+    display: inline-block;
+    transition: outline 0.15s ease;
+}
+
+.resizable-image-container.is-selected {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+.resizable-image-container.is-resizing {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+.resizable-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #6366f1;
+    border: 2px solid white;
+    border-radius: 2px;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.resize-handle-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
+}
+
+.resize-handle-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: sw-resize;
+}
+
+.resize-handle:hover {
+    background-color: #4f46e5;
+    transform: scale(1.1);
+}
+
+/* Width indicator during resize */
+.resize-width-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 20;
+}
+
+/* Dark mode adjustments for resize handles */
+.dark .resize-handle {
+    border-color: #1e293b;
+}
+
+.dark .resize-width-indicator {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
 }
 </style>

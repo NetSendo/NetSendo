@@ -58,6 +58,10 @@ _Modern, intuitive dashboard with real-time analytics and campaign management_
   - Redis
   - Node.js 25+
   - Composer
+  - **PHP GD Extension** (optional, for automatic color extraction from images)
+
+> [!TIP]
+> The PHP GD extension enables automatic color palette extraction from uploaded images in the Media Library. If GD is not installed, image uploads will still work, but color extraction will be skipped.
 
 ---
 

@@ -19,7 +19,10 @@ class SmsController extends Controller
         $messages = Message::sms()
             ->with(['contactLists'])
             ->when($request->search, function ($query, $search) {
-                $query->where('subject', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('subject', 'like', "%{$search}%")
+                      ->orWhere('id', 'like', "%{$search}%");
+                });
             })
             ->when($request->list_id, function ($query, $list_id) {
                 $query->whereHas('contactLists', function ($q) use ($list_id) {
@@ -31,8 +34,20 @@ class SmsController extends Controller
             })
             ->when($request->campaign_plan_id, function ($query, $campaignPlanId) {
                 $query->where('campaign_plan_id', $campaignPlanId);
-            })
-            ->orderBy($request->sort ?? 'created_at', $request->direction ?? 'desc')
+            });
+
+        // Sorting with whitelist validation
+        $sortField = $request->sort ?? 'created_at';
+        $sortDirection = $request->direction ?? 'desc';
+        $allowedSortFields = ['id', 'subject', 'status', 'created_at', 'type', 'day'];
+
+        if (in_array($sortField, $allowedSortFields)) {
+            $messages = $messages->orderBy($sortField, $sortDirection);
+        } else {
+            $messages = $messages->latest();
+        }
+
+        $messages = $messages
             ->paginate(10)
             ->withQueryString()
             ->through(fn ($message) => [
