@@ -43,8 +43,9 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function ensureStorageSetup(): void
     {
-        // Only run in production or when not in console (avoid issues during artisan commands)
-        if (app()->runningInConsole() && !app()->runningUnitTests()) {
+        // Skip during console commands (migrations, etc.) but allow during web requests
+        // This ensures symlinks are created when users access the app
+        if (app()->runningInConsole()) {
             return;
         }
 
