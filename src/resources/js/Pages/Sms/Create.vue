@@ -103,6 +103,42 @@ const previewSubscribers = ref([]);
 const previewContent = ref("");
 const isPreviewLoading = ref(false);
 
+// Test SMS state
+const showTestModal = ref(false);
+const testPhone = ref("");
+const sendingTest = ref(false);
+const testMessage = ref({ type: "", text: "" });
+
+// Send test SMS
+const sendTestSms = async () => {
+    if (!testPhone.value) return;
+
+    sendingTest.value = true;
+    testMessage.value = { type: "", text: "" };
+
+    try {
+        const response = await axios.post(route("sms.test"), {
+            phone: testPhone.value,
+            content: form.content,
+            list_id: form.list_id || null,
+        });
+
+        if (response.data.success) {
+            testMessage.value = { type: "success", text: t("sms.test.success") };
+        } else {
+            testMessage.value = { type: "error", text: response.data.error || t("sms.test.error") };
+        }
+    } catch (e) {
+        console.error(e);
+        testMessage.value = {
+            type: "error",
+            text: e.response?.data?.error || t("sms.test.error"),
+        };
+    } finally {
+        sendingTest.value = false;
+    }
+};
+
 // Fetch subscribers for preview
 const fetchPreviewSubscribers = async () => {
     if (!form.list_id) {
@@ -739,6 +775,26 @@ const submit = (targetStatus = null) => {
                         >
                             {{ $t("sms.actions.save_draft") }}
                         </SecondaryButton>
+                        <SecondaryButton
+                            @click="showTestModal = true"
+                            class="w-full justify-center"
+                            :disabled="!form.content"
+                        >
+                            <svg
+                                class="mr-2 h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                />
+                            </svg>
+                            {{ $t("sms.actions.send_test") }}
+                        </SecondaryButton>
                     </div>
                     <ActionMessage :on="form.recentlySuccessful" class="mt-3">
                         {{ $t("common.saved") }}
@@ -860,5 +916,130 @@ const submit = (targetStatus = null) => {
             @close="showSmsAiPanel = false"
             @use-content="handleAiContent"
         />
+
+        <!-- Test SMS Modal -->
+        <div
+            v-if="showTestModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            @click.self="showTestModal = false"
+        >
+            <div
+                class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800"
+            >
+                <div class="mb-4 flex items-center gap-3">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30"
+                    >
+                        <svg
+                            class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3
+                            class="text-lg font-semibold text-slate-900 dark:text-white"
+                        >
+                            {{ $t("sms.test.title") }}
+                        </h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">
+                            {{ $t("sms.test.subtitle") }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <InputLabel
+                            for="test_phone"
+                            :value="$t('sms.test.phone_label')"
+                        />
+                        <TextInput
+                            id="test_phone"
+                            type="tel"
+                            v-model="testPhone"
+                            class="mt-1 w-full"
+                            :placeholder="$t('sms.test.phone_placeholder')"
+                        />
+                    </div>
+
+                    <div
+                        class="rounded-lg bg-slate-50 p-3 dark:bg-slate-700/50"
+                    >
+                        <p class="text-sm text-slate-600 dark:text-slate-300">
+                            <span class="font-medium"
+                                >{{ $t("sms.test.preview_content") }}:</span
+                            >
+                        </p>
+                        <p
+                            class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-3"
+                        >
+                            {{
+                                form.content ||
+                                $t("sms.test.no_content_preview")
+                            }}
+                        </p>
+                    </div>
+
+                    <!-- Feedback message -->
+                    <div
+                        v-if="testMessage.text"
+                        :class="[
+                            'rounded-lg p-3 text-sm',
+                            testMessage.type === 'success'
+                                ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                        ]"
+                    >
+                        {{ testMessage.text }}
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="showTestModal = false">
+                        {{ $t("common.cancel") }}
+                    </SecondaryButton>
+                    <PrimaryButton
+                        @click="sendTestSms"
+                        :disabled="!testPhone || sendingTest"
+                        :class="{ 'opacity-50': !testPhone || sendingTest }"
+                    >
+                        <svg
+                            v-if="sendingTest"
+                            class="mr-2 h-4 w-4 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            />
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                        </svg>
+                        {{
+                            sendingTest
+                                ? $t("sms.test.sending")
+                                : $t("sms.test.send")
+                        }}
+                    </PrimaryButton>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>

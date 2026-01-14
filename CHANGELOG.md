@@ -37,10 +37,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations in PL, EN, DE, ES.
 
 - **WYSIWYG Editor - Font Size Support:**
+
   - Enhanced font size picker to display the currently selected size directly on the toolbar button.
   - Added "Default" option to easily reset font size to the default value.
   - Improved visual feedback with highlighting for the active font size in the dropdown.
   - Added translations for the new "Default" option in PL, EN, DE, ES.
+
+- **SMS Test Send:**
+  - Added "Send Test SMS" button to SMS campaign creation page, mirroring the existing email test functionality.
+  - New modal interface for entering test phone number with content preview.
+  - Backend `SmsController@test` method with placeholder substitution using sample data when no subscriber is selected.
+  - Detailed logging for successful sends and errors.
+  - Full translations in PL, EN, DE, ES.
 
 ### Fixed
 

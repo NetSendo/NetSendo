@@ -347,4 +347,98 @@ class SmsController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Send a test SMS
+     */
+    public function test(Request $request, \App\Services\PlaceholderService $placeholderService, \App\Services\Sms\SmsProviderService $smsProviderService)
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string|max:20',
+            'content' => 'required|string',
+            'subscriber_id' => 'nullable|exists:subscribers,id',
+            'list_id' => 'nullable|exists:contact_lists,id',
+        ]);
+
+        // Get SMS provider
+        $smsProvider = \App\Models\SmsProvider::getDefaultFor(auth()->id());
+
+        if (!$smsProvider) {
+            return response()->json(['error' => 'No SMS provider configured'], 422);
+        }
+
+        try {
+            $content = $validated['content'];
+
+            // Get subscriber for placeholder substitution
+            $subscriber = null;
+            if (!empty($validated['subscriber_id'])) {
+                // Use selected subscriber
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())->find($validated['subscriber_id']);
+            } elseif (!empty($validated['list_id'])) {
+                // Use first subscriber from selected list with phone number
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
+                    ->whereNotNull('phone')
+                    ->where('phone', '!=', '')
+                    ->whereHas('contactLists', function ($q) use ($validated) {
+                        $q->where('contact_lists.id', $validated['list_id']);
+                    })
+                    ->first();
+            }
+
+            // If we have a real subscriber, use PlaceholderService
+            if ($subscriber) {
+                $content = $placeholderService->replacePlaceholders($content, $subscriber, [
+                    'unsubscribe_link' => $placeholderService->generateUnsubscribeLink($subscriber),
+                    'unsubscribe_url' => $placeholderService->generateUnsubscribeLink($subscriber),
+                ]);
+            } else {
+                // Use sample data for placeholders
+                $sampleData = [
+                    'email' => 'jan.kowalski@example.com',
+                    'first_name' => 'Jan',
+                    'last_name' => 'Kowalski',
+                    'phone' => $validated['phone'],
+                    'device' => 'Mobile',
+                    'ip_address' => '127.0.0.1',
+                    'subscribed_at' => now()->format('Y-m-d H:i:s'),
+                    'confirmed_at' => now()->format('Y-m-d H:i:s'),
+                    'source' => 'test',
+                    'unsubscribe_link' => '#',
+                    'unsubscribe_url' => '#',
+                ];
+
+                // Replace placeholders with sample data
+                $content = preg_replace_callback(
+                    '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
+                    function ($matches) use ($sampleData) {
+                        $key = $matches[1];
+                        return $sampleData[$key] ?? $matches[0];
+                    },
+                    $content
+                );
+            }
+
+            // Send the test SMS
+            $provider = $smsProviderService->getProvider($smsProvider);
+
+            \Log::info('Sending test SMS', [
+                'phone' => $validated['phone'],
+                'content_length' => strlen($content),
+                'provider' => $smsProvider->provider,
+            ]);
+
+            $result = $provider->send(
+                to: $validated['phone'],
+                message: '[TEST] ' . $content
+            );
+
+            \Log::info('Test SMS result', ['result' => $result]);
+
+            return response()->json(['success' => true, 'message' => 'Test SMS sent']);
+        } catch (\Exception $e) {
+            \Log::error('Test SMS failed: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

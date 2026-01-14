@@ -1093,7 +1093,20 @@
             "save_draft": "Guardar borrador",
             "send_now": "Enviar ahora",
             "schedule": "Programar",
-            "activate": "Activar (Guardar)"
+            "activate": "Activar (Guardar)",
+            "send_test": "Enviar SMS de prueba"
+        },
+        "test": {
+            "title": "Enviar SMS de prueba",
+            "subtitle": "Vea cómo se verá su mensaje",
+            "phone_label": "Número de teléfono",
+            "phone_placeholder": "+34 612 345 678",
+            "preview_content": "Vista previa del contenido",
+            "no_content_preview": "Sin contenido para previsualizar",
+            "send": "Enviar prueba",
+            "sending": "Enviando...",
+            "success": "¡SMS de prueba enviado con éxito!",
+            "error": "Error al enviar el SMS de prueba."
         }
     },
     "messages": {

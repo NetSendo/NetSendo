@@ -136,6 +136,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');
+    Route::post('sms/test', [\App\Http\Controllers\SmsController::class, 'test'])->name('sms.test');
     Route::post('sms/preview', [\App\Http\Controllers\SmsController::class, 'preview'])->name('sms.preview');
     Route::post('sms/preview-subscribers', [\App\Http\Controllers\SmsController::class, 'previewSubscribers'])->name('sms.preview-subscribers');
     Route::resource('sms', \App\Http\Controllers\SmsController::class);

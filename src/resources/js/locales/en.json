@@ -931,7 +931,8 @@
             "save_draft": "Save Draft",
             "send_now": "Send Now",
             "schedule": "Schedule",
-            "activate": "Activate (Save)"
+            "activate": "Activate (Save)",
+            "send_test": "Send Test SMS"
         },
         "ai_assistant": {
             "title": "SMS AI Assistant",
@@ -990,6 +991,18 @@
             "insert_variable": "Insert variable",
             "standard": "Standard",
             "custom": "Custom"
+        },
+        "test": {
+            "title": "Send Test SMS",
+            "subtitle": "See how your message will look",
+            "phone_label": "Phone Number",
+            "phone_placeholder": "+1 234 567 890",
+            "preview_content": "Content Preview",
+            "no_content_preview": "No content to preview",
+            "send": "Send Test",
+            "sending": "Sending...",
+            "success": "Test SMS sent successfully!",
+            "error": "Failed to send test SMS."
         }
     },
     "messages": {

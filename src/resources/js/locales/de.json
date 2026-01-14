@@ -1175,7 +1175,20 @@
             "save_draft": "Entwurf speichern",
             "send_now": "Jetzt senden",
             "schedule": "Planen",
-            "activate": "Aktivieren (Speichern)"
+            "activate": "Aktivieren (Speichern)",
+            "send_test": "Test-SMS senden"
+        },
+        "test": {
+            "title": "Test-SMS senden",
+            "subtitle": "Sehen Sie, wie Ihre Nachricht aussehen wird",
+            "phone_label": "Telefonnummer",
+            "phone_placeholder": "+49 123 456 789",
+            "preview_content": "Inhaltsvorschau",
+            "no_content_preview": "Kein Inhalt zur Vorschau",
+            "send": "Test senden",
+            "sending": "Senden...",
+            "success": "Test-SMS erfolgreich gesendet!",
+            "error": "Fehler beim Senden der Test-SMS."
         }
     },
     "messages": {

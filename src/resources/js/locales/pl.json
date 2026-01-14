@@ -933,7 +933,8 @@
             "save_draft": "Zapisz szkic",
             "send_now": "Wyślij teraz",
             "schedule": "Zaplanuj wysyłkę",
-            "activate": "Aktywuj (Zapisz)"
+            "activate": "Aktywuj (Zapisz)",
+            "send_test": "Wyślij testowy SMS"
         },
         "ai_assistant": {
             "title": "Asystent AI dla SMS",
@@ -992,6 +993,18 @@
             "insert_variable": "Wstaw zmienną",
             "standard": "Standardowe",
             "custom": "Niestandardowe"
+        },
+        "test": {
+            "title": "Wyślij testowy SMS",
+            "subtitle": "Sprawdź, jak będzie wyglądać wiadomość SMS",
+            "phone_label": "Numer telefonu",
+            "phone_placeholder": "+48 123 456 789",
+            "preview_content": "Podgląd treści",
+            "no_content_preview": "Brak treści do podglądu",
+            "send": "Wyślij test",
+            "sending": "Wysyłanie...",
+            "success": "Testowy SMS został wysłany pomyślnie!",
+            "error": "Nie udało się wysłać testowego SMS-a."
         }
     },
     "messages": {
