@@ -18,9 +18,14 @@ use App\Events\PageVisited;
 use App\Events\ReadTimeThresholdReached;
 use App\Events\SubscriberBirthday;
 use App\Events\SubscriptionAnniversary;
+// CRM Events
+use App\Events\CrmDealStageChanged;
+use App\Events\CrmTaskOverdue;
+use App\Events\CrmContactReplied;
 
 // Listeners
 use App\Listeners\TriggerAutomationsListener;
+use App\Listeners\CrmEventListener;
 use App\Listeners\SendNewSubscriberNotification;
 use App\Listeners\SendUnsubscribeConfirmation;
 
@@ -93,6 +98,25 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\UserTimezoneUpdated::class => [
             \App\Listeners\SyncWebinarTimezonesOnUserUpdate::class,
         ],
+        // CRM Events
+        CrmDealStageChanged::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmTaskOverdue::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmContactReplied::class => [
+            TriggerAutomationsListener::class,
+        ],
+    ];
+
+    /**
+     * The subscriber classes to register.
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        CrmEventListener::class,
     ];
 
     /**

@@ -20,6 +20,10 @@ use App\Events\PixelProductViewed;
 use App\Events\PixelAddToCart;
 use App\Events\PixelCheckoutStarted;
 use App\Events\PixelCartAbandoned;
+// CRM events
+use App\Events\CrmDealStageChanged;
+use App\Events\CrmTaskOverdue;
+use App\Events\CrmContactReplied;
 use App\Services\Automation\AutomationService;
 use Illuminate\Support\Facades\Log;
 
@@ -82,6 +86,10 @@ class TriggerAutomationsListener
             PixelAddToCart::class => 'pixel_add_to_cart',
             PixelCheckoutStarted::class => 'pixel_checkout_started',
             PixelCartAbandoned::class => 'pixel_cart_abandoned',
+            // CRM event mappings
+            CrmDealStageChanged::class => 'crm_deal_stage_changed',
+            CrmTaskOverdue::class => 'crm_task_overdue',
+            CrmContactReplied::class => 'crm_contact_replied',
             default => null,
         };
     }

@@ -764,6 +764,50 @@ use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\AffiliateTrackingController;
 use App\Http\Controllers\PartnerAuthController;
 use App\Http\Controllers\PartnerPortalController;
+use App\Http\Controllers\CrmDashboardController;
+use App\Http\Controllers\CrmContactController;
+use App\Http\Controllers\CrmCompanyController;
+use App\Http\Controllers\CrmDealController;
+use App\Http\Controllers\CrmTaskController;
+use App\Http\Controllers\CrmImportController;
+
+// ==================== CRM MODULE ====================
+
+Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function () {
+    // CRM Dashboard
+    Route::get('/', [CrmDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/api/stats', [CrmDashboardController::class, 'stats'])->name('api.stats');
+
+    // CRM Contacts
+    Route::resource('contacts', CrmContactController::class);
+    Route::post('contacts/{contact}/activity', [CrmContactController::class, 'addActivity'])->name('contacts.activity');
+    Route::get('contacts/{contact}/quick-view', [CrmContactController::class, 'quickView'])->name('contacts.quick-view');
+
+    // CRM Companies
+    Route::resource('companies', CrmCompanyController::class);
+    Route::post('companies/{company}/note', [CrmCompanyController::class, 'addNote'])->name('companies.note');
+
+    // CRM Deals (Kanban)
+    Route::get('deals', [CrmDealController::class, 'index'])->name('deals.index');
+    Route::post('deals', [CrmDealController::class, 'store'])->name('deals.store');
+    Route::put('deals/{deal}', [CrmDealController::class, 'update'])->name('deals.update');
+    Route::put('deals/{deal}/stage', [CrmDealController::class, 'updateStage'])->name('deals.updateStage');
+    Route::delete('deals/{deal}', [CrmDealController::class, 'destroy'])->name('deals.destroy');
+    Route::get('api/pipelines', [CrmDealController::class, 'pipelines'])->name('api.pipelines');
+
+    // CRM Tasks
+    Route::get('tasks', [CrmTaskController::class, 'index'])->name('tasks.index');
+    Route::post('tasks', [CrmTaskController::class, 'store'])->name('tasks.store');
+    Route::put('tasks/{task}', [CrmTaskController::class, 'update'])->name('tasks.update');
+    Route::delete('tasks/{task}', [CrmTaskController::class, 'destroy'])->name('tasks.destroy');
+    Route::post('tasks/{task}/complete', [CrmTaskController::class, 'complete'])->name('tasks.complete');
+    Route::post('tasks/{task}/reschedule', [CrmTaskController::class, 'reschedule'])->name('tasks.reschedule');
+
+    // CRM Import
+    Route::get('import', [CrmImportController::class, 'index'])->name('import.index');
+    Route::post('import/preview', [CrmImportController::class, 'preview'])->name('import.preview');
+    Route::post('import', [CrmImportController::class, 'import'])->name('import.store');
+});
 
 // Public Tracking Routes
 Route::get('/t/r/{code}', [AffiliateTrackingController::class, 'redirect'])->name('affiliate.redirect');

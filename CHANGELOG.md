@@ -7,7 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] – CRM Module & Kanban Enhancements
+
+**Release date:** 2026-01-15
+
 ### Added
+
+- **CRM Module (Sales):**
+
+  - **Core System:** Complete CRM implementation with Companies, Contacts, Deals, Pipelines, Tasks, and Activities.
+  - **Kanban Board:** Interactive drag-and-drop Deal management with customizable pipelines and stages.
+  - **Contact & Company Profiles:** Deep integration with NetSendo Subscribers, activity timelines, notes, and task associations.
+  - **Task Management:** Dedicated task views (Overdue, Today, Upcoming) with filtering and entity linking.
+  - **CSV Import:** Built-in importer with column mapping, preview, and deduplication logic.
+  - **UI/UX:** Premium high-performance Vue 3 interface with "CRM Sales" sidebar section.
+  - **Backend:** 7 new Eloquent models, polymorphic activity tracking, and optimized database schema.
+
+- **Kanban Board Visual Feedback:**
+
+  - Added visual highlighting when dragging deals over columns in the Kanban board.
+  - Columns now display indigo ring and background when a deal hovers over them.
+  - Prevents highlighting when dragging over the deal's current column.
+  - Smooth transition animations for better user experience.
 
 - **Message ID Search:**
 
@@ -44,13 +65,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added translations for the new "Default" option in PL, EN, DE, ES.
 
 - **SMS Test Send:**
+
   - Added "Send Test SMS" button to SMS campaign creation page, mirroring the existing email test functionality.
   - New modal interface for entering test phone number with content preview.
   - Backend `SmsController@test` method with placeholder substitution using sample data when no subscriber is selected.
   - Detailed logging for successful sends and errors.
   - Full translations in PL, EN, DE, ES.
 
+- **CRM Automation & Events:**
+  - Implemented event-driven architecture for CRM: `CrmDealStageChanged`, `CrmTaskOverdue`, `CrmContactReplied`.
+  - Added `CrmEventListener` to trigger automations and notifications based on CRM activities.
+  - New Artisan command `crm:check-overdue-tasks` for detecting and notifying about overdue tasks.
+  - Added `overdue_notified` flag to `crm_tasks` table to prevent duplicate notifications.
+  - Full translations for CRM module in all supported languages (PL, EN, ES).
+
 ### Fixed
+
+- **CRM Kanban Drag-and-Drop:**
+
+  - Fixed "All Inertia requests must receive a valid Inertia response, however a plain JSON response was received" error when dragging deals between columns.
+  - Changed `CrmDealController@updateStage` to return `RedirectResponse` instead of `JsonResponse` for proper Inertia compatibility.
+
+- **CRM Module Fixes:**
+
+  - Fixed 500 Internal Server Error in CRM controllers caused by column name mismatch (`admin_id` replaced with `admin_user_id`).
+  - Fixed "Page not found" errors by creating missing Vue pages: `Deals/Index.vue` (Kanban board), `Companies/Create.vue`, `Companies/Show.vue`, and `Companies/Edit.vue`.
+  - Fixed sidebar navigation to use valid route names for correct active state detection.
+  - Fixed `UniqueConstraintViolationException` when creating a CRM contact for an existing subscriber email by using `firstOrCreate` logic to prevent duplicates.
 
 - **Media Library - Bulk Upload 500 Error:**
 

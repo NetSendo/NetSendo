@@ -104,7 +104,21 @@ const updateOpenGroup = () => {
         return;
     }
 
-    // CRM (Catches remaining subscribers.* routes)
+    // CRM Sprzedażowy (Sales CRM)
+    if (
+        isActive("crm.*") ||
+        isActive("crm.dashboard") ||
+        isActive("crm.contacts.*") ||
+        isActive("crm.companies.*") ||
+        isActive("crm.deals.*") ||
+        isActive("crm.tasks.*") ||
+        isActive("crm.import.*")
+    ) {
+        openGroup.value = "crm_sales";
+        return;
+    }
+
+    // Listy Kontaktów (old CRM - now renamed to contact lists)
     if (
         isActive("mailing-lists.*") ||
         isActive("sms-lists.*") ||
@@ -112,7 +126,7 @@ const updateOpenGroup = () => {
         isActive("subscribers.*") ||
         isActive("tags.*")
     ) {
-        openGroup.value = "crm";
+        openGroup.value = "contact_lists";
         return;
     }
 
@@ -646,12 +660,174 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                 </SidebarItem>
             </SidebarGroup>
 
-            <!-- CRM -->
+            <!-- CRM Sprzedażowy (Sales CRM) -->
             <SidebarGroup
-                :label="$t('navigation.groups.crm')"
+                :label="$t('navigation.groups.crm_sales', 'CRM Sprzedażowy')"
                 :collapsed="collapsed"
-                :is-open="openGroup === 'crm'"
-                @toggle="toggleGroup('crm')"
+                :is-open="openGroup === 'crm_sales'"
+                @toggle="toggleGroup('crm_sales')"
+            >
+                <template #icon>
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                    </svg>
+                </template>
+
+                <SidebarItem
+                    :href="route('crm.dashboard')"
+                    :active="isActive('crm.dashboard')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.dashboard", "Dashboard CRM") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('crm.contacts.index')"
+                    :active="isActive('crm.contacts.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.contacts", "Kontakty") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('crm.companies.index')"
+                    :active="isActive('crm.companies.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.companies", "Firmy") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('crm.deals.index')"
+                    :active="isActive('crm.deals.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.deals", "Lejek sprzedaży") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('crm.tasks.index')"
+                    :active="isActive('crm.tasks.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.tasks", "Zadania") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('crm.import.index')"
+                    :active="isActive('crm.import.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("crm.import", "Import") }}
+                </SidebarItem>
+            </SidebarGroup>
+
+            <!-- Listy Kontaktów (formerly CRM) -->
+            <SidebarGroup
+                :label="$t('navigation.groups.contact_lists', 'Listy Kontaktów')"
+                :collapsed="collapsed"
+                :is-open="openGroup === 'contact_lists'"
+                @toggle="toggleGroup('contact_lists')"
             >
                 <template #icon>
                     <svg
