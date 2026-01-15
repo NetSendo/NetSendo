@@ -782,6 +782,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::resource('contacts', CrmContactController::class);
     Route::post('contacts/{contact}/activity', [CrmContactController::class, 'addActivity'])->name('contacts.activity');
     Route::get('contacts/{contact}/quick-view', [CrmContactController::class, 'quickView'])->name('contacts.quick-view');
+    Route::post('contacts/{contact}/send-email', [CrmContactController::class, 'sendEmail'])->name('contacts.send-email');
 
     // CRM Companies
     Route::resource('companies', CrmCompanyController::class);

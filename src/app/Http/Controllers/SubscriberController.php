@@ -13,6 +13,7 @@ use App\Events\SubscriberUnsubscribed;
 use App\Events\SubscriberSignedUp;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use App\Services\GenderService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -923,6 +924,20 @@ class SubscriberController extends Controller
                     'last_name' => $lastName,
                     'is_active_global' => true,
                 ]);
+            }
+
+            // Auto-detect gender from first name if not set
+            if (empty($subscriber->gender) && !empty($subscriber->first_name)) {
+                $genderService = app(GenderService::class);
+                $detectedGender = $genderService->detectGender(
+                    $subscriber->first_name,
+                    'PL',
+                    auth()->id()
+                );
+                if ($detectedGender) {
+                    $subscriber->gender = $detectedGender;
+                    $subscriber->save();
+                }
             }
 
             // Attach to list with reactivation, respecting resubscription_behavior setting

@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
+use App\Services\GenderService;
 
 class SubscriberController extends Controller
 {
@@ -240,6 +241,20 @@ class SubscriberController extends Controller
             'device' => $validated['device'] ?? null,
             'subscribed_at' => now(),
         ]);
+
+        // Auto-detect gender from first name if not set
+        if (empty($subscriber->gender) && !empty($subscriber->first_name)) {
+            $genderService = app(GenderService::class);
+            $detectedGender = $genderService->detectGender(
+                $subscriber->first_name,
+                'PL',
+                $user->id
+            );
+            if ($detectedGender) {
+                $subscriber->gender = $detectedGender;
+                $subscriber->save();
+            }
+        }
 
         // Attach to contact list
         $subscriber->contactLists()->attach($validated['contact_list_id'], [
@@ -599,6 +614,20 @@ class SubscriberController extends Controller
                         'device' => $subData['device'] ?? null,
                         'subscribed_at' => now(),
                     ]);
+
+                    // Auto-detect gender from first name if not set
+                    if (empty($subscriber->gender) && !empty($subscriber->first_name)) {
+                        $genderService = app(GenderService::class);
+                        $detectedGender = $genderService->detectGender(
+                            $subscriber->first_name,
+                            'PL',
+                            $user->id
+                        );
+                        if ($detectedGender) {
+                            $subscriber->gender = $detectedGender;
+                            $subscriber->save();
+                        }
+                    }
 
                     $results['created']++;
                 }

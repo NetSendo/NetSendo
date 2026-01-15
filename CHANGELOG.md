@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CRM Email Sending:**
+
+  - **Direct Email:** Implemented "Send Email" functionality directly from CRM Contact profile page.
+  - **Composer Modal:** New rich modal interface for composing emails with subject and body.
+  - **Mailbox Selection:** Ability to choose sender identity (Mailbox) if multiple are available.
+  - **Activity Tracking:** Automatically logs sent emails to the contact's activity timeline.
+  - **Backend:** New `sendEmail` endpoint in `CrmContactController` utilizing `MailProviderService`.
+
+- **Automatic Gender Detection:**
+
+  - **CSV Import:** Implemented automatic gender detection during subscriber import from CSV files. If gender is missing, it's inferred from the first name.
+  - **API Support:** Added automatic gender detection to Subscriber API endpoints (`POST /api/v1/subscribers` and `POST /api/v1/subscribers/batch`).
+
+- **Test Message Personalization:**
+  - Implemented automatic subscriber lookup by email address when sending test messages.
+  - Test emails now support dynamic placeholders like `{{male|female}}` (gender forms) and `[[!fname]]` (vocative) when the recipient email exists in the subscriber database.
+
+### Fixed
+
+- **Name Database:** Fixed missing vocative forms (e.g., `[[!fname]]` returning original name instead of vocative) on production environments by adding a missing migration for `PolishNamesSeeder`.
+
 ## [1.7.0] – CRM Module & Kanban Enhancements
 
 **Release date:** 2026-01-15

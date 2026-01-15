@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import SendEmailModal from "@/Components/Crm/SendEmailModal.vue";
 
 const props = defineProps({
     contact: Object,
@@ -9,6 +10,10 @@ const props = defineProps({
     campaignEvents: Object,
     owners: Array,
     companies: Array,
+    mailboxes: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // Activity form
@@ -26,6 +31,14 @@ const addActivity = () => {
             activityForm.reset();
         },
     });
+};
+
+// Email modal state
+const showEmailModal = ref(false);
+
+const onEmailSent = () => {
+    // Reload the page to refresh activities
+    router.reload({ only: ['activities'] });
 };
 
 // Activity type options
@@ -103,7 +116,7 @@ const getActivityIcon = (type) => {
                         </svg>
                         Zadzwoń
                     </button>
-                    <button class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
+                    <button @click="showEmailModal = true" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
@@ -325,5 +338,14 @@ const getActivityIcon = (type) => {
                 </div>
             </div>
         </div>
+
+        <!-- Email Modal -->
+        <SendEmailModal
+            :show="showEmailModal"
+            :contact="contact"
+            :mailboxes="mailboxes"
+            @close="showEmailModal = false"
+            @sent="onEmailSent"
+        />
     </AuthenticatedLayout>
 </template>

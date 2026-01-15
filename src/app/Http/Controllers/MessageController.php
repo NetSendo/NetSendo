@@ -1109,12 +1109,23 @@ class MessageController extends Controller
             $subject = $validated['subject'];
 
             // Get subscriber for placeholder substitution
+            // Priority: 1) subscriber by test email, 2) subscriber_id from request, 3) first from selected lists
             $subscriber = null;
-            if (!empty($validated['subscriber_id'])) {
-                // Use selected subscriber
+
+            // First, try to find subscriber by the test email address
+            if (!empty($validated['email'])) {
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
+                    ->where('email', $validated['email'])
+                    ->first();
+            }
+
+            // Fallback: use subscriber_id from request
+            if (!$subscriber && !empty($validated['subscriber_id'])) {
                 $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())->find($validated['subscriber_id']);
-            } elseif (!empty($validated['contact_list_ids'])) {
-                // Use first subscriber from selected lists
+            }
+
+            // Fallback: use first subscriber from selected lists
+            if (!$subscriber && !empty($validated['contact_list_ids'])) {
                 $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
                     ->whereHas('contactLists', function ($q) use ($validated) {
                         $q->whereIn('contact_lists.id', $validated['contact_list_ids']);

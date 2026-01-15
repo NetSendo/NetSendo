@@ -8,6 +8,8 @@ use App\Models\CrmActivity;
 use App\Models\Subscriber;
 use App\Models\User;
 use App\Models\Tag;
+use App\Models\Mailbox;
+use App\Services\Mail\MailProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -216,12 +218,16 @@ class CrmContactController extends Controller
 
         $companies = CrmCompany::forUser($userId)->orderBy('name')->get(['id', 'name']);
 
+        // Get mailboxes for email sending
+        $mailboxes = Mailbox::forUser($userId)->active()->get(['id', 'name', 'from_email', 'is_default']);
+
         return Inertia::render('Crm/Contacts/Show', [
             'contact' => $contact,
             'activities' => $activities,
             'campaignEvents' => $campaignEvents,
             'owners' => $owners,
             'companies' => $companies,
+            'mailboxes' => $mailboxes,
         ]);
     }
 
@@ -316,6 +322,105 @@ class CrmContactController extends Controller
             'contact' => $contact,
             'recentActivities' => $recentActivities,
         ]);
+    }
+
+    /**
+     * Send an email to the contact.
+     */
+    public function sendEmail(Request $request, CrmContact $contact, MailProviderService $mailProviderService): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($contact->user_id !== $userId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string|max:50000',
+            'mailbox_id' => 'nullable|exists:mailboxes,id',
+        ]);
+
+        // Get recipient email from contact's subscriber
+        $recipientEmail = $contact->subscriber?->email;
+        if (!$recipientEmail) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kontakt nie ma przypisanego adresu email.',
+            ], 422);
+        }
+
+        // Get mailbox
+        $mailbox = null;
+        if (!empty($validated['mailbox_id'])) {
+            $mailbox = Mailbox::forUser($userId)
+                ->active()
+                ->find($validated['mailbox_id']);
+        }
+
+        if (!$mailbox) {
+            $mailbox = $mailProviderService->getBestMailbox($userId, 'system');
+        }
+
+        if (!$mailbox) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak skonfigurowanej skrzynki pocztowej. Przejdź do Ustawień > Skrzynki pocztowe.',
+            ], 422);
+        }
+
+        try {
+            $provider = $mailProviderService->getProvider($mailbox);
+
+            // Prepare HTML body with basic formatting
+            $htmlBody = '<div style="font-family: sans-serif; line-height: 1.6;">'
+                . nl2br(e($validated['body']))
+                . '</div>';
+
+            $result = $provider->send(
+                to: $recipientEmail,
+                subject: $validated['subject'],
+                html: $htmlBody,
+                text: $validated['body']
+            );
+
+            if (!$result['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['error'] ?? 'Wystąpił błąd podczas wysyłania emaila.',
+                ], 500);
+            }
+
+            // Increment mailbox sent count
+            $mailbox->incrementSentCount();
+
+            // Log activity
+            $recipientName = trim(($contact->subscriber?->first_name ?? '') . ' ' . ($contact->subscriber?->last_name ?? ''));
+            $contact->logActivity('email', "Wysłano email: {$validated['subject']}", [
+                'subject' => $validated['subject'],
+                'mailbox_name' => $mailbox->name,
+                'mailbox_id' => $mailbox->id,
+                'recipient_email' => $recipientEmail,
+                'recipient_name' => $recipientName ?: null,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email został wysłany pomyślnie.',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('CRM email send failed', [
+                'contact_id' => $contact->id,
+                'mailbox_id' => $mailbox->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Wystąpił błąd podczas wysyłania emaila: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
