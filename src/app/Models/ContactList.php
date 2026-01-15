@@ -62,7 +62,7 @@ class ContactList extends Model
     public function subscribers()
     {
         return $this->belongsToMany(Subscriber::class, 'contact_list_subscriber')
-            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at')
+            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at', 'soft_bounce_count')
             ->withTimestamps();
     }
 

@@ -15,7 +15,7 @@ class DefaultSettingsController extends Controller
     public function index()
     {
         $user = auth()->user();
-        
+
         return Inertia::render('Defaults/Index', [
             'settings' => $user->settings,
             'mailboxes' => \App\Models\Mailbox::where('user_id', auth()->id())->active()->get(['id', 'name', 'from_email']),
@@ -35,12 +35,13 @@ class DefaultSettingsController extends Controller
     {
         $validated = $request->validate([
             'settings' => 'required|array',
-            
+
             // Subscription
             'settings.subscription.double_optin' => 'boolean',
             'settings.subscription.notification_email' => 'nullable|email',
             'settings.subscription.delete_unconfirmed' => 'boolean',
-            
+            'settings.subscription.delete_unconfirmed_after_days' => 'nullable|integer|min:1|max:365',
+
             // Sending
             'settings.sending.from_name' => 'nullable|string|max:255',
             'settings.sending.reply_to' => 'nullable|email',
@@ -72,20 +73,20 @@ class DefaultSettingsController extends Controller
         ]);
 
         $user = auth()->user();
-        
+
         // Extract CRON settings before saving user settings
         $cronData = $validated['settings']['cron'] ?? null;
         unset($validated['settings']['cron']);
-        
+
         // Save user settings (without CRON)
         $user->settings = $validated['settings'];
         $user->save();
-        
+
         // Save CRON settings separately using key-value store
         if ($cronData) {
             CronSetting::setValue('volume_per_minute', $cronData['volume_per_minute'] ?? 100);
             CronSetting::setValue('daily_maintenance_hour', $cronData['daily_maintenance_hour'] ?? 4);
-            
+
             if (!empty($cronData['schedule'])) {
                 CronSetting::setGlobalSchedule($cronData['schedule']);
             }

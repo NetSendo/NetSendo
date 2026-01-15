@@ -7,13 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Configurable Bounce Management:**
+
+  - Users can now configure the **soft bounce threshold** (number of soft bounces before marking as bounced, default: 3).
+  - Users can choose the **bounce scope** - whether to apply bounce status per-list (recommended) or globally on the subscriber.
+  - New settings available in Mailing List Edit, Create, and Default Settings pages.
+
+- **Delete Unconfirmed Addresses:**
+  - Implemented automatic deletion of unconfirmed subscribers after a configurable number of days.
+  - New `delete_unconfirmed_after_days` setting in mailing list subscription settings (default: 7 days).
+  - Added UI input field for configuring the retention period in Edit, Create, and Default Settings pages.
+  - Backend logic added to `CronScheduleService::runDailyMaintenance()` for daily cleanup.
+  - Full translations in PL and EN.
+
 ### Fixed
 
 - **System Emails:** Fixed missing welcome email for new subscribers when double opt-in is disabled.
+
   - Added new `subscription_welcome` system email template.
   - New subscribers without double opt-in now receive a welcome email immediately after signup.
   - Resubscribers (already active) continue to receive `already_active_resubscribe`.
   - Resubscribers (previously inactive/unsubscribed) continue to receive `inactive_resubscribe`.
+
+- **Bounce Management:** Fixed the bounce analysis feature to properly function according to list settings.
+  - Bounce status is now applied per-list (in `contact_list_subscriber` pivot table) instead of globally on the subscriber.
+  - The `bounce_analysis` setting on each mailing list is now respected - bounces are only processed for lists with this setting enabled.
+  - Soft bounces now increment a counter and mark the subscriber as bounced only after 3 soft bounces (previously ignored).
+  - Hard bounces continue to immediately mark the subscriber as bounced.
+  - Added `soft_bounce_count` column to track soft bounce occurrences per subscriber-list relationship.
 
 ## [1.7.1] – Short Description
 

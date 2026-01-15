@@ -12,6 +12,7 @@ const props = defineProps({
 });
 
 const currentSettingsTab = ref('subscription');
+const saveSuccess = ref(false);
 
 // CRON helpers
 const days = [
@@ -48,7 +49,7 @@ const getSetting = (path, defaultVal) => {
     // Check if we have the new nested structure first
     const parts = path.split('.');
     let current = props.settings;
-    
+
     // Check if props.settings is the new structure (has 'subscription' key)
     if (props.settings && props.settings.subscription) {
          for (const part of parts) {
@@ -79,6 +80,7 @@ const form = useForm({
             double_optin: getSetting('subscription.double_optin', false),
             notification_email: getSetting('subscription.notification_email', ''),
             delete_unconfirmed: getSetting('subscription.delete_unconfirmed', false),
+            delete_unconfirmed_after_days: getSetting('subscription.delete_unconfirmed_after_days', 7),
         },
         sending: {
             mailbox_id: getSetting('sending.mailbox_id', null),
@@ -117,6 +119,8 @@ const form = useForm({
             facebook_integration: getSetting('advanced.facebook_integration', ''),
             queue_days: getSetting('advanced.queue_days', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
             bounce_analysis: getSetting('advanced.bounce_analysis', true),
+            bounce_scope: getSetting('advanced.bounce_scope', 'list'),
+            soft_bounce_threshold: getSetting('advanced.soft_bounce_threshold', 3),
         },
     },
 });
@@ -150,7 +154,15 @@ watch(() => form.settings.sending.mailbox_id, (newVal) => {
 });
 
 const submit = () => {
-    form.post(route('defaults.store'));
+    form.post(route('defaults.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            saveSuccess.value = true;
+            setTimeout(() => {
+                saveSuccess.value = false;
+            }, 3000);
+        }
+    });
 };
 </script>
 
@@ -175,7 +187,7 @@ const submit = () => {
             <div class="w-full max-w-5xl">
                 <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900 lg:p-8">
                     <form @submit.prevent="submit" class="flex flex-col gap-8 lg:flex-row">
-                        
+
                         <!-- Settings Sidebar -->
                         <div class="w-full lg:w-1/4">
                             <nav class="flex flex-col space-y-1">
@@ -185,8 +197,8 @@ const submit = () => {
                                     @click="currentSettingsTab = tab"
                                     type="button"
                                     class="flex items-center rounded-lg px-4 py-2 text-left text-sm font-medium transition-colors"
-                                    :class="currentSettingsTab === tab 
-                                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300' 
+                                    :class="currentSettingsTab === tab
+                                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'"
                                 >
                                     {{ $t(`mailing_lists.settings.tabs.${tab}`) }}
@@ -196,23 +208,23 @@ const submit = () => {
 
                         <!-- Content Area -->
                         <div class="flex-1 space-y-6 lg:pl-6">
-                            
+
                              <!-- Subscription Settings -->
                             <div v-show="currentSettingsTab === 'subscription'" class="space-y-6">
                                 <h3 class="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
                                     {{ $t('mailing_lists.settings.subscription_section') }}
                                 </h3>
-                                
+
                                 <div class="space-y-4">
                                     <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                         <div>
                                             <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.double_optin') }}</span>
                                             <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.double_optin_desc') }}</span>
                                         </div>
-                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900" 
+                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                                                 :class="form.settings.subscription.double_optin ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
                                                 @click="form.settings.subscription.double_optin = !form.settings.subscription.double_optin">
-                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                                     :class="{ 'translate-x-5': form.settings.subscription.double_optin }"></span>
                                         </div>
                                     </div>
@@ -222,12 +234,35 @@ const submit = () => {
                                             <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.delete_unconfirmed') }}</span>
                                             <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.delete_unconfirmed_desc') }}</span>
                                         </div>
-                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900" 
+                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                                                 :class="form.settings.subscription.delete_unconfirmed ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
                                                 @click="form.settings.subscription.delete_unconfirmed = !form.settings.subscription.delete_unconfirmed">
-                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                                     :class="{ 'translate-x-5': form.settings.subscription.delete_unconfirmed }"></span>
                                         </div>
+                                    </div>
+
+                                    <!-- Delete unconfirmed after days -->
+                                    <div
+                                        v-if="form.settings.subscription.delete_unconfirmed"
+                                        class="ml-4 border-l-2 border-indigo-200 pl-4 dark:border-indigo-800"
+                                    >
+                                        <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                            {{ $t('mailing_lists.settings.delete_unconfirmed_after_days') }}
+                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <input
+                                                v-model.number="form.settings.subscription.delete_unconfirmed_after_days"
+                                                type="number"
+                                                min="1"
+                                                max="365"
+                                                class="w-24 rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                                            />
+                                            <span class="text-sm text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.delete_unconfirmed_days_label') }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                                            {{ $t('mailing_lists.settings.delete_unconfirmed_after_days_help') }}
+                                        </p>
                                     </div>
 
                                     <div>
@@ -250,7 +285,7 @@ const submit = () => {
                                     <h3 class="mb-4 text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
                                         {{ $t('mailing_lists.settings.sending_section') }}
                                     </h3>
-                                    
+
                                      <!-- Default Mailbox Select -->
                                     <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                         <label class="mb-1 block text-sm font-medium text-slate-900 dark:text-white">
@@ -402,7 +437,7 @@ const submit = () => {
                                 <h3 class="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
                                     {{ $t('mailing_lists.settings.pages_section') }}
                                 </h3>
-                                
+
                                 <div v-for="(page, key) in form.settings.pages" :key="key" class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                     <div class="mb-3 flex items-center justify-between">
                                         <div>
@@ -412,7 +447,7 @@ const submit = () => {
                                             </p>
                                         </div>
                                         <div class="flex rounded-lg bg-white p-1 shadow-sm dark:bg-slate-900">
-                                            <button 
+                                            <button
                                                 @click="page.type = 'system'"
                                                 type="button"
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
@@ -420,7 +455,7 @@ const submit = () => {
                                             >
                                                 {{ $t('mailing_lists.settings.pages.types.system') }}
                                             </button>
-                                            <button 
+                                            <button
                                                 @click="page.type = 'custom'"
                                                 type="button"
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
@@ -428,7 +463,7 @@ const submit = () => {
                                             >
                                                 {{ $t('mailing_lists.settings.pages.types.custom') }}
                                             </button>
-                                            <button 
+                                            <button
                                                 @click="page.type = 'external'"
                                                 type="button"
                                                 class="rounded px-3 py-1 text-xs font-medium transition-colors"
@@ -438,7 +473,7 @@ const submit = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div v-if="page.type === 'custom'" class="mt-3">
                                         <input
                                             v-model="page.url"
@@ -447,7 +482,7 @@ const submit = () => {
                                             placeholder="https://"
                                         >
                                     </div>
-                                    
+
                                     <div v-if="page.type === 'external'" class="mt-3">
                                         <select
                                             v-model="page.external_page_id"
@@ -465,9 +500,9 @@ const submit = () => {
                             <!-- CRON Settings -->
                             <div v-show="currentSettingsTab === 'cron'" class="space-y-6">
                                 <h3 class="text-lg font-medium text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
-                                    ⏰ Globalne ustawienia harmonogramu wysyłki
+                                    {{ $t('defaults.cron_section_title') }}
                                 </h3>
-                                
+
                                 <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                                     <div class="flex items-start gap-3">
                                         <svg class="h-5 w-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -484,7 +519,7 @@ const submit = () => {
 
                                 <div>
                                     <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
-                                        {{ $t('cron.settings.volume_per_minute') }} (globalny)
+                                        {{ $t('defaults.volume_per_minute_label') }}
                                     </label>
                                     <input
                                         v-model.number="form.settings.cron.volume_per_minute"
@@ -516,15 +551,15 @@ const submit = () => {
                                         {{ $t('cron.schedule.title') }}
                                     </label>
                                     <div class="space-y-3">
-                                        <div 
-                                            v-for="day in days" 
+                                        <div
+                                            v-for="day in days"
                                             :key="day.key"
                                             class="flex flex-wrap items-center gap-4 p-3 bg-slate-100 dark:bg-slate-700/50 rounded-lg"
                                         >
                                             <div class="w-28">
                                                 <label class="flex items-center gap-2 cursor-pointer">
-                                                    <input 
-                                                        type="checkbox" 
+                                                    <input
+                                                        type="checkbox"
                                                         v-model="form.settings.cron.schedule[day.key].enabled"
                                                         class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                                                     />
@@ -534,14 +569,14 @@ const submit = () => {
                                                 </label>
                                             </div>
 
-                                            <div 
+                                            <div
                                                 v-if="form.settings.cron.schedule[day.key].enabled"
                                                 class="flex items-center gap-3 flex-1"
                                             >
                                                 <div class="flex items-center gap-2">
                                                     <label class="text-xs text-slate-500">{{ $t('cron.schedule.from') }}:</label>
-                                                    <input 
-                                                        type="time" 
+                                                    <input
+                                                        type="time"
                                                         :value="minutesToTime(form.settings.cron.schedule[day.key].start)"
                                                         @input="form.settings.cron.schedule[day.key].start = timeToMinutes($event.target.value)"
                                                         class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm dark:bg-slate-700 dark:text-white"
@@ -549,24 +584,24 @@ const submit = () => {
                                                 </div>
                                                 <div class="flex items-center gap-2">
                                                     <label class="text-xs text-slate-500">{{ $t('cron.schedule.to') }}:</label>
-                                                    <input 
-                                                        type="time" 
+                                                    <input
+                                                        type="time"
                                                         :value="minutesToTime(form.settings.cron.schedule[day.key].end)"
                                                         @input="form.settings.cron.schedule[day.key].end = timeToMinutes($event.target.value)"
                                                         class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm dark:bg-slate-700 dark:text-white"
                                                     />
                                                 </div>
-                                                
+
                                                 <!-- Quick presets -->
                                                 <div class="flex gap-1">
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         @click="form.settings.cron.schedule[day.key] = { enabled: true, start: 0, end: 1440 }"
                                                         class="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-600 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
                                                     >
                                                         {{ $t('cron.schedule.preset_24h') }}
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         @click="form.settings.cron.schedule[day.key] = { enabled: true, start: 480, end: 1020 }"
                                                         class="px-2 py-1 text-xs bg-slate-200 dark:bg-slate-600 rounded hover:bg-slate-300 dark:hover:bg-slate-500"
@@ -575,8 +610,8 @@ const submit = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            
-                                            <div 
+
+                                            <div
                                                 v-else
                                                 class="flex-1 text-sm text-slate-400 dark:text-slate-500 italic"
                                             >
@@ -601,13 +636,46 @@ const submit = () => {
                                             <span class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.advanced.bounce_title') }}</span>
                                             <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.bounce_desc') }}</span>
                                         </div>
-                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900" 
+                                        <div class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                                                 :class="form.settings.advanced.bounce_analysis ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
                                                 @click="form.settings.advanced.bounce_analysis = !form.settings.advanced.bounce_analysis">
-                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out" 
+                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                                                     :class="{ 'translate-x-5': form.settings.advanced.bounce_analysis }"></span>
                                         </div>
                                     </div>
+
+                                    <!-- Extended options when bounce_analysis is enabled -->
+                                    <template v-if="form.settings.advanced.bounce_analysis">
+                                        <!-- Bounce Scope -->
+                                        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                            <label class="block text-sm font-medium text-slate-900 dark:text-white mb-3">
+                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_label') }}
+                                            </label>
+                                            <div class="flex flex-col gap-3 sm:flex-row sm:gap-6">
+                                                <label class="flex items-start gap-3 cursor-pointer group">
+                                                    <input type="radio" v-model="form.settings.advanced.bounce_scope" value="list" class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"/>
+                                                    <div>
+                                                        <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">{{ $t('mailing_lists.settings.advanced.bounce_scope_list') }}</span>
+                                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.bounce_scope_list_desc') }}</span>
+                                                    </div>
+                                                </label>
+                                                <label class="flex items-start gap-3 cursor-pointer group">
+                                                    <input type="radio" v-model="form.settings.advanced.bounce_scope" value="global" class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"/>
+                                                    <div>
+                                                        <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">{{ $t('mailing_lists.settings.advanced.bounce_scope_global') }}</span>
+                                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.bounce_scope_global_desc') }}</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Soft Bounce Threshold -->
+                                        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                            <label class="block text-sm font-medium text-slate-900 dark:text-white mb-2">{{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_label') }}</label>
+                                            <input v-model.number="form.settings.advanced.soft_bounce_threshold" type="number" min="1" max="10" class="w-24 rounded-lg border-slate-200 bg-white px-3 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"/>
+                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_help') }}</p>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <div>
@@ -627,10 +695,10 @@ const submit = () => {
                                         {{ $t('mailing_lists.settings.advanced.queue_days_label') }}
                                     </label>
                                     <div class="flex flex-wrap gap-2">
-                                        <div v-for="day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']" :key="day" 
+                                        <div v-for="day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']" :key="day"
                                             class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
-                                            :class="form.settings.advanced.queue_days.includes(day) 
-                                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                                            :class="form.settings.advanced.queue_days.includes(day)
+                                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
                                                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'"
                                             @click="() => {
                                                 const idx = form.settings.advanced.queue_days.indexOf(day);
@@ -644,8 +712,25 @@ const submit = () => {
                                     <p class="mt-1 text-xs text-slate-500">{{ $t('mailing_lists.settings.advanced.queue_days_help') }}</p>
                                 </div>
                             </div>
-                            
+
                             <div class="flex items-center justify-end gap-4 border-t border-slate-100 pt-6 dark:border-slate-800">
+                                <!-- Success notification -->
+                                <Transition
+                                    enter-active-class="transition ease-out duration-300"
+                                    enter-from-class="transform opacity-0 translate-x-4"
+                                    enter-to-class="transform opacity-100 translate-x-0"
+                                    leave-active-class="transition ease-in duration-200"
+                                    leave-from-class="transform opacity-100 translate-x-0"
+                                    leave-to-class="transform opacity-0 translate-x-4"
+                                >
+                                    <div v-if="saveSuccess" class="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-2 text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        {{ $t('common.saved') }}
+                                    </div>
+                                </Transition>
+
                                 <button
                                     type="submit"
                                     :disabled="form.processing"

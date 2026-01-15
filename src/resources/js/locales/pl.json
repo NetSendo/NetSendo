@@ -1,4 +1,8 @@
 {
+    "defaults": {
+        "cron_section_title": "⏰ Globalne ustawienia harmonogramu wysyłki",
+        "volume_per_minute_label": "Limit wiadomości / minutę (globalny)"
+    },
 
     "affiliate": {
         "title": "Program Partnerski",
@@ -642,6 +646,9 @@
             "reply_to_placeholder": "np. kontakt{'@'}firma.pl",
             "delete_unconfirmed": "Usuń niepotwierdzone adresy",
             "delete_unconfirmed_desc": "Automatycznie usuwaj niepotwierdzone adresy",
+            "delete_unconfirmed_after_days": "Usuń po",
+            "delete_unconfirmed_days_label": "dniach",
+            "delete_unconfirmed_after_days_help": "Niepotwierdzone adresy zostaną automatycznie usunięte po upływie tego czasu",
             "company_section": "Dane firmy (Stopka)",
             "headers_section": "Nagłówki weryfikacyjne / Anti-Spam",
             "headers_help": "Nadpisz globalne nagłówki List-Unsubscribe tutaj.",
@@ -715,6 +722,13 @@
             "advanced": {
                 "bounce_title": "Analiza Odbić (Bounce Management)",
                 "bounce_desc": "Automatycznie oznaczaj adresy jako nieaktywne po miękkim lub twardym odbiciu.",
+                "bounce_scope_label": "Zakres odbić",
+                "bounce_scope_list": "Per lista (zalecane)",
+                "bounce_scope_list_desc": "Status 'bounced' zostanie ustawiony tylko na tej liście",
+                "bounce_scope_global": "Globalny",
+                "bounce_scope_global_desc": "Status 'bounced' zostanie ustawiony globalnie dla subskrybenta",
+                "soft_bounce_threshold_label": "Próg miękkich odbić",
+                "soft_bounce_threshold_help": "Liczba miękkich odbić przed oznaczeniem jako 'bounced'",
                 "facebook_label": "Facebook Integration (Pixel ID)",
                 "facebook_placeholder": "np. 1234567890",
                 "queue_days_label": "Dni wysyłki kolejki",

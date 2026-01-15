@@ -93,6 +93,11 @@ const form = useForm({
                 "delete_unconfirmed",
                 false
             ),
+            delete_unconfirmed_after_days: getSetting(
+                "subscription",
+                "delete_unconfirmed_after_days",
+                7
+            ),
             security_options: getSetting(
                 "subscription",
                 "security_options",
@@ -167,6 +172,8 @@ const form = useForm({
                 "sunday",
             ]),
             bounce_analysis: getSetting("advanced", "bounce_analysis", true),
+            bounce_scope: getSetting("advanced", "bounce_scope", "list"),
+            soft_bounce_threshold: getSetting("advanced", "soft_bounce_threshold", 3),
         },
         cron: {
             use_custom: props.list.cron_settings?.use_custom_settings ?? false,
@@ -675,6 +682,51 @@ const subscribeEndpoint = computed(() => {
                                                     }"
                                                 ></span>
                                             </div>
+                                        </div>
+
+                                        <!-- Delete unconfirmed after days -->
+                                        <div
+                                            v-if="
+                                                form.settings.subscription
+                                                    .delete_unconfirmed
+                                            "
+                                            class="ml-4 border-l-2 border-indigo-200 pl-4 dark:border-indigo-800"
+                                        >
+                                            <label
+                                                class="mb-2 block text-sm font-medium text-slate-900 dark:text-white"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "mailing_lists.settings.delete_unconfirmed_after_days"
+                                                    )
+                                                }}
+                                            </label>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    v-model.number="
+                                                        form.settings.subscription
+                                                            .delete_unconfirmed_after_days
+                                                    "
+                                                    type="number"
+                                                    min="1"
+                                                    max="365"
+                                                    class="w-24 rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                                                />
+                                                <span class="text-sm text-slate-500 dark:text-slate-400"
+                                                    >{{
+                                                        $t(
+                                                            "mailing_lists.settings.delete_unconfirmed_days_label"
+                                                        )
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                                                {{
+                                                    $t(
+                                                        "mailing_lists.settings.delete_unconfirmed_after_days_help"
+                                                    )
+                                                }}
+                                            </p>
                                         </div>
 
                                         <div>
@@ -1890,6 +1942,67 @@ const subscribeEndpoint = computed(() => {
                                                 ></span>
                                             </div>
                                         </div>
+
+                                        <!-- Extended options when bounce_analysis is enabled -->
+                                        <template v-if="form.settings.advanced.bounce_analysis">
+                                            <!-- Bounce Scope -->
+                                            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                                <label class="block text-sm font-medium text-slate-900 dark:text-white mb-3">
+                                                    {{ $t('mailing_lists.settings.advanced.bounce_scope_label') }}
+                                                </label>
+                                                <div class="flex flex-col gap-3 sm:flex-row sm:gap-6">
+                                                    <label class="flex items-start gap-3 cursor-pointer group">
+                                                        <input
+                                                            type="radio"
+                                                            v-model="form.settings.advanced.bounce_scope"
+                                                            value="list"
+                                                            class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"
+                                                        />
+                                                        <div>
+                                                            <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">
+                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_list') }}
+                                                            </span>
+                                                            <span class="block text-xs text-slate-500 dark:text-slate-400">
+                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_list_desc') }}
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                    <label class="flex items-start gap-3 cursor-pointer group">
+                                                        <input
+                                                            type="radio"
+                                                            v-model="form.settings.advanced.bounce_scope"
+                                                            value="global"
+                                                            class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"
+                                                        />
+                                                        <div>
+                                                            <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">
+                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_global') }}
+                                                            </span>
+                                                            <span class="block text-xs text-slate-500 dark:text-slate-400">
+                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_global_desc') }}
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Soft Bounce Threshold -->
+                                            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                                <label class="block text-sm font-medium text-slate-900 dark:text-white mb-2">
+                                                    {{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_label') }}
+                                                </label>
+                                                <input
+                                                    v-model.number="form.settings.advanced.soft_bounce_threshold"
+                                                    type="number"
+                                                    min="1"
+                                                    max="10"
+                                                    class="w-24 rounded-lg border-slate-200 bg-white px-3 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                                />
+                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                    {{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_help') }}
+                                                </p>
+                                            </div>
+                                        </template>
                                     </div>
 
                                     <div>

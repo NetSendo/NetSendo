@@ -1,4 +1,8 @@
 {
+    "defaults": {
+        "cron_section_title": "⏰ Globale Sendezeitplan-Einstellungen",
+        "volume_per_minute_label": "Nachrichtenlimit / Minute (global)"
+    },
     "templates": {
         "title": "Vorlagen",
         "subtitle": "Verwalten Sie Ihre E-Mail- und SMS-Vorlagen",
@@ -981,6 +985,7 @@
                 "subscription": "Anmeldung",
                 "sending": "Versand",
                 "pages": "Seiten",
+                "cron": "Zeitplan (CRON)",
                 "advanced": "Fortgeschritten",
                 "integration": "Integration"
             },
@@ -1017,6 +1022,13 @@
             "advanced": {
                 "bounce_title": "Bouncemanagement (Bounce Management)",
                 "bounce_desc": "E-Mail-Adressen nach einem Soft- oder Hard-Bounce automatisch als inaktiv markieren.",
+                "bounce_scope_label": "Bounce-Bereich",
+                "bounce_scope_list": "Pro Liste (empfohlen)",
+                "bounce_scope_list_desc": "Status 'bounced' wird nur für diese Liste gesetzt",
+                "bounce_scope_global": "Global",
+                "bounce_scope_global_desc": "Status 'bounced' wird global für den Abonnenten gesetzt",
+                "soft_bounce_threshold_label": "Soft-Bounce-Schwellenwert",
+                "soft_bounce_threshold_help": "Anzahl der Soft-Bounces bevor als 'bounced' markiert wird",
                 "facebook_label": "Facebook-Integration (Pixel-ID)",
                 "facebook_placeholder": "z.B. 1234567890",
                 "queue_days_label": "Versandtage der Warteschlange",

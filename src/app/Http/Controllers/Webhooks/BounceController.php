@@ -13,7 +13,7 @@ class BounceController extends Controller
 {
     /**
      * Handle bounce webhook from SendGrid
-     * 
+     *
      * @see https://docs.sendgrid.com/for-developers/tracking-events/event
      */
     public function sendgrid(Request $request)
@@ -44,7 +44,7 @@ class BounceController extends Controller
 
     /**
      * Handle bounce webhook from Postmark
-     * 
+     *
      * @see https://postmarkapp.com/developer/webhooks/bounce-webhook
      */
     public function postmark(Request $request)
@@ -78,7 +78,7 @@ class BounceController extends Controller
 
     /**
      * Handle bounce webhook from Mailgun
-     * 
+     *
      * @see https://documentation.mailgun.com/en/latest/user_manual.html#webhooks
      */
     public function mailgun(Request $request)
@@ -96,12 +96,12 @@ class BounceController extends Controller
         }
 
         $severity = $eventData['severity'] ?? 'permanent';
-        $bounceType = $severity === 'permanent' 
-            ? EmailBounced::TYPE_HARD 
+        $bounceType = $severity === 'permanent'
+            ? EmailBounced::TYPE_HARD
             : EmailBounced::TYPE_SOFT;
 
-        $reason = $eventData['delivery-status']['message'] ?? 
-                  $eventData['delivery-status']['description'] ?? 
+        $reason = $eventData['delivery-status']['message'] ??
+                  $eventData['delivery-status']['description'] ??
                   'Delivery failed';
 
         $this->processBounce(
@@ -169,10 +169,62 @@ class BounceController extends Controller
             $message = Message::find($messageId);
         }
 
-        // Update subscriber status for hard bounces
-        if ($bounceType === EmailBounced::TYPE_HARD) {
-            $subscriber->update(['status' => 'bounced']);
+        // Process bounce for each list the subscriber belongs to
+        $listsAffected = 0;
+        foreach ($subscriber->contactLists as $list) {
+            $settings = $list->settings ?? [];
+            $bounceAnalysis = $settings['advanced']['bounce_analysis'] ?? true;
+
+            if (!$bounceAnalysis) {
+                Log::debug("Skipping bounce analysis for list {$list->id} - disabled in settings");
+                continue;
+            }
+
+            // Get configurable settings with defaults for backward compatibility
+            $bounceScope = $settings['advanced']['bounce_scope'] ?? 'list';
+            $softBounceThreshold = $settings['advanced']['soft_bounce_threshold'] ?? 3;
+
+            if ($bounceType === EmailBounced::TYPE_HARD) {
+                // Hard bounce - immediate marking as bounced
+                if ($bounceScope === 'global') {
+                    $subscriber->update(['status' => 'bounced']);
+                    Log::info("Hard bounce: marked subscriber {$subscriber->id} as bounced globally");
+                } else {
+                    $list->subscribers()->updateExistingPivot($subscriber->id, [
+                        'status' => 'bounced',
+                    ]);
+                    Log::info("Hard bounce: marked subscriber {$subscriber->id} as bounced on list {$list->id}");
+                }
+                $listsAffected++;
+            } else {
+                // Soft bounce - increment counter
+                $currentCount = $list->pivot->soft_bounce_count ?? 0;
+                $newCount = $currentCount + 1;
+
+                $updateData = ['soft_bounce_count' => $newCount];
+
+                // Check against configurable threshold
+                if ($newCount >= $softBounceThreshold) {
+                    if ($bounceScope === 'global') {
+                        $subscriber->update(['status' => 'bounced']);
+                        Log::info("Soft bounce threshold reached: marked subscriber {$subscriber->id} as bounced globally (count: {$newCount}/{$softBounceThreshold})");
+                    } else {
+                        $updateData['status'] = 'bounced';
+                        Log::info("Soft bounce threshold reached: marked subscriber {$subscriber->id} as bounced on list {$list->id} (count: {$newCount}/{$softBounceThreshold})");
+                    }
+                    $listsAffected++;
+                } else {
+                    Log::info("Soft bounce for subscriber {$subscriber->id} on list {$list->id} (count: {$newCount}/{$softBounceThreshold})");
+                }
+
+                $list->subscribers()->updateExistingPivot($subscriber->id, $updateData);
+            }
         }
+
+        Log::info("Bounce processing complete for {$email}", [
+            'lists_affected' => $listsAffected,
+            'bounce_type' => $bounceType,
+        ]);
 
         // Dispatch event for automations
         event(new EmailBounced(

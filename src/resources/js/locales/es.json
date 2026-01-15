@@ -1,4 +1,8 @@
 {
+    "defaults": {
+        "cron_section_title": "⏰ Configuración Global del Calendario de Envío",
+        "volume_per_minute_label": "Límite de mensajes / minuto (global)"
+    },
     "affiliate": {
         "title": "Programa de Afiliados",
         "programs": "Programas",
@@ -914,6 +918,7 @@
                 "subscription": "Suscripción",
                 "sending": "Envío",
                 "pages": "Páginas",
+                "cron": "Calendario (CRON)",
                 "advanced": "Avanzado",
                 "integration": "Integración"
             },
@@ -950,6 +955,13 @@
             "advanced": {
                 "bounce_title": "Gestión de Rebotes (Bounce Management)",
                 "bounce_desc": "Marcar automáticamente las direcciones como inactivas después de un rebote suave o duro.",
+                "bounce_scope_label": "Ámbito de rebotes",
+                "bounce_scope_list": "Por lista (recomendado)",
+                "bounce_scope_list_desc": "El estado 'bounced' se aplicará solo a esta lista",
+                "bounce_scope_global": "Global",
+                "bounce_scope_global_desc": "El estado 'bounced' se aplicará globalmente al suscriptor",
+                "soft_bounce_threshold_label": "Umbral de rebotes suaves",
+                "soft_bounce_threshold_help": "Número de rebotes suaves antes de marcar como 'bounced'",
                 "facebook_label": "Integración con Facebook (Pixel ID)",
                 "facebook_placeholder": "ej. 1234567890",
                 "queue_days_label": "Días de envío de la cola",

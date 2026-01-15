@@ -1,4 +1,8 @@
 {
+    "defaults": {
+        "cron_section_title": "⏰ Global Sending Schedule Settings",
+        "volume_per_minute_label": "Message limit / minute (global)"
+    },
     "affiliate": {
         "title": "Affiliate Program",
         "programs": "Programs",
@@ -642,6 +646,9 @@
             "reply_to_placeholder": "e.g. contact{'@'}company.com",
             "delete_unconfirmed": "Delete unconfirmed addresses",
             "delete_unconfirmed_desc": "Automatically delete unconfirmed addresses",
+            "delete_unconfirmed_after_days": "Delete after",
+            "delete_unconfirmed_days_label": "days",
+            "delete_unconfirmed_after_days_help": "Unconfirmed addresses will be automatically deleted after this period",
             "company_section": "Company Information (Footer)",
             "headers_section": "Validation / Anti-Spam Headers",
             "headers_help": "Override global List-Unsubscribe headers here.",
@@ -678,6 +685,7 @@
                 "subscription": "Subscription",
                 "sending": "Sending",
                 "pages": "Pages",
+                "cron": "Schedule (CRON)",
                 "advanced": "Advanced",
                 "integration": "Integration"
             },
@@ -714,6 +722,13 @@
             "advanced": {
                 "bounce_title": "Bounce Management",
                 "bounce_desc": "Automatically mark addresses as inactive after soft or hard bounce.",
+                "bounce_scope_label": "Bounce Scope",
+                "bounce_scope_list": "Per list (recommended)",
+                "bounce_scope_list_desc": "Status 'bounced' will only be set on this list",
+                "bounce_scope_global": "Global",
+                "bounce_scope_global_desc": "Status 'bounced' will be set globally for subscriber",
+                "soft_bounce_threshold_label": "Soft Bounce Threshold",
+                "soft_bounce_threshold_help": "Number of soft bounces before marking as 'bounced'",
                 "facebook_label": "Facebook Integration (Pixel ID)",
                 "facebook_placeholder": "e.g. 1234567890",
                 "queue_days_label": "Queue Dispatch Days",

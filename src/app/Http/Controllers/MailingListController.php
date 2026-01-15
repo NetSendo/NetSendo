@@ -148,6 +148,7 @@ class MailingListController extends Controller
             'settings.subscription.double_optin' => 'boolean',
             'settings.subscription.notification_email' => 'nullable|email',
             'settings.subscription.delete_unconfirmed' => 'boolean',
+            'settings.subscription.delete_unconfirmed_after_days' => 'nullable|integer|min:1|max:365',
             'settings.subscription.security_options' => 'nullable|array',
 
             // Sending
@@ -285,6 +286,7 @@ class MailingListController extends Controller
             'settings.subscription.double_optin' => 'boolean',
             'settings.subscription.notification_email' => 'nullable|email',
             'settings.subscription.delete_unconfirmed' => 'boolean',
+            'settings.subscription.delete_unconfirmed_after_days' => 'nullable|integer|min:1|max:365',
             'settings.subscription.security_options' => 'nullable|array',
 
             // Sending

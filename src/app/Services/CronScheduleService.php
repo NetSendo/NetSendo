@@ -537,6 +537,52 @@ class CronScheduleService
     }
 
     /**
+     * Usuń niepotwierdzone subskrypcje z list które mają włączoną tę opcję
+     */
+    public function deleteUnconfirmedSubscribers(): array
+    {
+        $stats = [
+            'lists_processed' => 0,
+            'subscribers_deleted' => 0,
+        ];
+
+        // Pobierz wszystkie listy z włączonym delete_unconfirmed
+        $lists = ContactList::all();
+
+        foreach ($lists as $list) {
+            $settings = $list->settings ?? [];
+            $deleteUnconfirmed = $settings['subscription']['delete_unconfirmed'] ?? false;
+
+            if (!$deleteUnconfirmed) {
+                continue;
+            }
+
+            // Domyślnie 7 dni jeśli nie ustawiono
+            $afterDays = $settings['subscription']['delete_unconfirmed_after_days'] ?? 7;
+            $cutoffDate = now()->subDays($afterDays);
+
+            // Znajdź ID niepotwierdzonych subskrybentów starszych niż X dni
+            $subscriberIds = $list->subscribers()
+                ->wherePivot('status', 'unconfirmed')
+                ->wherePivot('subscribed_at', '<', $cutoffDate)
+                ->pluck('subscriber_id')
+                ->toArray();
+
+            if (count($subscriberIds) > 0) {
+                // Usuń relacje z tabeli pivot
+                $deleted = $list->subscribers()->detach($subscriberIds);
+
+                Log::info("Deleted {$deleted} unconfirmed subscribers from list {$list->id} ({$list->name})");
+                $stats['subscribers_deleted'] += $deleted;
+            }
+
+            $stats['lists_processed']++;
+        }
+
+        return $stats;
+    }
+
+    /**
      * Uruchom operacje dzienne
      */
     public function runDailyMaintenance(): array
@@ -549,8 +595,12 @@ class CronScheduleService
             $deletedLogs = CronJobLog::cleanupOld(30);
             $results['deleted_cron_logs'] = $deletedLogs;
 
-            // 2. Tu można dodać inne operacje dzienne:
-            // - Usuwanie niepotwierdzonych subskrybentów
+            // 2. Usuń niepotwierdzone subskrypcje
+            $unconfirmedResults = $this->deleteUnconfirmedSubscribers();
+            $results['deleted_unconfirmed_subscribers'] = $unconfirmedResults['subscribers_deleted'];
+            $results['lists_checked_for_unconfirmed'] = $unconfirmedResults['lists_processed'];
+
+            // 3. Tu można dodać inne operacje dzienne:
             // - Przetwarzanie odbitych wiadomości
             // - Archiwizacja starej kolejki
 
