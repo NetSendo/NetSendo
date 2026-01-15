@@ -5189,5 +5189,54 @@
             "cold_call": "Cold Call",
             "other": "Other"
         }
+    },
+    "funnels": {
+        "title": "Funnels",
+        "create": "Create Funnel",
+        "edit": "Edit Funnel",
+        "builder": {
+            "name_placeholder": "Funnel name...",
+            "blocks": "Blocks",
+            "trigger": "Trigger",
+            "trigger_type": "Trigger Type",
+            "trigger_list": "Mailing List",
+            "trigger_form": "Form",
+            "trigger_tag": "Tag",
+            "trigger_tag_placeholder": "e.g. purchase",
+            "step_name": "Step Name",
+            "select_email": "Select Email",
+            "days": "days",
+            "condition": "Condition",
+            "action": "Action",
+            "click_to_configure": "Click to configure",
+            "connect_to": "Connect to",
+            "new": "New",
+            "zoom_in": "Zoom In",
+            "zoom_out": "Zoom Out",
+            "fit_to_view": "Fit to View",
+            "trigger_types": {
+                "list_subscribe": "Subscribe to List",
+                "form_submit": "Submit Form",
+                "tag_added": "Tag Added"
+            },
+            "nodes": {
+                "start": "Start",
+                "email": "Email",
+                "sms": "SMS",
+                "delay": "Delay",
+                "wait_until": "Wait Until",
+                "condition": "Condition",
+                "action": "Action",
+                "split": "Split",
+                "goal": "Goal",
+                "end": "End"
+            }
+        },
+        "notifications": {
+            "saved": "Funnel saved successfully",
+            "updated": "Funnel updated successfully",
+            "created": "Funnel created successfully",
+            "deleted": "Funnel deleted successfully"
+        }
     }
 }

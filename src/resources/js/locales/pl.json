@@ -5272,5 +5272,54 @@
             "cold_call": "Cold call",
             "other": "Inne"
         }
+    },
+    "funnels": {
+        "title": "Lejki",
+        "create": "Utwórz lejek",
+        "edit": "Edytuj lejek",
+        "builder": {
+            "name_placeholder": "Nazwa lejka...",
+            "blocks": "Bloki",
+            "trigger": "Wyzwalacz",
+            "trigger_type": "Typ wyzwalacza",
+            "trigger_list": "Lista adresowa",
+            "trigger_form": "Formularz",
+            "trigger_tag": "Tag",
+            "trigger_tag_placeholder": "np. zakup",
+            "step_name": "Nazwa kroku",
+            "select_email": "Wybierz e-mail",
+            "days": "dni",
+            "condition": "Warunek",
+            "action": "Akcja",
+            "click_to_configure": "Kliknij, aby skonfigurować",
+            "connect_to": "Połącz z",
+            "new": "Nowy",
+            "zoom_in": "Przybliż",
+            "zoom_out": "Oddal",
+            "fit_to_view": "Dopasuj",
+            "trigger_types": {
+                "list_subscribe": "Zapis na listę",
+                "form_submit": "Wysłanie formularza",
+                "tag_added": "Dodanie tagu"
+            },
+            "nodes": {
+                "start": "Start",
+                "email": "E-mail",
+                "sms": "SMS",
+                "delay": "Opóźnienie",
+                "wait_until": "Czekaj do",
+                "condition": "Warunek",
+                "action": "Akcja",
+                "split": "Podział",
+                "goal": "Cel",
+                "end": "Koniec"
+            }
+        },
+        "notifications": {
+            "saved": "Lejek zapisany pomyślnie",
+            "updated": "Lejek zaktualizowany pomyślnie",
+            "created": "Lejek utworzony pomyślnie",
+            "deleted": "Lejek usunięty pomyślnie"
+        }
     }
 }

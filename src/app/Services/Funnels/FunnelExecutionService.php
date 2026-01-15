@@ -13,6 +13,15 @@ use Illuminate\Support\Facades\Http;
 
 class FunnelExecutionService
 {
+    protected ABTestService $abTestService;
+    protected WebhookService $webhookService;
+
+    public function __construct(ABTestService $abTestService, WebhookService $webhookService)
+    {
+        $this->abTestService = $abTestService;
+        $this->webhookService = $webhookService;
+    }
+
     /**
      * Enroll a subscriber in a funnel.
      */
@@ -53,6 +62,8 @@ class FunnelExecutionService
             FunnelStep::TYPE_DELAY => $this->executeDelayStep($enrollment, $step),
             FunnelStep::TYPE_CONDITION => $this->executeConditionStep($enrollment, $step),
             FunnelStep::TYPE_ACTION => $this->executeActionStep($enrollment, $step),
+            FunnelStep::TYPE_SPLIT => $this->executeSplitStep($enrollment, $step),
+            FunnelStep::TYPE_GOAL => $this->executeGoalStep($enrollment, $step),
             FunnelStep::TYPE_END => $this->executeEndStep($enrollment, $step),
             default => $this->moveToNextStep($enrollment, $step->nextStep),
         };
@@ -322,22 +333,46 @@ class FunnelExecutionService
             return;
         }
 
-        $subscriber = $enrollment->subscriber;
+        // Build payload with variable substitution
+        $templateData = $config['data'] ?? [];
+        $eventName = $config['event_name'] ?? 'funnel_webhook';
+        $payload = $this->webhookService->buildPayload($enrollment, $templateData, $eventName);
 
-        try {
-            Http::post($url, [
-                'event' => 'funnel_webhook',
-                'funnel_id' => $enrollment->funnel_id,
-                'subscriber' => [
-                    'id' => $subscriber->id,
-                    'email' => $subscriber->email,
-                    'first_name' => $subscriber->first_name,
-                    'last_name' => $subscriber->last_name,
-                ],
-                'data' => $config['data'] ?? null,
+        // Parse custom headers
+        $headers = $this->webhookService->parseHeaders($config);
+
+        // Get HTTP method (default POST)
+        $method = strtoupper($config['method'] ?? 'POST');
+
+        // Send with retry logic
+        $result = $this->webhookService->send($url, $payload, $headers, $method);
+
+        // Log the result
+        if ($result['success']) {
+            $enrollment->addToHistory('webhook_sent', [
+                'url' => $url,
+                'method' => $method,
+                'status_code' => $result['status_code'],
+                'attempts' => $result['attempts'],
             ]);
-        } catch (\Exception $e) {
-            Log::error("Funnel webhook failed: " . $e->getMessage());
+
+            // Store response for condition checking if configured
+            if (!empty($config['store_response'])) {
+                $enrollment->setData('last_webhook_response', $result['body']);
+            }
+        } else {
+            $enrollment->addToHistory('webhook_failed', [
+                'url' => $url,
+                'method' => $method,
+                'error' => $result['error'] ?? 'Unknown error',
+                'attempts' => $result['attempts'],
+            ]);
+
+            Log::error("Funnel webhook failed after {$result['attempts']} attempts", [
+                'funnel_id' => $enrollment->funnel_id,
+                'url' => $url,
+                'error' => $result['error'] ?? 'Unknown error',
+            ]);
         }
     }
 
@@ -357,6 +392,89 @@ class FunnelExecutionService
 
         // Could use notification system here
         Log::info("Funnel notification: {$message} for {$enrollment->subscriber->email}");
+    }
+
+    /**
+     * Execute split step - enroll in A/B test and route to selected variant.
+     */
+    protected function executeSplitStep(FunnelSubscriber $enrollment, FunnelStep $step): void
+    {
+        // Get or create the A/B test for this split step
+        $abTest = $this->abTestService->getOrCreateTest($step);
+
+        // If test isn't running yet, start it automatically when first subscriber arrives
+        if ($abTest->status === \App\Models\FunnelAbTest::STATUS_DRAFT) {
+            $abTest->start();
+        }
+
+        // Enroll subscriber and get the selected variant
+        $variant = $this->abTestService->enrollSubscriber($abTest, $enrollment);
+
+        if (!$variant) {
+            Log::warning("Failed to enroll subscriber {$enrollment->id} in A/B test {$abTest->id}");
+            // Fallback to default next step
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
+        $enrollment->addToHistory('ab_test_enrolled', [
+            'test_id' => $abTest->id,
+            'test_name' => $abTest->name,
+            'variant_id' => $variant->id,
+            'variant_name' => $variant->name,
+        ]);
+
+        $enrollment->incrementStepsCompleted();
+
+        // Route to the variant's next step
+        $nextStep = $variant->nextStep ?? $step->nextStep;
+        $this->moveToNextStep($enrollment, $nextStep);
+    }
+
+    /**
+     * Execute goal step - record conversion tracking.
+     */
+    protected function executeGoalStep(FunnelSubscriber $enrollment, FunnelStep $step): void
+    {
+        $goalType = $step->goal_type;
+        $goalValue = $step->goal_value ?? 0;
+        $goalName = $step->goal_name ?? 'Goal';
+
+        $enrollment->addToHistory('goal_reached', [
+            'step_id' => $step->id,
+            'goal_name' => $goalName,
+            'goal_type' => $goalType,
+            'goal_value' => $goalValue,
+        ]);
+
+        // Record conversion to dedicated table
+        try {
+            \App\Models\FunnelGoalConversion::recordConversion(
+                $enrollment,
+                $step,
+                $goalValue,
+                ['goal_config' => $step->goal_config ?? []],
+                \App\Models\FunnelGoalConversion::SOURCE_FUNNEL
+            );
+        } catch (\Exception $e) {
+            Log::warning("Failed to record goal conversion: " . $e->getMessage());
+        }
+
+        // Record conversion for any active A/B tests this subscriber is enrolled in
+        $abEnrollments = \App\Models\FunnelAbEnrollment::where('funnel_subscriber_id', $enrollment->id)
+            ->whereHas('abTest', fn($q) => $q->where('status', \App\Models\FunnelAbTest::STATUS_RUNNING))
+            ->get();
+
+        foreach ($abEnrollments as $abEnrollment) {
+            $this->abTestService->recordConversion(
+                $abEnrollment->abTest,
+                $enrollment,
+                $goalValue
+            );
+        }
+
+        $enrollment->incrementStepsCompleted();
+        $this->moveToNextStep($enrollment, $step->nextStep);
     }
 
     /**

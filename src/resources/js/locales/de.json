@@ -4720,5 +4720,54 @@
             "cold_call": "Kaltakquise",
             "other": "Sonstiges"
         }
+    },
+    "funnels": {
+        "title": "Funnel",
+        "create": "Funnel erstellen",
+        "edit": "Funnel bearbeiten",
+        "builder": {
+            "name_placeholder": "Funnel Name...",
+            "blocks": "Blöcke",
+            "trigger": "Auslöser",
+            "trigger_type": "Auslösertyp",
+            "trigger_list": "Mailingliste",
+            "trigger_form": "Formular",
+            "trigger_tag": "Tag",
+            "trigger_tag_placeholder": "z.B. kauf",
+            "step_name": "Schrittname",
+            "select_email": "E-Mail auswählen",
+            "days": "Tage",
+            "condition": "Bedingung",
+            "action": "Aktion",
+            "click_to_configure": "Klicken zum Konfigurieren",
+            "connect_to": "Verbinden mit",
+            "new": "Neu",
+            "zoom_in": "Vergrößern",
+            "zoom_out": "Verkleinern",
+            "fit_to_view": "Ansicht anpassen",
+            "trigger_types": {
+                "list_subscribe": "Eintragung in Liste",
+                "form_submit": "Formular absenden",
+                "tag_added": "Tag hinzugefügt"
+            },
+            "nodes": {
+                "start": "Start",
+                "email": "E-Mail",
+                "sms": "SMS",
+                "delay": "Verzögerung",
+                "wait_until": "Warten bis",
+                "condition": "Bedingung",
+                "action": "Aktion",
+                "split": "Split",
+                "goal": "Ziel",
+                "end": "Ende"
+            }
+        },
+        "notifications": {
+            "saved": "Funnel erfolgreich gespeichert",
+            "updated": "Funnel erfolgreich aktualisiert",
+            "created": "Funnel erfolgreich erstellt",
+            "deleted": "Funnel erfolgreich gelöscht"
+        }
     }
 }

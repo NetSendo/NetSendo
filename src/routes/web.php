@@ -158,11 +158,38 @@ Route::middleware(['auth', '2fa'])->group(function () {
     });
 
     // Email Funnels
-    Route::resource('funnels', \App\Http\Controllers\FunnelController::class);
+    Route::resource('funnels', \App\Http\Controllers\FunnelController::class)->except(['show']);
     Route::post('funnels/{funnel}/duplicate', [\App\Http\Controllers\FunnelController::class, 'duplicate'])->name('funnels.duplicate');
     Route::get('funnels/{funnel}/stats', [\App\Http\Controllers\FunnelController::class, 'stats'])->name('funnels.stats');
     Route::post('funnels/{funnel}/toggle-status', [\App\Http\Controllers\FunnelController::class, 'toggleStatus'])->name('funnels.toggle-status');
     Route::get('funnels/{funnel}/validate', [\App\Http\Controllers\FunnelController::class, 'validate'])->name('funnels.validate');
+    Route::post('funnels/{funnel}/export-template', [\App\Http\Controllers\FunnelTemplateController::class, 'export'])->name('funnels.export-template');
+
+    // Funnel Templates
+    Route::prefix('funnel-templates')->name('funnel-templates.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FunnelTemplateController::class, 'index'])->name('index');
+        Route::get('/api', [\App\Http\Controllers\FunnelTemplateController::class, 'apiList'])->name('api');
+        Route::get('/{template}', [\App\Http\Controllers\FunnelTemplateController::class, 'show'])->name('show');
+        Route::post('/{template}/use', [\App\Http\Controllers\FunnelTemplateController::class, 'use'])->name('use');
+        Route::delete('/{template}', [\App\Http\Controllers\FunnelTemplateController::class, 'destroy'])->name('destroy');
+    });
+
+    // Funnel Subscribers Management
+    Route::prefix('funnels/{funnel}/subscribers')->name('funnels.subscribers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\FunnelSubscribersController::class, 'index'])->name('index');
+        Route::get('/api', [\App\Http\Controllers\FunnelSubscribersController::class, 'apiList'])->name('api');
+        Route::get('/{subscriber}', [\App\Http\Controllers\FunnelSubscribersController::class, 'show'])->name('show');
+        Route::post('/{subscriber}/pause', [\App\Http\Controllers\FunnelSubscribersController::class, 'pause'])->name('pause');
+        Route::post('/{subscriber}/resume', [\App\Http\Controllers\FunnelSubscribersController::class, 'resume'])->name('resume');
+        Route::post('/{subscriber}/advance', [\App\Http\Controllers\FunnelSubscribersController::class, 'advance'])->name('advance');
+        Route::delete('/{subscriber}', [\App\Http\Controllers\FunnelSubscribersController::class, 'remove'])->name('remove');
+    });
+
+    // Funnel Goal Tracking
+    Route::prefix('funnels/{funnel}/goals')->name('funnels.goals.')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\FunnelGoalController::class, 'stats'])->name('stats');
+        Route::get('/list', [\App\Http\Controllers\FunnelGoalController::class, 'list'])->name('list');
+    });
 
     // Automations (Triggers & Rules)
     Route::resource('automations', \App\Http\Controllers\AutomationController::class)->parameters([
@@ -754,6 +781,9 @@ Route::prefix('funnel/task')->name('funnel.task.')->group(function () {
     Route::post('/complete', [\App\Http\Controllers\Public\FunnelTaskController::class, 'complete'])->name('complete');
     Route::get('/status', [\App\Http\Controllers\Public\FunnelTaskController::class, 'status'])->name('status');
 });
+
+// Funnel Goal Conversion Webhook (public, for external systems like Stripe/WooCommerce)
+Route::post('/api/funnel/goal/convert', [\App\Http\Controllers\FunnelGoalController::class, 'convert'])->name('funnel.goal.convert');
 
 
 require __DIR__.'/auth.php';

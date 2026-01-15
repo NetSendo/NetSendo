@@ -14,10 +14,27 @@ class FunnelStep extends Model
     // Step type constants
     public const TYPE_START = 'start';
     public const TYPE_EMAIL = 'email';
+    public const TYPE_SMS = 'sms';
     public const TYPE_DELAY = 'delay';
+    public const TYPE_WAIT_UNTIL = 'wait_until';
     public const TYPE_CONDITION = 'condition';
     public const TYPE_ACTION = 'action';
+    public const TYPE_SPLIT = 'split';
+    public const TYPE_GOAL = 'goal';
     public const TYPE_END = 'end';
+
+    // Wait Until type constants
+    public const WAIT_UNTIL_SPECIFIC_DATE = 'specific_date';
+    public const WAIT_UNTIL_DAY_OF_WEEK = 'day_of_week';
+    public const WAIT_UNTIL_BUSINESS_HOURS = 'business_hours';
+
+    // Goal type constants
+    public const GOAL_PURCHASE = 'purchase';
+    public const GOAL_SIGNUP = 'signup';
+    public const GOAL_PAGE_VISIT = 'page_visit';
+    public const GOAL_TAG_ADDED = 'tag_added';
+    public const GOAL_CUSTOM = 'custom';
+    public const GOAL_WEBHOOK = 'webhook';
 
     // Delay unit constants
     public const DELAY_MINUTES = 'minutes';
@@ -76,6 +93,19 @@ class FunnelStep extends Model
         'retry_interval_unit',
         'retry_message_id',
         'retry_exhausted_action',
+        // New enhanced step fields
+        'sms_content',
+        'wait_until_date',
+        'wait_until_time',
+        'wait_until_timezone',
+        'wait_until_type',
+        'goal_name',
+        'goal_type',
+        'goal_value',
+        'goal_config',
+        'split_variants',
+        'node_color',
+        'node_icon',
     ];
 
     protected $casts = [
@@ -89,6 +119,10 @@ class FunnelStep extends Model
         'retry_enabled' => 'boolean',
         'retry_max_attempts' => 'integer',
         'retry_interval_value' => 'integer',
+        'goal_config' => 'array',
+        'split_variants' => 'array',
+        'goal_value' => 'decimal:2',
+        'wait_until_date' => 'datetime',
     ];
 
     // =====================================
@@ -162,6 +196,34 @@ class FunnelStep extends Model
     public function isEnd(): bool
     {
         return $this->type === self::TYPE_END;
+    }
+
+    public function isSms(): bool
+    {
+        return $this->type === self::TYPE_SMS;
+    }
+
+    public function isWaitUntil(): bool
+    {
+        return $this->type === self::TYPE_WAIT_UNTIL;
+    }
+
+    public function isSplit(): bool
+    {
+        return $this->type === self::TYPE_SPLIT;
+    }
+
+    public function isGoal(): bool
+    {
+        return $this->type === self::TYPE_GOAL;
+    }
+
+    /**
+     * Check if this step type requires branching (has yes/no paths)
+     */
+    public function hasBranching(): bool
+    {
+        return $this->isCondition() || $this->isSplit();
     }
 
     // =====================================
@@ -286,10 +348,35 @@ class FunnelStep extends Model
         return [
             self::TYPE_START => 'Start',
             self::TYPE_EMAIL => 'Email',
+            self::TYPE_SMS => 'SMS',
             self::TYPE_DELAY => 'Opóźnienie',
+            self::TYPE_WAIT_UNTIL => 'Czekaj do',
             self::TYPE_CONDITION => 'Warunek',
             self::TYPE_ACTION => 'Akcja',
+            self::TYPE_SPLIT => 'Test A/B',
+            self::TYPE_GOAL => 'Cel',
             self::TYPE_END => 'Koniec',
+        ];
+    }
+
+    public static function getGoalTypes(): array
+    {
+        return [
+            self::GOAL_PURCHASE => 'Zakup',
+            self::GOAL_SIGNUP => 'Rejestracja',
+            self::GOAL_PAGE_VISIT => 'Wizyta na stronie',
+            self::GOAL_TAG_ADDED => 'Dodanie tagu',
+            self::GOAL_CUSTOM => 'Niestandardowy',
+            self::GOAL_WEBHOOK => 'Webhook',
+        ];
+    }
+
+    public static function getWaitUntilTypes(): array
+    {
+        return [
+            self::WAIT_UNTIL_SPECIFIC_DATE => 'Konkretna data',
+            self::WAIT_UNTIL_DAY_OF_WEEK => 'Dzień tygodnia',
+            self::WAIT_UNTIL_BUSINESS_HOURS => 'Godziny pracy',
         ];
     }
 

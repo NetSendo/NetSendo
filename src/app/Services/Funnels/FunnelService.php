@@ -87,6 +87,17 @@ class FunnelService
                     'condition_config' => $node['data']['condition_config'] ?? null,
                     'action_type' => $node['data']['action_type'] ?? null,
                     'action_config' => $node['data']['action_config'] ?? null,
+                    // New enhanced fields
+                    'sms_content' => $node['data']['sms_content'] ?? null,
+                    'wait_until_type' => $node['data']['wait_until_type'] ?? null,
+                    'wait_until_date' => $node['data']['wait_until_date'] ?? null,
+                    'wait_until_time' => $node['data']['wait_until_time'] ?? null,
+                    'wait_until_timezone' => $node['data']['wait_until_timezone'] ?? null,
+                    'goal_name' => $node['data']['goal_name'] ?? null,
+                    'goal_type' => $node['data']['goal_type'] ?? null,
+                    'goal_value' => $node['data']['goal_value'] ?? null,
+                    'goal_config' => $node['data']['goal_config'] ?? null,
+                    'split_variants' => $node['data']['split_variants'] ?? null,
                     'position_x' => (int) ($node['position']['x'] ?? 250),
                     'position_y' => (int) ($node['position']['y'] ?? 100),
                     'order' => $index,
@@ -203,6 +214,17 @@ class FunnelService
                     'condition_config' => $step->condition_config,
                     'action_type' => $step->action_type,
                     'action_config' => $step->action_config,
+                    // New enhanced fields
+                    'sms_content' => $step->sms_content,
+                    'wait_until_type' => $step->wait_until_type,
+                    'wait_until_date' => $step->wait_until_date?->format('Y-m-d'),
+                    'wait_until_time' => $step->wait_until_time,
+                    'wait_until_timezone' => $step->wait_until_timezone,
+                    'goal_name' => $step->goal_name,
+                    'goal_type' => $step->goal_type,
+                    'goal_value' => $step->goal_value,
+                    'goal_config' => $step->goal_config,
+                    'split_variants' => $step->split_variants,
                 ],
             ];
 
@@ -286,15 +308,19 @@ class FunnelService
     }
 
     /**
-     * Get funnel statistics.
+     * Get funnel statistics with advanced analytics.
      */
     public function getStats(Funnel $funnel): array
     {
         $baseStats = $funnel->getStats();
 
-        // Per-step stats
+        // Per-step stats with conversion tracking
         $stepStats = [];
-        foreach ($funnel->steps as $step) {
+        $prevStepCompleted = $baseStats['total_subscribers'] ?? 0;
+
+        $orderedSteps = $funnel->steps->sortBy('order');
+
+        foreach ($orderedSteps as $step) {
             $atStep = $funnel->subscribers()
                 ->where('current_step_id', $step->id)
                 ->count();
@@ -303,17 +329,118 @@ class FunnelService
                 ->where('steps_completed', '>=', $step->order + 1)
                 ->count();
 
+            // Calculate drop-off from previous step
+            $dropOff = max(0, $prevStepCompleted - $completedStep - $atStep);
+
+            // Conversion rate from previous step
+            $conversionRate = $prevStepCompleted > 0
+                ? round(($completedStep / $prevStepCompleted) * 100, 1)
+                : 0;
+
             $stepStats[] = [
                 'id' => $step->id,
                 'name' => $step->display_name,
                 'type' => $step->type,
                 'at_step' => $atStep,
                 'completed' => $completedStep,
+                'drop_off' => $dropOff,
+                'conversion_rate' => $conversionRate,
             ];
+
+            $prevStepCompleted = $completedStep;
         }
+
+        // Time metrics
+        $timeMetrics = $this->calculateTimeMetrics($funnel);
+
+        // A/B Test stats
+        $abTestStats = $this->getAbTestStats($funnel);
 
         return array_merge($baseStats, [
             'step_stats' => $stepStats,
+            'time_metrics' => $timeMetrics,
+            'ab_tests' => $abTestStats,
+            'steps_count' => $orderedSteps->count(),
         ]);
+    }
+
+    /**
+     * Calculate time metrics for funnel completion.
+     */
+    protected function calculateTimeMetrics(Funnel $funnel): array
+    {
+        $completedSubscribers = $funnel->subscribers()
+            ->where('status', FunnelSubscriber::STATUS_COMPLETED)
+            ->whereNotNull('completed_at')
+            ->whereNotNull('enrolled_at')
+            ->get();
+
+        if ($completedSubscribers->isEmpty()) {
+            return [
+                'avg_completion_time' => null,
+                'min_completion_time' => null,
+                'max_completion_time' => null,
+                'median_completion_time' => null,
+            ];
+        }
+
+        $completionTimes = $completedSubscribers->map(function ($sub) {
+            return $sub->enrolled_at->diffInMinutes($sub->completed_at);
+        })->filter()->values();
+
+        if ($completionTimes->isEmpty()) {
+            return [
+                'avg_completion_time' => null,
+                'min_completion_time' => null,
+                'max_completion_time' => null,
+                'median_completion_time' => null,
+            ];
+        }
+
+        $sorted = $completionTimes->sort()->values();
+        $count = $sorted->count();
+        $median = $count % 2 === 0
+            ? ($sorted[$count / 2 - 1] + $sorted[$count / 2]) / 2
+            : $sorted[floor($count / 2)];
+
+        return [
+            'avg_completion_time' => round($completionTimes->avg()),
+            'min_completion_time' => $completionTimes->min(),
+            'max_completion_time' => $completionTimes->max(),
+            'median_completion_time' => round($median),
+        ];
+    }
+
+    /**
+     * Get A/B test statistics for the funnel.
+     */
+    protected function getAbTestStats(Funnel $funnel): array
+    {
+        $abTests = \App\Models\FunnelAbTest::where('funnel_id', $funnel->id)
+            ->with('variants')
+            ->get();
+
+        return $abTests->map(function ($test) {
+            return [
+                'id' => $test->id,
+                'name' => $test->name,
+                'status' => $test->status,
+                'winning_metric' => $test->winning_metric,
+                'winner_id' => $test->winner_variant_id,
+                'total_enrollments' => $test->getTotalEnrollments(),
+                'overall_conversion_rate' => $test->getOverallConversionRate(),
+                'variants' => $test->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'name' => $variant->name,
+                        'weight' => $variant->weight,
+                        'enrollments' => $variant->enrollments,
+                        'conversions' => $variant->conversions,
+                        'conversion_rate' => $variant->getConversionRate(),
+                        'is_winner' => $variant->isWinner(),
+                    ];
+                })->toArray(),
+            ];
+        })->toArray();
     }
 }
