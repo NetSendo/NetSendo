@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **System Emails:** Fixed missing welcome email for new subscribers when double opt-in is disabled.
+  - Added new `subscription_welcome` system email template.
+  - New subscribers without double opt-in now receive a welcome email immediately after signup.
+  - Resubscribers (already active) continue to receive `already_active_resubscribe`.
+  - Resubscribers (previously inactive/unsubscribed) continue to receive `inactive_resubscribe`.
+
 ## [1.7.1] – Short Description
 
 **Release date:** 2026-01-15

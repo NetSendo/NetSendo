@@ -127,6 +127,12 @@ class SystemMessageSeeder extends Seeder
                 'subject' => 'Welcome to [[list-name]]!',
                 'content' => '<h2>Welcome!</h2><p>Thank you for joining <strong>[[list-name]]</strong>.</p>',
             ],
+            [
+                'slug' => 'subscription_welcome',
+                'name' => 'Subscription Welcome',
+                'subject' => 'Welcome to [[list-name]]!',
+                'content' => '<h2>Welcome!</h2><p>Thank you for subscribing to <strong>[[list-name]]</strong>.</p><p>We\'re excited to have you on board!</p>',
+            ],
         ];
 
         foreach ($emails as $email) {

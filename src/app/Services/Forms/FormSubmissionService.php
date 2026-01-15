@@ -113,6 +113,9 @@ class FormSubmissionService
                 } elseif ($wasAlreadySubscribed && $previousStatus !== 'active') {
                     // User was inactive/unsubscribed, send welcome back
                     $this->emailService->sendInactiveResubscribeNotification($subscriber, $form->contactList);
+                } else {
+                    // New subscriber without double opt-in - send welcome email
+                    $this->emailService->sendSubscriptionWelcome($subscriber, $form->contactList);
                 }
             }
 

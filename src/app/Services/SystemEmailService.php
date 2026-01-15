@@ -294,6 +294,14 @@ class SystemEmailService
     }
 
     /**
+     * Send welcome email to new subscriber (no double opt-in).
+     */
+    public function sendSubscriptionWelcome(Subscriber $subscriber, ContactList $list): bool
+    {
+        return $this->send('subscription_welcome', $subscriber, $list);
+    }
+
+    /**
      * Send unsubscribe confirmation email.
      */
     public function sendUnsubscribeConfirmation(Subscriber $subscriber, ContactList $list): bool
