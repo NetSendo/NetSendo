@@ -61,11 +61,11 @@ const resetImport = () => {
 </script>
 
 <template>
-    <Head title="Import CRM" />
+    <Head :title="$t('crm.import.title_page', 'Import CRM')" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Import kontaktów</h1>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.import.title', 'Import kontaktów') }}</h1>
         </template>
 
         <!-- Upload Step -->
@@ -74,16 +74,16 @@ const resetImport = () => {
                 <svg class="mx-auto h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Prześlij plik CSV</h2>
+                <h2 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">{{ $t('crm.import.upload.title_upload') }}</h2>
                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    Załaduj plik CSV z kontaktami. Wymagane pole: email.
+                    {{ $t('crm.import.upload.description') }}
                 </p>
                 <label class="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-indigo-700">
                     <svg v-if="isUploading" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    <span>{{ isUploading ? 'Wczytywanie...' : 'Wybierz plik' }}</span>
+                    <span>{{ isUploading ? $t('crm.import.upload.loading', 'Wczytywanie...') : $t('crm.import.upload.select_file', 'Wybierz plik') }}</span>
                     <input type="file" accept=".csv,.txt" class="hidden" @change="onFileSelect" :disabled="isUploading" />
                 </label>
             </div>
@@ -99,14 +99,14 @@ const resetImport = () => {
                         <p class="text-sm text-slate-500 dark:text-slate-400">{{ previewData.totalRows }} rekordów</p>
                     </div>
                     <button @click="resetImport" class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400">
-                        Wybierz inny plik
+                        {{ $t('crm.import.mapping.select_another', 'Wybierz inny plik') }}
                     </button>
                 </div>
             </div>
 
             <!-- Column Mapping -->
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-                <h2 class="mb-4 font-semibold text-slate-900 dark:text-white">Mapowanie kolumn</h2>
+                <h2 class="mb-4 font-semibold text-slate-900 dark:text-white">{{ $t('crm.import.mapping.title', 'Mapowanie kolumn') }}</h2>
                 <div class="space-y-3">
                     <div v-for="header in previewData.headers" :key="header" class="flex items-center gap-4">
                         <span class="w-48 truncate font-mono text-sm text-slate-600 dark:text-slate-400">{{ header }}</span>
@@ -126,26 +126,26 @@ const resetImport = () => {
             <!-- Options -->
             <div class="grid gap-6 md:grid-cols-2">
                 <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-                    <h3 class="mb-3 font-semibold text-slate-900 dark:text-white">Duplikaty (email)</h3>
+                    <h3 class="mb-3 font-semibold text-slate-900 dark:text-white">{{ $t('crm.import.mapping.duplicates', 'Duplikaty (email)') }}</h3>
                     <div class="space-y-2">
                         <label class="flex items-center gap-2">
                             <input type="radio" v-model="duplicateAction" value="skip" class="text-indigo-600 focus:ring-indigo-500" />
-                            <span class="text-sm text-slate-700 dark:text-slate-300">Pomiń istniejące</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ $t('crm.import.mapping.skip', 'Pomiń') }}</span>
                         </label>
                         <label class="flex items-center gap-2">
                             <input type="radio" v-model="duplicateAction" value="update" class="text-indigo-600 focus:ring-indigo-500" />
-                            <span class="text-sm text-slate-700 dark:text-slate-300">Aktualizuj istniejące</span>
+                            <span class="text-sm text-slate-700 dark:text-slate-300">{{ $t('crm.import.mapping.update', 'Aktualizuj istniejące') }}</span>
                         </label>
                     </div>
                 </div>
                 <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
-                    <h3 class="mb-3 font-semibold text-slate-900 dark:text-white">Domyślny status</h3>
+                    <h3 class="mb-3 font-semibold text-slate-900 dark:text-white">{{ $t('crm.import.mapping.default_status', 'Domyślny status') }}</h3>
                     <select v-model="defaultStatus"
                         class="w-full rounded-lg border-slate-200 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                        <option value="lead">Lead</option>
-                        <option value="prospect">Prospect</option>
-                        <option value="client">Klient</option>
-                        <option value="dormant">Uśpiony</option>
+                        <option value="lead">{{ $t('crm.contacts.status.lead') }}</option>
+                        <option value="prospect">{{ $t('crm.contacts.status.prospect') }}</option>
+                        <option value="client">{{ $t('crm.contacts.status.client') }}</option>
+                        <option value="dormant">{{ $t('crm.contacts.status.dormant') }}</option>
                     </select>
                 </div>
             </div>
@@ -158,7 +158,7 @@ const resetImport = () => {
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    {{ isImporting ? 'Importowanie...' : 'Rozpocznij import' }}
+                    {{ isImporting ? $t('crm.import.mapping.importing', 'Importowanie...') : $t('crm.import.mapping.start_button', 'Rozpocznij import') }}
                 </button>
             </div>
         </div>

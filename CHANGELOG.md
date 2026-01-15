@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] – Short Description
+
+**Release date:** 2026-01-15
+
 ### Added
+
+- **International Names Support:**
+  - Added full vocative case support for international names (US, UK, DE, FR, IT, ES, CZ, SK).
+  - Implemented specific vocative mappings for **Czech (CZ)** names (e.g., Jan -> Jane).
+  - Configured default vocative behavior (Nominative = Vocative) for other supported languages.
+  - Added migration `fill_missing_vocatives` to backfill missing data for existing names.
+
+### Added
+
+- **CRM Sales Automation System:**
+
+  - **Triggers:** Implemented 5 new CRM triggers: Deal Stage Changed, Deal Won, Deal Created, Task Completed, and Contact Created.
+  - **Actions:** Added comprehensive CRM actions including Create Task, Update Score, Update Deal Stage, Assign Owner, Convert to Contact, and Log Activity.
+  - **Conditions:** Added logic for evaluating CRM-specific conditions (Pipeline Stage, Deal Value, Score Threshold, Contact Status, Idle Days).
+  - **Idle Deal Detection:** Created `crm:process-idle-deals` scheduled job to detect and trigger automations for deals inactive for X days.
+  - **UI Integration:** Extended Automation Builder with dedicated configuration components for all new CRM triggers and actions.
+  - **Testing:** Added `CrmAutomationTriggerTest` covering 8 key scenarios for CRM automation logic.
+  - **Localization:** Full translations in PL, EN, DE, ES for all CRM automation features (+160 new keys).
 
 - **CRM Email Sending:**
 
@@ -29,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Name Database:** Fixed missing vocative forms (e.g., `[[!fname]]` returning original name instead of vocative) on production environments by adding a missing migration for `PolishNamesSeeder`.
+
+### Improved
+
+- **System Email Editor & UI:**
+  - **Interactive Placeholders:** Replaced static codes with a functional toolbar in System Email editor. Users can now click to insert variables into content/subject or copy to clipboard.
+  - **Dark Mode Contrast:** Fixed visibility issues for input fields (`TextInput`) and country search (`PhoneInput`) in dark mode by adjusting background and text colors.
+  - **Vocative Placeholder:** Added documented support for `[[!fname]]` (vocative form) in the system email editor.
 
 ## [1.7.0] – CRM Module & Kanban Enhancements
 

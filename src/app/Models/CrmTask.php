@@ -153,6 +153,9 @@ class CrmTask extends Model
                 ],
             ]);
         }
+
+        // Dispatch event for automation triggers
+        event(new \App\Events\CrmTaskCompleted($this, auth()->id()));
     }
 
     /**

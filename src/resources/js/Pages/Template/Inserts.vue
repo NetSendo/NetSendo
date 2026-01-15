@@ -817,7 +817,7 @@ const toggleCategory = (category) => {
                 class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/80 p-4 backdrop-blur-sm"
             >
                 <div
-                    class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
+                    class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
                 >
                     <!-- Modal Header -->
                     <div

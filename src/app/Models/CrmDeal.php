@@ -36,6 +36,18 @@ class CrmDeal extends Model
     ];
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function (CrmDeal $deal) {
+            event(new \App\Events\CrmDealCreated($deal, auth()->id()));
+        });
+    }
+
+    /**
      * Get the user (account owner) for this deal.
      */
     public function user(): BelongsTo

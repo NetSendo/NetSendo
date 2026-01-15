@@ -18,12 +18,12 @@ const selectedCompany = ref(props.filters?.company_id || "");
 
 // Status options
 const statusOptions = [
-    { value: "", label: "Wszystkie statusy" },
-    { value: "lead", label: "Lead" },
-    { value: "prospect", label: "Prospect" },
-    { value: "client", label: "Klient" },
-    { value: "dormant", label: "Uśpiony" },
-    { value: "archived", label: "Zarchiwizowany" },
+    { value: "", label: "crm.contacts.all_statuses" },
+    { value: "lead", label: "crm.contacts.status.lead" },
+    { value: "prospect", label: "crm.contacts.status.prospect" },
+    { value: "client", label: "crm.contacts.status.client" },
+    { value: "dormant", label: "crm.contacts.status.dormant" },
+    { value: "archived", label: "crm.contacts.status.archived" },
 ];
 
 // Apply filters
@@ -54,31 +54,31 @@ const getStatusClass = (status) => {
 // Get status label
 const getStatusLabel = (status) => {
     const labels = {
-        lead: "Lead",
-        prospect: "Prospect",
-        client: "Klient",
-        dormant: "Uśpiony",
-        archived: "Zarchiwizowany",
+        lead: "crm.contacts.status.lead",
+        prospect: "crm.contacts.status.prospect",
+        client: "crm.contacts.status.client",
+        dormant: "crm.contacts.status.dormant",
+        archived: "crm.contacts.status.archived",
     };
     return labels[status] || status;
 };
 </script>
 
 <template>
-    <Head title="Kontakty CRM" />
+    <Head :title="$t('crm.contacts.title', 'Kontakty CRM')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    Kontakty
+                    {{ $t('crm.contacts.title', 'Kontakty') }}
                 </h1>
                 <Link href="/crm/contacts/create"
                     class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Dodaj kontakt
+                    {{ $t('crm.contacts.create_button') }}
                 </Link>
             </div>
         </template>
@@ -91,7 +91,7 @@ const getStatusLabel = (status) => {
                     <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input v-model="search" @keyup.enter="applyFilters" type="text" placeholder="Szukaj po email, nazwie, telefonie..."
+                    <input v-model="search" @keyup.enter="applyFilters" type="text" :placeholder="$t('crm.contacts.search_placeholder', 'Szukaj po email...')"
                         class="w-full rounded-xl border-slate-200 bg-white py-2 pl-10 pr-4 text-sm placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                 </div>
 
@@ -99,14 +99,14 @@ const getStatusLabel = (status) => {
                 <select v-model="selectedStatus" @change="applyFilters"
                     class="rounded-xl border-slate-200 bg-white py-2 pl-3 pr-10 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
                     <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                        {{ option.label }}
+                        {{ $t(option.label) }}
                     </option>
                 </select>
 
                 <!-- Owner filter -->
                 <select v-if="owners?.length > 1" v-model="selectedOwner" @change="applyFilters"
                     class="rounded-xl border-slate-200 bg-white py-2 pl-3 pr-10 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                    <option value="">Wszyscy handlowcy</option>
+                    <option value="">{{ $t('crm.contacts.all_owners', 'Wszyscy handlowcy') }}</option>
                     <option v-for="owner in owners" :key="owner.id" :value="owner.id">
                         {{ owner.name }}
                     </option>
@@ -115,7 +115,7 @@ const getStatusLabel = (status) => {
                 <!-- Company filter -->
                 <select v-if="companies?.length > 0" v-model="selectedCompany" @change="applyFilters"
                     class="rounded-xl border-slate-200 bg-white py-2 pl-3 pr-10 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                    <option value="">Wszystkie firmy</option>
+                    <option value="">{{ $t('crm.contacts.all_companies', 'Wszystkie firmy') }}</option>
                     <option v-for="company in companies" :key="company.id" :value="company.id">
                         {{ company.name }}
                     </option>
@@ -126,7 +126,7 @@ const getStatusLabel = (status) => {
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
-                    Filtruj
+                    {{ $t('common.filter', 'Filtruj') }}
                 </button>
             </div>
         </div>
@@ -138,10 +138,10 @@ const getStatusLabel = (status) => {
                     <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Kontakt
+                                {{ $t('crm.contacts.table_contact', 'Kontakt') }}
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Firma
+                                {{ $t('crm.contacts.table_company', 'Firma') }}
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 Status
@@ -153,7 +153,7 @@ const getStatusLabel = (status) => {
                                 Handlowiec
                             </th>
                             <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Akcje
+                                {{ $t('crm.contacts.table_actions', 'Akcje') }}
                             </th>
                         </tr>
                     </thead>
@@ -186,7 +186,7 @@ const getStatusLabel = (status) => {
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
                                 <span :class="[getStatusClass(contact.status), 'rounded-full px-2 py-1 text-xs font-medium']">
-                                    {{ getStatusLabel(contact.status) }}
+                                    {{ $t(getStatusLabel(contact.status)) }}
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-6 py-4">
@@ -206,18 +206,18 @@ const getStatusLabel = (status) => {
                             </td>
                             <td class="whitespace-nowrap px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <button class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" title="Zadzwoń">
+                                    <button class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" :title="$t('crm.contacts.actions.call', 'Zadzwoń')">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                         </svg>
                                     </button>
-                                    <button class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" title="Email">
+                                    <button class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" :title="$t('crm.contacts.actions.email', 'Email')">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                     </button>
                                     <Link :href="`/crm/contacts/${contact.id}`"
-                                        class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" title="Szczegóły">
+                                        class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700" :title="$t('crm.contacts.actions.details', 'Szczegóły')">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -235,19 +235,19 @@ const getStatusLabel = (status) => {
                 <svg class="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p class="mt-4 text-slate-500 dark:text-slate-400">Brak kontaktów</p>
+                <p class="mt-4 text-slate-500 dark:text-slate-400">{{ $t('crm.contacts.empty_title', 'Brak kontaktów') }}</p>
                 <Link href="/crm/contacts/create" class="mt-4 inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Dodaj pierwszy kontakt
+                    {{ $t('crm.contacts.create_first', 'Dodaj pierwszy kontakt') }}
                 </Link>
             </div>
 
             <!-- Pagination -->
             <div v-if="contacts?.links && contacts.data?.length" class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-3 dark:border-slate-700 dark:bg-slate-900/50">
                 <p class="text-sm text-slate-500 dark:text-slate-400">
-                    Wyświetlanie {{ contacts.from }}-{{ contacts.to }} z {{ contacts.total }} kontaktów
+                    {{ $t('crm.contacts.pagination', { from: contacts.from, to: contacts.to, total: contacts.total }, 'Wyświetlanie {from}-{to} z {total} kontaktów') }}
                 </p>
                 <div class="flex items-center gap-2">
                     <Link v-for="link in contacts.links" :key="link.label" :href="link.url || '#'"

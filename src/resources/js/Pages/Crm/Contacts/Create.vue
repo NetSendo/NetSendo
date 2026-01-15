@@ -30,7 +30,7 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Nowy kontakt CRM" />
+    <Head :title="$t('crm.contacts.create_title')" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -40,7 +40,7 @@ const submit = () => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </Link>
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Nowy kontakt</h1>
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.contacts.create_title') }}</h1>
             </div>
         </template>
 
@@ -49,67 +49,67 @@ const submit = () => {
                 <div class="space-y-6">
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Email *</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.email_required') }}</label>
                             <input v-model="form.email" type="email" required :disabled="!!subscriber"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white disabled:bg-slate-50" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Telefon</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.phone') }}</label>
                             <input v-model="form.phone" type="tel"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
                     </div>
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Imię</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.first_name') }}</label>
                             <input v-model="form.first_name" type="text"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Nazwisko</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.last_name') }}</label>
                             <input v-model="form.last_name" type="text"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
                     </div>
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.status') }}</label>
                             <select v-model="form.status"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="lead">Lead</option>
-                                <option value="prospect">Prospect</option>
-                                <option value="client">Klient</option>
-                                <option value="dormant">Uśpiony</option>
+                                <option value="lead">{{ $t('crm.contacts.status.lead') }}</option>
+                                <option value="prospect">{{ $t('crm.contacts.status.prospect') }}</option>
+                                <option value="client">{{ $t('crm.contacts.status.client') }}</option>
+                                <option value="dormant">{{ $t('crm.contacts.status.dormant') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Źródło</label>
-                            <input v-model="form.source" type="text" placeholder="np. LinkedIn, Konferencja..."
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.source') }}</label>
+                            <input v-model="form.source" type="text" :placeholder="$t('crm.contacts.placeholders.source')"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
                     </div>
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Firma</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.company') }}</label>
                             <select v-model="form.crm_company_id"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="">-- Brak --</option>
+                                <option value="">{{ $t('common.none') }}</option>
                                 <option v-for="company in companies" :key="company.id" :value="company.id">
                                     {{ company.name }}
                                 </option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Stanowisko</label>
-                            <input v-model="form.position" type="text" placeholder="np. CEO, Marketing Manager..."
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.position') }}</label>
+                            <input v-model="form.position" type="text" :placeholder="$t('crm.contacts.placeholders.position')"
                                 class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
                     </div>
                     <div v-if="owners?.length > 1">
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Handlowiec</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.contacts.fields.owner') }}</label>
                         <select v-model="form.owner_id"
                             class="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                            <option value="">-- Wybierz --</option>
+                            <option value="">{{ $t('common.select_option') }}</option>
                             <option v-for="owner in owners" :key="owner.id" :value="owner.id">
                                 {{ owner.name }}
                             </option>
@@ -119,11 +119,11 @@ const submit = () => {
 
                 <div class="mt-6 flex justify-end gap-3">
                     <Link href="/crm/contacts" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300">
-                        Anuluj
+                        {{ $t('common.cancel') }}
                     </Link>
                     <button type="submit" :disabled="form.processing"
                         class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                        Utwórz kontakt
+                        {{ $t('crm.contacts.create_button') }}
                     </button>
                 </div>
             </form>

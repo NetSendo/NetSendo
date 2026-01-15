@@ -69,7 +69,7 @@ const getActivityIcon = (type) => {
         <template #header>
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    Dashboard CRM
+                    {{ $t('crm.dashboard.title', 'Dashboard CRM') }}
                 </h1>
                 <div class="text-sm text-slate-500 dark:text-slate-400">
                     {{ new Date().toLocaleDateString("pl-PL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
@@ -83,12 +83,12 @@ const getActivityIcon = (type) => {
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Kontakty</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $t('crm.contacts.title', 'Kontakty') }}</p>
                         <p class="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
                             {{ stats?.contacts?.total || 0 }}
                         </p>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {{ stats?.contacts?.leads || 0 }} leadów • {{ stats?.contacts?.clients || 0 }} klientów
+                            {{ stats?.contacts?.leads || 0 }} {{ $t('crm.contacts.leads', 'leadów') }} • {{ stats?.contacts?.clients || 0 }} {{ $t('crm.contacts.clients', 'klientów') }}
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
@@ -103,7 +103,7 @@ const getActivityIcon = (type) => {
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Otwarte deale</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $t('crm.dashboard.open_deals', 'Otwarte deale') }}</p>
                         <p class="mt-1 text-3xl font-bold text-slate-900 dark:text-white">
                             {{ stats?.deals?.open || 0 }}
                         </p>
@@ -123,7 +123,7 @@ const getActivityIcon = (type) => {
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Wygrane (miesiąc)</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $t('crm.dashboard.won_this_month', 'Wygrane (miesiąc)') }}</p>
                         <p class="mt-1 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
                             {{ stats?.deals?.won_this_month || 0 }}
                         </p>
@@ -143,7 +143,7 @@ const getActivityIcon = (type) => {
             <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Zadania</p>
+                        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ $t('crm.dashboard.tasks_due_today', 'Zadania') }}</p>
                         <div class="mt-1 flex items-baseline gap-2">
                             <span v-if="stats?.tasks?.overdue > 0" class="text-2xl font-bold text-red-600 dark:text-red-400">
                                 {{ stats?.tasks?.overdue }}
@@ -153,9 +153,9 @@ const getActivityIcon = (type) => {
                             </span>
                         </div>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            <span v-if="stats?.tasks?.overdue > 0" class="text-red-600 dark:text-red-400">{{ stats?.tasks?.overdue }} zaległe</span>
-                            <span v-else>na dziś</span>
-                            • {{ stats?.tasks?.upcoming || 0 }} nadchodzące
+                            <span v-if="stats?.tasks?.overdue > 0" class="text-red-600 dark:text-red-400">{{ stats?.tasks?.overdue }} {{ $t('crm.dashboard.tasks_overdue_label', 'zaległe') }}</span>
+                            <span v-else>{{ $t('crm.dashboard.for_today', 'na dziś') }}</span>
+                            • {{ stats?.tasks?.upcoming || 0 }} {{ $t('crm.dashboard.upcoming', 'nadchodzące') }}
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
@@ -177,10 +177,10 @@ const getActivityIcon = (type) => {
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            Zaległe zadania
+                            {{ $t('crm.dashboard.tasks_overdue', 'Zaległe zadania') }}
                         </h2>
                         <Link href="/crm/tasks?view=overdue" class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                            Zobacz wszystkie →
+                            {{ $t('common.view_all', 'Zobacz wszystkie') }} →
                         </Link>
                     </div>
                     <div class="space-y-3">
@@ -211,10 +211,10 @@ const getActivityIcon = (type) => {
                             <svg class="h-5 w-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
-                            Zadania na dziś
+                            {{ $t('crm.dashboard.upcoming_tasks', 'Zadania na dziś') }}
                         </h2>
                         <Link href="/crm/tasks" class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                            Zobacz wszystkie →
+                            {{ $t('common.view_all', 'Zobacz wszystkie') }} →
                         </Link>
                     </div>
                     <div v-if="todayTasks?.length > 0" class="space-y-3">
@@ -240,7 +240,7 @@ const getActivityIcon = (type) => {
                         <svg class="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <p class="mt-2">Brak zadań na dziś</p>
+                        <p class="mt-2">{{ $t('crm.dashboard.no_tasks_today', 'Brak zadań na dziś') }}</p>
                     </div>
                 </div>
 
@@ -251,10 +251,10 @@ const getActivityIcon = (type) => {
                             <svg class="h-5 w-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                             </svg>
-                            Gorące leady
+                            {{ $t('crm.dashboard.hot_leads', 'Gorące leady') }}
                         </h2>
                         <Link href="/crm/contacts?status=lead" class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                            Zobacz wszystkie →
+                            {{ $t('common.view_all', 'Zobacz wszystkie') }} →
                         </Link>
                     </div>
                     <div class="space-y-3">
@@ -287,7 +287,7 @@ const getActivityIcon = (type) => {
             <div class="lg:col-span-1">
                 <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                     <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
-                        Ostatnie aktywności
+                        {{ $t('crm.dashboard.recent_activities', 'Ostatnie aktywności') }}
                     </h2>
                     <div v-if="recentActivities?.length > 0" class="space-y-4">
                         <div v-for="activity in recentActivities" :key="activity.id" class="flex gap-3">
@@ -307,7 +307,7 @@ const getActivityIcon = (type) => {
                         </div>
                     </div>
                     <div v-else class="py-8 text-center text-slate-500 dark:text-slate-400">
-                        <p>Brak aktywności</p>
+                        <p>{{ $t('crm.dashboard.no_activities', 'Brak aktywności') }}</p>
                     </div>
                 </div>
             </div>

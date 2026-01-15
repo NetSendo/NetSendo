@@ -29,7 +29,19 @@ class InternationalNamesSeeder extends Seeder
             $femaleCount = 0;
 
             // Insert male names
-            foreach ($names['male'] as $name) {
+            foreach ($names['male'] as $key => $value) {
+                // Check if name is key=>value (name=>vocative) or just value (name)
+                $name = is_string($key) ? $key : $value;
+                $vocative = is_string($key) ? $value : $value; // Default to name if no vocative map
+
+                // For CZ, we used explicit mapping. For others, we default to name.
+                // If the array was simple [name1, name2], then key is int, value is name.
+                // In that case vocative = name.
+                if (is_int($key)) {
+                    $name = $value;
+                    $vocative = $value;
+                }
+
                 Name::updateOrCreate(
                     [
                         'name' => mb_strtolower($name),
@@ -38,14 +50,22 @@ class InternationalNamesSeeder extends Seeder
                     ],
                     [
                         'gender' => 'male',
-                        'vocative' => null, // Vocative forms are mainly for Polish
+                        'vocative' => mb_strtolower($vocative),
                     ]
                 );
                 $maleCount++;
             }
 
             // Insert female names
-            foreach ($names['female'] as $name) {
+            foreach ($names['female'] as $key => $value) {
+                $name = is_string($key) ? $key : $value;
+                $vocative = is_string($key) ? $value : $value;
+
+                if (is_int($key)) {
+                    $name = $value;
+                    $vocative = $value;
+                }
+
                 Name::updateOrCreate(
                     [
                         'name' => mb_strtolower($name),
@@ -54,7 +74,7 @@ class InternationalNamesSeeder extends Seeder
                     ],
                     [
                         'gender' => 'female',
-                        'vocative' => null,
+                        'vocative' => mb_strtolower($vocative),
                     ]
                 );
                 $femaleCount++;
@@ -96,16 +116,72 @@ class InternationalNamesSeeder extends Seeder
     {
         return [
             'male' => [
-                'Jan', 'Petr', 'Pavel', 'Martin', 'Tomáš', 'Jakub', 'Jiří', 'Lukáš',
-                'David', 'Ondřej', 'Filip', 'Michal', 'Adam', 'Marek', 'Vojtěch', 'Daniel',
-                'Václav', 'Josef', 'František', 'Karel', 'Jaroslav', 'Miroslav', 'Zdeněk', 'Milan',
-                'Vladimír', 'Radek', 'Roman', 'Stanislav', 'Ladislav', 'Aleš', 'Patrik', 'Matěj',
+                'Jan' => 'Jane',
+                'Petr' => 'Petře',
+                'Pavel' => 'Pavle',
+                'Martin' => 'Martine',
+                'Tomáš' => 'Tomáši',
+                'Jakub' => 'Jakube',
+                'Jiří' => 'Jiří',
+                'Lukáš' => 'Lukáši',
+                'David' => 'Davide',
+                'Ondřej' => 'Ondřeji',
+                'Filip' => 'Filipe',
+                'Michal' => 'Michale',
+                'Adam' => 'Adame',
+                'Marek' => 'Marku',
+                'Vojtěch' => 'Vojtěchu',
+                'Daniel' => 'Danieli',
+                'Václav' => 'Václave',
+                'Josef' => 'Josefe',
+                'František' => 'Františku',
+                'Karel' => 'Karle',
+                'Jaroslav' => 'Jaroslave',
+                'Miroslav' => 'Miroslave',
+                'Zdeněk' => 'Zdeňku',
+                'Milan' => 'Milane',
+                'Vladimír' => 'Vladimíre',
+                'Radek' => 'Radku',
+                'Roman' => 'Romane',
+                'Stanislav' => 'Stanislave',
+                'Ladislav' => 'Ladislave',
+                'Aleš' => 'Aleši',
+                'Patrik' => 'Patriku',
+                'Matěj' => 'Matěji',
             ],
             'female' => [
-                'Marie', 'Jana', 'Eva', 'Anna', 'Hana', 'Petra', 'Lenka', 'Kateřina',
-                'Lucie', 'Veronika', 'Martina', 'Michaela', 'Tereza', 'Markéta', 'Barbora', 'Kristýna',
-                'Eliška', 'Adéla', 'Natalie', 'Simona', 'Denisa', 'Monika', 'Ivana', 'Zuzana',
-                'Jitka', 'Alena', 'Jaroslava', 'Ludmila', 'Dana', 'Irena', 'Věra', 'Dagmar',
+                'Marie' => 'Marie',
+                'Jana' => 'Jano',
+                'Eva' => 'Evo',
+                'Anna' => 'Anno',
+                'Hana' => 'Hano',
+                'Petra' => 'Petro',
+                'Lenka' => 'Lenko',
+                'Kateřina' => 'Kateřino',
+                'Lucie' => 'Lucie',
+                'Veronika' => 'Veroniko',
+                'Martina' => 'Martino',
+                'Michaela' => 'Michaelo',
+                'Tereza' => 'Terezo',
+                'Markéta' => 'Markéto',
+                'Barbora' => 'Barboro',
+                'Kristýna' => 'Kristýno',
+                'Eliška' => 'Eliško',
+                'Adéla' => 'Adélo',
+                'Natalie' => 'Natalie',
+                'Simona' => 'Simono',
+                'Denisa' => 'Deniso',
+                'Monika' => 'Moniko',
+                'Ivana' => 'Ivano',
+                'Zuzana' => 'Zuzano',
+                'Jitka' => 'Jitko',
+                'Alena' => 'Aleno',
+                'Jaroslava' => 'Jaroslavo',
+                'Ludmila' => 'Ludmilo',
+                'Dana' => 'Dano',
+                'Irena' => 'Ireno',
+                'Věra' => 'Věro',
+                'Dagmar' => 'Dagmar',
             ],
         ];
     }

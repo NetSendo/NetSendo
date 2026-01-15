@@ -7,7 +7,7 @@ import InputError from "@/Components/InputError.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import AdvancedEditor from "@/Components/AdvancedEditor.vue";
 import { useI18n } from "vue-i18n";
-import { computed } from "vue";
+import { computed, ref, nextTick } from "vue";
 
 const { t } = useI18n();
 
@@ -36,6 +36,63 @@ const form = useForm({
     is_active: props.email.is_active ?? true,
     list_id: props.list_id,
 });
+
+// Referencja do edytora i pola subject
+const advancedEditorRef = ref(null);
+const subjectInputRef = ref(null);
+const subjectCursorPos = ref(0);
+
+// Stan skopiowania
+const copiedPlaceholder = ref(null);
+
+// Dostępne placeholdery z opisami
+const placeholders = [
+    { code: '[[list-name]]', label: t('system_emails.placeholders.list_name') || 'Nazwa listy' },
+    { code: '[[email]]', label: t('system_emails.placeholders.email') || 'Adres email' },
+    { code: '[[first-name]]', label: t('system_emails.placeholders.first_name') || 'Imię' },
+    { code: '[[!fname]]', label: t('system_emails.placeholders.fname_vocative') || 'Imię w wołaczu' },
+    { code: '[[last-name]]', label: t('system_emails.placeholders.last_name') || 'Nazwisko' },
+    { code: '[[date]]', label: t('system_emails.placeholders.date') || 'Data' },
+    { code: '[[activation-link]]', label: t('system_emails.placeholders.activation_link') || 'Link aktywacyjny' },
+    { code: '[[unsubscribe-link]]', label: t('system_emails.placeholders.unsubscribe_link') || 'Link wypisania' },
+];
+
+// Śledzenie pozycji kursora w polu subject
+const updateSubjectCursor = (event) => {
+    subjectCursorPos.value = event.target.selectionStart;
+};
+
+// Wstaw placeholder do treści (edytora)
+const insertPlaceholderToContent = (code) => {
+    if (advancedEditorRef.value?.insertAtCursor) {
+        advancedEditorRef.value.insertAtCursor(code);
+    }
+};
+
+// Wstaw placeholder do tematu
+const insertPlaceholderToSubject = (code) => {
+    const input = subjectInputRef.value?.$el || subjectInputRef.value;
+    if (input) {
+        const start = subjectCursorPos.value;
+        const text = form.subject || "";
+        form.subject = text.substring(0, start) + code + text.substring(start);
+        nextTick(() => {
+            input.focus();
+            const newPos = start + code.length;
+            input.setSelectionRange(newPos, newPos);
+            subjectCursorPos.value = newPos;
+        });
+    }
+};
+
+// Kopiuj do schowka
+const copyToClipboard = async (code) => {
+    await navigator.clipboard.writeText(code);
+    copiedPlaceholder.value = code;
+    setTimeout(() => {
+        copiedPlaceholder.value = null;
+    }, 2000);
+};
 
 const submit = () => {
     form.put(route("settings.system-emails.update", props.email.id), {
@@ -81,32 +138,79 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <!-- Available placeholders -->
+                <!-- Available placeholders - interactive -->
                 <div
                     class="bg-indigo-50 p-4 shadow sm:rounded-lg dark:bg-indigo-900/20"
                 >
-                    <p
-                        class="text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-2"
-                    >
-                        {{ t("system_emails.available_placeholders") }}:
-                    </p>
-                    <div class="flex flex-wrap gap-2">
-                        <code
-                            v-for="placeholder in [
-                                '[[list-name]]',
-                                '[[email]]',
-                                '[[first-name]]',
-                                '[[!fname]]',
-                                '[[last-name]]',
-                                '[[date]]',
-                                '[[activation-link]]',
-                                '[[unsubscribe-link]]',
-                            ]"
-                            :key="placeholder"
-                            class="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-800 rounded text-xs"
+                    <div class="flex items-center justify-between mb-3">
+                        <p
+                            class="text-sm font-medium text-indigo-700 dark:text-indigo-300"
                         >
-                            {{ placeholder }}
-                        </code>
+                            {{ t("system_emails.available_placeholders") }}:
+                        </p>
+                        <span class="text-xs text-indigo-600 dark:text-indigo-400">
+                            {{ t("system_emails.click_to_insert") || "Kliknij aby wstawić" }}
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <div
+                            v-for="placeholder in placeholders"
+                            :key="placeholder.code"
+                            class="group relative"
+                        >
+                            <!-- Main placeholder button -->
+                            <div
+                                class="flex items-center gap-1 rounded-lg bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-700 shadow-sm overflow-hidden"
+                            >
+                                <!-- Insert to content button -->
+                                <button
+                                    type="button"
+                                    @click="insertPlaceholderToContent(placeholder.code)"
+                                    class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
+                                    :title="t('system_emails.insert_to_content') || 'Wstaw do treści'"
+                                >
+                                    <code class="font-mono">{{ placeholder.code }}</code>
+                                </button>
+
+                                <!-- Divider -->
+                                <div class="w-px h-6 bg-indigo-200 dark:bg-indigo-700"></div>
+
+                                <!-- Action buttons -->
+                                <div class="flex items-center">
+                                    <!-- Insert to subject -->
+                                    <button
+                                        type="button"
+                                        @click="insertPlaceholderToSubject(placeholder.code)"
+                                        class="p-1.5 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
+                                        :title="t('system_emails.insert_to_subject') || 'Wstaw do tematu'"
+                                    >
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                        </svg>
+                                    </button>
+
+                                    <!-- Copy to clipboard -->
+                                    <button
+                                        type="button"
+                                        @click="copyToClipboard(placeholder.code)"
+                                        class="p-1.5 text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors"
+                                        :title="t('common.copy') || 'Kopiuj'"
+                                    >
+                                        <svg v-if="copiedPlaceholder !== placeholder.code" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-3.5 w-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tooltip with label -->
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                                {{ placeholder.label }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -152,10 +256,14 @@ const submit = () => {
                             />
                             <TextInput
                                 id="subject"
+                                ref="subjectInputRef"
                                 type="text"
                                 class="mt-1 block w-full"
                                 v-model="form.subject"
                                 required
+                                @click="updateSubjectCursor"
+                                @keyup="updateSubjectCursor"
+                                @focus="updateSubjectCursor"
                             />
                             <InputError
                                 class="mt-2"
@@ -170,6 +278,7 @@ const submit = () => {
                             />
                             <div class="mt-1">
                                 <AdvancedEditor
+                                    ref="advancedEditorRef"
                                     v-model="form.content"
                                     min-height="400px"
                                 />

@@ -34,7 +34,7 @@ return new class extends Migration
 
             // Indexes for efficient queries
             $table->index(['webinar_id', 'created_at']);
-            $table->index(['webinar_id', 'webinar_session_id', 'created_at']);
+            $table->index(['webinar_id', 'webinar_session_id', 'created_at'], 'wcr_webinar_session_created_idx');
         });
     }
 

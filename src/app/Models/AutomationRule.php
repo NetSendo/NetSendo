@@ -68,6 +68,18 @@ class AutomationRule extends Model
         'pixel_checkout_started' => '🎯 Pixel: Rozpoczęcie checkout',
         'pixel_cart_abandoned' => '🎯 Pixel: Porzucony koszyk',
         'pixel_return_visit' => '🎯 Pixel: Powrót na stronę',
+        // CRM Sales Triggers
+        'crm_deal_stage_changed' => '💼 CRM: Zmiana etapu deala',
+        'crm_deal_won' => '💼 CRM: Deal wygrany',
+        'crm_deal_lost' => '💼 CRM: Deal przegrany',
+        'crm_deal_created' => '💼 CRM: Utworzenie deala',
+        'crm_deal_idle' => '💼 CRM: Brak aktywności w dealu',
+        'crm_task_completed' => '💼 CRM: Ukończenie zadania',
+        'crm_task_overdue' => '💼 CRM: Zadanie przeterminowane',
+        'crm_contact_created' => '💼 CRM: Utworzenie kontaktu',
+        'crm_contact_status_changed' => '💼 CRM: Zmiana statusu kontaktu',
+        'crm_score_threshold' => '💼 CRM: Próg lead score',
+        'crm_activity_logged' => '💼 CRM: Nowa aktywność',
     ];
 
     /**
@@ -84,6 +96,15 @@ class AutomationRule extends Model
         'start_funnel' => 'Uruchom lejek',
         'update_field' => 'Zaktualizuj pole',
         'notify_admin' => 'Powiadom administratora',
+        // CRM Actions
+        'crm_create_task' => '💼 CRM: Utwórz zadanie',
+        'crm_update_score' => '💼 CRM: Zmień lead score',
+        'crm_move_deal' => '💼 CRM: Przesuń deal do etapu',
+        'crm_assign_owner' => '💼 CRM: Przypisz właściciela',
+        'crm_convert_to_contact' => '💼 CRM: Konwertuj na kontakt CRM',
+        'crm_log_activity' => '💼 CRM: Zaloguj aktywność',
+        'crm_update_contact_status' => '💼 CRM: Zmień status kontaktu',
+        'crm_create_deal' => '💼 CRM: Utwórz deal',
     ];
 
     /**
@@ -103,6 +124,14 @@ class AutomationRule extends Model
         'email_clicked_message' => 'Kliknął w wiadomość',
         'subscribed_days_ago' => 'Zapisał się X dni temu',
         'source_is' => 'Źródło zapisu jest',
+        // CRM Conditions
+        'crm_deal_in_stage' => '💼 CRM: Deal w etapie',
+        'crm_contact_has_deals' => '💼 CRM: Kontakt ma otwarte deale',
+        'crm_score_above' => '💼 CRM: Score powyżej',
+        'crm_score_below' => '💼 CRM: Score poniżej',
+        'crm_contact_status_is' => '💼 CRM: Status kontaktu jest',
+        'crm_owned_by' => '💼 CRM: Przypisany do',
+        'crm_pipeline_is' => '💼 CRM: Pipeline jest',
     ];
 
     /**

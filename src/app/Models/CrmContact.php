@@ -29,6 +29,18 @@ class CrmContact extends Model
     ];
 
     /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function (CrmContact $contact) {
+            event(new \App\Events\CrmContactCreated($contact, auth()->id()));
+        });
+    }
+
+    /**
      * Get the subscriber (marketing data) for this CRM contact.
      * This is the 1:1 relationship with the existing Subscriber model.
      */

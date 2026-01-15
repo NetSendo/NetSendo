@@ -80,14 +80,14 @@ const parsePhoneNumber = (value) => {
         phoneNumber.value = '';
         return;
     }
-    
+
     // Try to match country dial code from the start
     let matched = null;
     let remaining = value;
-    
+
     // Sort by dial code length descending for proper matching
     const sortedCountries = [...countries].sort((a, b) => b.dial.length - a.dial.length);
-    
+
     for (const country of sortedCountries) {
         if (value.startsWith(country.dial)) {
             matched = country;
@@ -95,7 +95,7 @@ const parsePhoneNumber = (value) => {
             break;
         }
     }
-    
+
     if (matched) {
         selectedCountry.value = matched;
         phoneNumber.value = remaining;
@@ -109,8 +109,8 @@ const parsePhoneNumber = (value) => {
 const filteredCountries = computed(() => {
     if (!searchQuery.value) return countries;
     const q = searchQuery.value.toLowerCase();
-    return countries.filter(c => 
-        c.name.toLowerCase().includes(q) || 
+    return countries.filter(c =>
+        c.name.toLowerCase().includes(q) ||
         c.code.toLowerCase().includes(q) ||
         c.dial.includes(q)
     );
@@ -179,7 +179,7 @@ onUnmounted(() => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            
+
             <!-- Phone number input -->
             <input
                 v-model="phoneNumber"
@@ -189,7 +189,7 @@ onUnmounted(() => {
                 placeholder="123 456 789"
             >
         </div>
-        
+
         <!-- Country dropdown -->
         <Transition
             enter-active-class="transition duration-100 ease-out"
@@ -208,12 +208,12 @@ onUnmounted(() => {
                     <input
                         v-model="searchQuery"
                         type="text"
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-3 py-2 text-sm placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
+                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-3 py-2 text-sm placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
                         placeholder="Search country..."
                         @click.stop
                     >
                 </div>
-                
+
                 <!-- Countries list -->
                 <div class="max-h-48 overflow-y-auto">
                     <button
@@ -228,7 +228,7 @@ onUnmounted(() => {
                         <span class="flex-1">{{ country.name }}</span>
                         <span class="text-slate-500 dark:text-slate-400">{{ country.dial }}</span>
                     </button>
-                    
+
                     <div v-if="filteredCountries.length === 0" class="px-3 py-4 text-center text-sm text-slate-500">
                         No countries found
                     </div>

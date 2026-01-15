@@ -22,6 +22,13 @@ use App\Events\SubscriptionAnniversary;
 use App\Events\CrmDealStageChanged;
 use App\Events\CrmTaskOverdue;
 use App\Events\CrmContactReplied;
+use App\Events\CrmDealCreated;
+use App\Events\CrmDealIdle;
+use App\Events\CrmTaskCompleted;
+use App\Events\CrmContactCreated;
+use App\Events\CrmContactStatusChanged;
+use App\Events\CrmScoreThresholdReached;
+use App\Events\CrmActivityLogged;
 
 // Listeners
 use App\Listeners\TriggerAutomationsListener;
@@ -106,6 +113,27 @@ class EventServiceProvider extends ServiceProvider
             TriggerAutomationsListener::class,
         ],
         CrmContactReplied::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmDealCreated::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmDealIdle::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmTaskCompleted::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmContactCreated::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmContactStatusChanged::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmScoreThresholdReached::class => [
+            TriggerAutomationsListener::class,
+        ],
+        CrmActivityLogged::class => [
             TriggerAutomationsListener::class,
         ],
     ];

@@ -484,6 +484,8 @@
         "groups": {
             "address_list": "Address List",
             "crm": "CRM",
+            "crm_sales": "Sales CRM",
+            "contact_lists": "Contact Lists",
             "automation": "Automation",
             "media_library": "Media Library",
             "products": "Products",
@@ -3089,7 +3091,49 @@
             "or": "Any (OR)",
             "add_action": "Add action",
             "add_action_hint": "Add at least one action",
-            "activate_immediately": "Activate immediately"
+            "activate_immediately": "Activate immediately",
+            "crm": {
+                "pipeline": "Pipeline",
+                "all_pipelines": "All pipelines",
+                "from_stage": "From stage",
+                "to_stage": "To stage",
+                "any_stage": "Any stage",
+                "value_min": "Min value",
+                "value_max": "Max value",
+                "idle_days": "Days without activity",
+                "score_threshold": "Score threshold",
+                "score_direction": "Direction",
+                "score_above": "Above threshold",
+                "score_below": "Below threshold",
+                "task_type": "Task type",
+                "all_task_types": "All types",
+                "task_call": "Call",
+                "task_email": "Email",
+                "task_meeting": "Meeting",
+                "task_follow_up": "Follow-up",
+                "contact_status": "Contact status",
+                "any_status": "Any status",
+                "status_lead": "Lead",
+                "status_prospect": "Prospect",
+                "status_customer": "Customer",
+                "status_churned": "Churned",
+                "task_title": "Task title",
+                "task_title_placeholder": "Task title (use {{deal_name}}, {{first_name}})",
+                "priority_high": "High",
+                "priority_medium": "Normal",
+                "priority_low": "Low",
+                "due_days": "Due in X days",
+                "score_delta": "+/- points",
+                "set_absolute": "Set absolute value",
+                "target_stage": "Target stage",
+                "assign_owner": "Assign to",
+                "deal_name": "Deal name",
+                "deal_name_placeholder": "Deal name (use {{first_name}}, {{last_name}})",
+                "deal_value": "Value",
+                "activity_type": "Activity type",
+                "activity_note": "Note",
+                "activity_content": "Activity content"
+            }
         },
         "logs_page": {
             "title": "Logs: {name}",
@@ -4774,36 +4818,71 @@
             "overview": "Overview",
             "open_deals": "Open Deals",
             "won_this_month": "Won This Month",
-            "tasks_due_today": "Tasks Due Today",
+            "tasks_due_today": "Tasks",
             "tasks_overdue": "Overdue Tasks",
+            "tasks_overdue_label": "overdue",
+            "for_today": "today",
+            "upcoming": "upcoming",
+            "hot_leads": "Hot Leads",
             "recent_activities": "Recent Activities",
             "pipeline_performance": "Pipeline Performance",
             "total_value": "Total Value",
             "avg_deal_size": "Avg Deal Size",
             "win_rate": "Win Rate",
-            "upcoming_tasks": "Upcoming Tasks",
-            "no_activities": "No recent activities",
+            "upcoming_tasks": "Today's Tasks",
+            "no_activities": "No activities",
+            "no_tasks_today": "No tasks due today",
             "no_tasks": "No upcoming tasks"
         },
+        "common": {
+            "cancel": "Cancel",
+            "save_changes": "Save Changes",
+            "delete": "Delete",
+            "select_option": "-- Select --",
+            "none": "-- None --",
+            "search": "Search..."
+        },
         "contacts": {
+            "title_page": "CRM Contacts",
+            "all_owners": "All Owners",
             "title": "Contacts",
             "subtitle": "Manage your CRM contacts",
-            "new_contact": "New Contact",
-            "search_placeholder": "Search contacts...",
             "all_companies": "All Companies",
             "all_statuses": "All Statuses",
+            "search_placeholder": "Search contacts...",
+            "table_contact": "Contact",
+            "table_company": "Company",
+            "table_actions": "Actions",
             "empty_title": "No contacts",
             "empty_description": "Add your first contact to start managing relationships.",
             "create_first": "Add First Contact",
+            "create_button": "Create Contact",
             "create_title": "New Contact",
             "edit_title": "Edit Contact",
             "show_title": "Contact Details",
+            "pagination": "Showing {from}-{to} of {total} contacts",
+            "leads": "leads",
+            "clients": "clients",
+            "actions": {
+                "call": "Call",
+                "email": "Email",
+                "details": "Details"
+            },
             "status": {
+                "lead": "Lead",
+                "prospect": "Prospect",
+                "client": "Client",
+                "dormant": "Dormant",
+                "archived": "Archived",
                 "new": "New",
                 "contacted": "Contacted",
                 "qualified": "Qualified",
                 "unqualified": "Unqualified",
                 "customer": "Customer"
+            },
+            "placeholders": {
+                "source": "e.g. LinkedIn, Conference...",
+                "position": "e.g. CEO, Marketing Manager..."
             },
             "fields": {
                 "first_name": "First Name",
@@ -4816,7 +4895,8 @@
                 "source": "Source",
                 "notes": "Notes",
                 "tags": "Tags",
-                "owner": "Owner"
+                "owner": "Owner",
+                "email_required": "Email *"
             },
             "tabs": {
                 "overview": "Overview",
@@ -4837,18 +4917,25 @@
             "updated": "Contact updated"
         },
         "companies": {
+            "title_page": "CRM Companies",
+            "add_company": "Add Company",
+            "no_companies": "No companies",
+            "add_first": "Add first company",
             "title": "Companies",
             "subtitle": "Manage companies and organizations",
             "new_company": "New Company",
             "search_placeholder": "Search companies...",
             "empty_title": "No companies",
             "empty_description": "Add your first company to organize contacts.",
-            "create_first": "Add First Company",
-            "create_title": "New Company",
+            "create_first": "Add first contact",
+            "create_button": "Add contact",
+            "create_title": "New Contact",
             "edit_title": "Edit Company",
             "show_title": "Company Details",
             "fields": {
                 "name": "Company Name",
+                "name_required": "Company Name *",
+                "domain": "Domain (e.g. company.com)",
                 "website": "Website",
                 "industry": "Industry",
                 "size": "Size",
@@ -4858,6 +4945,13 @@
                 "phone": "Phone",
                 "notes": "Notes"
             },
+            "placeholders": {
+                "notes": "Additional info about company..."
+            },
+            "create_button": "Create Company",
+            "save_button": "Save Changes",
+            "delete_button": "Delete Company",
+            "delete_confirm": "Are you sure you want to delete this company?",
             "size_options": {
                 "micro": "Micro (1-9)",
                 "small": "Small (10-49)",
@@ -4873,7 +4967,23 @@
         "deals": {
             "title": "Deals",
             "subtitle": "Manage your sales pipeline",
+            "stages": {
+                "new": "New",
+                "qualify": "Qualify",
+                "proposition": "Proposition",
+                "negotiation": "Negotiation",
+                "won": "Won",
+                "lost": "Lost",
+                "analysis": "Analysis",
+                "offer": "Offer",
+                "contact": "Contact",
+                "meeting": "Meeting"
+            },
             "new_deal": "New Deal",
+            "create_deal": "Create Deal",
+            "deal_name": "Deal Name",
+            "drag_here": "Drag deal here",
+            "no_stages": "No sales stages",
             "search_placeholder": "Search deals...",
             "empty_title": "No deals",
             "empty_description": "Create your first deal.",
@@ -4885,6 +4995,14 @@
                 "open": "Open",
                 "won": "Won",
                 "lost": "Lost"
+            },
+            "form": {
+                "value_label": "Value ({currency})",
+                "contact_label": "Contact",
+                "company_label": "Company",
+                "notes_label": "Notes",
+                "stage_label": "Stage",
+                "none_option": "-- None --"
             },
             "fields": {
                 "name": "Deal Name",
@@ -4938,6 +5056,7 @@
             "filter_upcoming": "Upcoming",
             "filter_completed": "Completed",
             "empty_title": "No tasks",
+            "empty_category": "No tasks in this category",
             "empty_description": "Create your first task.",
             "create_first": "Create First Task",
             "create_title": "New Task",
@@ -4999,10 +5118,27 @@
             "empty": "No activities"
         },
         "import": {
+            "title_page": "CRM Import",
             "title": "Import Contacts",
             "subtitle": "Import contacts from a CSV file",
+            "upload": {
+                "title_upload": "Upload CSV File",
+                "description": "Upload a CSV file with contacts. Required field: email.",
+                "loading": "Loading...",
+                "select_file": "Select File"
+            },
             "upload_csv": "Upload CSV File",
             "upload_hint": "Drag and drop a CSV file or click to select",
+            "mapping": {
+                "title": "Field Mapping",
+                "select_another": "Select another file",
+                "duplicates": "Duplicates (email)",
+                "skip": "Skip",
+                "update": "Update existing",
+                "default_status": "Default Status",
+                "start_button": "Start Import",
+                "importing": "Importing..."
+            },
             "mapping_title": "Field Mapping",
             "source_column": "Source Column",
             "target_field": "CRM Field",
@@ -5032,4 +5168,3 @@
         }
     }
 }
-

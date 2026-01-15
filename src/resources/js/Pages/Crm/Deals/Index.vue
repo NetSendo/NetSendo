@@ -83,7 +83,7 @@ const handleDragEnd = () => {
 
 // Format currency
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0);
+    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0); // TODO: Currency from user settings
 };
 
 // Stage total value
@@ -93,13 +93,13 @@ const stageTotal = (stage) => {
 </script>
 
 <template>
-    <Head title="Lejek sprzedaży" />
+    <Head :title="$t('crm.deals.title', 'Lejek sprzedaży')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Lejek sprzedaży</h1>
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.deals.title', 'Lejek sprzedaży') }}</h1>
                     <select v-if="pipelines?.length > 1"
                         class="rounded-lg border-slate-200 bg-white text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         @change="(e) => router.get('/crm/deals', { pipeline_id: e.target.value })">
@@ -113,7 +113,7 @@ const stageTotal = (stage) => {
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Nowy deal
+                    {{ $t('crm.deals.new_deal', 'Nowy deal') }}
                 </button>
             </div>
         </template>
@@ -135,7 +135,7 @@ const stageTotal = (stage) => {
                 <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700">
                     <div class="flex items-center gap-2">
                         <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: stage.color || '#6b7280' }"></div>
-                        <h3 class="font-semibold text-slate-900 dark:text-white">{{ stage.name }}</h3>
+                        <h3 class="font-semibold text-slate-900 dark:text-white">{{ $t('crm.deals.stages.' + stage.name.toLowerCase(), stage.name) }}</h3>
                         <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-400">
                             {{ stage.deals?.length || 0 }}
                         </span>
@@ -150,7 +150,7 @@ const stageTotal = (stage) => {
                         draggable="true"
                         @dragstart="handleDragStart(deal)"
                         @dragend="handleDragEnd">
-                        <h4 class="font-medium text-slate-900 dark:text-white">{{ deal.name }}</h4>
+                        <h3 class="text-lg font-medium text-slate-900 dark:text-white">{{ $t('crm.deals.new_deal') }}</h3>
                         <p v-if="deal.contact?.subscriber" class="mt-1 text-sm text-slate-500">
                             {{ deal.contact.subscriber.first_name }} {{ deal.contact.subscriber.last_name }}
                         </p>
@@ -168,8 +168,8 @@ const stageTotal = (stage) => {
                     </div>
 
                     <!-- Empty state -->
-                    <div v-if="!stage.deals?.length" class="py-8 text-center text-sm text-slate-400">
-                        Przeciągnij deal tutaj
+                    <div v-if="!stage.deals?.length" class="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+                        {{ $t('crm.deals.drag_here') }}
                     </div>
                 </div>
             </div>
@@ -180,7 +180,7 @@ const stageTotal = (stage) => {
             <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" />
             </svg>
-            <p class="mt-4 text-slate-500">Brak etapów sprzedaży</p>
+            <p class="mt-4 text-slate-500 dark:text-slate-400">{{ $t('crm.deals.no_stages') }}</p>
         </div>
 
         <!-- New Deal Modal -->
@@ -188,7 +188,7 @@ const stageTotal = (stage) => {
             @click.self="showNewDealModal = false">
             <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
                 <div class="mb-4 flex items-center justify-between">
-                    <h2 class="text-lg font-bold text-slate-900 dark:text-white">Nowy deal</h2>
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ $t('crm.deals.new_deal', 'Nowy deal') }}</h2>
                     <button @click="showNewDealModal = false" class="text-slate-400 hover:text-slate-600">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -198,21 +198,21 @@ const stageTotal = (stage) => {
 
                 <form @submit.prevent="submitDeal" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Nazwa deala *</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.deal_name', 'Nazwa deala') }} *</label>
                         <input v-model="form.name" type="text" required
                             class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Etap</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.stage_label', 'Etap') }}</label>
                             <select v-model="form.crm_stage_id"
                                 class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
                                 <option v-for="stage in stages" :key="stage.id" :value="stage.id">{{ stage.name }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Wartość (PLN)</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.value_label', { currency: 'PLN' }, 'Wartość (PLN)') }}</label>
                             <input v-model="form.value" type="number" min="0" step="0.01"
                                 class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
                         </div>
@@ -220,25 +220,25 @@ const stageTotal = (stage) => {
 
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Kontakt</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.contact_label') }}</label>
                             <select v-model="form.crm_contact_id"
                                 class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="">-- Brak --</option>
+                                <option value="">{{ $t('crm.deals.form.none_option') }}</option>
                                 <option v-for="contact in contacts" :key="contact.id" :value="contact.id">{{ contact.name }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Firma</label>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.company_label') }}</label>
                             <select v-model="form.crm_company_id"
                                 class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="">-- Brak --</option>
+                                <option value="">{{ $t('crm.deals.form.none_option') }}</option>
                                 <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
                             </select>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Notatki</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.notes_label', 'Notatki') }}</label>
                         <textarea v-model="form.notes" rows="2"
                             class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white"></textarea>
                     </div>
@@ -246,11 +246,11 @@ const stageTotal = (stage) => {
                     <div class="flex justify-end gap-3">
                         <button type="button" @click="showNewDealModal = false"
                             class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300">
-                            Anuluj
+                            {{ $t('common.cancel') }}
                         </button>
                         <button type="submit" :disabled="form.processing"
                             class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                            Utwórz deal
+                            {{ $t('crm.deals.create_deal', 'Utwórz deal') }}
                         </button>
                     </div>
                 </form>

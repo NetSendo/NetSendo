@@ -703,7 +703,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.dashboard", "Dashboard CRM") }}
+                    {{ $t("crm.dashboard.title", "Dashboard CRM") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -726,7 +726,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.contacts", "Kontakty") }}
+                    {{ $t("crm.contacts.title", "Kontakty") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -749,7 +749,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.companies", "Firmy") }}
+                    {{ $t("crm.companies.title", "Firmy") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -772,7 +772,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.deals", "Lejek sprzedaży") }}
+                    {{ $t("crm.deals.title", "Lejek sprzedaży") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -795,7 +795,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.tasks", "Zadania") }}
+                    {{ $t("crm.tasks.title", "Zadania") }}
                 </SidebarItem>
 
                 <SidebarItem

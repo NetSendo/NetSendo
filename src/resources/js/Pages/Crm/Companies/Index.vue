@@ -17,18 +17,18 @@ const applySearch = () => {
 </script>
 
 <template>
-    <Head title="Firmy CRM" />
+    <Head :title="$t('crm.companies.title_page', 'Firmy CRM')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Firmy</h1>
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.companies.title', 'Firmy') }}</h1>
                 <Link href="/crm/companies/create"
                     class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Dodaj firmę
+                    {{ $t('crm.companies.add_company', 'Dodaj firmę') }}
                 </Link>
             </div>
         </template>
@@ -39,7 +39,7 @@ const applySearch = () => {
                 <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input v-model="search" @keyup.enter="applySearch" type="text" placeholder="Szukaj firm..."
+                <input v-model="search" @keyup.enter="applySearch" type="text" :placeholder="$t('crm.companies.search_placeholder', 'Szukaj firm...')"
                     class="w-full rounded-xl border-slate-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
             </div>
         </div>
@@ -79,12 +79,12 @@ const applySearch = () => {
             <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <p class="mt-4 text-slate-500">Brak firm</p>
+            <p class="mt-4 text-slate-500">{{ $t('crm.companies.no_companies', 'Brak firm') }}</p>
             <Link href="/crm/companies/create" class="mt-4 inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                Dodaj pierwszą firmę
+                {{ $t('crm.companies.add_first', 'Dodaj pierwszą firmę') }}
             </Link>
         </div>
     </AuthenticatedLayout>

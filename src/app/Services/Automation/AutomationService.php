@@ -153,6 +153,118 @@ class AutomationService
             return false;
         }
 
+        // ===== CRM Trigger Config Matching =====
+
+        // Check pipeline_id filter
+        if (!empty($config['pipeline_id'])) {
+            $contextPipelineId = (int) ($context['pipeline_id'] ?? 0);
+            $configPipelineId = (int) $config['pipeline_id'];
+            if ($contextPipelineId !== $configPipelineId) {
+                return false;
+            }
+        }
+
+        // Check stage_id filter (for current stage)
+        if (!empty($config['stage_id'])) {
+            $contextStageId = (int) ($context['stage_id'] ?? $context['new_stage_id'] ?? 0);
+            $configStageId = (int) $config['stage_id'];
+            if ($contextStageId !== $configStageId) {
+                return false;
+            }
+        }
+
+        // Check from_stage_id filter (for stage change FROM)
+        if (!empty($config['from_stage_id'])) {
+            $contextFromStageId = (int) ($context['old_stage_id'] ?? 0);
+            $configFromStageId = (int) $config['from_stage_id'];
+            if ($contextFromStageId !== $configFromStageId) {
+                return false;
+            }
+        }
+
+        // Check to_stage_id filter (for stage change TO)
+        if (!empty($config['to_stage_id'])) {
+            $contextToStageId = (int) ($context['new_stage_id'] ?? 0);
+            $configToStageId = (int) $config['to_stage_id'];
+            if ($contextToStageId !== $configToStageId) {
+                return false;
+            }
+        }
+
+        // Check deal_value_min filter
+        if (!empty($config['deal_value_min'])) {
+            $dealValue = (float) ($context['deal_value'] ?? 0);
+            $minValue = (float) $config['deal_value_min'];
+            if ($dealValue < $minValue) {
+                return false;
+            }
+        }
+
+        // Check deal_value_max filter
+        if (!empty($config['deal_value_max'])) {
+            $dealValue = (float) ($context['deal_value'] ?? 0);
+            $maxValue = (float) $config['deal_value_max'];
+            if ($dealValue > $maxValue) {
+                return false;
+            }
+        }
+
+        // Check owner_id filter
+        if (!empty($config['owner_id'])) {
+            $contextOwnerId = (int) ($context['owner_id'] ?? 0);
+            $configOwnerId = (int) $config['owner_id'];
+            if ($contextOwnerId !== $configOwnerId) {
+                return false;
+            }
+        }
+
+        // Check contact_status filter
+        if (!empty($config['contact_status'])) {
+            $contextStatus = $context['status'] ?? $context['new_status'] ?? '';
+            if ($contextStatus !== $config['contact_status']) {
+                return false;
+            }
+        }
+
+        // Check score_threshold filter
+        if (!empty($config['score_threshold'])) {
+            $newScore = (int) ($context['new_score'] ?? $context['score'] ?? 0);
+            $threshold = (int) $config['score_threshold'];
+            $direction = $config['score_direction'] ?? 'above';
+
+            if ($direction === 'above' && $newScore < $threshold) {
+                return false;
+            }
+            if ($direction === 'below' && $newScore > $threshold) {
+                return false;
+            }
+        }
+
+        // Check idle_days filter
+        if (!empty($config['idle_days'])) {
+            $contextIdleDays = (int) ($context['idle_days'] ?? 0);
+            $configIdleDays = (int) $config['idle_days'];
+            if ($contextIdleDays < $configIdleDays) {
+                return false;
+            }
+        }
+
+        // Check task_type filter
+        if (!empty($config['task_type'])) {
+            $contextTaskType = $context['task_type'] ?? '';
+            if ($contextTaskType !== $config['task_type']) {
+                return false;
+            }
+        }
+
+        // Check activity_type filter
+        if (!empty($config['activity_type'])) {
+            $contextActivityType = $context['activity_type'] ?? '';
+            if ($contextActivityType !== $config['activity_type']) {
+                return false;
+            }
+        }
+
         return true;
     }
 

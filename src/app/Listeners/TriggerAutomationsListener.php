@@ -24,6 +24,13 @@ use App\Events\PixelCartAbandoned;
 use App\Events\CrmDealStageChanged;
 use App\Events\CrmTaskOverdue;
 use App\Events\CrmContactReplied;
+use App\Events\CrmDealCreated;
+use App\Events\CrmDealIdle;
+use App\Events\CrmTaskCompleted;
+use App\Events\CrmContactCreated;
+use App\Events\CrmContactStatusChanged;
+use App\Events\CrmScoreThresholdReached;
+use App\Events\CrmActivityLogged;
 use App\Services\Automation\AutomationService;
 use Illuminate\Support\Facades\Log;
 
@@ -90,6 +97,13 @@ class TriggerAutomationsListener
             CrmDealStageChanged::class => 'crm_deal_stage_changed',
             CrmTaskOverdue::class => 'crm_task_overdue',
             CrmContactReplied::class => 'crm_contact_replied',
+            CrmDealCreated::class => 'crm_deal_created',
+            CrmDealIdle::class => 'crm_deal_idle',
+            CrmTaskCompleted::class => 'crm_task_completed',
+            CrmContactCreated::class => 'crm_contact_created',
+            CrmContactStatusChanged::class => 'crm_contact_status_changed',
+            CrmScoreThresholdReached::class => 'crm_score_threshold',
+            CrmActivityLogged::class => 'crm_activity_logged',
             default => null,
         };
     }

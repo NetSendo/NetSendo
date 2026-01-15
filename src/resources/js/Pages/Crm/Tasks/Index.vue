@@ -33,7 +33,7 @@ const formatDate = (date) => {
         month: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-    });
+    }); // TODO: Use user locale
 };
 
 // Priority class
@@ -60,12 +60,12 @@ const getTypeIcon = (type) => {
 </script>
 
 <template>
-    <Head title="Zadania CRM" />
+    <Head :title="$t('crm.tasks.title', 'Zadania CRM')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Zadania</h1>
+                <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.tasks.title', 'Zadania') }}</h1>
             </div>
         </template>
 
@@ -74,19 +74,19 @@ const getTypeIcon = (type) => {
             <button @click="changeView('overdue')"
                 :class="['flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                     selectedView === 'overdue' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300']">
-                Zaległe
+                {{ $t('crm.tasks.filter_overdue', 'Zaległe') }}
                 <span v-if="counts?.overdue" class="rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">{{ counts.overdue }}</span>
             </button>
             <button @click="changeView('today')"
                 :class="['flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                     selectedView === 'today' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300']">
-                Na dziś
+                {{ $t('crm.tasks.filter_today', 'Na dziś') }}
                 <span v-if="counts?.today" class="rounded-full bg-amber-600 px-2 py-0.5 text-xs text-white">{{ counts.today }}</span>
             </button>
             <button @click="changeView('upcoming')"
                 :class="['flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition',
                     selectedView === 'upcoming' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300']">
-                Nadchodzące
+                {{ $t('crm.tasks.filter_upcoming', 'Nadchodzące') }}
                 <span v-if="counts?.upcoming" class="rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">{{ counts.upcoming }}</span>
             </button>
         </div>
@@ -129,7 +129,7 @@ const getTypeIcon = (type) => {
                 <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p class="mt-4 text-slate-500">Brak zadań w tej kategorii</p>
+                <p class="mt-4 text-slate-500">{{ $t('crm.tasks.empty_category', 'Brak zadań w tej kategorii') }}</p>
             </div>
         </div>
     </AuthenticatedLayout>
