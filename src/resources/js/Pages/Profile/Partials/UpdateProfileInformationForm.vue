@@ -29,7 +29,13 @@ const form = useForm({
     email: user.email,
     timezone: user.timezone || 'UTC',
     default_currency: user.settings?.default_currency || 'EUR',
+    time_format: user.settings?.time_format || '24',
 });
+
+const timeFormats = [
+    { value: '24', label: '24h (14:30)' },
+    { value: '12', label: '12h (2:30 PM)' },
+];
 
 const detectTimezone = () => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -123,6 +129,21 @@ const detectTimezone = () => {
                     </option>
                 </select>
                 <InputError class="mt-2" :message="form.errors.default_currency" />
+            </div>
+
+            <div>
+                <InputLabel for="time_format" :value="$t('profile.information.time_format')" />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('profile.information.time_format_description') }}</p>
+                <select
+                    id="time_format"
+                    v-model="form.time_format"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
+                >
+                    <option v-for="tf in timeFormats" :key="tf.value" :value="tf.value">
+                        {{ tf.label }}
+                    </option>
+                </select>
+                <InputError class="mt-2" :message="form.errors.time_format" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

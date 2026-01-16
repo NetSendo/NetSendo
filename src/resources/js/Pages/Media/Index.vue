@@ -93,10 +93,11 @@ const uploadFiles = async (files) => {
     compressionStats.value = null;
 
     try {
-        // Compress images before upload
+        // Compress images before upload with iterative compression
+        // Uses default options: targetSizeKB: 10240 (10MB server limit)
         const { files: compressedFiles, stats } = await compressImages(
             files,
-            { maxWidth: 2048, maxHeight: 2048, quality: 0.8, maxSizeKB: 1024 },
+            {}, // Use default options from composable
             (current, total) => {
                 compressionProgress.value = { current, total };
             }
@@ -104,6 +105,22 @@ const uploadFiles = async (files) => {
 
         compressionStats.value = stats;
         isCompressing.value = false;
+
+        // Check if any files were too large
+        if (stats.tooLargeCount > 0) {
+            const fileNames = stats.tooLargeFiles.join(', ');
+            alert(t('media.files_too_large', {
+                count: stats.tooLargeCount,
+                files: fileNames,
+                maxSize: '10 MB'
+            }));
+        }
+
+        // If no valid files to upload, skip upload
+        if (compressedFiles.length === 0) {
+            return;
+        }
+
         isUploading.value = true;
         uploadProgress.value = 0;
 
@@ -132,7 +149,10 @@ const uploadFiles = async (files) => {
         isUploading.value = false;
         isCompressing.value = false;
         uploadProgress.value = 0;
-        compressionStats.value = null;
+        // Keep stats briefly visible, then clear
+        setTimeout(() => {
+            compressionStats.value = null;
+        }, 5000);
     }
 };
 

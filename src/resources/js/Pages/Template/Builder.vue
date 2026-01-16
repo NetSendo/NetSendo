@@ -4,6 +4,7 @@ import { Head, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 import html2canvas from "html2canvas";
+import useDateTime from "@/Composables/useDateTime";
 import BuilderCanvas from "@/Components/TemplateBuilder/BuilderCanvas.vue";
 import BlockLibrary from "@/Components/TemplateBuilder/BlockLibrary.vue";
 import BlockEditor from "@/Components/TemplateBuilder/BlockEditor.vue";
@@ -12,6 +13,7 @@ import StyleEditor from "@/Components/TemplateBuilder/StyleEditor.vue";
 import AiAssistant from "@/Components/TemplateBuilder/AiAssistant.vue";
 
 const { t } = useI18n();
+const { formatTime } = useDateTime();
 
 const props = defineProps({
     template: Object,
@@ -532,7 +534,7 @@ onBeforeUnmount(() => {
                     class="hidden text-xs text-slate-400 lg:inline"
                 >
                     {{ $t("template_builder.saved_at") }}
-                    {{ lastSaved.toLocaleTimeString() }}
+                    {{ formatTime(lastSaved) }}
                 </span>
 
                 <!-- Preview toggle (Desktop only) -->

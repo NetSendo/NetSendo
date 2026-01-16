@@ -2,7 +2,9 @@
 import { ref } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { useDateTime } from "@/Composables/useDateTime";
 
+const { formatDate: formatDateBase, locale } = useDateTime();
 const props = defineProps({
     tasks: Object,
     counts: Object,
@@ -28,12 +30,12 @@ const completeTask = async (task) => {
 // Format date
 const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("pl-PL", {
+    return formatDateBase(date, null, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
         minute: "2-digit",
-    }); // TODO: Use user locale
+    });
 };
 
 // Priority class

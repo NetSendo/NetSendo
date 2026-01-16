@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useDateTime } from '@/Composables/useDateTime';
+
+const { formatCurrency } = useDateTime();
 
 const props = defineProps({
     webinarId: { type: Number, required: true },
@@ -72,10 +75,7 @@ const resetForm = () => {
 };
 
 const formatPrice = (price, currency = 'PLN') => {
-    return new Intl.NumberFormat('pl-PL', {
-        style: 'currency',
-        currency: currency,
-    }).format(price);
+    return formatCurrency(price, currency);
 };
 </script>
 

@@ -3,8 +3,10 @@ import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
+import { useDateTime } from '@/Composables/useDateTime';
 
 const { t } = useI18n();
+const { formatDate: formatDateBase } = useDateTime();
 
 const props = defineProps({
     form: Object,
@@ -27,7 +29,7 @@ const statsCards = computed(() => [
 // Format date
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('pl-PL', {
+    return formatDateBase(date, null, {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -59,7 +61,7 @@ function getStatusClass(status) {
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center gap-4">
-                <Link 
+                <Link
                     :href="route('forms.edit', form.id)"
                     class="btn-icon"
                 >
@@ -80,13 +82,13 @@ function getStatusClass(status) {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Stats cards -->
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <div 
-                        v-for="stat in statsCards" 
+                    <div
+                        v-for="stat in statsCards"
                         :key="stat.label"
                         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6"
                     >
                         <div class="flex items-center gap-4">
-                            <div 
+                            <div
                                 :class="[
                                     'w-12 h-12 rounded-xl flex items-center justify-center',
                                     {
@@ -97,7 +99,7 @@ function getStatusClass(status) {
                                     }
                                 ]"
                             >
-                                <svg 
+                                <svg
                                     :class="[
                                         'w-6 h-6',
                                         {
@@ -107,8 +109,8 @@ function getStatusClass(status) {
                                             'text-red-600 dark:text-red-400': stat.color === 'red',
                                         }
                                     ]"
-                                    fill="none" 
-                                    stroke="currentColor" 
+                                    fill="none"
+                                    stroke="currentColor"
                                     viewBox="0 0 24 24"
                                 >
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="stat.icon"/>
@@ -170,8 +172,8 @@ function getStatusClass(status) {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr 
-                                v-for="submission in recentSubmissions" 
+                            <tr
+                                v-for="submission in recentSubmissions"
                                 :key="submission.id"
                                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                             >
@@ -182,7 +184,7 @@ function getStatusClass(status) {
                                     {{ [submission.subscriber?.first_name, submission.subscriber?.last_name].filter(Boolean).join(' ') || '-' }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span 
+                                    <span
                                         class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium"
                                         :class="getStatusClass(submission.status)"
                                     >

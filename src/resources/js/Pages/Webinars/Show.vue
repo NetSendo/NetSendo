@@ -1,7 +1,9 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatDate: formatDateBase } = useDateTime();
 const props = defineProps({
     webinar: Object,
     stats: Object,
@@ -9,7 +11,7 @@ const props = defineProps({
 
 const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('pl-PL', {
+    return formatDateBase(date, null, {
         day: 'numeric',
         month: 'long',
         year: 'numeric',

@@ -1,7 +1,9 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import PartnerLayout from '@/Layouts/PartnerLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase } = useDateTime();
 const props = defineProps({
     stats: Object,
     recentConversions: Array,
@@ -9,7 +11,7 @@ const props = defineProps({
 });
 
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0);
+    return formatCurrencyBase(value, 'PLN');
 };
 </script>
 

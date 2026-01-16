@@ -7,7 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Global Date/Time Localization:**
+
+  - Dates and times now display in the user's selected language format (en-US, de-DE, es-ES, pl-PL).
+  - Updated `useDateTime.js` composable with automatic locale detection from i18n.
+  - Added `formatCurrency` and `formatNumber` helpers for locale-aware number formatting.
+  - Added locale-aware relative time strings ("just now", "5 minutes ago", etc.) for all 4 languages.
+  - Added localized greeting messages (Good morning/afternoon/evening) for all 4 languages.
+  - Updated 24+ components: CRM Dashboard, Tasks, Companies, Contacts, Media, Webinars, Forms, Subscriber tabs, Profit/Affiliate, Partner, Funnels, Settings/Backup.
+
+- **WYSIWYG Editor - List Indentation:**
+
+  - Added "Increase Indent" and "Decrease Indent" buttons to the editor toolbar.
+  - Implemented keyboard shortcuts for list indentation (Tab / Shift+Tab).
+  - Updated list icons for better visibility.
+  - Added translations for indentation actions in PL, EN, DE, ES.
+
+- **Iterative Image Compression:**
+
+  - Implemented smart iterative compression algorithm that automatically adjusts image quality and dimensions to ensure uploaded images are within the 10MB server limit.
+  - Added intelligent retry logic that progressively reduces quality (down to 0.30) and scales down image (down to 35%) if necessary.
+  - Added user feedback mechanism to alert when files cannot be compressed enough to meet the 10MB limit.
+  - Added `files_too_large` translations in PL, EN, DE, ES.
+
+- **Email Image Processing:**
+
+  - Implemented `EmailImageService` to automatically convert images with `img_to_b64` class to inline base64 enabled images.
+  - Updated `SendEmailJob` to process inline images before sending, improving compatibility with email clients like Onet.
+  - Added configuration options in `netsendo.php` for controlling inline image conversion active state, maximum size limit (default 500KB), and fetch timeout (default 10s).
+
+- **User Time Format Preference:**
+
+  - Implemented user setting for preferred time format (24-hour vs 12-hour with AM/PM).
+  - Added new "Time Format" dropdown in Profile Information settings.
+  - Updates all time displays across the application (Dashboard, Lists, Tables, Template Builder) to respect the user's choice.
+  - Full translations for new settings in PL, EN, DE, ES.
+
+### Changed
+
+- **Locale-Aware Formatting:**
+
+  - Standardized currency formatting across the entire application to use locale-aware `Intl.NumberFormat`.
+  - Updated key components: `ProductPickerModal`, `WebinarProductPanel`, `BlockEditor`, `Funnels/Stats`, `Crm/Contacts/Show`, `Settings/Backup`, `Webinars/Analytics`, and all `Profit/Affiliate` & `Partner` views.
+  - Improved display of prices and monetary values consistent with user's selected language.
+
 ### Fixed
+
+- **WYSIWYG List Formatting:**
+
+  - Fixed issue where bullet points and numbered lists were not displaying correctly due to missing CSS styles.
+  - Added explicit list styling to `TiptapEditor`, `AdvancedEditor`, and `SignatureEditor`.
+  - Fixed email export to include inline styles for lists, ensuring correct rendering in email clients.
 
 - **Media Upload:**
   - Fixed 422 error when uploading images that undergo client-side compression.

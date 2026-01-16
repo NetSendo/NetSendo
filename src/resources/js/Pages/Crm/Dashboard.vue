@@ -2,6 +2,9 @@
 import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
+import { useDateTime } from "@/Composables/useDateTime";
+
+const { formatDate, getCurrentDateFormatted, locale } = useDateTime();
 
 const props = defineProps({
     overdueTasks: Array,
@@ -14,16 +17,16 @@ const props = defineProps({
 
 // Format currency
 const formatCurrency = (value, currency = "PLN") => {
-    return new Intl.NumberFormat("pl-PL", {
+    return new Intl.NumberFormat(locale.value, {
         style: "currency",
         currency: currency,
     }).format(value);
 };
 
-// Format date
-const formatDate = (date) => {
+// Format date with time
+const formatDateWithTime = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("pl-PL", {
+    return formatDate(date, null, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -72,7 +75,7 @@ const getActivityIcon = (type) => {
                     {{ $t('crm.dashboard.title', 'Dashboard CRM') }}
                 </h1>
                 <div class="text-sm text-slate-500 dark:text-slate-400">
-                    {{ new Date().toLocaleDateString("pl-PL", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+                    {{ getCurrentDateFormatted() }}
                 </div>
             </div>
         </template>
@@ -198,7 +201,7 @@ const getActivityIcon = (type) => {
                                 </div>
                             </div>
                             <span class="text-sm text-red-600 dark:text-red-400">
-                                {{ formatDate(task.due_date) }}
+                                {{ formatDateWithTime(task.due_date) }}
                             </span>
                         </div>
                     </div>
@@ -232,7 +235,7 @@ const getActivityIcon = (type) => {
                                 </div>
                             </div>
                             <span class="text-sm text-slate-500 dark:text-slate-400">
-                                {{ formatDate(task.due_date) }}
+                                {{ formatDateWithTime(task.due_date) }}
                             </span>
                         </div>
                     </div>
@@ -301,7 +304,7 @@ const getActivityIcon = (type) => {
                                     {{ activity.content || activity.type_label }}
                                 </p>
                                 <p class="text-xs text-slate-500 dark:text-slate-400">
-                                    {{ formatDate(activity.created_at) }}
+                                    {{ formatDateWithTime(activity.created_at) }}
                                 </p>
                             </div>
                         </div>

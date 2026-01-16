@@ -113,4 +113,24 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for email processing and delivery.
+    |
+    */
+
+    'email' => [
+        // Convert images with class="img_to_b64" to inline base64
+        'convert_inline_images' => env('EMAIL_CONVERT_INLINE_IMAGES', true),
+
+        // Maximum size for inline images (in bytes, default 500KB)
+        'max_inline_image_size' => env('EMAIL_MAX_INLINE_IMAGE_SIZE', 512000),
+
+        // Timeout for fetching remote images (in seconds)
+        'image_fetch_timeout' => env('EMAIL_IMAGE_FETCH_TIMEOUT', 10),
+    ],
+
 ];

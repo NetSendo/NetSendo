@@ -9,6 +9,7 @@ use App\Models\MessageTrackedLink;
 use App\Models\Subscriber;
 use App\Services\Mail\MailProviderService;
 use App\Services\PlaceholderService;
+use App\Services\EmailImageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -159,7 +160,16 @@ class SendEmailJob implements ShouldQueue
                 $content .= $pixelHtml;
             }
 
-            // 5. Send Email using Mailbox Provider or Default Laravel Mailer
+            // 5. Convert images marked with class="img_to_b64" to inline base64
+            if (config('netsendo.email.convert_inline_images', true)) {
+                $imageService = app(EmailImageService::class);
+                if ($imageService->hasImagesToProcess($content)) {
+                    $content = $imageService->processInlineImages($content);
+                    Log::debug("Processed inline images for email to {$this->subscriber->email}");
+                }
+            }
+
+            // 6. Send Email using Mailbox Provider or Default Laravel Mailer
             $recipientName = trim(($this->subscriber->first_name ?? '') . ' ' . ($this->subscriber->last_name ?? ''));
 
             // Prepare attachments array
@@ -207,7 +217,7 @@ class SendEmailJob implements ShouldQueue
                 Log::info("Email sent via default mailer to {$this->subscriber->email}");
             }
 
-            // 6. Update queue entry status on successful delivery
+            // 7. Update queue entry status on successful delivery
             $this->markQueueEntryAsSent();
 
         } catch (\Exception $e) {

@@ -2,7 +2,9 @@
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase } = useDateTime();
 const props = defineProps({
     affiliates: Object,
     program: Object,
@@ -20,10 +22,7 @@ const applyFilters = () => {
 };
 
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', {
-        style: 'currency',
-        currency: props.program.currency || 'PLN',
-    }).format(value || 0);
+    return formatCurrencyBase(value, props.program.currency || 'PLN');
 };
 
 const approveAffiliate = (affiliate) => {

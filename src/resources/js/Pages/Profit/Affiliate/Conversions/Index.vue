@@ -2,7 +2,9 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase } = useDateTime();
 const props = defineProps({
     conversions: Object,
     program: Object,
@@ -14,7 +16,7 @@ const dateFrom = ref(props.filters?.date_from || '');
 const dateTo = ref(props.filters?.date_to || '');
 
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: props.program.currency || 'PLN' }).format(value || 0);
+    return formatCurrencyBase(value, props.program.currency || 'PLN');
 };
 
 const applyFilters = () => {

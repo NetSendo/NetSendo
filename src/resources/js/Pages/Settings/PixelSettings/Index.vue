@@ -4,6 +4,7 @@ import { usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { useEcho, usePrivateChannel } from "@/Composables/useEcho";
+import { useDateTime } from "@/Composables/useDateTime";
 
 const props = defineProps({
     stats: Object,
@@ -15,6 +16,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const { locale } = useDateTime();
 const page = usePage();
 
 // Live Visitors State
@@ -138,7 +140,7 @@ const chartData = computed(() => {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split("T")[0];
-        days.push(date.toLocaleDateString("pl-PL", { weekday: "short" }));
+        days.push(date.toLocaleDateString(locale.value, { weekday: "short" }));
         counts.push(eventsByDay[dateStr] || 0);
     }
 

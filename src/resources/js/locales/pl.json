@@ -340,6 +340,8 @@
         "align_right": "Wyrównaj do prawej",
         "bullet_list": "Lista punktowana",
         "ordered_list": "Lista numerowana",
+        "indent": "Zwiększ wcięcie",
+        "outdent": "Zmniejsz wcięcie",
         "blockquote": "Cytat",
         "code_block": "Blok kodu",
         "link": "Link",
@@ -2359,7 +2361,9 @@
             "verification_link_sent": "Nowy link weryfikacyjny został wysłany na Twój adres e-mail.",
             "saved": "Zapisano.",
             "default_currency": "Domyślna waluta",
-            "default_currency_description": "Waluta używana do wyświetlania sum i raportów w CRM"
+            "default_currency_description": "Waluta używana do wyświetlania sum i raportów w CRM",
+            "time_format": "Format godziny",
+            "time_format_description": "Wybierz preferowany format wyświetlania godzin"
         },
         "password": {
             "title": "Aktualizacja hasła",
@@ -4867,7 +4871,8 @@
             "copy_url": "Kopiuj URL"
         },
         "compressing": "Kompresowanie obrazów...",
-        "compressed_info": "Skompresowano {count} plików, zaoszczędzono {saved}"
+        "compressed_info": "Skompresowano {count} plików, zaoszczędzono {saved}",
+        "files_too_large": "{count} plik(ów) jest zbyt duży(ch) do przesłania (maks. {maxSize}): {files}"
     },
     "brands": {
         "title": "Zarządzanie Markami",

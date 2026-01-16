@@ -1557,6 +1557,46 @@ const btnClass = (isActive = false) => {
 .ProseMirror ul,
 .ProseMirror ol {
     padding: 0 1rem;
+    margin-left: 1rem;
+}
+
+/* Unordered list styles */
+.ProseMirror ul {
+    list-style-type: disc;
+}
+
+.ProseMirror ul ul {
+    list-style-type: circle;
+}
+
+.ProseMirror ul ul ul {
+    list-style-type: square;
+}
+
+/* Ordered list styles */
+.ProseMirror ol {
+    list-style-type: decimal;
+}
+
+.ProseMirror ol ol {
+    list-style-type: lower-alpha;
+}
+
+.ProseMirror ol ol ol {
+    list-style-type: lower-roman;
+}
+
+/* List item spacing */
+.ProseMirror li {
+    margin-bottom: 0.25em;
+}
+
+.ProseMirror li > p {
+    margin: 0;
+}
+
+.ProseMirror li::marker {
+    color: inherit;
 }
 
 .ProseMirror h1,

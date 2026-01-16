@@ -4,8 +4,10 @@ import { Head, useForm, usePage, router } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import { useDateTime } from "@/Composables/useDateTime";
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
+const { locale, formatDate: formatDateBase } = useDateTime();
 
 const props = defineProps({
     licenseActive: Boolean,
@@ -297,14 +299,11 @@ const submitActivation = () => {
 const formattedExpiresAt = computed(() => {
     if (!props.licenseExpiresAt) return null;
     try {
-        return new Date(props.licenseExpiresAt).toLocaleDateString(
-            locale.value === "pl" ? "pl-PL" : "en-US",
-            {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            }
-        );
+        return formatDateBase(props.licenseExpiresAt, null, {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
     } catch {
         return props.licenseExpiresAt;
     }

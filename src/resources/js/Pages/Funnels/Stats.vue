@@ -3,9 +3,11 @@ import { computed, ref, onMounted } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
+import { useDateTime } from '@/Composables/useDateTime';
 import axios from 'axios';
 
 const { t } = useI18n();
+const { formatCurrency: formatCurrencyBase, formatDate: formatDateBase } = useDateTime();
 
 const props = defineProps({
     funnel: Object,
@@ -137,7 +139,7 @@ const loadGoals = async () => {
 };
 
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0);
+    return formatCurrencyBase(value, 'PLN');
 };
 
 const getGoalTypeIcon = (type) => {
@@ -881,7 +883,7 @@ const getDropOffColor = (dropOff, total) => {
                                 </div>
                                 <div class="text-right">
                                     <p v-if="conv.value > 0" class="font-semibold text-green-600 dark:text-green-400">{{ formatCurrency(conv.value) }}</p>
-                                    <p class="text-xs text-gray-400">{{ new Date(conv.converted_at).toLocaleString('pl-PL') }}</p>
+                                    <p class="text-xs text-gray-400">{{ formatDateBase(conv.converted_at) }}</p>
                                 </div>
                             </div>
                         </div>

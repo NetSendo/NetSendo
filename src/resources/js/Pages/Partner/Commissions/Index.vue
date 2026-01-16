@@ -1,13 +1,15 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import PartnerLayout from '@/Layouts/PartnerLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase } = useDateTime();
 const props = defineProps({
     commissions: Object,
     summary: Object,
 });
 
-const formatCurrency = (v) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(v || 0);
+const formatCurrency = (v) => formatCurrencyBase(v, 'PLN');
 
 const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800',

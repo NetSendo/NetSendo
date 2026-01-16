@@ -55,7 +55,7 @@ onBeforeUnmount(() => {
     <div v-if="editor" class="overflow-hidden rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
         <!-- Toolbar -->
         <div class="flex flex-wrap items-center gap-1 border-b border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2">
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleBold().run()"
                 :disabled="!editor.can().chain().focus().toggleBold().run()"
@@ -65,7 +65,7 @@ onBeforeUnmount(() => {
             >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h8a4 4 0 110 8H6v-8z" /></svg>
             </button>
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleItalic().run()"
                 :disabled="!editor.can().chain().focus().toggleItalic().run()"
@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
             >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /><path d="M19 4h-9l-4 16h9" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" /></svg>
             </button>
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleStrike().run()"
                 :disabled="!editor.can().chain().focus().toggleStrike().run()"
@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
 
             <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('heading', { level: 1 }) }"
@@ -97,7 +97,7 @@ onBeforeUnmount(() => {
             >
                 <span class="font-bold text-xs">H1</span>
             </button>
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('heading', { level: 2 }) }"
@@ -109,28 +109,40 @@ onBeforeUnmount(() => {
 
             <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
-             <button 
+             <button
                 type="button"
                 @click="editor.chain().focus().toggleBulletList().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('bulletList') }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                 title="Lista punktowana"
             >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <!-- Bullet list icon with dots -->
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="4" cy="6" r="1.5" fill="currentColor"/>
+                    <circle cx="4" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="4" cy="18" r="1.5" fill="currentColor"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" />
+                </svg>
             </button>
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().toggleOrderedList().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('orderedList') }"
                  class="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                 title="Lista numerowana"
             >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h12M7 12h12M7 17h12M3 7v.01M3 12v.01M3 17v.01" /></svg>
+                <!-- Ordered list icon with numbers -->
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <text x="2" y="8" font-size="6" font-weight="bold">1.</text>
+                    <text x="2" y="14" font-size="6" font-weight="bold">2.</text>
+                    <text x="2" y="20" font-size="6" font-weight="bold">3.</text>
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" fill="none"/>
+                </svg>
             </button>
 
              <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
-             <button 
+             <button
                 type="button"
                 @click="editor.chain().focus().toggleBlockquote().run()"
                 :class="{ 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white': editor.isActive('blockquote') }"
@@ -142,7 +154,7 @@ onBeforeUnmount(() => {
 
              <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
-             <button 
+             <button
                 type="button"
                 @click="editor.chain().focus().undo().run()"
                 :disabled="!editor.can().chain().focus().undo().run()"
@@ -151,7 +163,7 @@ onBeforeUnmount(() => {
             >
                  <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
             </button>
-            <button 
+            <button
                 type="button"
                 @click="editor.chain().focus().redo().run()"
                 :disabled="!editor.can().chain().focus().redo().run()"
@@ -180,6 +192,46 @@ onBeforeUnmount(() => {
 .ProseMirror ul,
 .ProseMirror ol {
   padding: 0 1rem;
+  margin-left: 1rem;
+}
+
+/* Unordered list styles */
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ul ul {
+  list-style-type: circle;
+}
+
+.ProseMirror ul ul ul {
+  list-style-type: square;
+}
+
+/* Ordered list styles */
+.ProseMirror ol {
+  list-style-type: decimal;
+}
+
+.ProseMirror ol ol {
+  list-style-type: lower-alpha;
+}
+
+.ProseMirror ol ol ol {
+  list-style-type: lower-roman;
+}
+
+/* List item spacing */
+.ProseMirror li {
+  margin-bottom: 0.25em;
+}
+
+.ProseMirror li > p {
+  margin: 0;
+}
+
+.ProseMirror li::marker {
+  color: inherit;
 }
 
 .ProseMirror h1,

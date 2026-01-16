@@ -326,6 +326,8 @@
         "align_right": "Alinear a la derecha",
         "bullet_list": "Lista con viñetas",
         "ordered_list": "Lista numerada",
+        "indent": "Aumentar sangría",
+        "outdent": "Disminuir sangría",
         "blockquote": "Cita",
         "code_block": "Bloque de código",
         "link": "Enlace",
@@ -1824,7 +1826,9 @@
             "verification_link_sent": "Se ha enviado un nuevo enlace de verificación a su dirección de correo electrónico.",
             "saved": "Guardado.",
             "default_currency": "Moneda predeterminada",
-            "default_currency_description": "Moneda utilizada para mostrar totales e informes en CRM"
+            "default_currency_description": "Moneda utilizada para mostrar totales e informes en CRM",
+            "time_format": "Formato de hora",
+            "time_format_description": "Elija su formato de visualización de hora preferido"
         },
         "password": {
             "title": "Actualizar contraseña",
@@ -4277,7 +4281,8 @@
             "copy_url": "Copiar URL"
         },
         "compressing": "Comprimiendo imágenes...",
-        "compressed_info": "{count} archivos comprimidos, {saved} ahorrados"
+        "compressed_info": "{count} archivos comprimidos, {saved} ahorrados",
+        "files_too_large": "{count} archivo(s) son demasiado grandes para subir (máx. {maxSize}): {files}"
     },
     "brands": {
         "title": "Gestión de Marcas",

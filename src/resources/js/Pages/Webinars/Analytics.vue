@@ -2,7 +2,9 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { computed } from 'vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatNumber: formatNumberBase } = useDateTime();
 const props = defineProps({
     webinar: Object,
     stats: Object,
@@ -13,7 +15,7 @@ const props = defineProps({
 
 const formatNumber = (num) => {
     if (!num) return '0';
-    return new Intl.NumberFormat('pl-PL').format(num);
+    return formatNumberBase(num);
 };
 
 const formatPercent = (value) => {

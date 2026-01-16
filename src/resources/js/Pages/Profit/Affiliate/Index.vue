@@ -2,7 +2,9 @@
 import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase, formatNumber: formatNumberBase } = useDateTime();
 const copied = ref(false);
 
 const props = defineProps({
@@ -12,14 +14,11 @@ const props = defineProps({
 });
 
 const formatCurrency = (value, currency = 'PLN') => {
-    return new Intl.NumberFormat('pl-PL', {
-        style: 'currency',
-        currency: currency,
-    }).format(value || 0);
+    return formatCurrencyBase(value, currency);
 };
 
 const formatNumber = (value) => {
-    return new Intl.NumberFormat('pl-PL').format(value || 0);
+    return formatNumberBase(value);
 };
 
 const fullRegistrationUrl = computed(() => {

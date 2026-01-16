@@ -364,6 +364,8 @@
         "align_right": "Rechtsbündig",
         "bullet_list": "Aufzählungsliste",
         "ordered_list": "Nummerierte Liste",
+        "indent": "Einzug vergrößern",
+        "outdent": "Einzug verkleinern",
         "blockquote": "Zitat",
         "code_block": "Code-Block",
         "link": "Link",
@@ -1988,7 +1990,9 @@
             "verification_link_sent": "Ein neuer Bestätigungslink wurde an Ihre E-Mail-Adresse gesendet.",
             "saved": "Gespeichert.",
             "default_currency": "Standardwährung",
-            "default_currency_description": "Währung für die Anzeige von Summen und Berichten im CRM"
+            "default_currency_description": "Währung für die Anzeige von Summen und Berichten im CRM",
+            "time_format": "Zeitformat",
+            "time_format_description": "Wählen Sie Ihr bevorzugtes Zeitanzeigeformat"
         },
         "password": {
             "title": "Passwort aktualisieren",
@@ -4326,7 +4330,8 @@
             "copy_url": "URL kopieren"
         },
         "compressing": "Bilder werden komprimiert...",
-        "compressed_info": "{count} Dateien komprimiert, {saved} gespart"
+        "compressed_info": "{count} Dateien komprimiert, {saved} gespart",
+        "files_too_large": "{count} Datei(en) sind zu groß zum Hochladen (max. {maxSize}): {files}"
     },
     "brands": {
         "title": "Markenverwaltung",

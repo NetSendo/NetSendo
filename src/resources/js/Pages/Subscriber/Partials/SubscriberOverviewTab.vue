@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed } from "vue";
 import { router } from "@inertiajs/vue3";
+import { useDateTime } from "@/Composables/useDateTime";
 
+const { formatDate: formatDateBase } = useDateTime();
 const props = defineProps({
     subscriber: Object,
     statistics: Object,
@@ -66,8 +68,7 @@ const activeLists = computed(() => {
 // Format date helper
 const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("pl-PL", {
+    return formatDateBase(dateStr, null, {
         year: "numeric",
         month: "short",
         day: "numeric",

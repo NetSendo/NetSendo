@@ -2,7 +2,9 @@
 import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { useDateTime } from "@/Composables/useDateTime";
 
+const { formatDate: formatDateBase, locale } = useDateTime();
 const props = defineProps({
     company: Object,
     activities: Array,
@@ -27,7 +29,7 @@ const addNote = () => {
 // Format date
 const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("pl-PL", {
+    return formatDateBase(date, null, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -38,7 +40,7 @@ const formatDate = (date) => {
 
 // Format currency
 const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0);
+    return new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'PLN' }).format(value || 0);
 };
 </script>
 

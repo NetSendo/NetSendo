@@ -3,8 +3,10 @@ import { ref } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
+import { useDateTime } from '@/Composables/useDateTime';
 
 const { t } = useI18n();
+const { formatDate: formatDateBase } = useDateTime();
 const page = usePage();
 
 const props = defineProps({
@@ -35,20 +37,26 @@ function deleteBackup(filename) {
 }
 
 function formatDate(date) {
-    return new Date(date).toLocaleString('pl-PL');
+    return formatDateBase(date, null, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 }
 </script>
 
 <template>
     <Head :title="t('backup.title')" />
-    
+
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
                     💾 {{ t('backup.title') }}
                 </h2>
-                <button 
+                <button
                     @click="createBackup"
                     :disabled="isCreating"
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -90,8 +98,8 @@ function formatDate(date) {
                         {{ t('backup.options') }}
                     </h3>
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <input 
-                            type="checkbox" 
+                        <input
+                            type="checkbox"
                             v-model="onlyDb"
                             class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                         />
@@ -108,7 +116,7 @@ function formatDate(date) {
                             {{ t('backup.list_title') }}
                         </h3>
                     </div>
-                    
+
                     <div v-if="backups.length === 0" class="px-6 py-12 text-center">
                         <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
@@ -116,7 +124,7 @@ function formatDate(date) {
                         <p class="mt-4 text-gray-500 dark:text-gray-400">
                             {{ t('backup.no_backups') }}
                         </p>
-                        <button 
+                        <button
                             @click="createBackup"
                             :disabled="isCreating"
                             class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
@@ -160,7 +168,7 @@ function formatDate(date) {
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <button 
+                                        <button
                                             @click="downloadBackup(backup.name)"
                                             class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                                         >
@@ -169,7 +177,7 @@ function formatDate(date) {
                                             </svg>
                                             {{ t('backup.download') }}
                                         </button>
-                                        <button 
+                                        <button
                                             @click="deleteBackup(backup.name)"
                                             class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                         >

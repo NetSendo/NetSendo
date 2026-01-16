@@ -4,8 +4,10 @@ import { useI18n } from "vue-i18n";
 import axios from "axios";
 import InsertPickerModal from "@/Components/InsertPickerModal.vue";
 import ProductPickerModal from "@/Components/ProductPickerModal.vue";
+import { useDateTime } from "@/Composables/useDateTime";
 
 const { t } = useI18n();
+const { formatCurrency } = useDateTime();
 
 const props = defineProps({
     block: Object,
@@ -114,10 +116,7 @@ const handleProductSelect = (products) => {
 // Format price helper
 const formatPrice = (price, currency = "PLN") => {
     if (!price) return "";
-    return new Intl.NumberFormat("pl-PL", {
-        style: "currency",
-        currency: currency,
-    }).format(price);
+    return formatCurrency(price, currency);
 };
 
 // Clear WooCommerce link

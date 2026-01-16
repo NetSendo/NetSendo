@@ -1,7 +1,9 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3';
 import PartnerLayout from '@/Layouts/PartnerLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatCurrency: formatCurrencyBase } = useDateTime();
 const props = defineProps({
     affiliate: Object,
     payouts: Array,
@@ -16,7 +18,7 @@ const updateSettings = () => {
     form.post(route('partner.payouts.settings'));
 };
 
-const formatCurrency = (v) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(v || 0);
+const formatCurrency = (v) => formatCurrencyBase(v, 'PLN');
 </script>
 
 <template>

@@ -3,8 +3,10 @@ import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
 const { t } = useI18n();
+const { formatDate: formatDateBase } = useDateTime();
 
 const props = defineProps({
     media: Object,
@@ -66,7 +68,8 @@ const formatSize = (bytes) => {
 };
 
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('pl-PL', {
+    if (!date) return '-';
+    return formatDateBase(date, null, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',

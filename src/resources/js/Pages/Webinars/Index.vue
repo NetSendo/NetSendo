@@ -2,7 +2,9 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { ref } from 'vue';
+import { useDateTime } from '@/Composables/useDateTime';
 
+const { formatDate: formatDateBase } = useDateTime();
 const props = defineProps({
     webinars: Object,
     filters: Object,
@@ -43,7 +45,7 @@ const getStatusLabel = (status) => {
 
 const formatDate = (date) => {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('pl-PL', {
+    return formatDateBase(date, null, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',

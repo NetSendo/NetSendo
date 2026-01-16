@@ -3,8 +3,10 @@ import { ref, computed } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { useI18n } from "vue-i18n";
+import { useDateTime } from "@/Composables/useDateTime";
 
 const { t } = useI18n();
+const { formatDate: formatDateBase } = useDateTime();
 
 const props = defineProps({
     forms: Object,
@@ -73,7 +75,7 @@ function getStatusBadge(status) {
 // Format date
 function formatDate(date) {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("pl-PL", {
+    return formatDateBase(date, null, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

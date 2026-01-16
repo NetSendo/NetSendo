@@ -40,12 +40,18 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
-        // Handle default_currency in settings
+        // Handle settings (default_currency, time_format)
+        $settings = $user->settings ?? [];
+
         if ($request->has('default_currency')) {
-            $settings = $user->settings ?? [];
             $settings['default_currency'] = $request->input('default_currency');
-            $user->settings = $settings;
         }
+
+        if ($request->has('time_format')) {
+            $settings['time_format'] = $request->input('time_format');
+        }
+
+        $user->settings = $settings;
 
         $user->save();
 

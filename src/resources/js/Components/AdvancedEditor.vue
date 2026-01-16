@@ -3,6 +3,9 @@ import { useEditor, EditorContent, NodeViewWrapper, VueNodeViewRenderer } from '
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import BulletList from '@tiptap/extension-bullet-list'
+import OrderedList from '@tiptap/extension-ordered-list'
+import ListItem from '@tiptap/extension-list-item'
 import { defineComponent, ref, computed, onMounted, onBeforeUnmount, h, watch, nextTick } from 'vue'
 
 // Resizable Image NodeView Component
@@ -541,7 +544,15 @@ const editor = useEditor({
             heading: {
                 levels: [1, 2, 3, 4],
             },
+            // Disable lists from StarterKit - we add them separately for sinkListItem/liftListItem support
+            bulletList: false,
+            orderedList: false,
+            listItem: false,
         }),
+        // Add list extensions separately for proper indent/outdent support
+        BulletList,
+        OrderedList,
+        ListItem,
         Link.configure({
             openOnClick: false,
             HTMLAttributes: {
@@ -575,6 +586,41 @@ const editor = useEditor({
     editorProps: {
         attributes: {
             class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none dark:prose-invert min-h-[150px] text-slate-900 dark:text-white p-4',
+        },
+        // Strip inline color styles from pasted content to prevent black text on dark background
+        transformPastedHTML(html) {
+            // Create a temporary DOM element to parse and clean the HTML
+            const doc = new DOMParser().parseFromString(html, 'text/html')
+
+            // Find all elements with inline styles
+            doc.querySelectorAll('[style]').forEach(el => {
+                const style = el.getAttribute('style')
+                if (style) {
+                    // Remove color property from inline styles (keeps other styles like font-size, etc.)
+                    const cleanedStyle = style
+                        .split(';')
+                        .filter(prop => {
+                            const propName = prop.split(':')[0]?.trim().toLowerCase()
+                            // Remove color and background-color to ensure readability
+                            return propName !== 'color' && propName !== 'background-color' && propName !== 'background'
+                        })
+                        .join(';')
+                        .trim()
+
+                    if (cleanedStyle) {
+                        el.setAttribute('style', cleanedStyle)
+                    } else {
+                        el.removeAttribute('style')
+                    }
+                }
+            })
+
+            // Also remove any <font> tags color attribute (old Word format)
+            doc.querySelectorAll('font[color]').forEach(el => {
+                el.removeAttribute('color')
+            })
+
+            return doc.body.innerHTML
         },
         handleClick: (view, pos, event) => {
             // Check if clicked on an image (including through NodeView wrapper)
@@ -1171,16 +1217,47 @@ const isFullDocument = computed(() => {
 })
 
 // Wrap content in a basic HTML document for preview
+// Also adds inline styles to lists for email client compatibility
 const wrapInDocument = (content) => {
+    // Process content to add inline styles to list elements for email compatibility
+    let processedContent = content || ''
+
+    // Add inline styles to unordered lists
+    processedContent = processedContent.replace(
+        /<ul>/gi,
+        '<ul style="list-style-type: disc; padding-left: 20px; margin: 0.5em 0;">'
+    )
+
+    // Add inline styles to ordered lists
+    processedContent = processedContent.replace(
+        /<ol>/gi,
+        '<ol style="list-style-type: decimal; padding-left: 20px; margin: 0.5em 0;">'
+    )
+
+    // Add inline styles to list items
+    processedContent = processedContent.replace(
+        /<li>/gi,
+        '<li style="margin-bottom: 0.25em;">'
+    )
+
     return `<!DOCTYPE html>
 <html lang="${useI18n().locale.value || 'en'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 16px; line-height: 1.5; }</style>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 16px; line-height: 1.5; }
+        ul { list-style-type: disc; padding-left: 20px; margin: 0.5em 0; }
+        ol { list-style-type: decimal; padding-left: 20px; margin: 0.5em 0; }
+        li { margin-bottom: 0.25em; }
+        ul ul { list-style-type: circle; }
+        ul ul ul { list-style-type: square; }
+        ol ol { list-style-type: lower-alpha; }
+        ol ol ol { list-style-type: lower-roman; }
+    </style>
 </head>
 <body>
-${content || ''}
+${processedContent}
 </body>
 </html>`
 }
@@ -1899,7 +1976,13 @@ const btnClass = (isActive = false) => {
                     :class="btnClass(editor.isActive('bulletList'))"
                     :title="$t('editor.bullet_list')"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    <!-- Bullet list icon with dots -->
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="4" cy="6" r="1.5" fill="currentColor"/>
+                        <circle cx="4" cy="12" r="1.5" fill="currentColor"/>
+                        <circle cx="4" cy="18" r="1.5" fill="currentColor"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" />
+                    </svg>
                 </button>
                 <button
                     type="button"
@@ -1907,7 +1990,37 @@ const btnClass = (isActive = false) => {
                     :class="btnClass(editor.isActive('orderedList'))"
                     :title="$t('editor.ordered_list')"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h12M7 12h12M7 17h12M3 7v.01M3 12v.01M3 17v.01" /></svg>
+                    <!-- Ordered list icon with numbers -->
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                        <text x="2" y="8" font-size="6" font-weight="bold">1.</text>
+                        <text x="2" y="14" font-size="6" font-weight="bold">2.</text>
+                        <text x="2" y="20" font-size="6" font-weight="bold">3.</text>
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" fill="none"/>
+                    </svg>
+                </button>
+
+                <!-- List indent/outdent -->
+                <button
+                    type="button"
+                    @click="editor.chain().focus().sinkListItem('listItem').run()"
+                    :disabled="!editor.can().sinkListItem('listItem')"
+                    :class="[btnClass(), { 'opacity-40 cursor-not-allowed': !editor.can().sinkListItem('listItem') }]"
+                    :title="$t('editor.indent') || 'Zwiększ wcięcie'"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M9 9h12M9 14h12M3 19h18M3 9l4 2.5L3 14" />
+                    </svg>
+                </button>
+                <button
+                    type="button"
+                    @click="editor.chain().focus().liftListItem('listItem').run()"
+                    :disabled="!editor.can().liftListItem('listItem')"
+                    :class="[btnClass(), { 'opacity-40 cursor-not-allowed': !editor.can().liftListItem('listItem') }]"
+                    :title="$t('editor.outdent') || 'Zmniejsz wcięcie'"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M9 9h12M9 14h12M3 19h18M7 9l-4 2.5L7 14" />
+                    </svg>
                 </button>
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
@@ -2756,6 +2869,46 @@ const btnClass = (isActive = false) => {
 .ProseMirror ul,
 .ProseMirror ol {
     padding: 0 1rem;
+    margin-left: 1rem;
+}
+
+/* Unordered list styles */
+.ProseMirror ul {
+    list-style-type: disc;
+}
+
+.ProseMirror ul ul {
+    list-style-type: circle;
+}
+
+.ProseMirror ul ul ul {
+    list-style-type: square;
+}
+
+/* Ordered list styles */
+.ProseMirror ol {
+    list-style-type: decimal;
+}
+
+.ProseMirror ol ol {
+    list-style-type: lower-alpha;
+}
+
+.ProseMirror ol ol ol {
+    list-style-type: lower-roman;
+}
+
+/* List item spacing */
+.ProseMirror li {
+    margin-bottom: 0.25em;
+}
+
+.ProseMirror li > p {
+    margin: 0;
+}
+
+.ProseMirror li::marker {
+    color: inherit;
 }
 
 .ProseMirror h1 { font-size: 2em; font-weight: bold; }

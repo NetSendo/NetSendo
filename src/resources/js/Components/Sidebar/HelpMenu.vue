@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useDateTime } from "@/Composables/useDateTime";
 
-const { t, tm, locale } = useI18n();
+const { t, tm } = useI18n();
+const { locale, formatDate: formatDateBase } = useDateTime();
 
 const isOpen = ref(false);
 const isLoadingUpdates = ref(false);
@@ -132,14 +134,11 @@ const refreshUpdates = async () => {
 const formatDate = (dateString) => {
     if (!dateString) return "";
     try {
-        return new Date(dateString).toLocaleDateString(
-            locale.value === "pl" ? "pl-PL" : locale.value,
-            {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-            }
-        );
+        return formatDateBase(dateString, null, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
     } catch {
         return dateString;
     }

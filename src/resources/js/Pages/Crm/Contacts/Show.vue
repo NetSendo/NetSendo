@@ -3,7 +3,9 @@ import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import SendEmailModal from "@/Components/Crm/SendEmailModal.vue";
+import { useDateTime } from "@/Composables/useDateTime";
 
+const { formatDate: formatDateBase, locale, formatCurrency } = useDateTime();
 const props = defineProps({
     contact: Object,
     activities: Array,
@@ -64,7 +66,7 @@ const getStatusClass = (status) => {
 // Format date
 const formatDate = (date) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("pl-PL", {
+    return formatDateBase(date, null, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -274,7 +276,7 @@ const getActivityIcon = (type) => {
                                 <p class="text-sm text-slate-500 dark:text-slate-400">{{ deal.stage?.name }}</p>
                             </div>
                             <span class="font-semibold text-slate-900 dark:text-white">
-                                {{ new Intl.NumberFormat('pl-PL', { style: 'currency', currency: deal.currency }).format(deal.value) }}
+                                {{ formatCurrency(deal.value, deal.currency) }}
                             </span>
                         </Link>
                     </div>

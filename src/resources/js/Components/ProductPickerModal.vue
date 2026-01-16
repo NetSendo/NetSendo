@@ -2,8 +2,10 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
+import { useDateTime } from '@/Composables/useDateTime';
 
 const { t } = useI18n();
+const { formatCurrency } = useDateTime();
 
 const props = defineProps({
     show: Boolean,
@@ -296,10 +298,7 @@ const confirmSelection = () => {
 // Format price
 const formatPrice = (price, currency = 'PLN') => {
     if (!price) return '';
-    return new Intl.NumberFormat('pl-PL', {
-        style: 'currency',
-        currency: currency,
-    }).format(price);
+    return formatCurrency(price, currency);
 };
 </script>
 
