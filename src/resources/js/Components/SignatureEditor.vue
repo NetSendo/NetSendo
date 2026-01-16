@@ -3,6 +3,10 @@ import { useEditor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
+import { Mark, mergeAttributes } from "@tiptap/core";
 
 // Custom Image extension that preserves style properties via data attributes
 const CustomImage = Image.extend({
@@ -120,6 +124,28 @@ const imagePreviewError = ref(false);
 const showFontPicker = ref(false);
 const showSizePicker = ref(false);
 const showColorPicker = ref(false);
+const showHighlightPicker = ref(false);
+const showTextTransformPicker = ref(false);
+
+// Emoji picker state
+const showEmojiPicker = ref(false);
+const activeEmojiCategory = ref("faces");
+const emojiPickerRef = ref(null);
+const emojiButtonRef = ref(null);
+
+// Media browser state
+const showMediaBrowser = ref(false);
+const showLogoBrowser = ref(false);
+const mediaLibrary = ref([]);
+const isLoadingMedia = ref(false);
+
+// Advanced image formatting
+const imageFloat = ref("none");
+const imageMargin = ref("10");
+const imageBorderRadius = ref("0");
+const imageLink = ref("");
+const isEditingImage = ref(false);
+const imageUploadError = ref("");
 
 // Available fonts
 const fontOptions = [
@@ -166,6 +192,91 @@ const colorPalette = [
     "#339966",
 ];
 
+// Emojis organized by categories
+const emojiCategories = {
+    faces: {
+        icon: "😀",
+        emojis: ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "😊", "😇", "🥰", "😍", "😘", "😗", "😋", "😛", "😜", "🤪", "😎", "🤩", "🥳", "😏", "😌", "😴"]
+    },
+    symbols: {
+        icon: "🎉",
+        emojis: ["🎉", "🎊", "🎁", "🎀", "🎈", "🎗️", "✨", "🌟", "⭐", "💫", "🔥", "💥", "💢", "💯", "🏆", "🥇", "🥈", "🥉", "🎯", "🚀", "⚡", "💎", "🔔", "📣", "📢"]
+    },
+    gestures: {
+        icon: "👍",
+        emojis: ["👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✌️", "🤞", "🤟", "🤘", "👌", "👈", "👉", "👆", "👇", "✋", "🖐️", "💪"]
+    },
+    business: {
+        icon: "💼",
+        emojis: ["💼", "📧", "📬", "💌", "📝", "📊", "📈", "📉", "💰", "💵", "💳", "🏦", "🏢", "📅", "⏰", "🔒", "🔓", "📱", "💻", "🖥️"]
+    },
+    hearts: {
+        icon: "❤️",
+        emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💝", "💖", "💗", "💓", "💕", "💞", "💘", "💔", "❣️", "💟", "♥️"]
+    },
+    nature: {
+        icon: "🌟",
+        emojis: ["☀️", "🌙", "🌈", "⛅", "🌤️", "🌧️", "❄️", "🌸", "🌺", "🌻", "🌷", "🌹", "🌲", "🌴", "🍀", "🍁", "🍂", "🌊", "💧", "🌍"]
+    }
+};
+
+// TextTransform Extension
+const TextTransform = Mark.create({
+    name: "textTransform",
+    addOptions() {
+        return { types: ["textStyle"] };
+    },
+    addAttributes() {
+        return {
+            textTransform: {
+                default: null,
+                parseHTML: element => element.style.textTransform || null,
+                renderHTML: attributes => {
+                    if (!attributes.textTransform) return {};
+                    return { style: `text-transform: ${attributes.textTransform}` };
+                },
+            },
+        };
+    },
+    parseHTML() {
+        return [{
+            tag: "span",
+            getAttrs: element => {
+                const hasTextTransform = element.style.textTransform;
+                if (!hasTextTransform) return false;
+                return { textTransform: element.style.textTransform };
+            },
+        }];
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ["span", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
+    },
+    addCommands() {
+        return {
+            setTextTransform: textTransform => ({ chain }) => chain().setMark(this.name, { textTransform }).run(),
+            unsetTextTransform: () => ({ chain }) => chain().unsetMark(this.name).run(),
+            toggleTextTransform: textTransform => ({ chain, editor }) => {
+                const currentTransform = editor.getAttributes(this.name)?.textTransform;
+                if (currentTransform === textTransform) {
+                    return chain().unsetMark(this.name).run();
+                }
+                return chain().setMark(this.name, { textTransform }).run();
+            },
+        };
+    },
+});
+
+// Emoji picker positioning
+const emojiPickerStyle = computed(() => {
+    if (!emojiButtonRef.value) return { top: "100px", left: "100px" };
+    const rect = emojiButtonRef.value.getBoundingClientRect();
+    const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1024;
+    return {
+        top: (rect.bottom + 8) + "px",
+        left: Math.min(rect.left, viewportWidth - 336) + "px"
+    };
+});
+
 // Check if content is a full HTML document
 const isFullHtmlDocument = computed(() => {
     const content = sourceCode.value?.trim().toLowerCase() || "";
@@ -183,7 +294,15 @@ const editor = useEditor({
             heading: {
                 levels: [1, 2, 3],
             },
+            // Disable lists from StarterKit - we add them separately for indent/outdent support
+            bulletList: false,
+            orderedList: false,
+            listItem: false,
         }),
+        // Add list extensions separately for proper indent/outdent support
+        BulletList,
+        OrderedList,
+        ListItem,
         Link.configure({
             openOnClick: false,
             HTMLAttributes: {
@@ -208,10 +327,8 @@ const editor = useEditor({
         Highlight.configure({
             multicolor: true,
         }),
-        Highlight.configure({
-            multicolor: true,
-        }),
         FontSize,
+        TextTransform,
         Table.configure({
             resizable: true,
         }),
@@ -338,10 +455,17 @@ const openImageModal = () => {
     imageUrl.value = "";
     imageAlignment.value = "center";
     imageWidth.value = "100";
+    imageFloat.value = "none";
+    imageMargin.value = "10";
+    imageBorderRadius.value = "0";
+    imageLink.value = "";
     imagePreviewLoaded.value = false;
     imagePreviewError.value = false;
+    imageUploadError.value = "";
+    isEditingImage.value = false;
+    showMediaBrowser.value = false;
+    showLogoBrowser.value = false;
     showImageModal.value = true;
-    activeImageTab.value = "upload";
 };
 
 const handleImageUpload = async (event) => {
@@ -349,6 +473,7 @@ const handleImageUpload = async (event) => {
     if (!file) return;
 
     isUploading.value = true;
+    imageUploadError.value = "";
     const formData = new FormData();
     formData.append("image", file);
 
@@ -361,9 +486,7 @@ const handleImageUpload = async (event) => {
         imagePreviewError.value = false;
     } catch (error) {
         console.error("Image upload failed:", error);
-        alert(
-            "Upload failed: " + (error.response?.data?.message || error.message)
-        );
+        imageUploadError.value = error.response?.data?.message || error.message;
     } finally {
         isUploading.value = false;
     }
@@ -386,20 +509,44 @@ const onImageError = () => {
 
 const insertImage = () => {
     if (imageUrl.value) {
-        // Build data attributes for CustomImage extension
-        const dataAttrs = `data-width="${imageWidth.value}" data-align="${imageAlignment.value}"`;
+        const width = imageWidth.value;
+        const align = imageAlignment.value;
+        const float = imageFloat.value;
+        const margin = imageMargin.value;
+        const borderRadius = imageBorderRadius.value;
 
-        // Build inline style for visual feedback and email compatibility
-        let styleStr = `width: ${imageWidth.value}%; max-width: 100%; height: auto; display: block;`;
-        if (imageAlignment.value === 'center') {
-            styleStr += ' margin-left: auto; margin-right: auto;';
-        } else if (imageAlignment.value === 'right') {
-            styleStr += ' margin-left: auto;';
-        } else if (imageAlignment.value === 'left') {
-            styleStr += ' margin-right: auto;';
+        // Build data attributes
+        const dataAttrs = `data-width="${width}" data-align="${align}" data-float="${float}" data-margin="${margin}" data-border-radius="${borderRadius}"`;
+
+        // Build inline style for email compatibility
+        let styleStr = `width: ${width}%; max-width: 100%; height: auto;`;
+        styleStr += ` margin: ${margin}px;`;
+
+        if (float === "left") {
+            styleStr += " float: left;";
+        } else if (float === "right") {
+            styleStr += " float: right;";
+        } else {
+            styleStr += " display: block;";
+            if (align === "center") {
+                styleStr += " margin-left: auto; margin-right: auto;";
+            } else if (align === "right") {
+                styleStr += " margin-left: auto;";
+            } else if (align === "left") {
+                styleStr += " margin-right: auto;";
+            }
         }
 
-        const imgHtml = `<img src="${imageUrl.value}" alt="" ${dataAttrs} style="${styleStr}" />`;
+        if (parseInt(borderRadius) > 0) {
+            styleStr += ` border-radius: ${borderRadius}px;`;
+        }
+
+        let imgHtml = `<img src="${imageUrl.value}" alt="" ${dataAttrs} style="${styleStr}" />`;
+
+        // Wrap in link if provided
+        if (imageLink.value) {
+            imgHtml = `<a href="${imageLink.value}" target="_blank">${imgHtml}</a>`;
+        }
 
         editor.value?.chain().focus().insertContent(imgHtml).run();
     }
@@ -407,6 +554,11 @@ const insertImage = () => {
     imageUrl.value = "";
     imageAlignment.value = "center";
     imageWidth.value = "100";
+    imageFloat.value = "none";
+    imageMargin.value = "10";
+    imageBorderRadius.value = "0";
+    imageLink.value = "";
+    isEditingImage.value = false;
 };
 
 // Wrap content in a basic HTML document for preview
@@ -431,6 +583,64 @@ const getPreviewSrcdoc = computed(() => {
         : wrapInDocument(sourceCode.value);
     return content;
 });
+
+// Insert emoji
+const insertEmoji = (emoji) => {
+    editor.value?.chain().focus().insertContent(emoji).run();
+    showEmojiPicker.value = false;
+};
+
+// Media browser functions
+const openMediaBrowser = async () => {
+    showMediaBrowser.value = true;
+    showLogoBrowser.value = false;
+    isLoadingMedia.value = true;
+    try {
+        const response = await axios.get(route("media.search"));
+        let media = response.data.media || [];
+        // Filter only images (not logos)
+        media = media.filter(m => m.type !== 'logo');
+        mediaLibrary.value = media;
+    } catch (error) {
+        console.error("Failed to load media:", error);
+        mediaLibrary.value = [];
+    } finally {
+        isLoadingMedia.value = false;
+    }
+};
+
+const openLogoBrowser = async () => {
+    showLogoBrowser.value = true;
+    showMediaBrowser.value = false;
+    isLoadingMedia.value = true;
+    try {
+        const response = await axios.get(route("media.search"));
+        let media = response.data.media || [];
+        // Filter only logos
+        media = media.filter(m => m.type === 'logo');
+        mediaLibrary.value = media;
+    } catch (error) {
+        console.error("Failed to load logos:", error);
+        mediaLibrary.value = [];
+    } finally {
+        isLoadingMedia.value = false;
+    }
+};
+
+const selectFromMediaBrowser = (media) => {
+    imageUrl.value = media.url;
+    imagePreviewLoaded.value = true;
+    imagePreviewError.value = false;
+    showMediaBrowser.value = false;
+    showLogoBrowser.value = false;
+};
+
+// Delete image (for edit mode)
+const deleteImage = () => {
+    editor.value?.chain().focus().deleteSelection().run();
+    showImageModal.value = false;
+    isEditingImage.value = false;
+};
 
 // Expose methods for parent component
 defineExpose({
@@ -643,6 +853,15 @@ const btnClass = (isActive = false) => {
                             d="M7 8v4a5 5 0 0010 0V8M5 20h14"
                         />
                     </svg>
+                </button>
+                <button
+                    type="button"
+                    @click="editor.chain().focus().toggleStrike().run()"
+                    :disabled="!editor.can().chain().focus().toggleStrike().run()"
+                    :class="btnClass(editor.isActive('strike'))"
+                    :title="$t('editor.strikethrough') || 'Przekreślenie'"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15L15 9M5 12h14" /></svg>
                 </button>
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
@@ -880,6 +1099,87 @@ const btnClass = (isActive = false) => {
                 </button>
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                <!-- Highlight Color Picker -->
+                <div class="relative">
+                    <button type="button" @click="showHighlightPicker = !showHighlightPicker; showFontPicker = false; showSizePicker = false; showColorPicker = false; showTextTransformPicker = false" :class="btnClass(showHighlightPicker || editor.isActive('highlight'))" :title="$t('editor.highlight') || 'Podświetlenie'">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <span class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 rounded" :style="{ backgroundColor: editor.getAttributes('highlight')?.color || '#FFCC00' }"></span>
+                    </button>
+                    <div v-if="showHighlightPicker" class="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 w-[156px]">
+                        <div class="grid grid-cols-6 gap-1">
+                            <button v-for="color in colorPalette" :key="color" type="button" @click="editor.chain().focus().toggleHighlight({ color }).run(); showHighlightPicker = false" class="w-5 h-5 rounded border border-slate-300 dark:border-slate-600 hover:scale-110 transition-transform" :style="{ backgroundColor: color }" :title="color"></button>
+                        </div>
+                        <hr class="my-2 border-slate-200 dark:border-slate-700" />
+                        <button type="button" @click="editor.chain().focus().unsetHighlight().run(); showHighlightPicker = false" class="w-full text-center px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">{{ $t('editor.clear_highlight') || 'Usuń podświetlenie' }}</button>
+                    </div>
+                </div>
+
+                <!-- Text Transform Picker -->
+                <div class="relative">
+                    <button type="button" @click="showTextTransformPicker = !showTextTransformPicker; showFontPicker = false; showSizePicker = false; showColorPicker = false; showHighlightPicker = false" :class="btnClass(showTextTransformPicker || editor.isActive('textTransform'))" :title="$t('editor.text_transform') || 'Wielkość liter'">
+                        <span class="text-xs font-bold">Aa</span>
+                    </button>
+                    <div v-if="showTextTransformPicker" class="absolute top-full left-0 mt-1 p-1 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 min-w-[140px]">
+                        <button type="button" @click="editor.chain().focus().setTextTransform('uppercase').run(); showTextTransformPicker = false" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300" :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'uppercase' }"><span class="uppercase">{{ $t('editor.text_transform_uppercase') || 'WIELKIE LITERY' }}</span></button>
+                        <button type="button" @click="editor.chain().focus().setTextTransform('lowercase').run(); showTextTransformPicker = false" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300" :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'lowercase' }"><span class="lowercase">{{ $t('editor.text_transform_lowercase') || 'małe litery' }}</span></button>
+                        <button type="button" @click="editor.chain().focus().setTextTransform('capitalize').run(); showTextTransformPicker = false" class="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-slate-700 dark:text-slate-300" :class="{ 'bg-indigo-100 dark:bg-indigo-900/30': editor.getAttributes('textTransform')?.textTransform === 'capitalize' }"><span class="capitalize">{{ $t('editor.text_transform_capitalize') || 'Pierwsza Wielka' }}</span></button>
+                        <hr class="my-1 border-slate-200 dark:border-slate-700" />
+                        <button type="button" @click="editor.chain().focus().unsetTextTransform().run(); showTextTransformPicker = false" class="w-full text-left px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">{{ $t('editor.clear_text_transform') || 'Normalne' }}</button>
+                    </div>
+                </div>
+
+                <!-- Headings -->
+                <button type="button" @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="btnClass(editor.isActive('heading', { level: 1 }))" :title="$t('editor.heading1') || 'Nagłówek 1'"><span class="font-bold text-xs">H1</span></button>
+                <button type="button" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="btnClass(editor.isActive('heading', { level: 2 }))" :title="$t('editor.heading2') || 'Nagłówek 2'"><span class="font-bold text-xs">H2</span></button>
+                <button type="button" @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" :class="btnClass(editor.isActive('heading', { level: 3 }))" :title="$t('editor.heading3') || 'Nagłówek 3'"><span class="font-bold text-xs">H3</span></button>
+
+                <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                <!-- Lists -->
+                <button type="button" @click="editor.chain().focus().toggleBulletList().run()" :class="btnClass(editor.isActive('bulletList'))" :title="$t('editor.bullet_list') || 'Lista punktowa'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="4" cy="6" r="1.5" fill="currentColor"/><circle cx="4" cy="12" r="1.5" fill="currentColor"/><circle cx="4" cy="18" r="1.5" fill="currentColor"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" /></svg>
+                </button>
+                <button type="button" @click="editor.chain().focus().toggleOrderedList().run()" :class="btnClass(editor.isActive('orderedList'))" :title="$t('editor.ordered_list') || 'Lista numerowana'">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><text x="2" y="8" font-size="6" font-weight="bold">1.</text><text x="2" y="14" font-size="6" font-weight="bold">2.</text><text x="2" y="20" font-size="6" font-weight="bold">3.</text><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 6h11M9 12h11M9 18h11" fill="none"/></svg>
+                </button>
+                <button type="button" @click="editor.chain().focus().sinkListItem('listItem').run()" :disabled="!editor.can().sinkListItem('listItem')" :class="[btnClass(), { 'opacity-40 cursor-not-allowed': !editor.can().sinkListItem('listItem') }]" :title="$t('editor.indent') || 'Zwiększ wcięcie'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M9 9h12M9 14h12M3 19h18M3 9l4 2.5L3 14" /></svg>
+                </button>
+                <button type="button" @click="editor.chain().focus().liftListItem('listItem').run()" :disabled="!editor.can().liftListItem('listItem')" :class="[btnClass(), { 'opacity-40 cursor-not-allowed': !editor.can().liftListItem('listItem') }]" :title="$t('editor.outdent') || 'Zmniejsz wcięcie'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M9 9h12M9 14h12M3 19h18M7 9l-4 2.5L7 14" /></svg>
+                </button>
+
+                <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                <!-- Blockquote & Code -->
+                <button type="button" @click="editor.chain().focus().toggleBlockquote().run()" :class="btnClass(editor.isActive('blockquote'))" :title="$t('editor.blockquote') || 'Cytat'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
+                </button>
+                <button type="button" @click="editor.chain().focus().toggleCodeBlock().run()" :class="btnClass(editor.isActive('codeBlock'))" :title="$t('editor.code_block') || 'Blok kodu'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                </button>
+
+                <!-- Emoji Picker -->
+                <div class="relative">
+                    <button ref="emojiButtonRef" type="button" @click="showEmojiPicker = !showEmojiPicker" :class="btnClass(showEmojiPicker)" :title="$t('editor.emoji') || 'Emoji'"><span class="text-lg">😀</span></button>
+                </div>
+                <Teleport to="body">
+                    <div v-if="showEmojiPicker" ref="emojiPickerRef" class="fixed p-2 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-[9999] w-[320px]" :style="emojiPickerStyle">
+                        <div class="flex gap-1 mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <button v-for="(category, key) in emojiCategories" :key="key" type="button" @click="activeEmojiCategory = key" :class="['p-1.5 rounded transition-colors text-lg', activeEmojiCategory === key ? 'bg-indigo-100 dark:bg-indigo-900/50' : 'hover:bg-slate-100 dark:hover:bg-slate-700']" :title="key">{{ category.icon }}</button>
+                        </div>
+                        <div class="grid grid-cols-10 gap-0.5 max-h-[200px] overflow-y-auto">
+                            <button v-for="emoji in emojiCategories[activeEmojiCategory]?.emojis || []" :key="emoji" type="button" @click="insertEmoji(emoji)" class="p-1 text-xl hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors">{{ emoji }}</button>
+                        </div>
+                    </div>
+                    <div v-if="showEmojiPicker" class="fixed inset-0 z-[9998]" @click="showEmojiPicker = false"></div>
+                </Teleport>
+
+                <!-- Horizontal Rule -->
+                <button type="button" @click="editor.chain().focus().setHorizontalRule().run()" :class="btnClass()" :title="$t('editor.horizontal_rule') || 'Linia pozioma'">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" /></svg>
+                </button>
 
                 <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
 
@@ -1288,254 +1588,161 @@ const btnClass = (isActive = false) => {
             </div>
         </Teleport>
 
-        <!-- Image Modal -->
+        <!-- Image Modal (Advanced) -->
         <Teleport to="body">
-            <div
-                v-if="showImageModal"
-                class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
-            >
-                <div
-                    class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-800 p-6 shadow-2xl"
-                >
-                    <h3
-                        class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
-                    >
-                        {{ $t("editor.insert_image") || "Wstaw obraz" }}
+            <div v-if="showImageModal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+                <div class="w-full max-w-lg rounded-xl bg-white dark:bg-slate-800 p-6 shadow-2xl my-4 max-h-[90vh] overflow-y-auto">
+                    <h3 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+                        {{ isEditingImage ? $t('editor.edit_image') : $t('editor.insert_image') || 'Wstaw obraz' }}
                     </h3>
 
-                    <!-- Tabs -->
-                    <div
-                        class="mb-4 flex border-b border-slate-200 dark:border-slate-700"
-                    >
-                        <button
-                            type="button"
-                            @click="activeImageTab = 'upload'"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium transition-colors border-b-2',
-                                activeImageTab === 'upload'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300',
-                            ]"
-                        >
-                            {{ $t("editor.upload_image") || "Wgraj plik" }}
-                        </button>
-                        <button
-                            type="button"
-                            @click="activeImageTab = 'url'"
-                            :class="[
-                                'px-4 py-2 text-sm font-medium transition-colors border-b-2',
-                                activeImageTab === 'url'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300',
-                            ]"
-                        >
-                            {{ $t("editor.image_url") || "Adres URL" }}
+                    <!-- Upload Zone -->
+                    <div class="mb-4">
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:hover:border-slate-500 dark:hover:bg-slate-600 transition-colors">
+                            <div class="flex flex-col items-center justify-center py-4">
+                                <div v-if="isUploading">
+                                    <svg class="animate-spin h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                </div>
+                                <div v-else class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <span class="text-sm font-medium">{{ $t('editor.click_to_upload') || 'Kliknij, aby wgrać' }}</span>
+                                </div>
+                            </div>
+                            <input type="file" class="hidden" accept="image/jpeg,image/png,image/gif,image/webp" @change="handleImageUpload" :disabled="isUploading" />
+                        </label>
+                        <p v-if="imageUploadError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ imageUploadError }}</p>
+                    </div>
+
+                    <!-- Media Browser Button -->
+                    <div class="mb-4">
+                        <button type="button" @click="openMediaBrowser" class="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-indigo-300 bg-indigo-50 p-3 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50 transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            {{ $t('common.browse_media') || 'Przeglądaj multimedia' }}
                         </button>
                     </div>
 
-                    <!-- Upload Tab -->
-                    <div v-if="activeImageTab === 'upload'" class="mb-4">
-                        <label
-                            class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                        >
-                            {{
-                                $t("editor.select_image") ||
-                                "Wybierz obraz z dysku"
-                            }}
-                        </label>
-                        <div class="flex items-center justify-center w-full">
-                            <label
-                                for="dropzone-file"
-                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:hover:border-slate-500 dark:hover:bg-slate-600"
-                            >
-                                <div
-                                    class="flex flex-col items-center justify-center pt-5 pb-6"
-                                >
-                                    <div v-if="isUploading">
-                                        <svg
-                                            class="animate-spin h-8 w-8 text-indigo-500"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                class="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                stroke-width="4"
-                                            ></circle>
-                                            <path
-                                                class="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                            ></path>
-                                        </svg>
-                                    </div>
-                                    <div
-                                        v-else
-                                        class="flex flex-col items-center"
-                                    >
-                                        <svg
-                                            class="w-8 h-8 mb-4 text-slate-500 dark:text-slate-400"
-                                            aria-hidden="true"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 20 16"
-                                        >
-                                            <path
-                                                stroke="currentColor"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
-                                            />
-                                        </svg>
-                                        <p
-                                            class="mb-2 text-sm text-slate-500 dark:text-slate-400"
-                                        >
-                                            <span class="font-semibold">{{
-                                                $t("editor.click_to_upload") ||
-                                                "Kliknij, aby wgrać"
-                                            }}</span>
-                                        </p>
-                                        <p
-                                            class="text-xs text-slate-500 dark:text-slate-400"
-                                        >
-                                            PNG, JPG, GIF (MAX. 5MB)
-                                        </p>
-                                    </div>
-                                </div>
-                                <input
-                                    id="dropzone-file"
-                                    type="file"
-                                    class="hidden"
-                                    accept="image/*"
-                                    @change="handleImageUpload"
-                                    :disabled="isUploading"
-                                />
-                            </label>
+                    <!-- Media Browser Grid -->
+                    <div v-if="showMediaBrowser" class="mb-4 border rounded-lg p-3 bg-slate-50 dark:bg-slate-900 max-h-40 overflow-y-auto">
+                        <div v-if="isLoadingMedia" class="flex items-center justify-center py-4">
+                            <svg class="animate-spin h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        </div>
+                        <div v-else-if="mediaLibrary.length === 0" class="text-center py-4 text-slate-500 dark:text-slate-400 text-sm">{{ $t('media.no_media_found') || 'Brak plików' }}</div>
+                        <div v-else class="grid grid-cols-4 gap-2">
+                            <button v-for="media in mediaLibrary" :key="media.id" type="button" @click="selectFromMediaBrowser(media)" class="aspect-square overflow-hidden rounded-lg border-2 border-transparent hover:border-indigo-500 transition-colors">
+                                <img :src="media.url" :alt="media.name" class="h-full w-full object-cover" />
+                            </button>
                         </div>
                     </div>
 
-                    <!-- URL Tab (conditional) -->
-                    <div v-if="activeImageTab === 'url'" class="mb-4">
-                        <label
-                            class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                            >{{ $t("editor.image_url") || "URL obrazu" }}</label
-                        >
-                        <input
-                            v-model="imageUrl"
-                            type="url"
-                            @input="onImageUrlChange"
-                            class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                            placeholder="https://example.com/image.jpg"
-                        />
+                    <!-- Logo Browser Button -->
+                    <div class="mb-4">
+                        <button type="button" @click="openLogoBrowser" class="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-purple-300 bg-purple-50 p-3 text-sm font-medium text-purple-700 hover:bg-purple-100 dark:border-purple-600 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                            {{ $t('common.browse_logos') || 'Przeglądaj loga' }}
+                        </button>
+                    </div>
+
+                    <!-- Logo Browser Grid -->
+                    <div v-if="showLogoBrowser" class="mb-4 border rounded-lg p-3 bg-purple-50 dark:bg-purple-900/20 max-h-40 overflow-y-auto">
+                        <div v-if="isLoadingMedia" class="flex items-center justify-center py-4">
+                            <svg class="animate-spin h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        </div>
+                        <div v-else-if="mediaLibrary.length === 0" class="text-center py-4 text-purple-600 dark:text-purple-400 text-sm">{{ $t('media.no_logos_found') || 'Brak logotypów' }}</div>
+                        <div v-else class="grid grid-cols-4 gap-2">
+                            <button v-for="media in mediaLibrary" :key="media.id" type="button" @click="selectFromMediaBrowser(media)" class="aspect-square overflow-hidden rounded-lg border-2 border-transparent hover:border-purple-500 bg-white dark:bg-slate-800 transition-colors">
+                                <img :src="media.url" :alt="media.name" class="h-full w-full object-contain p-1" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Separator -->
+                    <div class="relative mb-4">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-300 dark:border-slate-600"></div></div>
+                        <div class="relative flex justify-center text-sm"><span class="bg-white dark:bg-slate-800 px-2 text-slate-500 dark:text-slate-400">{{ $t('editor.or_paste_url') || 'lub wklej URL' }}</span></div>
+                    </div>
+
+                    <!-- URL Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ $t('editor.image_url') || 'URL obrazu' }}</label>
+                        <input v-model="imageUrl" type="url" @input="onImageUrlChange" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://example.com/image.jpg" />
                     </div>
 
                     <!-- Image Preview -->
                     <div v-if="imageUrl" class="mb-4">
-                        <div
-                            class="rounded-lg border border-slate-200 dark:border-slate-700 p-2 bg-slate-50 dark:bg-slate-900 min-h-[100px] flex items-center justify-center"
-                        >
-                            <img
-                                v-if="!imagePreviewError"
-                                :src="imageUrl"
-                                @load="onImageLoad"
-                                @error="onImageError"
-                                class="max-h-[150px] max-w-full object-contain"
-                                :style="{ width: imageWidth + '%' }"
-                            />
-                            <span
-                                v-if="imagePreviewError"
-                                class="text-sm text-red-500"
-                                >{{
-                                    $t("editor.image_load_error") ||
-                                    "Nie można załadować obrazu"
-                                }}</span
-                            >
+                        <div class="relative bg-slate-100 dark:bg-slate-700 rounded-lg p-4 min-h-[100px] flex items-center justify-center">
+                            <div v-if="!imagePreviewLoaded && !imagePreviewError" class="text-slate-400 flex items-center gap-2">
+                                <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            </div>
+                            <div v-if="imagePreviewError" class="text-red-500 flex items-center gap-2">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                {{ $t('editor.image_load_error') || 'Błąd ładowania' }}
+                            </div>
+                            <img :src="imageUrl" @load="onImageLoad" @error="onImageError" :class="['max-h-[120px] rounded transition-opacity', imagePreviewLoaded ? 'opacity-100' : 'opacity-0 absolute']" :style="{ width: imageWidth + '%', maxWidth: '100%' }" />
                         </div>
                     </div>
 
-                    <!-- Alignment -->
-                    <div class="mb-4">
-                        <label
-                            class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                            >{{ $t("editor.alignment") || "Wyrównanie" }}</label
-                        >
-                        <div class="flex gap-2">
-                            <button
-                                type="button"
-                                @click="imageAlignment = 'left'"
-                                :class="[
-                                    'flex-1 rounded-lg border px-3 py-2 text-sm transition-colors',
-                                    imageAlignment === 'left'
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                        : 'border-slate-300 dark:border-slate-600',
-                                ]"
-                            >
-                                {{ $t("editor.align_left") || "Lewo" }}
-                            </button>
-                            <button
-                                type="button"
-                                @click="imageAlignment = 'center'"
-                                :class="[
-                                    'flex-1 rounded-lg border px-3 py-2 text-sm transition-colors',
-                                    imageAlignment === 'center'
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                        : 'border-slate-300 dark:border-slate-600',
-                                ]"
-                            >
-                                {{ $t("editor.align_center") || "Środek" }}
-                            </button>
-                            <button
-                                type="button"
-                                @click="imageAlignment = 'right'"
-                                :class="[
-                                    'flex-1 rounded-lg border px-3 py-2 text-sm transition-colors',
-                                    imageAlignment === 'right'
-                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                        : 'border-slate-300 dark:border-slate-600',
-                                ]"
-                            >
-                                {{ $t("editor.align_right") || "Prawo" }}
-                            </button>
+                    <!-- Settings (only show when image is loaded) -->
+                    <div v-if="imagePreviewLoaded" class="space-y-4">
+                        <!-- Alignment -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.alignment') || 'Wyrównanie' }}</label>
+                            <div class="flex gap-2">
+                                <button type="button" @click="imageAlignment = 'left'" :class="['flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors', imageAlignment === 'left' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h14" /></svg>
+                                </button>
+                                <button type="button" @click="imageAlignment = 'center'" :class="['flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors', imageAlignment === 'center' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M5 18h14" /></svg>
+                                </button>
+                                <button type="button" @click="imageAlignment = 'right'" :class="['flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-colors', imageAlignment === 'right' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M6 18h14" /></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Width -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.width') || 'Szerokość' }}: {{ imageWidth }}%</label>
+                            <input v-model="imageWidth" type="range" min="10" max="100" step="5" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                        </div>
+
+                        <!-- Float (Text Wrapping) -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_float') || 'Opływanie tekstu' }}</label>
+                            <div class="flex gap-2">
+                                <button type="button" @click="imageFloat = 'none'" :class="['flex-1 px-3 py-2 rounded-lg border text-sm transition-colors', imageFloat === 'none' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">{{ $t('editor.float_none') || 'Brak' }}</button>
+                                <button type="button" @click="imageFloat = 'left'" :class="['flex-1 px-3 py-2 rounded-lg border text-sm transition-colors', imageFloat === 'left' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">{{ $t('editor.float_left') || 'Lewo' }}</button>
+                                <button type="button" @click="imageFloat = 'right'" :class="['flex-1 px-3 py-2 rounded-lg border text-sm transition-colors', imageFloat === 'right' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700']">{{ $t('editor.float_right') || 'Prawo' }}</button>
+                            </div>
+                        </div>
+
+                        <!-- Margin -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_margin') || 'Margines' }}: {{ imageMargin }}px</label>
+                            <input v-model="imageMargin" type="range" min="0" max="50" step="5" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                        </div>
+
+                        <!-- Border Radius -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{{ $t('editor.image_border_radius') || 'Zaokrąglenie rogów' }}: {{ imageBorderRadius }}px</label>
+                            <input v-model="imageBorderRadius" type="range" min="0" max="50" step="5" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                        </div>
+
+                        <!-- Link -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{{ $t('editor.image_link') || 'Link do obrazu' }}</label>
+                            <input v-model="imageLink" type="url" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 px-4 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://example.com" />
                         </div>
                     </div>
 
-                    <!-- Width -->
-                    <div class="mb-4">
-                        <label
-                            class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
-                            >{{ $t("editor.width") || "Szerokość" }}:
-                            {{ imageWidth }}%</label
-                        >
-                        <input
-                            v-model="imageWidth"
-                            type="range"
-                            min="10"
-                            max="100"
-                            class="w-full"
-                        />
-                    </div>
-
-                    <div class="flex justify-end gap-2">
-                        <button
-                            type="button"
-                            @click="showImageModal = false"
-                            class="rounded-lg border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                        >
-                            {{ $t("common.cancel") }}
-                        </button>
-                        <button
-                            type="button"
-                            @click="insertImage"
-                            :disabled="!imageUrl || imagePreviewError"
-                            class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-                        >
-                            {{ $t("editor.insert") || "Wstaw" }}
-                        </button>
+                    <!-- Actions -->
+                    <div class="mt-6 flex justify-between">
+                        <div>
+                            <button v-if="isEditingImage" type="button" @click="deleteImage" class="px-4 py-2 text-sm rounded-lg transition-colors bg-red-600 text-white hover:bg-red-700">{{ $t('editor.delete_image') || 'Usuń obraz' }}</button>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" @click="showImageModal = false" class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">{{ $t('common.cancel') }}</button>
+                            <button type="button" @click="insertImage" :disabled="!imageUrl || !imagePreviewLoaded" :class="['px-4 py-2 text-sm rounded-lg transition-colors', (!imageUrl || !imagePreviewLoaded) ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 text-white hover:bg-indigo-700']">{{ $t('editor.insert') || 'Wstaw' }}</button>
+                        </div>
                     </div>
                 </div>
             </div>

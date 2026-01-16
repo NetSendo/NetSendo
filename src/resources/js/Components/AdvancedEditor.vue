@@ -296,6 +296,12 @@ import { Color } from '@tiptap/extension-color'
 import { Highlight } from '@tiptap/extension-highlight'
 import { FontSize } from 'tiptap-extension-font-size'
 import { Mark, mergeAttributes } from '@tiptap/core'
+import {
+    Table,
+    TableCell,
+    TableHeader,
+    TableRow,
+} from '@tiptap/extension-table'
 import { useI18n } from 'vue-i18n'
 
 // Custom TextTransform Extension for text-transform CSS property
@@ -528,12 +534,12 @@ const emojiPickerStyle = computed(() => {
     }
 })
 
-// Check if content is a full HTML document (email template with tables, doctype, etc.)
+// Check if content is a full HTML document (email template with doctype, etc.)
+// NOTE: We do NOT include <table> here - tables are valid WYSIWYG content
 const isFullHtmlDocument = computed(() => {
     const content = sourceCode.value?.trim().toLowerCase() || ''
     return content.startsWith('<!doctype') ||
            content.startsWith('<html') ||
-           content.includes('<table') ||
            content.includes('<body')
 })
 
@@ -582,6 +588,12 @@ const editor = useEditor({
         }),
         FontSize,
         TextTransform,
+        Table.configure({
+            resizable: true,
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
     ],
     editorProps: {
         attributes: {
@@ -670,9 +682,9 @@ watch(() => props.modelValue, (value) => {
         // If it's now a full HTML document, switch to preview mode
         nextTick(() => {
             const content = (value || '').trim().toLowerCase()
+            // NOTE: We do NOT check for <table> - tables are valid WYSIWYG content
             const isFullHtml = content.startsWith('<!doctype') ||
                                content.startsWith('<html') ||
-                               content.includes('<table') ||
                                content.includes('<body')
             if (isFullHtml && editorMode.value === 'visual') {
                 editorMode.value = 'preview'
@@ -2063,6 +2075,88 @@ const btnClass = (isActive = false) => {
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </button>
 
+                <div class="mx-1 h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+                <!-- Table Controls -->
+                <button
+                    type="button"
+                    @click="editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()"
+                    :class="btnClass(editor.isActive('table'))"
+                    :title="$t('editor.insert_table') || 'Wstaw tabelę'"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7-12h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V4a2 2 0 012-2z" /></svg>
+                </button>
+
+                <!-- Table edit controls (only visible when table is active) -->
+                <div v-if="editor.isActive('table')" class="flex items-center gap-1 border-l border-slate-300 dark:border-slate-600 pl-1 ml-1">
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().addColumnBefore().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.add_col_before') || 'Kolumna przed'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().addColumnAfter().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.add_col_after') || 'Kolumna po'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().deleteColumn().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.delete_col') || 'Usuń kolumnę'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="mx-0.5 h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().addRowBefore().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.add_row_before') || 'Wiersz przed'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().addRowAfter().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.add_row_after') || 'Wiersz po'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().deleteRow().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.delete_row') || 'Usuń wiersz'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <div class="mx-0.5 h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().mergeCells().run()"
+                        :class="btnClass()"
+                        :title="$t('editor.merge_cells') || 'Scal komórki'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    </button>
+                    <button
+                        type="button"
+                        @click="editor.chain().focus().deleteTable().run()"
+                        class="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-colors"
+                        :title="$t('editor.delete_table') || 'Usuń tabelę'"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </div>
+
                 <!-- Emoji Picker -->
                 <div class="relative">
                     <button
@@ -3085,5 +3179,71 @@ const btnClass = (isActive = false) => {
 .dark .resize-width-indicator {
     background-color: rgba(255, 255, 255, 0.9);
     color: #1e293b;
+}
+
+/* Table styles */
+.ProseMirror table {
+    border-collapse: collapse;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.ProseMirror table td,
+.ProseMirror table th {
+    border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+    min-width: 1em;
+    padding: 6px 8px;
+    position: relative;
+    vertical-align: top;
+}
+
+.dark .ProseMirror table td,
+.dark .ProseMirror table th {
+    border-color: #475569;
+}
+
+.ProseMirror table th {
+    background-color: #f1f5f9;
+    font-weight: bold;
+    text-align: left;
+}
+
+.dark .ProseMirror table th {
+    background-color: #334155;
+}
+
+.ProseMirror table .selectedCell:after {
+    background: rgba(99, 102, 241, 0.2);
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+}
+
+.ProseMirror table .column-resize-handle {
+    background-color: #6366f1;
+    bottom: -2px;
+    pointer-events: none;
+    position: absolute;
+    right: -2px;
+    top: 0;
+    width: 4px;
+}
+
+.ProseMirror .tableWrapper {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+}
+
+.ProseMirror.resize-cursor {
+    cursor: ew-resize;
+    cursor: col-resize;
 }
 </style>

@@ -1451,11 +1451,15 @@ class MessageController extends Controller
                 'unsubscribe_from_list_ids' => !empty($linkData['unsubscribe_from_list_ids']) ? $linkData['unsubscribe_from_list_ids'] : null,
             ];
 
-            if ($existingLink) {
-                $existingLink->update($data);
-            } else {
-                MessageTrackedLink::create($data);
-            }
+            // Use updateOrCreate to handle duplicate URLs in the same request
+            // (e.g., when pasting content from Word with the same link multiple times)
+            MessageTrackedLink::updateOrCreate(
+                [
+                    'message_id' => $message->id,
+                    'url_hash' => $urlHash,
+                ],
+                $data
+            );
         }
 
         // Delete links that are no longer in the content

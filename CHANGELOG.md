@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Signature Editor - Unification with Advanced Editor:**
+
+  - Added comprehensive toolbar controls to `SignatureEditor.vue` (used for signatures and inserts) effectively mirroring `AdvancedEditor.vue`.
+  - Added new formatting options: Strikethrough, Highlight color, Text Transform (uppercase/lowercase/capitalize), Headings (H1-H3), Blockquote, Code Block, Horizontal Rule.
+  - Added full List support: Bullet Lists, Ordered Lists, and Indent/Outdent actions.
+  - Added Emoji Picker with categorized selection.
+
+- **Signature Editor - Advanced Image Management:**
+  - Replaced the simple image URL input with the full-featured Image Modal from `AdvancedEditor`.
+  - **Media Browser:** Direct access to Media Library for selecting images and logos.
+  - **Direct Upload:** Drag-and-drop image upload capability directly within the editor.
+  - **Advanced Styling:** Added controls for Image Float (text wrapping), Margin, Border Radius, and Image Linking.
+  - Preserved image resizing capabilities.
+
+### Fixed
+
+- **Media Browser Integration:**
+  - Fixed an issue in `SignatureEditor.vue` where the media browser was attempting to use an incorrect API endpoint structure.
+  - Updated `openMediaBrowser` and `openLogoBrowser` to use the correct `media.search` route and response format, ensuring consistent behavior with `AdvancedEditor`.
+
+### Fixed
+
+- **Tracked Links - Duplicate URL Handling:**
+
+  - Fixed `UniqueConstraintViolationException` when saving tracked links that contain duplicate URLs (e.g., when pasting content from Word).
+  - Updated `MessageController` to use `updateOrCreate` for tracked links to handle duplicates gracefully.
+
+- **WYSIWYG Editor - Insert/Signature Compatibility:**
+  - Fixed issue where inserting signatures or inserts containing tables into email messages would switch the editor from WYSIWYG mode to HTML/preview mode, losing visual editing capability.
+  - Updated `isFullHtmlDocument` detection in `AdvancedEditor.vue` to NOT treat simple tables as full HTML documents.
+  - Tables created in the Signature/Insert editor are now fully editable in the Message editor.
+
+### Added
+
+- **WYSIWYG Editor - Table Support:**
+  - Added table support to `AdvancedEditor.vue` (used for email messages) to match `SignatureEditor.vue` functionality.
+  - New "Insert Table" button in the toolbar creates a 3x3 table with header row.
+  - Table editing controls appear when a table is selected: add/delete rows, add/delete columns, merge cells, delete table.
+  - Full table styling for both light and dark modes.
+
 ## [1.7.3] – Short Description
 
 **Release date:** 2026-01-16
