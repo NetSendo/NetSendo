@@ -16,6 +16,9 @@ class CrmCompany extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'country',
+        'nip',
+        'regon',
         'domain',
         'industry',
         'size',

@@ -815,6 +815,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::post('contacts/{contact}/send-email', [CrmContactController::class, 'sendEmail'])->name('contacts.send-email');
 
     // CRM Companies
+    Route::get('companies/lookup', [\App\Http\Controllers\CompanyLookupController::class, 'lookup'])->name('companies.lookup');
     Route::resource('companies', CrmCompanyController::class);
     Route::post('companies/{company}/note', [CrmCompanyController::class, 'addNote'])->name('companies.note');
 

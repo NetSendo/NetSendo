@@ -17,6 +17,10 @@ defineProps({
         type: Array,
         default: () => [],
     },
+    currencies: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 </script>
 
@@ -41,6 +45,7 @@ defineProps({
                         :must-verify-email="mustVerifyEmail"
                         :status="status"
                         :timezones="timezones"
+                        :currencies="currencies"
                         class="max-w-xl"
                     />
                 </div>

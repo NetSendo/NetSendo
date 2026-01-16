@@ -22,6 +22,7 @@ class CrmDealController extends Controller
     public function index(Request $request): Response
     {
         $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $user = auth()->user();
 
         // Get or select pipeline
         $pipelineId = $request->get('pipeline_id');
@@ -63,6 +64,11 @@ class CrmDealController extends Controller
             $q->where('id', $userId)->orWhere('admin_user_id', $userId);
         })->get(['id', 'name']);
 
+        // Currency support
+        $currencyService = app(\App\Services\CurrencyExchangeService::class);
+        $userSettings = $user->settings ?? [];
+        $defaultCurrency = $userSettings['default_currency'] ?? 'EUR';
+
         return Inertia::render('Crm/Deals/Index', [
             'pipeline' => $pipeline,
             'stages' => $stages,
@@ -70,8 +76,12 @@ class CrmDealController extends Controller
             'contacts' => $contacts,
             'companies' => $companies,
             'owners' => $owners,
+            'currencies' => $currencyService->getSupportedCurrencies(),
+            'defaultCurrency' => $defaultCurrency,
+            'exchangeRates' => $currencyService->getRates(),
         ]);
     }
+
 
     /**
      * Store a newly created deal.
@@ -79,6 +89,9 @@ class CrmDealController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $user = auth()->user();
+        $userSettings = $user->settings ?? [];
+        $defaultCurrency = $userSettings['default_currency'] ?? 'EUR';
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -97,9 +110,10 @@ class CrmDealController extends Controller
             ...$validated,
             'user_id' => $userId,
             'value' => $validated['value'] ?? 0,
-            'currency' => $validated['currency'] ?? 'PLN',
+            'currency' => $validated['currency'] ?? $defaultCurrency,
             'status' => 'open',
         ]);
+
 
         // Log activity
         $deal->activities()->create([

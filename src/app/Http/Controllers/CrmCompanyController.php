@@ -69,6 +69,9 @@ class CrmCompanyController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'country' => 'nullable|string|size:2',
+            'nip' => 'nullable|string|max:10',
+            'regon' => 'nullable|string|max:14',
             'domain' => 'nullable|string|max:255',
             'industry' => 'nullable|string|max:100',
             'size' => 'nullable|string|max:50',
@@ -153,6 +156,9 @@ class CrmCompanyController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'country' => 'nullable|string|size:2',
+            'nip' => 'nullable|string|max:10',
+            'regon' => 'nullable|string|max:14',
             'domain' => 'nullable|string|max:255',
             'industry' => 'nullable|string|max:100',
             'size' => 'nullable|string|max:50',

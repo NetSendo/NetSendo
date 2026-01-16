@@ -172,6 +172,7 @@
         "previous": "Zurück",
         "next": "Weiter",
         "select": "Auswählen",
+        "select_option": "Option wählen",
         "all": "Alle",
         "none": "Keine",
         "filter": "Filtern",
@@ -1985,7 +1986,9 @@
             "email_unverified": "Ihre E-Mail-Adresse ist nicht verifiziert.",
             "resend_verification": "Klicken Sie hier, um die Bestätigungs-E-Mail erneut zu senden.",
             "verification_link_sent": "Ein neuer Bestätigungslink wurde an Ihre E-Mail-Adresse gesendet.",
-            "saved": "Gespeichert."
+            "saved": "Gespeichert.",
+            "default_currency": "Standardwährung",
+            "default_currency_description": "Währung für die Anzeige von Summen und Berichten im CRM"
         },
         "password": {
             "title": "Passwort aktualisieren",
@@ -4321,7 +4324,9 @@
             "folder": "Ordner",
             "extracted_colors": "Extrahierte Farben",
             "copy_url": "URL kopieren"
-        }
+        },
+        "compressing": "Bilder werden komprimiert...",
+        "compressed_info": "{count} Dateien komprimiert, {saved} gespart"
     },
     "brands": {
         "title": "Markenverwaltung",
@@ -4491,6 +4496,8 @@
             "show_title": "Firmendetails",
             "fields": {
                 "name": "Firmenname",
+                "name_required": "Firmenname *",
+                "domain": "Domain (z.B. firma.de)",
                 "website": "Webseite",
                 "industry": "Branche",
                 "size": "Größe",
@@ -4498,8 +4505,27 @@
                 "city": "Stadt",
                 "country": "Land",
                 "phone": "Telefon",
-                "notes": "Notizen"
+                "notes": "Notizen",
+                "nip": "Steuer-ID (NIP)",
+                "regon": "REGON"
             },
+            "placeholders": {
+                "notes": "Zusätzliche Informationen zur Firma..."
+            },
+            "polish_company_lookup": "Automatische Firmendatensuche",
+            "fetch_data": "Daten abrufen",
+            "fetch_success": "Daten erfolgreich abgerufen",
+            "fetch_error": "Firma nicht gefunden",
+            "lookup": {
+                "missing_identifier": "NIP oder REGON eingeben",
+                "invalid_nip": "Ungültiges NIP-Format",
+                "invalid_regon": "Ungültiges REGON-Format",
+                "not_found": "Firma mit dieser NIP/REGON nicht gefunden"
+            },
+            "create_button": "Firma erstellen",
+            "save_button": "Änderungen speichern",
+            "delete_button": "Firma löschen",
+            "delete_confirm": "Möchten Sie diese Firma wirklich löschen?",
             "size_options": {
                 "micro": "Mikro (1-9)",
                 "small": "Klein (10-49)",
@@ -4725,6 +4751,15 @@
         "title": "Funnel",
         "create": "Funnel erstellen",
         "edit": "Funnel bearbeiten",
+        "all_statuses": "Alle Status",
+        "all_triggers": "Alle Auslöser",
+        "table": {
+            "name": "Name",
+            "trigger": "Auslöser",
+            "status": "Status",
+            "subscribers": "Abonnenten",
+            "completed": "Abgeschlossen"
+        },
         "builder": {
             "name_placeholder": "Funnel Name...",
             "blocks": "Blöcke",

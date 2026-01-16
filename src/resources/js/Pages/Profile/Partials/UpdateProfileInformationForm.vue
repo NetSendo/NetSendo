@@ -15,6 +15,10 @@ defineProps({
     timezones: {
         type: Array,
         default: () => [],
+    },
+    currencies: {
+        type: Object,
+        default: () => ({}),
     }
 });
 
@@ -24,6 +28,7 @@ const form = useForm({
     name: user.name,
     email: user.email,
     timezone: user.timezone || 'UTC',
+    default_currency: user.settings?.default_currency || 'EUR',
 });
 
 const detectTimezone = () => {
@@ -80,7 +85,7 @@ const detectTimezone = () => {
 
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
-            
+
             <div>
                 <InputLabel for="timezone" :value="$t('profile.information.timezone')" />
                 <div class="flex gap-2">
@@ -93,8 +98,8 @@ const detectTimezone = () => {
                             {{ tz }}
                         </option>
                     </select>
-                    <button 
-                        type="button" 
+                    <button
+                        type="button"
                         @click="detectTimezone"
                         class="mt-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                         :title="$t('profile.information.detect_timezone_title')"
@@ -103,6 +108,21 @@ const detectTimezone = () => {
                     </button>
                 </div>
                 <InputError class="mt-2" :message="form.errors.timezone" />
+            </div>
+
+            <div>
+                <InputLabel for="default_currency" :value="$t('profile.information.default_currency')" />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('profile.information.default_currency_description') }}</p>
+                <select
+                    id="default_currency"
+                    v-model="form.default_currency"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-indigo-600 dark:focus:ring-indigo-600"
+                >
+                    <option v-for="(name, code) in currencies" :key="code" :value="code">
+                        {{ code }} - {{ name }}
+                    </option>
+                </select>
+                <InputError class="mt-2" :message="form.errors.default_currency" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

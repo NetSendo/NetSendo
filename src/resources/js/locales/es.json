@@ -130,6 +130,7 @@
         "previous": "Anterior",
         "next": "Siguiente",
         "select": "Seleccionar",
+        "select_option": "Seleccione una opción",
         "all": "Todos",
         "none": "Ninguno",
         "filter": "Filtrar",
@@ -1821,7 +1822,9 @@
             "email_unverified": "Su dirección de correo electrónico no está verificada.",
             "resend_verification": "Haga clic aquí para volver a enviar el correo electrónico de verificación.",
             "verification_link_sent": "Se ha enviado un nuevo enlace de verificación a su dirección de correo electrónico.",
-            "saved": "Guardado."
+            "saved": "Guardado.",
+            "default_currency": "Moneda predeterminada",
+            "default_currency_description": "Moneda utilizada para mostrar totales e informes en CRM"
         },
         "password": {
             "title": "Actualizar contraseña",
@@ -4272,7 +4275,9 @@
             "folder": "Carpeta",
             "extracted_colors": "Colores extraídos",
             "copy_url": "Copiar URL"
-        }
+        },
+        "compressing": "Comprimiendo imágenes...",
+        "compressed_info": "{count} archivos comprimidos, {saved} ahorrados"
     },
     "brands": {
         "title": "Gestión de Marcas",
@@ -4443,6 +4448,8 @@
             "show_title": "Detalles de la empresa",
             "fields": {
                 "name": "Nombre de la empresa",
+                "name_required": "Nombre de la empresa *",
+                "domain": "Dominio (ej. empresa.com)",
                 "website": "Sitio web",
                 "industry": "Industria",
                 "size": "Tamaño",
@@ -4450,8 +4457,27 @@
                 "city": "Ciudad",
                 "country": "País",
                 "phone": "Teléfono",
-                "notes": "Notas"
+                "notes": "Notas",
+                "nip": "NIP (CIF)",
+                "regon": "REGON"
             },
+            "placeholders": {
+                "notes": "Información adicional sobre la empresa..."
+            },
+            "polish_company_lookup": "Búsqueda automática de datos de empresa",
+            "fetch_data": "Obtener datos",
+            "fetch_success": "Datos obtenidos correctamente",
+            "fetch_error": "Empresa no encontrada",
+            "lookup": {
+                "missing_identifier": "Introduzca NIP o REGON",
+                "invalid_nip": "Formato de NIP inválido",
+                "invalid_regon": "Formato de REGON inválido",
+                "not_found": "Empresa con este NIP/REGON no encontrada"
+            },
+            "create_button": "Crear empresa",
+            "save_button": "Guardar cambios",
+            "delete_button": "Eliminar empresa",
+            "delete_confirm": "¿Está seguro de que desea eliminar esta empresa?",
             "size_options": {
                 "micro": "Micro (1-9)",
                 "small": "Pequeña (10-49)",
@@ -4677,6 +4703,15 @@
         "title": "Embudos",
         "create": "Crear embudo",
         "edit": "Editar embudo",
+        "all_statuses": "Todos los estados",
+        "all_triggers": "Todos los disparadores",
+        "table": {
+            "name": "Nombre",
+            "trigger": "Disparador",
+            "status": "Estado",
+            "subscribers": "Suscriptores",
+            "completed": "Completado"
+        },
         "builder": {
             "name_placeholder": "Nombre del embudo...",
             "blocks": "Bloques",

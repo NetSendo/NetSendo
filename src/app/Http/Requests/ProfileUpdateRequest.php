@@ -26,6 +26,8 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'timezone' => ['nullable', 'string', 'max:255'],
+            'default_currency' => ['nullable', 'string', 'size:3', Rule::in(array_keys(\App\Services\CurrencyExchangeService::CURRENCIES))],
         ];
     }
+
 }

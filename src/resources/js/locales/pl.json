@@ -133,6 +133,7 @@
         "previous": "Poprzedni",
         "next": "Następny",
         "select": "Wybierz",
+        "select_option": "Wybierz opcję",
         "all": "Wszystkie",
         "none": "Brak",
         "filter": "Filtruj",
@@ -2356,7 +2357,9 @@
             "email_unverified": "Twój adres e-mail jest niezweryfikowany.",
             "resend_verification": "Kliknij tutaj, aby ponownie wysłać e-mail weryfikacyjny.",
             "verification_link_sent": "Nowy link weryfikacyjny został wysłany na Twój adres e-mail.",
-            "saved": "Zapisano."
+            "saved": "Zapisano.",
+            "default_currency": "Domyślna waluta",
+            "default_currency_description": "Waluta używana do wyświetlania sum i raportów w CRM"
         },
         "password": {
             "title": "Aktualizacja hasła",
@@ -4862,7 +4865,9 @@
             "folder": "Folder",
             "extracted_colors": "Wyodrębnione kolory",
             "copy_url": "Kopiuj URL"
-        }
+        },
+        "compressing": "Kompresowanie obrazów...",
+        "compressed_info": "Skompresowano {count} plików, zaoszczędzono {saved}"
     },
     "brands": {
         "title": "Zarządzanie Markami",
@@ -5041,10 +5046,22 @@
                 "city": "Miasto",
                 "country": "Kraj",
                 "phone": "Telefon",
-                "notes": "Notatki"
+                "notes": "Notatki",
+                "nip": "NIP",
+                "regon": "REGON"
             },
             "placeholders": {
                 "notes": "Dodatkowe informacje o firmie..."
+            },
+            "polish_company_lookup": "Automatyczne pobieranie danych firmy",
+            "fetch_data": "Pobierz dane",
+            "fetch_success": "Dane pobrane pomyślnie",
+            "fetch_error": "Nie znaleziono firmy",
+            "lookup": {
+                "missing_identifier": "Wprowadź NIP lub REGON",
+                "invalid_nip": "Nieprawidłowy format NIP",
+                "invalid_regon": "Nieprawidłowy format REGON",
+                "not_found": "Nie znaleziono firmy o podanym NIP/REGON"
             },
             "create_button": "Utwórz firmę",
             "save_button": "Zapisz zmiany",
@@ -5277,6 +5294,15 @@
         "title": "Lejki",
         "create": "Utwórz lejek",
         "edit": "Edytuj lejek",
+        "all_statuses": "Wszystkie statusy",
+        "all_triggers": "Wszystkie wyzwalacze",
+        "table": {
+            "name": "Nazwa",
+            "trigger": "Wyzwalacz",
+            "status": "Status",
+            "subscribers": "Subskrybenci",
+            "completed": "Ukończono"
+        },
         "builder": {
             "name_placeholder": "Nazwa lejka...",
             "blocks": "Bloki",

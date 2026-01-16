@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { compressImages, formatFileSize } from '@/Composables/useImageCompression.js';
 
 const { t } = useI18n();
 
@@ -18,6 +19,11 @@ const isDragging = ref(false);
 const isUploading = ref(false);
 const uploadProgress = ref(0);
 const showUploadModal = ref(false);
+
+// Compression state
+const isCompressing = ref(false);
+const compressionProgress = ref({ current: 0, total: 0 });
+const compressionStats = ref(null);
 
 // Filters
 const search = ref(props.filters?.search || '');
@@ -82,17 +88,32 @@ const handleFileSelect = async (e) => {
 };
 
 const uploadFiles = async (files) => {
-    isUploading.value = true;
-    uploadProgress.value = 0;
-
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-        formData.append('files[]', files[i]);
-    }
-    if (selectedBrand.value) formData.append('brand_id', selectedBrand.value);
-    if (selectedFolder.value) formData.append('folder_id', selectedFolder.value);
+    isCompressing.value = true;
+    compressionProgress.value = { current: 0, total: files.length };
+    compressionStats.value = null;
 
     try {
+        // Compress images before upload
+        const { files: compressedFiles, stats } = await compressImages(
+            files,
+            { maxWidth: 2048, maxHeight: 2048, quality: 0.8, maxSizeKB: 1024 },
+            (current, total) => {
+                compressionProgress.value = { current, total };
+            }
+        );
+
+        compressionStats.value = stats;
+        isCompressing.value = false;
+        isUploading.value = true;
+        uploadProgress.value = 0;
+
+        const formData = new FormData();
+        for (let i = 0; i < compressedFiles.length; i++) {
+            formData.append('files[]', compressedFiles[i]);
+        }
+        if (selectedBrand.value) formData.append('brand_id', selectedBrand.value);
+        if (selectedFolder.value) formData.append('folder_id', selectedFolder.value);
+
         const response = await axios.post(route('media.bulk-store'), formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (e) => {
@@ -109,7 +130,9 @@ const uploadFiles = async (files) => {
         alert(error.response?.data?.message || t('common.error'));
     } finally {
         isUploading.value = false;
+        isCompressing.value = false;
         uploadProgress.value = 0;
+        compressionStats.value = null;
     }
 };
 
@@ -228,6 +251,37 @@ const getTypeIcon = (type) => {
                     <button @click="deselectAll" class="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400">
                         {{ $t('common.deselect_all') }}
                     </button>
+                </div>
+
+                <!-- Compression Progress -->
+                <div v-if="isCompressing" class="mb-4 rounded-lg bg-purple-50 p-4 dark:bg-purple-900/30">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 animate-spin text-purple-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-purple-700 dark:text-purple-300">
+                            {{ $t('media.compressing') }} ({{ compressionProgress.current }}/{{ compressionProgress.total }})
+                        </span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-purple-200">
+                        <div class="h-full bg-purple-600 transition-all" :style="{ width: (compressionProgress.current / compressionProgress.total * 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Compression Stats (shown briefly after compression) -->
+                <div v-if="compressionStats && compressionStats.compressedCount > 0 && !isCompressing" class="mb-4 rounded-lg bg-green-50 p-3 dark:bg-green-900/30">
+                    <div class="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>
+                            {{ $t('media.compressed_info', {
+                                count: compressionStats.compressedCount,
+                                saved: formatFileSize(compressionStats.totalOriginal - compressionStats.totalCompressed)
+                            }) }}
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Upload Progress -->

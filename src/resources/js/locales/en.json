@@ -134,6 +134,7 @@
         "previous": "Previous",
         "next": "Next",
         "select": "Select",
+        "select_option": "Select option",
 
         "none": "None",
         "filter": "Filter",
@@ -2763,7 +2764,9 @@
             "email_unverified": "Your email address is unverified.",
             "resend_verification": "Click here to re-send the verification email.",
             "verification_link_sent": "A new verification link has been sent to your email address.",
-            "saved": "Saved."
+            "saved": "Saved.",
+            "default_currency": "Default Currency",
+            "default_currency_description": "Currency used for displaying totals and reports in CRM"
         },
         "password": {
             "title": "Update Password",
@@ -4774,7 +4777,9 @@
             "folder": "Folder",
             "extracted_colors": "Extracted Colors",
             "copy_url": "Copy URL"
-        }
+        },
+        "compressing": "Compressing images...",
+        "compressed_info": "Compressed {count} files, saved {saved}"
     },
     "brands": {
         "title": "Brand Management",
@@ -4958,10 +4963,22 @@
                 "city": "City",
                 "country": "Country",
                 "phone": "Phone",
-                "notes": "Notes"
+                "notes": "Notes",
+                "nip": "Tax ID (NIP)",
+                "regon": "REGON"
             },
             "placeholders": {
                 "notes": "Additional info about company..."
+            },
+            "polish_company_lookup": "Automatic company data lookup",
+            "fetch_data": "Fetch data",
+            "fetch_success": "Data fetched successfully",
+            "fetch_error": "Company not found",
+            "lookup": {
+                "missing_identifier": "Enter NIP or REGON",
+                "invalid_nip": "Invalid NIP format",
+                "invalid_regon": "Invalid REGON format",
+                "not_found": "Company with this NIP/REGON not found"
             },
             "create_button": "Create Company",
             "save_button": "Save Changes",
@@ -5194,6 +5211,15 @@
         "title": "Funnels",
         "create": "Create Funnel",
         "edit": "Edit Funnel",
+        "all_statuses": "All statuses",
+        "all_triggers": "All triggers",
+        "table": {
+            "name": "Name",
+            "trigger": "Trigger",
+            "status": "Status",
+            "subscribers": "Subscribers",
+            "completed": "Completed"
+        },
         "builder": {
             "name_placeholder": "Funnel name...",
             "blocks": "Blocks",

@@ -10,6 +10,9 @@ const props = defineProps({
     contacts: Array,
     companies: Array,
     owners: Array,
+    currencies: Object,
+    defaultCurrency: String,
+    exchangeRates: Object,
 });
 
 // New deal form
@@ -22,7 +25,7 @@ const form = useForm({
     crm_company_id: "",
     owner_id: "",
     value: "",
-    currency: "PLN",
+    currency: props.defaultCurrency || "EUR",
     expected_close_date: "",
     notes: "",
 });
@@ -81,14 +84,36 @@ const handleDragEnd = () => {
     dragOverStageId.value = null;
 };
 
-// Format currency
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(value || 0); // TODO: Currency from user settings
+// Format currency with specified currency code
+const formatCurrency = (value, currency = null) => {
+    const currencyCode = currency || props.defaultCurrency || 'EUR';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+    }).format(value || 0);
 };
 
-// Stage total value
+// Convert value to user's default currency
+const convertToDefaultCurrency = (value, fromCurrency) => {
+    if (!value || !fromCurrency || fromCurrency === props.defaultCurrency) {
+        return value || 0;
+    }
+
+    const rates = props.exchangeRates || {};
+    const fromRate = fromCurrency === 'PLN' ? 1 : (rates[fromCurrency] || 1);
+    const toRate = props.defaultCurrency === 'PLN' ? 1 : (rates[props.defaultCurrency] || 1);
+
+    return (value * fromRate) / toRate;
+};
+
+// Stage total value in user's default currency
 const stageTotal = (stage) => {
-    return stage.deals?.reduce((sum, deal) => sum + (deal.value || 0), 0) || 0;
+    return stage.deals?.reduce((sum, deal) => {
+        const converted = convertToDefaultCurrency(deal.value || 0, deal.currency || props.defaultCurrency);
+        return sum + converted;
+    }, 0) || 0;
 };
 </script>
 
@@ -140,7 +165,7 @@ const stageTotal = (stage) => {
                             {{ stage.deals?.length || 0 }}
                         </span>
                     </div>
-                    <span class="text-sm text-slate-500">{{ formatCurrency(stageTotal(stage)) }}</span>
+                    <span class="text-sm text-slate-500">{{ formatCurrency(stageTotal(stage), defaultCurrency) }}</span>
                 </div>
 
                 <!-- Deals -->
@@ -150,7 +175,7 @@ const stageTotal = (stage) => {
                         draggable="true"
                         @dragstart="handleDragStart(deal)"
                         @dragend="handleDragEnd">
-                        <h3 class="text-lg font-medium text-slate-900 dark:text-white">{{ $t('crm.deals.new_deal') }}</h3>
+                        <h3 class="text-lg font-medium text-slate-900 dark:text-white">{{ deal.name }}</h3>
                         <p v-if="deal.contact?.subscriber" class="mt-1 text-sm text-slate-500">
                             {{ deal.contact.subscriber.first_name }} {{ deal.contact.subscriber.last_name }}
                         </p>
@@ -159,7 +184,7 @@ const stageTotal = (stage) => {
                         </p>
                         <div class="mt-3 flex items-center justify-between">
                             <span class="font-semibold text-indigo-600 dark:text-indigo-400">
-                                {{ formatCurrency(deal.value) }}
+                                {{ formatCurrency(deal.value, deal.currency) }}
                             </span>
                             <span v-if="deal.owner" class="text-xs text-slate-400">
                                 {{ deal.owner.name }}
@@ -212,9 +237,15 @@ const stageTotal = (stage) => {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.value_label', { currency: 'PLN' }, 'Wartość (PLN)') }}</label>
-                            <input v-model="form.value" type="number" min="0" step="0.01"
-                                class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.value_label', { currency: form.currency }, 'Wartość') }}</label>
+                            <div class="mt-1 flex gap-2">
+                                <input v-model="form.value" type="number" min="0" step="0.01"
+                                    class="flex-1 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+                                <select v-model="form.currency"
+                                    class="w-24 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
+                                    <option v-for="(name, code) in currencies" :key="code" :value="code">{{ code }}</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 

@@ -22,6 +22,7 @@ class ProfileController extends Controller
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'timezones' => \DateTimeZone::listIdentifiers(),
+            'currencies' => \App\Services\CurrencyExchangeService::CURRENCIES,
         ]);
     }
 
@@ -30,16 +31,27 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Handle regular fields
+        $user->fill($request->only(['name', 'email', 'timezone']));
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // Handle default_currency in settings
+        if ($request->has('default_currency')) {
+            $settings = $user->settings ?? [];
+            $settings['default_currency'] = $request->input('default_currency');
+            $user->settings = $settings;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit');
     }
+
 
     /**
      * Delete the user's account.

@@ -5,9 +5,30 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.7.2] – Short Description
+
+**Release date:** 2026-01-16
 
 ### Added
+
+- **Image Auto-Compression:**
+
+  - **Client-Side Compression:** Implemented automatic compression for images larger than 1MB using Canvas API before upload.
+  - **Smart Resizing:** Automatically resizes large images to max 2048px dimensions while preserving aspect ratio.
+  - **UI Feedback:** Added real-time compression progress bar and stats showing saved storage space.
+  - **Optimization:** Reduces server load and upload bandwidth usage by processing images in the browser.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+
+- **Company Data Lookup (Poland):**
+
+  - **Automatic Data Retrieval:** Implemented automatic company data fetching for Polish companies using NIP or REGON numbers.
+  - **Biała Lista VAT Integration:** Integrated with the official Ministry of Finance "Biała Lista VAT" API (mf.gov.pl) for accurate and free data retrieval.
+  - **CRM Integration:** Added lookup functionality directly to Company Create and Edit forms.
+  - **Smart Form Filling:** Automatically populates Company Name, Address, City, Postal Code, and VAT Status based on fetched data.
+  - **Validation:** Added real-time validation for NIP (10 digits + checksum) and REGON (9/14 digits) formats.
+  - **Backend:** New `PolishCompanyLookupService`, `CompanyLookupController`, and `/crm/companies/lookup` endpoint.
+  - **Database:** Added `country`, `nip`, `regon` columns to `crm_companies` table.
+  - **Localization:** Full translations for lookup features in PL, EN, DE, ES.
 
 - **Configurable Bounce Management:**
 
