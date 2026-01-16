@@ -75,7 +75,7 @@ class MediaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|max:10240|mimes:jpeg,jpg,png,gif,webp,svg,pdf',
+            'file' => 'required|file|max:10240|mimetypes:image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf',
             'brand_id' => 'nullable|exists:brands,id',
             'folder_id' => 'nullable|exists:media_folders,id',
             'type' => 'nullable|in:image,logo,icon,document',
@@ -142,7 +142,7 @@ class MediaController extends Controller
     {
         $request->validate([
             'files' => 'required|array|max:20',
-            'files.*' => 'file|max:10240|mimes:jpeg,jpg,png,gif,webp,svg,pdf',
+            'files.*' => 'file|max:10240|mimetypes:image/jpeg,image/png,image/gif,image/webp,image/svg+xml,application/pdf',
             'brand_id' => 'nullable|exists:brands,id',
             'folder_id' => 'nullable|exists:media_folders,id',
         ]);

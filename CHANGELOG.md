@@ -5,6 +5,14 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Media Upload:**
+  - Fixed 422 error when uploading images that undergo client-side compression.
+  - Updated validation logic in `MediaController` to use `mimetypes` instead of `mimes`, ensuring correct type detection for Blob-created files (canvas compression output).
+
 ## [1.7.2] – Short Description
 
 **Release date:** 2026-01-16
