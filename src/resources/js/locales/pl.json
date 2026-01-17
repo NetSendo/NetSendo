@@ -1964,6 +1964,10 @@
             "analytics": {
                 "title": "Analityka",
                 "desc": "Mierz wyniki"
+            },
+            "ai": {
+                "title": "Sztuczna Inteligencja",
+                "desc": "Integracje z asystentami AI"
             }
         },
         "request_title": "Potrzebujesz konkretnej integracji?",
@@ -2112,6 +2116,133 @@
             "help_desc": "Sprawdź dokumentację lub skontaktuj się z nami.",
             "documentation_button": "Dokumentacja"
         }
+    },
+    "mcp": {
+        "page_title": "MCP Server - Integracja AI",
+        "title": "MCP Server",
+        "hero_title": "Model Context Protocol",
+        "hero_subtitle": "Pozwól asystentom AI zarządzać Twoim NetSendo w naturalny sposób",
+        "hero_description": "MCP Server to most między NetSendo a nowoczesnymi asystentami AI jak Claude, Cursor czy VS Code Copilot. Rozmawiaj z AI o swoich subskrybentach, listach, wiadomościach — a AI wykona operacje za Ciebie.",
+        "how_it_works_title": "Jak to działa?",
+        "how_it_works_description": "MCP (Model Context Protocol) to otwarty standard, który pozwala asystentom AI na bezpieczny dostęp do zewnętrznych narzędzi. Twój asystent łączy się z MCP Server przez Docker, który komunikuje się z NetSendo API.",
+        "features_title": "Możliwości",
+        "features": {
+            "subscribers": {
+                "title": "Zarządzanie Subskrybentami",
+                "description": "Twórz, edytuj, usuwaj i wyszukuj subskrybentów za pomocą komend tekstowych."
+            },
+            "lists": {
+                "title": "Obsługa List Kontaktów",
+                "description": "Przeglądaj listy, pobieraj subskrybentów z list, zarządzaj tagami."
+            },
+            "messaging": {
+                "title": "Wysyłka Email",
+                "description": "Wysyłaj wiadomości email do subskrybentów bezpośrednio z AI."
+            },
+            "sms": {
+                "title": "Wysyłka SMS",
+                "description": "Wysyłaj wiadomości SMS przez skonfigurowanych providerów."
+            },
+            "tags": {
+                "title": "Tagi i Segmentacja",
+                "description": "Synchronizuj tagi subskrybentów, przeglądaj dostępne tagi."
+            },
+            "stats": {
+                "title": "Statystyki i Zasoby",
+                "description": "Pobieraj statystyki, informacje o instancji i szybki przegląd danych."
+            }
+        },
+        "installation_title": "Instalacja",
+        "mode_remote": "Zdalna instalacja",
+        "mode_local": "Lokalna (Docker)",
+        "remote_recommended": "Zalecane",
+        "remote_description": "Nie wymaga Dockera. Wystarczy Node.js 18+ na Twoim komputerze.",
+        "local_docker": "Instalacja Docker",
+        "local_description": "Dla self-hosted NetSendo z Docker Compose.",
+        "replace_api_key": "Zamień YOUR_API_KEY_HERE na swój rzeczywisty klucz API",
+        "steps": {
+            "api_key": {
+                "title": "Utwórz klucz API",
+                "description": "Przejdź do Ustawienia → Klucze API i wygeneruj nowy klucz dla MCP."
+            },
+            "install_node": {
+                "title": "Zainstaluj Node.js",
+                "description": "Pobierz i zainstaluj Node.js 18+ ze strony nodejs.org (zawiera npx)."
+            },
+            "add_env": {
+                "title": "Dodaj klucz do .env",
+                "description": "Ustaw zmienną MCP_API_KEY z Twoim kluczem w pliku .env."
+            },
+            "build": {
+                "title": "Zbuduj obraz Docker",
+                "description": "Wykonaj: docker compose build mcp"
+            },
+            "configure": {
+                "title": "Skonfiguruj klienta AI",
+                "description": "Dodaj konfigurację MCP do Claude Desktop, Cursor lub VS Code."
+            },
+            "configure_remote": {
+                "description": "Skopiuj konfigurację poniżej do swojego klienta AI."
+            }
+        },
+        "config_example": "Przykład konfiguracji",
+        "tools_title": "Dostępne Narzędzia",
+        "tools": {
+            "list_subscribers": "Listuj subskrybentów",
+            "get_subscriber": "Pobierz szczegóły subskrybenta",
+            "create_subscriber": "Utwórz nowego subskrybenta",
+            "update_subscriber": "Aktualizuj dane subskrybenta",
+            "delete_subscriber": "Usuń subskrybenta",
+            "sync_subscriber_tags": "Synchronizuj tagi subskrybenta",
+            "list_contact_lists": "Listuj listy kontaktów",
+            "list_tags": "Listuj dostępne tagi",
+            "send_email": "Wyślij wiadomość email",
+            "send_sms": "Wyślij wiadomość SMS",
+            "test_connection": "Testuj połączenie z API"
+        },
+        "examples_title": "Przykładowe komendy",
+        "examples": {
+            "show_lists": "Pokaż mi wszystkie listy mailingowe",
+            "count_subscribers": "Ilu mam subskrybentów na liście Newsletter?",
+            "create_subscriber": "Dodaj jan{'@'}example.com do listy głównej",
+            "send_email": "Wyślij email powitalny do nowego subskrybenta",
+            "analyze_list": "Przeanalizuj jakość mojej listy kontaktów"
+        },
+        "supported_clients": "Wspierani Klienci",
+        "clients": {
+            "claude": {
+                "description": "Pełna integracja z Claude Desktop App"
+            },
+            "cursor": {
+                "description": "Wbudowane wsparcie MCP w IDE"
+            },
+            "vscode": {
+                "description": "Rozszerzenie GitHub Copilot"
+            }
+        },
+        "api_config_title": "Konfiguracja API",
+        "api_url_label": "URL NetSendo",
+        "api_key_label": "Klucz API",
+        "manage_api_keys": "Zarządzaj kluczami API",
+        "security_title": "Bezpieczeństwo",
+        "security_note": "Klucz API daje dostęp do Twojego konta. Przechowuj go bezpiecznie i nie udostępniaj publicznie. MCP Server działa lokalnie w Twoim środowisku Docker.",
+        "need_help": "Potrzebujesz pomocy?",
+        "help_description": "Sprawdź naszą dokumentację dla szczegółowych instrukcji instalacji i konfiguracji.",
+        "documentation": "Dokumentacja"
+    },
+    "mcp_status": {
+        "title": "Status serwera MCP",
+        "connected": "Połączony",
+        "disconnected": "Rozłączony",
+        "not_configured": "Nie skonfigurowany",
+        "never_tested": "Nigdy nie testowano",
+        "last_tested": "Ostatni test",
+        "test_now": "Testuj teraz",
+        "testing": "Testowanie...",
+        "test_success": "Test połączenia udany",
+        "test_failed": "Test połączenia nieudany",
+        "go_to_settings": "Przejdź do ustawień MCP",
+        "api_key_missing": "Brak klucza API MCP"
     },
     "license": {
         "title": "Licencja",

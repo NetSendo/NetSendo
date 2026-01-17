@@ -5,9 +5,40 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.7.5] – Short Description
+
+**Release date:** 2026-01-17
 
 ### Added
+
+- **MCP Remote Connection:**
+
+  - **Remote Support:** Added capability to connect to remote NetSendo instances using `--url` and `--api-key` CLI arguments.
+  - **Auto-Configuration:** New Artisan command `mcp:config` generates ready-to-use configuration for both local Docker and remote setups (detects environment automatically).
+  - **Marketplace UI:** Updated `/marketplace/mcp` page with a tabbed interface offering tailored installation instructions for "Remote (npx)" and "Local (Docker)" workflows.
+  - **Public Package:** Published `@netsendo/mcp-client` to npm registry for simplified one-command usage via `npx`.
+
+- **MCP Server (Model Context Protocol):**
+
+  - **AI Integration:** Implemented a full-featured MCP server allowing AI assistants (Claude, Cursor, VS Code) to interact directly with NetSendo.
+  - **Core Capabilities:**
+    - **16 Tools:** Manage subscribers (create/update/delete), contact lists, tags, send emails, send SMS, check status.
+    - **2 Resources:** `netsendo://info` (instance capabilities) and `netsendo://stats` (quick dashboard overview).
+    - **3 Prompts:** Pre-built AI workflows for `analyze_subscribers`, `send_newsletter`, and `cleanup_list`.
+  - **Docker Integration:** Added dedicated `mcp` service to `docker-compose.yml` for seamless deployment.
+  - **Documentation:**
+    - Comprehensive `docs/mcp-server.md` user guide.
+    - Technical `mcp/README.md` for developers.
+    - Example configurations for Claude Desktop and Cursor IDE.
+  - **Security:** Private API key authentication with standard NetSendo permissions.
+
+- **MCP Status Indicator:**
+
+  - **Visual Status:** Added a status indicator to the top navigation bar showing the current state of the MCP connection (Connected, Disconnected, or Not Configured).
+  - **Connection Testing:** Implemented automated daily connection tests via `mcp:test-connection` Artisan command and a manual "Test Now" button in the UI.
+  - **Database Tracking:** Added `mcp_status` table to store connection test history, version information, and API accessibility status.
+  - **User Interface:** Created `McpStatusIndicator` Vue component with a detailed dropdown menu showing connection details, version, and last test time.
+  - **Localization:** Full translations for MCP status messages and UI elements in EN, PL, DE, ES.
 
 ## [1.7.4] – Short Description
 

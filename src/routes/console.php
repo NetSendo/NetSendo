@@ -82,6 +82,12 @@ Schedule::command('license:verify --deactivate')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/license-verify.log'));
 
+// Test połączenia MCP - raz dziennie o 5:30
+Schedule::command('mcp:test-connection --silent')
+    ->dailyAt('05:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/mcp-status.log'));
+
 // AI Campaign Audit - raz dziennie o 5:00
 // Automatyczna analiza kampanii dla wszystkich użytkowników
 Schedule::command('audit:run --all')

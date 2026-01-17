@@ -146,6 +146,14 @@ const activeIntegrations = [
         color: "teal",
         route: null,
     },
+    {
+        id: "mcp",
+        name: "MCP Server",
+        description: "AI assistants integration",
+        icon: "🔌",
+        color: "violet",
+        route: "marketplace.mcp",
+    },
 ];
 
 // Future integration categories with planned platforms
@@ -220,6 +228,17 @@ const categories = [
             { name: "Plausible", logo: null },
             { name: "Mixpanel", logo: null },
             { name: "Segment", logo: null },
+        ],
+    },
+    {
+        id: "ai",
+        icon: "🤖",
+        color: "violet",
+        platforms: [
+            { name: "MCP Server", logo: null, status: "available", route: "marketplace.mcp" },
+            { name: "Claude", logo: null },
+            { name: "Cursor IDE", logo: null },
+            { name: "VS Code Copilot", logo: null },
         ],
     },
 ];

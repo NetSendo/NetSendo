@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "netsendo": {
+      "command": "docker",
+      "args": [
+        "compose", 
+        "-f", "/path/to/your/NetSendo/docker-compose.yml",
+        "run", "--rm", "-i", "mcp"
+      ]
+    }
+  }
+}

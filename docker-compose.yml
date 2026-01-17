@@ -258,6 +258,28 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  # MCP Server - Model Context Protocol for AI Assistants (Claude, Cursor, VS Code)
+  # Usage: docker compose run --rm mcp
+  # This service is NOT started automatically - it's invoked by AI tools when needed
+  mcp:
+    build:
+      context: ./mcp
+      dockerfile: Dockerfile
+    container_name: netsendo-mcp
+    profiles:
+      - mcp  # Only starts when explicitly requested
+    environment:
+      - NETSENDO_API_URL=http://webserver:80
+      - NETSENDO_API_KEY=${MCP_API_KEY:-}
+    networks:
+      - netsendo-network
+    depends_on:
+      webserver:
+        condition: service_healthy
+    # MCP uses stdio transport, not HTTP
+    stdin_open: true
+    tty: true
+
 networks:
   netsendo-network:
     driver: bridge

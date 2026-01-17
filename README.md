@@ -6,7 +6,7 @@
 
 **Professional Email Marketing & Automation Platform**
 
-[![Version](https://img.shields.io/badge/version-1.7.4-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
+[![Version](https://img.shields.io/badge/version-1.7.5-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
 [![PHP](https://img.shields.io/badge/PHP-8.5-purple.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3-green.svg)](https://vuejs.org)
@@ -29,6 +29,7 @@ NetSendo is a modern email marketing and automation platform that enables:
 - 👥 **Live Visitors** - Real-time visitor tracking and analytics using WebSockets
 - 🛍️ **E-commerce & Funnels** - Sell digital products via Stripe, Polar, & Shopify with built-in sales funnels
 - 🤖 **AI Suite** - Campaign Auditor, Advisor, and Smart Content Generation (OpenAI, Claude, Gemini)
+- 🔌 **MCP Server** - Model Context Protocol integration for AI assistants (Claude, Cursor, VS Code)
 - 📱 **SMS Marketing** - Send SMS messages to your subscribers
 - 🔄 **Automations** - Build complex scenarios and workflows
 - 📦 **Integrations** - Native support for WordPress, WooCommerce, n8n, and more

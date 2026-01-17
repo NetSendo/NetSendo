@@ -9,6 +9,7 @@ import LanguageSwitcher from "@/Components/LanguageSwitcher.vue";
 import NotificationDropdown from "@/Components/NotificationDropdown.vue";
 import OnboardingModal from "@/Components/Dashboard/OnboardingModal.vue";
 import GlobalSearchPanel from "@/Components/GlobalSearchPanel.vue";
+import McpStatusIndicator from "@/Components/McpStatusIndicator.vue";
 import { useTheme } from "@/Composables/useTheme";
 
 const page = usePage();
@@ -253,6 +254,9 @@ const toggleMobileMenu = () => {
 
                         <!-- Language Switcher -->
                         <LanguageSwitcher />
+
+                        <!-- MCP Status Indicator -->
+                        <McpStatusIndicator />
 
                         <!-- 2FA Indicator -->
                         <div

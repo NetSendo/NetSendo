@@ -1,0 +1,235 @@
+/**
+ * NetSendo MCP Server - Messaging Tools
+ * 
+ * Tools for sending emails and SMS
+ */
+
+import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { NetSendoApiClient } from '../api-client.js';
+
+export function registerMessagingTools(server: McpServer, api: NetSendoApiClient) {
+
+  // List Mailboxes
+  server.tool(
+    'list_mailboxes',
+    'Get all available mailboxes for sending emails. Use the mailbox ID when sending emails.',
+    {},
+    async () => {
+      try {
+        const mailboxes = await api.listMailboxes();
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              mailboxes: mailboxes.map(m => ({
+                id: m.id,
+                name: m.name,
+                email: m.email,
+                is_default: m.is_default,
+                is_verified: m.is_verified,
+              })),
+              total: mailboxes.length,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Send Email
+  server.tool(
+    'send_email',
+    'Send an email to a subscriber. Requires a verified mailbox.',
+    {
+      subscriber_id: z.number().optional().describe('Subscriber ID (provide either this or email)'),
+      email: z.string().email().optional().describe('Email address (provide either this or subscriber_id)'),
+      mailbox_id: z.number().describe('Mailbox ID to send from (use list_mailboxes to get IDs)'),
+      subject: z.string().min(1).describe('Email subject line'),
+      content: z.string().min(1).describe('Email content (HTML or plain text)'),
+      content_type: z.enum(['html', 'text']).optional().describe('Content type (default: html)'),
+    },
+    async ({ subscriber_id, email, mailbox_id, subject, content, content_type }) => {
+      try {
+        if (!subscriber_id && !email) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: Either subscriber_id or email is required' }],
+            isError: true,
+          };
+        }
+
+        const result = await api.sendEmail({
+          subscriber_id,
+          email,
+          mailbox_id,
+          subject,
+          content,
+          content_type: content_type ?? 'html',
+        });
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              success: true,
+              message: 'Email queued for sending',
+              email_id: result.id,
+              status: result.status,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Get Email Status
+  server.tool(
+    'get_email_status',
+    'Check the delivery status of a sent email.',
+    {
+      email_id: z.string().describe('Email ID (returned from send_email)'),
+    },
+    async ({ email_id }) => {
+      try {
+        const status = await api.getEmailStatus(email_id);
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              id: status.id,
+              status: status.status,
+              sent_at: status.sent_at,
+              delivered_at: status.delivered_at,
+              opened_at: status.opened_at,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // List SMS Providers
+  server.tool(
+    'list_sms_providers',
+    'Get all available SMS providers. Use the provider ID when sending SMS.',
+    {},
+    async () => {
+      try {
+        const providers = await api.listSmsProviders();
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              providers: providers.map(p => ({
+                id: p.id,
+                name: p.name,
+                provider: p.provider,
+                is_active: p.is_active,
+              })),
+              total: providers.length,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Send SMS
+  server.tool(
+    'send_sms',
+    'Send an SMS message to a subscriber or phone number.',
+    {
+      subscriber_id: z.number().optional().describe('Subscriber ID (provide either this or phone)'),
+      phone: z.string().optional().describe('Phone number (provide either this or subscriber_id)'),
+      provider_id: z.number().optional().describe('SMS Provider ID (optional, uses default if not specified)'),
+      content: z.string().min(1).max(160).describe('SMS message content (max 160 characters)'),
+    },
+    async ({ subscriber_id, phone, provider_id, content }) => {
+      try {
+        if (!subscriber_id && !phone) {
+          return {
+            content: [{ type: 'text' as const, text: 'Error: Either subscriber_id or phone is required' }],
+            isError: true,
+          };
+        }
+
+        const result = await api.sendSms({
+          subscriber_id,
+          phone,
+          provider_id,
+          content,
+        });
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              success: true,
+              message: 'SMS queued for sending',
+              sms_id: result.id,
+              status: result.status,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Get SMS Status
+  server.tool(
+    'get_sms_status',
+    'Check the delivery status of a sent SMS.',
+    {
+      sms_id: z.string().describe('SMS ID (returned from send_sms)'),
+    },
+    async ({ sms_id }) => {
+      try {
+        const status = await api.getSmsStatus(sms_id);
+
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              id: status.id,
+              status: status.status,
+              sent_at: status.sent_at,
+            }, null, 2),
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+}

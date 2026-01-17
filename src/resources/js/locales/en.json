@@ -2478,6 +2478,10 @@
             "analytics": {
                 "title": "Analytics",
                 "desc": "Measure performance"
+            },
+            "ai": {
+                "title": "Artificial Intelligence",
+                "desc": "AI assistant integrations"
             }
         },
         "request_title": "Need a specific integration?",
@@ -2626,6 +2630,133 @@
             "help_desc": "Check documentation or contact us.",
             "documentation_button": "Documentation"
         }
+    },
+    "mcp": {
+        "page_title": "MCP Server - AI Integration",
+        "title": "MCP Server",
+        "hero_title": "Model Context Protocol",
+        "hero_subtitle": "Let AI assistants manage your NetSendo naturally",
+        "hero_description": "MCP Server bridges NetSendo with modern AI assistants like Claude, Cursor, and VS Code Copilot. Talk to AI about your subscribers, lists, messages — and AI will execute operations for you.",
+        "how_it_works_title": "How does it work?",
+        "how_it_works_description": "MCP (Model Context Protocol) is an open standard that allows AI assistants to securely access external tools. Your assistant connects to MCP Server via Docker, which communicates with NetSendo API.",
+        "features_title": "Capabilities",
+        "features": {
+            "subscribers": {
+                "title": "Subscriber Management",
+                "description": "Create, edit, delete and search subscribers using text commands."
+            },
+            "lists": {
+                "title": "Contact Lists",
+                "description": "Browse lists, get subscribers from lists, manage tags."
+            },
+            "messaging": {
+                "title": "Email Sending",
+                "description": "Send email messages to subscribers directly from AI."
+            },
+            "sms": {
+                "title": "SMS Sending",
+                "description": "Send SMS messages through configured providers."
+            },
+            "tags": {
+                "title": "Tags & Segmentation",
+                "description": "Sync subscriber tags, browse available tags."
+            },
+            "stats": {
+                "title": "Stats & Resources",
+                "description": "Get statistics, instance info and quick data overview."
+            }
+        },
+        "installation_title": "Installation",
+        "mode_remote": "Remote Installation",
+        "mode_local": "Local (Docker)",
+        "remote_recommended": "Recommended",
+        "remote_description": "No Docker required. Just Node.js 18+ on your machine.",
+        "local_docker": "Docker Installation",
+        "local_description": "For self-hosted NetSendo with Docker Compose.",
+        "replace_api_key": "Replace YOUR_API_KEY_HERE with your actual API key",
+        "steps": {
+            "api_key": {
+                "title": "Create API Key",
+                "description": "Go to Settings → API Keys and generate a new key for MCP."
+            },
+            "install_node": {
+                "title": "Install Node.js",
+                "description": "Download and install Node.js 18+ from nodejs.org (includes npx)."
+            },
+            "add_env": {
+                "title": "Add key to .env",
+                "description": "Set MCP_API_KEY variable with your key in .env file."
+            },
+            "build": {
+                "title": "Build Docker image",
+                "description": "Run: docker compose build mcp"
+            },
+            "configure": {
+                "title": "Configure AI client",
+                "description": "Add MCP configuration to Claude Desktop, Cursor or VS Code."
+            },
+            "configure_remote": {
+                "description": "Copy the configuration below to your AI client."
+            }
+        },
+        "config_example": "Configuration example",
+        "tools_title": "Available Tools",
+        "tools": {
+            "list_subscribers": "List subscribers",
+            "get_subscriber": "Get subscriber details",
+            "create_subscriber": "Create new subscriber",
+            "update_subscriber": "Update subscriber data",
+            "delete_subscriber": "Delete subscriber",
+            "sync_subscriber_tags": "Sync subscriber tags",
+            "list_contact_lists": "List contact lists",
+            "list_tags": "List available tags",
+            "send_email": "Send email message",
+            "send_sms": "Send SMS message",
+            "test_connection": "Test API connection"
+        },
+        "examples_title": "Example commands",
+        "examples": {
+            "show_lists": "Show me all mailing lists",
+            "count_subscribers": "How many subscribers do I have on Newsletter list?",
+            "create_subscriber": "Add john{'@'}example.com to main list",
+            "send_email": "Send welcome email to new subscriber",
+            "analyze_list": "Analyze the quality of my contact list"
+        },
+        "supported_clients": "Supported Clients",
+        "clients": {
+            "claude": {
+                "description": "Full integration with Claude Desktop App"
+            },
+            "cursor": {
+                "description": "Built-in MCP support in IDE"
+            },
+            "vscode": {
+                "description": "GitHub Copilot extension"
+            }
+        },
+        "api_config_title": "API Configuration",
+        "api_url_label": "NetSendo URL",
+        "api_key_label": "API Key",
+        "manage_api_keys": "Manage API Keys",
+        "security_title": "Security",
+        "security_note": "API key grants access to your account. Keep it secure and don't share it publicly. MCP Server runs locally in your Docker environment.",
+        "need_help": "Need help?",
+        "help_description": "Check our documentation for detailed installation and configuration instructions.",
+        "documentation": "Documentation"
+    },
+    "mcp_status": {
+        "title": "MCP Server Status",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "not_configured": "Not configured",
+        "never_tested": "Never tested",
+        "last_tested": "Last tested",
+        "test_now": "Test now",
+        "testing": "Testing...",
+        "test_success": "Connection test successful",
+        "test_failed": "Connection test failed",
+        "go_to_settings": "Go to MCP settings",
+        "api_key_missing": "MCP API key missing"
     },
     "ai": {
         "title": "AI Integrations",

@@ -425,6 +425,15 @@ Route::middleware(['auth', '2fa'])->group(function () {
         return response()->download($path, 'netsendo-wordpress.zip');
     })->name('marketplace.wordpress.download');
 
+    // MCP Integration (AI Assistants)
+    Route::get('/marketplace/mcp', fn() => Inertia::render('Marketplace/MCP'))->name('marketplace.mcp');
+
+    // MCP Status API
+    Route::prefix('mcp')->name('mcp.')->group(function () {
+        Route::get('/status', [\App\Http\Controllers\McpStatusController::class, 'status'])->name('status');
+        Route::post('/test', [\App\Http\Controllers\McpStatusController::class, 'test'])->name('test');
+    });
+
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {
