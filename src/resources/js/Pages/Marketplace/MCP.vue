@@ -57,6 +57,21 @@ const features = [
         icon: "📋",
     },
     {
+        title: "mcp.features.campaigns.title",
+        description: "mcp.features.campaigns.description",
+        icon: "📧",
+    },
+    {
+        title: "mcp.features.ab_tests.title",
+        description: "mcp.features.ab_tests.description",
+        icon: "🧪",
+    },
+    {
+        title: "mcp.features.funnels.title",
+        description: "mcp.features.funnels.description",
+        icon: "⚡",
+    },
+    {
         title: "mcp.features.messaging.title",
         description: "mcp.features.messaging.description",
         icon: "✉️",
@@ -78,18 +93,80 @@ const features = [
     },
 ];
 
-const tools = [
-    { name: "list_subscribers", description: "mcp.tools.list_subscribers" },
-    { name: "get_subscriber", description: "mcp.tools.get_subscriber" },
-    { name: "create_subscriber", description: "mcp.tools.create_subscriber" },
-    { name: "update_subscriber", description: "mcp.tools.update_subscriber" },
-    { name: "delete_subscriber", description: "mcp.tools.delete_subscriber" },
-    { name: "sync_subscriber_tags", description: "mcp.tools.sync_subscriber_tags" },
-    { name: "list_contact_lists", description: "mcp.tools.list_contact_lists" },
-    { name: "list_tags", description: "mcp.tools.list_tags" },
-    { name: "send_email", description: "mcp.tools.send_email" },
-    { name: "send_sms", description: "mcp.tools.send_sms" },
-    { name: "test_connection", description: "mcp.tools.test_connection" },
+// Tool categories for organized display
+const toolCategories = [
+    {
+        name: "mcp.tool_categories.subscribers",
+        tools: [
+            { name: "list_subscribers", description: "mcp.tools.list_subscribers" },
+            { name: "get_subscriber", description: "mcp.tools.get_subscriber" },
+            { name: "create_subscriber", description: "mcp.tools.create_subscriber" },
+            { name: "update_subscriber", description: "mcp.tools.update_subscriber" },
+            { name: "delete_subscriber", description: "mcp.tools.delete_subscriber" },
+            { name: "sync_subscriber_tags", description: "mcp.tools.sync_subscriber_tags" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.lists",
+        tools: [
+            { name: "list_contact_lists", description: "mcp.tools.list_contact_lists" },
+            { name: "list_tags", description: "mcp.tools.list_tags" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.campaigns",
+        tools: [
+            { name: "list_campaigns", description: "mcp.tools.list_campaigns" },
+            { name: "get_campaign", description: "mcp.tools.get_campaign" },
+            { name: "create_campaign", description: "mcp.tools.create_campaign" },
+            { name: "update_campaign", description: "mcp.tools.update_campaign" },
+            { name: "set_campaign_lists", description: "mcp.tools.set_campaign_lists" },
+            { name: "set_campaign_exclusions", description: "mcp.tools.set_campaign_exclusions" },
+            { name: "schedule_campaign", description: "mcp.tools.schedule_campaign" },
+            { name: "send_campaign", description: "mcp.tools.send_campaign" },
+            { name: "get_campaign_stats", description: "mcp.tools.get_campaign_stats" },
+            { name: "delete_campaign", description: "mcp.tools.delete_campaign" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.ab_tests",
+        tools: [
+            { name: "list_ab_tests", description: "mcp.tools.list_ab_tests" },
+            { name: "create_ab_test", description: "mcp.tools.create_ab_test" },
+            { name: "add_ab_variant", description: "mcp.tools.add_ab_variant" },
+            { name: "start_ab_test", description: "mcp.tools.start_ab_test" },
+            { name: "end_ab_test", description: "mcp.tools.end_ab_test" },
+            { name: "get_ab_test_results", description: "mcp.tools.get_ab_test_results" },
+            { name: "delete_ab_test", description: "mcp.tools.delete_ab_test" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.funnels",
+        tools: [
+            { name: "list_funnels", description: "mcp.tools.list_funnels" },
+            { name: "get_funnel", description: "mcp.tools.get_funnel" },
+            { name: "create_funnel", description: "mcp.tools.create_funnel" },
+            { name: "add_funnel_step", description: "mcp.tools.add_funnel_step" },
+            { name: "activate_funnel", description: "mcp.tools.activate_funnel" },
+            { name: "pause_funnel", description: "mcp.tools.pause_funnel" },
+            { name: "get_funnel_stats", description: "mcp.tools.get_funnel_stats" },
+            { name: "delete_funnel", description: "mcp.tools.delete_funnel" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.messaging",
+        tools: [
+            { name: "send_email", description: "mcp.tools.send_email" },
+            { name: "send_sms", description: "mcp.tools.send_sms" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.account",
+        tools: [
+            { name: "test_connection", description: "mcp.tools.test_connection" },
+            { name: "get_account_info", description: "mcp.tools.get_account_info" },
+        ]
+    },
 ];
 
 const clients = [
@@ -399,18 +476,32 @@ const exampleQueries = [
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
                                 🛠️ {{ $t('mcp.tools_title') }}
                             </h2>
-                            <div class="grid gap-3 sm:grid-cols-2">
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-6">
+                                {{ $t('mcp.tools_count', { count: 37 }) }}
+                            </p>
+                            <div class="space-y-6">
                                 <div
-                                    v-for="tool in tools"
-                                    :key="tool.name"
-                                    class="flex items-start gap-3 rounded-xl bg-gray-50 dark:bg-white/5 px-4 py-3"
+                                    v-for="category in toolCategories"
+                                    :key="category.name"
                                 >
-                                    <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded">
-                                        {{ tool.name }}
-                                    </code>
-                                    <span class="text-sm text-gray-600 dark:text-slate-400">
-                                        {{ $t(tool.description) }}
-                                    </span>
+                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                        {{ $t(category.name) }}
+                                    </h3>
+                                    <div class="grid gap-2 sm:grid-cols-2">
+                                        <div
+                                            v-for="tool in category.tools"
+                                            :key="tool.name"
+                                            class="flex items-start gap-2 rounded-lg bg-gray-50 dark:bg-white/5 px-3 py-2"
+                                        >
+                                            <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded shrink-0">
+                                                {{ tool.name }}
+                                            </code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">
+                                                {{ $t(tool.description) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

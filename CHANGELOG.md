@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented server-side image proxy (`api.templates.proxy-image`) that fetches external images and returns them with proper CORS headers.
   - Updated `Builder.vue` to automatically route external images through the proxy during thumbnail generation.
   - Added security measures: MIME type validation, file size limits (5MB), blocked local/internal URLs, and response caching (1 hour).
+  - **Enhanced Reliability:** Added retry logic (2 retries), browser-like User-Agent/Referer headers, and improved error logging to resolve 502 Bad Gateway errors with strict external servers (e.g., WordPress).
 
 ## [1.7.5] – Short Description
 

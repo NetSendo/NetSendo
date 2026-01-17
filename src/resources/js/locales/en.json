@@ -2651,6 +2651,18 @@
                 "title": "Contact Lists",
                 "description": "Browse lists, get subscribers from lists, manage tags."
             },
+            "campaigns": {
+                "title": "Email/SMS Campaigns",
+                "description": "Create, schedule, and send email/SMS campaigns with list exclusions."
+            },
+            "ab_tests": {
+                "title": "A/B Testing",
+                "description": "Test different message variants and automatically select winners."
+            },
+            "funnels": {
+                "title": "Automation Funnels",
+                "description": "Create email sequences with triggers and time-based steps."
+            },
             "messaging": {
                 "title": "Email Sending",
                 "description": "Send email messages to subscribers directly from AI."
@@ -2703,6 +2715,16 @@
         },
         "config_example": "Configuration example",
         "tools_title": "Available Tools",
+        "tools_count": "{count} tools available via AI",
+        "tool_categories": {
+            "subscribers": "Subscribers",
+            "lists": "Lists & Tags",
+            "campaigns": "Campaigns",
+            "ab_tests": "A/B Tests",
+            "funnels": "Automation Funnels",
+            "messaging": "Messaging",
+            "account": "Account"
+        },
         "tools": {
             "list_subscribers": "List subscribers",
             "get_subscriber": "Get subscriber details",
@@ -2712,9 +2734,35 @@
             "sync_subscriber_tags": "Sync subscriber tags",
             "list_contact_lists": "List contact lists",
             "list_tags": "List available tags",
+            "list_campaigns": "List campaigns",
+            "get_campaign": "Get campaign details",
+            "create_campaign": "Create new campaign",
+            "update_campaign": "Update campaign",
+            "set_campaign_lists": "Set recipient lists",
+            "set_campaign_exclusions": "Set exclusion lists",
+            "schedule_campaign": "Schedule campaign",
+            "send_campaign": "Send campaign",
+            "get_campaign_stats": "Get campaign stats",
+            "delete_campaign": "Delete campaign",
+            "list_ab_tests": "List A/B tests",
+            "create_ab_test": "Create A/B test",
+            "add_ab_variant": "Add test variant",
+            "start_ab_test": "Start test",
+            "end_ab_test": "End test",
+            "get_ab_test_results": "Get test results",
+            "delete_ab_test": "Delete A/B test",
+            "list_funnels": "List funnels",
+            "get_funnel": "Get funnel details",
+            "create_funnel": "Create funnel",
+            "add_funnel_step": "Add funnel step",
+            "activate_funnel": "Activate funnel",
+            "pause_funnel": "Pause funnel",
+            "get_funnel_stats": "Get funnel stats",
+            "delete_funnel": "Delete funnel",
             "send_email": "Send email message",
             "send_sms": "Send SMS message",
-            "test_connection": "Test API connection"
+            "test_connection": "Test API connection",
+            "get_account_info": "Get account info"
         },
         "examples_title": "Example commands",
         "examples": {

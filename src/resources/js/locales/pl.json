@@ -2137,6 +2137,18 @@
                 "title": "Obsługa List Kontaktów",
                 "description": "Przeglądaj listy, pobieraj subskrybentów z list, zarządzaj tagami."
             },
+            "campaigns": {
+                "title": "Kampanie Email/SMS",
+                "description": "Twórz, planuj i wysyłaj kampanie email i SMS z wykluczeniami list."
+            },
+            "ab_tests": {
+                "title": "Testy A/B",
+                "description": "Testuj różne warianty wiadomości i wybieraj zwycięzców automatycznie."
+            },
+            "funnels": {
+                "title": "Lejki Automatyzacji",
+                "description": "Twórz sekwencje email z triggerami i krokami czasowymi."
+            },
             "messaging": {
                 "title": "Wysyłka Email",
                 "description": "Wysyłaj wiadomości email do subskrybentów bezpośrednio z AI."
@@ -2189,6 +2201,16 @@
         },
         "config_example": "Przykład konfiguracji",
         "tools_title": "Dostępne Narzędzia",
+        "tools_count": "{count} narzędzi dostępnych przez AI",
+        "tool_categories": {
+            "subscribers": "Subskrybenci",
+            "lists": "Listy i tagi",
+            "campaigns": "Kampanie",
+            "ab_tests": "Testy A/B",
+            "funnels": "Lejki automatyzacji",
+            "messaging": "Wiadomości",
+            "account": "Konto"
+        },
         "tools": {
             "list_subscribers": "Listuj subskrybentów",
             "get_subscriber": "Pobierz szczegóły subskrybenta",
@@ -2198,9 +2220,35 @@
             "sync_subscriber_tags": "Synchronizuj tagi subskrybenta",
             "list_contact_lists": "Listuj listy kontaktów",
             "list_tags": "Listuj dostępne tagi",
+            "list_campaigns": "Listuj kampanie",
+            "get_campaign": "Pobierz szczegóły kampanii",
+            "create_campaign": "Utwórz nową kampanię",
+            "update_campaign": "Aktualizuj kampanię",
+            "set_campaign_lists": "Ustaw listy odbiorców",
+            "set_campaign_exclusions": "Ustaw wykluczenia",
+            "schedule_campaign": "Zaplanuj wysyłkę",
+            "send_campaign": "Wyślij kampanię",
+            "get_campaign_stats": "Pobierz statystyki kampanii",
+            "delete_campaign": "Usuń kampanię",
+            "list_ab_tests": "Listuj testy A/B",
+            "create_ab_test": "Utwórz test A/B",
+            "add_ab_variant": "Dodaj wariant testu",
+            "start_ab_test": "Uruchom test",
+            "end_ab_test": "Zakończ test",
+            "get_ab_test_results": "Pobierz wyniki testu",
+            "delete_ab_test": "Usuń test A/B",
+            "list_funnels": "Listuj lejki",
+            "get_funnel": "Pobierz szczegóły lejka",
+            "create_funnel": "Utwórz lejek",
+            "add_funnel_step": "Dodaj krok do lejka",
+            "activate_funnel": "Aktywuj lejek",
+            "pause_funnel": "Wstrzymaj lejek",
+            "get_funnel_stats": "Pobierz statystyki lejka",
+            "delete_funnel": "Usuń lejek",
             "send_email": "Wyślij wiadomość email",
             "send_sms": "Wyślij wiadomość SMS",
-            "test_connection": "Testuj połączenie z API"
+            "test_connection": "Testuj połączenie z API",
+            "get_account_info": "Pobierz informacje o koncie"
         },
         "examples_title": "Przykładowe komendy",
         "examples": {

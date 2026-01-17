@@ -160,7 +160,7 @@ class ApiKey extends Model
     }
 
     /**
-     * Get the API key marked as MCP key (for MCP status testing)
+     * Get the first MCP key for testing (returns first active MCP key found)
      */
     public static function getMcpKey(): ?self
     {
@@ -168,16 +168,11 @@ class ApiKey extends Model
     }
 
     /**
-     * Mark this key as the MCP key (unmarks all others)
+     * Mark this key as an MCP key (allows multiple MCP keys)
      * @param string|null $plainKey Plain key to encrypt for MCP testing
      */
     public function markAsMcp(?string $plainKey = null): void
     {
-        // Unmark all other keys for this user and clear their encrypted keys
-        static::where('user_id', $this->user_id)
-            ->where('id', '!=', $this->id)
-            ->update(['is_mcp' => false, 'encrypted_key' => null]);
-
         $updateData = ['is_mcp' => true];
 
         // Store encrypted key if provided
