@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import SendEmailModal from "@/Components/Crm/SendEmailModal.vue";
+import TaskModal from "@/Components/Crm/TaskModal.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const { formatDate: formatDateBase, locale, formatCurrency } = useDateTime();
@@ -41,6 +42,13 @@ const showEmailModal = ref(false);
 const onEmailSent = () => {
     // Reload the page to refresh activities
     router.reload({ only: ['activities'] });
+};
+
+// Task modal state
+const showTaskModal = ref(false);
+
+const onTaskSaved = () => {
+    router.reload({ only: ['contact', 'activities'] });
 };
 
 // Activity type options
@@ -117,6 +125,12 @@ const getActivityIcon = (type) => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                         </svg>
                         Zadzwoń
+                    </button>
+                    <button @click="showTaskModal = true" class="inline-flex items-center gap-2 rounded-xl bg-amber-100 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                        Zadanie
                     </button>
                     <button @click="showEmailModal = true" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -283,14 +297,21 @@ const getActivityIcon = (type) => {
                 </div>
 
                 <!-- Pending Tasks -->
-                <div v-if="contact.tasks?.length" class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+                <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
                     <h2 class="mb-4 flex items-center justify-between text-lg font-semibold text-slate-900 dark:text-white">
                         Zadania
-                        <Link href="/crm/tasks" class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
-                            Zobacz wszystkie →
-                        </Link>
+                        <div class="flex items-center gap-2">
+                            <button @click="showTaskModal = true" class="rounded-lg p-1.5 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                            <Link href="/crm/tasks" class="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                                Zobacz wszystkie →
+                            </Link>
+                        </div>
                     </h2>
-                    <div class="space-y-3">
+                    <div v-if="contact.tasks?.length" class="space-y-3">
                         <div v-for="task in contact.tasks" :key="task.id"
                             class="flex items-center justify-between rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                             <div class="flex items-center gap-3">
@@ -303,6 +324,18 @@ const getActivityIcon = (type) => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div v-else class="py-8 text-center">
+                        <svg class="mx-auto h-10 w-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                        <p class="mt-2 text-slate-500 dark:text-slate-400">Brak zadań dla tego kontaktu</p>
+                        <button @click="showTaskModal = true" class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Dodaj zadanie
+                        </button>
                     </div>
                 </div>
 
@@ -348,6 +381,15 @@ const getActivityIcon = (type) => {
             :mailboxes="mailboxes"
             @close="showEmailModal = false"
             @sent="onEmailSent"
+        />
+
+        <!-- Task Modal -->
+        <TaskModal
+            :show="showTaskModal"
+            :contact-id="contact.id"
+            :owners="owners"
+            @close="showTaskModal = false"
+            @saved="onTaskSaved"
         />
     </AuthenticatedLayout>
 </template>

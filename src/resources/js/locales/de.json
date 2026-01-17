@@ -123,6 +123,29 @@
         "profile_updated": "Profil aktualisiert!",
         "password_updated": "Passwort aktualisiert!"
     },
+    "global_search": {
+        "placeholder": "Suche in NetSendo...",
+        "open_search": "Suche (⌘K)",
+        "recent_searches": "Letzte Suchanfragen",
+        "clear": "Löschen",
+        "hint": "Geben Sie mindestens 2 Zeichen ein",
+        "no_results": "Keine Ergebnisse für",
+        "navigate": "navigieren",
+        "open": "öffnen",
+        "close": "schließen",
+        "results": "Ergebnisse",
+        "categories": {
+            "all": "Alle",
+            "contacts": "Kontakte",
+            "companies": "Firmen",
+            "tasks": "Aufgaben",
+            "messages": "Nachrichten",
+            "media": "Medien",
+            "subscribers": "Abonnenten",
+            "lists": "Listen",
+            "webinars": "Webinare"
+        }
+    },
     "common": {
         "save": "Speichern",
         "cancel": "Abbrechen",

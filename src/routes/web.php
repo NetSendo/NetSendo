@@ -356,6 +356,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/export/{year}/{month}', [\App\Http\Controllers\GlobalStatsController::class, 'export'])->name('export');
     });
 
+    // Global Search API
+    Route::get('/api/search', [\App\Http\Controllers\GlobalSearchController::class, 'search'])->name('api.search');
+
     // Dashboard Stats API
     Route::get('/api/dashboard/stats', [\App\Http\Controllers\GlobalStatsController::class, 'getDashboardStats'])->name('api.dashboard.stats');
 

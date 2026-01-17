@@ -3,6 +3,7 @@ import { ref } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { useDateTime } from "@/Composables/useDateTime";
+import TaskModal from "@/Components/Crm/TaskModal.vue";
 
 const { formatDate: formatDateBase, locale } = useDateTime();
 const props = defineProps({
@@ -15,6 +16,19 @@ const props = defineProps({
 });
 
 const selectedView = ref(props.view || "today");
+
+// Task modal
+const showTaskModal = ref(false);
+const editingTask = ref(null);
+
+const openNewTaskModal = () => {
+    editingTask.value = null;
+    showTaskModal.value = true;
+};
+
+const onTaskSaved = () => {
+    router.reload({ only: ['tasks', 'counts'] });
+};
 
 // Change view
 const changeView = (view) => {
@@ -68,6 +82,12 @@ const getTypeIcon = (type) => {
         <template #header>
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ $t('crm.tasks.title', 'Zadania') }}</h1>
+                <button @click="openNewTaskModal" class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {{ $t('crm.tasks.add', 'Dodaj zadanie') }}
+                </button>
             </div>
         </template>
 
@@ -134,5 +154,15 @@ const getTypeIcon = (type) => {
                 <p class="mt-4 text-slate-500">{{ $t('crm.tasks.empty_category', 'Brak zadań w tej kategorii') }}</p>
             </div>
         </div>
+
+        <!-- Task Modal -->
+        <TaskModal
+            :show="showTaskModal"
+            :task="editingTask"
+            :contacts="contacts"
+            :owners="owners"
+            @close="showTaskModal = false"
+            @saved="onTaskSaved"
+        />
     </AuthenticatedLayout>
 </template>

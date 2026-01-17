@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+## [1.7.4] – Short Description
+
+**Release date:** 2026-01-17
+
+### Added
+
+- **Global Search System:**
+
+  - **Command Palette Interface:** Implemented a professional, slide-out search panel inspired by modern "Command Palette" interfaces (Raycast/Spotlight).
+  - **Universal Access:** Activated via a compact search icon in the top navigation or keyboard shortcut `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux).
+  - **Multi-Resource Search:** Intelligent search across 8 key areas:
+    - **Contacts:** Search by name, email, phone.
+    - **Companies:** Search by name, NIP, domain.
+    - **Tasks:** Search by title, description.
+    - **Messages & Media:** Search email/SMS subjects and media filenames/tags.
+    - **Subscribers, Lists, Webinars:** Quick access to marketing assets.
+  - **Smart Features:**
+    - **Category Filtering:** Filter results by specific resource type with clickable chips.
+    - **Search History:** Remembers last 5 search queries for quick access.
+    - **Keyboard Navigation:** Full support for arrow keys (↑/↓) and Enter to navigate results without a mouse.
+  - **Backend Performance:** Optimized `GlobalSearchController` with user-scoped queries and limits.
+  - **Localization:** Full translations in PL.
+
+- **CRM Tasks - Advanced Creation Flow:**
+
+  - Implemented `TaskModal.vue`, a comprehensive modal for creating and editing CRM tasks with full support for task types (Call, Email, Meeting, Task, Follow-up), priorities, due dates, and descriptions.
+  - Added "Add Task" button to the CRM Tasks dashboard (`/crm/tasks`) header for quick task creation.
+  - Enhanced Contact Profile (`/crm/contacts/{id}`) with a direct "Task" button in the header and a dedicated "Add Task" button within the tasks section (which is now always visible).
+  - Integrated `TaskModal` into both the Tasks dashboard and Contact Profile for a seamless user experience.
+
 - **Signature Editor - Unification with Advanced Editor:**
 
   - Added comprehensive toolbar controls to `SignatureEditor.vue` (used for signatures and inserts) effectively mirroring `AdvancedEditor.vue`.
@@ -25,11 +55,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Global Search:**
+
+  - Fixed `500 Server Error` caused by invalid column references (`messages.name`, `webinars.title`) and optimized search query scoping.
+
 - **Media Browser Integration:**
+
   - Fixed an issue in `SignatureEditor.vue` where the media browser was attempting to use an incorrect API endpoint structure.
   - Updated `openMediaBrowser` and `openLogoBrowser` to use the correct `media.search` route and response format, ensuring consistent behavior with `AdvancedEditor`.
-
-### Fixed
 
 - **Tracked Links - Duplicate URL Handling:**
 
