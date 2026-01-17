@@ -2790,6 +2790,11 @@
         "manage_api_keys": "Manage API Keys",
         "security_title": "Security",
         "security_note": "API key grants access to your account. Keep it secure and don't share it publicly. MCP Server runs locally in your Docker environment.",
+        "test_connection_title": "Test Connection",
+        "test_connection_description": "Use this endpoint in external applications (AI assistants) to test the connection to NetSendo API.",
+        "test_endpoint_label": "Test endpoint",
+        "test_curl_example": "Curl example",
+        "test_success_hint": "A valid API key will return JSON with account information",
         "need_help": "Need help?",
         "help_description": "Check our documentation for detailed installation and configuration instructions.",
         "documentation": "Documentation"

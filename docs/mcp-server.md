@@ -232,6 +232,54 @@ You can connect to multiple NetSendo instances by using different server names:
 | `get_funnel_stats` | Get funnel statistics        |
 | `delete_funnel`    | Delete a funnel              |
 
+## Testing Connection
+
+Use the `/api/mcp/test` endpoint to verify your API key and connection before configuring AI clients.
+
+### Endpoint
+
+```
+GET /api/mcp/test
+```
+
+### Authentication
+
+Include your API key as a Bearer token:
+
+```bash
+curl -X GET "https://your-netsendo-domain.com/api/mcp/test" \
+  -H "Authorization: Bearer ns_live_YOUR_API_KEY"
+```
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "Connection successful",
+  "data": {
+    "account_name": "Your Name",
+    "account_email": "your@email.com",
+    "api_url": "https://your-netsendo-domain.com",
+    "version": "1.0.0",
+    "mcp_enabled": true,
+    "api_key_name": "MCP Key",
+    "timestamp": "2026-01-17T12:00:00+00:00"
+  }
+}
+```
+
+### Error Response (401)
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid API key"
+}
+```
+
+---
+
 ## Security
 
 - Uses your existing NetSendo API key with same permissions

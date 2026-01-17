@@ -2276,6 +2276,11 @@
         "manage_api_keys": "Zarządzaj kluczami API",
         "security_title": "Bezpieczeństwo",
         "security_note": "Klucz API daje dostęp do Twojego konta. Przechowuj go bezpiecznie i nie udostępniaj publicznie. MCP Server działa lokalnie w Twoim środowisku Docker.",
+        "test_connection_title": "Test połączenia",
+        "test_connection_description": "Użyj tego endpointu w zewnętrznych aplikacjach (AI assistants) do testowania połączenia z NetSendo API.",
+        "test_endpoint_label": "Endpoint testowy",
+        "test_curl_example": "Przykład curl",
+        "test_success_hint": "Poprawny klucz API zwróci JSON z informacjami o koncie",
         "need_help": "Potrzebujesz pomocy?",
         "help_description": "Sprawdź naszą dokumentację dla szczegółowych instrukcji instalacji i konfiguracji.",
         "documentation": "Dokumentacja"

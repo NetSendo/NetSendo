@@ -588,6 +588,60 @@ const exampleQueries = [
                             </div>
                         </div>
 
+                        <!-- Test Connection -->
+                        <div class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm">
+                            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
+                                🧪 {{ $t('mcp.test_connection_title') }}
+                            </h3>
+
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
+                                {{ $t('mcp.test_connection_description') }}
+                            </p>
+
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-slate-500 mb-2">{{ $t('mcp.test_endpoint_label') }}</p>
+                                <div class="flex items-center gap-2 rounded-lg bg-gray-50 dark:bg-white/5 px-3 py-2 mb-3">
+                                    <code class="text-sm text-gray-700 dark:text-slate-300 truncate flex-1">{{ appUrl }}/api/mcp/test</code>
+                                    <button
+                                        @click="copyToClipboard(appUrl + '/api/mcp/test', 'endpoint')"
+                                        class="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    >
+                                        <svg v-if="copied !== 'endpoint'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-slate-500 mb-2">{{ $t('mcp.test_curl_example') }}</p>
+                                <div class="rounded-lg bg-gray-900 dark:bg-slate-950 p-3 relative">
+                                    <pre class="text-xs text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap"><code>curl -X GET "{{ appUrl }}/api/mcp/test" \
+  -H "Authorization: Bearer YOUR_API_KEY"</code></pre>
+                                    <button
+                                        @click="copyToClipboard(`curl -X GET '${appUrl}/api/mcp/test' -H 'Authorization: Bearer YOUR_API_KEY'`, 'curl')"
+                                        class="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        <svg v-if="copied !== 'curl'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
+                                <p class="text-xs text-emerald-700 dark:text-emerald-400">
+                                    ✓ {{ $t('mcp.test_success_hint') }}
+                                </p>
+                            </div>
+                        </div>
+
                         <!-- Security Note -->
                         <div class="rounded-2xl bg-amber-50 dark:bg-amber-500/10 p-6 ring-1 ring-amber-500/20">
                             <h3 class="font-semibold text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.7.6] – Short Description
+
+**Release date:** 2026-01-17
+
+### Added
+
+- **MCP Test Endpoint:**
+
+  - **Public API:** Added `/api/mcp/test` endpoint allowing external applications (AI assistants) to verify API key validity and connection status.
+  - **Documentation:** Updated `docs/mcp-server.md` with connection testing instructions and curl examples.
+  - **Marketplace UI:** Added a "Test Connection" section to the `/marketplace/mcp` page with a ready-to-use curl command generator.
+
 - **MCP Email Campaign & Automation:**
 
   - **Campaign Management:** Added MCP tools and API endpoints for full email campaign lifecycle:

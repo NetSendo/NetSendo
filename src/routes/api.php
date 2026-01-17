@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\AbTestController;
 use App\Http\Controllers\Api\V1\FunnelController;
+use App\Http\Controllers\Api\McpController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -192,3 +193,9 @@ Route::prefix('v1/lists/{list}')->middleware('throttle:api')->group(function () 
     Route::post('unsubscribe', [\App\Http\Controllers\Api\ListSubscriptionController::class, 'unsubscribe'])
         ->name('api.v1.lists.unsubscribe');
 });
+
+// MCP Connection Test (for AI assistants and external tools)
+Route::get('mcp/test', [McpController::class, 'test'])
+    ->middleware(['api.key', 'throttle:api'])
+    ->name('api.mcp.test');
+
