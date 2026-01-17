@@ -350,7 +350,8 @@ class MessageController extends Controller
             'ab_split_percentage' => $validated['ab_split_percentage'] ?? 50,
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
-            'is_active' => true, // Queue messages start as active
+            // Queue messages: active only when not a draft
+            'is_active' => $validated['status'] !== 'draft',
         ]);
 
         if (!empty($validated['contact_list_ids'])) {
@@ -636,6 +637,8 @@ class MessageController extends Controller
             'ab_split_percentage' => $validated['ab_split_percentage'] ?? 50,
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
+            // Queue messages: active only when not a draft
+            'is_active' => $validated['status'] !== 'draft',
         ]);
 
         if (array_key_exists('contact_list_ids', $validated)) {
