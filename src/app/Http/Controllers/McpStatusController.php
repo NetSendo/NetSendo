@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiKey;
 use App\Models\McpStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -14,8 +15,11 @@ class McpStatusController extends Controller
     public function status()
     {
         $latest = McpStatus::getLatestStatus();
-        $apiKey = config('services.mcp.api_key') ?: env('MCP_API_KEY');
-        $isConfigured = !empty($apiKey);
+
+        // Check for MCP key in database first, then fall back to ENV
+        $mcpKey = ApiKey::getMcpKey();
+        $envApiKey = config('services.mcp.api_key') ?: env('MCP_API_KEY');
+        $isConfigured = $mcpKey !== null || !empty($envApiKey);
 
         if (!$latest) {
             return response()->json([
@@ -76,3 +80,4 @@ class McpStatusController extends Controller
         }
     }
 }
+

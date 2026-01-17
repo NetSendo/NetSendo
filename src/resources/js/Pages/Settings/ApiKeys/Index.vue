@@ -35,6 +35,16 @@ const form = useForm({
     name: "",
     permissions: [],
     expires_at: "",
+    is_mcp: false,
+});
+
+// Edit Modal state
+const showEditModal = ref(false);
+const editingKey = ref(null);
+const editForm = useForm({
+    name: "",
+    permissions: [],
+    is_mcp: false,
 });
 
 const permissionLabels = computed(() => ({
@@ -63,6 +73,7 @@ const permissionLabels = computed(() => ({
 function openCreateModal() {
     form.reset();
     form.permissions = [...props.availablePermissions]; // All permissions by default
+    form.is_mcp = false;
     newKeyResult.value = null;
     keyVisible.value = false;
     keyCopied.value = false;
@@ -92,6 +103,7 @@ async function createKey() {
                 name: form.name,
                 permissions: form.permissions,
                 expires_at: form.expires_at || null,
+                is_mcp: form.is_mcp,
             }),
         });
 
@@ -145,6 +157,32 @@ function deleteKey() {
             onFinish: () => closeModal(),
         });
     }
+}
+
+function openEditModal(key) {
+    editingKey.value = key;
+    editForm.name = key.name;
+    editForm.permissions = [...(key.permissions || [])];
+    editForm.is_mcp = key.is_mcp || false;
+    showEditModal.value = true;
+}
+
+function closeEditModal() {
+    showEditModal.value = false;
+    editingKey.value = null;
+}
+
+function updateKey() {
+    if (!editingKey.value) return;
+
+    router.put(route("settings.api-keys.update", editingKey.value.id), {
+        name: editForm.name,
+        permissions: editForm.permissions,
+        is_mcp: editForm.is_mcp,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => closeEditModal(),
+    });
 }
 
 const { locale } = useI18n();
@@ -329,6 +367,12 @@ function formatDateTime(dateString) {
                                             >{{ key.name }}</span
                                         >
                                         <span
+                                            v-if="key.is_mcp"
+                                            class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                        >
+                                            🤖 MCP
+                                        </span>
+                                        <span
                                             v-if="key.is_expired"
                                             class="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                                         >
@@ -373,24 +417,25 @@ function formatDateTime(dateString) {
                                     {{ formatDateTime(key.created_at) }}
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <button
-                                        @click="confirmDeleteKey(key.id)"
-                                        class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                    >
-                                        <svg
-                                            class="w-5 h-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                    <div class="flex items-center justify-end gap-2">
+                                        <button
+                                            @click="openEditModal(key)"
+                                            class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                                            :title="t('api_keys.edit') || 'Edytuj'"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
-                                    </button>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click="confirmDeleteKey(key.id)"
+                                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -497,6 +542,25 @@ curl -X POST \
                                 type="datetime-local"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                             />
+                        </div>
+
+                        <!-- MCP Key Checkbox -->
+                        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    v-model="form.is_mcp"
+                                    class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                                />
+                                <div>
+                                    <span class="font-medium text-purple-800 dark:text-purple-200">
+                                        🤖 {{ t("api_keys.mcp_key") || "Klucz MCP" }}
+                                    </span>
+                                    <p class="text-sm text-purple-600 dark:text-purple-300 mt-0.5">
+                                        {{ t("api_keys.mcp_key_hint") || "Użyj tego klucza do integracji z Claude, Cursor lub VS Code" }}
+                                    </p>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
@@ -657,6 +721,83 @@ curl -X POST \
                     <DangerButton class="ml-3" @click="deleteKey">
                         {{ t("common.delete") || "Delete" }}
                     </DangerButton>
+                </div>
+            </div>
+        </Modal>
+
+        <!-- Edit Key Modal -->
+        <Modal :show="showEditModal" @close="closeEditModal">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    ✏️ {{ t("api_keys.edit_modal.title") || "Edytuj klucz API" }}
+                </h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {{ t("api_keys.modal.name_label") }}
+                        </label>
+                        <input
+                            v-model="editForm.name"
+                            type="text"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {{ t("api_keys.modal.permissions_label") }}
+                        </label>
+                        <div class="space-y-2">
+                            <label
+                                v-for="perm in availablePermissions"
+                                :key="perm"
+                                class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    v-model="editForm.permissions"
+                                    :value="perm"
+                                    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                />
+                                <span class="text-lg">{{ permissionLabels[perm]?.icon }}</span>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ permissionLabels[perm]?.label || perm }}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- MCP Key Checkbox -->
+                    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                v-model="editForm.is_mcp"
+                                class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                            />
+                            <div>
+                                <span class="font-medium text-purple-800 dark:text-purple-200">
+                                    🤖 {{ t("api_keys.mcp_key") || "Klucz MCP" }}
+                                </span>
+                                <p class="text-sm text-purple-600 dark:text-purple-300 mt-0.5">
+                                    {{ t("api_keys.mcp_key_hint") || "Użyj tego klucza do integracji z Claude, Cursor lub VS Code" }}
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <SecondaryButton @click="closeEditModal">
+                        {{ t("common.cancel") || "Anuluj" }}
+                    </SecondaryButton>
+                    <button
+                        @click="updateKey"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+                    >
+                        {{ t("common.save") || "Zapisz" }}
+                    </button>
                 </div>
             </div>
         </Modal>

@@ -338,6 +338,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::prefix('settings/api-keys')->name('settings.api-keys.')->group(function () {
         Route::get('/', [\App\Http\Controllers\ApiKeyController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\ApiKeyController::class, 'store'])->name('store');
+        Route::put('/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'update'])->name('update');
         Route::delete('/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'destroy'])->name('destroy');
     });
 

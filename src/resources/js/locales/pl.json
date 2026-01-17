@@ -2118,6 +2118,8 @@
         }
     },
     "mcp": {
+        "local_setup_note": "Ważne: Upewnij się, że zaznaczyłeś opcję \"Użyj dla MCP\" przy jednym z kluczy API w Ustawieniach. Serwer automatycznie go użyje.",
+        "remote_setup_hint": "Użyj wygenerowanego poniżej polecenia. Zawiera ono konfigurację twojego klucza API.",
         "page_title": "MCP Server - Integracja AI",
         "title": "MCP Server",
         "hero_title": "Model Context Protocol",
@@ -3687,7 +3689,14 @@
             "get_subscribers": "Pobierz listę subskrybentów",
             "add_subscriber": "Dodaj nowego subskrybenta"
         },
-        "delete_confirm": "Czy na pewno chcesz usunąć ten klucz API? Ta operacja jest nieodwracalna."
+        "delete_confirm": "Czy na pewno chcesz usunąć ten klucz API? Ta operacja jest nieodwracalna.",
+        "delete_confirm_title": "Usuń klucz API",
+        "mcp_key": "Klucz MCP",
+        "mcp_key_hint": "Użyj tego klucza do integracji z Claude, Cursor lub VS Code",
+        "edit": "Edytuj",
+        "edit_modal": {
+            "title": "Edytuj klucz API"
+        }
     },
     "inserts": {
         "title": "Wstawki i podpisy",

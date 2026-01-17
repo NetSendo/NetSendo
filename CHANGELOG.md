@@ -5,6 +5,34 @@ All notable changes to the NetSendo project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **MCP Key Management:**
+  - **Encrypted Storage:** Implemented secure storage for MCP-designated API keys using Laravel's encryption. Plain keys are encrypted and stored in the database, allowing retrieval for automated testing.
+  - **Hybrid Connection Testing:** Updated `mcp:test-connection` command to support both standard HTTP testing and internal fallback verification.
+    - Automatically detects if `localhost` is unreachable (e.g., within Docker) and switches to internal API key validation.
+    - Ensures reliable MCP status reporting across all environments (Local Docker, Hosted, Remote).
+  - **Zero-Config Local Setup:** Local Docker environments no longer require manual `MCP_API_KEY` configuration in environment variables when an API key is marked as "Use for MCP".
+  - **Database Integration:** Added `is_mcp` column to `api_keys` table to designate a specific API key for MCP usage, removing the need for `MCP_API_KEY` environment variable.
+  - **API Key Editing:** Added functionality to edit existing API keys (rename, modify permissions, toggle MCP status).
+  - **UI Improvements:** Updated API Keys settings page with:
+    - MCP checkbox in "Create Key" modal.
+    - Edit button and modal for existing keys.
+    - specialized "MCP" badge for the designated key.
+  - **Auto-Discovery:** Updated `McpStatusService` to automatically detect and use the database-configured MCP key for status checks and connections.
+
+### Fixed
+
+- **MCP Connection Test:** Fixed failure in Docker environments where internal networking prevented the test command from reaching the API endpoint. Added fallback mechanism to verify key validity directly against the database.
+
+- **Email Editor Image Editing:**
+  - Fixed an issue where images in full HTML documents (e.g., templates with imported footers/inserts) were not editable in preview mode as they are rendered inside an iframe.
+  - Implemented double-click handling for images within the preview iframe to open the image editing modal.
+  - Added synchronization between the image editing modal and the preview iframe for real-time updates of image properties (width, alignment, float, margin, border-radius).
+  - Added visual hover effects to clearly indicate editable images in preview mode.
+
 ## [1.7.5] – Short Description
 
 **Release date:** 2026-01-17

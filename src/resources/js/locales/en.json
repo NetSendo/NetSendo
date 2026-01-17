@@ -2632,6 +2632,8 @@
         }
     },
     "mcp": {
+        "local_setup_note": "Important: Ensure you have enabled \"Use for MCP\" on one of your API Keys in Settings. The server will automatically use it.",
+        "remote_setup_hint": "Use the generated command below. It includes your API Key configuration.",
         "page_title": "MCP Server - AI Integration",
         "title": "MCP Server",
         "hero_title": "Model Context Protocol",
@@ -3733,7 +3735,14 @@
             "get_subscribers": "Get subscribers list",
             "add_subscriber": "Add new subscriber"
         },
-        "delete_confirm": "Are you sure you want to delete this API key? This operation is irreversible."
+        "delete_confirm": "Are you sure you want to delete this API key? This operation is irreversible.",
+        "delete_confirm_title": "Delete API Key",
+        "mcp_key": "MCP Key",
+        "mcp_key_hint": "Use this key for integration with Claude, Cursor or VS Code",
+        "edit": "Edit",
+        "edit_modal": {
+            "title": "Edit API Key"
+        }
     },
     "inserts": {
         "title": "Inserts & Signatures",

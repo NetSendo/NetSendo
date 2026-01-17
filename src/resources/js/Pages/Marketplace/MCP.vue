@@ -298,9 +298,19 @@ const exampleQueries = [
 
                             <!-- Remote Mode Content -->
                             <div v-if="activeInstallMode === 'remote'" class="space-y-6 mb-6">
+                                <div class="rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-4 py-3 ring-1 ring-indigo-500/20">
+                                    <p class="text-sm text-indigo-700 dark:text-indigo-400">
+                                        {{ $t('mcp.remote_setup_hint') }}
+                                    </p>
+                                </div>
                                 <div class="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
                                     <p class="text-sm text-emerald-700 dark:text-emerald-400">
                                         <span class="font-semibold">{{ $t('mcp.remote_recommended') }}</span> — {{ $t('mcp.remote_description') }}
+                                    </p>
+                                </div>
+                                <div class="rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-4 py-3 ring-1 ring-indigo-500/20">
+                                    <p class="text-sm text-indigo-700 dark:text-indigo-400">
+                                        {{ $t('mcp.remote_setup_hint') }}
                                     </p>
                                 </div>
                                 <div class="flex gap-4">
@@ -331,6 +341,11 @@ const exampleQueries = [
                                 <div class="rounded-xl bg-blue-50 dark:bg-blue-500/10 p-4 ring-1 ring-blue-500/20">
                                     <p class="text-sm text-blue-700 dark:text-blue-400">
                                         <span class="font-semibold">{{ $t('mcp.local_docker') }}</span> — {{ $t('mcp.local_description') }}
+                                    </p>
+                                </div>
+                                <div class="rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-4 py-3 ring-1 ring-indigo-500/20">
+                                    <p class="text-sm text-indigo-700 dark:text-indigo-400">
+                                        {{ $t('mcp.local_setup_note') }}
                                     </p>
                                 </div>
                                 <div

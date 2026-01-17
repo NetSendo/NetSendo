@@ -459,6 +459,9 @@ const editingText = ref('')
 const editingElementTag = ref('')
 const textEditCursorPos = ref(0)
 
+// Image editing from iframe (preview mode for full HTML documents)
+const editingImageFromIframe = ref(null) // Stores the data-img-edit-id when editing from iframe
+
 // Common variables for insertion
 const commonVariables = [
     { code: '[[first_name]]', label: 'placeholders.first_name' },
@@ -1119,8 +1122,21 @@ const insertImage = () => {
             imgHtml = `<a href="${imageLink.value}" target="_blank">${imgHtml}</a>`
         }
 
-        if (isEditingImage.value && editingImageElement.value) {
-            // For editing, we need to find and replace the image in the document
+        // Check if editing from iframe (preview mode for full HTML documents)
+        if (isEditingImage.value && editingImageFromIframe.value) {
+            // Send update message to iframe
+            const iframe = visualEditorIframe.value
+            if (iframe?.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'updateImage',
+                    editId: editingImageFromIframe.value,
+                    src: imageUrl.value,
+                    style: styleStr,
+                    link: imageLink.value || null
+                }, '*')
+            }
+        } else if (isEditingImage.value && editingImageElement.value) {
+            // For editing in Tiptap, we need to find and replace the image in the document
             // Use a more reliable approach - delete and reinsert at current position
             const editorInstance = editor.value
 
@@ -1172,6 +1188,7 @@ const closeImageModal = () => {
     imageBorderRadius.value = '0'
     isEditingImage.value = false
     editingImageElement.value = null
+    editingImageFromIframe.value = null
 }
 
 // Delete the currently editing image from the editor
@@ -1310,12 +1327,17 @@ const getEditableSrcdoc = computed(() => {
         '[data-edit-id] { cursor: pointer !important; transition: all 0.2s ease !important; }' +
         '[data-edit-id]:hover { outline: 2px solid #6366f1 !important; outline-offset: 2px !important; background-color: rgba(99, 102, 241, 0.05) !important; }' +
         '[data-edit-id].editing-active { outline: 2px solid #10b981 !important; outline-offset: 2px !important; background-color: rgba(16, 185, 129, 0.1) !important; }' +
+        // Image editing styles
+        '[data-img-edit-id] { cursor: pointer !important; transition: all 0.2s ease !important; }' +
+        '[data-img-edit-id]:hover { outline: 3px solid #8b5cf6 !important; outline-offset: 2px !important; }' +
+        '[data-img-edit-id].editing-active { outline: 3px solid #10b981 !important; outline-offset: 2px !important; }' +
         '.netsendo-edit-hint { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 8px 16px; border-radius: 8px; font-size: 12px; z-index: 9999; opacity: 0.9; pointer-events: none; }' +
     '</sty' + 'le>' +
     '<scr' + 'ipt>' +
         'document.addEventListener("DOMContentLoaded", function() {' +
             'var editableSelectors = "h1, h2, h3, h4, h5, h6, p, span, a, td, th, li, strong, em, b, i, u, div";' +
             'var elementIndex = 0;' +
+            'var imageIndex = 0;' +
             'var elements = document.querySelectorAll(editableSelectors);' +
 
             // Create hint element
@@ -1325,7 +1347,7 @@ const getEditableSrcdoc = computed(() => {
             'hint.style.display = "none";' +
             'document.body.appendChild(hint);' +
 
-            // Process elements
+            // Process text elements
             'elements.forEach(function(el) {' +
                 // Only make elements with actual text content editable
                 'var hasDirectText = false;' +
@@ -1373,6 +1395,81 @@ const getEditableSrcdoc = computed(() => {
                 '}' +
             '});' +
 
+            // Process images for editing
+            'var images = document.querySelectorAll("img");' +
+            'images.forEach(function(img) {' +
+                'var imgId = "img-edit-" + (imageIndex++);' +
+                'img.setAttribute("data-img-edit-id", imgId);' +
+
+                // Double-click handler to edit image
+                'img.addEventListener("dblclick", function(e) {' +
+                    'e.preventDefault();' +
+                    'e.stopPropagation();' +
+
+                    // Remove active class from all elements
+                    'document.querySelectorAll(".editing-active").forEach(function(active) {' +
+                        'active.classList.remove("editing-active");' +
+                    '});' +
+
+                    // Add active class to clicked image
+                    'this.classList.add("editing-active");' +
+
+                    // Extract image properties
+                    'var style = this.getAttribute("style") || "";' +
+                    'var src = this.getAttribute("src") || "";' +
+
+                    // Parse width
+                    'var widthMatch = style.match(/width:\\s*(\\d+)%/);' +
+                    'var width = widthMatch ? widthMatch[1] : "100";' +
+
+                    // Parse float
+                    'var float = "none";' +
+                    'if (style.indexOf("float: left") > -1) float = "left";' +
+                    'else if (style.indexOf("float: right") > -1) float = "right";' +
+
+                    // Parse alignment
+                    'var align = "center";' +
+                    'if (style.indexOf("margin-left: auto") > -1 && style.indexOf("margin-right: auto") > -1) align = "center";' +
+                    'else if (style.indexOf("margin-left: auto") > -1) align = "right";' +
+                    'else if (style.indexOf("margin-right: auto") > -1) align = "left";' +
+
+                    // Parse margin
+                    'var marginMatch = style.match(/margin:\\s*(\\d+)px/);' +
+                    'var margin = marginMatch ? marginMatch[1] : "10";' +
+
+                    // Parse border-radius
+                    'var borderRadiusMatch = style.match(/border-radius:\\s*(\\d+)px/);' +
+                    'var borderRadius = borderRadiusMatch ? borderRadiusMatch[1] : "0";' +
+
+                    // Check for parent link
+                    'var parentLink = this.closest("a");' +
+                    'var link = parentLink ? parentLink.getAttribute("href") || "" : "";' +
+
+                    // Send message to parent
+                    'window.parent.postMessage({' +
+                        'type: "imageClicked",' +
+                        'editId: imgId,' +
+                        'src: src,' +
+                        'width: width,' +
+                        'float: float,' +
+                        'align: align,' +
+                        'margin: margin,' +
+                        'borderRadius: borderRadius,' +
+                        'link: link' +
+                    '}, "*");' +
+                '});' +
+
+                // Show hint on hover
+                'img.addEventListener("mouseenter", function() {' +
+                    'hint.textContent = "Kliknij dwukrotnie, aby edytować obraz";' +
+                    'hint.style.display = "block";' +
+                '});' +
+                'img.addEventListener("mouseleave", function() {' +
+                    'hint.style.display = "none";' +
+                    'hint.textContent = "Kliknij, aby edytować tekst";' +
+                '});' +
+            '});' +
+
             // Listen for update from parent (after saving edit)
             'window.addEventListener("message", function(e) {' +
                 'if (e.data && e.data.type === "updateElement" && e.data.editId && e.data.newContent !== undefined) {' +
@@ -1380,6 +1477,37 @@ const getEditableSrcdoc = computed(() => {
                     'if (el) {' +
                         'el.innerHTML = e.data.newContent;' +
                         'el.classList.remove("editing-active");' +
+                        // Send updated HTML back
+                        'window.parent.postMessage({ type: "htmlUpdate", html: document.documentElement.outerHTML }, "*");' +
+                    '}' +
+                '}' +
+                // Handle image update from parent
+                'if (e.data && e.data.type === "updateImage" && e.data.editId) {' +
+                    'var img = document.querySelector("[data-img-edit-id=\\"" + e.data.editId + "\\"]");' +
+                    'if (img) {' +
+                        // Update image src
+                        'if (e.data.src) img.setAttribute("src", e.data.src);' +
+                        // Update style
+                        'if (e.data.style) img.setAttribute("style", e.data.style);' +
+                        'img.classList.remove("editing-active");' +
+                        // Handle link wrapping
+                        'var parentLink = img.closest("a");' +
+                        'if (e.data.link) {' +
+                            'if (parentLink) {' +
+                                'parentLink.setAttribute("href", e.data.link);' +
+                            '} else {' +
+                                // Wrap in new link
+                                'var newLink = document.createElement("a");' +
+                                'newLink.setAttribute("href", e.data.link);' +
+                                'newLink.setAttribute("target", "_blank");' +
+                                'img.parentNode.insertBefore(newLink, img);' +
+                                'newLink.appendChild(img);' +
+                            '}' +
+                        '} else if (parentLink) {' +
+                            // Remove link wrapper
+                            'parentLink.parentNode.insertBefore(img, parentLink);' +
+                            'parentLink.remove();' +
+                        '}' +
                         // Send updated HTML back
                         'window.parent.postMessage({ type: "htmlUpdate", html: document.documentElement.outerHTML }, "*");' +
                     '}' +
@@ -1425,13 +1553,33 @@ const setupEditableIframe = () => {
             return
         }
 
-        // Handle HTML update from iframe
+        // Handle image click from iframe - open image edit modal
+        if (event.data?.type === 'imageClicked') {
+            isEditingImage.value = true
+            editingImageFromIframe.value = event.data.editId
+            editingImageElement.value = null // Clear Tiptap reference since we're editing from iframe
+            imageUrl.value = event.data.src || ''
+            imageWidth.value = event.data.width || '100'
+            imageFloat.value = event.data.float || 'none'
+            imageAlignment.value = event.data.align || 'center'
+            imageMargin.value = event.data.margin || '10'
+            imageBorderRadius.value = event.data.borderRadius || '0'
+            imageLink.value = event.data.link || ''
+            imagePreviewLoaded.value = true
+            imagePreviewError.value = false
+            isUploadingImage.value = false
+            imageUploadError.value = ''
+            showImageModal.value = true
+            return
+        }
+
         if (event.data?.type === 'htmlUpdate' && event.data.html) {
             // Extract just the content we care about (remove our injected scripts/styles)
             let newHtml = event.data.html
 
             // Clean up our added attributes
             newHtml = newHtml.replace(/\s*data-edit-id="[^"]*"/g, '')
+            newHtml = newHtml.replace(/\s*data-img-edit-id="[^"]*"/g, '')
             newHtml = newHtml.replace(/\s*class="editing-active"/g, '')
 
             // Remove our injected style and script blocks
