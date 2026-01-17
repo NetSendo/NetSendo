@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Message Sorting:** Fixed sorting by "Type" column in the messages list. Now properly applies secondary sorting by "Day" for autoresponder messages, ensuring they appear in numerical order (Day 1, Day 2, etc.) instead of random order.
+
 ### Changed
 
 ## [1.7.6] – Short Description

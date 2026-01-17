@@ -80,6 +80,12 @@ class MessageController extends Controller
         // Allow sorting by valid fields
         if (in_array($sortField, ['id', 'subject', 'status', 'created_at', 'type', 'day'])) {
             $query->orderBy($sortField, $sortDirection);
+
+            // When sorting by type, add secondary sort by day for proper queue ordering
+            // This ensures autoresponder messages are sorted: Day 1, Day 2, Day 3... instead of random order
+            if ($sortField === 'type') {
+                $query->orderBy('day', $sortDirection);
+            }
         } else {
              $query->latest();
         }
