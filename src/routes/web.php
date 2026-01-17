@@ -101,6 +101,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('{template}/thumbnail', [\App\Http\Controllers\TemplateBuilderController::class, 'generateThumbnail'])->name('thumbnail');
         Route::get('block-defaults', [\App\Http\Controllers\TemplateBuilderController::class, 'getBlockDefaults'])->name('block-defaults');
         Route::post('upload-thumbnail', [\App\Http\Controllers\TemplateBuilderController::class, 'uploadThumbnail'])->name('upload-thumbnail');
+        Route::get('proxy-image', [\App\Http\Controllers\ImageProxyController::class, 'proxy'])->name('proxy-image');
     });
 
     // Template AI API

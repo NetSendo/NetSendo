@@ -4,7 +4,7 @@
  * HTTP client for communicating with NetSendo REST API v1
  */
 import type { Config } from './config.js';
-import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse } from './types.js';
+import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStats } from './types.js';
 export declare class NetSendoApiError extends Error {
     statusCode: number;
     errors?: Record<string, string[]> | undefined;
@@ -51,6 +51,95 @@ export declare class NetSendoApiClient {
     }>;
     getSmsStatus(id: string): Promise<SmsStatus>;
     listSmsProviders(): Promise<SmsProvider[]>;
+    listMessages(params?: {
+        page?: number;
+        per_page?: number;
+        channel?: 'email' | 'sms';
+        type?: 'broadcast' | 'autoresponder';
+        status?: string;
+        search?: string;
+    }): Promise<PaginatedResponse<Message>>;
+    getMessage(id: number): Promise<Message>;
+    createMessage(data: MessageCreateInput): Promise<Message>;
+    updateMessage(id: number, data: MessageUpdateInput): Promise<Message>;
+    deleteMessage(id: number): Promise<void>;
+    setMessageLists(id: number, contactListIds: number[]): Promise<{
+        message: Message;
+        planned_recipients: number;
+    }>;
+    setMessageExclusions(id: number, excludedListIds: number[]): Promise<{
+        message: Message;
+        planned_recipients: number;
+    }>;
+    scheduleMessage(id: number, scheduledAt: string): Promise<Message>;
+    sendMessage(id: number): Promise<{
+        message: Message;
+        recipients_added?: number;
+    }>;
+    getMessageStats(id: number): Promise<MessageStats>;
+    listAbTests(params?: {
+        page?: number;
+        per_page?: number;
+        status?: string;
+        message_id?: number;
+    }): Promise<PaginatedResponse<AbTest>>;
+    getAbTest(id: number): Promise<AbTest>;
+    createAbTest(data: AbTestCreateInput): Promise<AbTest>;
+    addAbTestVariant(testId: number, data: AbTestVariantInput): Promise<AbTestVariant>;
+    startAbTest(id: number): Promise<{
+        test: AbTest;
+        ends_at: string;
+    }>;
+    endAbTest(id: number, winnerVariantId?: number): Promise<{
+        test: AbTest;
+        winner: {
+            variant_letter: string;
+            id: number;
+        } | null;
+    }>;
+    getAbTestResults(id: number): Promise<{
+        test_id: number;
+        name: string;
+        status: string;
+        test_type: string;
+        winning_metric: string;
+        test_started_at: string | null;
+        test_ended_at: string | null;
+        winner: {
+            variant_letter: string;
+            id: number;
+        } | null;
+        results: Record<string, AbTestVariantResult>;
+    }>;
+    deleteAbTest(id: number): Promise<void>;
+    listFunnels(params?: {
+        page?: number;
+        per_page?: number;
+        status?: string;
+        trigger_type?: string;
+        search?: string;
+    }): Promise<PaginatedResponse<Funnel>>;
+    getFunnel(id: number): Promise<Funnel & {
+        stats: FunnelStats;
+    }>;
+    createFunnel(data: FunnelCreateInput): Promise<Funnel>;
+    updateFunnel(id: number, data: Partial<FunnelCreateInput>): Promise<Funnel>;
+    addFunnelStep(funnelId: number, data: FunnelStepInput): Promise<FunnelStep>;
+    activateFunnel(id: number): Promise<Funnel>;
+    pauseFunnel(id: number): Promise<Funnel>;
+    getFunnelStats(id: number): Promise<{
+        id: number;
+        name: string;
+        status: string;
+        stats: FunnelStats;
+        trigger: {
+            type: string;
+            list?: string;
+            form?: string;
+            tag?: string;
+        };
+    }>;
+    deleteFunnel(id: number): Promise<void>;
     getAccountInfo(): Promise<{
         name: string;
         email: string;

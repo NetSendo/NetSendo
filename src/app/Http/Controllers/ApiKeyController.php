@@ -96,6 +96,7 @@ class ApiKeyController extends Controller
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|in:' . implode(',', ApiKey::PERMISSIONS),
             'is_mcp' => 'nullable|boolean',
+            'plain_key' => 'nullable|string|starts_with:ns_live_',
         ]);
 
         // Update name if provided
@@ -111,7 +112,9 @@ class ApiKeyController extends Controller
         // Handle MCP flag
         if (isset($validated['is_mcp'])) {
             if ($validated['is_mcp']) {
-                $apiKey->markAsMcp();
+                // Pass plain key for encryption if provided
+                $plainKey = $validated['plain_key'] ?? null;
+                $apiKey->markAsMcp($plainKey);
             } else {
                 $apiKey->unmarkAsMcp();
             }

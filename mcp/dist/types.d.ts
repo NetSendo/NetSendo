@@ -52,6 +52,201 @@ export interface Tag {
     subscribers_count?: number;
     created_at: string;
 }
+export interface Message {
+    id: number;
+    user_id: number;
+    channel: 'email' | 'sms';
+    type: 'broadcast' | 'autoresponder';
+    subject: string;
+    preheader: string | null;
+    content: string;
+    status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'active';
+    mailbox_id: number | null;
+    template_id: number | null;
+    day: number | null;
+    time_of_day: string | null;
+    timezone: string | null;
+    scheduled_at: string | null;
+    is_active: boolean;
+    sent_count: number;
+    planned_recipients_count: number;
+    created_at: string;
+    updated_at: string;
+    mailbox?: Mailbox;
+    contact_lists?: ContactList[];
+    excluded_lists?: ContactList[];
+}
+export interface MessageCreateInput {
+    subject: string;
+    channel: 'email' | 'sms';
+    type: 'broadcast' | 'autoresponder';
+    content?: string;
+    preheader?: string;
+    mailbox_id?: number;
+    template_id?: number;
+    day?: number;
+    time_of_day?: string;
+    timezone?: string;
+    contact_list_ids?: number[];
+    excluded_list_ids?: number[];
+}
+export interface MessageUpdateInput {
+    subject?: string;
+    content?: string;
+    preheader?: string;
+    mailbox_id?: number;
+    template_id?: number;
+    day?: number;
+    time_of_day?: string;
+    timezone?: string;
+    is_active?: boolean;
+}
+export interface MessageStats {
+    id: number;
+    subject: string;
+    status: string;
+    type: string;
+    sent_count: number;
+    planned_recipients_count: number;
+    queue_stats: {
+        planned: number;
+        queued: number;
+        sent: number;
+        failed: number;
+        skipped: number;
+        total: number;
+    };
+    schedule_stats?: {
+        sent: number;
+        today: number;
+        tomorrow: number;
+        day_after_tomorrow: number;
+        days_3_7: number;
+        over_7_days: number;
+        missed: number;
+        total_scheduled: number;
+    };
+}
+export interface AbTest {
+    id: number;
+    message_id: number;
+    user_id: number;
+    name: string;
+    status: 'draft' | 'running' | 'paused' | 'completed' | 'cancelled';
+    test_type: 'subject' | 'content' | 'sender' | 'send_time' | 'full';
+    winning_metric: 'open_rate' | 'click_rate' | 'conversion_rate';
+    sample_percentage: number;
+    test_duration_hours: number;
+    auto_select_winner: boolean;
+    confidence_threshold: number;
+    winner_variant_id: number | null;
+    test_started_at: string | null;
+    test_ended_at: string | null;
+    final_results: Record<string, AbTestVariantResult> | null;
+    created_at: string;
+    updated_at: string;
+    message?: Message;
+    variants?: AbTestVariant[];
+    winner_variant?: AbTestVariant;
+}
+export interface AbTestVariant {
+    id: number;
+    ab_test_id: number;
+    variant_letter: string;
+    subject: string | null;
+    content: string | null;
+    mailbox_id: number | null;
+    is_control: boolean;
+    weight: number;
+}
+export interface AbTestVariantResult {
+    variant_id: number;
+    variant_letter: string;
+    sent: number;
+    opens: number;
+    unique_opens: number;
+    clicks: number;
+    unique_clicks: number;
+    open_rate: number;
+    click_rate: number;
+    click_to_open_rate: number;
+}
+export interface AbTestCreateInput {
+    message_id: number;
+    name: string;
+    test_type: 'subject' | 'content' | 'sender' | 'send_time' | 'full';
+    winning_metric: 'open_rate' | 'click_rate' | 'conversion_rate';
+    sample_percentage: number;
+    test_duration_hours: number;
+    auto_select_winner?: boolean;
+    confidence_threshold?: number;
+}
+export interface AbTestVariantInput {
+    variant_letter: string;
+    subject?: string;
+    content?: string;
+    mailbox_id?: number;
+    is_control?: boolean;
+    weight?: number;
+}
+export interface Funnel {
+    id: number;
+    user_id: number;
+    name: string;
+    slug: string;
+    status: 'draft' | 'active' | 'paused';
+    trigger_type: 'list_signup' | 'tag_added' | 'form_submit' | 'manual';
+    trigger_list_id: number | null;
+    trigger_form_id: number | null;
+    trigger_tag: string | null;
+    subscribers_count: number;
+    completed_count: number;
+    settings: Record<string, unknown>;
+    created_at: string;
+    updated_at: string;
+    steps?: FunnelStep[];
+    trigger_list?: ContactList;
+}
+export interface FunnelStep {
+    id: number;
+    funnel_id: number;
+    type: 'start' | 'email' | 'sms' | 'delay' | 'condition' | 'action' | 'end';
+    name: string;
+    order: number;
+    config: Record<string, unknown>;
+    message_id: number | null;
+    delay_value: number | null;
+    delay_unit: 'minutes' | 'hours' | 'days' | null;
+    condition_type: string | null;
+    condition_config: Record<string, unknown> | null;
+    next_step_id: number | null;
+}
+export interface FunnelCreateInput {
+    name: string;
+    trigger_type: 'list_signup' | 'tag_added' | 'form_submit' | 'manual';
+    trigger_list_id?: number;
+    trigger_form_id?: number;
+    trigger_tag?: string;
+    settings?: Record<string, unknown>;
+}
+export interface FunnelStepInput {
+    type: 'email' | 'sms' | 'delay' | 'condition' | 'action' | 'end';
+    name: string;
+    after_step_id?: number;
+    config?: Record<string, unknown>;
+    message_id?: number;
+    delay_value?: number;
+    delay_unit?: 'minutes' | 'hours' | 'days';
+    condition_type?: string;
+    condition_config?: Record<string, unknown>;
+}
+export interface FunnelStats {
+    total_subscribers: number;
+    active_subscribers: number;
+    completed: number;
+    completion_rate: number;
+    steps_count: number;
+}
 export interface Campaign {
     id: number;
     name: string;

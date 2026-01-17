@@ -45,6 +45,7 @@ const editForm = useForm({
     name: "",
     permissions: [],
     is_mcp: false,
+    plain_key: "",
 });
 
 const permissionLabels = computed(() => ({
@@ -164,6 +165,7 @@ function openEditModal(key) {
     editForm.name = key.name;
     editForm.permissions = [...(key.permissions || [])];
     editForm.is_mcp = key.is_mcp || false;
+    editForm.plain_key = "";
     showEditModal.value = true;
 }
 
@@ -179,6 +181,7 @@ function updateKey() {
         name: editForm.name,
         permissions: editForm.permissions,
         is_mcp: editForm.is_mcp,
+        plain_key: editForm.plain_key || null,
     }, {
         preserveScroll: true,
         onSuccess: () => closeEditModal(),
@@ -785,6 +788,22 @@ curl -X POST \
                                 </p>
                             </div>
                         </label>
+
+                        <!-- Plain Key Input (shown when MCP is checked) -->
+                        <div v-if="editForm.is_mcp" class="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
+                            <label class="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-1">
+                                🔑 {{ t("api_keys.mcp_plain_key_label") || "Klucz API do szyfrowania" }}
+                            </label>
+                            <input
+                                v-model="editForm.plain_key"
+                                type="text"
+                                :placeholder="t('api_keys.mcp_plain_key_placeholder') || 'ns_live_...'"
+                                class="w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-lg focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
+                            />
+                            <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                                {{ t("api_keys.mcp_plain_key_hint") || "Wklej swój klucz API, aby umożliwić testowanie połączenia MCP" }}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

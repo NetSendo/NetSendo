@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **MCP Email Campaign & Automation:**
+
+  - **Campaign Management:** Added MCP tools and API endpoints for full email campaign lifecycle:
+    - Create, update, delete campaigns (messages).
+    - Manage recipient lists and exclusions.
+    - Schedule and send campaigns.
+    - View campaign statistics.
+  - **A/B Testing:** Implemented comprehensive A/B testing capabilities via MCP:
+    - Create and manage A/B tests.
+    - Support for multiple variants (Subject, Content, Sender, etc.).
+    - Tools for start, end, and retrieve test results.
+  - **Automation Funnels:** Added tools for managing automation sequences:
+    - Create funnels with triggers (List Signup, Tag Added, etc.).
+    - Add steps (Email, Delay, Condition).
+    - Activate and pause funnels.
+  - **Extended Client:** Updated `@netsendo/mcp-client` with 25 new tools and corresponding API methods.
+
 - **MCP Key Management:**
   - **Encrypted Storage:** Implemented secure storage for MCP-designated API keys using Laravel's encryption. Plain keys are encrypted and stored in the database, allowing retrieval for automated testing.
   - **Hybrid Connection Testing:** Updated `mcp:test-connection` command to support both standard HTTP testing and internal fallback verification.
@@ -27,11 +44,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **MCP Connection Test:** Fixed failure in Docker environments where internal networking prevented the test command from reaching the API endpoint. Added fallback mechanism to verify key validity directly against the database.
 
+- **MCP Key for Existing API Keys:** Fixed issue where editing an existing API key to mark it as MCP would not allow connection testing because the plain key was not stored. Added an input field in the API Key edit modal to provide the plain key for encryption when marking an existing key as MCP.
+
 - **Email Editor Image Editing:**
+
   - Fixed an issue where images in full HTML documents (e.g., templates with imported footers/inserts) were not editable in preview mode as they are rendered inside an iframe.
   - Implemented double-click handling for images within the preview iframe to open the image editing modal.
   - Added synchronization between the image editing modal and the preview iframe for real-time updates of image properties (width, alignment, float, margin, border-radius).
   - Added visual hover effects to clearly indicate editable images in preview mode.
+
+- **Template Builder - CORS Image Proxy:**
+  - Fixed thumbnail generation failing silently when templates contain external images from domains without CORS headers.
+  - Implemented server-side image proxy (`api.templates.proxy-image`) that fetches external images and returns them with proper CORS headers.
+  - Updated `Builder.vue` to automatically route external images through the proxy during thumbnail generation.
+  - Added security measures: MIME type validation, file size limits (5MB), blocked local/internal URLs, and response caching (1 hour).
 
 ## [1.7.5] – Short Description
 

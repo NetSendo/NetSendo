@@ -3742,7 +3742,10 @@
         "edit": "Edit",
         "edit_modal": {
             "title": "Edit API Key"
-        }
+        },
+        "mcp_plain_key_label": "API Key for encryption",
+        "mcp_plain_key_hint": "Paste your API key to enable MCP connection testing",
+        "mcp_plain_key_placeholder": "ns_live_..."
     },
     "inserts": {
         "title": "Inserts & Signatures",

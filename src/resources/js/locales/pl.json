@@ -3696,7 +3696,10 @@
         "edit": "Edytuj",
         "edit_modal": {
             "title": "Edytuj klucz API"
-        }
+        },
+        "mcp_plain_key_label": "Klucz API do szyfrowania",
+        "mcp_plain_key_hint": "Wklej swój klucz API, aby umożliwić testowanie połączenia MCP",
+        "mcp_plain_key_placeholder": "ns_live_..."
     },
     "inserts": {
         "title": "Wstawki i podpisy",

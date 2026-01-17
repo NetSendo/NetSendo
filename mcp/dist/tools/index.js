@@ -6,6 +6,9 @@
 import { registerSubscriberTools } from './subscribers.js';
 import { registerListTools } from './lists.js';
 import { registerMessagingTools } from './messaging.js';
+import { registerCampaignTools } from './campaigns.js';
+import { registerAbTestTools } from './ab-tests.js';
+import { registerFunnelTools } from './funnels.js';
 /**
  * Register all tools with the MCP server
  */
@@ -14,8 +17,14 @@ export function registerAllTools(server, api) {
     registerSubscriberTools(server, api);
     // Contact lists and tags tools
     registerListTools(server, api);
-    // Email and SMS messaging tools
+    // Email and SMS messaging tools (single sends)
     registerMessagingTools(server, api);
+    // Campaign management tools (bulk campaigns)
+    registerCampaignTools(server, api);
+    // A/B testing tools
+    registerAbTestTools(server, api);
+    // Funnel/automation tools
+    registerFunnelTools(server, api);
     // Account / Connection test tool
     server.tool('test_connection', 'Test the connection to NetSendo API. Use this to verify credentials are working.', {}, async () => {
         const result = await api.testConnection();
@@ -57,4 +66,7 @@ export function registerAllTools(server, api) {
 export { registerSubscriberTools } from './subscribers.js';
 export { registerListTools } from './lists.js';
 export { registerMessagingTools } from './messaging.js';
+export { registerCampaignTools } from './campaigns.js';
+export { registerAbTestTools } from './ab-tests.js';
+export { registerFunnelTools } from './funnels.js';
 //# sourceMappingURL=index.js.map

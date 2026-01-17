@@ -29,6 +29,23 @@ import type {
   Automation,
   PaginatedResponse,
   ApiErrorResponse,
+  // Message (Campaign) types
+  Message,
+  MessageCreateInput,
+  MessageUpdateInput,
+  MessageStats,
+  // A/B Test types
+  AbTest,
+  AbTestCreateInput,
+  AbTestVariant,
+  AbTestVariantInput,
+  AbTestVariantResult,
+  // Funnel types
+  Funnel,
+  FunnelCreateInput,
+  FunnelStep,
+  FunnelStepInput,
+  FunnelStats,
 } from './types.js';
 
 export class NetSendoApiError extends Error {
@@ -217,6 +234,184 @@ export class NetSendoApiClient {
   }
 
   // ============================================================================
+  // Messages (Campaigns)
+  // ============================================================================
+
+  async listMessages(params?: {
+    page?: number;
+    per_page?: number;
+    channel?: 'email' | 'sms';
+    type?: 'broadcast' | 'autoresponder';
+    status?: string;
+    search?: string;
+  }): Promise<PaginatedResponse<Message>> {
+    const response = await this.client.get('/messages', { params });
+    return response.data;
+  }
+
+  async getMessage(id: number): Promise<Message> {
+    const response = await this.client.get(`/messages/${id}`);
+    return response.data.data;
+  }
+
+  async createMessage(data: MessageCreateInput): Promise<Message> {
+    const response = await this.client.post('/messages', data);
+    return response.data.data;
+  }
+
+  async updateMessage(id: number, data: MessageUpdateInput): Promise<Message> {
+    const response = await this.client.put(`/messages/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteMessage(id: number): Promise<void> {
+    await this.client.delete(`/messages/${id}`);
+  }
+
+  async setMessageLists(id: number, contactListIds: number[]): Promise<{ message: Message; planned_recipients: number }> {
+    const response = await this.client.post(`/messages/${id}/lists`, { contact_list_ids: contactListIds });
+    return response.data;
+  }
+
+  async setMessageExclusions(id: number, excludedListIds: number[]): Promise<{ message: Message; planned_recipients: number }> {
+    const response = await this.client.post(`/messages/${id}/exclusions`, { excluded_list_ids: excludedListIds });
+    return response.data;
+  }
+
+  async scheduleMessage(id: number, scheduledAt: string): Promise<Message> {
+    const response = await this.client.post(`/messages/${id}/schedule`, { scheduled_at: scheduledAt });
+    return response.data.data;
+  }
+
+  async sendMessage(id: number): Promise<{ message: Message; recipients_added?: number }> {
+    const response = await this.client.post(`/messages/${id}/send`);
+    return response.data;
+  }
+
+  async getMessageStats(id: number): Promise<MessageStats> {
+    const response = await this.client.get(`/messages/${id}/stats`);
+    return response.data.data;
+  }
+
+  // ============================================================================
+  // A/B Tests
+  // ============================================================================
+
+  async listAbTests(params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+    message_id?: number;
+  }): Promise<PaginatedResponse<AbTest>> {
+    const response = await this.client.get('/ab-tests', { params });
+    return response.data;
+  }
+
+  async getAbTest(id: number): Promise<AbTest> {
+    const response = await this.client.get(`/ab-tests/${id}`);
+    return response.data.data;
+  }
+
+  async createAbTest(data: AbTestCreateInput): Promise<AbTest> {
+    const response = await this.client.post('/ab-tests', data);
+    return response.data.data;
+  }
+
+  async addAbTestVariant(testId: number, data: AbTestVariantInput): Promise<AbTestVariant> {
+    const response = await this.client.post(`/ab-tests/${testId}/variants`, data);
+    return response.data.data;
+  }
+
+  async startAbTest(id: number): Promise<{ test: AbTest; ends_at: string }> {
+    const response = await this.client.post(`/ab-tests/${id}/start`);
+    return response.data;
+  }
+
+  async endAbTest(id: number, winnerVariantId?: number): Promise<{ test: AbTest; winner: { variant_letter: string; id: number } | null }> {
+    const response = await this.client.post(`/ab-tests/${id}/end`, { winner_variant_id: winnerVariantId });
+    return response.data;
+  }
+
+  async getAbTestResults(id: number): Promise<{
+    test_id: number;
+    name: string;
+    status: string;
+    test_type: string;
+    winning_metric: string;
+    test_started_at: string | null;
+    test_ended_at: string | null;
+    winner: { variant_letter: string; id: number } | null;
+    results: Record<string, AbTestVariantResult>;
+  }> {
+    const response = await this.client.get(`/ab-tests/${id}/results`);
+    return response.data.data;
+  }
+
+  async deleteAbTest(id: number): Promise<void> {
+    await this.client.delete(`/ab-tests/${id}`);
+  }
+
+  // ============================================================================
+  // Funnels (Automation)
+  // ============================================================================
+
+  async listFunnels(params?: {
+    page?: number;
+    per_page?: number;
+    status?: string;
+    trigger_type?: string;
+    search?: string;
+  }): Promise<PaginatedResponse<Funnel>> {
+    const response = await this.client.get('/funnels', { params });
+    return response.data;
+  }
+
+  async getFunnel(id: number): Promise<Funnel & { stats: FunnelStats }> {
+    const response = await this.client.get(`/funnels/${id}`);
+    return response.data.data;
+  }
+
+  async createFunnel(data: FunnelCreateInput): Promise<Funnel> {
+    const response = await this.client.post('/funnels', data);
+    return response.data.data;
+  }
+
+  async updateFunnel(id: number, data: Partial<FunnelCreateInput>): Promise<Funnel> {
+    const response = await this.client.put(`/funnels/${id}`, data);
+    return response.data.data;
+  }
+
+  async addFunnelStep(funnelId: number, data: FunnelStepInput): Promise<FunnelStep> {
+    const response = await this.client.post(`/funnels/${funnelId}/steps`, data);
+    return response.data.data;
+  }
+
+  async activateFunnel(id: number): Promise<Funnel> {
+    const response = await this.client.post(`/funnels/${id}/activate`);
+    return response.data.data;
+  }
+
+  async pauseFunnel(id: number): Promise<Funnel> {
+    const response = await this.client.post(`/funnels/${id}/pause`);
+    return response.data.data;
+  }
+
+  async getFunnelStats(id: number): Promise<{
+    id: number;
+    name: string;
+    status: string;
+    stats: FunnelStats;
+    trigger: { type: string; list?: string; form?: string; tag?: string };
+  }> {
+    const response = await this.client.get(`/funnels/${id}/stats`);
+    return response.data.data;
+  }
+
+  async deleteFunnel(id: number): Promise<void> {
+    await this.client.delete(`/funnels/${id}`);
+  }
+
+  // ============================================================================
   // Account / Stats (internal API)
   // ============================================================================
 
@@ -254,3 +449,4 @@ export class NetSendoApiClient {
     }
   }
 }
+

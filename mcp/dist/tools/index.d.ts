@@ -12,4 +12,7 @@ export declare function registerAllTools(server: McpServer, api: NetSendoApiClie
 export { registerSubscriberTools } from './subscribers.js';
 export { registerListTools } from './lists.js';
 export { registerMessagingTools } from './messaging.js';
+export { registerCampaignTools } from './campaigns.js';
+export { registerAbTestTools } from './ab-tests.js';
+export { registerFunnelTools } from './funnels.js';
 //# sourceMappingURL=index.d.ts.map

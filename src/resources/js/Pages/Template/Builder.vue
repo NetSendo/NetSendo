@@ -394,6 +394,23 @@ const saveTemplate = async (isAutoSave = false) => {
 
 // Generate thumbnail from canvas
 const canvasRef = ref(null);
+
+// Helper function to check if URL is external (needs proxy)
+const isExternalUrl = (url) => {
+    if (!url) return false;
+    try {
+        const urlObj = new URL(url, window.location.origin);
+        return urlObj.origin !== window.location.origin && !url.startsWith('/');
+    } catch {
+        return false;
+    }
+};
+
+// Get proxy URL for external images
+const getProxyUrl = (originalUrl) => {
+    return route('api.templates.proxy-image') + '?url=' + encodeURIComponent(originalUrl);
+};
+
 const generateThumbnail = async (templateId) => {
     try {
         // Find the canvas element
@@ -403,16 +420,53 @@ const generateThumbnail = async (templateId) => {
             return;
         }
 
+        // Find all images and temporarily replace external URLs with proxy URLs
+        const images = canvasElement.querySelectorAll('img');
+        const originalSrcs = new Map();
+
+        images.forEach((img) => {
+            const src = img.getAttribute('src');
+            if (isExternalUrl(src)) {
+                originalSrcs.set(img, src);
+                img.setAttribute('src', getProxyUrl(src));
+            }
+        });
+
+        // Also handle background images in inline styles
+        const elementsWithBgImage = canvasElement.querySelectorAll('[style*="background-image"]');
+        const originalStyles = new Map();
+
+        elementsWithBgImage.forEach((el) => {
+            const style = el.getAttribute('style');
+            const match = style.match(/url\(['"]?(https?:\/\/[^'")\s]+)['"]?\)/);
+            if (match && match[1] && isExternalUrl(match[1])) {
+                originalStyles.set(el, style);
+                const newStyle = style.replace(match[0], `url('${getProxyUrl(match[1])}')`);
+                el.setAttribute('style', newStyle);
+            }
+        });
+
+        // Wait a bit for images to load via proxy
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         // Generate canvas using html2canvas
         const canvas = await html2canvas(canvasElement, {
             scale: 0.5, // Reduce size for thumbnail
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false, // Changed to false - now we use proxy, no need to taint
             backgroundColor: "#ffffff",
             logging: false,
             width: 600,
             height: 450,
             windowWidth: 600,
+        });
+
+        // Restore original URLs
+        originalSrcs.forEach((src, img) => {
+            img.setAttribute('src', src);
+        });
+        originalStyles.forEach((style, el) => {
+            el.setAttribute('style', style);
         });
 
         // Convert to blob

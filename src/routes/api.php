@@ -6,7 +6,11 @@ use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SubscriberController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\ExportController;
+use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\AbTestController;
+use App\Http\Controllers\Api\V1\FunnelController;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +91,62 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
     Route::get('sms/providers', [SmsController::class, 'providers'])
         ->name('api.v1.sms.providers');
 
-    // Webhooks (Triggers)
+    // Campaigns (Messages)
+    Route::post('messages/{message}/lists', [MessageController::class, 'setLists'])
+        ->name('api.v1.messages.lists');
+    Route::post('messages/{message}/exclusions', [MessageController::class, 'setExclusions'])
+        ->name('api.v1.messages.exclusions');
+    Route::post('messages/{message}/schedule', [MessageController::class, 'schedule'])
+        ->name('api.v1.messages.schedule');
+    Route::post('messages/{message}/send', [MessageController::class, 'send'])
+        ->name('api.v1.messages.send');
+    Route::get('messages/{message}/stats', [MessageController::class, 'stats'])
+        ->name('api.v1.messages.stats');
+    Route::apiResource('messages', MessageController::class)
+        ->names([
+            'index' => 'api.v1.messages.index',
+            'store' => 'api.v1.messages.store',
+            'show' => 'api.v1.messages.show',
+            'update' => 'api.v1.messages.update',
+            'destroy' => 'api.v1.messages.destroy',
+        ]);
+
+    // A/B Tests
+    Route::post('ab-tests/{ab_test}/variants', [AbTestController::class, 'addVariant'])
+        ->name('api.v1.ab-tests.variants');
+    Route::post('ab-tests/{ab_test}/start', [AbTestController::class, 'start'])
+        ->name('api.v1.ab-tests.start');
+    Route::post('ab-tests/{ab_test}/end', [AbTestController::class, 'end'])
+        ->name('api.v1.ab-tests.end');
+    Route::get('ab-tests/{ab_test}/results', [AbTestController::class, 'results'])
+        ->name('api.v1.ab-tests.results');
+    Route::apiResource('ab-tests', AbTestController::class)
+        ->names([
+            'index' => 'api.v1.ab-tests.index',
+            'store' => 'api.v1.ab-tests.store',
+            'show' => 'api.v1.ab-tests.show',
+            'update' => 'api.v1.ab-tests.update',
+            'destroy' => 'api.v1.ab-tests.destroy',
+        ]);
+
+    // Funnels (Automation Sequences)
+    Route::post('funnels/{funnel}/steps', [FunnelController::class, 'addStep'])
+        ->name('api.v1.funnels.steps');
+    Route::post('funnels/{funnel}/activate', [FunnelController::class, 'activate'])
+        ->name('api.v1.funnels.activate');
+    Route::post('funnels/{funnel}/pause', [FunnelController::class, 'pause'])
+        ->name('api.v1.funnels.pause');
+    Route::get('funnels/{funnel}/stats', [FunnelController::class, 'stats'])
+        ->name('api.v1.funnels.stats');
+    Route::apiResource('funnels', FunnelController::class)
+        ->names([
+            'index' => 'api.v1.funnels.index',
+            'store' => 'api.v1.funnels.store',
+            'show' => 'api.v1.funnels.show',
+            'update' => 'api.v1.funnels.update',
+            'destroy' => 'api.v1.funnels.destroy',
+        ]);
+
     Route::get('webhooks/events', [\App\Http\Controllers\Api\V1\WebhookController::class, 'availableEvents'])
         ->name('api.v1.webhooks.events');
     Route::post('webhooks/{webhook}/test', [\App\Http\Controllers\Api\V1\WebhookController::class, 'test'])

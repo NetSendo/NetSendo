@@ -138,6 +138,120 @@ export class NetSendoApiClient {
         return response.data.data;
     }
     // ============================================================================
+    // Messages (Campaigns)
+    // ============================================================================
+    async listMessages(params) {
+        const response = await this.client.get('/messages', { params });
+        return response.data;
+    }
+    async getMessage(id) {
+        const response = await this.client.get(`/messages/${id}`);
+        return response.data.data;
+    }
+    async createMessage(data) {
+        const response = await this.client.post('/messages', data);
+        return response.data.data;
+    }
+    async updateMessage(id, data) {
+        const response = await this.client.put(`/messages/${id}`, data);
+        return response.data.data;
+    }
+    async deleteMessage(id) {
+        await this.client.delete(`/messages/${id}`);
+    }
+    async setMessageLists(id, contactListIds) {
+        const response = await this.client.post(`/messages/${id}/lists`, { contact_list_ids: contactListIds });
+        return response.data;
+    }
+    async setMessageExclusions(id, excludedListIds) {
+        const response = await this.client.post(`/messages/${id}/exclusions`, { excluded_list_ids: excludedListIds });
+        return response.data;
+    }
+    async scheduleMessage(id, scheduledAt) {
+        const response = await this.client.post(`/messages/${id}/schedule`, { scheduled_at: scheduledAt });
+        return response.data.data;
+    }
+    async sendMessage(id) {
+        const response = await this.client.post(`/messages/${id}/send`);
+        return response.data;
+    }
+    async getMessageStats(id) {
+        const response = await this.client.get(`/messages/${id}/stats`);
+        return response.data.data;
+    }
+    // ============================================================================
+    // A/B Tests
+    // ============================================================================
+    async listAbTests(params) {
+        const response = await this.client.get('/ab-tests', { params });
+        return response.data;
+    }
+    async getAbTest(id) {
+        const response = await this.client.get(`/ab-tests/${id}`);
+        return response.data.data;
+    }
+    async createAbTest(data) {
+        const response = await this.client.post('/ab-tests', data);
+        return response.data.data;
+    }
+    async addAbTestVariant(testId, data) {
+        const response = await this.client.post(`/ab-tests/${testId}/variants`, data);
+        return response.data.data;
+    }
+    async startAbTest(id) {
+        const response = await this.client.post(`/ab-tests/${id}/start`);
+        return response.data;
+    }
+    async endAbTest(id, winnerVariantId) {
+        const response = await this.client.post(`/ab-tests/${id}/end`, { winner_variant_id: winnerVariantId });
+        return response.data;
+    }
+    async getAbTestResults(id) {
+        const response = await this.client.get(`/ab-tests/${id}/results`);
+        return response.data.data;
+    }
+    async deleteAbTest(id) {
+        await this.client.delete(`/ab-tests/${id}`);
+    }
+    // ============================================================================
+    // Funnels (Automation)
+    // ============================================================================
+    async listFunnels(params) {
+        const response = await this.client.get('/funnels', { params });
+        return response.data;
+    }
+    async getFunnel(id) {
+        const response = await this.client.get(`/funnels/${id}`);
+        return response.data.data;
+    }
+    async createFunnel(data) {
+        const response = await this.client.post('/funnels', data);
+        return response.data.data;
+    }
+    async updateFunnel(id, data) {
+        const response = await this.client.put(`/funnels/${id}`, data);
+        return response.data.data;
+    }
+    async addFunnelStep(funnelId, data) {
+        const response = await this.client.post(`/funnels/${funnelId}/steps`, data);
+        return response.data.data;
+    }
+    async activateFunnel(id) {
+        const response = await this.client.post(`/funnels/${id}/activate`);
+        return response.data.data;
+    }
+    async pauseFunnel(id) {
+        const response = await this.client.post(`/funnels/${id}/pause`);
+        return response.data.data;
+    }
+    async getFunnelStats(id) {
+        const response = await this.client.get(`/funnels/${id}/stats`);
+        return response.data.data;
+    }
+    async deleteFunnel(id) {
+        await this.client.delete(`/funnels/${id}`);
+    }
+    // ============================================================================
     // Account / Stats (internal API)
     // ============================================================================
     async getAccountInfo() {

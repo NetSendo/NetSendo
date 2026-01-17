@@ -182,12 +182,55 @@ You can connect to multiple NetSendo instances by using different server names:
 
 ## Available Tools
 
-| Category         | Tools                                               |
-| ---------------- | --------------------------------------------------- |
-| **Subscribers**  | List, get, create, update, delete, sync tags        |
-| **Lists & Tags** | List contact lists, get list subscribers, list tags |
-| **Messaging**    | Send email, send SMS, check delivery status         |
-| **Account**      | Test connection, get account info                   |
+| Category         | Tools                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| **Subscribers**  | List, get, create, update, delete, sync tags                                           |
+| **Lists & Tags** | List contact lists, get list subscribers, list tags                                    |
+| **Messaging**    | Send email, send SMS, check delivery status                                            |
+| **Campaigns**    | List, create, update, delete campaigns; set lists/exclusions; schedule/send; get stats |
+| **A/B Tests**    | Create tests, add variants, start/end tests, get results                               |
+| **Funnels**      | Create automation funnels, add steps, activate/pause, get stats                        |
+| **Account**      | Test connection, get account info                                                      |
+
+### Campaign Tools (NEW)
+
+| Tool                      | Description                       |
+| ------------------------- | --------------------------------- |
+| `list_campaigns`          | List all campaigns with filtering |
+| `get_campaign`            | Get campaign details              |
+| `create_campaign`         | Create new email/SMS campaign     |
+| `update_campaign`         | Update campaign content/settings  |
+| `set_campaign_lists`      | Set recipient lists               |
+| `set_campaign_exclusions` | Set exclusion lists               |
+| `schedule_campaign`       | Schedule for future sending       |
+| `send_campaign`           | Send immediately or activate      |
+| `get_campaign_stats`      | Get sending statistics            |
+| `delete_campaign`         | Delete a campaign                 |
+
+### A/B Test Tools (NEW)
+
+| Tool                  | Description                |
+| --------------------- | -------------------------- |
+| `list_ab_tests`       | List all A/B tests         |
+| `create_ab_test`      | Create test for a campaign |
+| `add_ab_variant`      | Add test variant           |
+| `start_ab_test`       | Start running test         |
+| `end_ab_test`         | End test and pick winner   |
+| `get_ab_test_results` | Get test results           |
+| `delete_ab_test`      | Delete a test              |
+
+### Funnel Tools (NEW)
+
+| Tool               | Description                  |
+| ------------------ | ---------------------------- |
+| `list_funnels`     | List automation funnels      |
+| `get_funnel`       | Get funnel details and steps |
+| `create_funnel`    | Create new funnel            |
+| `add_funnel_step`  | Add step to funnel           |
+| `activate_funnel`  | Activate funnel              |
+| `pause_funnel`     | Pause funnel                 |
+| `get_funnel_stats` | Get funnel statistics        |
+| `delete_funnel`    | Delete a funnel              |
 
 ## Security
 
