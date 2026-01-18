@@ -115,36 +115,55 @@ Returns campaign details including:
   // Create Campaign
   server.tool(
     'create_campaign',
-    `Create a new email or SMS campaign.
+    `Create a new email or SMS campaign. The campaign is created as a DRAFT by default.
 
-CAMPAIGN TYPES:
-- broadcast: One-time send to contact lists
-- autoresponder: Triggered by subscription, sends on day X after signup
+REQUIRED PARAMETERS:
+- subject: Campaign subject line / title
+- channel: Must be 'email' or 'sms' 
+- type: 'broadcast' (one-time) or 'autoresponder' (subscription-triggered)
+
+OPTIONAL PARAMETERS:
+- content: HTML for email, plain text for SMS
+- preheader: Email preview text (email only)
+- mailbox_id: Sender mailbox ID (use list_mailboxes to get IDs)
+- contact_list_ids: Array of recipient list IDs
+- excluded_list_ids: Array of list IDs to exclude from sending
+- scheduled_at: ISO datetime to schedule sending (creates as 'scheduled')
+- day, time_of_day, timezone: For autoresponders only
+
+WORKFLOW OPTIONS:
+1. DRAFT: create_campaign → edit later in UI
+2. SEND NOW: create_campaign → set_campaign_lists → send_campaign
+3. SCHEDULE: create_campaign → set_campaign_lists → schedule_campaign
+4. ONE-STEP SCHEDULE: create_campaign with scheduled_at + contact_list_ids
 
 PERSONALIZATION (use list_placeholders for full list):
 - [[first_name]], [[last_name]], [[email]], [[phone]]
 - [[unsubscribe_link]] - REQUIRED for email compliance
 - {{male|female}} - Gender-based text variation
 
-EXAMPLE CONTENT:
+EXAMPLE:
+channel: "email"
+type: "broadcast"
 subject: "{{Drogi|Droga}} [[first_name]], sprawdź naszą ofertę!"
 content: "<p>Cześć [[first_name]]!</p><a href='[[unsubscribe_link]]'>Wypisz się</a>"
-
-WORKFLOW: create_campaign → set_campaign_lists → send_campaign`,
+mailbox_id: 1
+contact_list_ids: [1, 2]`,
     {
-      subject: z.string().min(1).describe('Campaign subject line'),
-      channel: z.enum(['email', 'sms']).describe('Channel type (email or sms)'),
-      type: z.enum(['broadcast', 'autoresponder']).describe('Campaign type: broadcast (one-time) or autoresponder (triggered)'),
+      subject: z.string().min(1).describe('Campaign subject line / title'),
+      channel: z.enum(['email', 'sms']).describe('REQUIRED: Channel type - must be "email" or "sms"'),
+      type: z.enum(['broadcast', 'autoresponder']).describe('REQUIRED: Campaign type - "broadcast" (one-time) or "autoresponder" (triggered on subscription)'),
       content: z.string().optional().describe('Email/SMS content (HTML for email, plain text for SMS)'),
-      preheader: z.string().optional().describe('Email preheader text'),
-      mailbox_id: z.number().optional().describe('Mailbox ID for sending (use list_mailboxes to get IDs)'),
-      contact_list_ids: z.array(z.number()).optional().describe('Array of contact list IDs to send to'),
-      excluded_list_ids: z.array(z.number()).optional().describe('Array of contact list IDs to exclude'),
-      day: z.number().optional().describe('For autoresponders: day offset after subscription (0 = immediately)'),
-      time_of_day: z.string().optional().describe('For autoresponders: time to send (format: HH:MM)'),
-      timezone: z.string().optional().describe('Timezone for scheduling (e.g., Europe/Warsaw)'),
+      preheader: z.string().optional().describe('Email preheader/preview text (shown in inbox preview)'),
+      mailbox_id: z.number().optional().describe('Mailbox ID for sending (use list_mailboxes to get available IDs)'),
+      contact_list_ids: z.array(z.number()).optional().describe('Array of contact list IDs to send to (use list_contact_lists to get IDs)'),
+      excluded_list_ids: z.array(z.number()).optional().describe('Array of contact list IDs to EXCLUDE from sending'),
+      scheduled_at: z.string().optional().describe('ISO 8601 datetime to schedule sending (e.g., 2024-12-25T10:00:00Z). If provided, campaign status will be "scheduled"'),
+      day: z.number().optional().describe('For autoresponders only: day offset after subscription (0 = same day)'),
+      time_of_day: z.string().optional().describe('For autoresponders only: time to send (format: HH:MM, e.g., "09:00")'),
+      timezone: z.string().optional().describe('Timezone for scheduling (e.g., Europe/Warsaw, America/New_York)'),
     },
-    async ({ subject, channel, type, content, preheader, mailbox_id, contact_list_ids, excluded_list_ids, day, time_of_day, timezone }) => {
+    async ({ subject, channel, type, content, preheader, mailbox_id, contact_list_ids, excluded_list_ids, scheduled_at, day, time_of_day, timezone }) => {
       try {
         const campaign = await api.createMessage({
           subject,
@@ -155,6 +174,7 @@ WORKFLOW: create_campaign → set_campaign_lists → send_campaign`,
           mailbox_id,
           contact_list_ids,
           excluded_list_ids,
+          scheduled_at,
           day,
           time_of_day,
           timezone,

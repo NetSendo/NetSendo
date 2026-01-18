@@ -3,7 +3,6 @@
         "cron_section_title": "⏰ Globalne ustawienia harmonogramu wysyłki",
         "volume_per_minute_label": "Limit wiadomości / minutę (globalny)"
     },
-
     "affiliate": {
         "title": "Program Partnerski",
         "programs": "Programy",
@@ -246,10 +245,7 @@
         "hours": "godzin",
         "first_name": "Imię",
         "last_name": "Nazwisko",
-        "phone": "Telefon",
-        "messages": {
-            "delete_warning": "Czy na pewno chcesz usunąć ten element? Tej operacji nie można cofnąć."
-        }
+        "phone": "Telefon"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -913,7 +909,6 @@
             }
         }
     },
-
     "sms": {
         "title": "Kampanie SMS",
         "subtitle": "Zarządzaj wysyłką wiadomości SMS",
@@ -1438,6 +1433,10 @@
                 "queue_status": "Status wysyłki",
                 "sent_at": "Data wysłania",
                 "error": "Błąd",
+                "error_details": "Szczegóły błędu",
+                "click_to_view_error": "Kliknij, aby zobaczyć pełny błąd",
+                "copy_error": "Kopiuj błąd",
+                "copied": "Skopiowano!",
                 "status": {
                     "planned": "Zaplanowany",
                     "queued": "W kolejce",
@@ -1987,70 +1986,6 @@
         "request_success_title": "Dziękujemy!",
         "request_success_desc": "Twoja prośba o integrację została wysłana. Skontaktujemy się z Tobą wkrótce.",
         "request_error": "Nie udało się wysłać prośby. Spróbuj ponownie.",
-        "woocommerce": {
-            "title": "WooCommerce",
-            "hero_title": "Integracja WooCommerce",
-            "hero_subtitle": "Połącz swój sklep i zwiększ sprzedaż.",
-            "hero_description": "Bezproblemowo zintegruj swój sklep WooCommerce z NetSendo. Automatycznie synchronizuj klientów, odzyskuj porzucone koszyki i śledź przychody.",
-            "features_title": "Funkcje",
-            "features": {
-                "auto_subscribe": {
-                    "title": "Automatyczna Subskrypcja",
-                    "description": "Automatycznie dodawaj klientów do list mailingowych podczas zakupu."
-                },
-                "cart_recovery": {
-                    "title": "Odzyskiwanie Koszyków",
-                    "description": "Odzyskuj utraconą sprzedaż dzięki automatycznym e-mailom o porzuconych koszykach."
-                },
-                "product_settings": {
-                    "title": "Synchronizacja Produktów",
-                    "description": "Mapuj produkty WooCommerce do tagów i list NetSendo."
-                },
-                "external_pages": {
-                    "title": "Strony Zewnętrzne",
-                    "description": "Śledź odwiedziny i zdarzenia na stronach sklepu."
-                }
-            },
-            "setup_title": "Konfiguracja",
-            "setup_steps": {
-                "download": {
-                    "title": "Pobierz",
-                    "description": "Pobierz plik wtyczki."
-                },
-                "install": {
-                    "title": "Zainstaluj",
-                    "description": "Prześlij do WordPress/WooCommerce."
-                },
-                "configure": {
-                    "title": "Skonfiguruj",
-                    "description": "Połącz API."
-                },
-                "lists": {
-                    "title": "Mapuj Listy",
-                    "description": "Wybierz listy dla klientów."
-                }
-            },
-            "download_button": "Pobierz Wtyczkę",
-            "api_config_title": "Konfiguracja API",
-            "api_url_label": "URL API",
-            "api_url_help": "Endpoint dla webhooków.",
-            "api_key_label": "Klucz API",
-            "api_key_desc": "Wygeneruj klucz dla swojego sklepu.",
-            "manage_api_keys": "Zarządzaj Kluczami API",
-            "requirements_title": "Wymagania",
-            "requirements": {
-                "wp": "WordPress 5.8+",
-                "wc": "WooCommerce 6.0+",
-                "php": "PHP 7.4+",
-                "account": "Konto NetSendo"
-            },
-            "docs_link": "Dokumentacja WooCommerce",
-            "lists_link": "Zarządzaj Listami",
-            "funnels_link": "Lejki Sprzedażowe",
-            "help_title": "Pomoc",
-            "help_desc": "Przeczytaj poradnik lub skontaktuj się z nami.",
-            "documentation_button": "Dokumentacja"
-        },
         "shopify": {
             "title": "Shopify",
             "hero_title": "Integracja Shopify",
@@ -4578,7 +4513,6 @@
         "no_products_desc": "Utwórz swój pierwszy produkt, aby zacząć przyjmować płatności.",
         "configure_first": "Najpierw skonfiguruj Polar.",
         "product_name": "Nazwa produktu",
-        "description": "Opis",
         "price": "Cena",
         "currency": "Waluta",
         "type": "Typ",
@@ -5006,30 +4940,6 @@
             }
         }
     },
-    "sms_providers": {
-        "title": "Dostawcy SMS",
-        "subtitle": "Konfiguruj bramki SMS",
-        "add_new": "Dodaj dostawcę",
-        "add_first": "Dodaj pierwszego dostawcę",
-        "empty": {
-            "title": "Brak skonfigurowanych dostawców SMS",
-            "description": "Dodaj swojego pierwszego dostawcę SMS, aby rozpocząć wysyłanie wiadomości."
-        },
-        "info": {
-            "title": "Wspierani dostawcy",
-            "twilio": "Twilio: Globalny zasięg, niezawodne dostarczanie.",
-            "smsapi": "SMS API (PL): Najlepsze rozwiązanie na polski rynek."
-        },
-        "modal": {
-            "add_title": "Dodaj dostawcę SMS",
-            "provider": "Wybierz dostawcę",
-            "name": "Nazwa integracji",
-            "name_placeholder": "np. Moje konto Twilio",
-            "from_number": "Sender ID / Numer nadawcy",
-            "daily_limit": "Limit dzienny",
-            "daily_limit_placeholder": "np. 1000 (zostaw puste dla braku limitu)"
-    }
-},
     "external_pages": {
         "index": {
             "title": "Strony zewnętrzne",
@@ -5536,64 +5446,6 @@
             "event": "Wydarzenie",
             "cold_call": "Cold call",
             "other": "Inne"
-        }
-    },
-    "funnels": {
-        "title": "Lejki",
-        "create": "Utwórz lejek",
-        "edit": "Edytuj lejek",
-        "all_statuses": "Wszystkie statusy",
-        "all_triggers": "Wszystkie wyzwalacze",
-        "table": {
-            "name": "Nazwa",
-            "trigger": "Wyzwalacz",
-            "status": "Status",
-            "subscribers": "Subskrybenci",
-            "completed": "Ukończono"
-        },
-        "builder": {
-            "name_placeholder": "Nazwa lejka...",
-            "blocks": "Bloki",
-            "trigger": "Wyzwalacz",
-            "trigger_type": "Typ wyzwalacza",
-            "trigger_list": "Lista adresowa",
-            "trigger_form": "Formularz",
-            "trigger_tag": "Tag",
-            "trigger_tag_placeholder": "np. zakup",
-            "step_name": "Nazwa kroku",
-            "select_email": "Wybierz e-mail",
-            "days": "dni",
-            "condition": "Warunek",
-            "action": "Akcja",
-            "click_to_configure": "Kliknij, aby skonfigurować",
-            "connect_to": "Połącz z",
-            "new": "Nowy",
-            "zoom_in": "Przybliż",
-            "zoom_out": "Oddal",
-            "fit_to_view": "Dopasuj",
-            "trigger_types": {
-                "list_subscribe": "Zapis na listę",
-                "form_submit": "Wysłanie formularza",
-                "tag_added": "Dodanie tagu"
-            },
-            "nodes": {
-                "start": "Start",
-                "email": "E-mail",
-                "sms": "SMS",
-                "delay": "Opóźnienie",
-                "wait_until": "Czekaj do",
-                "condition": "Warunek",
-                "action": "Akcja",
-                "split": "Podział",
-                "goal": "Cel",
-                "end": "Koniec"
-            }
-        },
-        "notifications": {
-            "saved": "Lejek zapisany pomyślnie",
-            "updated": "Lejek zaktualizowany pomyślnie",
-            "created": "Lejek utworzony pomyślnie",
-            "deleted": "Lejek usunięty pomyślnie"
         }
     }
 }

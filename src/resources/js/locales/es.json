@@ -229,9 +229,6 @@
         "first_name": "Nombre",
         "last_name": "Apellido",
         "phone": "Teléfono",
-        "messages": {
-            "delete_warning": "¿Está seguro de que desea eliminar este elemento? Esta acción no se puede deshacer."
-        },
         "hour": "hora",
         "hours": "horas",
         "soon": "Pronto",
@@ -3775,7 +3772,6 @@
         "no_products_desc": "Crea tu primer producto para empezar a aceptar pagos.",
         "configure_first": "Por favor, configura Polar primero.",
         "product_name": "Nombre del producto",
-        "description": "Descripción",
         "price": "Precio",
         "currency": "Moneda",
         "type": "Tipo",
@@ -4225,8 +4221,8 @@
             "from_number": "ID de remitente / Número de origen",
             "daily_limit": "Límite diario",
             "daily_limit_placeholder": "p.ej. 1000 (dejar vacío para ilimitado)"
-    }
-},
+        }
+    },
     "external_pages": {
         "index": {
             "title": "External Pages",
@@ -4368,7 +4364,6 @@
         "dashboard": {
             "title": "Panel CRM",
             "overview": "Visión general",
-            "overview": "Resumen",
             "open_deals": "Tratos abiertos",
             "won_this_month": "Ganado este mes",
             "tasks_due_today": "Tareas",
@@ -4731,64 +4726,6 @@
             "event": "Evento",
             "cold_call": "Llamada en frío",
             "other": "Otro"
-        }
-    },
-    "funnels": {
-        "title": "Embudos",
-        "create": "Crear embudo",
-        "edit": "Editar embudo",
-        "all_statuses": "Todos los estados",
-        "all_triggers": "Todos los disparadores",
-        "table": {
-            "name": "Nombre",
-            "trigger": "Disparador",
-            "status": "Estado",
-            "subscribers": "Suscriptores",
-            "completed": "Completado"
-        },
-        "builder": {
-            "name_placeholder": "Nombre del embudo...",
-            "blocks": "Bloques",
-            "trigger": "Disparador",
-            "trigger_type": "Tipo de disparador",
-            "trigger_list": "Lista de correo",
-            "trigger_form": "Formulario",
-            "trigger_tag": "Etiqueta",
-            "trigger_tag_placeholder": "ej. compra",
-            "step_name": "Nombre del paso",
-            "select_email": "Seleccionar correo",
-            "days": "días",
-            "condition": "Condición",
-            "action": "Acción",
-            "click_to_configure": "Haz clic para configurar",
-            "connect_to": "Conectar a",
-            "new": "Nuevo",
-            "zoom_in": "Acercar",
-            "zoom_out": "Alejar",
-            "fit_to_view": "Ajustar a la vista",
-            "trigger_types": {
-                "list_subscribe": "Suscribirse a lista",
-                "form_submit": "Enviar formulario",
-                "tag_added": "Etiqueta añadida"
-            },
-            "nodes": {
-                "start": "Inicio",
-                "email": "Correo",
-                "sms": "SMS",
-                "delay": "Retraso",
-                "wait_until": "Esperar hasta",
-                "condition": "Condición",
-                "action": "Acción",
-                "split": "Dividir",
-                "goal": "Objetivo",
-                "end": "Fin"
-            }
-        },
-        "notifications": {
-            "saved": "Embudo guardado exitosamente",
-            "updated": "Embudo actualizado exitosamente",
-            "created": "Embudo creado exitosamente",
-            "deleted": "Embudo eliminado exitosamente"
         }
     }
 }

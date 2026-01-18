@@ -1,5 +1,7 @@
 <script setup>
+import { ref } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import Modal from "@/Components/Modal.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import {
     Chart as ChartJS,
@@ -169,6 +171,33 @@ const formatReadTime = (seconds) => {
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
     return sec > 0 ? `${min}m ${sec}s` : `${min}m`;
+};
+
+// Error modal state
+const showErrorModal = ref(false);
+const selectedError = ref({ email: "", error: "" });
+const errorCopied = ref(false);
+
+const openErrorModal = (email, error) => {
+    selectedError.value = { email, error };
+    showErrorModal.value = true;
+    errorCopied.value = false;
+};
+
+const closeErrorModal = () => {
+    showErrorModal.value = false;
+};
+
+const copyError = async () => {
+    try {
+        await navigator.clipboard.writeText(selectedError.value.error);
+        errorCopied.value = true;
+        setTimeout(() => {
+            errorCopied.value = false;
+        }, 2000);
+    } catch (err) {
+        console.error("Failed to copy:", err);
+    }
 };
 </script>
 
@@ -641,19 +670,16 @@ const formatReadTime = (seconds) => {
                                             "-"
                                         }}
                                     </td>
-                                    <td
-                                        class="px-4 py-3 max-w-xs truncate"
-                                        :title="recipient.error"
-                                    >
-                                        <span
+                                    <td class="px-4 py-3 max-w-xs">
+                                        <button
                                             v-if="recipient.error"
-                                            class="text-red-600 dark:text-red-400"
+                                            @click="openErrorModal(recipient.email, recipient.error)"
+                                            class="text-left text-red-600 dark:text-red-400 hover:underline cursor-pointer truncate block max-w-full"
+                                            :title="$t('messages.stats.recipients.click_to_view_error')"
                                         >
                                             {{ recipient.error }}
-                                        </span>
-                                        <span v-else class="text-gray-400"
-                                            >-</span
-                                        >
+                                        </button>
+                                        <span v-else class="text-gray-400">-</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -1030,4 +1056,38 @@ const formatReadTime = (seconds) => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Error Details Modal -->
+    <Modal :show="showErrorModal" @close="closeErrorModal" max-width="lg">
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                {{ $t("messages.stats.recipients.error_details") }}
+            </h3>
+            <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                {{ $t("messages.stats.recipients.email") }}:
+                <span class="font-medium text-gray-900 dark:text-gray-100">{{ selectedError.email }}</span>
+            </div>
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                <pre class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap break-words font-mono">{{ selectedError.error }}</pre>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button
+                    @click="copyError"
+                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                    :class="errorCopied
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'"
+                >
+                    <span v-if="errorCopied">✓ {{ $t("messages.stats.recipients.copied") }}</span>
+                    <span v-else>📋 {{ $t("messages.stats.recipients.copy_error") }}</span>
+                </button>
+                <button
+                    @click="closeErrorModal"
+                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                >
+                    {{ $t("common.close") }}
+                </button>
+            </div>
+        </div>
+    </Modal>
 </template>

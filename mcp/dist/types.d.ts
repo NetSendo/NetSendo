@@ -87,6 +87,7 @@ export interface MessageCreateInput {
     day?: number;
     time_of_day?: string;
     timezone?: string;
+    scheduled_at?: string;
     contact_list_ids?: number[];
     excluded_list_ids?: number[];
 }

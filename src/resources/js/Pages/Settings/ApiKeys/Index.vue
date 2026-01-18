@@ -121,33 +121,24 @@ function closeCreateModal() {
 
 async function createKey() {
     try {
-        const response = await fetch(route("settings.api-keys.store"), {
-            method: "POST",
-            headers: {
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute("content"),
-                "Content-Type": "application/json",
-                Accept: "application/json",
-            },
-            body: JSON.stringify({
-                name: form.name,
-                permissions: form.permissions,
-                expires_at: form.expires_at || null,
-                is_mcp: form.is_mcp,
-            }),
+        const response = await window.axios.post(route("settings.api-keys.store"), {
+            name: form.name,
+            permissions: form.permissions,
+            expires_at: form.expires_at || null,
+            is_mcp: form.is_mcp,
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            newKeyResult.value = data;
-            keyVisible.value = true;
-        } else {
-            const error = await response.json();
-            alert(error.message || t("common.error"));
-        }
+        newKeyResult.value = response.data;
+        keyVisible.value = true;
     } catch (e) {
-        alert(t("common.error"));
+        if (e.response?.status === 419) {
+            // CSRF token mismatch - reload the page to get a fresh token
+            alert(t("api_keys.errors.session_expired") || "Sesja wygasła. Strona zostanie odświeżona.");
+            window.location.reload();
+        } else {
+            const errorMessage = e.response?.data?.message || t("common.error");
+            alert(errorMessage);
+        }
     }
 }
 

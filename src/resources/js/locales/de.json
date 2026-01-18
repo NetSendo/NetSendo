@@ -173,7 +173,6 @@
         "actions": "Aktionen",
         "yes": "Ja",
         "no": "Nein",
-        "saving": "Speichern...",
         "uploading": "Hochladen...",
         "active": "Aktiv",
         "inactive": "Inaktiv",
@@ -196,7 +195,6 @@
         "next": "Weiter",
         "select": "Auswählen",
         "select_option": "Option wählen",
-        "all": "Alle",
         "none": "Keine",
         "filter": "Filtern",
         "sort": "Sortieren",
@@ -269,9 +267,6 @@
         "first_name": "Vorname",
         "last_name": "Nachname",
         "phone": "Telefon",
-        "messages": {
-            "delete_warning": "Sind Sie sicher, dass Sie dieses Element löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden."
-        },
         "hour": "Stunde",
         "hours": "Stunden"
     },
@@ -628,100 +623,6 @@
             "lists_link": "Listen Verwalten",
             "help_title": "Brauchen Sie Hilfe?",
             "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie uns.",
-            "documentation_button": "Dokumentation"
-        },
-        "wordpress": {
-            "title": "WordPress",
-            "description": "Professionelle Abonnement-Formulare und Content Gating für Blogger und Content-Ersteller auf WordPress.",
-            "hero_title": "WordPress",
-            "hero_subtitle": "Professionelle Abonnement-Formulare und Content Gating für Blogger und Content-Ersteller auf WordPress.",
-            "hero_description": "Das NetSendo für WordPress Plugin ist eine Komplettlösung für Blogger und Content-Ersteller. Fügen Sie professionelle Newsletter-Anmeldeformulare hinzu, beschränken Sie die Sichtbarkeit von Artikeln nur auf Abonnenten und bauen Sie Ihre Mailingliste von WordPress aus auf.",
-            "features_title": "🚀 Funktionen",
-            "features": {
-                "forms": {
-                    "title": "Anmeldeformulare",
-                    "description": "Professionelle Anmeldeformulare mit verschiedenen Stilen: Inline, Minimal, Karte."
-                },
-                "content_gating": {
-                    "title": "Content Gating",
-                    "description": "Beschränken Sie die Sichtbarkeit von Artikeln - zeigen Sie X% des Inhalts, den Rest nur für Abonnenten."
-                },
-                "gutenberg": {
-                    "title": "Gutenberg-Blöcke",
-                    "description": "Native Gutenberg-Blöcke für Formulare und Content Gates."
-                },
-                "widget": {
-                    "title": "Sidebar-Widget",
-                    "description": "Gebrauchsfertiges Anmeldeformular-Widget zur Platzierung in jeder Sidebar."
-                },
-                "gdpr": {
-                    "title": "DSGVO-Bereit",
-                    "description": "Eingebautes DSGVO-Zustimmungs-Kontrollkästchen mit anpassbarem Text."
-                },
-                "per_post": {
-                    "title": "Einstellungen pro Beitrag",
-                    "description": "Aktivieren Sie Content Gating für bestimmte Beiträge direkt im Editor."
-                }
-            },
-            "setup_title": "⚙️ Installation",
-            "setup_steps": {
-                "download": {
-                    "title": "Plugin herunterladen",
-                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WordPress Plugin herunterzuladen."
-                },
-                "install": {
-                    "title": "In WordPress installieren",
-                    "description": "Gehen Sie zu WordPress → Plugins → Installieren → Plugin hochladen und installieren Sie die heruntergeladene ZIP-Datei."
-                },
-                "configure": {
-                    "title": "Verbindung konfigurieren",
-                    "description": "Gehen Sie in WordPress zu Einstellungen → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest."
-                },
-                "forms": {
-                    "title": "Formulare hinzufügen",
-                    "description": "Verwenden Sie Gutenberg-Blöcke oder Shortcodes, um Formulare und Content Gates zu Ihren Beiträgen hinzuzufügen."
-                }
-            },
-            "download_button": "Plugin herunterladen",
-            "shortcodes_title": "📝 Shortcodes",
-            "shortcodes": {
-                "form_basic": "Basis-Anmeldeformular",
-                "form_style": "Formular mit bestimmter Liste und Stil",
-                "gate_percent": "30% Inhalt zeigen, Rest verborgen",
-                "gate_subscribers": "Vollständiger Inhalt nur für Abonnenten"
-            },
-            "api_config_title": "🔑 API-Konfiguration",
-            "api_url_label": "NetSendo URL",
-            "api_url_help": "Geben Sie diese URL in den WordPress-Plugin-Einstellungen ein",
-            "api_key_label": "API-Schlüssel",
-            "api_key_desc": "Erstellen Sie einen API-Schlüssel in NetSendo, der für die Plugin-Autorisierung verwendet wird.",
-            "manage_api_keys": "API-Schlüssel verwalten",
-            "requirements_title": "📋 Anforderungen",
-            "requirements": {
-                "wp": "WordPress 5.8 oder neuer",
-                "php": "PHP 7.4 oder neuer",
-                "account": "Aktives NetSendo-Konto mit API-Schlüssel"
-            },
-            "gate_types_title": "🔒 Content Gate Typen",
-            "gate_types": {
-                "percentage": {
-                    "title": "Prozentsatz",
-                    "desc": "Zeige X% des Artikels, Rest verborgen"
-                },
-                "subscribers": {
-                    "title": "Nur Abonnenten",
-                    "desc": "Vollständiger Inhalt erfordert Abonnement"
-                },
-                "logged_in": {
-                    "title": "Eingeloggt",
-                    "desc": "Erfordert Login in WP"
-                }
-            },
-            "resources_title": "Ressourcen",
-            "docs_link": "WordPress Docs",
-            "lists_link": "Listen verwalten",
-            "help_title": "Brauchen Sie Hilfe?",
-            "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie unser Support-Team.",
             "documentation_button": "Dokumentation"
         },
         "categories": {
@@ -1548,6 +1449,10 @@
                 "queue_status": "Status",
                 "sent_at": "Gesendet am",
                 "error": "Fehler",
+                "error_details": "Fehlerdetails",
+                "click_to_view_error": "Klicken Sie, um den vollständigen Fehler anzuzeigen",
+                "copy_error": "Fehler kopieren",
+                "copied": "Kopiert!",
                 "status": {
                     "planned": "Geplant",
                     "queued": "In Warteschlange",
@@ -1805,48 +1710,6 @@
         },
         "empty_state": "Keine Tags erstellt.",
         "confirm_delete": "Sind Sie sicher, dass Sie dieses Tag löschen möchten?"
-    },
-    "templates": {
-        "your_templates": "Ihre Vorlagen",
-        "edit_in_editor": "Im Editor bearbeiten",
-        "builder_badge": "Builder",
-        "title": "E-Mail-Vorlagen",
-        "subtitle": "Verwalten Sie Ihre E-Mail-Nachrichtenvorlagen",
-        "new_template": "Neue Vorlage",
-        "empty_title": "Keine Vorlagen",
-        "empty_description": "Erstellen Sie Ihre erste Vorlage, um die Nachrichtenerstellung zu beschleunigen.",
-        "start": "Start",
-        "fields": {
-            "name": "Vorlagenname",
-            "name_placeholder": "z. B. Starter-Newsletter",
-            "content": "Nachrichteninhalt",
-            "created_at": "Erstellt am: {date}"
-        },
-        "create_title": "Neue Vorlage",
-        "create_subtitle": "Erstellen Sie eine neue Nachrichtenvorlage",
-        "edit_title": "Vorlage bearbeiten",
-        "edit_subtitle": "Aktualisieren Sie Ihre Nachrichtenvorlage",
-        "back_to_list": "Zurück zur Liste",
-        "actions": {
-            "create": "Vorlage erstellen",
-            "update": "Vorlage aktualisieren"
-        },
-        "default_content": "<p>Hallo, [name]!</p><p>Beispielinhalt...</p>",
-        "starter": {
-            "title": "Starter-Vorlagen",
-            "subtitle": "Gebrauchsfertige Premium-Vorlagen - zum Verwenden anklicken",
-            "use_template": "Vorlage verwenden",
-            "show_templates": "Starter-Vorlagen anzeigen",
-            "premium": "Premium",
-            "categories": {
-                "welcome": "Willkommen",
-                "newsletter": "Newsletter",
-                "promotional": "Werbung",
-                "ecommerce": "E-Commerce",
-                "transactional": "Transaktional",
-                "notification": "Benachrichtigung"
-            }
-        }
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -3824,7 +3687,6 @@
         "no_products_desc": "Erstellen Sie Ihr erstes Produkt, um Zahlungen zu akzeptieren.",
         "configure_first": "Bitte konfigurieren Sie zuerst Polar.",
         "product_name": "Produktname",
-        "description": "Beschreibung",
         "price": "Preis",
         "currency": "Währung",
         "type": "Typ",
@@ -4210,48 +4072,48 @@
                 "promo": "Promo"
             }
         },
-    "scenario": {
-        "title": "Szenario-Builder",
-        "generate_random": "Zufällig generieren",
-        "add_message": "Nachricht hinzufügen",
-        "clear": "Löschen",
-        "no_messages": "Keine Nachrichten im Szenario",
-        "add_first": "Erste Nachricht hinzufügen",
-        "messages": "Nachrichten",
-        "avg_density": "Durchschn. Dichte",
-        "questions": "Fragen",
-        "testimonials": "Referenzen",
-        "modal": {
-            "add_title": "Nachricht hinzufügen",
-            "edit_title": "Nachricht bearbeiten",
-            "sender_name": "Absendername",
-            "message_text": "Nachrichteninhalt",
-            "message_type": "Nachrichtentyp",
-            "minute": "Minute",
-            "second": "Sekunde",
-            "advanced": "Erweiterte Optionen",
-            "variance": "Zeitabweichung (±sek)",
-            "reactions": "Simulierte Reaktionen",
-            "randomly": "Zufällig anzeigen (70% Chance)",
-            "cancel": "Abbrechen",
-            "save": "Speichern",
-            "add": "Hinzufügen",
-            "delete_title": "Nachricht löschen",
-            "delete_confirm": "Möchten Sie diese Nachricht wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
-            "clear_title": "Szenario löschen",
-            "clear_confirm": "Möchten Sie wirklich ALLE Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.",
-            "delete": "Löschen",
-            "clear_all": "Alles löschen"
-        },
-        "types": {
-            "comment": "Kommentar",
-            "question": "Frage",
-            "reaction": "Reaktion",
-            "testimonial": "Referenz",
-            "excitement": "Begeisterung"
+        "scenario": {
+            "title": "Szenario-Builder",
+            "generate_random": "Zufällig generieren",
+            "add_message": "Nachricht hinzufügen",
+            "clear": "Löschen",
+            "no_messages": "Keine Nachrichten im Szenario",
+            "add_first": "Erste Nachricht hinzufügen",
+            "messages": "Nachrichten",
+            "avg_density": "Durchschn. Dichte",
+            "questions": "Fragen",
+            "testimonials": "Referenzen",
+            "modal": {
+                "add_title": "Nachricht hinzufügen",
+                "edit_title": "Nachricht bearbeiten",
+                "sender_name": "Absendername",
+                "message_text": "Nachrichteninhalt",
+                "message_type": "Nachrichtentyp",
+                "minute": "Minute",
+                "second": "Sekunde",
+                "advanced": "Erweiterte Optionen",
+                "variance": "Zeitabweichung (±sek)",
+                "reactions": "Simulierte Reaktionen",
+                "randomly": "Zufällig anzeigen (70% Chance)",
+                "cancel": "Abbrechen",
+                "save": "Speichern",
+                "add": "Hinzufügen",
+                "delete_title": "Nachricht löschen",
+                "delete_confirm": "Möchten Sie diese Nachricht wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+                "clear_title": "Szenario löschen",
+                "clear_confirm": "Möchten Sie wirklich ALLE Nachrichten löschen? Dies kann nicht rückgängig gemacht werden.",
+                "delete": "Löschen",
+                "clear_all": "Alles löschen"
+            },
+            "types": {
+                "comment": "Kommentar",
+                "question": "Frage",
+                "reaction": "Reaktion",
+                "testimonial": "Referenz",
+                "excitement": "Begeisterung"
+            }
         }
-    }
-},
+    },
     "sms_providers": {
         "title": "SMS-Anbieter",
         "subtitle": "SMS-Gateway-Einstellungen konfigurieren",
@@ -4274,8 +4136,8 @@
             "from_number": "Absender-ID / Absendernummer",
             "daily_limit": "Tageslimit",
             "daily_limit_placeholder": "z.B. 1000 (leer lassen für unbegrenzt)"
-    }
-},
+        }
+    },
     "external_pages": {
         "index": {
             "title": "External Pages",
@@ -4779,64 +4641,6 @@
             "event": "Event",
             "cold_call": "Kaltakquise",
             "other": "Sonstiges"
-        }
-    },
-    "funnels": {
-        "title": "Funnel",
-        "create": "Funnel erstellen",
-        "edit": "Funnel bearbeiten",
-        "all_statuses": "Alle Status",
-        "all_triggers": "Alle Auslöser",
-        "table": {
-            "name": "Name",
-            "trigger": "Auslöser",
-            "status": "Status",
-            "subscribers": "Abonnenten",
-            "completed": "Abgeschlossen"
-        },
-        "builder": {
-            "name_placeholder": "Funnel Name...",
-            "blocks": "Blöcke",
-            "trigger": "Auslöser",
-            "trigger_type": "Auslösertyp",
-            "trigger_list": "Mailingliste",
-            "trigger_form": "Formular",
-            "trigger_tag": "Tag",
-            "trigger_tag_placeholder": "z.B. kauf",
-            "step_name": "Schrittname",
-            "select_email": "E-Mail auswählen",
-            "days": "Tage",
-            "condition": "Bedingung",
-            "action": "Aktion",
-            "click_to_configure": "Klicken zum Konfigurieren",
-            "connect_to": "Verbinden mit",
-            "new": "Neu",
-            "zoom_in": "Vergrößern",
-            "zoom_out": "Verkleinern",
-            "fit_to_view": "Ansicht anpassen",
-            "trigger_types": {
-                "list_subscribe": "Eintragung in Liste",
-                "form_submit": "Formular absenden",
-                "tag_added": "Tag hinzugefügt"
-            },
-            "nodes": {
-                "start": "Start",
-                "email": "E-Mail",
-                "sms": "SMS",
-                "delay": "Verzögerung",
-                "wait_until": "Warten bis",
-                "condition": "Bedingung",
-                "action": "Aktion",
-                "split": "Split",
-                "goal": "Ziel",
-                "end": "Ende"
-            }
-        },
-        "notifications": {
-            "saved": "Funnel erfolgreich gespeichert",
-            "updated": "Funnel erfolgreich aktualisiert",
-            "created": "Funnel erfolgreich erstellt",
-            "deleted": "Funnel erfolgreich gelöscht"
         }
     }
 }

@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.8] – Short Description
+
+**Release date:** 2026-01-18
+
 ### Added
 
+- **MCP Campaign Tools:**
+  - **Tool Enhancements:** Updated `create_campaign` tool description to clarify required parameters (channel, type) and workflow options.
+  - **New Parameter:** Added optional `scheduled_at` parameter to `create_campaign` for one-step scheduled campaign creation.
+  - **Type Definitions:** Updated `MessageCreateInput` interface to include `scheduled_at` support.
+- **Message Statistics Error Modal:**
+  - **Detailed View:** Implemented a clickable error column in the recipient list that opens a modal with the full, non-truncated error message.
+  - **Copy Functionality:** Added a "Copy to Clipboard" button for quick error copying.
+  - **Localization:** Added translation support for error details in PL and DE.
+
 ### Fixed
+
+- **API Key Generation:** Fixed "CSRF token mismatch" error when generating new keys by replacing native `fetch` with `axios` implementation to ensure proper token handling.
+- **Error Message Truncation:** Fixed an issue in Message Statistics where long error messages (e.g., SMTP connection failures) were truncated/hidden in the table view. Now accessible via the new details modal.
 
 ### Changed
 
@@ -20,7 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **MCP Tool Enhancements:**
-
   - **New Tool:** Added `list_placeholders` tool to the MCP server, allowing AI agents to retrieve a complete list of available system, custom, and special placeholders.
   - **Client Method:** Added `listPlaceholders()` method to `@netsendo/mcp-client` SDK.
   - **Enhanced Descriptions:** Updated tool descriptions for `create_campaign`, `send_email`, and `send_sms` to include detailed placeholder usage examples and workflow guidance.
@@ -52,13 +67,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **MCP Test Endpoint:**
-
   - **Public API:** Added `/api/mcp/test` endpoint allowing external applications (AI assistants) to verify API key validity and connection status.
   - **Documentation:** Updated `docs/mcp-server.md` with connection testing instructions and curl examples.
   - **Marketplace UI:** Added a "Test Connection" section to the `/marketplace/mcp` page with a ready-to-use curl command generator.
 
 - **MCP Email Campaign & Automation:**
-
   - **Campaign Management:** Added MCP tools and API endpoints for full email campaign lifecycle:
     - Create, update, delete campaigns (messages).
     - Manage recipient lists and exclusions.
@@ -95,7 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **MCP Key for Existing API Keys:** Fixed issue where editing an existing API key to mark it as MCP would not allow connection testing because the plain key was not stored. Added an input field in the API Key edit modal to provide the plain key for encryption when marking an existing key as MCP.
 
 - **Email Editor Image Editing:**
-
   - Fixed an issue where images in full HTML documents (e.g., templates with imported footers/inserts) were not editable in preview mode as they are rendered inside an iframe.
   - Implemented double-click handling for images within the preview iframe to open the image editing modal.
   - Added synchronization between the image editing modal and the preview iframe for real-time updates of image properties (width, alignment, float, margin, border-radius).
@@ -115,14 +127,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **MCP Remote Connection:**
-
   - **Remote Support:** Added capability to connect to remote NetSendo instances using `--url` and `--api-key` CLI arguments.
   - **Auto-Configuration:** New Artisan command `mcp:config` generates ready-to-use configuration for both local Docker and remote setups (detects environment automatically).
   - **Marketplace UI:** Updated `/marketplace/mcp` page with a tabbed interface offering tailored installation instructions for "Remote (npx)" and "Local (Docker)" workflows.
   - **Public Package:** Published `@netsendo/mcp-client` to npm registry for simplified one-command usage via `npx`.
 
 - **MCP Server (Model Context Protocol):**
-
   - **AI Integration:** Implemented a full-featured MCP server allowing AI assistants (Claude, Cursor, VS Code) to interact directly with NetSendo.
   - **Core Capabilities:**
     - **16 Tools:** Manage subscribers (create/update/delete), contact lists, tags, send emails, send SMS, check status.
@@ -136,7 +146,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Security:** Private API key authentication with standard NetSendo permissions.
 
 - **MCP Status Indicator:**
-
   - **Visual Status:** Added a status indicator to the top navigation bar showing the current state of the MCP connection (Connected, Disconnected, or Not Configured).
   - **Connection Testing:** Implemented automated daily connection tests via `mcp:test-connection` Artisan command and a manual "Test Now" button in the UI.
   - **Database Tracking:** Added `mcp_status` table to store connection test history, version information, and API accessibility status.
@@ -150,7 +159,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Global Search System:**
-
   - **Command Palette Interface:** Implemented a professional, slide-out search panel inspired by modern "Command Palette" interfaces (Raycast/Spotlight).
   - **Universal Access:** Activated via a compact search icon in the top navigation or keyboard shortcut `Cmd+K` (Mac) / `Ctrl+K` (Windows/Linux).
   - **Multi-Resource Search:** Intelligent search across 8 key areas:
@@ -167,14 +175,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Localization:** Full translations in PL.
 
 - **CRM Tasks - Advanced Creation Flow:**
-
   - Implemented `TaskModal.vue`, a comprehensive modal for creating and editing CRM tasks with full support for task types (Call, Email, Meeting, Task, Follow-up), priorities, due dates, and descriptions.
   - Added "Add Task" button to the CRM Tasks dashboard (`/crm/tasks`) header for quick task creation.
   - Enhanced Contact Profile (`/crm/contacts/{id}`) with a direct "Task" button in the header and a dedicated "Add Task" button within the tasks section (which is now always visible).
   - Integrated `TaskModal` into both the Tasks dashboard and Contact Profile for a seamless user experience.
 
 - **Signature Editor - Unification with Advanced Editor:**
-
   - Added comprehensive toolbar controls to `SignatureEditor.vue` (used for signatures and inserts) effectively mirroring `AdvancedEditor.vue`.
   - Added new formatting options: Strikethrough, Highlight color, Text Transform (uppercase/lowercase/capitalize), Headings (H1-H3), Blockquote, Code Block, Horizontal Rule.
   - Added full List support: Bullet Lists, Ordered Lists, and Indent/Outdent actions.
@@ -190,16 +196,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Global Search:**
-
   - Fixed `500 Server Error` caused by invalid column references (`messages.name`, `webinars.title`) and optimized search query scoping.
 
 - **Media Browser Integration:**
-
   - Fixed an issue in `SignatureEditor.vue` where the media browser was attempting to use an incorrect API endpoint structure.
   - Updated `openMediaBrowser` and `openLogoBrowser` to use the correct `media.search` route and response format, ensuring consistent behavior with `AdvancedEditor`.
 
 - **Tracked Links - Duplicate URL Handling:**
-
   - Fixed `UniqueConstraintViolationException` when saving tracked links that contain duplicate URLs (e.g., when pasting content from Word).
   - Updated `MessageController` to use `updateOrCreate` for tracked links to handle duplicates gracefully.
 
@@ -223,7 +226,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Global Date/Time Localization:**
-
   - Dates and times now display in the user's selected language format (en-US, de-DE, es-ES, pl-PL).
   - Updated `useDateTime.js` composable with automatic locale detection from i18n.
   - Added `formatCurrency` and `formatNumber` helpers for locale-aware number formatting.
@@ -232,27 +234,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Updated 24+ components: CRM Dashboard, Tasks, Companies, Contacts, Media, Webinars, Forms, Subscriber tabs, Profit/Affiliate, Partner, Funnels, Settings/Backup.
 
 - **WYSIWYG Editor - List Indentation:**
-
   - Added "Increase Indent" and "Decrease Indent" buttons to the editor toolbar.
   - Implemented keyboard shortcuts for list indentation (Tab / Shift+Tab).
   - Updated list icons for better visibility.
   - Added translations for indentation actions in PL, EN, DE, ES.
 
 - **Iterative Image Compression:**
-
   - Implemented smart iterative compression algorithm that automatically adjusts image quality and dimensions to ensure uploaded images are within the 10MB server limit.
   - Added intelligent retry logic that progressively reduces quality (down to 0.30) and scales down image (down to 35%) if necessary.
   - Added user feedback mechanism to alert when files cannot be compressed enough to meet the 10MB limit.
   - Added `files_too_large` translations in PL, EN, DE, ES.
 
 - **Email Image Processing:**
-
   - Implemented `EmailImageService` to automatically convert images with `img_to_b64` class to inline base64 enabled images.
   - Updated `SendEmailJob` to process inline images before sending, improving compatibility with email clients like Onet.
   - Added configuration options in `netsendo.php` for controlling inline image conversion active state, maximum size limit (default 500KB), and fetch timeout (default 10s).
 
 - **User Time Format Preference:**
-
   - Implemented user setting for preferred time format (24-hour vs 12-hour with AM/PM).
   - Added new "Time Format" dropdown in Profile Information settings.
   - Updates all time displays across the application (Dashboard, Lists, Tables, Template Builder) to respect the user's choice.
@@ -261,7 +259,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Locale-Aware Formatting:**
-
   - Standardized currency formatting across the entire application to use locale-aware `Intl.NumberFormat`.
   - Updated key components: `ProductPickerModal`, `WebinarProductPanel`, `BlockEditor`, `Funnels/Stats`, `Crm/Contacts/Show`, `Settings/Backup`, `Webinars/Analytics`, and all `Profit/Affiliate` & `Partner` views.
   - Improved display of prices and monetary values consistent with user's selected language.
@@ -269,7 +266,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **WYSIWYG List Formatting:**
-
   - Fixed issue where bullet points and numbered lists were not displaying correctly due to missing CSS styles.
   - Added explicit list styling to `TiptapEditor`, `AdvancedEditor`, and `SignatureEditor`.
   - Fixed email export to include inline styles for lists, ensuring correct rendering in email clients.
@@ -285,7 +281,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Image Auto-Compression:**
-
   - **Client-Side Compression:** Implemented automatic compression for images larger than 1MB using Canvas API before upload.
   - **Smart Resizing:** Automatically resizes large images to max 2048px dimensions while preserving aspect ratio.
   - **UI Feedback:** Added real-time compression progress bar and stats showing saved storage space.
@@ -293,7 +288,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Localization:** Full translations in PL, EN, DE, ES.
 
 - **Company Data Lookup (Poland):**
-
   - **Automatic Data Retrieval:** Implemented automatic company data fetching for Polish companies using NIP or REGON numbers.
   - **Biała Lista VAT Integration:** Integrated with the official Ministry of Finance "Biała Lista VAT" API (mf.gov.pl) for accurate and free data retrieval.
   - **CRM Integration:** Added lookup functionality directly to Company Create and Edit forms.
@@ -304,13 +298,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Localization:** Full translations for lookup features in PL, EN, DE, ES.
 
 - **Configurable Bounce Management:**
-
   - Users can now configure the **soft bounce threshold** (number of soft bounces before marking as bounced, default: 3).
   - Users can choose the **bounce scope** - whether to apply bounce status per-list (recommended) or globally on the subscriber.
   - New settings available in Mailing List Edit, Create, and Default Settings pages.
 
 - **Delete Unconfirmed Addresses:**
-
   - Implemented automatic deletion of unconfirmed subscribers after a configurable number of days.
   - New `delete_unconfirmed_after_days` setting in mailing list subscription settings (default: 7 days).
   - Added UI input field for configuring the retention period in Edit, Create, and Default Settings pages.
@@ -318,7 +310,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations in PL and EN.
 
 - **Email Funnels - Enhanced Visual Builder:**
-
   - Added 4 new step types: **SMS** (160 char limit), **Wait Until** (specific date/time), **Goal** (conversion tracking), **Split** (A/B testing).
   - Implemented **Undo/Redo** functionality (Ctrl+Z/Y) with 50-state history.
   - Added **Zoom controls** (zoom in/out/fit) and canvas toolbar.
@@ -326,7 +317,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Configuration panels for all 10 step types.
 
 - **Email Funnels - A/B Testing System:**
-
   - New database tables: `funnel_ab_tests`, `funnel_ab_variants`, `funnel_ab_enrollments`.
   - `ABTestService` with weighted random distribution algorithm for variant selection.
   - Auto-winner detection (10% lift threshold, 30 min samples per variant).
@@ -334,14 +324,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Conversion tracking for Goal steps records to active A/B tests.
 
 - **Email Funnels - Advanced Analytics:**
-
   - Enhanced Stats page with tabbed interface (Overview / Steps / A/B Tests).
   - Step-by-step conversion rates and drop-off analysis.
   - Time-to-completion metrics (avg/min/max/median).
   - A/B test performance dashboard with variant comparison.
 
 - **Email Funnels - Template System:**
-
   - New `funnel_templates` table with 8 categories (welcome, reengagement, launch, cart_abandonment, webinar, onboarding, sales, custom).
   - `FunnelTemplateService` for export/import functionality.
   - 3 pre-built system templates: Welcome Sequence, Re-engagement, Product Launch.
@@ -349,7 +337,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Routes: `/funnel-templates` gallery, `/funnels/{id}/export-template`.
 
 - **Email Funnels - Subscriber Management:**
-
   - New **Subscriber Management** tab in Funnel Stats with filtering and pagination.
   - Ability to manually **Pause/Resume** subscriber progression.
   - **Advance/Rewind** functionality to manually move subscribers between steps.
@@ -357,7 +344,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `FunnelSubscribersController` with comprehensive API endpoints.
 
 - **Email Funnels - Goal Tracking:**
-
   - Dedicated **Goals** tab in Stats with revenue dashboard.
   - **Revenue Tracking:** Calculate and display total revenue generated by funnel.
   - **Goal Conversions:** Track specific goal steps (Purchase, Signup, Custom) with value.
@@ -365,7 +351,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Breakdown of conversions by funnel step and source.
 
 - **Email Funnels - Enhanced Webhooks:**
-
   - **Retry Logic:** Automatic retries (3 attempts) with exponential backoff for failed webhooks.
   - **Variable Substitution:** Support for dynamic placeholders (e.g., `{{subscriber.email}}`, `{{funnel.name}}`) in webhook payload.
   - **Custom Headers:** Support for custom HTTP headers and authentication (API Key, Basic Auth).
@@ -373,7 +358,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Support for all standard HTTP methods (POST, GET, PUT, PATCH, DELETE).
 
 - **Email Funnels - Testing Suite:**
-
   - Added comprehensive **Feature Tests** for Funnel Controller (CRUD, security, validation).
   - Added **Unit Tests** for `FunnelExecutionService` covering global logic, conditions, and actions.
   - Added **Unit Tests** for `WebhookService` verifying retry logic and payload construction.
@@ -382,7 +366,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **System Emails:** Fixed missing welcome email for new subscribers when double opt-in is disabled.
-
   - Added new `subscription_welcome` system email template.
   - New subscribers without double opt-in now receive a welcome email immediately after signup.
   - Resubscribers (already active) continue to receive `already_active_resubscribe`.
@@ -410,7 +393,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **CRM Sales Automation System:**
-
   - **Triggers:** Implemented 5 new CRM triggers: Deal Stage Changed, Deal Won, Deal Created, Task Completed, and Contact Created.
   - **Actions:** Added comprehensive CRM actions including Create Task, Update Score, Update Deal Stage, Assign Owner, Convert to Contact, and Log Activity.
   - **Conditions:** Added logic for evaluating CRM-specific conditions (Pipeline Stage, Deal Value, Score Threshold, Contact Status, Idle Days).
@@ -420,7 +402,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Localization:** Full translations in PL, EN, DE, ES for all CRM automation features (+160 new keys).
 
 - **CRM Email Sending:**
-
   - **Direct Email:** Implemented "Send Email" functionality directly from CRM Contact profile page.
   - **Composer Modal:** New rich modal interface for composing emails with subject and body.
   - **Mailbox Selection:** Ability to choose sender identity (Mailbox) if multiple are available.
@@ -428,7 +409,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Backend:** New `sendEmail` endpoint in `CrmContactController` utilizing `MailProviderService`.
 
 - **Automatic Gender Detection:**
-
   - **CSV Import:** Implemented automatic gender detection during subscriber import from CSV files. If gender is missing, it's inferred from the first name.
   - **API Support:** Added automatic gender detection to Subscriber API endpoints (`POST /api/v1/subscribers` and `POST /api/v1/subscribers/batch`).
 
@@ -454,7 +434,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **CRM Module (Sales):**
-
   - **Core System:** Complete CRM implementation with Companies, Contacts, Deals, Pipelines, Tasks, and Activities.
   - **Kanban Board:** Interactive drag-and-drop Deal management with customizable pipelines and stages.
   - **Contact & Company Profiles:** Deep integration with NetSendo Subscribers, activity timelines, notes, and task associations.
@@ -464,26 +443,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Backend:** 7 new Eloquent models, polymorphic activity tracking, and optimized database schema.
 
 - **Kanban Board Visual Feedback:**
-
   - Added visual highlighting when dragging deals over columns in the Kanban board.
   - Columns now display indigo ring and background when a deal hovers over them.
   - Prevents highlighting when dragging over the deal's current column.
   - Smooth transition animations for better user experience.
 
 - **Message ID Search:**
-
   - Extended search functionality in email and SMS message lists to support searching by message ID in addition to subject.
   - Updated `MessageController.php` and `SmsController.php` to include ID in search query.
 
 - **Searchable List Filter:**
-
   - Replaced static dropdown with searchable list picker in email and SMS message filters.
   - Users can now filter lists by name or ID, making it easier to find specific lists when managing many.
   - Added list ID display (#ID) next to each list name in the dropdown.
   - Full translations in PL, EN, DE, ES.
 
 - **WYSIWYG Editor - Image Resize Drag Handles:**
-
   - Added drag-to-resize functionality for images in the WYSIWYG editor.
   - Users can click on an image to select it and drag the corner handles to resize proportionally.
   - Width percentage indicator displayed during resize.
@@ -491,21 +466,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented custom `ResizableImageView` NodeView component with full CSS styling for resize handles.
 
 - **WYSIWYG Editor - Text Case Formatting:**
-
   - Added text-transform functionality (uppercase, lowercase, capitalize) to the WYSIWYG editor.
   - New toolbar button with dropdown menu for selecting text case options.
   - Custom `TextTransform` Tiptap extension using CSS `text-transform` property.
   - Full translations in PL, EN, DE, ES.
 
 - **WYSIWYG Editor - Font Size Support:**
-
   - Enhanced font size picker to display the currently selected size directly on the toolbar button.
   - Added "Default" option to easily reset font size to the default value.
   - Improved visual feedback with highlighting for the active font size in the dropdown.
   - Added translations for the new "Default" option in PL, EN, DE, ES.
 
 - **SMS Test Send:**
-
   - Added "Send Test SMS" button to SMS campaign creation page, mirroring the existing email test functionality.
   - New modal interface for entering test phone number with content preview.
   - Backend `SmsController@test` method with placeholder substitution using sample data when no subscriber is selected.
@@ -522,19 +494,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **CRM Kanban Drag-and-Drop:**
-
   - Fixed "All Inertia requests must receive a valid Inertia response, however a plain JSON response was received" error when dragging deals between columns.
   - Changed `CrmDealController@updateStage` to return `RedirectResponse` instead of `JsonResponse` for proper Inertia compatibility.
 
 - **CRM Module Fixes:**
-
   - Fixed 500 Internal Server Error in CRM controllers caused by column name mismatch (`admin_id` replaced with `admin_user_id`).
   - Fixed "Page not found" errors by creating missing Vue pages: `Deals/Index.vue` (Kanban board), `Companies/Create.vue`, `Companies/Show.vue`, and `Companies/Edit.vue`.
   - Fixed sidebar navigation to use valid route names for correct active state detection.
   - Fixed `UniqueConstraintViolationException` when creating a CRM contact for an existing subscriber email by using `firstOrCreate` logic to prevent duplicates.
 
 - **Media Library - Bulk Upload 500 Error:**
-
   - Fixed critical 500 Internal Server Error when uploading images to the Media Library on servers without PHP GD extension.
   - Added `function_exists()` checks for all GD functions (`imagecreatefromjpeg`, `imagecreatefrompng`, `imagecreatefromgif`, `imagecreatefromwebp`, `imagesx`, `imagesy`, `imagecolorat`, `imagedestroy`) in `ColorExtractionService.php`.
   - Image uploads now work gracefully without GD extension - color extraction is simply skipped if GD is unavailable.
@@ -555,7 +524,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Enterprise Media Library:**
-
   - **Media Library Page (`/media`):** Centralized asset management with drag-and-drop upload, filtering by brand/type/folder, search functionality, bulk selection, and grid display.
   - **Brand Management Page (`/brands`):** Create and manage brands with logos, descriptions, and color palettes.
   - **Automatic Color Extraction:** Native GD library k-means clustering algorithm extracts 8 dominant colors from uploaded images automatically.
@@ -571,7 +539,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Translations:** Full localization in EN, PL, DE, ES for all media, brands, and colors features.
 
   - **Media Library Enhancements:**
-
     - **Detailed View:** Added dedicated media view page (`/media/{id}`) displaying full image preview, metadata (size, dimensions, type), and extracted color palette.
     - **Type Management:** implemented functionality to change media type (Image, Logo, Icon, Document) and update Alt Text directly from the detailed view.
     - **Upload Improvements:** Fixed 500 Internal Server Error during bulk upload by resolving GD library namespace conflicts. Added better error handling and automatic page reload on success.
@@ -588,7 +555,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **WYSIWYG Editor - Image Style Options:**
-
   - Fixed issue where image formatting options (width, alignment, float, margin, border-radius) were not being preserved after saving.
   - Created custom `CustomImage` extension for Tiptap that properly preserves inline `style` attribute during HTML parsing/serialization.
   - Applied fix to both `AdvancedEditor.vue` and `SignatureEditor.vue`.
@@ -612,7 +578,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **WYSIWYG Editor - Enhanced Link Editing:**
-
   - Link editing modal (`AdvancedEditor.vue`) now includes a **Link Text** field alongside the URL field, allowing users to modify both the display text and the destination URL.
   - **Extended Link Options:** Added **Title** field (for tooltips/accessibility) and **Target** dropdown (Same window / New window) - matching previous NetSendo functionality.
   - **Click-to-Edit Links:** Clicking on any link in the editor now opens the edit modal with pre-filled values, allowing quick modifications.
@@ -632,18 +597,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Template Builder - Link Click Prevention:**
-
   - Fixed issue where clicking on links within text blocks in the Template Builder canvas (`BuilderCanvas.vue`) would navigate to the link URL instead of allowing editing.
   - Added CSS to disable pointer events on anchor tags within text content in edit mode.
 
 - **Template Builder - WooCommerce Product Visibility:**
-
   - **Dark Mode Support:** Fixed visibility issues where product titles and prices were white/invisible on white product block backgrounds when the app was in Dark Mode.
   - **Product Grid:** Fixed "Product Grid" blocks turning dark gray in the editor when in Dark Mode, ensuring they remain white to match the email canvas for proper contrast.
   - **Preview Panel:** Updated MJML preview generation to correctly render product blocks with dynamic background and text colors, respecting the selected Light/Dark preview mode.
 
 - **WordPress Plugin - Pixel User ID Configuration (v1.1.1):**
-
   - Fixed critical issue where "User ID not set" warning persisted after successful API connection test.
   - Updated `ajax_test_connection` to accept `api_url` and `api_key` from form fields, enabling testing before saving.
   - Modified `NetSendo_WP_API` constructor to accept optional parameters for on-the-fly testing.
@@ -651,13 +613,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Updated JavaScript to pass current form values during test and dynamically update Pixel status UI when `user_id` is received.
 
 - **WooCommerce Plugin - Pixel User ID Configuration (v1.1.1):**
-
   - Applied identical fixes to WooCommerce plugin for consistent behavior.
   - Updated `NetSendo_WC_API` constructor, `ajax_test_connection`, and `save_user_id` methods.
   - Updated JavaScript to send form values during connection test.
 
 - **A/B Testing - Draft Saving:**
-
   - Fixed critical issue where A/B test variants were not being saved when saving a message as a draft.
   - Implemented `ab_test_config` validation and processing in `MessageController`.
   - Added `syncAbTest` method to correctly synchronize A/B test configuration and variants with the database during save/update operations.
@@ -670,15 +630,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **WooCommerce Product Variants Support:**
-
   - **Backend:**
-
     - Extended `WooCommerceApiService` to fetch and cache product variations.
     - Updated `TemplateProductsController` with new endpoint `getProductVariations` for fetching variations.
     - Added support for variant data structure (price ranges, attributes, image overrides) in API responses.
 
   - **Frontend (Template Builder):**
-
     - **Variable Product Support:** Product Picker now identifies variable products with a specific badge and variant count.
     - **Variant Selection:** Added UI to expand variable products in the picker and select individual variants or the parent product.
     - **Block Editor Integration:** Product blocks now display selected variant attributes (e.g., Size: XL, Color: Red).
@@ -711,14 +668,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Full HTML Visual Editing:**
-
   - **Text Editing:** Implemented direct text editing for full HTML templates in visual mode with click-to-edit functionality.
   - **Modal Interface:** Added text editing modal (`AdvancedEditor.vue`) with textarea and variable insertion support.
   - **UX Improvements:** Added hover highlights for editable elements and auto-scroll to element after saving.
   - **Translations:** Added translations for text editing features in PL, EN, DE, ES.
 
 - **A/B Testing System:**
-
   - **Enterprise-Grade Testing:** Implemented a comprehensive A/B testing solution for email marketing.
   - **Multi-Variant Support:** Support for up to 5 variants (A-E) per test, exceeding industry standards.
   - **Flexible Test Types:** Test different Subjects, Preheaders, Content, Sender Names, or Send Times.
@@ -769,7 +724,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **NetSendo Pixel for WordPress Plugin:**
-
   - Implemented Pixel tracking script injection in WordPress plugin (`netsendo-wordpress.php`).
   - Added `page_view` tracking with page type detection (home, post, page, archive, search).
   - Added new "Pixel Tracking" settings section with `enable_pixel` toggle in admin panel.
@@ -835,7 +789,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Plugin Version & Update System:**
-
   - Implemented version tracking for WordPress and WooCommerce integrations.
   - New `plugin_connections` database table for storing plugin metadata (version, site URL, WP/WC versions).
   - New API endpoints:
@@ -860,26 +813,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Quick Create Actions:**
-
   - Added "Create email" (envelope icon) and "Create SMS" (message icon) buttons to "Actions" column in Email and SMS List views.
   - Clicking the button automatically navigates to the message creator with the corresponding list pre-selected.
   - Supported in both Grid and Table views for seamless workflow.
   - Backend controllers (`MessageController`, `SmsController`) updated to handle `list_id` query parameter for pre-selection.
 
 - **API User Data Passthrough:**
-
   - Added optional `ip_address`, `user_agent`, and `device` fields to Subscriber API (`POST /api/v1/subscribers`, `POST /api/v1/subscribers/batch`).
   - Added optional `client_ip` field to Pixel API (`POST /t/pixel/event`, `POST /t/pixel/batch`).
   - Enables passing real user data when API calls come from proxies (e.g., n8n, Zapier) instead of recording proxy server IP.
   - If fields are not provided, system falls back to automatically detected values from the HTTP request.
 
 - **List ID in CRM Lists:**
-
   - Added "ID LISTY" column to Mailing Lists and SMS Lists table views for easier reference.
   - Enhanced search functionality in Mailing Lists and SMS Lists to support searching by exact List ID in addition to list name.
 
 - **Tracked Links Feature:**
-
   - Implemented "Tracked Links" functionality for email messages, allowing per-link configuration.
   - **Features:**
     - Enable/disable tracking for individual links.
@@ -908,7 +857,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Advanced Subscriber Card (Karta Subskrybenta):**
-
   - New comprehensive subscriber profile page accessible at `/subscribers/{id}` with a professional tabbed interface.
   - **Overview Tab:** Profile information, engagement score ring, tags, custom fields, and active subscriptions.
   - **Message History Tab:** Table of all messages sent to the subscriber with status, opens, and clicks.
@@ -921,13 +869,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations in PL, EN, DE, ES.
 
 - **CRM Deletion Confirmations:**
-
   - Implemented secure deletion modals for Contact Groups, Mailing Lists, and Tags, preventing accidental data loss.
   - **Mailing Lists:** Deletion now supports transferring subscribers to ANY accessible list (previously limited to the current pagination page).
   - **Groups/Tags:** Added specific confirmation dialogs explaining the impact on related data (e.g., child groups, tagged items).
 
 - **Pixel Custom Events Documentation:**
-
   - Expanded custom events help section on Pixel Settings page with comprehensive documentation.
   - Added visual overview of all supported event types (`page_view`, `product_view`, `add_to_cart`, `checkout_started`, `purchase`, `custom`).
   - Added copy-to-clipboard code examples for key tracking events.
@@ -944,7 +890,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **NetSendo Pixel Cross-Origin Tracking:**
-
   - Added `config/cors.php` with proper CORS configuration for `/t/pixel/*` endpoints, enabling pixel tracking from external websites.
   - Added `HandleCors` middleware to global middleware stack in `bootstrap/app.php`.
   - Fixed critical issue where `sendBeacon` requests from browsers were not being recorded despite curl requests working correctly.
@@ -965,7 +910,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Live Visitors (Real-Time Tracking):**
-
   - Real-time visitor tracking on Pixel Settings page using WebSockets (Laravel Reverb).
   - New `PixelVisitorActive` broadcast event for live visitor updates.
   - `LiveVisitorService` for Redis-based active visitor tracking with 5-minute TTL.
@@ -975,20 +919,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations for live visitors feature in PL, EN, DE, ES.
 
 - **Gender Personalization Placeholder:**
-
   - Added `{{męska|żeńska}}` (e.g., `{{male_form|female_form}}`) placeholder to `quickVariables` in Message Creator (`Create.vue`), allowing one-click insertion into Subject and Preheader fields.
   - Updated `TemplateAiService` to instruct AI on how to use gender-specific forms (`{{male_form|female_form}}`) for personalization.
   - Added translations for the new gender placeholder UI in PL, EN, DE, ES.
 
 - **Documentation:**
-
   - Added complete WebSocket/Reverb configuration guide to `README.md` and `DOCKER_INSTALL.md`.
   - Created `.env.example` file with all required environment variables including Reverb settings.
   - Added Nginx WebSocket proxy configuration for production deployments.
   - Added troubleshooting steps for "WebSocket connection failed" errors.
 
 - **Multi-Store WooCommerce Integration:**
-
   - Users can now connect and manage multiple WooCommerce stores from the Integrations tab.
   - New database migration adding `name` and `is_default` columns to `woocommerce_settings` table.
   - Updated `WooCommerceSettings` model with methods for multi-store support (`forUser()` returns collection, `getDefaultForUser()`, `getByIdForUser()`, `setAsDefault()`).
@@ -1066,7 +1007,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Autoresponder Queue Timing:** Fixed issue where autoresponder messages created with a day offset (e.g., `day=1`) would incorrectly queue messages for subscribers whose sending time had already passed.
-
   - Implemented logic to skip automatic queue entry creation for "missed" subscribers when creating/updating messages.
   - Added new listener to properly handle queueing for new subscribers based on their signup time.
   - "Send to missed" functionality remains available for manual remediation.
@@ -1219,14 +1159,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Missing translation keys for Affiliate Program in frontend locales (EN, DE, ES).
 
 - **Signature Editor:**
-
   - **Image Upload:** Implemented direct file upload support (drag & drop) in `SignatureEditor.vue`, alongside existing URL insertion.
   - **Table Support:** Fixed "full HTML" detection logic to correctly identify tables as supported elements in visual mode.
   - **Dark Mode:** Fixed styling issues in the Image Modal where text was invisible on dark backgrounds.
   - **Translations:** Added missing translation keys for editor messages (`editor.full_html_message`) and upload UI.
 
 - **Mailboxes:**
-
   - Fixed issue where editing a Gmail mailbox caused a validation error due to browser autofill prevention clearing the `from_email` field.
   - Backend `update` method now correctly handles empty `from_email` for Gmail providers by retaining existing values or setting a default, mirroring the creation logic.
 
@@ -1330,7 +1268,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Subscriber Management:**
-
   - **Advanced Pagination:**
     - Added per-page selector (10, 15, 25, 50, 100, 200 items) with persistent local storage settings.
     - Updated backend to support dynamic pagination limits.
@@ -1343,7 +1280,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     - Added full Polish translations for all new bulk operations, modals, and statistics.
 
 - **External Pages:**
-
   - Added toast notification when copying the external page link to the clipboard.
   - Added confirmation modal when deleting an external page.
 
@@ -1363,7 +1299,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Automation Builder:**
-
   - Fixed issue where mailing lists were not visible in "Then" actions (e.g., Unsubscribe, Move to list) for team members by selecting lists via `accessibleLists()` instead of `forUser()`.
   - Fixed configuration persistence issue where selected options (like list ID) were not saved to the database due to missing validation for `actions.*.config`.
 
@@ -1377,7 +1312,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Automations:**
-
   - Added confirmation modals for duplicate and delete actions with dark mode support.
 
 - **Translations:**
@@ -1386,7 +1320,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Template List UI:**
-
   - Reordered template cards to display the thumbnail at the top for better visual hierarchy.
   - Increased thumbnail height to `192px` (h-48) for improved visibility.
   - Renamed "Edit" button to "Edit in editor" for clarity.
@@ -1406,7 +1339,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Automations:**
-
   - Fixed 403 Forbidden error when accessing automation routes (Policy discovery issue).
   - Fixed JavaScript error (`TypeError: Cannot read properties of undefined`) in Automation Builder when actions lack configuration.
   - Fixed 404 error when editing automation rules caused by route model binding issues.
@@ -1415,25 +1347,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Fixed dark mode visibility issues (inputs, dropdowns, radio buttons, and "Cancel" button) in Automation Builder.
 
 - **Template List Layout:**
-
   - Fixed issue where the page title and "Add Template" button were truncated in the header.
   - Moved title and actions to the main content area for better visibility and mobile responsiveness.
   - Reordered template card elements to place action buttons (Edit, Duplicate, Delete) at the top, preventing overlap with the thumbnail link.
 
 - **Image Upload Error Handling:**
-
   - Fixed silent failures during image uploads in the Template Builder.
   - Added explicit error messages for failed uploads (e.g., file too large, invalid format).
 
 - **Translations:**
-
   - Updated Polish translation for "Your templates" to "Twoje szablony" for better clarity.
     **Release date:** 2026-01-04
 
 ### Added
 
 - **Message Creation:**
-
   - Active subscriber count now displayed next to each list name in list selection views (e.g., "My List (42)").
   - Count reflects only active subscribers (excludes unsubscribed).
 
@@ -1455,16 +1383,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Template Builder:**
-
   - **Inserts (Placeholders):** Added functionality to insert dynamic placeholders (firstname, email, signatures, etc.) into text blocks, buttons, and other editable fields.
   - **Variable Picker:** Integrated `InsertPickerModal` into the builder for easy variable selection.
 
 - **Translations:**
-
   - Added missing translations for `template_builder.insert_variable` and `templates.builder_badge` in all supported languages.
 
 - **GDPR "Right to be Forgotten" (Article 17):**
-
   - **Data Deletion:** Subscribers can now request permanent deletion of all their data via the preferences page.
   - **Suppression List:** Deleted subscribers are added to a suppression list to prevent accidental re-adding.
   - **Re-subscription Flow:** Previously forgotten users can re-subscribe with renewed consent; system logs the event and removes them from the suppression list.
@@ -1479,27 +1404,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Starter Templates Missing on New Installations:**
-
   - Fixed issue where new NetSendo installations had no starter templates in the Templates section.
   - Docker entrypoint now automatically seeds the database with 6 premium starter templates (Welcome Email, Classic Newsletter, Promo Campaign, Cart Abandonment, Order Confirmation, Password Reset).
   - Smart seeding logic checks if templates exist before seeding, ensuring existing installations also receive templates on next container restart.
 
 - **Subscription Persistence:**
-
   - Fixed issue in Admin Panel where `Contact Lists` tab displayed unsubscribed lists as active.
   - Updated `SubscriberController` to filter contact lists by pivot status `active`.
 
 - **Single-List Unsubscribe:**
-
   - Fixed issue where unsubscribing from a single list failed to send confirmation emails.
   - Added comprehensive logging to `UnsubscribeController` and `SystemEmailService` for better traceability.
 
 - **Mobile Notifications:**
-
   - Fixed issue where notification messages were truncated on mobile devices by adjusting dropdown width.
 
 - **Templates UI:**
-
   - Fixed mobile layout overflow in Templates view by adjusting header flex properties and title sizing.
 
 - **Mobile Notification Modal:**
@@ -1519,11 +1439,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Subscription Persistence:**
-
   - Fixed critical issue where unchecking lists or unsubscribing in preferences was not persisted due to incorrect user identification in `SubscriberPreferencesController`.
 
 - **System Email Sending:**
-
   - Fixed critical issue where custom system emails failed with "Connection could not be established" error when using non-SMTP providers (e.g., SendGrid/Gmail API).
   - Refactored `SystemEmailService` to properly leverage `MailProviderService` for all custom emails, fixing "empty host" errors.
   - Updated `SendNewSubscriberNotification` listener to use `SystemEmailService`, ensuring reliable delivery of admin notifications using the correct mailbox.
@@ -1538,7 +1456,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Template Builder UX:**
-
   - **Mobile Experience:**
     - Restored "Preview" button in mobile navigation.
     - Added visual save status indicator (Saving/Saved) to mobile bottom bar.
@@ -1583,7 +1500,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Multi-level Group Hierarchy:**
-
   - Implemented hierarchical structure for Contact List Groups (parent-child relationships).
   - Updated `ContactListGroup` model with `parent`, `children`, and `allChildren` relationships.
   - New recursive methods `getAllDescendantIds`, `getFullPathAttribute`, and `getDepthAttribute`.
@@ -1606,7 +1522,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Universal Webinar Timezone Management:**
-
   - Implemented "Inherited" timezone logic for Webinars (defaults to User timezone) and Auto-Webinars (defaults to Webinar timezone).
   - Added `UserTimezoneUpdated` event listener to automatically sync specific webinar timezones when user changes account timezone.
   - Added `getEffectiveTimezoneAttribute` to models for transparent timezone resolution.
@@ -1623,7 +1538,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Webinar Timezone Logic:**
-
   - Fixed migration to correctly handle nullable `timezone` column for inheritance.
   - Fixed session start times on watch/registration pages to correctly respect timezone.
   - Fixed issue where changing user timezone wouldn't update relevant webinars.
@@ -1644,7 +1558,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **UI Naming Consistency Improvements:**
-
   - Added "New Email List" and "New SMS List" quick actions on the Dashboard.
   - New SVG icons for quick actions with blue and teal color themes.
   - Updated navigation menu item names for better clarity:
@@ -1664,7 +1577,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **AI Token Limits:**
-
   - Increased default fallback `max_tokens` from 1024 to 65536 in all AI providers.
   - Prevents content truncation when generating long HTML templates.
   - Affected providers: `GeminiProvider`, `OpenAiProvider`, `AnthropicProvider`, `GrokProvider`, `OpenrouterProvider`, `OllamaProvider`.
@@ -1682,7 +1594,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Webinar List Integration:**
-
   - **Advanced Attendance Tracking:** Automatically managing subscribers based on their webinar behavior.
   - **Click Tracking:** Subscribers entering the webinar watch page are automatically added to a specific "Clicked Link" contact list.
   - **Watch Duration Tracking:** Subscribers who watch the webinar for a specified duration (e.g., 5 mins) are added to an "Attended" contact list.
@@ -1691,9 +1602,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Full Translations:** UI available in PL, EN, DE, ES.
 
 - **Webinar Chat System:**
-
   - **Reactions (Emoji):**
-
     - Real-time reactions system with animated bubbles (TikTok/Instagram Live style).
     - 7 reaction types: heart, thumbs up, fire, clap, wow, laugh, think.
     - Host-configurable (enable/disable) via control panel.
@@ -1701,7 +1610,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     - New `WebinarReactionBar` and `ReactionBubbles` Vue components.
 
   - **Host Control Panel:**
-
     - New "Controls" tab in Webinar Studio for advanced chat management.
     - **Chat Modes:** Open, Moderated, Q&A Only, Host Only.
     - **Slow Mode:** Configurable cooldowns (5s, 10s, 30s, 1min) to prevent spam.
@@ -1709,7 +1617,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     - **Announcements:** Send official host messages (Info, Success, Warning, Promo) directly to chat.
 
   - **Scenario Builder (Auto-Webinars):**
-
     - Visual timeline editor for creating automated chat scripts.
     - Drag-and-drop message management grouped by time segments.
     - **Random Generator:** Templates for Sales, Educational, and Launch webinars.
@@ -1717,7 +1624,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     - Support for various message types: Comment, Question, Reaction, Testimonial.
 
   - **Promotion Features:**
-
     - **Promotion Countdown:** Urgent pulsing timer for product offers.
     - Shimmer effects and "Ending Soon" visual indicators.
     - Integrated into public watch page.
@@ -1744,7 +1650,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Webinar Success Page Integration:**
-
   - Added "Add to Google Calendar" and "Add to Outlook" buttons to webinar success page.
   - Generates calendar events with correct webinar title, date, time, and link.
   - Added "Go to Webinar" button (🚀) directing users straight to the webinar room.
@@ -1785,7 +1690,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Webinar Public Registration Link:**
-
   - Added public registration link display in webinar edit view with copy-to-clipboard functionality.
   - Visual link preview with prominent gradient styling and external link button.
   - Full translations for link section in PL, EN, DE, ES.
@@ -1862,13 +1766,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Database Migrations:**
-
   - Resolved MySQL index length limit issue in `page_visits` table migration (`1071 Specified key was too long`).
   - Fixed `SystemMessageSeeder` to support renamed `system_pages` table after migration.
   - Fixed `webinar_chat_messages` index length issue.
 
 - **Developer Experience:**
-
   - Removed automatic creation of test user in `DatabaseSeeder` to allow clean manual registration.
   - Replaced external `@heroicons/vue` dependency with inline SVGs in webinar components to fix build errors.
 
@@ -1903,12 +1805,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **NetSendo Logo for Plugins:**
-
   - Added NetSendo logo (`netsendo-logo.png`) to both WooCommerce and WordPress plugin assets.
   - WordPress plugin settings page now displays actual logo instead of dashicons icon.
 
 - **WooCommerce Product-Level External Pages:**
-
   - Added dynamic "NetSendo External Page" dropdown to WooCommerce product settings.
   - Product override settings now support selecting external pages from API (matching global settings).
   - Renamed "Redirect URL after Purchase" to "Or Custom Redirect URL" for clarity.
@@ -1960,7 +1860,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Campaign Architect Enhancements:**
-
   - **Campaign Deletion:** Ability to delete campaign plans with option to cascade delete associated email and SMS messages.
   - **Export Success Modal:** New modal with export summary and "Next Steps" guidance after exporting campaigns.
   - **Campaign Filtering:** Emails and SMS messages created from plans are now linked to the campaign and filterable in message lists.
@@ -1987,7 +1886,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Sales Funnels Integration:**
-
   - Implemented Sales Funnels feature for Stripe and Polar products.
   - New "Sales Funnels" tab in Stripe and Polar product settings.
   - Ability to create sales funnels, assign products, and generate embed codes.
@@ -1998,7 +1896,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations for Sales Funnels in PL, EN, DE, ES.
 
 - **User Model Improvement:**
-
   - Added missing `externalPages()` relationship to `User` model, fixing "Call to undefined method" error in automations.
 
 - **Integration Documentation Updates:**
@@ -2015,7 +1912,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Stripe OAuth (Connect) Integration:**
-
   - Added new OAuth-based connection method for Stripe alongside existing API key entry.
   - New `StripeOAuthController` handling OAuth authorization flow, callback token exchange, and disconnection.
   - Redesigned Stripe Settings page with connection mode toggle (OAuth vs Manual API Keys).
@@ -2028,7 +1924,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations for OAuth setup wizard in PL, EN, DE, ES.
 
 - **Polar Payment Processor Integration:**
-
   - Implemented full Polar integration for handling digital product sales and subscriptions.
   - New `PolarService` for interacting with Polar API, including product management, checkout sessions, and webhook verification.
   - Created `PolarProduct` model and controller for managing Polar products.
@@ -2083,7 +1978,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Webhook-Based Password Reset:**
-
   - Implemented a new password reset flow using an external n8n webhook (`password.webhook-reset`) instead of standard SMTP email.
   - Replaced the standard "Forgot Password" page with a modal in the login view.
   - Reset instructions are now handled by an external automation workflow, making it compatible with environments without configured SMTP.
@@ -2093,27 +1987,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Old standard password reset routes (`password.request`, `password.email`) have been removed to prevent access to the legacy flow.
 
 - **Batch Subscriber API Endpoint:**
-
   - New `POST /api/v1/subscribers/batch` endpoint for creating up to 1000 subscribers in a single request.
   - Returns detailed results: created count, updated count, skipped count, and per-item errors.
   - Supports all subscriber fields: email, phone, first_name, last_name, tags, custom_fields.
   - Webhooks (`subscriber.created`, `subscriber.subscribed`) dispatched asynchronously for each subscriber.
 
 - **Async Webhook Dispatching:**
-
   - Webhooks are now dispatched asynchronously via Laravel queue for better performance.
   - New `DispatchWebhookJob` handles webhook delivery with 3 retry attempts and 10s backoff.
   - API requests no longer block on webhook HTTP calls, significantly improving response times for batch operations.
 
 - **Custom Fields API Endpoints:**
-
   - New `GET /api/v1/custom-fields` endpoint to list all user's custom fields with filtering options.
   - New `GET /api/v1/custom-fields/{id}` endpoint to get single custom field details.
   - New `GET /api/v1/custom-fields/placeholders` endpoint returning all available placeholders (system + custom).
   - Enables n8n nodes to dynamically load available fields and placeholders.
 
 - **System Emails Integration:**
-
   - All 8 system emails from `/settings/system-emails` are now fully functional.
   - **Signup Confirmation (Double Opt-In):** `signup_confirmation` email sent with activation link when double opt-in is enabled.
   - **Activation Confirmation:** `activation_confirmation` email sent after user clicks activation link.
@@ -2126,7 +2016,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - New `SendUnsubscribeConfirmation` listener for `SubscriberUnsubscribed` event.
 
 - **System Pages Integration:**
-
   - All 10 system pages from `/settings/system-pages` are now fully functional.
   - New `UnsubscribeController` for public unsubscribe flow using SystemPage templates.
   - Unsubscribe now shows `unsubscribe_confirm`, `unsubscribe_success`, or `unsubscribe_error` pages.
@@ -2140,7 +2029,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Webhook Triggers for All Subscription Scenarios:**
-
   - Fixed missing webhooks for re-subscription and already-active scenarios.
   - Form submissions now dispatch: `subscriber.subscribed` (new), `subscriber.resubscribed` (re-activation), `subscriber.updated` (already active).
   - API `POST /api/v1/subscribers` now returns 200 with subscriber data instead of 409 when adding existing subscriber to a new list.
@@ -2148,7 +2036,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - All subscription scenarios (form and API) now trigger appropriate webhooks for n8n and other integrations.
 
 - **System Pages Not Used After Form Submission:**
-
   - Fixed issue where customizable system pages from `/settings/system-pages` were not rendered after form submission.
   - Form success and error pages now properly use content from `SystemPage` model instead of hardcoded Polish text.
   - New `system-page.blade.php` template supports dynamic HTML content with placeholder replacement.
@@ -2157,7 +2044,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added migration to ensure all system page slugs exist in the database.
 
 - **Global Stats Query Error:**
-
   - Fixed `SQLSTATE[42S22]: Column not found` error in Global Stats when filtering by date.
   - Resolved scope issue with `contact_list_subscriber.updated_at` in `whereHas` query constraints.
 
@@ -2174,7 +2060,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Dynamic Placeholders on Thank You Page:**
-
   - Thank you page after form submission now supports dynamic placeholders (`[[first_name]]`, `[[email]]`, etc.).
   - Users can personalize success page title and message using subscriber data.
   - New `success_title` field on forms for customizable heading (e.g., `[[first_name]], dziękujemy!`).
@@ -2182,7 +2067,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Works with all standard fields and custom fields defined in the system.
 
 - **Placeholder Picker for System Pages:**
-
   - New "Available Placeholders" section in System Pages editor showing all available placeholders.
   - Placeholders are grouped by type: Standard Fields, System Placeholders, Custom Fields.
   - Click-to-copy functionality for easy insertion into content.
@@ -2190,7 +2074,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Works with all standard fields and custom fields defined in the system.
 
 - **n8n Subscriber Inserts Documentation:**
-
   - New `docs/N8N_SUBSCRIBER_INSERTS_GUIDE.md` with comprehensive instructions for n8n node agent.
   - Documents `custom_fields` support for subscriber creation/update via API.
   - Lists all available placeholders (`[[fname]]`, `[[email]]`, `[[phone]]`, etc.) for email/SMS personalization.
@@ -2200,13 +2083,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Form Submission Error:**
-
   - Fixed `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'source'` error during form submission.
   - Added missing `source` column to `contact_list_subscriber` table via new migration.
   - Updated `Subscriber` and `ContactList` models to include `source` in pivot relationships.
 
 - **Subscriber Duplicate Check:**
-
   - Fixed `Integrity constraint violation: 1062` error when a subscriber re-subscribes via form.
   - Updated `createOrUpdateSubscriber` to scope lookup by `user_id` and include soft-deleted records (`withTrashed`), restoring them if found to prevent unique constraint violations.
 
@@ -2221,7 +2102,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Queue Stats Modal for Autoresponders:**
-
   - Implemented detailed statistics modal for autoresponder messages.
   - Shows breakdown of scheduled recipients (tomorrow, day after, 3-7 days, 7+ days).
   - Identifies "missed" subscribers who joined before the message's day offset.
@@ -2230,7 +2110,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations for EN, PL, DE, ES.
 
 - **System Logs Viewer:**
-
   - New logs viewer page at `/settings/logs` for monitoring `storage/logs/laravel.log`.
   - Log level filtering (ERROR, WARNING, INFO, DEBUG) with color-coded display.
   - Search functionality to find specific log entries.
@@ -2249,23 +2128,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Custom Field Creation:**
-
   - Fixed issue where creating new "Text" / "Number" type custom fields failed silently due to empty options data validation error.
   - Implemented automatic data sanitization in form submission to remove invalid empty options.
 
 - **Form Submission Redirects:**
-
   - Fixed issue where form submissions were resulting in 404 errors instead of correct redirects.
   - Implemented priority-based redirect logic: Form settings -> List settings (Success/Confirmation page) -> Global settings.
   - Added support for "External Page" and custom URL redirections from List settings.
 
 - **List Webhooks:**
-
   - Fixed issue where `subscribe` webhook event was not being triggered for public form submissions.
   - Submissions from public forms now correctly trigger configured List webhooks with full subscriber data.
 
 - **Form Submission 404 Error:**
-
   - Fixed critical route conflict causing 404 errors when submitting embedded forms.
   - Removed deprecated `/subscribe/{contactList}` route that conflicted with form slug-based routing.
   - Added CSRF token exclusion for `/subscribe/*` routes to enable cross-domain form submissions.
@@ -2282,7 +2157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **PDF Attachments Indicator:**
-
   - Added visual indicator (PDF icon) in the email message list for messages with PDF attachments.
   - Implemented smart tooltip showing the count and filenames of attached PDF files.
   - Backend now exposes `pdf_attachments` data in the message list API.
@@ -2302,7 +2176,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **AI Executive Summary for Campaign Auditor:**
-
   - New AI-generated executive summary displayed after each audit.
   - Summary uses user's preferred language and informal tone ("Ty" not "Państwa").
   - New `ai_summary` column in `campaign_audits` table.
@@ -2310,23 +2183,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Summary displayed in dedicated section with gradient styling on Campaign Auditor page.
 
 - **AI Model Selection for Campaign Advisor:**
-
   - New "AI Model" dropdown in Campaign Advisor settings.
   - Users can select which AI integration to use for audit summaries.
   - Falls back to default integration if selected one is not active.
 
 - **AI Summary Widget on Dashboard:**
-
   - Short AI summary excerpt displayed in Health Score Widget.
   - Shows key findings (second paragraph) instead of intro text.
   - Fallback to data-based summary if AI summary unavailable.
 
 - **Community Links:**
-
   - Added Official Telegram Channel link to Help Modal.
 
 - **Developer Experience:**
-
   - Added `bug_report.md` GitHub Issue template for standardized bug reporting.
 
 - **Translations:**
@@ -2348,12 +2217,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **AI Summary Generation:**
-
   - Fixed `Undefined array key 0` error when generating AI summary with empty recommendations.
   - Fixed SQL error with incorrect column names (`label`/`model` → `name`/`default_model`).
 
 - **Help Modal Updates:**
-
   - Updated Documentation link to `https://netsendo.com/en/docs`.
   - Updated "Report a bug" link to professional GitHub Issues flow.
   - Hidden "Courses and Training" link.
@@ -2370,7 +2237,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **AI Campaign Auditor Module:**
-
   - New AI-powered campaign analysis tool that identifies issues, risks, and optimization opportunities.
   - 8 analysis types: frequency, content quality, timing, segmentation, deliverability, automations, revenue impact, and AI-powered insights.
   - Overall health score (0-100) with color-coded severity levels (Excellent/Good/Needs Attention/Critical).
@@ -2383,7 +2249,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Sidebar navigation under Automation section with "AI" badge.
 
 - **AI Campaign Advisor (Recommendations):**
-
   - New AI-powered recommendation engine providing actionable advice for campaign improvement.
   - Three recommendation categories: **Quick Wins** (low-effort fixes), **Strategic** (medium-term improvements), **Growth** (AI-generated scaling opportunities).
   - New `CampaignAdvisorService` generating recommendations from audit issues, historical data, and AI analysis.
@@ -2397,13 +2262,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Full translations for EN, PL, DE, and ES locales.
 
 - **Campaign Health Score Dashboard Widget:**
-
   - New `HealthScoreWidget` component displayed on the main Dashboard.
   - Shows circular score gauge, issue counts (critical/warnings/info), and stale audit warning.
   - Direct link to full Campaign Auditor page for detailed analysis.
 
 - **Automated Daily Campaign Audit:**
-
   - New Artisan command: `php artisan audit:run` with `--all` and `--user=ID` options.
   - Scheduled daily at 05:00 via Laravel Scheduler.
   - Logs saved to `storage/logs/campaign-audit.log`.
@@ -2458,7 +2321,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved
 
 - **SMS Campaign List Display:**
-
   - Added subscriber count display in the "Audience" column of SMS campaigns list (matching email campaigns behavior).
   - Added `recipients_count` field to `SmsController::index()` response.
 
@@ -2477,7 +2339,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **In-App Notification System:**
-
   - New real-time notification dropdown in application header with animated unread badge.
   - Backend: `Notification` model, `NotificationService`, and `NotificationController` with full API.
   - Database migration for `notifications` table with support for types (info/success/warning/error).
@@ -2486,14 +2347,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Mark as read (individual and bulk) functionality.
 
 - **SMS AI Assistant:**
-
   - Added new AI generation feature for SMS content (similar to email assistant).
   - Support for tone selection (Casual, Formal, Persuasive) and multiple suggestions (1 or 3).
   - Includes SMS-specific character counting and GSM/Unicode detection.
   - New `SmsAiAssistant` Vue component integrated into SMS creation page.
 
 - **SMS Preview with Data:**
-
   - Added "Preview with Data" feature to SMS editor.
   - Allows previewing content with real subscriber data (replacing `[[first_name]]`, etc.).
   - Added dynamic placeholder replacement API (`POST /sms/preview`).
@@ -2506,7 +2365,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved
 
 - **Translations:**
-
   - Added `notifications` section to vue-i18n locale files (EN/PL) with all notification-related keys.
   - Created new PHP translation files: `license.php`, `sms_providers.php`, `common.php` (EN/PL).
 
@@ -2544,7 +2402,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Mailing List System Refactor:**
-
   - Separated "Mailing Lists" and "SMS Lists" into distinct views for clearer management.
   - "Mailing Lists" view now strictly shows only Email-type lists.
   - "SMS Lists" view continues to show SMS-type lists.
@@ -2568,7 +2425,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Email Campaign List Selection:**
-
   - Fixed missing list type data in Email campaign creation form.
   - Added `type` field to contact lists query in `MessageController::create()` and `MessageController::edit()`.
   - List type filtering now works correctly in both autoresponder and broadcast modes.
@@ -2582,7 +2438,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved
 
 - **Subscriber Management UX:**
-
   - Updated "Add/Edit Subscriber" forms with list type filtering (All/Email/SMS).
   - Added dynamic "Required" (`*`) indicators that update in real-time based on selected lists.
   - Added informational alerts explaining which fields are required for the selected combination.
@@ -2598,7 +2453,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **SMS Queue System:**
-
   - New `ProcessSmsQueueCommand` artisan command (`cron:process-sms-queue`) for processing SMS queue.
   - New `processSmsQueue()` method in `CronScheduleService` handling SMS dispatch with schedule/volume limits.
   - SMS queue scheduler entry running every minute (same as email queue).
@@ -2608,7 +2462,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Dry-run mode (`--dry-run`) for testing without sending.
 
 - **SMS Integration:**
-
   - Implemented comprehensive SMS capability with multi-provider support.
   - Supported Providers: **Twilio**, **SMS API** (PL/COM), **Vonage (Nexmo)**, **MessageBird**, **Plivo**.
   - New "SMS Providers" settings page for credential management and connection testing.
@@ -2653,7 +2506,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Global "Quick Start" Modal:**
-
   - Implemented a "Quick Start" (Szybki start) link in the Help menu sidebar.
   - Opens a global onboarding modal with a progress checklist (License, CRON, Profile, List, Subscribers, Campaign).
   - Accessible from any page in the application.
@@ -2666,7 +2518,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **API Key Deletion UI:**
-
   - Replaced the native browser confirmation dialog with a custom modal for deleting API keys.
   - Improved user experience with a consistent and integrated modal design in `Settings > API Keys`.
 
@@ -2739,7 +2590,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **List-Level API Integration:**
-
   - New "Integracja" (Integration) sub-tab in mailing list settings.
   - List-specific API key generation and management (format: `ml_{list_id}_{random_string}`).
   - Webhook configuration with customizable events: subscribe, unsubscribe, update, bounce.
@@ -2749,7 +2599,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Displays List ID (MLID) and API usage examples in the UI.
 
 - **Advanced List Settings (Co-registration & Limits):**
-
   - Expanded "Zaawansowane" (Advanced) sub-tab with new features.
   - Co-registration: select parent list for automatic subscriber synchronization.
   - Sync settings: configurable sync on subscribe/unsubscribe events.
@@ -2857,7 +2706,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Advanced Editor Rendering:**
-
   - Fixed a critical rendering issue caused by incorrect TipTap extension imports (default vs named exports).
   - Fixed `SyntaxError` with `@tiptap/extension-text-style` in Vite build.
   - Fixed Vue runtime error (`Property "window" was accessed during render`) in Emoji Picker positioning by creating a safe computed property.
@@ -2879,13 +2727,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Email Preheader Bug:**
-
   - Fixed issue where preheader text from HTML template was used instead of the preheader field set by user in message form.
   - `SendEmailJob` now removes existing preheader from HTML content and injects the `Message->preheader` value after `<body>` tag.
   - User-defined preheader now takes priority over template preheader.
 
 - **Test Email Placeholder and Preheader Support:**
-
   - Fixed issue where test emails did not substitute placeholders (e.g., `[[first_name]]`) with actual values.
   - Fixed issue where test emails did not include the preheader text.
   - `MessageController::test()` now uses `PlaceholderService` for variable substitution.
@@ -2923,7 +2769,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **AI Subject Assistant - Preheader Generation:**
-
   - AI assistant now generates a preheader alongside each subject line suggestion.
   - Preheaders are generated without emojis (per user requirement).
   - Each suggestion in the dropdown now displays both subject (with emojis) and preheader (italic, below subject).
@@ -2939,17 +2784,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved
 
 - **AI Assistant UI:**
-
   - Added auto-scrolling to generated content so users immediately see the result.
   - Fixed dark mode readability issues by adjusting text and background contrast in content preview.
 
 - **AI Integration Settings:**
-
   - Fixed issue where `max_tokens_small` and `max_tokens_large` settings were not persisting after save.
   - Added proper validation for token fields in `AiIntegrationController`.
 
 - **Subject AI Assistant Dropdown:**
-
   - Fixed issue where the suggestions dropdown was clipped or hidden by surrounding elements.
   - Implemented smart positioning (Teleport to body) to ensure the dropdown is always fully visible on top of other content.
   - Fixed issue where scrolling the suggestions list would close the dropdown.
@@ -2965,13 +2807,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Message Scheduling Timezone:**
-
   - Fixed a critical issue where scheduled messages were saved as UTC directly without accounting for user's timezone, causing a time shift in display.
   - Implemented correct timezone conversion: User Input (User TZ) -> Storage (UTC) -> Display (User TZ).
   - Ensures "What You See Is What You Get" for message scheduling regardless of user's timezone settings.
 
 - **Message Statistics:**
-
   - Fixed issue where email opens and clicks were always displaying as zero in message statistics dashboard.
   - Implemented missing queries to `EmailOpen` and `EmailClick` in `MessageController::stats`.
   - Added recent activity feed for opens and clicks on the stats page.
@@ -2988,25 +2828,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Message Statistics Enhancements:**
-
   - Added "Recipients List" section to message statistics
   - detailed table showing every recipient with their status (queued, sent, failed, skipped)
   - Color-coded status badges and error messages for failed deliveries
   - Pagination for the recipient list
 
 - **Message Preheader Display:**
-
   - Added display of message preheader in the message list view (under subject)
   - Added missing "Optional" label translation for preheader input field
 
 - **Real-time Status Updates:**
-
   - Implemented dynamic status polling for message list
   - "Scheduled" messages now automatically update their status to "Sent" without page refresh
   - Optimized polling runs only when scheduled messages are present (every 15s)
 
 - **Message Scheduling Display:**
-
   - Added `scheduled_at` field display in message list (below status badge for scheduled messages)
   - Added `scheduled_at` display in message statistics header
   - For "Send Immediately" broadcast messages, recipients are now synced to queue immediately for instant statistics access
@@ -3020,7 +2856,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Message Controller:**
-
   - `stats()` method now returns paginated `queue_entries` with recipient data
   - `index()` method now accepts `per_page` parameter
   - Added `statuses()` endpoint for efficient batch status checking
@@ -3031,18 +2866,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Docker Queue Worker (Critical Fix):**
-
   - Fixed regression where `queue` container was starting `php-fpm` instead of the queue worker command.
   - Patched `docker/php/docker-entrypoint.sh` to correctly handle command-line arguments.
   - Updated `docker-compose.yml` to mount the patched entrypoint, ensuring the fix works without rebuilding images.
   - This resolves the issue where messages remained in "Queued" status indefinitely.
 
 - **Database Migrations:**
-
   - Fixed `2025_12_22_000002_create_page_visits_table` migration to check if table exists before creating, preventing startup crashes on restart.
 
 - **Version Check Cache Invalidation:**
-
   - Implemented smart cache invalidation for update checks
   - Automatically clears version cache when application version changes
   - Ensures users see correct update status immediately after upgrading
@@ -3065,7 +2897,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Message List Recipient Count:**
-
   - Audience column now shows real recipient count (after exclusions and deduplication) alongside list name
   - Count is calculated live for draft/scheduled messages
   - For sent messages, uses frozen `planned_recipients_count` to preserve historical data
@@ -3079,13 +2910,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Docker Queue Worker (Critical):**
-
   - Added missing `queue` service to `docker-compose.yml` running `php artisan queue:work`
   - This fixes the issue where messages appeared as "sent" but were never actually delivered
   - Jobs were being dispatched to queue but no worker was processing them
 
 - **Docker Background Tasks:**
-
   - Added missing `scheduler` service to `docker-compose.yml`
   - Fixed issue where "Cron not configured" warning appeared despite correct app configuration
   - Scheduled messages and automations now process correctly in Docker environment
@@ -3134,12 +2963,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **UX Improvements:**
-
   - Added visual 2FA status indicator in Profile settings
   - Added 2FA lock icon in the top header when enabled
 
 - **Automatic Version Check:**
-
   - New CRON task `netsendo:check-updates` running daily at 9:00 AM
   - Automatically checks GitHub for new releases and caches results for 6 hours
   - Shared cache with frontend checks ensures consistent update status
@@ -3157,7 +2984,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Message Triggers Integration:**
-
   - Triggers tab in message editor is now fully functional (removed "Coming Soon" badge)
   - Trigger selection automatically creates `AutomationRule` behind the scenes
   - Supported trigger types: signup, anniversary, birthday, inactivity, page visit, custom (tag)
@@ -3165,27 +2991,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Green dot indicator shows when trigger is active on a message
 
 - **Email Read Time Tracking:**
-
   - Track how long subscribers read emails using `EmailReadSession` model
   - New endpoints: `/t/read-start`, `/t/heartbeat`, `/t/read-end`
   - Integration with automations via `read_time_threshold` trigger
 
 - **Read Time Statistics on Stats Page:**
-
   - KPI cards: Average read time, Median, Total sessions, Max time
   - Read time distribution histogram chart (0-10s, 10-30s, 30-60s, 1-2min, 2min+)
   - Top readers table showing subscribers with longest read times
   - Data sourced from `EmailReadSession` model
 
 - **Page Visit Tracking:**
-
   - Track subscriber visits to external pages with `PageVisit` model
   - JS Tracking Script generator for external sites (`/t/page-script/{user}`)
   - Visitor identification linking anonymous visitors to subscribers when they click email links
   - New `page_visited` automation trigger supporting URL patterns (wildcards)
 
 - **Date-Based Automations:**
-
   - `DateTriggerService` for processing time-based triggers
   - New automation triggers: `date_reached`, `subscriber_birthday`, `subscription_anniversary`
   - Integrated with main scheduler (runs daily at 8:00 AM)
@@ -3210,7 +3032,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Message Scheduling Bug:**
-
   - Added `scheduled_at` to `$fillable` array in `Message` model - this was preventing "Send immediately" and scheduled messages from being processed by CRON
   - Added `scheduled_at` to `$casts` as datetime for proper type handling
 
@@ -3233,7 +3054,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **System Pages & System Emails Separation:**
-
   - Split `system_messages` table into `system_pages` (HTML pages) and `system_emails` (email templates)
   - New `SystemPage` model for HTML pages shown after subscriber actions (signup, activation, unsubscribe)
   - New `SystemEmail` model for email templates (8 templates total)
@@ -3242,7 +3062,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Copy-on-write logic for list-specific customizations
 
 - **8 System Email Templates:**
-
   - `activation_confirmation` - Sent after user confirms email
   - `data_edit_access` - Sent when user requests to edit profile
   - `new_subscriber_notification` - Sent to admin when new subscriber joins
@@ -3253,20 +3072,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `signup_confirmation` - Double opt-in email to confirm subscription
 
 - **10 System Pages (HTML):**
-
   - Signup success/error pages
   - Email already exists (active/inactive variants)
   - Activation success/error pages
   - Unsubscribe success/error/confirm pages
 
 - **Quick Email Toggle:**
-
   - Toggle switch in email list view to enable/disable emails per list
   - Global emails cannot be toggled (always active)
   - Toggling global email for specific list creates list-specific copy
 
 - **Per-Subscriber Queue Tracking System:**
-
   - New `message_queue_entries` table for tracking send status per subscriber (planned/queued/sent/failed/skipped)
   - New `MessageQueueEntry` model with status management methods
   - `Message::syncPlannedRecipients()` dynamically adds new subscribers and marks unsubscribed ones
@@ -3274,21 +3090,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Queue progress section in Stats.vue with visual progress bar and status cards
 
 - **Queue Message Active/Inactive Status:**
-
   - New `is_active` column for autoresponder/queue messages
   - Toggle button in message list actions to activate/deactivate queue messages
   - Queue messages display "Active"/"Inactive" status instead of "Sent"/"Scheduled"
   - Inactive queue messages are skipped by CRON processor
 
 - **Message Statistics Improvements:**
-
   - New `sent_count` column to track actual sent messages
   - New `planned_recipients_count` column for planned recipient tracking
   - Stats page now shows actual sent count vs planned recipients for queue messages
   - New `queue_stats` object with planned/queued/sent/failed/skipped breakdown
 
 - **Dashboard Clock Widget:**
-
   - Modern live clock showing current time in user's timezone
   - Gradient design (indigo → purple → pink) with glassmorphism
   - Displays timezone name and formatted date
@@ -3300,14 +3113,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **CRON Queue Processing Refactored:**
-
   - `CronScheduleService::processQueue()` now syncs recipients before processing
   - Processing now iterates over `MessageQueueEntry` records instead of messages
   - Each subscriber is tracked individually through planned → queued → sent stages
   - New subscribers added to lists are automatically included in next CRON run
 
 - **Dashboard Layout:**
-
   - "License Active" and "Current Time" sections now share a single row (2 columns) to save vertical space
   - Improved responsive behavior for dashboard widgets
 
@@ -3318,7 +3129,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Timezone Display Issues:**
-
   - Dates now display in the user's configured timezone instead of server UTC
   - Affected controllers: MessageController, SubscriberController, ApiKeyController, SmsController, UserManagementController, MailingListController, SmsListController
 
@@ -3331,18 +3141,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Database
 
 - New migration: `2025_12_21_210000_separate_system_pages_and_emails`
-
   - Renamed `system_messages` to `system_pages`
   - Added `access` column (public/private) to `system_pages`
   - Created `system_emails` table with slug, subject, content, is_active
 
 - New migration: `2025_12_21_220000_update_system_emails_to_8_with_english`
-
   - Seeded 8 system email templates with English content
   - Updated 10 system pages with English content
 
 - New migration: `2025_12_21_220000_create_message_queue_entries_table`
-
   - Table `message_queue_entries` with columns: `message_id`, `subscriber_id`, `status`, `planned_at`, `queued_at`, `sent_at`, `error_message`
 
 - New migration: `2025_12_21_200000_add_queue_status_columns_to_messages`
@@ -3351,15 +3158,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Translations
 
 - Added system_pages translations (PL, EN, DE, ES):
-
   - Full CRUD labels, access levels, slug editing
 
 - Added system_emails translations (PL, EN, DE, ES):
-
   - Full CRUD labels, toggle messages, placeholders info
 
 - Added queue progress translations (PL, EN):
-
   - `messages.stats.queue.*` keys
 
 - Added clock widget translations (PL, EN):
@@ -3399,7 +3203,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 
 - **Subscriber Exclusion Lists:**
-
   - New "Don't send to subscribers from lists" option in message Settings tab
   - Allows excluding specific contact lists from message recipients
   - Subscribers on excluded lists won't receive the message, even if on sending lists
@@ -3436,7 +3239,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Improved
 
 - **Dashboard - Real Data Integration:**
-
   - "Recent Campaigns" section now fetches the latest 4 campaigns from the database
   - Activity Chart shows real statistics from the last 7 days (emails sent, new subscribers, opens)
   - Removed demo/sample data from Dashboard components

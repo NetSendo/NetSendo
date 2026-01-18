@@ -133,7 +133,6 @@
         "actions": "Actions",
         "yes": "Yes",
         "no": "No",
-
         "uploading": "Uploading...",
         "active": "Active",
         "inactive": "Inactive",
@@ -158,7 +157,6 @@
         "next": "Next",
         "select": "Select",
         "select_option": "Select option",
-
         "none": "None",
         "filter": "Filter",
         "sort": "Sort",
@@ -247,10 +245,7 @@
         "hours": "hours",
         "first_name": "First Name",
         "last_name": "Last Name",
-        "phone": "Phone",
-        "messages": {
-            "delete_warning": "Are you sure you want to delete this item? This action cannot be undone."
-        }
+        "phone": "Phone"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -912,7 +907,6 @@
             }
         }
     },
-
     "sms": {
         "title": "SMS Campaigns",
         "subtitle": "Manage your SMS messages",
@@ -1153,42 +1147,6 @@
                 "anniversary": "Anniversary",
                 "inactivity": "Inactivity",
                 "custom": "Custom action"
-            }
-        },
-        "triggers": {
-            "title": "Triggers & Automations",
-            "coming_soon": "This feature will be available soon. You will be able to trigger messages based on actions like link clicks, page visits, or specific dates.",
-            "info": "Set a trigger to send this message automatically when a specific event occurs. The message will be attached to the automation system.",
-            "select_type": "Select trigger type",
-            "config_title": "Trigger configuration",
-            "advanced_link": "Need more advanced conditions?",
-            "advanced_link_desc": "Configure detailed conditions and actions in the automation editor.",
-            "go_to_automations": "Go to automations",
-            "types": {
-                "none": "No trigger",
-                "signup": "List subscription",
-                "anniversary": "Subscription anniversary",
-                "birthday": "Subscriber birthday",
-                "inactivity": "Inactivity",
-                "page_visit": "Page visit",
-                "custom": "Custom action (tag)"
-            },
-            "desc": {
-                "none": "The message will not be triggered automatically",
-                "signup": "Send when subscriber signs up for the list",
-                "anniversary": "Send on subscriber's subscription anniversary",
-                "birthday": "Send on subscriber's birthday",
-                "inactivity": "Send when subscriber is inactive",
-                "page_visit": "Send when subscriber visits a page",
-                "custom": "Send when a specific tag is added"
-            },
-            "config": {
-                "inactive_days": "Inactivity days",
-                "url_pattern": "Page URL pattern",
-                "url_pattern_help": "Use * as wildcard, e.g. */pricing or https://site.com/offer/*",
-                "tag": "Trigger tag",
-                "select_tag": "-- Select tag --",
-                "no_config_needed": "This trigger requires no additional configuration"
             }
         },
         "ab_testing": {
@@ -2501,70 +2459,6 @@
         "request_success_title": "Thank you!",
         "request_success_desc": "Your integration request has been submitted. We will contact you soon.",
         "request_error": "Failed to submit request. Please try again.",
-        "woocommerce": {
-            "title": "WooCommerce",
-            "hero_title": "WooCommerce Integration",
-            "hero_subtitle": "Connect your store and boost sales.",
-            "hero_description": "Seamlessly integrate your WooCommerce store with NetSendo. Automatically sync customers, recover abandoned carts, and track revenue.",
-            "features_title": "Features",
-            "features": {
-                "auto_subscribe": {
-                    "title": "Automatic Subscription",
-                    "description": "Automatically add customers to mailing lists during purchase."
-                },
-                "cart_recovery": {
-                    "title": "Cart Recovery",
-                    "description": "Recover lost sales with automated abandoned cart emails."
-                },
-                "product_settings": {
-                    "title": "Product Sync",
-                    "description": "Map WooCommerce products to NetSendo tags and lists."
-                },
-                "external_pages": {
-                    "title": "External Pages",
-                    "description": "Track visits and events on store pages."
-                }
-            },
-            "setup_title": "Setup",
-            "setup_steps": {
-                "download": {
-                    "title": "Download",
-                    "description": "Download the plugin file."
-                },
-                "install": {
-                    "title": "Install",
-                    "description": "Upload to WordPress/WooCommerce."
-                },
-                "configure": {
-                    "title": "Configure",
-                    "description": "Connect the API."
-                },
-                "lists": {
-                    "title": "Map Lists",
-                    "description": "Choose lists for customers."
-                }
-            },
-            "download_button": "Download Plugin",
-            "api_config_title": "API Configuration",
-            "api_url_label": "API URL",
-            "api_url_help": "Endpoint for webhooks.",
-            "api_key_label": "API Key",
-            "api_key_desc": "Generate a key for your store.",
-            "manage_api_keys": "Manage API Keys",
-            "requirements_title": "Requirements",
-            "requirements": {
-                "wp": "WordPress 5.8+",
-                "wc": "WooCommerce 6.0+",
-                "php": "PHP 7.4+",
-                "account": "NetSendo Account"
-            },
-            "docs_link": "WooCommerce Documentation",
-            "lists_link": "Manage Lists",
-            "funnels_link": "Sales Funnels",
-            "help_title": "Help",
-            "help_desc": "Read the guide or contact us.",
-            "documentation_button": "Documentation"
-        },
         "shopify": {
             "title": "Shopify",
             "hero_title": "Shopify Integration",
@@ -4490,7 +4384,6 @@
         "no_products_desc": "Create your first product to start accepting payments.",
         "configure_first": "Please configure Polar first.",
         "product_name": "Product Name",
-        "description": "Description",
         "price": "Price",
         "currency": "Currency",
         "type": "Type",
@@ -5228,7 +5121,6 @@
                 "invalid_regon": "Invalid REGON format",
                 "not_found": "Company with this NIP/REGON not found"
             },
-            "create_button": "Create Company",
             "save_button": "Save Changes",
             "delete_button": "Delete Company",
             "delete_confirm": "Are you sure you want to delete this company?",
@@ -5453,64 +5345,6 @@
             "event": "Event",
             "cold_call": "Cold Call",
             "other": "Other"
-        }
-    },
-    "funnels": {
-        "title": "Funnels",
-        "create": "Create Funnel",
-        "edit": "Edit Funnel",
-        "all_statuses": "All statuses",
-        "all_triggers": "All triggers",
-        "table": {
-            "name": "Name",
-            "trigger": "Trigger",
-            "status": "Status",
-            "subscribers": "Subscribers",
-            "completed": "Completed"
-        },
-        "builder": {
-            "name_placeholder": "Funnel name...",
-            "blocks": "Blocks",
-            "trigger": "Trigger",
-            "trigger_type": "Trigger Type",
-            "trigger_list": "Mailing List",
-            "trigger_form": "Form",
-            "trigger_tag": "Tag",
-            "trigger_tag_placeholder": "e.g. purchase",
-            "step_name": "Step Name",
-            "select_email": "Select Email",
-            "days": "days",
-            "condition": "Condition",
-            "action": "Action",
-            "click_to_configure": "Click to configure",
-            "connect_to": "Connect to",
-            "new": "New",
-            "zoom_in": "Zoom In",
-            "zoom_out": "Zoom Out",
-            "fit_to_view": "Fit to View",
-            "trigger_types": {
-                "list_subscribe": "Subscribe to List",
-                "form_submit": "Submit Form",
-                "tag_added": "Tag Added"
-            },
-            "nodes": {
-                "start": "Start",
-                "email": "Email",
-                "sms": "SMS",
-                "delay": "Delay",
-                "wait_until": "Wait Until",
-                "condition": "Condition",
-                "action": "Action",
-                "split": "Split",
-                "goal": "Goal",
-                "end": "End"
-            }
-        },
-        "notifications": {
-            "saved": "Funnel saved successfully",
-            "updated": "Funnel updated successfully",
-            "created": "Funnel created successfully",
-            "deleted": "Funnel deleted successfully"
         }
     }
 }
