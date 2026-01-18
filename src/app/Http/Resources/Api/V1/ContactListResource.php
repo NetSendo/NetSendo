@@ -32,6 +32,15 @@ class ContactListResource extends JsonResource
                     'name' => $this->group?->name,
                 ]
             ),
+            'default_mailbox' => $this->when(
+                $this->relationLoaded('defaultMailbox') && $this->defaultMailbox,
+                fn () => [
+                    'id' => $this->defaultMailbox->id,
+                    'name' => $this->defaultMailbox->name,
+                    'from_email' => $this->defaultMailbox->from_email,
+                    'from_name' => $this->defaultMailbox->from_name,
+                ]
+            ),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

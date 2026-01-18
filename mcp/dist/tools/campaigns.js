@@ -114,6 +114,19 @@ OPTIONAL PARAMETERS:
 - scheduled_at: ISO datetime to schedule sending (e.g., 2024-12-25T10:00:00Z)
 - day, time_of_day, timezone: For autoresponders only
 
+🔑 MAILBOX SELECTION WORKFLOW (for email campaigns):
+Before creating an email campaign, determine the correct mailbox_id:
+1. Call list_contact_lists to check if contact lists have default_mailbox
+2. If list has default_mailbox: use that mailbox_id
+3. If no list default: call list_mailboxes and use default_mailbox_id from response
+4. If no default: ask user which mailbox to use
+
+AUTO-SELECTION (if mailbox_id not provided):
+The system will try to auto-select in this order:
+1. First attached list's default_mailbox
+2. Global default mailbox (is_default: true)
+3. First active verified mailbox
+
 WORKFLOW OPTIONS:
 1. DRAFT: create_campaign → edit later in UI
 2. SEND NOW: create_campaign → set_campaign_lists → send_campaign

@@ -42,6 +42,12 @@ export interface ContactList {
     description: string | null;
     subscribers_count: number;
     double_opt_in: boolean;
+    default_mailbox?: {
+        id: number;
+        name: string;
+        from_email: string;
+        from_name: string;
+    } | null;
     created_at: string;
     updated_at: string;
 }

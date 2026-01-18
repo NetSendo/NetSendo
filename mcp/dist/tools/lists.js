@@ -6,7 +6,11 @@
 import { z } from 'zod';
 export function registerListTools(server, api) {
     // List Contact Lists
-    server.tool('list_contact_lists', 'Get all contact lists with subscriber counts. Use this to see available lists for filtering subscribers.', {
+    server.tool('list_contact_lists', `Get all contact lists with subscriber counts and default mailbox info.
+
+Each list may have a default_mailbox configured. When creating campaigns for a list:
+- If list has default_mailbox: use that mailbox_id
+- If no list default: use global default from list_mailboxes (is_default: true)`, {
         page: z.number().optional().describe('Page number (default: 1)'),
         per_page: z.number().min(1).max(100).optional().describe('Results per page (1-100, default: 50)'),
     }, async ({ page, per_page }) => {
@@ -21,6 +25,12 @@ export function registerListTools(server, api) {
                 description: l.description,
                 subscribers_count: l.subscribers_count,
                 double_opt_in: l.double_opt_in,
+                default_mailbox: l.default_mailbox ? {
+                    id: l.default_mailbox.id,
+                    name: l.default_mailbox.name,
+                    from_email: l.default_mailbox.from_email,
+                    from_name: l.default_mailbox.from_name,
+                } : null,
                 created_at: l.created_at,
             }));
             return {
@@ -45,7 +55,9 @@ export function registerListTools(server, api) {
         }
     });
     // Get Contact List Details
-    server.tool('get_contact_list', 'Get detailed information about a specific contact list.', {
+    server.tool('get_contact_list', `Get detailed information about a specific contact list, including its default mailbox.
+
+Use default_mailbox info when creating campaigns to automatically select the right sender.`, {
         id: z.number().describe('Contact list ID'),
     }, async ({ id }) => {
         try {
@@ -59,6 +71,12 @@ export function registerListTools(server, api) {
                             description: list.description,
                             subscribers_count: list.subscribers_count,
                             double_opt_in: list.double_opt_in,
+                            default_mailbox: list.default_mailbox ? {
+                                id: list.default_mailbox.id,
+                                name: list.default_mailbox.name,
+                                from_email: list.default_mailbox.from_email,
+                                from_name: list.default_mailbox.from_name,
+                            } : null,
                             created_at: list.created_at,
                             updated_at: list.updated_at,
                         }, null, 2),

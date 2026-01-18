@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP Campaign Creation:**
+  - **Tool Validation:** Fixed "missing channel" error by enhancing `create_campaign` tool with strict pre-validation and clear error messages requiring `channel` ('email' or 'sms').
+  - **Agent Prompts:** Updated AI agent prompts (PL/EN) in `MCP.vue` to explicitly document the `channel` parameter requirement and distinguish between Email and SMS workflows.
+  - **Package Distribution:** Bumped `@netsendo/mcp-client` to v1.1.0 to ensure client tools receive the updated schema.
+
+### Added
+
+- **API Request Logging:**
+  - **Infrastructure:** Implemented `ApiRequestLog` model and migration for storing full API request/response lifecycle.
+  - **Middleware:** Added `LogApiRequest` middleware to logging all API v1 traffic asynchronously.
+  - **Settings UI:** Added backend endpoints (`/settings/logs/api-requests`) for the log viewer to display API traffic statistics and details.
+
 ## [1.7.8] – Short Description
 
 **Release date:** 2026-01-18

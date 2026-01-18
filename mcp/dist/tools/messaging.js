@@ -6,9 +6,28 @@
 import { z } from 'zod';
 export function registerMessagingTools(server, api) {
     // List Mailboxes
-    server.tool('list_mailboxes', 'Get all available mailboxes for sending emails. Use the mailbox ID when sending emails.', {}, async () => {
+    server.tool('list_mailboxes', `Get all available mailboxes for sending emails.
+
+MAILBOX SELECTION WORKFLOW:
+1. Call list_mailboxes to see available mailboxes
+2. Look for mailbox with is_default: true as the global default
+3. When using contact lists, check list's default_mailbox (via list_contact_lists or get_contact_list)
+4. Use list's default_mailbox if set, otherwise use global default
+
+PRIORITY ORDER:
+1. List's default_mailbox (if contact_list_ids provided)
+2. Global default mailbox (is_default: true)
+3. Any verified, active mailbox
+
+TIPS:
+- Mailbox with is_default: true is the user's preferred sender
+- Each contact list can have its own default_mailbox
+- Always use a verified mailbox (is_verified: true)
+- Use mailbox from_email and from_name for display purposes`, {}, async () => {
         try {
             const mailboxes = await api.listMailboxes();
+            // Find the default mailbox
+            const defaultMailbox = mailboxes.find(m => m.is_default);
             return {
                 content: [{
                         type: 'text',
@@ -21,6 +40,10 @@ export function registerMessagingTools(server, api) {
                                 is_verified: m.is_verified,
                             })),
                             total: mailboxes.length,
+                            default_mailbox_id: defaultMailbox?.id ?? null,
+                            tip: defaultMailbox
+                                ? `Use mailbox_id: ${defaultMailbox.id} (${defaultMailbox.name}) as the global default`
+                                : 'No default mailbox set. Choose any verified mailbox.',
                         }, null, 2),
                     }],
             };

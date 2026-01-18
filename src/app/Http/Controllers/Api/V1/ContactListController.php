@@ -23,7 +23,7 @@ class ContactListController extends Controller
             ->withCount(['subscribers' => function ($query) {
                 $query->where('contact_list_subscriber.status', 'active');
             }])
-            ->with('group');
+            ->with(['group', 'defaultMailbox']);
 
         // Filter by type
         if ($request->has('type')) {
@@ -61,7 +61,7 @@ class ContactListController extends Controller
             ->withCount(['subscribers' => function ($query) {
                 $query->where('contact_list_subscriber.status', 'active');
             }])
-            ->with('group')
+            ->with(['group', 'defaultMailbox'])
             ->find($id);
 
         if (!$list) {

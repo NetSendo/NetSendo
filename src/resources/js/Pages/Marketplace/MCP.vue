@@ -90,23 +90,37 @@ AVAILABLE TOOLS:
 - set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
 - list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
-- send_email, send_sms
-- list_placeholders, test_connection, get_account_info
+- send_email, send_sms (for single messages)
+- list_placeholders, list_mailboxes, test_connection, get_account_info
+
+⚠️ CRITICAL - create_campaign REQUIRED PARAMETERS:
+1. channel: MUST be "email" OR "sms" (determines campaign type)
+2. subject: Campaign title
+3. type: "broadcast" (one-time) or "autoresponder" (automated)
+
+Optional: content, mailbox_id, contact_list_ids, scheduled_at
 
 PLACEHOLDERS IN CONTENT:
 - [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data
-- [[!fname]] - first name in vocative case (Polish)
 - [[unsubscribe_link]] - REQUIRED in every email
 - [[manage]] - manage preferences link
 - {{male|female}} - gender variation
 
-CAMPAIGN WORKFLOW:
-1. create_campaign → 2. set_campaign_lists → 3. send_campaign
+EMAIL CAMPAIGN WORKFLOW:
+1. create_campaign with channel:"email", type:"broadcast", subject:"..."
+2. set_campaign_lists with contact_list_ids
+3. send_campaign
 
-IMPORTANT:
+SMS CAMPAIGN WORKFLOW:
+1. create_campaign with channel:"sms", type:"broadcast", subject:"..."
+2. set_campaign_lists with contact_list_ids
+3. send_campaign
+
+RULES:
 - Always use list_placeholders first to learn available placeholders
 - Every email MUST contain [[unsubscribe_link]]
-- Before sending a campaign you MUST assign lists (set_campaign_lists)`;
+- Before sending a campaign you MUST assign lists (set_campaign_lists)
+- For create_campaign ALWAYS provide channel: "email" or "sms"`;
 });
 
 // Gender example placeholder - needs actual {{ }}
