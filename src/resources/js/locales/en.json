@@ -2809,7 +2809,7 @@
         "placeholder_last_name": "Last name",
         "placeholder_email": "Email address",
         "placeholder_phone": "Phone number",
-        "placeholder_unsubscribe": "Unsubscribe link (REQUIRED)",
+        "placeholder_unsubscribe": "Unsubscribe (REQUIRED)",
         "placeholder_manage": "Manage preferences link",
         "placeholder_gender_example": "Dear → for males, Dear → for females",
         "agent_prompt_title": "AI Agent Prompt",

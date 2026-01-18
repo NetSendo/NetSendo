@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.7.7] – Short Description
+
+**Release date:** 2026-01-18
+
+### Added
+
 - **MCP Tool Enhancements:**
 
   - **New Tool:** Added `list_placeholders` tool to the MCP server, allowing AI agents to retrieve a complete list of available system, custom, and special placeholders.
@@ -25,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Frontend Syntax Error:** Fixed `SyntaxError: Not allowed nest placeholder` in Vue i18n causing issues with gender-based placeholders (e.g., `{{male|female}}`) in code blocks. Implemented safe rendering using computed properties.
 - **API Routes:** Added route aliases for `/api/v1/campaigns` ensuring backward compatibility by redirecting to `MessageController`.
+- **Placeholder Consistency:** Standardized unsubscribe placeholder to `[[unsubscribe_link]]` (underscores) in System Email editor (`SystemEmail/Edit.vue`) to match the global application convention and fix redundancy.
+
+### Changed
+
+- **UI UX:** Simplified unsubscribe placeholder labels in PL and EN translations (removed redundant "link" word).
 
 - **Message Sorting:** Fixed sorting by "Type" column in the messages list. Now properly applies secondary sorting by "Day" for autoresponder messages, ensuring they appear in numerical order (Day 1, Day 2, etc.) instead of random order.
 

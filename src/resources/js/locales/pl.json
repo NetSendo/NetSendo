@@ -2295,7 +2295,7 @@
         "placeholder_last_name": "Nazwisko",
         "placeholder_email": "Adres email",
         "placeholder_phone": "Numer telefonu",
-        "placeholder_unsubscribe": "Link wypisania (WYMAGANY)",
+        "placeholder_unsubscribe": "Wypisanie z listy (WYMAGANE)",
         "placeholder_manage": "Link zarządzania preferencjami",
         "placeholder_gender_example": "Drogi → dla mężczyzn, Droga → dla kobiet",
         "agent_prompt_title": "Prompt dla Agenta AI",
