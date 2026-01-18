@@ -1,7 +1,10 @@
 {
     "defaults": {
-        "cron_section_title": "⏰ Global Sending Schedule Settings",
-        "volume_per_minute_label": "Message limit / minute (global)"
+        "cron_section_title": "⏰ Global CRON Settings",
+        "volume_per_minute_label": "Email Limit / Minute (Global)",
+        "global_settings_title": "These are global settings for all lists",
+        "global_settings_desc": "Changes here will apply as defaults for new lists and lists without custom settings. To change settings for a specific list only, please edit that list (Settings tab):",
+        "go_to_lists": "Email Lists →"
     },
     "affiliate": {
         "title": "Affiliate Program",
@@ -174,6 +177,7 @@
         "open": "Open",
         "open_in_new_tab": "Open in new tab",
         "soon": "Soon",
+        "days_unit": "days",
         "optional": "Optional",
         "messages": "Messages",
         "view_messages": "View Messages",
@@ -1140,13 +1144,42 @@
         },
         "triggers": {
             "title": "Triggers and Automations",
+            "info": "Set a trigger to have this message sent automatically when a specific event occurs. The message will be connected to the automation system.",
             "coming_soon": "This feature is coming soon. You will be able to trigger messages by actions like link clicks, page visits, or specific dates.",
             "select_type": "Select trigger type",
+            "config_title": "Trigger Configuration",
+            "advanced_link": "Need more advanced conditions?",
+            "advanced_link_desc": "Configure detailed conditions and actions in the automation editor.",
+            "go_to_automations": "Go to Automations",
             "types": {
-                "signup": "Signup",
-                "anniversary": "Anniversary",
+                "none": "No trigger",
+                "signup": "List signup",
+                "anniversary": "Signup anniversary",
+                "birthday": "Subscriber birthday",
                 "inactivity": "Inactivity",
-                "custom": "Custom action"
+                "page_visit": "Page visit",
+                "custom": "Custom action (tag)",
+                "recent_subscribers": "Recent signups"
+            },
+            "desc": {
+                "none": "Message will not be triggered automatically",
+                "signup": "Send when subscriber signs up for the list",
+                "anniversary": "Send on subscriber's signup anniversary",
+                "birthday": "Send on subscriber's birthday",
+                "inactivity": "Send when subscriber is inactive",
+                "page_visit": "Send when subscriber visits a page",
+                "custom": "Send when a specific tag is added",
+                "recent_subscribers": "Send only to people who signed up within the last X days"
+            },
+            "config": {
+                "inactive_days": "Days of inactivity",
+                "url_pattern": "URL pattern",
+                "url_pattern_help": "Use * as wildcard, e.g. */pricing or https://site.com/offer/*",
+                "tag": "Trigger tag",
+                "select_tag": "-- Select tag --",
+                "no_config_needed": "This trigger doesn't require additional configuration",
+                "recent_days": "Days since signup",
+                "recent_days_help": "Use the slider or enter a number manually (1-365 days)"
             }
         },
         "ab_testing": {
@@ -5345,6 +5378,15 @@
             "event": "Event",
             "cold_call": "Cold Call",
             "other": "Other"
+        }
+    },
+    "onboarding": {
+        "tracker": {
+            "title": "Initial Setup",
+            "license": "License",
+            "ai": "AI Integration",
+            "mailbox": "Mailbox",
+            "cron": "CRON"
         }
     }
 }

@@ -1,7 +1,10 @@
 {
     "defaults": {
         "cron_section_title": "⏰ Globale Sendezeitplan-Einstellungen",
-        "volume_per_minute_label": "Nachrichtenlimit / Minute (global)"
+        "volume_per_minute_label": "Nachrichtenlimit / Minute (global)",
+        "global_settings_title": "Dies sind globale Einstellungen für alle Listen",
+        "global_settings_desc": "Änderungen hier gelten als Standard für neue Listen und Listen ohne eigene Einstellungen. Um Einstellungen nur für eine bestimmte Liste zu ändern, bearbeiten Sie bitte diese Liste (Registerkarte Einstellungen):",
+        "go_to_lists": "E-Mail-Listen →"
     },
     "templates": {
         "title": "Vorlagen",
@@ -148,6 +151,7 @@
     },
     "common": {
         "save": "Speichern",
+        "days_unit": "Tage",
         "cancel": "Abbrechen",
         "delete": "Löschen",
         "edit": "Bearbeiten",
@@ -1204,13 +1208,42 @@
         },
         "triggers": {
             "title": "Trigger und Automatisierungen",
+            "info": "Legen Sie einen Trigger fest, damit diese Nachricht automatisch gesendet wird, wenn ein bestimmtes Ereignis eintritt. Die Nachricht wird mit dem Automatisierungssystem verbunden.",
             "coming_soon": "Diese Funktion wird bald verfügbar sein. Sie können Nachrichten basierend auf Aktionen wie Link-Klicks, Seitenbesuchen oder bestimmten Daten auslösen.",
             "select_type": "Trigger-Typ auswählen",
+            "config_title": "Trigger-Konfiguration",
+            "advanced_link": "Benötigen Sie erweiterte Bedingungen?",
+            "advanced_link_desc": "Konfigurieren Sie detaillierte Bedingungen und Aktionen im Automatisierungs-Editor.",
+            "go_to_automations": "Zu Automatisierungen",
             "types": {
-                "signup": "Anmeldung",
-                "anniversary": "Jahrestag",
+                "none": "Kein Trigger",
+                "signup": "Listen-Anmeldung",
+                "anniversary": "Anmelde-Jahrestag",
+                "birthday": "Geburtstag des Abonnenten",
                 "inactivity": "Inaktivität",
-                "custom": "Benutzerdefinierte Aktion"
+                "page_visit": "Seitenbesuch",
+                "custom": "Benutzerdefinierte Aktion (Tag)",
+                "recent_subscribers": "Neueste Anmeldungen"
+            },
+            "desc": {
+                "none": "Nachricht wird nicht automatisch ausgelöst",
+                "signup": "Senden, wenn sich Abonnent für die Liste anmeldet",
+                "anniversary": "Senden am Jahrestag der Anmeldung des Abonnenten",
+                "birthday": "Senden am Geburtstag des Abonnenten",
+                "inactivity": "Senden, wenn Abonnent inaktiv ist",
+                "page_visit": "Senden, wenn Abonnent eine Seite besucht",
+                "custom": "Senden, wenn ein bestimmter Tag hinzugefügt wird",
+                "recent_subscribers": "Nur an Personen senden, die sich in den letzten X Tagen angemeldet haben"
+            },
+            "config": {
+                "inactive_days": "Tage der Inaktivität",
+                "url_pattern": "URL-Muster",
+                "url_pattern_help": "Verwenden Sie * als Platzhalter, z.B. */preise oder https://seite.de/angebot/*",
+                "tag": "Auslösender Tag",
+                "select_tag": "-- Tag auswählen --",
+                "no_config_needed": "Dieser Trigger erfordert keine zusätzliche Konfiguration",
+                "recent_days": "Tage seit Anmeldung",
+                "recent_days_help": "Verwenden Sie den Schieberegler oder geben Sie eine Zahl ein (1-365 Tage)"
             }
         },
         "ab_testing": {
@@ -4641,6 +4674,15 @@
             "event": "Event",
             "cold_call": "Kaltakquise",
             "other": "Sonstiges"
+        }
+    },
+    "onboarding": {
+        "tracker": {
+            "title": "Erste Schritte",
+            "license": "Lizenz",
+            "ai": "KI-Integration",
+            "mailbox": "Postfach",
+            "cron": "CRON"
         }
     }
 }

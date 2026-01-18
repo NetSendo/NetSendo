@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Infrastructure:** Implemented `ApiRequestLog` model and migration for storing full API request/response lifecycle.
   - **Middleware:** Added `LogApiRequest` middleware to logging all API v1 traffic asynchronously.
   - **Settings UI:** Added backend endpoints (`/settings/logs/api-requests`) for the log viewer to display API traffic statistics and details.
+- **Recent Subscribers Trigger:**
+  - **New Trigger Type:** Added "Recent Subscribers" trigger allowing messages to be sent only to users who subscribed within a specific timeframe (1-365 days).
+  - **Configuration:** Implemented a slider and manual input interface for easy day selection in the message creation wizard.
+  - **Filtering Logic:** Updated backend recipient filtering to strictly respect the subscription date window.
+  - **Localization:** Full translations in PL, EN, DE, and ES.
 
 ## [1.7.8] – Short Description
 

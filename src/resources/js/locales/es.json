@@ -1,7 +1,10 @@
 {
     "defaults": {
-        "cron_section_title": "⏰ Configuración Global del Calendario de Envío",
-        "volume_per_minute_label": "Límite de mensajes / minuto (global)"
+        "cron_section_title": "⏰ Configuración global de CRON",
+        "volume_per_minute_label": "Límite de correos / minuto (Global)",
+        "global_settings_title": "Estos son ajustes globales para todas las listas",
+        "global_settings_desc": "Los cambios aquí se aplicarán por defecto a las nuevas listas y a las que no tengan configuración propia. Para cambiar la configuración de una lista específica, edite esa lista (pestaña Configuración):",
+        "go_to_lists": "Listas de correo →"
     },
     "affiliate": {
         "title": "Programa de Afiliados",
@@ -232,6 +235,7 @@
         "hour": "hora",
         "hours": "horas",
         "soon": "Pronto",
+        "days_unit": "días",
         "source_placeholder": "Escriba o pegue el código HTML..."
     },
     "ab_tests": {
@@ -1218,13 +1222,42 @@
         },
         "triggers": {
             "title": "Disparadores y automatizaciones",
+            "info": "Establezca un disparador para que este mensaje se envíe automáticamente cuando ocurra un evento específico. El mensaje se conectará al sistema de automatización.",
             "coming_soon": "Esta función estará disponible pronto. Podrá lanzar mensajes basados en acciones como clics en enlaces, visitas a páginas o fechas específicas.",
             "select_type": "Seleccionar tipo de disparador",
+            "config_title": "Configuración del disparador",
+            "advanced_link": "¿Necesita condiciones más avanzadas?",
+            "advanced_link_desc": "Configure condiciones y acciones detalladas en el editor de automatización.",
+            "go_to_automations": "Ir a Automatizaciones",
             "types": {
+                "none": "Sin disparador",
                 "signup": "Registro en la lista",
-                "anniversary": "Aniversario",
+                "anniversary": "Aniversario de registro",
+                "birthday": "Cumpleaños del suscriptor",
                 "inactivity": "Inactividad",
-                "custom": "Acción personalizada"
+                "page_visit": "Visita a la página",
+                "custom": "Acción personalizada (etiqueta)",
+                "recent_subscribers": "Registros recientes"
+            },
+            "desc": {
+                "none": "El mensaje no se disparará automáticamente",
+                "signup": "Enviar cuando el suscriptor se registra en la lista",
+                "anniversary": "Enviar en el aniversario de registro del suscriptor",
+                "birthday": "Enviar en el cumpleaños del suscriptor",
+                "inactivity": "Enviar cuando el suscriptor está inactivo",
+                "page_visit": "Enviar cuando el suscriptor visita una página",
+                "custom": "Enviar cuando se añade una etiqueta específica",
+                "recent_subscribers": "Enviar solo a personas que se registraron en los últimos X días"
+            },
+            "config": {
+                "inactive_days": "Días de inactividad",
+                "url_pattern": "Patrón de URL",
+                "url_pattern_help": "Use * como comodín, ej. */precios o https://sitio.com/oferta/*",
+                "tag": "Etiqueta de activación",
+                "select_tag": "-- Seleccionar etiqueta --",
+                "no_config_needed": "Este disparador no requiere configuración adicional",
+                "recent_days": "Días desde el registro",
+                "recent_days_help": "Use el deslizador o ingrese un número manualmente (1-365 días)"
             }
         },
         "ab_testing": {
@@ -4726,6 +4759,15 @@
             "event": "Evento",
             "cold_call": "Llamada en frío",
             "other": "Otro"
+        }
+    },
+    "onboarding": {
+        "tracker": {
+            "title": "Configuración inicial",
+            "license": "Licencia",
+            "ai": "Integración IA",
+            "mailbox": "Buzón de correo",
+            "cron": "CRON"
         }
     }
 }

@@ -185,8 +185,29 @@ const submit = () => {
 
         <div class="flex justify-center">
             <div class="w-full max-w-5xl">
+                <!-- Info Banner -->
+                <div class="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div class="flex gap-3">
+                        <svg class="h-5 w-5 flex-shrink-0 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-sm">
+                            <p class="font-medium text-blue-800 dark:text-blue-200">
+                                {{ $t('defaults.global_settings_title') }}
+                            </p>
+                            <p class="mt-1 text-blue-700 dark:text-blue-300">
+                                {{ $t('defaults.global_settings_desc') }}
+                                <a :href="route('mailing-lists.index')" class="font-medium underline hover:text-blue-900 dark:hover:text-blue-100">
+                                    {{ $t('defaults.go_to_lists') }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900 lg:p-8">
                     <form @submit.prevent="submit" class="flex flex-col gap-8 lg:flex-row">
+
 
                         <!-- Settings Sidebar -->
                         <div class="w-full lg:w-1/4">

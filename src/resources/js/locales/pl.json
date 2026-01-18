@@ -1,8 +1,12 @@
 {
     "defaults": {
         "cron_section_title": "⏰ Globalne ustawienia harmonogramu wysyłki",
-        "volume_per_minute_label": "Limit wiadomości / minutę (globalny)"
+        "volume_per_minute_label": "Limit wiadomości / minutę (globalny)",
+        "global_settings_title": "To są globalne ustawienia dla wszystkich list",
+        "global_settings_desc": "Zmiany tutaj będą stosowane jako domyślne dla nowych list oraz list, które nie mają własnych ustawień. Jeśli chcesz zmienić ustawienia tylko dla konkretnej listy, przejdź do edycji tej listy (zakładka \"Ustawienia\"):",
+        "go_to_lists": "Lista e-mail →"
     },
+
     "affiliate": {
         "title": "Program Partnerski",
         "programs": "Programy",
@@ -174,6 +178,7 @@
         "open": "Otwórz",
         "open_in_new_tab": "Otwórz w nowej karcie",
         "soon": "Wkrótce",
+        "days_unit": "dni",
         "optional": "opcjonalne",
         "messages": "Wiadomości",
         "view_messages": "Zobacz Wiadomości",
@@ -1157,7 +1162,8 @@
                 "birthday": "Urodziny subskrybenta",
                 "inactivity": "Brak aktywności",
                 "page_visit": "Odwiedziny strony",
-                "custom": "Własna akcja (tag)"
+                "custom": "Własna akcja (tag)",
+                "recent_subscribers": "Ostatni subskrybenci"
             },
             "desc": {
                 "none": "Wiadomość nie będzie uruchamiana automatycznie",
@@ -1166,7 +1172,8 @@
                 "birthday": "Wyślij w dzień urodzin subskrybenta",
                 "inactivity": "Wyślij gdy subskrybent jest nieaktywny",
                 "page_visit": "Wyślij gdy subskrybent odwiedzi stronę",
-                "custom": "Wyślij gdy zostanie dodany konkretny tag"
+                "custom": "Wyślij gdy zostanie dodany konkretny tag",
+                "recent_subscribers": "Wyślij tylko do osób zapisanych w ciągu ostatnich X dni"
             },
             "config": {
                 "inactive_days": "Liczba dni nieaktywności",
@@ -1174,7 +1181,9 @@
                 "url_pattern_help": "Użyj * jako wieloznacznika, np. */cennik lub https://strona.pl/oferta/*",
                 "tag": "Tag uruchamiający",
                 "select_tag": "-- Wybierz tag --",
-                "no_config_needed": "Ten trigger nie wymaga dodatkowej konfiguracji"
+                "no_config_needed": "Ten trigger nie wymaga dodatkowej konfiguracji",
+                "recent_days": "Liczba dni od zapisu",
+                "recent_days_help": "Użyj suwaka lub wpisz liczbę ręcznie (1-365 dni)"
             }
         },
         "ab_testing": {
@@ -5446,6 +5455,15 @@
             "event": "Wydarzenie",
             "cold_call": "Cold call",
             "other": "Inne"
+        }
+    },
+    "onboarding": {
+        "tracker": {
+            "title": "Konfiguracja startowa",
+            "license": "Licencja",
+            "ai": "Integracja AI",
+            "mailbox": "Skrzynka pocztowa",
+            "cron": "CRON"
         }
     }
 }

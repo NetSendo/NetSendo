@@ -892,6 +892,12 @@ const triggerTypes = [
         icon: "⚙️",
         description: t("messages.triggers.desc.custom"),
     },
+    {
+        value: "recent_subscribers",
+        label: t("messages.triggers.types.recent_subscribers"),
+        icon: "📅",
+        description: t("messages.triggers.desc.recent_subscribers"),
+    },
 ];
 
 // Preview Logic
@@ -3026,19 +3032,19 @@ if (form.contact_list_ids.length > 0) {
                                     class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                                 >
                                     <option :value="7">
-                                        7 {{ $t("common.days") }}
+                                        7 {{ $t("common.days_unit") }}
                                     </option>
                                     <option :value="14">
-                                        14 {{ $t("common.days") }}
+                                        14 {{ $t("common.days_unit") }}
                                     </option>
                                     <option :value="30">
-                                        30 {{ $t("common.days") }}
+                                        30 {{ $t("common.days_unit") }}
                                     </option>
                                     <option :value="60">
-                                        60 {{ $t("common.days") }}
+                                        60 {{ $t("common.days_unit") }}
                                     </option>
                                     <option :value="90">
-                                        90 {{ $t("common.days") }}
+                                        90 {{ $t("common.days_unit") }}
                                     </option>
                                 </select>
                             </div>
@@ -3101,6 +3107,52 @@ if (form.contact_list_ids.length > 0) {
                                         {{ tag.name }}
                                     </option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- Recent subscribers config -->
+                        <div
+                            v-if="form.trigger_type === 'recent_subscribers'"
+                            class="space-y-3"
+                        >
+                            <div>
+                                <InputLabel
+                                    :value="
+                                        $t(
+                                            'messages.triggers.config.recent_days'
+                                        )
+                                    "
+                                />
+                                <div class="mt-2 space-y-3">
+                                    <!-- Slider -->
+                                    <div class="flex items-center gap-4">
+                                        <input
+                                            type="range"
+                                            v-model.number="form.trigger_config.recent_days"
+                                            min="1"
+                                            max="365"
+                                            class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary-600"
+                                        />
+                                        <!-- Manual input -->
+                                        <input
+                                            type="number"
+                                            v-model.number="form.trigger_config.recent_days"
+                                            min="1"
+                                            max="365"
+                                            class="w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center"
+                                        />
+                                        <span class="text-sm text-slate-600 dark:text-slate-400">
+                                            {{ $t('common.days_unit') }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{
+                                        $t(
+                                            'messages.triggers.config.recent_days_help'
+                                        )
+                                    }}
+                                </p>
                             </div>
                         </div>
 

@@ -477,6 +477,13 @@ class Message extends Model
                 })->pluck('email')->toArray();
                 $query->whereNotIn('email', $excludedEmails);
             })
+            ->when($this->trigger_type === 'recent_subscribers' && !empty($this->trigger_config['recent_days']), function ($query) {
+                // Filter to only include subscribers who joined within the recent X days
+                $days = (int) $this->trigger_config['recent_days'];
+                $query->whereHas('contactLists', function ($q) use ($days) {
+                    $q->where('contact_list_subscriber.subscribed_at', '>=', now()->subDays($days));
+                });
+            })
             ->get()
             ->unique('email'); // Final deduplication by email
     }

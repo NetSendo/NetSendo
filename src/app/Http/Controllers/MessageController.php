@@ -259,7 +259,7 @@ class MessageController extends Controller
             'ab_variant_subject' => 'nullable|string|max:255',
             'ab_variant_content' => 'nullable|string',
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
-            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom',
+            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers',
             'trigger_config' => 'nullable|array',
             // PDF Attachments
             'attachments' => 'nullable|array|max:5',
@@ -546,7 +546,7 @@ class MessageController extends Controller
             'ab_variant_subject' => 'nullable|string|max:255',
             'ab_variant_content' => 'nullable|string',
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
-            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom',
+            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers',
             'trigger_config' => 'nullable|array',
             // PDF Attachments
             'attachments' => 'nullable|array|max:5',
