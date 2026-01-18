@@ -3727,7 +3727,13 @@
             "subscribers_read": "Subskrybenci (odczyt)",
             "subscribers_write": "Subskrybenci (zapis)",
             "lists_read": "Listy (odczyt)",
-            "tags_read": "Tagi (odczyt)"
+            "tags_read": "Tagi (odczyt)",
+            "webhooks_read": "Webhooki (odczyt)",
+            "webhooks_write": "Webhooki (zapis)",
+            "sms_read": "SMS (odczyt)",
+            "sms_write": "SMS (zapis)",
+            "messages_read": "Kampanie (odczyt)",
+            "messages_write": "Kampanie (zapis)"
         },
         "status": {
             "expired": "wygasł",

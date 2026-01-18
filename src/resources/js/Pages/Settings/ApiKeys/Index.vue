@@ -69,6 +69,36 @@ const permissionLabels = computed(() => ({
         icon: "🏷️",
         color: "orange",
     },
+    "webhooks:read": {
+        label: t("api_keys.permissions.webhooks_read"),
+        icon: "🔗",
+        color: "gray",
+    },
+    "webhooks:write": {
+        label: t("api_keys.permissions.webhooks_write"),
+        icon: "🔗",
+        color: "gray",
+    },
+    "sms:read": {
+        label: t("api_keys.permissions.sms_read"),
+        icon: "📱",
+        color: "teal",
+    },
+    "sms:write": {
+        label: t("api_keys.permissions.sms_write"),
+        icon: "📱",
+        color: "teal",
+    },
+    "messages:read": {
+        label: t("api_keys.permissions.messages_read"),
+        icon: "📨",
+        color: "indigo",
+    },
+    "messages:write": {
+        label: t("api_keys.permissions.messages_write"),
+        icon: "✉️",
+        color: "indigo",
+    },
 }));
 
 function openCreateModal() {

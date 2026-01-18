@@ -2723,7 +2723,13 @@
             "subscribers_read": "Suscriptores (lectura)",
             "subscribers_write": "Suscriptores (escritura)",
             "lists_read": "Listas (lectura)",
-            "tags_read": "Etiquetas (lectura)"
+            "tags_read": "Etiquetas (lectura)",
+            "webhooks_read": "Webhooks (lectura)",
+            "webhooks_write": "Webhooks (escritura)",
+            "sms_read": "SMS (lectura)",
+            "sms_write": "SMS (escritura)",
+            "messages_read": "Campañas (lectura)",
+            "messages_write": "Campañas (escritura)"
         },
         "status": {
             "expired": "expirado",

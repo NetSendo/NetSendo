@@ -40,6 +40,8 @@ class ApiKey extends Model
         'webhooks:write',
         'sms:read',
         'sms:write',
+        'messages:read',
+        'messages:write',
     ];
 
     /**

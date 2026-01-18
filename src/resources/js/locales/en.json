@@ -3773,7 +3773,13 @@
             "subscribers_read": "Subscribers (read)",
             "subscribers_write": "Subscribers (write)",
             "lists_read": "Lists (read)",
-            "tags_read": "Tags (read)"
+            "tags_read": "Tags (read)",
+            "webhooks_read": "Webhooks (read)",
+            "webhooks_write": "Webhooks (write)",
+            "sms_read": "SMS (read)",
+            "sms_write": "SMS (write)",
+            "messages_read": "Campaigns (read)",
+            "messages_write": "Campaigns (write)"
         },
         "status": {
             "expired": "expired",

@@ -2869,7 +2869,13 @@
             "subscribers_read": "Abonnenten (Lesen)",
             "subscribers_write": "Abonnenten (Schreiben)",
             "lists_read": "Listen (Lesen)",
-            "tags_read": "Tags (Lesen)"
+            "tags_read": "Tags (Lesen)",
+            "webhooks_read": "Webhooks (Lesen)",
+            "webhooks_write": "Webhooks (Schreiben)",
+            "sms_read": "SMS (Lesen)",
+            "sms_write": "SMS (Schreiben)",
+            "messages_read": "Kampagnen (Lesen)",
+            "messages_write": "Kampagnen (Schreiben)"
         },
         "status": {
             "expired": "abgelaufen",
