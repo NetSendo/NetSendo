@@ -412,6 +412,18 @@ export class NetSendoApiClient {
   }
 
   // ============================================================================
+  // Custom Fields & Placeholders
+  // ============================================================================
+
+  async listPlaceholders(): Promise<{
+    system: Array<{ name: string; placeholder: string; label: string; type: string }>;
+    custom: Array<{ name: string; placeholder: string; label: string; type: string; field_type: string }>;
+  }> {
+    const response = await this.client.get('/custom-fields/placeholders');
+    return response.data.data;
+  }
+
+  // ============================================================================
   // Account / Stats (internal API)
   // ============================================================================
 

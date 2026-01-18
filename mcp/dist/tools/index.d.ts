@@ -15,4 +15,5 @@ export { registerMessagingTools } from './messaging.js';
 export { registerCampaignTools } from './campaigns.js';
 export { registerAbTestTools } from './ab-tests.js';
 export { registerFunnelTools } from './funnels.js';
+export { registerPlaceholderTools } from './placeholders.js';
 //# sourceMappingURL=index.d.ts.map

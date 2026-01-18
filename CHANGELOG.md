@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **MCP Tool Enhancements:**
+
+  - **New Tool:** Added `list_placeholders` tool to the MCP server, allowing AI agents to retrieve a complete list of available system, custom, and special placeholders.
+  - **Client Method:** Added `listPlaceholders()` method to `@netsendo/mcp-client` SDK.
+  - **Enhanced Descriptions:** Updated tool descriptions for `create_campaign`, `send_email`, and `send_sms` to include detailed placeholder usage examples and workflow guidance.
+  - **Vocative Support:** Added documentation for `[[!fname]]` (Polish vocative case) to MCP tools.
+
+- **MCP Marketplace UI:**
+  - **Placeholder Documentation:** Added a dedicated section listing standard, system, and gender-based placeholders with examples.
+  - **AI Agent Prompt:** Added a "Technical Prompt" section with a one-click copy feature to help users configure their AI agents effectively.
+  - **Localization:** Added full Polish (PL) and English (EN) translations for all new MCP sections.
+
 ### Fixed
+
+- **Frontend Syntax Error:** Fixed `SyntaxError: Not allowed nest placeholder` in Vue i18n causing issues with gender-based placeholders (e.g., `{{male|female}}`) in code blocks. Implemented safe rendering using computed properties.
+- **API Routes:** Added route aliases for `/api/v1/campaigns` ensuring backward compatibility by redirecting to `MessageController`.
 
 - **Message Sorting:** Fixed sorting by "Type" column in the messages list. Now properly applies secondary sorting by "Day" for autoresponder messages, ensuring they appear in numerical order (Day 1, Day 2, etc.) instead of random order.
 

@@ -252,6 +252,13 @@ export class NetSendoApiClient {
         await this.client.delete(`/funnels/${id}`);
     }
     // ============================================================================
+    // Custom Fields & Placeholders
+    // ============================================================================
+    async listPlaceholders() {
+        const response = await this.client.get('/custom-fields/placeholders');
+        return response.data.data;
+    }
+    // ============================================================================
     // Account / Stats (internal API)
     // ============================================================================
     async getAccountInfo() {

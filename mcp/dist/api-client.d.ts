@@ -140,6 +140,21 @@ export declare class NetSendoApiClient {
         };
     }>;
     deleteFunnel(id: number): Promise<void>;
+    listPlaceholders(): Promise<{
+        system: Array<{
+            name: string;
+            placeholder: string;
+            label: string;
+            type: string;
+        }>;
+        custom: Array<{
+            name: string;
+            placeholder: string;
+            label: string;
+            type: string;
+            field_type: string;
+        }>;
+    }>;
     getAccountInfo(): Promise<{
         name: string;
         email: string;

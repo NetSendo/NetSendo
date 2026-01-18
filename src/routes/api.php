@@ -112,6 +112,27 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () 
             'destroy' => 'api.v1.messages.destroy',
         ]);
 
+    // Campaigns (alias for messages - backward compatibility with external MCP clients)
+    // External applications may use /campaigns instead of /messages
+    Route::post('campaigns/{campaign}/lists', [MessageController::class, 'setLists'])
+        ->name('api.v1.campaigns.lists');
+    Route::post('campaigns/{campaign}/exclusions', [MessageController::class, 'setExclusions'])
+        ->name('api.v1.campaigns.exclusions');
+    Route::post('campaigns/{campaign}/schedule', [MessageController::class, 'schedule'])
+        ->name('api.v1.campaigns.schedule');
+    Route::post('campaigns/{campaign}/send', [MessageController::class, 'send'])
+        ->name('api.v1.campaigns.send');
+    Route::get('campaigns/{campaign}/stats', [MessageController::class, 'stats'])
+        ->name('api.v1.campaigns.stats');
+    Route::apiResource('campaigns', MessageController::class)
+        ->names([
+            'index' => 'api.v1.campaigns.index',
+            'store' => 'api.v1.campaigns.store',
+            'show' => 'api.v1.campaigns.show',
+            'update' => 'api.v1.campaigns.update',
+            'destroy' => 'api.v1.campaigns.destroy',
+        ]);
+
     // A/B Tests
     Route::post('ab-tests/{ab_test}/variants', [AbTestController::class, 'addVariant'])
         ->name('api.v1.ab-tests.variants');

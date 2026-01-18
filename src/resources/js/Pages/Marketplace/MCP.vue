@@ -9,6 +9,7 @@ const page = usePage();
 
 const copied = ref(null);
 const activeInstallMode = ref('remote'); // 'local' or 'remote'
+const showAgentPrompt = ref(false);
 const appUrl = computed(() => window.location.origin);
 
 // Configuration for local Docker installation
@@ -32,6 +33,69 @@ const remoteConfig = computed(() => JSON.stringify({
 }, null, 2));
 
 const currentConfig = computed(() => activeInstallMode.value === 'local' ? localConfig.value : remoteConfig.value);
+
+// Agent prompt content - cannot use $t() because vue-i18n escapes {{ }} incorrectly in code blocks
+const agentPromptContent = computed(() => {
+    const locale = page.props?.locale ?? 'en';
+    if (locale === 'pl') {
+        return `Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.
+
+DOSTĘPNE NARZĘDZIA:
+- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber
+- list_contact_lists, list_tags, sync_subscriber_tags
+- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign
+- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
+- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
+- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
+- send_email, send_sms
+- list_placeholders, test_connection, get_account_info
+
+PLACEHOLDERY W TREŚCI:
+- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta
+- [[!fname]] - imię w wołaczu (polski)
+- [[unsubscribe_link]] - WYMAGANY w każdym emailu
+- [[manage]] - link zarządzania preferencjami
+- {{męska|żeńska}} - odmiana przez płeć, np. {{Drogi|Droga}}
+
+WORKFLOW KAMPANII:
+1. create_campaign → 2. set_campaign_lists → 3. send_campaign
+
+WAŻNE:
+- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery
+- Każdy email MUSI zawierać [[unsubscribe_link]]
+- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)`;
+    }
+    // Default: English (also for ES, DE until translated)
+    return `You are an AI assistant with access to NetSendo — an email/SMS marketing platform.
+
+AVAILABLE TOOLS:
+- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber
+- list_contact_lists, list_tags, sync_subscriber_tags
+- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign
+- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
+- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
+- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
+- send_email, send_sms
+- list_placeholders, test_connection, get_account_info
+
+PLACEHOLDERS IN CONTENT:
+- [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data
+- [[!fname]] - first name in vocative case (Polish)
+- [[unsubscribe_link]] - REQUIRED in every email
+- [[manage]] - manage preferences link
+- {{male|female}} - gender variation
+
+CAMPAIGN WORKFLOW:
+1. create_campaign → 2. set_campaign_lists → 3. send_campaign
+
+IMPORTANT:
+- Always use list_placeholders first to learn available placeholders
+- Every email MUST contain [[unsubscribe_link]]
+- Before sending a campaign you MUST assign lists (set_campaign_lists)`;
+});
+
+// Gender example placeholder - needs actual {{ }}
+const placeholderGenderExample = '{{Drogi|Droga}}';
 
 const copyToClipboard = async (text, key) => {
     try {
@@ -165,6 +229,7 @@ const toolCategories = [
         tools: [
             { name: "test_connection", description: "mcp.tools.test_connection" },
             { name: "get_account_info", description: "mcp.tools.get_account_info" },
+            { name: "list_placeholders", description: "mcp.tools.list_placeholders" },
         ]
     },
 ];
@@ -503,6 +568,103 @@ const exampleQueries = [
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Placeholders Documentation -->
+                        <div class="rounded-2xl bg-white dark:bg-slate-800 p-8 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm">
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                                ✨ {{ $t('mcp.placeholders_title') }}
+                            </h2>
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-6">
+                                {{ $t('mcp.placeholders_description') }}
+                            </p>
+                            <div class="space-y-4">
+                                <!-- Standard Placeholders -->
+                                <div class="rounded-xl bg-gray-50 dark:bg-slate-900/50 p-4">
+                                    <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">{{ $t('mcp.placeholders_standard') }}</h3>
+                                    <div class="grid gap-2 sm:grid-cols-2">
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">[[first_name]]</code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('mcp.placeholder_first_name') }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">[[!fname]]</code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('mcp.placeholder_vocative') }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">[[last_name]]</code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('mcp.placeholder_last_name') }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">[[email]]</code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('mcp.placeholder_email') }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">[[phone]]</code>
+                                            <span class="text-xs text-gray-600 dark:text-slate-400">{{ $t('mcp.placeholder_phone') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- System Placeholders -->
+                                <div class="rounded-xl bg-indigo-50 dark:bg-indigo-500/10 p-4 ring-1 ring-indigo-500/20">
+                                    <h3 class="text-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-3">{{ $t('mcp.placeholders_system') }}</h3>
+                                    <div class="grid gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded">[[unsubscribe_link]]</code>
+                                            <span class="text-xs text-indigo-700 dark:text-indigo-300">{{ $t('mcp.placeholder_unsubscribe') }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded">[[manage]]</code>
+                                            <span class="text-xs text-indigo-700 dark:text-indigo-300">{{ $t('mcp.placeholder_manage') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Gender Forms -->
+                                <div class="rounded-xl bg-violet-50 dark:bg-violet-500/10 p-4 ring-1 ring-violet-500/20">
+                                    <h3 class="text-sm font-semibold text-violet-700 dark:text-violet-300 mb-3">{{ $t('mcp.placeholders_gender') }}</h3>
+                                    <div class="space-y-2">
+                                        <div class="flex items-start gap-2">
+                                            <code class="text-xs font-mono text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-500/10 px-1.5 py-0.5 rounded shrink-0">{{Drogi|Droga}}</code>
+                                            <span class="text-xs text-violet-700 dark:text-violet-300">{{ $t('mcp.placeholder_gender_example') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agent Prompt -->
+                        <div class="rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 p-8 ring-1 ring-emerald-500/20">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                                    🤖 {{ $t('mcp.agent_prompt_title') }}
+                                </h2>
+                                <button
+                                    @click="showAgentPrompt = !showAgentPrompt"
+                                    class="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
+                                >
+                                    {{ showAgentPrompt ? $t('common.hide') : $t('common.show') }}
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">
+                                {{ $t('mcp.agent_prompt_description') }}
+                            </p>
+                            <div v-if="showAgentPrompt" class="rounded-xl bg-gray-900 dark:bg-slate-950 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10">
+                                <div class="flex items-center justify-between mb-4">
+                                    <p class="text-sm text-gray-400 dark:text-slate-400">
+                                        {{ $t('mcp.agent_prompt_label') }}
+                                    </p>
+                                    <button
+                                    @click="copyToClipboard(agentPromptContent, 'agent-prompt')"
+                                        class="text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        {{ copied === 'agent-prompt' ? $t('common.copied') : $t('common.copy') }}
+                                    </button>
+                                </div>
+                                <pre class="text-sm text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap"><code>{{ agentPromptContent }}</code></pre>
                             </div>
                         </div>
 

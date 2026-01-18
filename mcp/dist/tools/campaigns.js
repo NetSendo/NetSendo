@@ -6,7 +6,14 @@
 import { z } from 'zod';
 export function registerCampaignTools(server, api) {
     // List Campaigns
-    server.tool('list_campaigns', 'List all campaigns (email/SMS messages) with optional filtering. Returns campaign details including status, type, and recipient counts.', {
+    server.tool('list_campaigns', `List all campaigns (email/SMS messages) with optional filtering.
+
+Returns campaign details including:
+- id, subject, channel (email/sms)
+- type (broadcast/autoresponder)
+- status (draft/scheduled/sending/sent/active)
+- sent_count, planned_recipients
+- scheduled_at, created_at`, {
         channel: z.enum(['email', 'sms']).optional().describe('Filter by channel type'),
         type: z.enum(['broadcast', 'autoresponder']).optional().describe('Filter by campaign type'),
         status: z.string().optional().describe('Filter by status (draft, scheduled, sending, sent, active)'),
@@ -89,7 +96,22 @@ export function registerCampaignTools(server, api) {
         }
     });
     // Create Campaign
-    server.tool('create_campaign', 'Create a new email or SMS campaign. Returns the created campaign with its ID.', {
+    server.tool('create_campaign', `Create a new email or SMS campaign.
+
+CAMPAIGN TYPES:
+- broadcast: One-time send to contact lists
+- autoresponder: Triggered by subscription, sends on day X after signup
+
+PERSONALIZATION (use list_placeholders for full list):
+- [[first_name]], [[last_name]], [[email]], [[phone]]
+- [[unsubscribe_link]] - REQUIRED for email compliance
+- {{male|female}} - Gender-based text variation
+
+EXAMPLE CONTENT:
+subject: "{{Drogi|Droga}} [[first_name]], sprawdź naszą ofertę!"
+content: "<p>Cześć [[first_name]]!</p><a href='[[unsubscribe_link]]'>Wypisz się</a>"
+
+WORKFLOW: create_campaign → set_campaign_lists → send_campaign`, {
         subject: z.string().min(1).describe('Campaign subject line'),
         channel: z.enum(['email', 'sms']).describe('Channel type (email or sms)'),
         type: z.enum(['broadcast', 'autoresponder']).describe('Campaign type: broadcast (one-time) or autoresponder (triggered)'),
@@ -141,7 +163,13 @@ export function registerCampaignTools(server, api) {
         }
     });
     // Update Campaign
-    server.tool('update_campaign', 'Update an existing campaign. Only draft or scheduled campaigns can be updated.', {
+    server.tool('update_campaign', `Update an existing campaign (draft or scheduled only).
+
+UPDATABLE FIELDS:
+- subject, content, preheader, mailbox_id
+- For autoresponders: day, time_of_day, is_active
+
+NOTE: Sent campaigns cannot be modified.`, {
         campaign_id: z.number().describe('Campaign ID to update'),
         subject: z.string().optional().describe('New subject line'),
         content: z.string().optional().describe('New content'),
@@ -261,7 +289,15 @@ export function registerCampaignTools(server, api) {
         }
     });
     // Send Campaign
-    server.tool('send_campaign', 'Send a campaign immediately (broadcast) or activate it (autoresponder).', {
+    server.tool('send_campaign', `Send a campaign immediately or activate an autoresponder.
+
+BEHAVIOR:
+- Broadcast: Queues all recipients for immediate sending
+- Autoresponder: Activates the trigger (sends on schedule)
+
+PREREQUISITES:
+- Campaign must have contact lists (use set_campaign_lists first)
+- Must have content, subject, and mailbox configured`, {
         campaign_id: z.number().describe('Campaign ID'),
     }, async ({ campaign_id }) => {
         try {

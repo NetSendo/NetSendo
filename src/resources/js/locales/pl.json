@@ -2248,7 +2248,8 @@
             "send_email": "Wyślij wiadomość email",
             "send_sms": "Wyślij wiadomość SMS",
             "test_connection": "Testuj połączenie z API",
-            "get_account_info": "Pobierz informacje o koncie"
+            "get_account_info": "Pobierz informacje o koncie",
+            "list_placeholders": "Listuj dostępne placeholdery"
         },
         "examples_title": "Przykładowe komendy",
         "examples": {
@@ -2283,7 +2284,24 @@
         "test_success_hint": "Poprawny klucz API zwróci JSON z informacjami o koncie",
         "need_help": "Potrzebujesz pomocy?",
         "help_description": "Sprawdź naszą dokumentację dla szczegółowych instrukcji instalacji i konfiguracji.",
-        "documentation": "Dokumentacja"
+        "documentation": "Dokumentacja",
+        "placeholders_title": "Personalizacja wiadomości",
+        "placeholders_description": "Używaj placeholderów w treści wiadomości, aby personalizować każdy email/SMS. Zostaną automatycznie zastąpione danymi subskrybenta.",
+        "placeholders_standard": "Standardowe placeholdery",
+        "placeholders_system": "Systemowe (wymagane)",
+        "placeholders_gender": "Odmiana przez płeć",
+        "placeholder_first_name": "Imię subskrybenta",
+        "placeholder_vocative": "Imię w wołaczu (Anna → Anno)",
+        "placeholder_last_name": "Nazwisko",
+        "placeholder_email": "Adres email",
+        "placeholder_phone": "Numer telefonu",
+        "placeholder_unsubscribe": "Link wypisania (WYMAGANY)",
+        "placeholder_manage": "Link zarządzania preferencjami",
+        "placeholder_gender_example": "Drogi → dla mężczyzn, Droga → dla kobiet",
+        "agent_prompt_title": "Prompt dla Agenta AI",
+        "agent_prompt_description": "Skopiuj ten prompt do swojego agenta AI, aby mógł efektywnie korzystać z NetSendo MCP. Prompt zawiera instrukcje obsługi, listę dostępnych narzędzi i przykłady użycia.",
+        "agent_prompt_label": "Prompt techniczny",
+        "agent_prompt_content": "Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.\n\nDOSTĘPNE NARZĘDZIA:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERY W TREŚCI:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta\n- [[!fname]] - imię w wołaczu (polski)\n- [[unsubscribe_link]] - WYMAGANY w każdym emailu\n- [[manage]] - link zarządzania preferencjami\n- {'{'}{'{'}męska|żeńska{'}'}{'}'}  - odmiana przez płeć, np. {'{'}{'{'}Drogi|Droga{'}'}{'}'} \n\nWORKFLOW KAMPANII:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWAŻNE:\n- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery\n- Każdy email MUSI zawierać [[unsubscribe_link]]\n- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)"
     },
     "mcp_status": {
         "title": "Status serwera MCP",

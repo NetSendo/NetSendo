@@ -9,6 +9,7 @@ import { registerMessagingTools } from './messaging.js';
 import { registerCampaignTools } from './campaigns.js';
 import { registerAbTestTools } from './ab-tests.js';
 import { registerFunnelTools } from './funnels.js';
+import { registerPlaceholderTools } from './placeholders.js';
 /**
  * Register all tools with the MCP server
  */
@@ -25,6 +26,8 @@ export function registerAllTools(server, api) {
     registerAbTestTools(server, api);
     // Funnel/automation tools
     registerFunnelTools(server, api);
+    // Placeholder/custom fields tools
+    registerPlaceholderTools(server, api);
     // Account / Connection test tool
     server.tool('test_connection', 'Test the connection to NetSendo API. Use this to verify credentials are working.', {}, async () => {
         const result = await api.testConnection();
@@ -69,4 +72,5 @@ export { registerMessagingTools } from './messaging.js';
 export { registerCampaignTools } from './campaigns.js';
 export { registerAbTestTools } from './ab-tests.js';
 export { registerFunnelTools } from './funnels.js';
+export { registerPlaceholderTools } from './placeholders.js';
 //# sourceMappingURL=index.js.map

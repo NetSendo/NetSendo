@@ -13,6 +13,7 @@ import { registerMessagingTools } from './messaging.js';
 import { registerCampaignTools } from './campaigns.js';
 import { registerAbTestTools } from './ab-tests.js';
 import { registerFunnelTools } from './funnels.js';
+import { registerPlaceholderTools } from './placeholders.js';
 
 /**
  * Register all tools with the MCP server
@@ -35,6 +36,9 @@ export function registerAllTools(server: McpServer, api: NetSendoApiClient) {
 
   // Funnel/automation tools
   registerFunnelTools(server, api);
+
+  // Placeholder/custom fields tools
+  registerPlaceholderTools(server, api);
 
   // Account / Connection test tool
   server.tool(
@@ -93,4 +97,5 @@ export { registerMessagingTools } from './messaging.js';
 export { registerCampaignTools } from './campaigns.js';
 export { registerAbTestTools } from './ab-tests.js';
 export { registerFunnelTools } from './funnels.js';
+export { registerPlaceholderTools } from './placeholders.js';
 

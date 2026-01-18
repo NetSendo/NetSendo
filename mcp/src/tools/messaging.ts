@@ -46,7 +46,18 @@ export function registerMessagingTools(server: McpServer, api: NetSendoApiClient
   // Send Email
   server.tool(
     'send_email',
-    'Send an email to a subscriber. Requires a verified mailbox.',
+    `Send a single email to a subscriber. Requires a verified mailbox.
+
+PERSONALIZATION (use list_placeholders for full list):
+- [[first_name]], [[last_name]], [[email]]
+- [[unsubscribe_link]] - REQUIRED for compliance
+- {{male|female}} - Gender-based text
+
+EXAMPLE:
+subject: "Cześć [[first_name]]!"
+content: "<p>Dziękujemy za kontakt.</p><a href='[[unsubscribe_link]]'>Wypisz</a>"
+
+NOTE: For bulk sends, use create_campaign instead.`,
     {
       subscriber_id: z.number().optional().describe('Subscriber ID (provide either this or email)'),
       email: z.string().email().optional().describe('Email address (provide either this or subscriber_id)'),
@@ -160,7 +171,16 @@ export function registerMessagingTools(server: McpServer, api: NetSendoApiClient
   // Send SMS
   server.tool(
     'send_sms',
-    'Send an SMS message to a subscriber or phone number.',
+    `Send a single SMS to a subscriber or phone number.
+
+PERSONALIZATION:
+- [[first_name]], [[phone]], etc.
+- Max 160 characters per SMS segment
+
+EXAMPLE:
+content: "Cześć [[first_name]]! Twoje zamówienie jest gotowe."
+
+NOTE: For bulk SMS, use create_campaign with channel='sms'.`,
     {
       subscriber_id: z.number().optional().describe('Subscriber ID (provide either this or phone)'),
       phone: z.string().optional().describe('Phone number (provide either this or subscriber_id)'),
