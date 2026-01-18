@@ -47,23 +47,38 @@ DOSTĘPNE NARZĘDZIA:
 - set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
 - list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
-- send_email, send_sms
-- list_placeholders, test_connection, get_account_info
+- send_email, send_sms (pojedyncze wiadomości)
+- list_placeholders, list_mailboxes, test_connection, get_account_info
+
+⚠️ WAŻNE - create_campaign WYMAGANE PARAMETRY:
+1. channel: MUSI być "email" LUB "sms" (określa typ kampanii)
+2. subject: Tytuł kampanii
+3. type: "broadcast" (jednorazowa) lub "autoresponder" (automatyczna)
+
+Opcjonalne: content, mailbox_id, contact_list_ids, scheduled_at
 
 PLACEHOLDERY W TREŚCI:
 - [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta
 - [[!fname]] - imię w wołaczu (polski)
 - [[unsubscribe_link]] - WYMAGANY w każdym emailu
 - [[manage]] - link zarządzania preferencjami
-- {{męska|żeńska}} - odmiana przez płeć, np. {{Drogi|Droga}}
+- {{męska|żeńska}} - odmiana przez płeć
 
-WORKFLOW KAMPANII:
-1. create_campaign → 2. set_campaign_lists → 3. send_campaign
+WORKFLOW KAMPANII EMAIL:
+1. create_campaign z channel:"email", type:"broadcast", subject:"..."
+2. set_campaign_lists z contact_list_ids
+3. send_campaign
 
-WAŻNE:
+WORKFLOW KAMPANII SMS:
+1. create_campaign z channel:"sms", type:"broadcast", subject:"..."
+2. set_campaign_lists z contact_list_ids
+3. send_campaign
+
+ZASADY:
 - Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery
 - Każdy email MUSI zawierać [[unsubscribe_link]]
-- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)`;
+- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)
+- Dla create_campaign ZAWSZE podaj channel: "email" lub "sms"`;
     }
     // Default: English (also for ES, DE until translated)
     return `You are an AI assistant with access to NetSendo — an email/SMS marketing platform.

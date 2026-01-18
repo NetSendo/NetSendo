@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApiRequestLog;
 use App\Models\LogSetting;
 use App\Models\WebhookLog;
 use Illuminate\Http\Request;
@@ -20,10 +21,12 @@ class LogViewerController extends Controller
         ];
 
         $webhookStats = WebhookLog::getLast24HoursStats(auth()->id());
+        $apiStats = $this->calculateApiStats();
 
         return Inertia::render('Settings/Logs/Index', [
             'settings' => $settings,
             'webhookStats' => $webhookStats,
+            'apiStats' => $apiStats,
         ]);
     }
 
@@ -208,6 +211,107 @@ class LogViewerController extends Controller
     }
 
     /**
+     * Get API request logs
+     */
+    public function getApiLogs(Request $request)
+    {
+        $query = ApiRequestLog::forUser(auth()->id())
+            ->orderBy('created_at', 'desc');
+
+        // Filter by method
+        if ($request->has('method') && $request->method) {
+            $query->forMethod($request->method);
+        }
+
+        // Filter by endpoint
+        if ($request->has('endpoint') && $request->endpoint) {
+            $query->forEndpoint($request->endpoint);
+        }
+
+        // Filter errors only
+        if ($request->boolean('errors_only')) {
+            $query->errors();
+        }
+
+        // Search in endpoint or response body
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('endpoint', 'like', "%{$search}%")
+                  ->orWhereJsonContains('response_body->message', $search);
+            });
+        }
+
+        $limit = min($request->get('limit', 100), 500);
+        $logs = $query->limit($limit)->get();
+
+        // Get unique endpoints for filter dropdown
+        $endpoints = ApiRequestLog::forUser(auth()->id())
+            ->distinct()
+            ->pluck('endpoint')
+            ->toArray();
+
+        return response()->json([
+            'logs' => $logs->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'method' => $log->method,
+                    'endpoint' => $log->endpoint,
+                    'response_status' => $log->response_status,
+                    'is_error' => $log->isError(),
+                    'duration_ms' => $log->duration_ms,
+                    'ip_address' => $log->ip_address,
+                    'request_body' => $log->request_body,
+                    'response_body' => $log->response_body,
+                    'created_at' => $log->created_at->toIso8601String(),
+                ];
+            }),
+            'endpoints' => $endpoints,
+            'stats' => $this->calculateApiStats(),
+        ]);
+    }
+
+    /**
+     * Clear old API logs
+     */
+    public function clearApiLogs(Request $request)
+    {
+        $days = $request->get('older_than_days', 30);
+
+        $deleted = ApiRequestLog::where('user_id', auth()->id())
+            ->where('created_at', '<', now()->subDays($days))
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+            'message' => __('logs.api_logs_cleared', ['count' => $deleted]),
+        ]);
+    }
+
+    /**
+     * Get API statistics
+     */
+    protected function calculateApiStats(): array
+    {
+        $userId = auth()->id();
+        $last24Hours = now()->subHours(24);
+
+        return [
+            'total_requests' => ApiRequestLog::forUser($userId)
+                ->where('created_at', '>=', $last24Hours)
+                ->count(),
+            'error_requests' => ApiRequestLog::forUser($userId)
+                ->where('created_at', '>=', $last24Hours)
+                ->errors()
+                ->count(),
+            'avg_duration_ms' => (int) ApiRequestLog::forUser($userId)
+                ->where('created_at', '>=', $last24Hours)
+                ->avg('duration_ms'),
+        ];
+    }
+
+    /**
      * Clear the log file
      */
     public function clearLog()
@@ -274,4 +378,3 @@ class LogViewerController extends Controller
         return $bytes . ' B';
     }
 }
-

@@ -98,18 +98,20 @@ Returns campaign details including:
     // Create Campaign
     server.tool('create_campaign', `Create a new email or SMS campaign. The campaign is created as a DRAFT by default.
 
-REQUIRED PARAMETERS:
-- subject: Campaign subject line / title
-- channel: Must be 'email' or 'sms' 
-- type: 'broadcast' (one-time) or 'autoresponder' (subscription-triggered)
+⚠️ CRITICAL: You MUST specify 'channel' parameter - choose 'email' OR 'sms'!
+
+REQUIRED PARAMETERS (all three must be provided):
+1. subject: Campaign subject line / title (string)
+2. channel: MUST be 'email' or 'sms' - this determines the type of campaign
+3. type: 'broadcast' (one-time mass send) or 'autoresponder' (triggered on subscription)
 
 OPTIONAL PARAMETERS:
-- content: HTML for email, plain text for SMS
+- content: HTML for email campaigns, plain text for SMS campaigns
 - preheader: Email preview text (email only)
-- mailbox_id: Sender mailbox ID (use list_mailboxes to get IDs)
-- contact_list_ids: Array of recipient list IDs
+- mailbox_id: Sender mailbox ID - required for email campaigns (use list_mailboxes to get IDs)
+- contact_list_ids: Array of recipient list IDs (use list_contact_lists to get IDs)
 - excluded_list_ids: Array of list IDs to exclude from sending
-- scheduled_at: ISO datetime to schedule sending (creates as 'scheduled')
+- scheduled_at: ISO datetime to schedule sending (e.g., 2024-12-25T10:00:00Z)
 - day, time_of_day, timezone: For autoresponders only
 
 WORKFLOW OPTIONS:
@@ -123,15 +125,30 @@ PERSONALIZATION (use list_placeholders for full list):
 - [[unsubscribe_link]] - REQUIRED for email compliance
 - {{male|female}} - Gender-based text variation
 
-EXAMPLE:
-channel: "email"
-type: "broadcast"
-subject: "{{Drogi|Droga}} [[first_name]], sprawdź naszą ofertę!"
-content: "<p>Cześć [[first_name]]!</p><a href='[[unsubscribe_link]]'>Wypisz się</a>"
-mailbox_id: 1
-contact_list_ids: [1, 2]`, {
+EXAMPLE EMAIL CAMPAIGN:
+{
+  "channel": "email",
+  "type": "broadcast",
+  "subject": "Cześć [[first_name]], sprawdź naszą ofertę!",
+  "content": "<p>Dziękujemy za kontakt.</p><a href='[[unsubscribe_link]]'>Wypisz się</a>",
+  "mailbox_id": 1,
+  "contact_list_ids": [1, 2]
+}
+
+EXAMPLE SMS CAMPAIGN:
+{
+  "channel": "sms",
+  "type": "broadcast",
+  "subject": "Promocja SMS",
+  "content": "Cześć [[first_name]]! Twoja zniżka: PROMO20"
+}
+
+⚠️ Common mistakes:
+- Forgetting to include 'channel' parameter → causes validation error
+- Using 'send_email' instead of 'create_campaign' for bulk sends
+- Not specifying mailbox_id for email campaigns`, {
         subject: z.string().min(1).describe('Campaign subject line / title'),
-        channel: z.enum(['email', 'sms']).describe('REQUIRED: Channel type - must be "email" or "sms"'),
+        channel: z.enum(['email', 'sms']).describe('⚠️ REQUIRED: Campaign channel - must be exactly "email" or "sms"'),
         type: z.enum(['broadcast', 'autoresponder']).describe('REQUIRED: Campaign type - "broadcast" (one-time) or "autoresponder" (triggered on subscription)'),
         content: z.string().optional().describe('Email/SMS content (HTML for email, plain text for SMS)'),
         preheader: z.string().optional().describe('Email preheader/preview text (shown in inbox preview)'),
@@ -144,6 +161,28 @@ contact_list_ids: [1, 2]`, {
         timezone: z.string().optional().describe('Timezone for scheduling (e.g., Europe/Warsaw, America/New_York)'),
     }, async ({ subject, channel, type, content, preheader, mailbox_id, contact_list_ids, excluded_list_ids, scheduled_at, day, time_of_day, timezone }) => {
         try {
+            // Additional validation with clear error messages
+            if (!channel) {
+                return {
+                    content: [{
+                            type: 'text',
+                            text: 'Error: The "channel" parameter is REQUIRED. Please specify channel: "email" or "sms". This determines whether you\'re creating an email campaign or SMS campaign.'
+                        }],
+                    isError: true,
+                };
+            }
+            if (!['email', 'sms'].includes(channel)) {
+                return {
+                    content: [{
+                            type: 'text',
+                            text: `Error: Invalid channel "${channel}". The channel parameter must be exactly "email" or "sms".`
+                        }],
+                    isError: true,
+                };
+            }
+            if (channel === 'email' && !mailbox_id) {
+                console.error('[NetSendo MCP] Warning: Creating email campaign without mailbox_id. Campaign will need mailbox configured before sending.');
+            }
             const campaign = await api.createMessage({
                 subject,
                 channel,
@@ -171,6 +210,9 @@ contact_list_ids: [1, 2]`, {
                                 type: campaign.type,
                                 status: campaign.status,
                             },
+                            next_steps: campaign.status === 'draft'
+                                ? 'Campaign is in DRAFT status. Use set_campaign_lists to add recipients, then send_campaign or schedule_campaign to send.'
+                                : undefined,
                         }, null, 2),
                     }],
             };

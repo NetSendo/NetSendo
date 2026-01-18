@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::prefix('v1')->middleware(['api.key', 'throttle:api'])->group(function () {
+Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware\LogApiRequest::class])->group(function () {
 
     // Account Info (for plugin connection testing)
     Route::get('account', [\App\Http\Controllers\Api\V1\AccountController::class, 'show'])

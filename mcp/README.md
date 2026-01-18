@@ -152,6 +152,45 @@ Best for connecting to NetSendo hosted on a server (e.g., `https://app.example.c
 | `send_sms`           | Send an SMS message           |
 | `get_sms_status`     | Check SMS delivery status     |
 
+### Campaign Management
+
+| Tool                      | Description                                                          |
+| ------------------------- | -------------------------------------------------------------------- |
+| `list_campaigns`          | List all campaigns with filtering                                    |
+| `get_campaign`            | Get campaign details                                                 |
+| `create_campaign`         | Create email/SMS campaign (**requires `channel`**: 'email' or 'sms') |
+| `update_campaign`         | Update campaign settings                                             |
+| `set_campaign_lists`      | Set recipient lists                                                  |
+| `set_campaign_exclusions` | Set exclusion lists                                                  |
+| `schedule_campaign`       | Schedule for future sending                                          |
+| `send_campaign`           | Send immediately                                                     |
+| `get_campaign_stats`      | Get sending statistics                                               |
+| `delete_campaign`         | Delete a campaign                                                    |
+
+### A/B Testing
+
+| Tool                  | Description                |
+| --------------------- | -------------------------- |
+| `list_ab_tests`       | List A/B tests             |
+| `get_ab_test`         | Get test details           |
+| `create_ab_test`      | Create new A/B test        |
+| `add_ab_test_variant` | Add variant to test        |
+| `start_ab_test`       | Start the test             |
+| `end_ab_test`         | End test and select winner |
+| `get_ab_test_results` | Get test results           |
+
+### Funnels (Automation)
+
+| Tool               | Description             |
+| ------------------ | ----------------------- |
+| `list_funnels`     | List automation funnels |
+| `get_funnel`       | Get funnel details      |
+| `create_funnel`    | Create new funnel       |
+| `add_funnel_step`  | Add step to funnel      |
+| `activate_funnel`  | Activate funnel         |
+| `pause_funnel`     | Pause funnel            |
+| `get_funnel_stats` | Get funnel statistics   |
+
 ### Account
 
 | Tool               | Description             |

@@ -391,6 +391,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // Webhook logs
         Route::get('/webhooks', [\App\Http\Controllers\LogViewerController::class, 'getWebhookLogs'])->name('webhooks');
         Route::delete('/webhooks/clear', [\App\Http\Controllers\LogViewerController::class, 'clearWebhookLogs'])->name('webhooks.clear');
+        // API request logs
+        Route::get('/api-requests', [\App\Http\Controllers\LogViewerController::class, 'getApiLogs'])->name('api-requests');
+        Route::delete('/api-requests/clear', [\App\Http\Controllers\LogViewerController::class, 'clearApiLogs'])->name('api-requests.clear');
     });
 
     // Tracked Links Dashboard
