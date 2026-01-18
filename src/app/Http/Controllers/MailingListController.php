@@ -118,6 +118,7 @@ class MailingListController extends Controller
                 ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
             'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'smsProviders' => \App\Models\SmsProvider::forUser($scopeUser->id)->active()->get(['id', 'name', 'from_name', 'from_number']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
         ]);
     }
@@ -234,6 +235,7 @@ class MailingListController extends Controller
                 'tags' => $mailingList->tags->pluck('id'),
                 'settings' => $mailingList->settings ?? [],
                 'default_mailbox_id' => $mailingList->default_mailbox_id,
+                'default_sms_provider_id' => $mailingList->default_sms_provider_id,
                 'cron_settings' => $mailingList->cronSettings ?? null,
                 // Integration settings
                 'api_key' => $mailingList->api_key,
@@ -261,6 +263,7 @@ class MailingListController extends Controller
                 ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
             'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'smsProviders' => \App\Models\SmsProvider::forUser($scopeUser->id)->active()->get(['id', 'name', 'from_name', 'from_number']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
             'otherLists' => $otherLists,
@@ -330,11 +333,19 @@ class MailingListController extends Controller
 
             // Resubscription behavior
             'resubscription_behavior' => 'nullable|in:reset_date,keep_original_date',
+
+            // Direct provider assignments
+            'default_sms_provider_id' => 'nullable|exists:sms_providers,id',
         ]);
 
         // Assign default_mailbox_id from settings if present
         if (isset($validated['settings']['sending']['mailbox_id'])) {
             $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'];
+        }
+
+        // Assign default_sms_provider_id from settings if present
+        if (isset($validated['settings']['sending']['sms_provider_id'])) {
+            $validated['default_sms_provider_id'] = $validated['settings']['sending']['sms_provider_id'];
         }
 
         $mailingList->update($validated);

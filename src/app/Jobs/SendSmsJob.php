@@ -38,8 +38,13 @@ class SendSmsJob implements ShouldQueue
             return;
         }
 
-        // Get or find the best SMS provider
-        $provider = $this->smsProvider ?? $smsProviderService->getBestProvider($this->message->user_id);
+        // Get or find the best SMS provider using hierarchical resolution
+        // Priority: Explicit -> Message -> List -> Global Default
+        $provider = $this->smsProvider ?? $this->message->getEffectiveSmsProvider();
+        if (!$provider) {
+            // Fallback to service's best provider method
+            $provider = $smsProviderService->getBestProvider($this->message->user_id);
+        }
         if (!$provider) {
             $this->failWithReason('Brak aktywnego dostawcy SMS');
             return;

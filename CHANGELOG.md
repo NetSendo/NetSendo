@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Agent Prompts:** Updated AI agent prompts (PL/EN) in `MCP.vue` to explicitly document the `channel` parameter requirement and distinguish between Email and SMS workflows.
   - **Package Distribution:** Bumped `@netsendo/mcp-client` to v1.1.0 to ensure client tools receive the updated schema.
 
+- **SMS Provider Selection:**
+  - **Dynamic Resolution:** Implemented hierarchical resolution for SMS providers (Message → List → Global Default), matching email mailbox logic.
+  - **Database Migration:** Added `default_sms_provider_id` to `contact_lists` and `sms_provider_id` to `messages` tables.
+  - **UI Implementation:** Added SMS provider selection dropdown in Message Creator (`Sms/Create.vue`) with source indicators (Global, List, Explicit).
+  - **Localization:** Added translations for new SMS settings in PL and EN.
+
 ### Added
 
 - **API Request Logging:**

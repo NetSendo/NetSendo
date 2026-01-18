@@ -90,14 +90,20 @@ class SmsController extends Controller
     public function create(Request $request)
     {
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->get(['id', 'name', 'type']);
+        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
 
         // Get optional pre-selected list ID from query parameter
         $preselectedListId = $request->query('list_id') ? (int) $request->query('list_id') : null;
 
+        // Get SMS providers for selection
+        $smsProviders = \App\Models\SmsProvider::forUser(auth()->id())->active()->get(['id', 'name', 'from_name', 'from_number', 'is_default']);
+        $defaultSmsProvider = \App\Models\SmsProvider::getDefaultFor(auth()->id());
+
         return Inertia::render('Sms/Create', [
             'lists' => $lists,
             'preselectedListId' => $preselectedListId,
+            'smsProviders' => $smsProviders,
+            'defaultSmsProvider' => $defaultSmsProvider,
         ]);
     }
 
@@ -110,6 +116,7 @@ class SmsController extends Controller
             'subject' => 'required|string|max:255',
             'content' => 'required|string', // SMS content
             'list_id' => 'nullable|exists:contact_lists,id',
+            'sms_provider_id' => 'nullable|exists:sms_providers,id',
             'type' => 'required|in:broadcast,autoresponder',
             'day' => 'nullable|integer|min:0',
             'time' => 'nullable|date_format:H:i',
@@ -167,20 +174,26 @@ class SmsController extends Controller
             'subject' => $message->subject,
             'content' => $message->content,
             'list_id' => $message->contactLists->first()->id ?? null,
+            'sms_provider_id' => $message->sms_provider_id,
             'type' => $message->type,
             'day' => $message->day,
-            'time' => $message->time_of_day, // Assuming column name is time_of_day? Let's check model.
-            // Model says 'time_of_day' in fillable.
+            'time' => $message->time_of_day,
             'scheduled_at' => $message->send_at ? $message->send_at->format('Y-m-d\TH:i') : null,
             'status' => $message->status,
         ];
 
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->get(['id', 'name', 'type']);
+        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
+
+        // Get SMS providers for selection
+        $smsProviders = \App\Models\SmsProvider::forUser(auth()->id())->active()->get(['id', 'name', 'from_name', 'from_number', 'is_default']);
+        $defaultSmsProvider = \App\Models\SmsProvider::getDefaultFor(auth()->id());
 
         return Inertia::render('Sms/Create', [
             'sms' => $smsData,
             'lists' => $lists,
+            'smsProviders' => $smsProviders,
+            'defaultSmsProvider' => $defaultSmsProvider,
         ]);
     }
 
@@ -195,9 +208,10 @@ class SmsController extends Controller
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
             'list_id' => 'nullable|exists:contact_lists,id',
+            'sms_provider_id' => 'nullable|exists:sms_providers,id',
             'type' => 'required|in:broadcast,autoresponder',
             'day' => 'nullable|integer|min:0',
-            'time' => 'nullable|date_format:H:i', // Input 'time' might map to 'time_of_day'
+            'time' => 'nullable|date_format:H:i',
             'schedule_date' => 'nullable|date',
             'status' => 'required|in:draft,scheduled,sent',
         ]);

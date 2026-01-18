@@ -966,7 +966,15 @@
             "scheduling": "Scheduling",
             "schedule_now": "Send Now",
             "schedule_later": "Schedule for Later",
-            "datetime": "Date and Time"
+            "datetime": "Date and Time",
+            "provider": "SMS Sender",
+            "provider_auto": "Auto (default)",
+            "provider_available": "Available Senders"
+        },
+        "provider_source": {
+            "explicit": "Manually selected",
+            "list": "From list settings",
+            "global": "Global default"
         },
         "actions": {
             "save_draft": "Save Draft",

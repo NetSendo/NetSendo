@@ -26,6 +26,7 @@ class ContactList extends Model
         'description',
         'contact_list_group_id',
         'default_mailbox_id',
+        'default_sms_provider_id',
         'is_public',
         'timezone',
         'settings',
@@ -74,6 +75,14 @@ class ContactList extends Model
     public function defaultMailbox()
     {
         return $this->belongsTo(Mailbox::class, 'default_mailbox_id');
+    }
+
+    /**
+     * Default SMS provider for this list
+     */
+    public function defaultSmsProvider()
+    {
+        return $this->belongsTo(SmsProvider::class, 'default_sms_provider_id');
     }
 
     public function tags()

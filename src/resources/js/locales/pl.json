@@ -969,7 +969,15 @@
             "scheduling": "Planowanie",
             "schedule_now": "Wyślij teraz",
             "schedule_later": "Zaplanuj na później",
-            "datetime": "Data i godzina"
+            "datetime": "Data i godzina",
+            "provider": "Nadawca SMS",
+            "provider_auto": "Automatycznie (domyślny)",
+            "provider_available": "Dostępni nadawcy"
+        },
+        "provider_source": {
+            "explicit": "Wybrany ręcznie",
+            "list": "Z ustawień listy",
+            "global": "Globalny domyślny"
         },
         "actions": {
             "save_draft": "Zapisz szkic",

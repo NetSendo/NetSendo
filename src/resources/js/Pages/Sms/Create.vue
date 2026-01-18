@@ -18,6 +18,11 @@ const { t } = useI18n();
 const props = defineProps({
     sms: Object,
     lists: Array,
+    smsProviders: {
+        type: Array,
+        default: () => [],
+    },
+    defaultSmsProvider: Object,
     preselectedListId: {
         type: Number,
         default: null,
@@ -30,6 +35,7 @@ const form = useForm({
     subject: props.sms?.subject || "",
     content: props.sms?.content || "",
     list_id: props.sms?.list_id || props.preselectedListId || "",
+    sms_provider_id: props.sms?.sms_provider_id || null,
     type: props.sms?.type || "broadcast",
     day: props.sms?.day || 0,
     time: props.sms?.time || "09:00",
@@ -76,6 +82,47 @@ const filteredLists = computed(() => {
     }
 
     return result;
+});
+
+// Effective SMS provider computed (similar to email mailbox logic)
+const effectiveSmsProviderInfo = computed(() => {
+    // 1. Explicit provider selected for this message
+    if (form.sms_provider_id) {
+        const provider = props.smsProviders?.find(p => p.id === form.sms_provider_id);
+        if (provider) {
+            return {
+                provider,
+                source: 'explicit',
+                label: t('sms.provider_source.explicit'),
+            };
+        }
+    }
+
+    // 2. List's default provider
+    if (form.list_id) {
+        const list = props.lists?.find(l => l.id === form.list_id);
+        if (list?.default_sms_provider_id) {
+            const provider = props.smsProviders?.find(p => p.id === list.default_sms_provider_id);
+            if (provider) {
+                return {
+                    provider,
+                    source: 'list',
+                    label: t('sms.provider_source.list'),
+                };
+            }
+        }
+    }
+
+    // 3. Global default
+    if (props.defaultSmsProvider) {
+        return {
+            provider: props.defaultSmsProvider,
+            source: 'global',
+            label: t('sms.provider_source.global'),
+        };
+    }
+
+    return null;
 });
 const segments = computed(() => {
     // Basic calculation: 160 chars per SMS if pure GSM, 70 if Unicode.
@@ -642,6 +689,66 @@ const submit = (targetStatus = null) => {
                                 </p>
                                 <InputError
                                     :message="form.errors.list_id"
+                                    class="mt-2"
+                                />
+                            </div>
+
+                            <!-- SMS Provider Selection -->
+                            <div v-if="smsProviders && smsProviders.length > 0">
+                                <InputLabel
+                                    for="sms_provider_id"
+                                    :value="$t('sms.fields.provider')"
+                                />
+                                <select
+                                    id="sms_provider_id"
+                                    v-model="form.sms_provider_id"
+                                    class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                >
+                                    <option :value="null">
+                                        {{ $t('sms.fields.provider_auto') }}
+                                    </option>
+                                    <optgroup :label="$t('sms.fields.provider_available')">
+                                        <option
+                                            v-for="provider in smsProviders"
+                                            :key="provider.id"
+                                            :value="provider.id"
+                                        >
+                                            {{ provider.name }}
+                                            <template v-if="provider.from_name || provider.from_number">
+                                                ({{ provider.from_name || provider.from_number }})
+                                            </template>
+                                            <template v-if="provider.is_default">
+                                                ★
+                                            </template>
+                                        </option>
+                                    </optgroup>
+                                </select>
+
+                                <!-- Effective provider info -->
+                                <div
+                                    v-if="effectiveSmsProviderInfo"
+                                    class="mt-2 flex items-center gap-2 text-xs"
+                                >
+                                    <span
+                                        class="inline-flex items-center rounded-full px-2 py-0.5"
+                                        :class="{
+                                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300': effectiveSmsProviderInfo.source === 'explicit',
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300': effectiveSmsProviderInfo.source === 'list',
+                                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400': effectiveSmsProviderInfo.source === 'global',
+                                        }"
+                                    >
+                                        {{ effectiveSmsProviderInfo.label }}
+                                    </span>
+                                    <span class="text-slate-500 dark:text-slate-400">
+                                        {{ effectiveSmsProviderInfo.provider?.name }}
+                                        <template v-if="effectiveSmsProviderInfo.provider?.from_number">
+                                            ({{ effectiveSmsProviderInfo.provider.from_number }})
+                                        </template>
+                                    </span>
+                                </div>
+
+                                <InputError
+                                    :message="form.errors.sms_provider_id"
                                     class="mt-2"
                                 />
                             </div>

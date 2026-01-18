@@ -22,6 +22,7 @@ class Message extends Model
         'campaign_plan_id',
         'channel', // email, sms
         'mailbox_id',
+        'sms_provider_id',
         'template_id',
         'webinar_id',
         'webinar_auto_register',
@@ -108,6 +109,11 @@ class Message extends Model
     public function mailbox()
     {
         return $this->belongsTo(Mailbox::class);
+    }
+
+    public function smsProvider()
+    {
+        return $this->belongsTo(SmsProvider::class);
     }
 
     public function template()
@@ -518,6 +524,27 @@ class Message extends Model
 
         // 3. User's global default mailbox
         return Mailbox::getDefaultFor($this->user_id);
+    }
+
+    /**
+     * Get the effective SMS provider for the message using hierarchical resolution.
+     * Priority: Message -> List -> User Default
+     */
+    public function getEffectiveSmsProvider(): ?SmsProvider
+    {
+        // 1. Explicit SMS provider for this message
+        if ($this->sms_provider_id) {
+            return $this->smsProvider;
+        }
+
+        // 2. Default SMS provider from the first contact list
+        $list = $this->contactLists->first();
+        if ($list && $list->default_sms_provider_id) {
+            return SmsProvider::find($list->default_sms_provider_id);
+        }
+
+        // 3. User's global default SMS provider
+        return SmsProvider::getDefaultFor($this->user_id);
     }
 
     /**
