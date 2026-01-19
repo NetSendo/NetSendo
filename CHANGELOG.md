@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.9] – Short Description
+
+**Release date:** 2026-01-19
+
 ### Fixed
 
 - **MCP Campaign Creation:**
