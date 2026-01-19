@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Docker Installation - `.env` Folder Bug:**
+  - Added explicit warning in `docker-compose.yml` header that `.env` file must be created BEFORE running `docker compose up -d`.
+  - Added troubleshooting section in `DOCKER_INSTALL.md` explaining the issue and solution.
+  - **Root Cause:** Docker creates a folder instead of a file when bind-mounting a non-existent source path.
+
 ### Changed
 
 ## [1.7.10] – Short Description

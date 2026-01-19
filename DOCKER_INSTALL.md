@@ -372,6 +372,36 @@ docker compose cp ./backup-storage/. app:/var/www/storage/app/
 
 ## ⚠️ Common Issues
 
+### `.env` Folder Created Instead of File
+
+**Symptom:** After running `docker compose up -d`, a `.env/` directory is created instead of a `.env` file, and the application fails to start.
+
+**Cause:** Docker creates a folder instead of a file when the source path for a bind mount doesn't exist. If you skip the `cp .env.example .env` step, Docker will create `.env` as a directory.
+
+**Solution:**
+
+```bash
+# 1. Stop containers
+docker compose down
+
+# 2. Remove the incorrectly created folder
+rm -rf .env
+
+# 3. Create .env file from example
+cp .env.example .env
+
+# 4. Edit .env with your settings
+nano .env
+
+# 5. Start containers
+docker compose up -d
+```
+
+> [!IMPORTANT]
+> **Always create the `.env` file before running `docker compose up -d`!**
+
+---
+
 ### WebSocket Connection Failed
 
 **Symptom:** Browser console shows:
