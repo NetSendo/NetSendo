@@ -1365,6 +1365,7 @@
             "send_now": "Send immediately",
             "schedule": "Schedule",
             "schedule_send": "Schedule sending",
+            "select_datetime": "Select date and time",
             "activate": "Activate (Save)",
             "test": "Test"
         },

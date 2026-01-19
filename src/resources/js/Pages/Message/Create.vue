@@ -234,7 +234,9 @@ const form = useForm({
     preheader: props.message?.preheader || "",
     type: props.message?.type || "broadcast",
     day: props.message?.day || 0,
-    contact_list_ids: props.message?.contact_list_ids || (props.preselectedListId ? [props.preselectedListId] : []),
+    contact_list_ids:
+        props.message?.contact_list_ids ||
+        (props.preselectedListId ? [props.preselectedListId] : []),
     excluded_list_ids: props.message?.excluded_list_ids || [],
     status: props.message?.status || "draft",
     content: props.message?.content || "",
@@ -359,12 +361,42 @@ const otherMailboxes = computed(() => {
 // UI State for Broadcast Scheduling
 const scheduleMode = ref(form.status === "scheduled" ? "later" : "now");
 
+// Minimum datetime for scheduling (current time + 5 minutes)
+const minDateTime = computed(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5);
+    // Format as YYYY-MM-DDTHH:mm in LOCAL time (required for datetime-local input)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+});
+
 watch(scheduleMode, (val) => {
     if (val === "now") {
         form.send_at = null;
         if (form.status === "scheduled") form.status = "draft";
     }
 });
+
+// Validate send_at to prevent past dates
+watch(
+    () => form.send_at,
+    (newVal) => {
+        if (newVal) {
+            const selectedDate = new Date(newVal);
+            const minDate = new Date();
+            minDate.setMinutes(minDate.getMinutes() + 5);
+
+            if (selectedDate < minDate) {
+                // Reset to minimum allowed time
+                form.send_at = minDateTime.value;
+            }
+        }
+    },
+);
 
 // UI State for Autoresponder Time
 const autoresponderTimeMode = ref(form.time_of_day ? "custom" : "signup");
@@ -390,7 +422,7 @@ const handleTemplateSelect = async (template) => {
     else if (template.mjml_content || template.json_structure?.blocks) {
         try {
             const response = await axios.get(
-                route("templates.compiled", template.id)
+                route("templates.compiled", template.id),
             );
 
             // If API returned already compiled HTML
@@ -408,7 +440,7 @@ const handleTemplateSelect = async (template) => {
                     console.warn("MJML compilation failed:", mjmlError);
                     // Fallback: show raw MJML info
                     htmlContent = `<p>${t(
-                        "messages.template.compilation_error"
+                        "messages.template.compilation_error",
                     )}</p>`;
                 }
             }
@@ -473,7 +505,7 @@ const mergeHtmlContent = (template, signatureHtml) => {
     if (lowerTemplate.includes("</body>")) {
         return template.replace(
             /<\/body>/i,
-            `\n<!-- Signature Start -->\n${signatureHtml}\n<!-- Signature End -->\n</body>`
+            `\n<!-- Signature Start -->\n${signatureHtml}\n<!-- Signature End -->\n</body>`,
         );
     }
 
@@ -483,7 +515,7 @@ const mergeHtmlContent = (template, signatureHtml) => {
         const lastTableCloseIndex = template.lastIndexOf("</table>");
         const lastTdCloseBeforeTable = template.lastIndexOf(
             "</td>",
-            lastTableCloseIndex
+            lastTableCloseIndex,
         );
 
         if (lastTdCloseBeforeTable > -1) {
@@ -590,7 +622,7 @@ const addFiles = (files) => {
 const removeExistingAttachment = (attachmentId) => {
     form.remove_attachment_ids.push(attachmentId);
     existingAttachments.value = existingAttachments.value.filter(
-        (a) => a.id !== attachmentId
+        (a) => a.id !== attachmentId,
     );
 };
 
@@ -675,7 +707,7 @@ const listsFilteredByTypeAndSearch = computed(() => {
     if (listSearch.value) {
         const search = listSearch.value.toLowerCase();
         result = result.filter((list) =>
-            list.name.toLowerCase().includes(search)
+            list.name.toLowerCase().includes(search),
         );
     }
 
@@ -734,7 +766,7 @@ const listsFilteredByTag = computed(() => {
     if (!selectedTag.value) return props.lists;
     return props.lists.filter(
         (list) =>
-            list.tags && list.tags.some((tag) => tag.id === selectedTag.value)
+            list.tags && list.tags.some((tag) => tag.id === selectedTag.value),
     );
 });
 
@@ -746,7 +778,7 @@ const isGroupSelected = (group) => {
 // Check if some (but not all) lists in a group are selected
 const isGroupPartiallySelected = (group) => {
     const selectedCount = group.lists.filter((list) =>
-        form.contact_list_ids.includes(list.id)
+        form.contact_list_ids.includes(list.id),
     ).length;
     return selectedCount > 0 && selectedCount < group.lists.length;
 };
@@ -758,7 +790,7 @@ const toggleGroup = (group) => {
 
     if (allSelected) {
         form.contact_list_ids = form.contact_list_ids.filter(
-            (id) => !groupIds.includes(id)
+            (id) => !groupIds.includes(id),
         );
     } else {
         const newIds = [...new Set([...form.contact_list_ids, ...groupIds])];
@@ -769,16 +801,16 @@ const toggleGroup = (group) => {
 // Toggle all lists with a specific tag
 const toggleByTag = (tagId) => {
     const listsWithTag = props.lists.filter(
-        (list) => list.tags && list.tags.some((tag) => tag.id === tagId)
+        (list) => list.tags && list.tags.some((tag) => tag.id === tagId),
     );
     const tagListIds = listsWithTag.map((list) => list.id);
     const allSelected = tagListIds.every((id) =>
-        form.contact_list_ids.includes(id)
+        form.contact_list_ids.includes(id),
     );
 
     if (allSelected) {
         form.contact_list_ids = form.contact_list_ids.filter(
-            (id) => !tagListIds.includes(id)
+            (id) => !tagListIds.includes(id),
         );
     } else {
         const newIds = [...new Set([...form.contact_list_ids, ...tagListIds])];
@@ -789,7 +821,7 @@ const toggleByTag = (tagId) => {
 // Check if all lists with a tag are selected
 const isTagSelected = (tagId) => {
     const listsWithTag = props.lists.filter(
-        (list) => list.tags && list.tags.some((tag) => tag.id === tagId)
+        (list) => list.tags && list.tags.some((tag) => tag.id === tagId),
     );
     return (
         listsWithTag.length > 0 &&
@@ -800,7 +832,7 @@ const isTagSelected = (tagId) => {
 // Count lists with a specific tag
 const getTagListCount = (tagId) => {
     return props.lists.filter(
-        (list) => list.tags && list.tags.some((tag) => tag.id === tagId)
+        (list) => list.tags && list.tags.some((tag) => tag.id === tagId),
     ).length;
 };
 
@@ -915,7 +947,7 @@ const fetchPreviewSubscribers = async () => {
             {
                 contact_list_ids: form.contact_list_ids,
                 search: previewSearch.value,
-            }
+            },
         );
         previewSubscribers.value = response.data.subscribers;
 
@@ -967,7 +999,7 @@ watch(
             fetchPreviewSubscribers();
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Initial fetch if lists pre-selected
@@ -1051,7 +1083,7 @@ if (form.contact_list_ids.length > 0) {
                                                 class="block text-sm font-medium text-slate-900 dark:text-white"
                                                 >{{
                                                     $t(
-                                                        "messages.fields.type_broadcast"
+                                                        "messages.fields.type_broadcast",
                                                     )
                                                 }}</span
                                             >
@@ -1059,7 +1091,7 @@ if (form.contact_list_ids.length > 0) {
                                                 class="block text-xs text-slate-500"
                                                 >{{
                                                     $t(
-                                                        "messages.fields.type_broadcast_desc"
+                                                        "messages.fields.type_broadcast_desc",
                                                     )
                                                 }}</span
                                             >
@@ -1084,7 +1116,7 @@ if (form.contact_list_ids.length > 0) {
                                                 class="block text-sm font-medium text-slate-900 dark:text-white"
                                                 >{{
                                                     $t(
-                                                        "messages.fields.type_autoresponder"
+                                                        "messages.fields.type_autoresponder",
                                                     )
                                                 }}</span
                                             >
@@ -1092,7 +1124,7 @@ if (form.contact_list_ids.length > 0) {
                                                 class="block text-xs text-slate-500"
                                                 >{{
                                                     $t(
-                                                        "messages.fields.type_autoresponder_desc"
+                                                        "messages.fields.type_autoresponder_desc",
                                                     )
                                                 }}</span
                                             >
@@ -1120,7 +1152,7 @@ if (form.contact_list_ids.length > 0) {
                                         v-model="form.subject"
                                         :placeholder="
                                             $t(
-                                                'messages.fields.subject_placeholder'
+                                                'messages.fields.subject_placeholder',
                                             )
                                         "
                                         @click="updateSubjectCursor"
@@ -1139,7 +1171,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="p-1 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
                                             :title="
                                                 $t(
-                                                    'messages.fields.insert_variable'
+                                                    'messages.fields.insert_variable',
                                                 )
                                             "
                                         >
@@ -1168,7 +1200,7 @@ if (form.contact_list_ids.length > 0) {
                                                 type="button"
                                                 @click="
                                                     insertSubjectVariable(
-                                                        variable.code
+                                                        variable.code,
                                                     )
                                                 "
                                                 class="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
@@ -1251,7 +1283,7 @@ if (form.contact_list_ids.length > 0) {
                                         v-model="form.preheader"
                                         :placeholder="
                                             $t(
-                                                'messages.fields.preheader_placeholder'
+                                                'messages.fields.preheader_placeholder',
                                             )
                                         "
                                         @click="updatePreheaderCursor"
@@ -1270,7 +1302,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="p-1 text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
                                             :title="
                                                 $t(
-                                                    'messages.fields.insert_variable'
+                                                    'messages.fields.insert_variable',
                                                 )
                                             "
                                         >
@@ -1299,7 +1331,7 @@ if (form.contact_list_ids.length > 0) {
                                                 type="button"
                                                 @click="
                                                     insertPreheaderVariable(
-                                                        variable.code
+                                                        variable.code,
                                                     )
                                                 "
                                                 class="w-full text-left px-3 py-2 text-sm rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
@@ -1402,7 +1434,7 @@ if (form.contact_list_ids.length > 0) {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.attachments.dropzone"
+                                                    "messages.attachments.dropzone",
                                                 )
                                             }}
                                         </p>
@@ -1410,7 +1442,7 @@ if (form.contact_list_ids.length > 0) {
                                             {{
                                                 $t(
                                                     "messages.attachments.info",
-                                                    { max: 5, size: "10MB" }
+                                                    { max: 5, size: "10MB" },
                                                 )
                                             }}
                                         </p>
@@ -1466,7 +1498,7 @@ if (form.contact_list_ids.length > 0) {
                                                 type="button"
                                                 @click="
                                                     removeExistingAttachment(
-                                                        attachment.id
+                                                        attachment.id,
                                                     )
                                                 "
                                                 class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -1528,13 +1560,13 @@ if (form.contact_list_ids.length > 0) {
                                                     >
                                                         {{
                                                             formatFileSize(
-                                                                file.size
+                                                                file.size,
                                                             )
                                                         }}
                                                         •
                                                         {{
                                                             $t(
-                                                                "messages.attachments.ready"
+                                                                "messages.attachments.ready",
                                                             )
                                                         }}
                                                     </p>
@@ -1739,7 +1771,7 @@ if (form.contact_list_ids.length > 0) {
                                     >
                                         {{
                                             $t(
-                                                "messages.webinar.placeholders_info"
+                                                "messages.webinar.placeholders_info",
                                             )
                                         }}
                                     </p>
@@ -1883,7 +1915,7 @@ if (form.contact_list_ids.length > 0) {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.preview.select_subscriber"
+                                                    "messages.preview.select_subscriber",
                                                 ) ||
                                                 "Wybierz odbiorcę do podglądu"
                                             }}
@@ -1932,7 +1964,7 @@ if (form.contact_list_ids.length > 0) {
                                             <option :value="null">
                                                 {{
                                                     $t(
-                                                        "messages.preview.no_subscriber"
+                                                        "messages.preview.no_subscriber",
                                                     ) ||
                                                     "Brak (surowe placeholdery)"
                                                 }}
@@ -1958,7 +1990,7 @@ if (form.contact_list_ids.length > 0) {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.preview.no_results"
+                                                    "messages.preview.no_results",
                                                 ) ||
                                                 "Brak wyników. Spróbuj wyszukać."
                                             }}
@@ -2111,7 +2143,7 @@ if (form.contact_list_ids.length > 0) {
                                     >
                                         {{
                                             $t(
-                                                "messages.mailbox.none_configured"
+                                                "messages.mailbox.none_configured",
                                             )
                                         }}
                                     </p>
@@ -2124,7 +2156,7 @@ if (form.contact_list_ids.length > 0) {
                                 >
                                     {{
                                         $t(
-                                            "messages.mailbox.change_in_settings"
+                                            "messages.mailbox.change_in_settings",
                                         )
                                     }}
                                     →
@@ -2170,7 +2202,7 @@ if (form.contact_list_ids.length > 0) {
                                         <option value="email">
                                             {{
                                                 $t(
-                                                    "subscribers.list_type_email"
+                                                    "subscribers.list_type_email",
                                                 )
                                             }}
                                         </option>
@@ -2247,7 +2279,7 @@ if (form.contact_list_ids.length > 0) {
                                         <option value="email">
                                             {{
                                                 $t(
-                                                    "subscribers.list_type_email"
+                                                    "subscribers.list_type_email",
                                                 )
                                             }}
                                         </option>
@@ -2364,7 +2396,7 @@ if (form.contact_list_ids.length > 0) {
                                             }"
                                             @click="
                                                 group.lists.length > 1 &&
-                                                    toggleGroup(group)
+                                                toggleGroup(group)
                                             "
                                         >
                                             <input
@@ -2375,7 +2407,7 @@ if (form.contact_list_ids.length > 0) {
                                                 "
                                                 :indeterminate="
                                                     isGroupPartiallySelected(
-                                                        group
+                                                        group,
                                                     )
                                                 "
                                                 @click.stop
@@ -2446,7 +2478,7 @@ if (form.contact_list_ids.length > 0) {
                                                     <span
                                                         v-for="tag in list.tags.slice(
                                                             0,
-                                                            2
+                                                            2,
                                                         )"
                                                         :key="tag.id"
                                                         class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-700 dark:text-slate-400"
@@ -2749,7 +2781,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="text-sm text-slate-700 dark:text-slate-300"
                                             >{{
                                                 $t(
-                                                    "messages.fields.time_signup"
+                                                    "messages.fields.time_signup",
                                                 )
                                             }}</span
                                         >
@@ -2765,7 +2797,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="text-sm text-slate-700 dark:text-slate-300"
                                             >{{
                                                 $t(
-                                                    "messages.fields.time_custom"
+                                                    "messages.fields.time_custom",
                                                 )
                                             }}</span
                                         >
@@ -2812,7 +2844,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="text-sm font-medium text-slate-700 dark:text-slate-300"
                                             >{{
                                                 $t(
-                                                    "messages.fields.schedule_now"
+                                                    "messages.fields.schedule_now",
                                                 )
                                             }}</span
                                         >
@@ -2830,7 +2862,7 @@ if (form.contact_list_ids.length > 0) {
                                             class="text-sm font-medium text-slate-700 dark:text-slate-300"
                                             >{{
                                                 $t(
-                                                    "messages.fields.schedule_later"
+                                                    "messages.fields.schedule_later",
                                                 )
                                             }}</span
                                         >
@@ -2849,6 +2881,7 @@ if (form.contact_list_ids.length > 0) {
                                         type="datetime-local"
                                         id="send_at"
                                         v-model="form.send_at"
+                                        :min="minDateTime"
                                         class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark]"
                                     />
                                     <InputError
@@ -2953,7 +2986,7 @@ if (form.contact_list_ids.length > 0) {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.triggers.types.none"
+                                                    "messages.triggers.types.none",
                                                 )
                                             }}
                                         </p>
@@ -2962,7 +2995,7 @@ if (form.contact_list_ids.length > 0) {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.triggers.desc.none"
+                                                    "messages.triggers.desc.none",
                                                 )
                                             }}
                                         </p>
@@ -3023,7 +3056,7 @@ if (form.contact_list_ids.length > 0) {
                                 <InputLabel
                                     :value="
                                         $t(
-                                            'messages.triggers.config.inactive_days'
+                                            'messages.triggers.config.inactive_days',
                                         )
                                     "
                                 />
@@ -3059,7 +3092,7 @@ if (form.contact_list_ids.length > 0) {
                                 <InputLabel
                                     :value="
                                         $t(
-                                            'messages.triggers.config.url_pattern'
+                                            'messages.triggers.config.url_pattern',
                                         )
                                     "
                                 />
@@ -3072,7 +3105,7 @@ if (form.contact_list_ids.length > 0) {
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{
                                         $t(
-                                            "messages.triggers.config.url_pattern_help"
+                                            "messages.triggers.config.url_pattern_help",
                                         )
                                     }}
                                 </p>
@@ -3095,7 +3128,7 @@ if (form.contact_list_ids.length > 0) {
                                     <option :value="null">
                                         {{
                                             $t(
-                                                "messages.triggers.config.select_tag"
+                                                "messages.triggers.config.select_tag",
                                             )
                                         }}
                                     </option>
@@ -3119,7 +3152,7 @@ if (form.contact_list_ids.length > 0) {
                                 <InputLabel
                                     :value="
                                         $t(
-                                            'messages.triggers.config.recent_days'
+                                            'messages.triggers.config.recent_days',
                                         )
                                     "
                                 />
@@ -3128,7 +3161,9 @@ if (form.contact_list_ids.length > 0) {
                                     <div class="flex items-center gap-4">
                                         <input
                                             type="range"
-                                            v-model.number="form.trigger_config.recent_days"
+                                            v-model.number="
+                                                form.trigger_config.recent_days
+                                            "
                                             min="1"
                                             max="365"
                                             class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 accent-primary-600"
@@ -3136,20 +3171,24 @@ if (form.contact_list_ids.length > 0) {
                                         <!-- Manual input -->
                                         <input
                                             type="number"
-                                            v-model.number="form.trigger_config.recent_days"
+                                            v-model.number="
+                                                form.trigger_config.recent_days
+                                            "
                                             min="1"
                                             max="365"
                                             class="w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center"
                                         />
-                                        <span class="text-sm text-slate-600 dark:text-slate-400">
-                                            {{ $t('common.days_unit') }}
+                                        <span
+                                            class="text-sm text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{ $t("common.days_unit") }}
                                         </span>
                                     </div>
                                 </div>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{
                                         $t(
-                                            'messages.triggers.config.recent_days_help'
+                                            "messages.triggers.config.recent_days_help",
                                         )
                                     }}
                                 </p>
@@ -3160,7 +3199,7 @@ if (form.contact_list_ids.length > 0) {
                         <div
                             v-if="
                                 ['anniversary', 'birthday', 'signup'].includes(
-                                    form.trigger_type
+                                    form.trigger_type,
                                 )
                             "
                             class="text-sm text-slate-500 dark:text-slate-400"
@@ -3169,7 +3208,7 @@ if (form.contact_list_ids.length > 0) {
                                 ✅
                                 {{
                                     $t(
-                                        "messages.triggers.config.no_config_needed"
+                                        "messages.triggers.config.no_config_needed",
                                     )
                                 }}
                             </p>
@@ -3193,7 +3232,7 @@ if (form.contact_list_ids.length > 0) {
                                 >
                                     {{
                                         $t(
-                                            "messages.triggers.advanced_link_desc"
+                                            "messages.triggers.advanced_link_desc",
                                         )
                                     }}
                                 </p>
@@ -3264,10 +3303,14 @@ if (form.contact_list_ids.length > 0) {
                                 {{ $t("messages.actions.save_draft") }}
                             </SecondaryButton>
 
-                            <!-- Schedule Button -->
+                            <!-- Schedule Button - only show when NOT in schedule later mode -->
                             <button
+                                v-if="scheduleMode !== 'later'"
                                 type="button"
-                                @click="activeTab = 'settings'"
+                                @click="
+                                    scheduleMode = 'later';
+                                    activeTab = 'settings';
+                                "
                                 class="inline-flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                             >
                                 <svg
@@ -3285,6 +3328,27 @@ if (form.contact_list_ids.length > 0) {
                                 </svg>
                                 {{ $t("messages.actions.schedule") }}
                             </button>
+
+                            <!-- Prompt to select date when in schedule mode without date -->
+                            <span
+                                v-if="scheduleMode === 'later' && !form.send_at"
+                                class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                </svg>
+                                {{ $t("messages.actions.select_datetime") }}
+                            </span>
 
                             <!-- Send Now / Submit Scheduled -->
                             <PrimaryButton

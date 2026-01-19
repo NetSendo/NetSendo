@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Scheduling Validation:**
+  - **Past Date Prevention:** Implemented validation in Email and SMS campaign creation to prevent users from selecting dates in the past.
+  - **Smart Reset:** Automatically resets invalid dates to the minimum allowed time (Current Time + 5 minutes).
+  - **Local Timezone Support:** Fixed timezone issues in date pickers to correctly respect the user's local time instead of UTC.
+  - **Component Update:** Updated `TextInput` component to correctly inherit attributes like `min` and `max`.
+
 ### Fixed
 
 - **Docker Installation - `.env` Folder Bug:**
@@ -17,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Root Cause:** Docker creates a folder instead of a file when bind-mounting a non-existent source path.
 
 ### Changed
+
+- **Message Scheduling UX:**
+  - **Smart Schedule Button:** The "Schedule" button now automatically switches the mode to "Schedule for later" and opens the settings tab, reducing clicks.
+  - **Context-Aware Visibility:** Hidden the generic "Schedule" button when "Schedule for later" mode is already active to prevent confusion.
+  - **User Guidance:** Added a prominent amber prompt "Select date and time" when scheduling mode is active but no date/time has been chosen yet.
 
 ## [1.7.10] – Short Description
 

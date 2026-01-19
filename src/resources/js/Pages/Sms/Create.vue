@@ -50,14 +50,14 @@ const activeTab = ref("content");
 // Tab configuration for ResponsiveTabs component
 const smsTabs = computed(() => [
     {
-        id: 'content',
-        label: t('sms.tabs.content'),
-        emoji: '✏️',
+        id: "content",
+        label: t("sms.tabs.content"),
+        emoji: "✏️",
     },
     {
-        id: 'settings',
-        label: t('sms.tabs.settings'),
-        emoji: '⚙️',
+        id: "settings",
+        label: t("sms.tabs.settings"),
+        emoji: "⚙️",
     },
 ]);
 
@@ -77,7 +77,7 @@ const filteredLists = computed(() => {
     if (listSearch.value) {
         const search = listSearch.value.toLowerCase();
         result = result.filter((list) =>
-            list.name.toLowerCase().includes(search)
+            list.name.toLowerCase().includes(search),
         );
     }
 
@@ -88,26 +88,30 @@ const filteredLists = computed(() => {
 const effectiveSmsProviderInfo = computed(() => {
     // 1. Explicit provider selected for this message
     if (form.sms_provider_id) {
-        const provider = props.smsProviders?.find(p => p.id === form.sms_provider_id);
+        const provider = props.smsProviders?.find(
+            (p) => p.id === form.sms_provider_id,
+        );
         if (provider) {
             return {
                 provider,
-                source: 'explicit',
-                label: t('sms.provider_source.explicit'),
+                source: "explicit",
+                label: t("sms.provider_source.explicit"),
             };
         }
     }
 
     // 2. List's default provider
     if (form.list_id) {
-        const list = props.lists?.find(l => l.id === form.list_id);
+        const list = props.lists?.find((l) => l.id === form.list_id);
         if (list?.default_sms_provider_id) {
-            const provider = props.smsProviders?.find(p => p.id === list.default_sms_provider_id);
+            const provider = props.smsProviders?.find(
+                (p) => p.id === list.default_sms_provider_id,
+            );
             if (provider) {
                 return {
                     provider,
-                    source: 'list',
-                    label: t('sms.provider_source.list'),
+                    source: "list",
+                    label: t("sms.provider_source.list"),
                 };
             }
         }
@@ -117,8 +121,8 @@ const effectiveSmsProviderInfo = computed(() => {
     if (props.defaultSmsProvider) {
         return {
             provider: props.defaultSmsProvider,
-            source: 'global',
-            label: t('sms.provider_source.global'),
+            source: "global",
+            label: t("sms.provider_source.global"),
         };
     }
 
@@ -135,8 +139,38 @@ const segments = computed(() => {
 
 const isUnicode = computed(() => /[^\x00-\x7F]/.test(form.content));
 
+// Minimum datetime for scheduling (current time + 5 minutes)
+const minDateTime = computed(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5);
+    // Format as YYYY-MM-DDTHH:mm in LOCAL time (required for datetime-local input)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+});
+
 // AI Assistant state
 const showSmsAiPanel = ref(false);
+
+// Validate schedule_date to prevent past dates
+watch(
+    () => form.schedule_date,
+    (newVal) => {
+        if (newVal) {
+            const selectedDate = new Date(newVal);
+            const minDate = new Date();
+            minDate.setMinutes(minDate.getMinutes() + 5);
+
+            if (selectedDate < minDate) {
+                // Reset to minimum allowed time
+                form.schedule_date = minDateTime.value;
+            }
+        }
+    },
+);
 
 const handleAiContent = (content) => {
     form.content = content;
@@ -171,9 +205,15 @@ const sendTestSms = async () => {
         });
 
         if (response.data.success) {
-            testMessage.value = { type: "success", text: t("sms.test.success") };
+            testMessage.value = {
+                type: "success",
+                text: t("sms.test.success"),
+            };
         } else {
-            testMessage.value = { type: "error", text: response.data.error || t("sms.test.error") };
+            testMessage.value = {
+                type: "error",
+                text: response.data.error || t("sms.test.error"),
+            };
         }
     } catch (e) {
         console.error(e);
@@ -241,7 +281,7 @@ watch(
         } else {
             previewSubscribers.value = [];
         }
-    }
+    },
 );
 
 // Insert placeholder into content
@@ -258,7 +298,7 @@ const insertPlaceholder = (placeholder) => {
             textarea.focus();
             textarea.setSelectionRange(
                 start + placeholder.length,
-                start + placeholder.length
+                start + placeholder.length,
             );
         }, 0);
     } else {
@@ -363,10 +403,7 @@ const submit = (targetStatus = null) => {
                         </div>
 
                         <!-- Responsive Tabs -->
-                        <ResponsiveTabs
-                            v-model="activeTab"
-                            :tabs="smsTabs"
-                        />
+                        <ResponsiveTabs v-model="activeTab" :tabs="smsTabs" />
 
                         <!-- Content Tab -->
                         <div
@@ -433,7 +470,7 @@ const submit = (targetStatus = null) => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "sms.inserts.insert_variable"
+                                                    "sms.inserts.insert_variable",
                                                 )
                                             }}
                                         </button>
@@ -447,7 +484,7 @@ const submit = (targetStatus = null) => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "sms.inserts.standard"
+                                                            "sms.inserts.standard",
                                                         )
                                                     }}
                                                 </p>
@@ -457,7 +494,7 @@ const submit = (targetStatus = null) => {
                                                     type="button"
                                                     @click="
                                                         insertPlaceholder(
-                                                            p.placeholder
+                                                            p.placeholder,
                                                         );
                                                         showPlaceholdersDropdown = false;
                                                     "
@@ -480,7 +517,7 @@ const submit = (targetStatus = null) => {
                                                     >
                                                         {{
                                                             $t(
-                                                                "sms.inserts.custom"
+                                                                "sms.inserts.custom",
                                                             )
                                                         }}
                                                     </p>
@@ -490,7 +527,7 @@ const submit = (targetStatus = null) => {
                                                         type="button"
                                                         @click="
                                                             insertPlaceholder(
-                                                                p.placeholder
+                                                                p.placeholder,
                                                             );
                                                             showPlaceholdersDropdown = false;
                                                         "
@@ -569,7 +606,7 @@ const submit = (targetStatus = null) => {
                                         >
                                             {{
                                                 $t(
-                                                    "sms.fields.type_broadcast_desc"
+                                                    "sms.fields.type_broadcast_desc",
                                                 )
                                             }}
                                         </p>
@@ -603,7 +640,7 @@ const submit = (targetStatus = null) => {
                                         >
                                             {{
                                                 $t(
-                                                    "sms.fields.type_autoresponder_desc"
+                                                    "sms.fields.type_autoresponder_desc",
                                                 )
                                             }}
                                         </p>
@@ -633,7 +670,7 @@ const submit = (targetStatus = null) => {
                                         <option value="email">
                                             {{
                                                 $t(
-                                                    "subscribers.list_type_email"
+                                                    "subscribers.list_type_email",
                                                 )
                                             }}
                                         </option>
@@ -705,19 +742,33 @@ const submit = (targetStatus = null) => {
                                     class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                 >
                                     <option :value="null">
-                                        {{ $t('sms.fields.provider_auto') }}
+                                        {{ $t("sms.fields.provider_auto") }}
                                     </option>
-                                    <optgroup :label="$t('sms.fields.provider_available')">
+                                    <optgroup
+                                        :label="
+                                            $t('sms.fields.provider_available')
+                                        "
+                                    >
                                         <option
                                             v-for="provider in smsProviders"
                                             :key="provider.id"
                                             :value="provider.id"
                                         >
                                             {{ provider.name }}
-                                            <template v-if="provider.from_name || provider.from_number">
-                                                ({{ provider.from_name || provider.from_number }})
+                                            <template
+                                                v-if="
+                                                    provider.from_name ||
+                                                    provider.from_number
+                                                "
+                                            >
+                                                ({{
+                                                    provider.from_name ||
+                                                    provider.from_number
+                                                }})
                                             </template>
-                                            <template v-if="provider.is_default">
+                                            <template
+                                                v-if="provider.is_default"
+                                            >
                                                 ★
                                             </template>
                                         </option>
@@ -732,17 +783,36 @@ const submit = (targetStatus = null) => {
                                     <span
                                         class="inline-flex items-center rounded-full px-2 py-0.5"
                                         :class="{
-                                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300': effectiveSmsProviderInfo.source === 'explicit',
-                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300': effectiveSmsProviderInfo.source === 'list',
-                                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400': effectiveSmsProviderInfo.source === 'global',
+                                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300':
+                                                effectiveSmsProviderInfo.source ===
+                                                'explicit',
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300':
+                                                effectiveSmsProviderInfo.source ===
+                                                'list',
+                                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400':
+                                                effectiveSmsProviderInfo.source ===
+                                                'global',
                                         }"
                                     >
                                         {{ effectiveSmsProviderInfo.label }}
                                     </span>
-                                    <span class="text-slate-500 dark:text-slate-400">
-                                        {{ effectiveSmsProviderInfo.provider?.name }}
-                                        <template v-if="effectiveSmsProviderInfo.provider?.from_number">
-                                            ({{ effectiveSmsProviderInfo.provider.from_number }})
+                                    <span
+                                        class="text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            effectiveSmsProviderInfo.provider
+                                                ?.name
+                                        }}
+                                        <template
+                                            v-if="
+                                                effectiveSmsProviderInfo
+                                                    .provider?.from_number
+                                            "
+                                        >
+                                            ({{
+                                                effectiveSmsProviderInfo
+                                                    .provider.from_number
+                                            }})
                                         </template>
                                     </span>
                                 </div>
@@ -844,6 +914,7 @@ const submit = (targetStatus = null) => {
                                             id="schedule_date"
                                             v-model="form.schedule_date"
                                             type="datetime-local"
+                                            :min="minDateTime"
                                             class="mt-1 block w-full"
                                         />
                                     </div>
