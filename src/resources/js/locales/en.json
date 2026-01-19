@@ -1427,7 +1427,10 @@
                 "queued": "Queued",
                 "sent": "Sent",
                 "failed": "Failed",
-                "skipped": "Skipped"
+                "skipped": "Skipped",
+                "resend_failed": "Retry",
+                "resending": "Sending...",
+                "resend_error": "An error occurred while retrying"
             },
             "recipients": {
                 "title": "Recipients List",

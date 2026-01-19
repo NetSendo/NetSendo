@@ -1431,7 +1431,10 @@
                 "queued": "W kolejce",
                 "sent": "Wysłano",
                 "failed": "Błędy",
-                "skipped": "Pominięto"
+                "skipped": "Pominięto",
+                "resend_failed": "Ponów",
+                "resending": "Wysyłanie...",
+                "resend_error": "Wystąpił błąd podczas ponawiania wysyłki"
             },
             "read_time": {
                 "average": "Średni czas",

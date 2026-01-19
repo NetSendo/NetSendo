@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+### Changed
+
+## [1.7.10] – Short Description
+
+**Release date:** 2026-01-19
+
+### Added
+
+- **Resend to Failed Subscribers:**
+  - **Feature:** Added ability to resend messages specifically to subscribers who encountered delivery errors (e.g., due to sending limits).
+  - **Backend:** New `resendToFailed()` method in `MessageController` that resets status from `failed` to `planned` for retry.
+  - **UI Implementation:** Added "Resend to Failed" button in Message Statistics view (`Stats.vue`) which appears when failed messages are detected.
+  - **Localization:** Full translations in PL and EN.
+
+### Fixed
+
+- **MCP Campaign Scheduling - Timezone Support:**
+  - **Problem:** When external AI agents scheduled campaigns via MCP, messages were sent at incorrect times because user's timezone was not considered.
+  - **Backend Fix:** Updated `MessageController::schedule()` to accept optional `timezone` parameter and convert user's local time to UTC before storing.
+  - **Timezone Resolution:** Implements hierarchical timezone detection: Request → Campaign → User Profile → UTC.
+  - **MCP Server Update:** Added `timezone` parameter to `schedule_campaign` tool with improved documentation.
+  - **Package Update:** Bumped `@netsendo/mcp-client` to v1.3.0.
+
 ## [1.7.9] – Short Description
 
 **Release date:** 2026-01-19

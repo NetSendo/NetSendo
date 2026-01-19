@@ -131,6 +131,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('messages/preview-subscribers', [\App\Http\Controllers\MessageController::class, 'previewSubscribers'])->name('messages.preview-subscribers');
     Route::post('messages/{message}/duplicate', [\App\Http\Controllers\MessageController::class, 'duplicate'])->name('messages.duplicate');
     Route::post('messages/{message}/resend', [\App\Http\Controllers\MessageController::class, 'resend'])->name('messages.resend');
+    Route::post('messages/{message}/resend-to-failed', [\App\Http\Controllers\MessageController::class, 'resendToFailed'])->name('messages.resend-to-failed');
     Route::post('messages/{message}/toggle-active', [\App\Http\Controllers\MessageController::class, 'toggleActive'])->name('messages.toggle-active');
     Route::get('messages/{message}/queue-schedule-stats', [\App\Http\Controllers\MessageController::class, 'queueScheduleStats'])->name('messages.queue-schedule-stats');
     Route::post('messages/{message}/send-to-missed', [\App\Http\Controllers\MessageController::class, 'sendToMissedRecipients'])->name('messages.send-to-missed');

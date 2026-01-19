@@ -27,7 +27,7 @@ ChartJS.register(
     BarElement,
     BarElement,
     Title,
-    ChartDataLabels
+    ChartDataLabels,
 );
 
 const { t } = useI18n();
@@ -78,11 +78,11 @@ const getStatusClass = (status) => {
 const handleSort = (type, field) => {
     const params = new URLSearchParams(window.location.search);
     const currentSortBy = params.get(`sort_${type}_by`);
-    const currentDir = params.get(`sort_${type}_dir`) || 'desc';
+    const currentDir = params.get(`sort_${type}_dir`) || "desc";
 
-    let newDir = 'desc';
-    if (currentSortBy === field && currentDir === 'desc') {
-        newDir = 'asc';
+    let newDir = "desc";
+    if (currentSortBy === field && currentDir === "desc") {
+        newDir = "asc";
     }
 
     params.set(`sort_${type}_by`, field);
@@ -146,22 +146,22 @@ const chartOptions = {
     maintainAspectRatio: false,
     plugins: {
         legend: {
-            position: 'bottom',
+            position: "bottom",
         },
         datalabels: {
-            color: '#fff',
+            color: "#fff",
             font: {
-                weight: 'bold',
-                size: 12
+                weight: "bold",
+                size: 12,
             },
             formatter: (value, ctx) => {
-                if (value === 0) return '';
+                if (value === 0) return "";
                 return value;
             },
             textShadowBlur: 4,
-            textShadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
-    }
+            textShadowColor: "rgba(0, 0, 0, 0.5)",
+        },
+    },
 };
 
 // Format seconds to human readable
@@ -197,6 +197,44 @@ const copyError = async () => {
         }, 2000);
     } catch (err) {
         console.error("Failed to copy:", err);
+    }
+};
+
+// Resend to failed functionality
+const resendingToFailed = ref(false);
+
+const resendToFailed = async () => {
+    if (resendingToFailed.value) return;
+
+    resendingToFailed.value = true;
+
+    try {
+        const response = await fetch(
+            route("messages.resend-to-failed", props.message.id),
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute("content"),
+                },
+            },
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Refresh the page to show updated stats
+            router.reload({ preserveScroll: true });
+        } else {
+            alert(data.message || t("messages.stats.queue.resend_error"));
+        }
+    } catch (error) {
+        console.error("Resend to failed error:", error);
+        alert(t("messages.stats.queue.resend_error"));
+    } finally {
+        resendingToFailed.value = false;
     }
 };
 </script>
@@ -542,6 +580,22 @@ const copyError = async () => {
                                 >
                                     {{ $t("messages.stats.queue.failed") }}
                                 </div>
+                                <button
+                                    v-if="queue_stats.failed > 0"
+                                    @click="resendToFailed"
+                                    :disabled="resendingToFailed"
+                                    class="mt-2 text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
+                                >
+                                    {{
+                                        resendingToFailed
+                                            ? $t(
+                                                  "messages.stats.queue.resending",
+                                              )
+                                            : $t(
+                                                  "messages.stats.queue.resend_failed",
+                                              )
+                                    }}
+                                </button>
                             </div>
                             <div
                                 class="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
@@ -601,7 +655,7 @@ const copyError = async () => {
                                     <th class="px-4 py-3">
                                         {{
                                             $t(
-                                                "messages.stats.recipients.email"
+                                                "messages.stats.recipients.email",
                                             )
                                         }}
                                     </th>
@@ -613,21 +667,21 @@ const copyError = async () => {
                                     <th class="px-4 py-3">
                                         {{
                                             $t(
-                                                "messages.stats.recipients.queue_status"
+                                                "messages.stats.recipients.queue_status",
                                             )
                                         }}
                                     </th>
                                     <th class="px-4 py-3">
                                         {{
                                             $t(
-                                                "messages.stats.recipients.sent_at"
+                                                "messages.stats.recipients.sent_at",
                                             )
                                         }}
                                     </th>
                                     <th class="px-4 py-3">
                                         {{
                                             $t(
-                                                "messages.stats.recipients.error"
+                                                "messages.stats.recipients.error",
                                             )
                                         }}
                                     </th>
@@ -652,13 +706,13 @@ const copyError = async () => {
                                             class="inline-flex px-2 py-1 rounded-full text-xs font-medium"
                                             :class="
                                                 getStatusClass(
-                                                    recipient.queue_status
+                                                    recipient.queue_status,
                                                 )
                                             "
                                         >
                                             {{
                                                 $t(
-                                                    `messages.stats.recipients.status.${recipient.queue_status}`
+                                                    `messages.stats.recipients.status.${recipient.queue_status}`,
                                                 )
                                             }}
                                         </span>
@@ -673,13 +727,24 @@ const copyError = async () => {
                                     <td class="px-4 py-3 max-w-xs">
                                         <button
                                             v-if="recipient.error"
-                                            @click="openErrorModal(recipient.email, recipient.error)"
+                                            @click="
+                                                openErrorModal(
+                                                    recipient.email,
+                                                    recipient.error,
+                                                )
+                                            "
                                             class="text-left text-red-600 dark:text-red-400 hover:underline cursor-pointer truncate block max-w-full"
-                                            :title="$t('messages.stats.recipients.click_to_view_error')"
+                                            :title="
+                                                $t(
+                                                    'messages.stats.recipients.click_to_view_error',
+                                                )
+                                            "
                                         >
                                             {{ recipient.error }}
                                         </button>
-                                        <span v-else class="text-gray-400">-</span>
+                                        <span v-else class="text-gray-400"
+                                            >-</span
+                                        >
                                     </td>
                                 </tr>
                             </tbody>
@@ -701,7 +766,8 @@ const copyError = async () => {
                                         link.active,
                                     'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800':
                                         !link.active && link.url,
-                                    'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
+                                    'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
+                                        !link.url,
                                 }"
                                 v-html="link.label"
                                 preserve-scroll
@@ -779,14 +845,14 @@ const copyError = async () => {
                                         <th class="px-3 py-2">
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.email"
+                                                    "messages.stats.activity.email",
                                                 )
                                             }}
                                         </th>
                                         <th class="px-3 py-2 text-right">
                                             {{
                                                 $t(
-                                                    "messages.stats.read_time.time"
+                                                    "messages.stats.read_time.time",
                                                 )
                                             }}
                                         </th>
@@ -825,7 +891,7 @@ const copyError = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.no_data"
+                                                    "messages.stats.activity.no_data",
                                                 )
                                             }}
                                         </td>
@@ -857,13 +923,16 @@ const copyError = async () => {
                                     <tr>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            @click="handleSort('opens', 'email')"
+                                            @click="
+                                                handleSort('opens', 'email')
+                                            "
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.email"
+                                                    "messages.stats.activity.email",
                                                 )
-                                            }} ⇅
+                                            }}
+                                            ⇅
                                         </th>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -871,17 +940,17 @@ const copyError = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.time"
+                                                    "messages.stats.activity.time",
                                                 )
-                                            }} ⇅
+                                            }}
+                                            ⇅
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr
-                                        v-for="(
-                                            log, i
-                                        ) in recent_activity.opens.data"
+                                        v-for="(log, i) in recent_activity.opens
+                                            .data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
                                     >
@@ -894,7 +963,9 @@ const copyError = async () => {
                                     </tr>
                                     <tr
                                         v-if="
-                                            !recent_activity.opens.data || recent_activity.opens.data.length === 0
+                                            !recent_activity.opens.data ||
+                                            recent_activity.opens.data
+                                                .length === 0
                                         "
                                     >
                                         <td
@@ -903,7 +974,7 @@ const copyError = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.no_data"
+                                                    "messages.stats.activity.no_data",
                                                 )
                                             }}
                                         </td>
@@ -913,12 +984,16 @@ const copyError = async () => {
                         </div>
                         <!-- Pagination for Opens -->
                         <div
-                            v-if="recent_activity.opens.links && recent_activity.opens.links.length > 3"
+                            v-if="
+                                recent_activity.opens.links &&
+                                recent_activity.opens.links.length > 3
+                            "
                             class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
                         >
                             <div class="flex gap-1 flex-wrap justify-center">
                                 <Link
-                                    v-for="(link, i) in recent_activity.opens.links"
+                                    v-for="(link, i) in recent_activity.opens
+                                        .links"
                                     :key="i"
                                     :href="link.url || '#'"
                                     class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
@@ -927,7 +1002,8 @@ const copyError = async () => {
                                             link.active,
                                         'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
                                             !link.active && link.url,
-                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
+                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
+                                            !link.url,
                                     }"
                                     v-html="link.label"
                                     preserve-scroll
@@ -955,13 +1031,16 @@ const copyError = async () => {
                                     <tr>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            @click="handleSort('clicks', 'email')"
+                                            @click="
+                                                handleSort('clicks', 'email')
+                                            "
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.email"
+                                                    "messages.stats.activity.email",
                                                 )
-                                            }} ⇅
+                                            }}
+                                            ⇅
                                         </th>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -969,27 +1048,30 @@ const copyError = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.url"
+                                                    "messages.stats.activity.url",
                                                 )
-                                            }} ⇅
+                                            }}
+                                            ⇅
                                         </th>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            @click="handleSort('clicks', 'time')"
+                                            @click="
+                                                handleSort('clicks', 'time')
+                                            "
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.time"
+                                                    "messages.stats.activity.time",
                                                 )
-                                            }} ⇅
+                                            }}
+                                            ⇅
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr
-                                        v-for="(
-                                            log, i
-                                        ) in recent_activity.clicks.data"
+                                        v-for="(log, i) in recent_activity
+                                            .clicks.data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
                                     >
@@ -1011,7 +1093,9 @@ const copyError = async () => {
                                     </tr>
                                     <tr
                                         v-if="
-                                            !recent_activity.clicks.data || recent_activity.clicks.data.length === 0
+                                            !recent_activity.clicks.data ||
+                                            recent_activity.clicks.data
+                                                .length === 0
                                         "
                                     >
                                         <td
@@ -1020,7 +1104,7 @@ const copyError = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "messages.stats.activity.no_data"
+                                                    "messages.stats.activity.no_data",
                                                 )
                                             }}
                                         </td>
@@ -1030,12 +1114,16 @@ const copyError = async () => {
                         </div>
                         <!-- Pagination for Clicks -->
                         <div
-                            v-if="recent_activity.clicks.links && recent_activity.clicks.links.length > 3"
+                            v-if="
+                                recent_activity.clicks.links &&
+                                recent_activity.clicks.links.length > 3
+                            "
                             class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
                         >
                             <div class="flex gap-1 flex-wrap justify-center">
                                 <Link
-                                    v-for="(link, i) in recent_activity.clicks.links"
+                                    v-for="(link, i) in recent_activity.clicks
+                                        .links"
                                     :key="i"
                                     :href="link.url || '#'"
                                     class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
@@ -1044,7 +1132,8 @@ const copyError = async () => {
                                             link.active,
                                         'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
                                             !link.active && link.url,
-                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed': !link.url,
+                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
+                                            !link.url,
                                     }"
                                     v-html="link.label"
                                     preserve-scroll
@@ -1060,26 +1149,42 @@ const copyError = async () => {
     <!-- Error Details Modal -->
     <Modal :show="showErrorModal" @close="closeErrorModal" max-width="lg">
         <div class="p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3
+                class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4"
+            >
                 {{ $t("messages.stats.recipients.error_details") }}
             </h3>
             <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
                 {{ $t("messages.stats.recipients.email") }}:
-                <span class="font-medium text-gray-900 dark:text-gray-100">{{ selectedError.email }}</span>
+                <span class="font-medium text-gray-900 dark:text-gray-100">{{
+                    selectedError.email
+                }}</span>
             </div>
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
-                <pre class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap break-words font-mono">{{ selectedError.error }}</pre>
+            <div
+                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4"
+            >
+                <pre
+                    class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap break-words font-mono"
+                    >{{ selectedError.error }}</pre
+                >
             </div>
             <div class="flex justify-end gap-3">
                 <button
                     @click="copyError"
                     class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                    :class="errorCopied
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'"
+                    :class="
+                        errorCopied
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                    "
                 >
-                    <span v-if="errorCopied">✓ {{ $t("messages.stats.recipients.copied") }}</span>
-                    <span v-else>📋 {{ $t("messages.stats.recipients.copy_error") }}</span>
+                    <span v-if="errorCopied"
+                        >✓ {{ $t("messages.stats.recipients.copied") }}</span
+                    >
+                    <span v-else
+                        >📋
+                        {{ $t("messages.stats.recipients.copy_error") }}</span
+                    >
                 </button>
                 <button
                     @click="closeErrorModal"

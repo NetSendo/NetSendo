@@ -428,10 +428,21 @@ class MessageController extends Controller
 
         $validated = $request->validate([
             'scheduled_at' => 'required|date|after:now',
+            'timezone' => 'nullable|timezone',
         ]);
 
+        // Determine timezone: request → message → user → UTC
+        $timezone = $validated['timezone']
+            ?? $message->effective_timezone
+            ?? $user->timezone
+            ?? 'UTC';
+
+        // Convert user's local time to UTC for storage
+        $scheduledAtUtc = \Carbon\Carbon::parse($validated['scheduled_at'], $timezone)
+            ->setTimezone('UTC');
+
         $message->update([
-            'scheduled_at' => $validated['scheduled_at'],
+            'scheduled_at' => $scheduledAtUtc,
             'status' => 'scheduled',
         ]);
 
@@ -442,6 +453,7 @@ class MessageController extends Controller
             'data' => $message->fresh(['mailbox', 'contactLists', 'excludedLists']),
             'message' => 'Campaign scheduled successfully',
             'scheduled_at' => $message->scheduled_at->toIso8601String(),
+            'timezone_used' => $timezone,
         ]);
     }
 

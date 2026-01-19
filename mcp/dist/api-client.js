@@ -167,8 +167,12 @@ export class NetSendoApiClient {
         const response = await this.client.post(`/messages/${id}/exclusions`, { excluded_list_ids: excludedListIds });
         return response.data;
     }
-    async scheduleMessage(id, scheduledAt) {
-        const response = await this.client.post(`/messages/${id}/schedule`, { scheduled_at: scheduledAt });
+    async scheduleMessage(id, scheduledAt, timezone) {
+        const payload = { scheduled_at: scheduledAt };
+        if (timezone) {
+            payload.timezone = timezone;
+        }
+        const response = await this.client.post(`/messages/${id}/schedule`, payload);
         return response.data.data;
     }
     async sendMessage(id) {

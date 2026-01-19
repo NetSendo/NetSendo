@@ -842,6 +842,63 @@ class MessageController extends Controller
         ]);
     }
 
+    /**
+     * Resend a message to subscribers who had errors (failed status)
+     * Useful for SendGrid free account limits - retry the next day
+     */
+    public function resendToFailed(Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Get failed queue entries
+        $failedEntries = $message->queueEntries()
+            ->where('status', MessageQueueEntry::STATUS_FAILED)
+            ->get();
+
+        $failedCount = $failedEntries->count();
+
+        if ($failedCount === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Brak odbiorców z błędami do ponowienia wysyłki.'
+            ], 422);
+        }
+
+        // Reset message status to scheduled if it was sent
+        if ($message->status === 'sent') {
+            $message->update([
+                'status' => 'scheduled',
+                'scheduled_at' => now(),
+            ]);
+        }
+
+        // Reset all failed entries to planned
+        $message->queueEntries()
+            ->where('status', MessageQueueEntry::STATUS_FAILED)
+            ->update([
+                'status' => MessageQueueEntry::STATUS_PLANNED,
+                'planned_at' => now(),
+                'queued_at' => null,
+                'sent_at' => null,
+                'error_message' => null,
+            ]);
+
+        // Update planned recipients count
+        $message->update([
+            'planned_recipients_count' => $message->queueEntries()
+                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+                ->count() + $message->sent_count,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'failed_count' => $failedCount,
+            'message' => "Ponowna wysyłka zaplanowana dla {$failedCount} odbiorców z błędami."
+        ]);
+    }
+
     public function destroy(Message $message)
     {
         if ($message->user_id !== auth()->id()) {

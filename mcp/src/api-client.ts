@@ -278,8 +278,12 @@ export class NetSendoApiClient {
     return response.data;
   }
 
-  async scheduleMessage(id: number, scheduledAt: string): Promise<Message> {
-    const response = await this.client.post(`/messages/${id}/schedule`, { scheduled_at: scheduledAt });
+  async scheduleMessage(id: number, scheduledAt: string, timezone?: string): Promise<Message> {
+    const payload: { scheduled_at: string; timezone?: string } = { scheduled_at: scheduledAt };
+    if (timezone) {
+      payload.timezone = timezone;
+    }
+    const response = await this.client.post(`/messages/${id}/schedule`, payload);
     return response.data.data;
   }
 

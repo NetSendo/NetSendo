@@ -71,7 +71,7 @@ export declare class NetSendoApiClient {
         message: Message;
         planned_recipients: number;
     }>;
-    scheduleMessage(id: number, scheduledAt: string): Promise<Message>;
+    scheduleMessage(id: number, scheduledAt: string, timezone?: string): Promise<Message>;
     sendMessage(id: number): Promise<{
         message: Message;
         recipients_added?: number;
