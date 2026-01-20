@@ -551,6 +551,15 @@ class MessageController extends Controller
 
         $queueStats = $message->getQueueStats();
 
+        // Calculate sent count for open/click rate calculations
+        $totalSent = $queueStats['sent'] > 0 ? $queueStats['sent'] : ($message->sent_count ?: 1);
+
+        // Get opens and clicks from tracking tables
+        $opens = \App\Models\EmailOpen::where('message_id', $message->id)->count();
+        $uniqueOpens = \App\Models\EmailOpen::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
+        $clicks = \App\Models\EmailClick::where('message_id', $message->id)->count();
+        $uniqueClicks = \App\Models\EmailClick::where('message_id', $message->id)->distinct('subscriber_id')->count('subscriber_id');
+
         $response = [
             'id' => $message->id,
             'subject' => $message->subject,
@@ -559,6 +568,14 @@ class MessageController extends Controller
             'sent_count' => $message->sent_count,
             'planned_recipients_count' => $message->planned_recipients_count,
             'queue_stats' => $queueStats,
+            // Open/Click statistics
+            'opens' => $opens,
+            'unique_opens' => $uniqueOpens,
+            'open_rate' => round(($uniqueOpens / $totalSent) * 100, 1),
+            'clicks' => $clicks,
+            'unique_clicks' => $uniqueClicks,
+            'click_rate' => round(($uniqueClicks / $totalSent) * 100, 1),
+            'click_to_open_rate' => $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 1) : 0,
         ];
 
         // Add schedule stats for autoresponders
