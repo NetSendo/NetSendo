@@ -12,6 +12,9 @@ return [
     'status' => 'Status',
     'created_at' => 'Utworzono',
     'updated_at' => 'Zaktualizowano',
+    'action_cannot_be_undone' => 'Ta operacja nie może zostać cofnięta.',
+    'copy_link' => 'Kopiuj link',
+    'open_in_new_tab' => 'Otwórz w nowej karcie',
 
     'notifications' => [
         'success' => 'Operacja zakończona sukcesem.',

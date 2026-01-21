@@ -35,6 +35,36 @@ class AppServiceProvider extends ServiceProvider
             \App\Models\AbTest::class,
             \App\Policies\AbTestPolicy::class
         );
+
+        // Register Affiliate policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\Affiliate::class,
+            \App\Policies\AffiliatePolicy::class
+        );
+
+        // Register AffiliateProgram policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\AffiliateProgram::class,
+            \App\Policies\AffiliateProgramPolicy::class
+        );
+
+        // Register AffiliateOffer policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\AffiliateOffer::class,
+            \App\Policies\AffiliateOfferPolicy::class
+        );
+
+        // Register AffiliateCommission policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\AffiliateCommission::class,
+            \App\Policies\AffiliateCommissionPolicy::class
+        );
+
+        // Register AffiliatePayout policy
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\AffiliatePayout::class,
+            \App\Policies\AffiliatePayoutPolicy::class
+        );
     }
 
     /**

@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.11] – Short Description
+
+**Release date:** 2026-01-21
+
 ### Added
+
+- **Partner Program Registration Flow:**
+  - Fixed partner registration form not submitting due to field name mismatch (`agree_terms` vs `accept_terms`).
+  - Added `website` field support to partner registration (validation, saving, database migration).
+  - Created `Pending.vue` page shown after registration when manual approval is required.
+  - Created 5 new authorization policies for affiliate system: `AffiliatePolicy`, `AffiliateProgramPolicy`, `AffiliateOfferPolicy`, `AffiliateCommissionPolicy`, `AffiliatePayoutPolicy`.
+
+- **Partner Program Management UI:**
+  - Added delete confirmation modal with program details (affiliates count, offers count).
+  - Added full registration link display with copy-to-clipboard button and open-in-new-tab button.
+  - Added visual feedback (checkmark icon) when link is copied successfully.
+  - Full translations in EN, PL, DE, ES.
+
+- **Multi-Level Affiliate Program Configuration:**
+  - **Level Rules Editor:** New `LevelRulesEditor.vue` component for configuring commission percentages per tier (e.g., L1: 20%, L2: 5%, L3: 2%).
+  - **MLM Toggle:** Added advanced settings panel to program Create/Edit forms with option to enable multi-level commissions.
+  - **Attribution Model:** Configurable attribution model selection (First Click, Last Click, Linear) for determining which affiliate receives credit.
+  - **Commission Hold Period:** Added configurable hold period (days) before commission auto-approval for refund protection.
+  - **Backend Updates:** Extended `AffiliateController` to handle level rules, attribution model, and commission hold days.
+  - **Database:** Added `commission_hold_days` column to `affiliate_programs` table.
+  - **Full Translations:** Added 30+ new translation keys in EN, PL, DE, ES for all MLM-related settings.
 
 - **Scheduling Validation:**
   - **Past Date Prevention:** Implemented validation in Email and SMS campaign creation to prevent users from selecting dates in the past.
@@ -21,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added explicit warning in `docker-compose.yml` header that `.env` file must be created BEFORE running `docker compose up -d`.
   - Added troubleshooting section in `DOCKER_INSTALL.md` explaining the issue and solution.
   - **Root Cause:** Docker creates a folder instead of a file when bind-mounting a non-existent source path.
+
+- **Affiliate Admin Panel 403 Errors:**
+  - Fixed 403 Forbidden errors when accessing affiliate management pages by implementing missing authorization policies.
+  - Registered all policies in `AppServiceProvider.php`.
 
 ### Changed
 

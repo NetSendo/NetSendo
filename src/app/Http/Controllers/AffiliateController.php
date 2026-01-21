@@ -8,6 +8,7 @@ use App\Models\AffiliateCommission;
 use App\Models\AffiliateConversion;
 use App\Models\AffiliateCoupon;
 use App\Models\AffiliateLink;
+use App\Models\AffiliateLevelRule;
 use App\Models\AffiliateOffer;
 use App\Models\AffiliatePayout;
 use App\Models\AffiliateProgram;
@@ -144,14 +145,45 @@ class AffiliateController extends Controller
             'currency' => 'required|string|size:3',
             'default_commission_percent' => 'required|numeric|min:0|max:100',
             'auto_approve_affiliates' => 'boolean',
+            // MLM settings
+            'enable_mlm' => 'boolean',
+            'max_levels' => 'integer|min:1|max:10',
+            'attribution_model' => 'string|in:first_click,last_click,linear',
+            'commission_hold_days' => 'integer|min:0|max:365',
+            'level_rules' => 'array',
+            'level_rules.*.level' => 'required|integer|min:1',
+            'level_rules.*.commission_type' => 'required|string|in:percent,fixed',
+            'level_rules.*.commission_value' => 'required|numeric|min:0',
+            'level_rules.*.min_sales_required' => 'integer|min:0',
         ]);
 
         $program = AffiliateProgram::create([
             'user_id' => Auth::id(),
-            ...$validated,
+            'name' => $validated['name'],
+            'terms_text' => $validated['terms_text'] ?? null,
+            'cookie_days' => $validated['cookie_days'],
+            'currency' => $validated['currency'],
+            'default_commission_percent' => $validated['default_commission_percent'],
+            'auto_approve_affiliates' => $validated['auto_approve_affiliates'] ?? false,
+            'max_levels' => $validated['enable_mlm'] ? ($validated['max_levels'] ?? 2) : 1,
+            'attribution_model' => $validated['attribution_model'] ?? 'last_click',
+            'commission_hold_days' => $validated['commission_hold_days'] ?? 30,
             'slug' => Str::slug($validated['name']) . '-' . Str::random(6),
             'status' => 'active',
         ]);
+
+        // Save level rules if MLM is enabled
+        if (!empty($validated['enable_mlm']) && !empty($validated['level_rules'])) {
+            foreach ($validated['level_rules'] as $rule) {
+                AffiliateLevelRule::create([
+                    'program_id' => $program->id,
+                    'level' => $rule['level'],
+                    'commission_type' => $rule['commission_type'],
+                    'commission_value' => $rule['commission_value'],
+                    'min_sales_required' => $rule['min_sales_required'] ?? 0,
+                ]);
+            }
+        }
 
         return redirect()->route('affiliate.programs.index')
             ->with('success', __('affiliate.program_created'));
@@ -161,8 +193,20 @@ class AffiliateController extends Controller
     {
         $this->authorize('update', $program);
 
+        $levelRules = $program->levelRules()
+            ->orderBy('level')
+            ->get()
+            ->map(fn($r) => [
+                'level' => $r->level,
+                'commission_type' => $r->commission_type,
+                'commission_value' => (float) $r->commission_value,
+                'min_sales_required' => $r->min_sales_required,
+            ])
+            ->toArray();
+
         return Inertia::render('Profit/Affiliate/Programs/Edit', [
             'program' => $program,
+            'levelRules' => $levelRules,
         ]);
     }
 
@@ -178,9 +222,49 @@ class AffiliateController extends Controller
             'currency' => 'required|string|size:3',
             'default_commission_percent' => 'required|numeric|min:0|max:100',
             'auto_approve_affiliates' => 'boolean',
+            // MLM settings
+            'enable_mlm' => 'boolean',
+            'max_levels' => 'integer|min:1|max:10',
+            'attribution_model' => 'string|in:first_click,last_click,linear',
+            'commission_hold_days' => 'integer|min:0|max:365',
+            'level_rules' => 'array',
+            'level_rules.*.level' => 'required|integer|min:1',
+            'level_rules.*.commission_type' => 'required|string|in:percent,fixed',
+            'level_rules.*.commission_value' => 'required|numeric|min:0',
+            'level_rules.*.min_sales_required' => 'integer|min:0',
         ]);
 
-        $program->update($validated);
+        $program->update([
+            'name' => $validated['name'],
+            'status' => $validated['status'],
+            'terms_text' => $validated['terms_text'] ?? null,
+            'cookie_days' => $validated['cookie_days'],
+            'currency' => $validated['currency'],
+            'default_commission_percent' => $validated['default_commission_percent'],
+            'auto_approve_affiliates' => $validated['auto_approve_affiliates'] ?? false,
+            'max_levels' => $validated['enable_mlm'] ? ($validated['max_levels'] ?? 2) : 1,
+            'attribution_model' => $validated['attribution_model'] ?? 'last_click',
+            'commission_hold_days' => $validated['commission_hold_days'] ?? 30,
+        ]);
+
+        // Update level rules if MLM is enabled
+        if (!empty($validated['enable_mlm']) && !empty($validated['level_rules'])) {
+            // Delete existing rules and recreate
+            $program->levelRules()->delete();
+
+            foreach ($validated['level_rules'] as $rule) {
+                AffiliateLevelRule::create([
+                    'program_id' => $program->id,
+                    'level' => $rule['level'],
+                    'commission_type' => $rule['commission_type'],
+                    'commission_value' => $rule['commission_value'],
+                    'min_sales_required' => $rule['min_sales_required'] ?? 0,
+                ]);
+            }
+        } elseif (empty($validated['enable_mlm'])) {
+            // If MLM is disabled, remove all level rules
+            $program->levelRules()->delete();
+        }
 
         return redirect()->route('affiliate.programs.index')
             ->with('success', __('affiliate.program_updated'));

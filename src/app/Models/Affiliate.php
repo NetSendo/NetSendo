@@ -23,6 +23,7 @@ class Affiliate extends Authenticatable
         'status',
         'company_name',
         'country',
+        'website',
         'payout_method',
         'payout_details',
         'referral_code',

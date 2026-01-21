@@ -26,6 +26,7 @@ class AffiliateProgram extends Model
         'default_commission_fixed',
         'auto_approve_affiliates',
         'max_levels',
+        'commission_hold_days',
         'settings',
     ];
 
@@ -35,6 +36,7 @@ class AffiliateProgram extends Model
         'default_commission_fixed' => 'decimal:2',
         'auto_approve_affiliates' => 'boolean',
         'max_levels' => 'integer',
+        'commission_hold_days' => 'integer',
         'settings' => 'array',
     ];
 

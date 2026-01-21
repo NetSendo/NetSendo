@@ -40,6 +40,7 @@ class PartnerAuthController extends Controller
             'email' => 'required|email|unique:affiliates,email',
             'password' => 'required|string|min:8|confirmed',
             'company_name' => 'nullable|string|max:255',
+            'website' => 'nullable|url|max:255',
             'country' => 'nullable|string|size:2',
             'accept_terms' => 'required|accepted',
             'referral_code' => 'nullable|string', // Parent affiliate code
@@ -61,6 +62,7 @@ class PartnerAuthController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'company_name' => $validated['company_name'] ?? null,
+            'website' => $validated['website'] ?? null,
             'country' => $validated['country'] ?? null,
             'status' => $programModel->auto_approve_affiliates ? 'approved' : 'pending',
             'referral_code' => strtoupper(Str::random(8)),
@@ -75,7 +77,7 @@ class PartnerAuthController extends Controller
         }
 
         return Inertia::render('Partner/Auth/Pending', [
-            'program' => $programModel->only(['name']),
+            'program' => $programModel->only(['name', 'slug']),
         ]);
     }
 

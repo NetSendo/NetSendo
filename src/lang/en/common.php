@@ -12,6 +12,9 @@ return [
     'status' => 'Status',
     'created_at' => 'Created At',
     'updated_at' => 'Updated At',
+    'action_cannot_be_undone' => 'This action cannot be undone.',
+    'copy_link' => 'Copy link',
+    'open_in_new_tab' => 'Open in new tab',
 
     'notifications' => [
         'success' => 'Operation successful.',

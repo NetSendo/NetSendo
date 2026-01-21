@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\AffiliateOffer;
+use App\Models\User;
+
+class AffiliateOfferPolicy
+{
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     */
+    public function view(User $user, AffiliateOffer $offer): bool
+    {
+        return $user->id === $offer->program->user_id || $user->admin_id === $offer->program->user_id;
+    }
+
+    /**
+     * Determine whether the user can create models.
+     */
+    public function create(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, AffiliateOffer $offer): bool
+    {
+        return $user->id === $offer->program->user_id || $user->admin_id === $offer->program->user_id;
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, AffiliateOffer $offer): bool
+    {
+        return $user->id === $offer->program->user_id || $user->admin_id === $offer->program->user_id;
+    }
+}
