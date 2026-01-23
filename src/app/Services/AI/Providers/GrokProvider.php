@@ -8,7 +8,7 @@ class GrokProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'grok-2-1212';
+        return 'grok-3-ultra';
     }
 
     public function supportsFetchModels(): bool
@@ -79,9 +79,9 @@ class GrokProvider extends BaseProvider
     private function formatModelName(string $modelId): string
     {
         $names = [
-            'grok-2-1212' => 'Grok 2 (Grudzień 2024)',
-            'grok-2-vision-1212' => 'Grok 2 Vision',
-            'grok-beta' => 'Grok Beta',
+            'grok-3-ultra' => 'Grok 3 Ultra (Styczeń 2026)',
+            'grok-3' => 'Grok 3',
+            'grok-2' => 'Grok 2',
         ];
 
         return $names[$modelId] ?? ucfirst(str_replace('-', ' ', $modelId));

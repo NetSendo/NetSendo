@@ -2847,6 +2847,8 @@
         },
         "models": {
             "latest": "Latest",
+            "new": "New",
+            "january_2026": "January 2026",
             "december_2025": "December 2025",
             "november_2025": "November 2025",
             "october_2025": "October 2025",

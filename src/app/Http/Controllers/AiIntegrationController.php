@@ -137,6 +137,7 @@ class AiIntegrationController extends Controller
      */
     public function testConnection(AiIntegration $integration)
     {
+        \Illuminate\Support\Facades\Log::info("Controller: Testing connection for integration ID: " . $integration->id . " provider: " . $integration->provider);
         $result = $this->aiService->testConnection($integration);
 
         return response()->json($result);

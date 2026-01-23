@@ -8,7 +8,7 @@ class OllamaProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'llama3.2';
+        return 'llama4.1';
     }
 
     public function supportsFetchModels(): bool
@@ -91,17 +91,13 @@ class OllamaProvider extends BaseProvider
         $name = explode(':', $modelId)[0];
 
         $names = [
+            'llama4.1' => 'Llama 4.1 (Styczeń 2026)',
+            'llama4' => 'Llama 4',
+            'llama3.3' => 'Llama 3.3',
             'llama3.2' => 'Llama 3.2',
-            'llama3.1' => 'Llama 3.1',
-            'llama3' => 'Llama 3',
-            'llama2' => 'Llama 2',
-            'mistral' => 'Mistral',
-            'mixtral' => 'Mixtral',
-            'codellama' => 'Code Llama',
-            'gemma2' => 'Gemma 2',
-            'gemma' => 'Gemma',
-            'phi3' => 'Phi-3',
-            'qwen2' => 'Qwen 2',
+            'mistral4' => 'Mistral 4',
+            'phi5' => 'Phi-5',
+            'qwen3' => 'Qwen 3',
         ];
 
         return $names[$name] ?? ucfirst(str_replace(['-', '_'], ' ', $name));

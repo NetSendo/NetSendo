@@ -8,7 +8,7 @@ class OpenrouterProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'openai/gpt-4o';
+        return 'openai/gpt-5';
     }
 
     public function supportsFetchModels(): bool
@@ -55,23 +55,22 @@ class OpenrouterProvider extends BaseProvider
         $models = [];
         $data = $response['data']['data'] ?? [];
 
-        // Get top popular models
+        // Get top popular models for Jan 2026
         $popularModels = [
-            'openai/gpt-4o',
-            'openai/gpt-4o-mini',
-            'anthropic/claude-3.5-sonnet',
-            'anthropic/claude-3-opus',
-            'google/gemini-pro-1.5',
-            'meta-llama/llama-3.1-405b-instruct',
-            'meta-llama/llama-3.1-70b-instruct',
-            'mistralai/mistral-large',
+            'openai/gpt-5',
+            'openai/gpt-5-mini',
+            'openai/o3',
+            'anthropic/claude-4-opus',
+            'anthropic/claude-4-sonnet',
+            'google/gemini-2.0-pro',
+            'meta-llama/llama-4-405b-instruct',
+            'meta-llama/llama-4-70b-instruct',
+            'mistralai/mistral-large-3',
+            'x-ai/grok-3',
+            'deepseek/deepseek-v3',
             // Free Models
             'google/gemini-2.0-flash-exp:free',
-            'microsoft/phi-3-mini-128k-instruct:free',
-            'meta-llama/llama-3-8b-instruct:free',
-            'mistralai/mistral-7b-instruct:free',
-            'openchat/openchat-7b:free',
-            'gryphe/mythomax-l2-13b:free',
+            'meta-llama/llama-4-8b-instruct:free',
         ];
 
         foreach ($data as $model) {

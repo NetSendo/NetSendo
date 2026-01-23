@@ -8,7 +8,7 @@ class AnthropicProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'claude-3-5-sonnet-20241022';
+        return 'claude-sonnet-4-5-20250929';
     }
 
     public function supportsFetchModels(): bool
@@ -28,10 +28,18 @@ class AnthropicProvider extends BaseProvider
 
     public function testConnection(): array
     {
+        // Try the configured model first, then fall back to default
+        $model = $this->getModel(null);
+        $apiKey = $this->getApiKey();
+
+        // Log debug info (only first 10 chars of API key for security)
+        $keyPreview = $apiKey ? substr($apiKey, 0, 10) . '...' : 'NULL';
+        \Illuminate\Support\Facades\Log::info("Testing Anthropic: model={$model}, api_key_prefix={$keyPreview}");
+
         // Anthropic doesn't have a simple test endpoint, so we send a minimal request
         $response = $this->makeRequest('post', 'v1/messages', [
-            'model' => $this->getDefaultModel(),
-            'max_tokens' => 10,
+            'model' => $model,
+            'max_tokens' => 1,
             'messages' => [
                 ['role' => 'user', 'content' => 'Hi'],
             ],
@@ -44,18 +52,30 @@ class AnthropicProvider extends BaseProvider
             ];
         }
 
+        \Illuminate\Support\Facades\Log::error("Anthropic testConnection failed for model [{$model}]: " . json_encode($response));
+
         // Check for specific error types
         $error = $response['error'] ?? 'Nieznany błąd';
-        if (str_contains($error, 'invalid_api_key') || str_contains($error, 'authentication')) {
+
+        // Handle 401 - Invalid API key
+        if (str_contains($error, 'invalid') && str_contains($error, 'api-key')) {
             return [
                 'success' => false,
-                'message' => 'Nieprawidłowy klucz API.',
+                'message' => 'Nieprawidłowy klucz API. Sprawdź czy klucz jest poprawny.',
+            ];
+        }
+
+        // Handle 404 - Model not found
+        if (isset($response['status']) && $response['status'] === 404) {
+            return [
+                'success' => false,
+                'message' => 'Model "' . $model . '" nie istnieje. Wybierz inny model.',
             ];
         }
 
         return [
             'success' => false,
-            'message' => 'Błąd połączenia: ' . $error,
+            'message' => 'Błąd połączenia (model ' . $model . '): ' . $error,
         ];
     }
 

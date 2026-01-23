@@ -14,6 +14,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Updated `MessageController` to return proper Redirect responses with flash messages instead of JSON, ensuring compatibility with Inertia.
   - Added missing translation keys for success/error messages in `src/lang/en/messages.php` and `src/lang/pl/messages.php`.
 
+- **Anthropic AI Integration - Connection Test & Model Updates:**
+  - Fixed Anthropic connection test failing with 404/401 errors due to outdated model IDs.
+  - Updated `AnthropicProvider.php` to use the user-selected model for connection tests instead of forcing a hardcoded default.
+  - Added detailed error logging with API key prefix and model information for easier debugging.
+  - Improved error messages to distinguish between invalid API key (401) and model not found (404) errors.
+
+### Changed
+
+- **AI Provider Models Updated to January 2026:**
+  - **Anthropic:** Updated to Claude 4.5 family (official January 2026 models):
+    - `claude-sonnet-4-5-20250929` - Claude Sonnet 4.5 (recommended default)
+    - `claude-haiku-4-5-20251001` - Claude Haiku 4.5 (fastest)
+    - `claude-opus-4-5-20251101` - Claude Opus 4.5 (premium)
+    - Added aliases (`claude-sonnet-4-5`, `claude-haiku-4-5`, `claude-opus-4-5`) for testing convenience.
+    - Added older active snapshots: `claude-sonnet-4-20250514`, `claude-opus-4-20250514`, `claude-opus-4-1-20250805`.
+    - Marked legacy Claude 3 models as deprecated with retirement dates.
+  - **OpenAI (OpenRouter):** Updated to GPT-5.2 Preview, GPT-5 Pro, o3 reasoning models.
+  - **Google Gemini:** Updated default to `gemini-2.5-pro`.
+  - **xAI Grok:** Updated default to `grok-3-ultra`.
+  - **Ollama:** Updated to support Llama 4.1, Mistral 4, Phi-5, Qwen 3.
+
+- **AI Integration Frontend:**
+  - Updated `Index.vue` (AI Integrations settings page) with January 2026 model lists for all providers.
+  - Updated `localizeModelName()` function to handle new date labels ("Styczeń 2026", "Nowość").
+  - Added new translation keys `ai.models.january_2026` and `ai.models.new` in `pl.json` and `en.json`.
+
 ## [1.7.11] – Short Description
 
 **Release date:** 2026-01-21
