@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+### Added
+
+### Changed
+
+## [1.7.12] – Short Description
+
+**Release date:** 2026-01-23
+
+### Fixed
+
+- **Message Link Tracking:**
+  - Fixed an issue where subscribe/unsubscribe list actions on tracked links were not working due to URL hash mismatches.
+  - Updated `MessageTrackedLink` model to decode HTML entities in URLs during normalization, ensuring hashes match between HTML content and click events.
+  - Updated `TrackedLinksSection.vue` to decode HTML entities when extracting links from message content for consistent tracking configuration.
+
 - **Resend to Failed Subscribers:**
   - Fixed 419 Page Expired (CSRF) error when using "Resend to Failed" button by migrating from manual `fetch()` to Inertia `router.post()`.
   - Updated `MessageController` to return proper Redirect responses with flash messages instead of JSON, ensuring compatibility with Inertia.

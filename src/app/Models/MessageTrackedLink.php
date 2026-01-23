@@ -67,12 +67,17 @@ class MessageTrackedLink extends Model
 
     /**
      * Normalize URL for consistent matching.
+     * - Decode HTML entities (e.g., &amp; → &)
      * - Lowercase scheme and host
      * - Remove trailing slash
      * - Sort query parameters
      */
     public static function normalizeUrl(string $url): string
     {
+        // Decode HTML entities first (e.g., &amp; → &)
+        // This ensures URLs extracted from HTML and URLs from clicks match
+        $url = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
         $parsed = parse_url($url);
 
         if (!$parsed || !isset($parsed['host'])) {

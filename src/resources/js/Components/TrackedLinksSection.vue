@@ -43,12 +43,20 @@ const expandedLinks = ref({});
 const extractLinksFromContent = (html) => {
     if (!html) return [];
 
+    // Helper to decode HTML entities (e.g., &amp; → &)
+    const decodeHtmlEntities = (str) => {
+        const textarea = document.createElement("textarea");
+        textarea.innerHTML = str;
+        return textarea.value;
+    };
+
     const linkRegex = /href=["']([^"']+)["']/g;
     const links = [];
     let match;
 
     while ((match = linkRegex.exec(html)) !== null) {
-        const url = match[1];
+        // Decode HTML entities from URL to ensure consistent hashing
+        const url = decodeHtmlEntities(match[1]);
 
         // Skip special links
         if (
@@ -143,7 +151,7 @@ const formatUrl = (url, maxLength = 50) => {
 
 // Get only email lists
 const emailLists = computed(() =>
-    props.lists.filter((l) => l.type === "email")
+    props.lists.filter((l) => l.type === "email"),
 );
 
 // Watch content changes and emit updated tracked links
@@ -153,7 +161,7 @@ watch(
         // Re-emit current tracked links to sync with new detected links
         emit("update:modelValue", trackedLinks.value);
     },
-    { immediate: false }
+    { immediate: false },
 );
 </script>
 
@@ -266,7 +274,7 @@ watch(
                                     updateLink(
                                         index,
                                         'tracking_enabled',
-                                        $event.target.checked
+                                        $event.target.checked,
                                     )
                                 "
                                 class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
@@ -276,7 +284,7 @@ watch(
                                     class="text-sm font-medium text-slate-900 dark:text-slate-200"
                                     >{{
                                         t(
-                                            "messages.tracked_links.tracking_enabled"
+                                            "messages.tracked_links.tracking_enabled",
                                         )
                                     }}</span
                                 >
@@ -284,7 +292,7 @@ watch(
                                     class="text-xs text-slate-500 dark:text-slate-400"
                                     >{{
                                         t(
-                                            "messages.tracked_links.tracking_enabled_desc"
+                                            "messages.tracked_links.tracking_enabled_desc",
                                         )
                                     }}</span
                                 >
@@ -302,7 +310,7 @@ watch(
                                     updateLink(
                                         index,
                                         'share_data_enabled',
-                                        $event.target.checked
+                                        $event.target.checked,
                                     )
                                 "
                                 class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
@@ -318,7 +326,7 @@ watch(
                                     class="text-xs text-slate-500 dark:text-slate-400"
                                     >{{
                                         t(
-                                            "messages.tracked_links.share_data_desc"
+                                            "messages.tracked_links.share_data_desc",
                                         )
                                     }}</span
                                 >
@@ -343,13 +351,13 @@ watch(
                                         type="checkbox"
                                         :checked="
                                             link.shared_fields?.includes(
-                                                field.value
+                                                field.value,
                                             )
                                         "
                                         @change="
                                             toggleSharedField(
                                                 index,
-                                                field.value
+                                                field.value,
                                             )
                                         "
                                         class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
@@ -367,7 +375,7 @@ watch(
                                 <span>➕</span>
                                 {{
                                     t(
-                                        "messages.tracked_links.subscribe_on_click"
+                                        "messages.tracked_links.subscribe_on_click",
                                     )
                                 }}
                             </label>
@@ -384,14 +392,14 @@ watch(
                                             type="checkbox"
                                             :checked="
                                                 link.subscribe_to_list_ids?.includes(
-                                                    list.id
+                                                    list.id,
                                                 )
                                             "
                                             @change="
                                                 toggleListSelection(
                                                     index,
                                                     'subscribe_to_list_ids',
-                                                    list.id
+                                                    list.id,
                                                 )
                                             "
                                             class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
@@ -407,7 +415,7 @@ watch(
                                 >
                                     {{
                                         t(
-                                            "messages.tracked_links.no_email_lists"
+                                            "messages.tracked_links.no_email_lists",
                                         )
                                     }}
                                 </p>
@@ -422,7 +430,7 @@ watch(
                                 <span>➖</span>
                                 {{
                                     t(
-                                        "messages.tracked_links.unsubscribe_on_click"
+                                        "messages.tracked_links.unsubscribe_on_click",
                                     )
                                 }}
                             </label>
@@ -439,14 +447,14 @@ watch(
                                             type="checkbox"
                                             :checked="
                                                 link.unsubscribe_from_list_ids?.includes(
-                                                    list.id
+                                                    list.id,
                                                 )
                                             "
                                             @change="
                                                 toggleListSelection(
                                                     index,
                                                     'unsubscribe_from_list_ids',
-                                                    list.id
+                                                    list.id,
                                                 )
                                             "
                                             class="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
