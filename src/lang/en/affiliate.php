@@ -99,6 +99,34 @@ return [
     'profile_updated' => 'Profile updated!',
     'password_updated' => 'Password updated!',
 
+    // Partner Referral Tools
+    'your_referral_tools' => 'Your Referral Tools',
+    'your_referral_link' => 'Your Referral Link',
+    'your_referral_code' => 'Your Referral Code',
+    'copy_link' => 'Copy Link',
+    'copy_code' => 'Copy Code',
+    'link_copied' => 'Copied!',
+    'referred_signups' => 'Referred Signups',
+    'referred_by' => 'Referred by partner',
+    'referral_code_optional' => 'Referral Code (Optional)',
+    'referral_code_placeholder' => 'Enter referral code',
+    'referral_code_hint' => 'If you were referred by a partner, enter their code',
+
+    // Team Page
+    'my_team' => 'My Team',
+    'invite_partners' => 'Invite Partners',
+    'invite_partners_desc' => 'Grow your team and earn commissions from their sales',
+    'total_partners' => 'Total Partners',
+    'direct_partners' => 'Direct Partners',
+    'team_clicks' => 'Team Clicks',
+    'team_conversions' => 'Team Conversions',
+    'team_earnings' => 'Team Earnings',
+    'partner_tree' => 'Partner Tree',
+    'no_partners_yet' => 'No partners yet',
+    'share_link_to_grow' => 'Share your referral link to grow your team',
+    'sub_partners' => 'sub-partners',
+    'view_as_partner' => 'View as Partner',
+
     // Multi-level settings
     'basic_settings' => 'Basic Settings',
     'advanced_settings' => 'Advanced Settings',

@@ -99,6 +99,34 @@ return [
     'profile_updated' => '¡Perfil actualizado!',
     'password_updated' => '¡Contraseña actualizada!',
 
+    // Partner Referral Tools
+    'your_referral_tools' => 'Tus herramientas de referencia',
+    'your_referral_link' => 'Tu enlace de referencia',
+    'your_referral_code' => 'Tu código de referencia',
+    'copy_link' => 'Copiar enlace',
+    'copy_code' => 'Copiar código',
+    'link_copied' => '¡Copiado!',
+    'referred_signups' => 'Registros referidos',
+    'referred_by' => 'Referido por socio',
+    'referral_code_optional' => 'Código de referencia (opcional)',
+    'referral_code_placeholder' => 'Introduce el código de referencia',
+    'referral_code_hint' => 'Si fuiste referido por un socio, introduce su código',
+
+    // Team Page
+    'my_team' => 'Mi Equipo',
+    'invite_partners' => 'Invitar Socios',
+    'invite_partners_desc' => 'Construye tu equipo y gana comisiones de sus ventas',
+    'total_partners' => 'Socios totales',
+    'direct_partners' => 'Socios directos',
+    'team_clicks' => 'Clics del equipo',
+    'team_conversions' => 'Conversiones del equipo',
+    'team_earnings' => 'Ganancias del equipo',
+    'partner_tree' => 'Árbol de socios',
+    'no_partners_yet' => 'Aún no hay socios',
+    'share_link_to_grow' => 'Comparte tu enlace de referencia para hacer crecer tu equipo',
+    'sub_partners' => 'sub-socios',
+    'view_as_partner' => 'Ver como Socio',
+
     // Multi-level settings
     'basic_settings' => 'Configuración básica',
     'advanced_settings' => 'Configuración avanzada',

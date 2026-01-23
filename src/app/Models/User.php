@@ -28,6 +28,7 @@ class User extends Authenticatable
         'locale',
         'settings',
         'admin_user_id',
+        'referred_by_affiliate_id',
     ];
 
     /**
@@ -250,6 +251,14 @@ class User extends Authenticatable
     public function brands()
     {
         return $this->hasMany(Brand::class);
+    }
+
+    /**
+     * Get the affiliate who referred this user.
+     */
+    public function referredByAffiliate()
+    {
+        return $this->belongsTo(Affiliate::class, 'referred_by_affiliate_id');
     }
 
     /**

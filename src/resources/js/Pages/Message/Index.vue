@@ -58,15 +58,16 @@ const listDropdownRef = ref(null);
 const filteredLists = computed(() => {
     if (!listSearch.value) return props.lists;
     const search = listSearch.value.toLowerCase();
-    return props.lists.filter(list =>
-        list.name.toLowerCase().includes(search) ||
-        String(list.id).includes(search)
+    return props.lists.filter(
+        (list) =>
+            list.name.toLowerCase().includes(search) ||
+            String(list.id).includes(search),
     );
 });
 
 const selectedListName = computed(() => {
     if (!form.list_id) return null;
-    const list = props.lists.find(l => l.id == form.list_id);
+    const list = props.lists.find((l) => l.id == form.list_id);
     return list ? list.name : null;
 });
 
@@ -83,7 +84,10 @@ const clearListFilter = () => {
 };
 
 const handleClickOutsideListDropdown = (event) => {
-    if (listDropdownRef.value && !listDropdownRef.value.contains(event.target)) {
+    if (
+        listDropdownRef.value &&
+        !listDropdownRef.value.contains(event.target)
+    ) {
         listDropdownOpen.value = false;
     }
 };
@@ -113,7 +117,7 @@ const getStatus = (message) => {
 // Fetch updated statuses for scheduled messages
 const fetchStatuses = async () => {
     const scheduledMessages = props.messages.data.filter(
-        (m) => m.status === "scheduled" && !localStatuses[m.id]
+        (m) => m.status === "scheduled" && !localStatuses[m.id],
     );
 
     if (scheduledMessages.length === 0) return;
@@ -140,7 +144,7 @@ const fetchStatuses = async () => {
 onMounted(() => {
     // Start polling if there are scheduled messages
     const hasScheduled = props.messages.data.some(
-        (m) => m.status === "scheduled"
+        (m) => m.status === "scheduled",
     );
     if (hasScheduled) {
         statusPollingInterval = setInterval(fetchStatuses, 15000); // Every 15 seconds
@@ -148,7 +152,7 @@ onMounted(() => {
     }
 
     // Click outside handler for list dropdown
-    document.addEventListener('click', handleClickOutsideListDropdown);
+    document.addEventListener("click", handleClickOutsideListDropdown);
 });
 
 // Cleanup on unmount
@@ -156,7 +160,7 @@ onBeforeUnmount(() => {
     if (statusPollingInterval) {
         clearInterval(statusPollingInterval);
     }
-    document.removeEventListener('click', handleClickOutsideListDropdown);
+    document.removeEventListener("click", handleClickOutsideListDropdown);
 });
 
 watch(
@@ -166,7 +170,7 @@ watch(
             preserveState: true,
             replace: true,
         });
-    }, 300)
+    }, 300),
 );
 
 const sort = (field) => {
@@ -212,7 +216,7 @@ const duplicateMessage = async () => {
     isDuplicating.value = true;
     try {
         const response = await axios.post(
-            route("messages.duplicate", messageToDuplicate.value.id)
+            route("messages.duplicate", messageToDuplicate.value.id),
         );
         if (response.data.success) {
             duplicatedMessage.value = response.data;
@@ -247,7 +251,7 @@ const toggleActive = async (message) => {
     togglingMessages.value.add(message.id);
     try {
         const response = await axios.post(
-            route("messages.toggle-active", message.id)
+            route("messages.toggle-active", message.id),
         );
         if (response.data.success) {
             localActiveStates[message.id] = response.data.is_active;
@@ -275,7 +279,7 @@ const resendMessage = async () => {
     resendingMessages.value.add(messageToResend.value.id);
     try {
         const response = await axios.post(
-            route("messages.resend", messageToResend.value.id)
+            route("messages.resend", messageToResend.value.id),
         );
         resendResult.value = response.data;
     } catch (error) {
@@ -395,19 +399,45 @@ const getAttachmentTooltip = (message, trans) => {
                     @click="listDropdownOpen = !listDropdownOpen"
                     class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm cursor-pointer min-w-[180px] dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
-                    <span v-if="selectedListName" class="flex-1 truncate">{{ selectedListName }}</span>
-                    <span v-else class="flex-1 text-slate-500 dark:text-slate-400">{{ $t("messages.all_lists") }}</span>
+                    <span v-if="selectedListName" class="flex-1 truncate">{{
+                        selectedListName
+                    }}</span>
+                    <span
+                        v-else
+                        class="flex-1 text-slate-500 dark:text-slate-400"
+                        >{{ $t("messages.all_lists") }}</span
+                    >
                     <button
                         v-if="form.list_id"
                         @click.stop="clearListFilter"
                         class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
                         </svg>
                     </button>
-                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    <svg
+                        class="h-4 w-4 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 9l-7 7-7-7"
+                        />
                     </svg>
                 </div>
                 <div
@@ -418,7 +448,9 @@ const getAttachmentTooltip = (message, trans) => {
                         <input
                             v-model="listSearch"
                             type="text"
-                            :placeholder="$t('messages.list_filter_placeholder')"
+                            :placeholder="
+                                $t('messages.list_filter_placeholder')
+                            "
                             class="block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                             @click.stop
                         />
@@ -427,7 +459,10 @@ const getAttachmentTooltip = (message, trans) => {
                         <button
                             @click="clearListFilter"
                             class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30': !form.list_id }"
+                            :class="{
+                                'bg-indigo-50 dark:bg-indigo-900/30':
+                                    !form.list_id,
+                            }"
                         >
                             {{ $t("messages.all_lists") }}
                         </button>
@@ -436,12 +471,21 @@ const getAttachmentTooltip = (message, trans) => {
                             :key="list.id"
                             @click="selectList(list)"
                             class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                            :class="{ 'bg-indigo-50 dark:bg-indigo-900/30': form.list_id == list.id }"
+                            :class="{
+                                'bg-indigo-50 dark:bg-indigo-900/30':
+                                    form.list_id == list.id,
+                            }"
                         >
                             <span class="font-medium">{{ list.name }}</span>
-                            <span class="ml-2 text-xs text-slate-400 dark:text-slate-500">#{{ list.id }}</span>
+                            <span
+                                class="ml-2 text-xs text-slate-400 dark:text-slate-500"
+                                >#{{ list.id }}</span
+                            >
                         </button>
-                        <div v-if="filteredLists.length === 0 && listSearch" class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                        <div
+                            v-if="filteredLists.length === 0 && listSearch"
+                            class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                        >
                             {{ $t("common.no_results") }}
                         </div>
                     </div>
@@ -618,7 +662,9 @@ const getAttachmentTooltip = (message, trans) => {
                             :key="message.id"
                             class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         >
-                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                            <td
+                                class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs"
+                            >
                                 {{ message.id }}
                             </td>
                             <td
@@ -679,7 +725,7 @@ const getAttachmentTooltip = (message, trans) => {
                                         >{{
                                             $t(
                                                 "messages.type_autoresponder_day",
-                                                { day: message.day }
+                                                { day: message.day },
                                             )
                                         }}</span
                                     >
@@ -749,8 +795,8 @@ const getAttachmentTooltip = (message, trans) => {
                                         getStatus(message) === "sent"
                                             ? $t("messages.status_sent")
                                             : getStatus(message) === "scheduled"
-                                            ? $t("messages.status_scheduled")
-                                            : $t("messages.status_draft")
+                                              ? $t("messages.status_scheduled")
+                                              : $t("messages.status_draft")
                                     }}
                                 </span>
                                 <!-- Show scheduled time for scheduled messages -->
@@ -765,27 +811,45 @@ const getAttachmentTooltip = (message, trans) => {
                                     📅 {{ message.scheduled_at }}
                                 </div>
                                 <!-- A/B Test indicator -->
-                                <div
-                                    v-if="message.ab_test"
-                                    class="mt-1"
-                                >
-                                    <span
-                                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                                <div v-if="message.ab_test" class="mt-1">
+                                    <Link
+                                        :href="
+                                            route(
+                                                'ab-tests.show',
+                                                message.ab_test.id,
+                                            )
+                                        "
+                                        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer hover:ring-2 hover:ring-offset-1 transition-all"
                                         :class="{
-                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400':
-                                                message.ab_test.status === 'running',
-                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400':
-                                                message.ab_test.status === 'draft' || message.ab_test.status === 'paused',
-                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400':
-                                                message.ab_test.status === 'completed',
-                                            'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400':
-                                                message.ab_test.status === 'cancelled',
+                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 hover:ring-purple-400':
+                                                message.ab_test.status ===
+                                                'running',
+                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:ring-amber-400':
+                                                message.ab_test.status ===
+                                                    'draft' ||
+                                                message.ab_test.status ===
+                                                    'paused',
+                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:ring-emerald-400':
+                                                message.ab_test.status ===
+                                                'completed',
+                                            'bg-slate-100 text-slate-600 dark:bg-slate-700/50 dark:text-slate-400 hover:ring-slate-400':
+                                                message.ab_test.status ===
+                                                'cancelled',
                                         }"
-                                        :title="$t('messages.ab_test_tooltip', { status: $t('messages.ab_test_status.' + message.ab_test.status) })"
+                                        :title="
+                                            $t('messages.ab_test_view_results')
+                                        "
                                     >
-                                        🧪 {{ $t('messages.ab_test_badge') }}
-                                        <span v-if="message.ab_test.status === 'running'" class="animate-pulse">●</span>
-                                    </span>
+                                        🧪 {{ $t("messages.ab_test_badge") }}
+                                        <span
+                                            v-if="
+                                                message.ab_test.status ===
+                                                'running'
+                                            "
+                                            class="animate-pulse"
+                                            >●</span
+                                        >
+                                    </Link>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
@@ -808,7 +872,7 @@ const getAttachmentTooltip = (message, trans) => {
                                         :title="
                                             getIsActive(message)
                                                 ? $t(
-                                                      'messages.toggle_deactivate'
+                                                      'messages.toggle_deactivate',
                                                   )
                                                 : $t('messages.toggle_activate')
                                         "
@@ -966,7 +1030,7 @@ const getAttachmentTooltip = (message, trans) => {
                                         <svg
                                             v-if="
                                                 resendingMessages.has(
-                                                    message.id
+                                                    message.id,
                                                 )
                                             "
                                             class="h-5 w-5 animate-spin"

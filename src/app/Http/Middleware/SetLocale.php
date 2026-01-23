@@ -14,8 +14,9 @@ use Symfony\Component\HttpFoundation\Response;
  * Detection priority:
  * 1. User preference (authenticated users, stored in DB)
  * 2. Session value (guests)
- * 3. Browser Accept-Language header (auto-detection)
- * 4. Default locale from config
+ * 3. Cookie value (persists user's manual selection across sessions)
+ * 4. Browser Accept-Language header (only for first-time visitors)
+ * 5. Default locale from config
  */
 class SetLocale
 {
@@ -54,13 +55,19 @@ class SetLocale
             }
         }
 
-        // Priority 3: Browser Accept-Language header
+        // Priority 3: Cookie (persists user's manual selection across sessions)
+        $cookieLocale = $request->cookie('locale');
+        if ($cookieLocale && in_array($cookieLocale, $supported)) {
+            return $cookieLocale;
+        }
+
+        // Priority 4: Browser Accept-Language header (only for first-time visitors)
         $browserLocale = $this->parseAcceptLanguage($request, $supported);
         if ($browserLocale) {
             return $browserLocale;
         }
 
-        // Priority 4: Default locale
+        // Priority 5: Default locale
         return $default;
     }
 

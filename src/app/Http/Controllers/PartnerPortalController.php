@@ -41,6 +41,18 @@ class PartnerPortalController extends Controller
             'paid_earned' => $affiliate->commissions()->paid()->sum('commission_amount'),
         ];
 
+        // 30-day stats for dashboard cards
+        $thirtyDaysAgo = now()->subDays(30);
+        $stats30d = [
+            'clicks' => $affiliate->clicks()->where('created_at', '>=', $thirtyDaysAgo)->count(),
+            'leads' => $affiliate->conversions()->where('type', 'lead')->where('created_at', '>=', $thirtyDaysAgo)->count(),
+            'sales' => $affiliate->conversions()->where('type', 'purchase')->where('created_at', '>=', $thirtyDaysAgo)->count(),
+            'earnings' => $affiliate->commissions()->where('created_at', '>=', $thirtyDaysAgo)->sum('commission_amount'),
+            'pending' => $stats['pending_earned'],
+            'payable' => $stats['payable_earned'],
+            'paid' => $stats['paid_earned'],
+        ];
+
         // Recent activity
         $recentConversions = $affiliate->conversions()
             ->with('offer')
@@ -58,12 +70,19 @@ class PartnerPortalController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
+        // Referral tools
+        $referralUrl = route('affiliate.referral', ['code' => $affiliate->referral_code]);
+        $referredUsersCount = \App\Models\User::where('referred_by_affiliate_id', $affiliate->id)->count();
+
         return Inertia::render('Partner/Dashboard', [
             'affiliate' => $affiliate,
             'program' => $affiliate->program,
-            'stats' => $stats,
+            'stats' => $stats30d,
             'recentConversions' => $recentConversions,
             'clickChart' => $clickChart,
+            'referralUrl' => $referralUrl,
+            'referralCode' => $affiliate->referral_code,
+            'referredUsersCount' => $referredUsersCount,
         ]);
     }
 
@@ -278,6 +297,83 @@ class PartnerPortalController extends Controller
             'assets' => $assets,
             'program' => $program,
         ]);
+    }
+
+    /**
+     * Partner team tree (MLM structure).
+     */
+    public function team()
+    {
+        $affiliate = Auth::guard('affiliate')->user();
+        $program = $affiliate->program;
+
+        // Get direct children (level 1)
+        $directPartners = $affiliate->children()
+            ->with(['children' => function ($query) {
+                $query->withCount(['conversions', 'clicks'])
+                    ->withSum('commissions', 'commission_amount');
+            }])
+            ->withCount(['conversions', 'clicks'])
+            ->withSum('commissions', 'commission_amount')
+            ->get()
+            ->map(function ($partner) {
+                return [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'email' => $partner->email,
+                    'referral_code' => $partner->referral_code,
+                    'joined_at' => $partner->joined_at,
+                    'status' => $partner->status,
+                    'clicks' => $partner->clicks_count ?? 0,
+                    'conversions' => $partner->conversions_count ?? 0,
+                    'earnings' => $partner->commissions_sum_commission_amount ?? 0,
+                    'children' => $partner->children->map(fn($child) => [
+                        'id' => $child->id,
+                        'name' => $child->name,
+                        'email' => $child->email,
+                        'referral_code' => $child->referral_code,
+                        'joined_at' => $child->joined_at,
+                        'status' => $child->status,
+                        'clicks' => $child->clicks_count ?? 0,
+                        'conversions' => $child->conversions_count ?? 0,
+                        'earnings' => $child->commissions_sum_commission_amount ?? 0,
+                    ]),
+                ];
+            });
+
+        // Calculate team stats
+        $allTeamIds = $this->getAllDescendantIds($affiliate->id);
+        $teamStats = [
+            'total_partners' => count($allTeamIds),
+            'direct_partners' => $affiliate->children()->count(),
+            'total_clicks' => \App\Models\AffiliateClick::whereIn('affiliate_id', $allTeamIds)->count(),
+            'total_conversions' => \App\Models\AffiliateConversion::whereIn('affiliate_id', $allTeamIds)->count(),
+            'total_earnings' => \App\Models\AffiliateCommission::whereIn('affiliate_id', $allTeamIds)->sum('commission_amount'),
+        ];
+
+        return Inertia::render('Partner/Team', [
+            'affiliate' => $affiliate,
+            'program' => $program,
+            'directPartners' => $directPartners,
+            'teamStats' => $teamStats,
+            'referralUrl' => route('partner.register', ['program' => $program->slug, 'ref' => $affiliate->referral_code]),
+        ]);
+    }
+
+    /**
+     * Get all descendant affiliate IDs recursively.
+     */
+    private function getAllDescendantIds(int $affiliateId): array
+    {
+        $ids = [];
+        $children = Affiliate::where('parent_affiliate_id', $affiliateId)->pluck('id')->toArray();
+
+        foreach ($children as $childId) {
+            $ids[] = $childId;
+            $ids = array_merge($ids, $this->getAllDescendantIds($childId));
+        }
+
+        return $ids;
     }
 
     /**

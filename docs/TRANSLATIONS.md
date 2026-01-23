@@ -204,3 +204,65 @@ done
 3. **Avoid duplicate keys** - Run the checker before committing
 4. **Use placeholders** instead of string concatenation
 5. **Keep translations context-specific** - Same word may need different translations in different contexts
+
+---
+
+## Recent Translation Additions
+
+### Partner Program Expansion (January 2026)
+
+The following translation keys were added to support the partner program referral system and team visualization:
+
+#### Backend Translations (`src/lang/{locale}/affiliate.php`)
+
+**Partner Referral Tools:**
+
+- `your_referral_tools` - Referral tools section title
+- `your_referral_link` - Referral link label
+- `your_referral_code` - Referral code label
+- `copy_link` - Copy link button
+- `copy_code` - Copy code button
+- `link_copied` - Success message after copying
+- `referred_signups` - Count of referred user signups
+- `referred_by` - Banner showing who referred the user
+- `referral_code_optional` - Referral code field label for registration
+- `referral_code_placeholder` - Placeholder text for referral code input
+- `referral_code_hint` - Help text explaining referral codes
+
+**Partner Team Page:**
+
+- `my_team` - Team page title
+- `invite_partners` - Invite partners section title
+- `invite_partners_desc` - Description for inviting partners
+- `total_partners` - Total partners count label
+- `direct_partners` - Direct partners count label
+- `team_clicks` - Team clicks metric label
+- `team_conversions` - Team conversions metric label
+- `team_earnings` - Team earnings metric label
+- `partner_tree` - Partner tree visualization title
+- `no_partners_yet` - Empty state message
+- `share_link_to_grow` - Call-to-action for growing team
+- `sub_partners` - Sub-partners label (nested affiliates)
+- `view_as_partner` - Admin button to access partner portal
+
+**Usage Example:**
+
+```php
+// In controller
+return Inertia::render('Partner/Dashboard', [
+    'referralCode' => $affiliate->referral_code,
+    'referralUrl' => route('affiliate.referral', ['code' => $affiliate->referral_code]),
+]);
+
+// In notification
+__('affiliate.referred_by', ['name' => $partner->name])
+```
+
+**Vue Component Example:**
+
+```vue
+<template>
+  <h2>{{ $t("affiliate.your_referral_tools") }}</h2>
+  <p>{{ $t("affiliate.referred_signups") }}: {{ count }}</p>
+</template>
+```

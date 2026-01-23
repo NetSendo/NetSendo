@@ -57,6 +57,10 @@ const copyLink = async (program) => {
 const openLink = (program) => {
     window.open(getFullLink(program), "_blank");
 };
+
+const loginAsPartner = (program) => {
+    router.post(route("affiliate.programs.login-as-partner", program.id));
+};
 </script>
 
 <template>
@@ -285,6 +289,12 @@ const openLink = (program) => {
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                                 >
+                                    <button
+                                        @click="loginAsPartner(program)"
+                                        class="text-purple-600 dark:text-purple-400 hover:text-purple-900 mr-3"
+                                    >
+                                        {{ $t("affiliate.view_as_partner") }}
+                                    </button>
                                     <Link
                                         :href="
                                             route(

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\AffiliateLink;
 use App\Models\AffiliateOffer;
 use App\Services\AffiliateTrackingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 
 class AffiliateTrackingController extends Controller
@@ -13,6 +15,44 @@ class AffiliateTrackingController extends Controller
     public function __construct(
         private AffiliateTrackingService $trackingService
     ) {}
+
+    /**
+     * Referral redirect for user registration.
+     * Sets affiliate cookie and redirects to register page.
+     * GET /ref/{code}
+     */
+    public function referralRedirect(string $code, Request $request)
+    {
+        // Find affiliate by referral code
+        $affiliate = Affiliate::where('referral_code', $code)
+            ->where('status', 'approved')
+            ->first();
+
+        if (!$affiliate) {
+            Log::warning('Invalid referral code', ['code' => $code]);
+            return redirect()->route('register');
+        }
+
+        // Get cookie duration from program settings (default 30 days)
+        $cookieDays = $affiliate->program->cookie_days ?? 30;
+
+        // Set affiliate cookie
+        $cookie = Cookie::make(
+            'ns_affiliate',
+            $affiliate->id,
+            $cookieDays * 24 * 60, // Convert days to minutes
+            '/',
+            null,
+            request()->secure(),
+            true, // httpOnly
+            false,
+            'lax'
+        );
+
+        return redirect()
+            ->route('register', ['ref' => $code])
+            ->withCookie($cookie);
+    }
 
     /**
      * Redirect endpoint for affiliate links.

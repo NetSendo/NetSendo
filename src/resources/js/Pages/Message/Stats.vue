@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { Head, Link } from "@inertiajs/vue3";
@@ -31,6 +31,57 @@ ChartJS.register(
 );
 
 const { t } = useI18n();
+
+// Search state
+const searchRecipients = ref(
+    new URLSearchParams(window.location.search).get("search_recipients") || "",
+);
+const searchOpens = ref(
+    new URLSearchParams(window.location.search).get("search_opens") || "",
+);
+const searchClicks = ref(
+    new URLSearchParams(window.location.search).get("search_clicks") || "",
+);
+
+// Debounce timers
+let recipientsTimer = null;
+let opensTimer = null;
+let clicksTimer = null;
+
+// Search handlers with debounce
+const handleSearch = (type, value) => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (value) {
+        params.set(`search_${type}`, value);
+    } else {
+        params.delete(`search_${type}`);
+    }
+
+    // Reset to first page when searching
+    params.delete(`${type}_page`);
+
+    router.visit(`${window.location.pathname}?${params.toString()}`, {
+        preserveScroll: true,
+        preserveState: true,
+    });
+};
+
+// Debounced search watchers
+watch(searchRecipients, (value) => {
+    clearTimeout(recipientsTimer);
+    recipientsTimer = setTimeout(() => handleSearch("recipients", value), 400);
+});
+
+watch(searchOpens, (value) => {
+    clearTimeout(opensTimer);
+    opensTimer = setTimeout(() => handleSearch("opens", value), 400);
+});
+
+watch(searchClicks, (value) => {
+    clearTimeout(clicksTimer);
+    clicksTimer = setTimeout(() => handleSearch("clicks", value), 400);
+});
 
 const props = defineProps({
     message: Object,
@@ -608,29 +659,75 @@ const resendToFailed = () => {
                 <div
                     v-if="
                         recipients &&
-                        recipients.data &&
-                        recipients.data.length > 0
+                        (recipients.data?.length > 0 || searchRecipients)
                     "
                     class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
                 >
                     <div
                         class="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
                     >
-                        <div class="flex justify-between items-center">
+                        <div
+                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
+                        >
                             <h3
                                 class="text-lg font-semibold text-gray-800 dark:text-gray-200"
                             >
                                 📧 {{ $t("messages.stats.recipients.title") }}
                             </h3>
-                            <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
-                            >
-                                {{
-                                    $t("messages.stats.recipients.total", {
-                                        count: recipients.total || 0,
-                                    })
-                                }}
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <div class="relative">
+                                    <input
+                                        v-model="searchRecipients"
+                                        type="text"
+                                        :placeholder="
+                                            $t('common.search_placeholder')
+                                        "
+                                        class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                                    />
+                                    <svg
+                                        v-if="!searchRecipients"
+                                        class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                        />
+                                    </svg>
+                                    <button
+                                        v-else
+                                        @click="searchRecipients = ''"
+                                        class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    >
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <span
+                                    class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap"
+                                >
+                                    {{
+                                        $t("messages.stats.recipients.total", {
+                                            count: recipients.total || 0,
+                                        })
+                                    }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -892,16 +989,63 @@ const resendToFailed = () => {
                 </div>
 
                 <!-- Recent Activity Logs -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <!-- Opens Log -->
                     <div
                         class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
                     >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
+                        <div
+                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4"
                         >
-                            {{ $t("messages.stats.activity.recent_opens") }}
-                        </h3>
+                            <h3
+                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
+                            >
+                                {{ $t("messages.stats.activity.recent_opens") }}
+                            </h3>
+                            <div class="relative">
+                                <input
+                                    v-model="searchOpens"
+                                    type="text"
+                                    :placeholder="
+                                        $t('common.search_placeholder')
+                                    "
+                                    class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                                />
+                                <svg
+                                    v-if="!searchOpens"
+                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                </svg>
+                                <button
+                                    v-else
+                                    @click="searchOpens = ''"
+                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <svg
+                                        class="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table
                                 class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
@@ -1005,11 +1149,60 @@ const resendToFailed = () => {
                     <div
                         class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
                     >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
+                        <div
+                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4"
                         >
-                            {{ $t("messages.stats.activity.recent_clicks") }}
-                        </h3>
+                            <h3
+                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
+                            >
+                                {{
+                                    $t("messages.stats.activity.recent_clicks")
+                                }}
+                            </h3>
+                            <div class="relative">
+                                <input
+                                    v-model="searchClicks"
+                                    type="text"
+                                    :placeholder="
+                                        $t('common.search_placeholder')
+                                    "
+                                    class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                                />
+                                <svg
+                                    v-if="!searchClicks"
+                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                </svg>
+                                <button
+                                    v-else
+                                    @click="searchClicks = ''"
+                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <svg
+                                        class="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table
                                 class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"

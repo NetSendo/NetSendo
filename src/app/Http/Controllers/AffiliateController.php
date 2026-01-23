@@ -279,6 +279,40 @@ class AffiliateController extends Controller
             ->with('success', __('affiliate.program_deleted'));
     }
 
+    /**
+     * Login as partner - creates affiliate account for admin if needed.
+     */
+    public function loginAsPartner(AffiliateProgram $program)
+    {
+        $this->authorize('update', $program);
+        $user = Auth::user();
+
+        // Find or create affiliate account for admin
+        $affiliate = Affiliate::where('program_id', $program->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$affiliate) {
+            $affiliate = Affiliate::create([
+                'program_id' => $program->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'password' => bcrypt(Str::random(32)), // Random password, not used
+                'status' => 'approved',
+                'referral_code' => strtoupper(Str::random(8)),
+                'joined_at' => now(),
+                'approved_at' => now(),
+                'meta' => ['is_owner' => true],
+            ]);
+        }
+
+        // Login to affiliate guard
+        Auth::guard('affiliate')->login($affiliate);
+
+        return redirect()->route('partner.dashboard');
+    }
+
     // ==================== OFFERS ====================
 
     public function offersIndex(Request $request)

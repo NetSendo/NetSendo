@@ -53,7 +53,7 @@ watch(
             localConfig.value = { ...newVal };
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Watch for internal changes and emit
@@ -66,12 +66,15 @@ watch(
             isInternalUpdate.value = false;
         });
     },
-    { deep: true }
+    { deep: true },
 );
 
 // Ensure we always have at least variant A
 const ensureVariantA = () => {
-    if (!localConfig.value.variants || localConfig.value.variants.length === 0) {
+    if (
+        !localConfig.value.variants ||
+        localConfig.value.variants.length === 0
+    ) {
         localConfig.value.variants = [
             {
                 variant_letter: "A",
@@ -124,20 +127,27 @@ const updateVariant = (index, field, value) => {
 
 // Computed
 const canAddVariant = computed(() => localConfig.value.variants.length < 5);
-const hasMinimumVariants = computed(() => localConfig.value.variants.length >= 2);
+const hasMinimumVariants = computed(
+    () => localConfig.value.variants.length >= 2,
+);
 
 // AI generation state per variant
 const generatingVariantAI = ref({});
 
 // Handle AI selection for a variant
 const handleVariantAISelect = (variantIndex, { subject, preheader }) => {
-    updateVariant(variantIndex, 'subject', subject);
-    updateVariant(variantIndex, 'preheader', preheader);
+    updateVariant(variantIndex, "subject", subject);
+    updateVariant(variantIndex, "preheader", preheader);
 };
 
 // Get control variant data for AI context
 const controlVariant = computed(() => {
-    return localConfig.value.variants.find(v => v.is_control) || { subject: '', preheader: '' };
+    return (
+        localConfig.value.variants.find((v) => v.is_control) || {
+            subject: "",
+            preheader: "",
+        }
+    );
 });
 
 // Check if control variant has empty data
@@ -156,8 +166,16 @@ const testTypeOptions = [
 
 const winningMetricOptions = [
     { value: "open_rate", label: t("ab_tests.metrics.open_rate"), icon: "📬" },
-    { value: "click_rate", label: t("ab_tests.metrics.click_rate"), icon: "🔗" },
-    { value: "conversion_rate", label: t("ab_tests.metrics.conversion_rate"), icon: "💰" },
+    {
+        value: "click_rate",
+        label: t("ab_tests.metrics.click_rate"),
+        icon: "🔗",
+    },
+    {
+        value: "conversion_rate",
+        label: t("ab_tests.metrics.conversion_rate"),
+        icon: "💰",
+    },
 ];
 
 const durationOptions = [
@@ -195,7 +213,9 @@ ensureVariantA();
                     class="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 <div>
-                    <span class="text-base font-semibold text-slate-900 dark:text-white">
+                    <span
+                        class="text-base font-semibold text-slate-900 dark:text-white"
+                    >
                         {{ $t("ab_tests.enable_testing") }}
                     </span>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -208,9 +228,13 @@ ensureVariantA();
         <!-- A/B Test Configuration (shown when enabled) -->
         <div v-if="localConfig.enabled" class="space-y-6">
             <!-- Variants Section -->
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
+            <div
+                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+            >
                 <div class="mb-4 flex items-center justify-between">
-                    <h4 class="text-base font-semibold text-slate-900 dark:text-white">
+                    <h4
+                        class="text-base font-semibold text-slate-900 dark:text-white"
+                    >
                         🧪 {{ $t("ab_tests.variants.title") }}
                     </h4>
                     <button
@@ -219,8 +243,18 @@ ensureVariantA();
                         @click="addVariant"
                         class="flex items-center gap-1 rounded-lg bg-indigo-100 px-3 py-1.5 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                     >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v16m8-8H4"
+                            />
                         </svg>
                         {{ $t("ab_tests.variants.add") }}
                     </button>
@@ -249,8 +283,11 @@ ensureVariantA();
                                 >
                                     {{ variant.variant_letter }}
                                 </span>
-                                <span class="font-medium text-slate-700 dark:text-slate-300">
-                                    {{ $t("ab_tests.variants.variant") }} {{ variant.variant_letter }}
+                                <span
+                                    class="font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("ab_tests.variants.variant") }}
+                                    {{ variant.variant_letter }}
                                 </span>
                                 <span
                                     v-if="variant.is_control"
@@ -260,12 +297,20 @@ ensureVariantA();
                                 </span>
                             </div>
                             <button
-                                v-if="!variant.is_control && localConfig.variants.length > 2"
+                                v-if="
+                                    !variant.is_control &&
+                                    localConfig.variants.length > 2
+                                "
                                 type="button"
                                 @click="removeVariant(index)"
                                 class="rounded p-1 text-slate-400 transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
                             >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -280,65 +325,137 @@ ensureVariantA();
                             <!-- Control Variant: Read-only with info -->
                             <template v-if="variant.is_control">
                                 <div>
-                                    <InputLabel :value="$t('ab_tests.variants.subject')" class="mb-1" />
+                                    <InputLabel
+                                        :value="$t('ab_tests.variants.subject')"
+                                        class="mb-1"
+                                    />
                                     <TextInput
                                         type="text"
                                         :model-value="originalSubject"
-                                        :placeholder="$t('ab_tests.variants.subject_placeholder')"
+                                        :placeholder="
+                                            $t(
+                                                'ab_tests.variants.subject_placeholder',
+                                            )
+                                        "
                                         class="w-full bg-slate-50 dark:bg-slate-700/50"
                                         disabled
                                     />
                                 </div>
                                 <div>
-                                    <InputLabel :value="$t('ab_tests.variants.preheader')" class="mb-1" />
+                                    <InputLabel
+                                        :value="
+                                            $t('ab_tests.variants.preheader')
+                                        "
+                                        class="mb-1"
+                                    />
                                     <TextInput
                                         type="text"
                                         :model-value="originalPreheader"
-                                        :placeholder="$t('ab_tests.variants.preheader_placeholder')"
+                                        :placeholder="
+                                            $t(
+                                                'ab_tests.variants.preheader_placeholder',
+                                            )
+                                        "
                                         class="w-full bg-slate-50 dark:bg-slate-700/50"
                                         disabled
                                     />
                                 </div>
                                 <!-- Info message for control variant -->
-                                <p v-if="!controlVariantEmpty" class="text-xs text-emerald-600 dark:text-emerald-400">
-                                    ℹ️ {{ $t('ab_tests.variants.control_readonly') }}
+                                <p
+                                    v-if="!controlVariantEmpty"
+                                    class="text-xs text-emerald-600 dark:text-emerald-400"
+                                >
+                                    ℹ️
+                                    {{
+                                        $t("ab_tests.variants.control_readonly")
+                                    }}
                                 </p>
                                 <!-- Warning if control is empty -->
-                                <p v-else class="text-xs text-amber-600 dark:text-amber-400">
-                                    ⚠️ {{ $t('ab_tests.variants.control_empty_warning') }}
+                                <p
+                                    v-else
+                                    class="text-xs text-amber-600 dark:text-amber-400"
+                                >
+                                    ⚠️
+                                    {{
+                                        $t(
+                                            "ab_tests.variants.control_empty_warning",
+                                        )
+                                    }}
                                 </p>
                             </template>
 
                             <!-- Other Variants: Editable with AI Assistant -->
                             <template v-else>
                                 <div>
-                                    <div class="mb-1 flex items-center justify-between">
-                                        <InputLabel :value="$t('ab_tests.variants.subject')" />
+                                    <div
+                                        class="mb-1 flex items-center justify-between"
+                                    >
+                                        <InputLabel
+                                            :value="
+                                                $t('ab_tests.variants.subject')
+                                            "
+                                        />
                                         <SubjectAiAssistant
                                             :current-content="messageContent"
-                                            :control-subject="controlVariant.subject || originalSubject"
-                                            :control-preheader="controlVariant.preheader || originalPreheader"
+                                            :control-subject="
+                                                controlVariant.subject ||
+                                                originalSubject
+                                            "
+                                            :control-preheader="
+                                                controlVariant.preheader ||
+                                                originalPreheader
+                                            "
                                             :is-variant="true"
-                                            @select="handleVariantAISelect(index, $event)"
+                                            @select="
+                                                handleVariantAISelect(
+                                                    index,
+                                                    $event,
+                                                )
+                                            "
                                             button-size="sm"
                                         />
                                     </div>
                                     <TextInput
                                         type="text"
                                         :model-value="variant.subject"
-                                        @update:model-value="updateVariant(index, 'subject', $event)"
-                                        :placeholder="$t('ab_tests.variants.subject_placeholder')"
+                                        @update:model-value="
+                                            updateVariant(
+                                                index,
+                                                'subject',
+                                                $event,
+                                            )
+                                        "
+                                        :placeholder="
+                                            $t(
+                                                'ab_tests.variants.subject_placeholder',
+                                            )
+                                        "
                                         class="w-full"
                                         :disabled="disabled"
                                     />
                                 </div>
                                 <div>
-                                    <InputLabel :value="$t('ab_tests.variants.preheader')" class="mb-1" />
+                                    <InputLabel
+                                        :value="
+                                            $t('ab_tests.variants.preheader')
+                                        "
+                                        class="mb-1"
+                                    />
                                     <TextInput
                                         type="text"
                                         :model-value="variant.preheader"
-                                        @update:model-value="updateVariant(index, 'preheader', $event)"
-                                        :placeholder="$t('ab_tests.variants.preheader_placeholder')"
+                                        @update:model-value="
+                                            updateVariant(
+                                                index,
+                                                'preheader',
+                                                $event,
+                                            )
+                                        "
+                                        :placeholder="
+                                            $t(
+                                                'ab_tests.variants.preheader_placeholder',
+                                            )
+                                        "
                                         class="w-full"
                                         :disabled="disabled"
                                     />
@@ -348,21 +465,31 @@ ensureVariantA();
                     </div>
                 </div>
 
-                <p v-if="!hasMinimumVariants" class="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                <p
+                    v-if="!hasMinimumVariants"
+                    class="mt-3 text-sm text-amber-600 dark:text-amber-400"
+                >
                     ⚠️ {{ $t("ab_tests.variants.minimum_required") }}
                 </p>
             </div>
 
             <!-- Test Settings -->
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <h4 class="mb-4 text-base font-semibold text-slate-900 dark:text-white">
+            <div
+                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+            >
+                <h4
+                    class="mb-4 text-base font-semibold text-slate-900 dark:text-white"
+                >
                     ⚙️ {{ $t("ab_tests.settings.title") }}
                 </h4>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- Winning Metric -->
                     <div>
-                        <InputLabel :value="$t('ab_tests.settings.winning_metric')" class="mb-2" />
+                        <InputLabel
+                            :value="$t('ab_tests.settings.winning_metric')"
+                            class="mb-2"
+                        />
                         <div class="space-y-2">
                             <label
                                 v-for="metric in winningMetricOptions"
@@ -382,7 +509,9 @@ ensureVariantA();
                                     :disabled="disabled"
                                 />
                                 <span class="text-lg">{{ metric.icon }}</span>
-                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
                                     {{ metric.label }}
                                 </span>
                             </label>
@@ -391,7 +520,10 @@ ensureVariantA();
 
                     <!-- Sample Percentage -->
                     <div>
-                        <InputLabel :value="$t('ab_tests.settings.sample_percentage')" class="mb-2" />
+                        <InputLabel
+                            :value="$t('ab_tests.settings.sample_percentage')"
+                            class="mb-2"
+                        />
                         <div class="space-y-2">
                             <input
                                 type="range"
@@ -402,9 +534,13 @@ ensureVariantA();
                                 class="w-full"
                                 :disabled="disabled"
                             />
-                            <div class="flex items-center justify-between text-sm">
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
                                 <span class="text-slate-500">5%</span>
-                                <span class="font-semibold text-indigo-600 dark:text-indigo-400">
+                                <span
+                                    class="font-semibold text-indigo-600 dark:text-indigo-400"
+                                >
                                     {{ localConfig.sample_percentage }}%
                                 </span>
                                 <span class="text-slate-500">50%</span>
@@ -417,13 +553,20 @@ ensureVariantA();
 
                     <!-- Test Duration -->
                     <div>
-                        <InputLabel :value="$t('ab_tests.settings.test_duration')" class="mb-2" />
+                        <InputLabel
+                            :value="$t('ab_tests.settings.test_duration')"
+                            class="mb-2"
+                        />
                         <select
                             v-model.number="localConfig.test_duration_hours"
                             class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
                             :disabled="disabled"
                         >
-                            <option v-for="option in durationOptions" :key="option.value" :value="option.value">
+                            <option
+                                v-for="option in durationOptions"
+                                :key="option.value"
+                                :value="option.value"
+                            >
                                 {{ option.label }}
                             </option>
                         </select>
@@ -434,7 +577,9 @@ ensureVariantA();
                 </div>
 
                 <!-- Auto Select Winner -->
-                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div
+                    class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"
+                >
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input
                             type="checkbox"
@@ -443,7 +588,9 @@ ensureVariantA();
                             :disabled="disabled"
                         />
                         <div>
-                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <span
+                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                            >
                                 {{ $t("ab_tests.settings.auto_winner") }}
                             </span>
                             <p class="text-xs text-slate-500">
@@ -455,18 +602,23 @@ ensureVariantA();
 
                 <!-- Confidence Threshold -->
                 <div v-if="localConfig.auto_select_winner" class="mt-4">
-                    <InputLabel :value="$t('ab_tests.settings.confidence_threshold')" class="mb-2" />
+                    <InputLabel
+                        :value="$t('ab_tests.settings.confidence_threshold')"
+                        class="mb-2"
+                    />
                     <div class="flex items-center gap-4">
                         <input
                             type="range"
                             v-model.number="localConfig.confidence_threshold"
-                            min="80"
+                            min="60"
                             max="99"
                             step="1"
                             class="flex-1"
                             :disabled="disabled"
                         />
-                        <span class="min-w-[4rem] text-center font-semibold text-indigo-600 dark:text-indigo-400">
+                        <span
+                            class="min-w-[4rem] text-center font-semibold text-indigo-600 dark:text-indigo-400"
+                        >
                             {{ localConfig.confidence_threshold }}%
                         </span>
                     </div>
@@ -477,9 +629,16 @@ ensureVariantA();
             </div>
 
             <!-- Info Banner -->
-            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+            <div
+                class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
+            >
                 <div class="flex gap-3">
-                    <svg class="h-5 w-5 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                        class="h-5 w-5 flex-shrink-0 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"

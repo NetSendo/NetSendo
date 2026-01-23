@@ -99,6 +99,34 @@ return [
     'profile_updated' => 'Profil aktualisiert!',
     'password_updated' => 'Passwort aktualisiert!',
 
+    // Partner Referral Tools
+    'your_referral_tools' => 'Ihre Empfehlungstools',
+    'your_referral_link' => 'Ihr Empfehlungslink',
+    'your_referral_code' => 'Ihr Empfehlungscode',
+    'copy_link' => 'Link kopieren',
+    'copy_code' => 'Code kopieren',
+    'link_copied' => 'Kopiert!',
+    'referred_signups' => 'Empfohlene Anmeldungen',
+    'referred_by' => 'Empfohlen von Partner',
+    'referral_code_optional' => 'Empfehlungscode (optional)',
+    'referral_code_placeholder' => 'Empfehlungscode eingeben',
+    'referral_code_hint' => 'Wenn Sie von einem Partner empfohlen wurden, geben Sie dessen Code ein',
+
+    // Team Page
+    'my_team' => 'Mein Team',
+    'invite_partners' => 'Partner einladen',
+    'invite_partners_desc' => 'Bauen Sie Ihr Team auf und verdienen Sie Provisionen aus deren Verkäufen',
+    'total_partners' => 'Partner gesamt',
+    'direct_partners' => 'Direkte Partner',
+    'team_clicks' => 'Team-Klicks',
+    'team_conversions' => 'Team-Konversionen',
+    'team_earnings' => 'Team-Einnahmen',
+    'partner_tree' => 'Partner-Baum',
+    'no_partners_yet' => 'Noch keine Partner',
+    'share_link_to_grow' => 'Teilen Sie Ihren Empfehlungslink, um Ihr Team zu vergrößern',
+    'sub_partners' => 'Unterpartner',
+    'view_as_partner' => 'Als Partner anzeigen',
+
     // Multi-level settings
     'basic_settings' => 'Grundeinstellungen',
     'advanced_settings' => 'Erweiterte Einstellungen',

@@ -7,7 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
 ### Fixed
+
+### Changed
+
+## [1.7.13] – Short Description
+
+**Release date:** 2026-01-23
+
+### Added
+
+- **Partner Program Expansion - Referral Tools:**
+  - Added "Your Referral Tools" card to Partner Dashboard showing personalized referral link and code with copy-to-clipboard functionality.
+  - Implemented referee tracking: new `referred_by_affiliate_id` column on `users` table to track which partner referred a user at registration.
+  - Added referral detection for user registration via URL parameter (`?ref=CODE`) or cookie (`ns_affiliate`).
+  - Created `/ref/{code}` route for seamless affiliate link tracking that redirects to registration with referral code.
+  - Registration through referral now records a "lead" conversion for commission tracking.
+
+- **Partner Registration Referrals (MLM Structure):**
+  - Partner registration form now accepts optional referral code from existing partners.
+  - Added referral banner showing "Referred by [Partner Name]" when registering via a referral link.
+  - Enables multi-level tracking of partner-to-partner referrals.
+
+- **Admin Partner Portal Access:**
+  - Added "View as Partner" button to Affiliate Program dashboard header and Programs list.
+  - Allows administrators to instantly access the Partner Portal for any affiliate program.
+  - Automatically creates an affiliate account for the admin if one doesn't exist.
+
+- **Partner Team Page ("My Team"):**
+  - New `/partner/team` page displaying hierarchical view of partner's referral network.
+  - Shows direct referrals (level 1) and their sub-referrals (level 2) with individual stats.
+  - Team statistics: total partners, direct partners, team clicks, conversions, and earnings.
+  - "Invite Partners" section with copy-to-clipboard referral link.
+  - Added "My Team" to Partner Portal sidebar navigation.
+
+- **Partner Program Translations:**
+  - Full translations for all new partner features in PL, EN, DE, ES.
+  - Updated both backend (PHP) and frontend (JSON) translation files.
+  - New keys: referral tools, team page elements, referred by banners, view as partner.
+
+### Fixed
+
+- **Persistent Locale Selection:**
+  - Implemented persistent locale storage using cookies to fix the issue where the browser's language setting overrides the user's manual selection after session expiration.
+  - Updated `SetLocale` middleware to prioritize the `locale` cookie over the `Accept-Language` header.
+  - Updated `LocaleController` to store the user's language preference in a cookie (valid for 1 year) upon manual selection.
 
 - **A/B Testing - Sample Percentage & Sending Logic:**
   - Fixed critical issue where A/B tests were sending to all recipients immediately instead of respecting the configured `sample_percentage`.
@@ -15,9 +61,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented logic to automatically substitute message subject and preheader with the assigned variant's content during sending.
   - Added `ab_test_variant_id` to `MessageQueueEntry` model to track variant assignment per recipient.
 
-### Added
+- **Message Statistics UI:**
+  - Fixed layout issue in "Recent Clicks" table where rows were stretched vertically due to grid alignment. Added `items-start` class to ensure independent height for "Recent Opens" and "Recent Clicks" cards.
 
 ### Changed
+
+- **A/B Test UI Improvements:**
+  - The "A/B Test" badge on the message list is now clickable and links directly to the results page.
+  - Lowered the minimum confidence threshold for auto-winner selection from 80% to 60% to provide more flexibility.
 
 ## [1.7.12] – Short Description
 

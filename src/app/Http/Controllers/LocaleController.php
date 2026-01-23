@@ -27,11 +27,14 @@ class LocaleController extends Controller
         // Store in session (works for both guests and authenticated users)
         $request->session()->put('locale', $validated['locale']);
 
+        // Store in cookie for persistence across sessions (1 year validity)
+        $cookie = cookie('locale', $validated['locale'], 60 * 24 * 365); // 1 year in minutes
+
         // Update user preference in database if authenticated
         if ($request->user()) {
             $request->user()->update(['locale' => $validated['locale']]);
         }
 
-        return back();
+        return back()->withCookie($cookie);
     }
 }

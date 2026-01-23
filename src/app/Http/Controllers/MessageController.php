@@ -964,9 +964,19 @@ class MessageController extends Controller
                 'read_at' => DateHelper::formatForUser($session->started_at),
             ]);
 
-        // Process recent opens with sorting and pagination
+        // Process recent opens with sorting, search, and pagination
         $opensQuery = EmailOpen::where('message_id', $message->id)
             ->with('subscriber:id,email,first_name,last_name');
+
+        // Search filter for opens
+        if ($request->filled('search_opens')) {
+            $search = $request->input('search_opens');
+            $opensQuery->whereHas('subscriber', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
 
         if ($request->input('sort_opens_by') && $request->input('sort_opens_dir')) {
             $sortBy = $request->input('sort_opens_by'); // 'email' or 'time'
@@ -993,9 +1003,19 @@ class MessageController extends Controller
                 'occurred_at' => DateHelper::formatForUser($open->opened_at),
             ]);
 
-        // Process recent clicks with sorting and pagination
+        // Process recent clicks with sorting, search, and pagination
         $clicksQuery = EmailClick::where('message_id', $message->id)
             ->with('subscriber:id,email,first_name,last_name');
+
+        // Search filter for clicks
+        if ($request->filled('search_clicks')) {
+            $search = $request->input('search_clicks');
+            $clicksQuery->whereHas('subscriber', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
 
         if ($request->input('sort_clicks_by') && $request->input('sort_clicks_dir')) {
             $sortBy = $request->input('sort_clicks_by'); // 'email', 'url', 'time'
@@ -1092,6 +1112,15 @@ class MessageController extends Controller
                       ->orWhereNull('message_queue_entries.error_message')
                       ->orWhere('message_queue_entries.error_message', 'NOT LIKE', '%removed from list%');
                 })
+                // Search filter for recipients
+                ->when($request->filled('search_recipients'), function ($q) use ($request) {
+                    $search = $request->input('search_recipients');
+                    $q->where(function ($q2) use ($search) {
+                        $q2->where('subscribers.email', 'like', "%{$search}%")
+                          ->orWhere('subscribers.first_name', 'like', "%{$search}%")
+                          ->orWhere('subscribers.last_name', 'like', "%{$search}%");
+                    });
+                })
                 ->orderByRaw("CASE message_queue_entries.status
                     WHEN 'failed' THEN 1
                     WHEN 'queued' THEN 2
@@ -1101,7 +1130,8 @@ class MessageController extends Controller
                     ELSE 6 END")
                 ->orderByDesc('sent_at')
                 ->orderByDesc('created_at')
-                ->paginate(20)
+                ->paginate(20, ['*'], 'recipients_page')
+                ->withQueryString()
                 ->through(fn($entry) => [
                     'id' => $entry->id,
                     'email' => $entry->subscriber?->email ?? 'Nieznany',

@@ -15,14 +15,27 @@ class PartnerAuthController extends Controller
     /**
      * Show registration page.
      */
-    public function showRegister(string $program)
+    public function showRegister(string $program, Request $request)
     {
         $programModel = AffiliateProgram::where('slug', $program)
             ->where('status', 'active')
             ->firstOrFail();
 
+        // Check for referral code in URL
+        $referralCode = $request->query('ref');
+        $referralPartner = null;
+
+        if ($referralCode) {
+            $referralPartner = Affiliate::where('referral_code', $referralCode)
+                ->where('program_id', $programModel->id)
+                ->where('status', 'approved')
+                ->first();
+        }
+
         return Inertia::render('Partner/Auth/Register', [
             'program' => $programModel->only(['id', 'name', 'slug', 'terms_text', 'terms_url']),
+            'referralCode' => $referralCode,
+            'referralPartnerName' => $referralPartner?->name,
         ]);
     }
 

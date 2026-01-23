@@ -860,6 +860,9 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
 });
 
 // Public Tracking Routes
+// User registration referral redirect (sets cookie and redirects to /register)
+Route::get('/ref/{code}', [AffiliateTrackingController::class, 'referralRedirect'])->name('affiliate.referral');
+
 Route::get('/t/r/{code}', [AffiliateTrackingController::class, 'redirect'])->name('affiliate.redirect');
 Route::post('/api/affiliate/track-click', [AffiliateTrackingController::class, 'trackClick'])->name('affiliate.track-click');
 Route::get('/api/affiliate/tracking-script/{programId}', [AffiliateTrackingController::class, 'trackingScript'])->name('affiliate.tracking-script');
@@ -878,6 +881,7 @@ Route::middleware(['auth', '2fa'])->prefix('profit/affiliate')->name('affiliate.
     Route::get('/programs/{program}/edit', [AffiliateController::class, 'programsEdit'])->name('programs.edit');
     Route::put('/programs/{program}', [AffiliateController::class, 'programsUpdate'])->name('programs.update');
     Route::delete('/programs/{program}', [AffiliateController::class, 'programsDestroy'])->name('programs.destroy');
+    Route::post('/programs/{program}/login-as-partner', [AffiliateController::class, 'loginAsPartner'])->name('programs.login-as-partner');
 
     // Offers
     Route::get('/offers', [AffiliateController::class, 'offersIndex'])->name('offers.index');
@@ -933,6 +937,7 @@ Route::middleware(['affiliate.auth'])->prefix('partner')->name('partner.')->grou
     Route::get('/payouts', [PartnerPortalController::class, 'payouts'])->name('payouts');
     Route::post('/payouts/settings', [PartnerPortalController::class, 'updatePayoutSettings'])->name('payouts.settings');
     Route::get('/assets', [PartnerPortalController::class, 'assets'])->name('assets');
+    Route::get('/team', [PartnerPortalController::class, 'team'])->name('team');
     Route::post('/profile', [PartnerPortalController::class, 'updateProfile'])->name('profile.update');
     Route::post('/password', [PartnerPortalController::class, 'updatePassword'])->name('password.update');
 });
