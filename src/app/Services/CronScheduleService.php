@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AbTest;
 use App\Models\ContactList;
 use App\Models\ContactListCronSetting;
 use App\Models\CronJobLog;
@@ -312,6 +313,52 @@ class CronScheduleService
                         }
 
                         $listVolumes[$listId]++;
+                    }
+
+                    // A/B Test handling - check sample_percentage limit
+                    $abTest = $message->abTest;
+                    if ($abTest && in_array($abTest->status, [AbTest::STATUS_DRAFT, AbTest::STATUS_RUNNING])) {
+                        // Calculate sample size
+                        $totalRecipients = $message->planned_recipients_count ?: $message->getUniqueRecipients()->count();
+                        $sampleSize = (int) ceil($totalRecipients * ($abTest->sample_percentage / 100));
+
+                        // Count how many already sent in test
+                        $sentInTest = MessageQueueEntry::where('message_id', $message->id)
+                            ->whereNotNull('ab_test_variant_id')
+                            ->whereIn('status', [MessageQueueEntry::STATUS_QUEUED, MessageQueueEntry::STATUS_SENT])
+                            ->count();
+
+                        // If sample limit reached, skip this entry for now
+                        if ($sentInTest >= $sampleSize) {
+                            Log::debug('A/B Test sample limit reached', [
+                                'message_id' => $message->id,
+                                'test_id' => $abTest->id,
+                                'sample_size' => $sampleSize,
+                                'sent' => $sentInTest,
+                            ]);
+                            continue;
+                        }
+
+                        // Assign variant if not already assigned
+                        if (!$entry->ab_test_variant_id) {
+                            $abTestService = app(AbTestService::class);
+                            $variant = $abTestService->assignVariant($abTest, $subscriber);
+                            $entry->update(['ab_test_variant_id' => $variant->id]);
+                            Log::debug('A/B Test variant assigned', [
+                                'entry_id' => $entry->id,
+                                'variant_id' => $variant->id,
+                                'variant_letter' => $variant->variant_letter,
+                            ]);
+                        }
+
+                        // Start test if still in draft
+                        if ($abTest->status === AbTest::STATUS_DRAFT) {
+                            $abTest->update([
+                                'status' => AbTest::STATUS_RUNNING,
+                                'test_started_at' => now(),
+                            ]);
+                            Log::info('A/B Test started', ['test_id' => $abTest->id]);
+                        }
                     }
 
                     // Oznacz jako w kolejce i wyślij

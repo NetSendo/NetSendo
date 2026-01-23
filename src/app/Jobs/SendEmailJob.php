@@ -51,6 +51,27 @@ class SendEmailJob implements ShouldQueue
             $content = $this->message->content;
             $subject = $this->message->subject;
 
+            // A/B Test: Apply variant content if variant is assigned to this queue entry
+            if ($this->queueEntryId) {
+                $queueEntry = MessageQueueEntry::find($this->queueEntryId);
+                if ($queueEntry && $queueEntry->ab_test_variant_id) {
+                    $variant = \App\Models\AbTestVariant::find($queueEntry->ab_test_variant_id);
+                    if ($variant) {
+                        if ($variant->subject) {
+                            $subject = $variant->subject;
+                            Log::debug('A/B Test: Using variant subject', [
+                                'entry_id' => $this->queueEntryId,
+                                'variant_letter' => $variant->variant_letter,
+                                'subject' => $subject,
+                            ]);
+                        }
+                        if ($variant->preheader) {
+                            $this->message->preheader = $variant->preheader;
+                        }
+                    }
+                }
+            }
+
             // Generate HMAC Hash for security
             $hash = hash_hmac('sha256', "{$this->message->id}.{$this->subscriber->id}", config('app.key'));
 

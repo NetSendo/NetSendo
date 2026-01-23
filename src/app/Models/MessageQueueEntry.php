@@ -16,12 +16,21 @@ class MessageQueueEntry extends Model
     protected $fillable = [
         'message_id',
         'subscriber_id',
+        'ab_test_variant_id',
         'status',
         'planned_at',
         'queued_at',
         'sent_at',
         'error_message',
     ];
+
+    /**
+     * Get the A/B test variant assigned to this entry.
+     */
+    public function abTestVariant(): BelongsTo
+    {
+        return $this->belongsTo(AbTestVariant::class);
+    }
 
     protected $casts = [
         'planned_at' => 'datetime',

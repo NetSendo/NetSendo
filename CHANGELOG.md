@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **A/B Testing - Sample Percentage & Sending Logic:**
+  - Fixed critical issue where A/B tests were sending to all recipients immediately instead of respecting the configured `sample_percentage`.
+  - Updated `processQueue` to properly limit sending to the sample size and auto-assign variants to recipients.
+  - Implemented logic to automatically substitute message subject and preheader with the assigned variant's content during sending.
+  - Added `ab_test_variant_id` to `MessageQueueEntry` model to track variant assignment per recipient.
+
 ### Added
 
 ### Changed
