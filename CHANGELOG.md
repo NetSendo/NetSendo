@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Resend to Failed Subscribers:**
+  - Fixed 419 Page Expired (CSRF) error when using "Resend to Failed" button by migrating from manual `fetch()` to Inertia `router.post()`.
+  - Updated `MessageController` to return proper Redirect responses with flash messages instead of JSON, ensuring compatibility with Inertia.
+  - Added missing translation keys for success/error messages in `src/lang/en/messages.php` and `src/lang/pl/messages.php`.
+
 ## [1.7.11] – Short Description
 
 **Release date:** 2026-01-21

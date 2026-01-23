@@ -860,10 +860,7 @@ class MessageController extends Controller
         $failedCount = $failedEntries->count();
 
         if ($failedCount === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Brak odbiorców z błędami do ponowienia wysyłki.'
-            ], 422);
+            return back()->with('error', __('messages.stats.queue.no_failed_recipients'));
         }
 
         // Reset message status to scheduled if it was sent
@@ -892,11 +889,7 @@ class MessageController extends Controller
                 ->count() + $message->sent_count,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'failed_count' => $failedCount,
-            'message' => "Ponowna wysyłka zaplanowana dla {$failedCount} odbiorców z błędami."
-        ]);
+        return back()->with('success', __('messages.stats.queue.resend_scheduled', ['count' => $failedCount]));
     }
 
     public function destroy(Message $message)

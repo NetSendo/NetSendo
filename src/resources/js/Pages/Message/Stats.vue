@@ -203,39 +203,28 @@ const copyError = async () => {
 // Resend to failed functionality
 const resendingToFailed = ref(false);
 
-const resendToFailed = async () => {
+const resendToFailed = () => {
     if (resendingToFailed.value) return;
 
     resendingToFailed.value = true;
 
-    try {
-        const response = await fetch(
-            route("messages.resend-to-failed", props.message.id),
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document
-                        .querySelector('meta[name="csrf-token"]')
-                        .getAttribute("content"),
-                },
+    router.post(
+        route("messages.resend-to-failed", props.message.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Automatically reloaded by Inertia
             },
-        );
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Refresh the page to show updated stats
-            router.reload({ preserveScroll: true });
-        } else {
-            alert(data.message || t("messages.stats.queue.resend_error"));
-        }
-    } catch (error) {
-        console.error("Resend to failed error:", error);
-        alert(t("messages.stats.queue.resend_error"));
-    } finally {
-        resendingToFailed.value = false;
-    }
+            onError: (errors) => {
+                console.error("Resend to failed error:", errors);
+                alert(t("messages.stats.queue.resend_error"));
+            },
+            onFinish: () => {
+                resendingToFailed.value = false;
+            },
+        },
+    );
 };
 </script>
 

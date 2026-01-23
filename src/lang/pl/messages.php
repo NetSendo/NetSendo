@@ -23,4 +23,13 @@ return [
     'confirm_delete' => 'Czy na pewno chcesz to usunąć?',
     'confirm_action' => 'Czy na pewno chcesz kontynuować?',
     'action_irreversible' => 'Ta akcja jest nieodwracalna.',
+
+    // Stats & Queue
+    'stats' => [
+        'queue' => [
+            'no_failed_recipients' => 'Nie znaleziono odbiorców z błędami do ponownej wysyłki.',
+            'resend_scheduled' => 'Zaplanowano ponowną wysyłkę dla :count odbiorców z błędami.',
+            'resend_error' => 'Wystąpił błąd podczas planowania ponownej wysyłki.',
+        ],
+    ],
 ];
