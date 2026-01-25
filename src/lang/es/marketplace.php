@@ -273,4 +273,130 @@ return [
         'help_desc' => 'Revisa la documentación o contáctanos.',
         'documentation_button' => 'Documentación',
     ],
+
+    'gmail' => [
+        'title' => 'Gmail',
+        'hero_title' => 'Integración Gmail',
+        'hero_subtitle' => 'Conecta tus cuentas de Gmail para gestión de correos.',
+        'hero_description' => 'Integra Gmail con NetSendo para usar tus cuentas de Google como buzones de envío. OAuth 2.0 proporciona autenticación segura sin almacenar contraseñas.',
+        'features_title' => 'Características',
+        'features' => [
+            'imap' => [
+                'title' => 'Acceso IMAP',
+                'description' => 'Lee y sincroniza emails de tu bandeja de Gmail.',
+            ],
+            'smtp' => [
+                'title' => 'Envío SMTP',
+                'description' => 'Envía emails directamente a través de servidores Gmail.',
+            ],
+            'oauth' => [
+                'title' => 'OAuth 2.0',
+                'description' => 'Autenticación segura sin almacenar contraseñas.',
+            ],
+            'tracking' => [
+                'title' => 'Rastreo de Emails',
+                'description' => 'Rastrea aperturas y clics de emails enviados.',
+            ],
+        ],
+        'setup_title' => 'Configuración',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Crear Proyecto Google Cloud',
+                'description' => 'Ve a Google Cloud Console y crea un nuevo proyecto.',
+            ],
+            'enable_api' => [
+                'title' => 'Habilitar Gmail API',
+                'description' => 'En tu proyecto, habilita Gmail API desde la biblioteca de APIs.',
+            ],
+            'oauth' => [
+                'title' => 'Configurar OAuth Consent',
+                'description' => 'Configura la pantalla de consentimiento OAuth con los permisos requeridos.',
+            ],
+            'configure' => [
+                'title' => 'Agregar Credenciales a NetSendo',
+                'description' => 'Ingresa Client ID y Client Secret en Configuración → Integraciones.',
+            ],
+            'authorize' => [
+                'title' => 'Autorizar Cuenta Gmail',
+                'description' => 'Conecta tu cuenta de Gmail a través del flujo OAuth.',
+            ],
+        ],
+        'go_to_settings' => 'Ir a Cuentas de Email',
+        'resources_title' => 'Recursos',
+        'docs_link' => 'Documentación Gmail API',
+        'manage_accounts' => 'Gestionar Cuentas de Email',
+        'requirements_title' => 'Requisitos',
+        'requirements' => [
+            'google_account' => 'Cuenta de Google',
+            'cloud_project' => 'Proyecto Google Cloud',
+            'oauth_credentials' => 'Credenciales OAuth 2.0',
+            'netsendo_account' => 'Cuenta NetSendo',
+        ],
+        'help_title' => '¿Necesitas ayuda?',
+        'help_desc' => 'Revisa nuestra documentación para instrucciones detalladas de configuración.',
+        'documentation_button' => 'Documentación',
+    ],
+
+    'google_calendar' => [
+        'title' => 'Google Calendar',
+        'hero_title' => 'Integración Google Calendar',
+        'hero_subtitle' => 'Sincroniza tareas CRM con Google Calendar.',
+        'hero_description' => 'Sincronización bidireccional entre tareas CRM de NetSendo y Google Calendar. Crea, actualiza y rastrea tareas automáticamente en ambas plataformas.',
+        'features_title' => 'Características',
+        'features' => [
+            'two_way_sync' => [
+                'title' => 'Sincronización Bidireccional',
+                'description' => 'Los cambios se sincronizan automáticamente en ambas direcciones.',
+            ],
+            'task_sync' => [
+                'title' => 'Sincronización de Tareas',
+                'description' => 'Las tareas CRM aparecen como eventos del calendario.',
+            ],
+            'reminders' => [
+                'title' => 'Recordatorios',
+                'description' => 'Recibe notificaciones sobre tareas próximas.',
+            ],
+            'webhooks' => [
+                'title' => 'Actualizaciones en Tiempo Real',
+                'description' => 'Sincronización instantánea vía webhooks de Google.',
+            ],
+        ],
+        'setup_title' => 'Configuración',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Crear Proyecto Google Cloud',
+                'description' => 'Ve a Google Cloud Console y crea un nuevo proyecto.',
+            ],
+            'enable_api' => [
+                'title' => 'Habilitar Calendar API',
+                'description' => 'Habilita Google Calendar API desde la biblioteca de APIs.',
+            ],
+            'oauth' => [
+                'title' => 'Configurar OAuth Consent',
+                'description' => 'Configura la pantalla de consentimiento OAuth con permisos de calendario.',
+            ],
+            'configure' => [
+                'title' => 'Agregar Credenciales a NetSendo',
+                'description' => 'Ingresa Client ID y Client Secret en Configuración → Integraciones.',
+            ],
+            'connect' => [
+                'title' => 'Conectar Calendario',
+                'description' => 'Autoriza tu Google Calendar en Configuración → Calendario.',
+            ],
+        ],
+        'go_to_settings' => 'Ir a Configuración de Calendario',
+        'resources_title' => 'Recursos',
+        'docs_link' => 'Documentación Calendar API',
+        'manage_tasks' => 'Gestionar Tareas CRM',
+        'requirements_title' => 'Requisitos',
+        'requirements' => [
+            'google_account' => 'Cuenta de Google',
+            'cloud_project' => 'Proyecto Google Cloud',
+            'calendar_api' => 'Calendar API Habilitado',
+            'netsendo_account' => 'Cuenta NetSendo',
+        ],
+        'help_title' => '¿Necesitas ayuda?',
+        'help_desc' => 'Revisa nuestra documentación para instrucciones detalladas de configuración.',
+        'documentation_button' => 'Documentación',
+    ],
 ];

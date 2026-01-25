@@ -273,4 +273,130 @@ return [
         'help_desc' => 'Check our documentation or contact support.',
         'documentation_button' => 'Documentation',
     ],
+
+    'gmail' => [
+        'title' => 'Gmail',
+        'hero_title' => 'Gmail Integration',
+        'hero_subtitle' => 'Connect your Gmail accounts for email inbox management.',
+        'hero_description' => 'Integrate Gmail with NetSendo to use your Google email accounts as sending mailboxes. OAuth 2.0 provides secure authentication without storing passwords.',
+        'features_title' => 'Features',
+        'features' => [
+            'imap' => [
+                'title' => 'IMAP Access',
+                'description' => 'Read and sync emails from your Gmail inbox.',
+            ],
+            'smtp' => [
+                'title' => 'SMTP Sending',
+                'description' => 'Send emails directly through Gmail servers.',
+            ],
+            'oauth' => [
+                'title' => 'OAuth 2.0',
+                'description' => 'Secure authentication without storing passwords.',
+            ],
+            'tracking' => [
+                'title' => 'Email Tracking',
+                'description' => 'Track opens and clicks for sent emails.',
+            ],
+        ],
+        'setup_title' => 'Setup',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Create Google Cloud Project',
+                'description' => 'Go to Google Cloud Console and create a new project.',
+            ],
+            'enable_api' => [
+                'title' => 'Enable Gmail API',
+                'description' => 'In your project, enable the Gmail API from the API Library.',
+            ],
+            'oauth' => [
+                'title' => 'Configure OAuth Consent',
+                'description' => 'Set up OAuth consent screen with required scopes.',
+            ],
+            'configure' => [
+                'title' => 'Add Credentials to NetSendo',
+                'description' => 'Enter Client ID and Client Secret in Settings → Integrations.',
+            ],
+            'authorize' => [
+                'title' => 'Authorize Gmail Account',
+                'description' => 'Connect your Gmail account through the OAuth flow.',
+            ],
+        ],
+        'go_to_settings' => 'Go to Email Accounts',
+        'resources_title' => 'Resources',
+        'docs_link' => 'Gmail API Documentation',
+        'manage_accounts' => 'Manage Email Accounts',
+        'requirements_title' => 'Requirements',
+        'requirements' => [
+            'google_account' => 'Google Account',
+            'cloud_project' => 'Google Cloud Project',
+            'oauth_credentials' => 'OAuth 2.0 Credentials',
+            'netsendo_account' => 'NetSendo Account',
+        ],
+        'help_title' => 'Need help?',
+        'help_desc' => 'Check our documentation for detailed setup instructions.',
+        'documentation_button' => 'Documentation',
+    ],
+
+    'google_calendar' => [
+        'title' => 'Google Calendar',
+        'hero_title' => 'Google Calendar Integration',
+        'hero_subtitle' => 'Sync CRM tasks with Google Calendar for seamless scheduling.',
+        'hero_description' => 'Two-way synchronization between NetSendo CRM tasks and Google Calendar. Create, update, and track tasks across both platforms automatically.',
+        'features_title' => 'Features',
+        'features' => [
+            'two_way_sync' => [
+                'title' => 'Two-Way Sync',
+                'description' => 'Changes sync automatically in both directions.',
+            ],
+            'task_sync' => [
+                'title' => 'Task Synchronization',
+                'description' => 'CRM tasks appear as calendar events.',
+            ],
+            'reminders' => [
+                'title' => 'Reminders',
+                'description' => 'Get notified about upcoming tasks.',
+            ],
+            'webhooks' => [
+                'title' => 'Real-Time Updates',
+                'description' => 'Instant sync via Google webhooks.',
+            ],
+        ],
+        'setup_title' => 'Setup',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Create Google Cloud Project',
+                'description' => 'Go to Google Cloud Console and create a new project.',
+            ],
+            'enable_api' => [
+                'title' => 'Enable Calendar API',
+                'description' => 'Enable Google Calendar API from the API Library.',
+            ],
+            'oauth' => [
+                'title' => 'Configure OAuth Consent',
+                'description' => 'Set up OAuth consent screen with calendar scopes.',
+            ],
+            'configure' => [
+                'title' => 'Add Credentials to NetSendo',
+                'description' => 'Enter Client ID and Client Secret in Settings → Integrations.',
+            ],
+            'connect' => [
+                'title' => 'Connect Calendar',
+                'description' => 'Authorize your Google Calendar in Settings → Calendar.',
+            ],
+        ],
+        'go_to_settings' => 'Go to Calendar Settings',
+        'resources_title' => 'Resources',
+        'docs_link' => 'Calendar API Documentation',
+        'manage_tasks' => 'Manage CRM Tasks',
+        'requirements_title' => 'Requirements',
+        'requirements' => [
+            'google_account' => 'Google Account',
+            'cloud_project' => 'Google Cloud Project',
+            'calendar_api' => 'Calendar API Enabled',
+            'netsendo_account' => 'NetSendo Account',
+        ],
+        'help_title' => 'Need help?',
+        'help_desc' => 'Check our documentation for detailed setup instructions.',
+        'documentation_button' => 'Documentation',
+    ],
 ];

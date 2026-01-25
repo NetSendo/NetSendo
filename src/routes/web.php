@@ -447,6 +447,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // MCP Integration (AI Assistants)
     Route::get('/marketplace/mcp', fn() => Inertia::render('Marketplace/MCP'))->name('marketplace.mcp');
 
+    // Gmail Integration (Email Inboxes)
+    Route::get('/marketplace/gmail', fn() => Inertia::render('Marketplace/Gmail'))->name('marketplace.gmail');
+
+    // Google Calendar Integration (CRM)
+    Route::get('/marketplace/google-calendar', fn() => Inertia::render('Marketplace/GoogleCalendar'))->name('marketplace.google-calendar');
+
     // MCP Status API
     Route::prefix('mcp')->name('mcp.')->group(function () {
         Route::get('/status', [\App\Http\Controllers\McpStatusController::class, 'status'])->name('status');

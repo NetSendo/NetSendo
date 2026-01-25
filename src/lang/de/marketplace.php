@@ -273,4 +273,130 @@ return [
         'help_desc' => 'Überprüfen Sie die Dokumentation oder kontaktieren Sie uns.',
         'documentation_button' => 'Dokumentation',
     ],
+
+    'gmail' => [
+        'title' => 'Gmail',
+        'hero_title' => 'Gmail Integration',
+        'hero_subtitle' => 'Verbinden Sie Ihre Gmail-Konten für die E-Mail-Postfachverwaltung.',
+        'hero_description' => 'Integrieren Sie Gmail mit NetSendo, um Ihre Google-E-Mail-Konten als Versand-Postfächer zu nutzen. OAuth 2.0 bietet sichere Authentifizierung ohne Passwort-Speicherung.',
+        'features_title' => 'Funktionen',
+        'features' => [
+            'imap' => [
+                'title' => 'IMAP-Zugriff',
+                'description' => 'E-Mails aus Ihrem Gmail-Postfach lesen und synchronisieren.',
+            ],
+            'smtp' => [
+                'title' => 'SMTP-Versand',
+                'description' => 'E-Mails direkt über Gmail-Server versenden.',
+            ],
+            'oauth' => [
+                'title' => 'OAuth 2.0',
+                'description' => 'Sichere Authentifizierung ohne Passwort-Speicherung.',
+            ],
+            'tracking' => [
+                'title' => 'E-Mail-Tracking',
+                'description' => 'Öffnungen und Klicks für gesendete E-Mails verfolgen.',
+            ],
+        ],
+        'setup_title' => 'Einrichtung',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Google Cloud Projekt Erstellen',
+                'description' => 'Gehen Sie zur Google Cloud Console und erstellen Sie ein neues Projekt.',
+            ],
+            'enable_api' => [
+                'title' => 'Gmail API Aktivieren',
+                'description' => 'Aktivieren Sie die Gmail API in Ihrem Projekt über die API-Bibliothek.',
+            ],
+            'oauth' => [
+                'title' => 'OAuth-Zustimmung Konfigurieren',
+                'description' => 'Richten Sie den OAuth-Zustimmungsbildschirm mit erforderlichen Bereichen ein.',
+            ],
+            'configure' => [
+                'title' => 'Anmeldedaten zu NetSendo Hinzufügen',
+                'description' => 'Geben Sie Client-ID und Client-Secret in Einstellungen → Integrationen ein.',
+            ],
+            'authorize' => [
+                'title' => 'Gmail-Konto Autorisieren',
+                'description' => 'Verbinden Sie Ihr Gmail-Konto über den OAuth-Flow.',
+            ],
+        ],
+        'go_to_settings' => 'Zu E-Mail-Konten',
+        'resources_title' => 'Ressourcen',
+        'docs_link' => 'Gmail API Dokumentation',
+        'manage_accounts' => 'E-Mail-Konten Verwalten',
+        'requirements_title' => 'Anforderungen',
+        'requirements' => [
+            'google_account' => 'Google-Konto',
+            'cloud_project' => 'Google Cloud Projekt',
+            'oauth_credentials' => 'OAuth 2.0 Anmeldedaten',
+            'netsendo_account' => 'NetSendo-Konto',
+        ],
+        'help_title' => 'Brauchen Sie Hilfe?',
+        'help_desc' => 'Überprüfen Sie unsere Dokumentation für detaillierte Einrichtungsanweisungen.',
+        'documentation_button' => 'Dokumentation',
+    ],
+
+    'google_calendar' => [
+        'title' => 'Google Kalender',
+        'hero_title' => 'Google Kalender Integration',
+        'hero_subtitle' => 'CRM-Aufgaben mit Google Kalender synchronisieren.',
+        'hero_description' => 'Bidirektionale Synchronisierung zwischen NetSendo CRM-Aufgaben und Google Kalender. Erstellen, aktualisieren und verfolgen Sie Aufgaben automatisch auf beiden Plattformen.',
+        'features_title' => 'Funktionen',
+        'features' => [
+            'two_way_sync' => [
+                'title' => 'Bidirektionale Synchronisierung',
+                'description' => 'Änderungen werden automatisch in beide Richtungen synchronisiert.',
+            ],
+            'task_sync' => [
+                'title' => 'Aufgaben-Synchronisierung',
+                'description' => 'CRM-Aufgaben erscheinen als Kalendertermine.',
+            ],
+            'reminders' => [
+                'title' => 'Erinnerungen',
+                'description' => 'Benachrichtigungen über bevorstehende Aufgaben erhalten.',
+            ],
+            'webhooks' => [
+                'title' => 'Echtzeit-Updates',
+                'description' => 'Sofortige Synchronisierung über Google Webhooks.',
+            ],
+        ],
+        'setup_title' => 'Einrichtung',
+        'setup_steps' => [
+            'google_cloud' => [
+                'title' => 'Google Cloud Projekt Erstellen',
+                'description' => 'Gehen Sie zur Google Cloud Console und erstellen Sie ein neues Projekt.',
+            ],
+            'enable_api' => [
+                'title' => 'Kalender API Aktivieren',
+                'description' => 'Aktivieren Sie die Google Calendar API aus der API-Bibliothek.',
+            ],
+            'oauth' => [
+                'title' => 'OAuth-Zustimmung Konfigurieren',
+                'description' => 'Richten Sie den OAuth-Zustimmungsbildschirm mit Kalender-Bereichen ein.',
+            ],
+            'configure' => [
+                'title' => 'Anmeldedaten zu NetSendo Hinzufügen',
+                'description' => 'Geben Sie Client-ID und Client-Secret in Einstellungen → Integrationen ein.',
+            ],
+            'connect' => [
+                'title' => 'Kalender Verbinden',
+                'description' => 'Autorisieren Sie Ihren Google Kalender in Einstellungen → Kalender.',
+            ],
+        ],
+        'go_to_settings' => 'Zu Kalender-Einstellungen',
+        'resources_title' => 'Ressourcen',
+        'docs_link' => 'Kalender API Dokumentation',
+        'manage_tasks' => 'CRM-Aufgaben Verwalten',
+        'requirements_title' => 'Anforderungen',
+        'requirements' => [
+            'google_account' => 'Google-Konto',
+            'cloud_project' => 'Google Cloud Projekt',
+            'calendar_api' => 'Kalender API Aktiviert',
+            'netsendo_account' => 'NetSendo-Konto',
+        ],
+        'help_title' => 'Brauchen Sie Hilfe?',
+        'help_desc' => 'Überprüfen Sie unsere Dokumentation für detaillierte Einrichtungsanweisungen.',
+        'documentation_button' => 'Dokumentation',
+    ],
 ];
