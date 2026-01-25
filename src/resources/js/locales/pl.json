@@ -3364,8 +3364,19 @@
             "refresh": "Odśwież kanał"
         },
         "webhook": {
-            "title": "URL Webhooka",
-            "description": "Ten URL odbiera powiadomienia push z Google Calendar do synchronizacji w czasie rzeczywistym."
+            "title": "Synchronizacja w czasie rzeczywistym (Webhook)",
+            "description": "Aby zmiany w Google Calendar były automatycznie synchronizowane z NetSendo, musisz skonfigurować powiadomienia push (webhook).",
+            "url_label": "URL Webhooka",
+            "setup_required": "Wymagana konfiguracja",
+            "setup_required_desc": "Powiadomienia push nie są jeszcze skonfigurowane. Wykonaj poniższe kroki, aby włączyć automatyczną synchronizację.",
+            "instructions_title": "Jak skonfigurować powiadomienia push?",
+            "step1": "Przejdź do Google Cloud Console → APIs & Services → Enabled APIs & services",
+            "step2": "Upewnij się, że Google Calendar API jest włączone dla Twojego projektu",
+            "step3": "W sekcji Domain Verification dodaj swoją domenę (premium.gregciupek.com)",
+            "step4": "Alternatywnie: Przejdź do Cloud Domains i zweryfikuj własność domeny przez DNS lub plik HTML",
+            "step5": "Po weryfikacji domeny kliknij przycisk 'Aktywuj powiadomienia push' poniżej",
+            "note": "Weryfikacja domeny w Google Cloud Console jest wymagana do odbierania powiadomień push. Bez niej synchronizacja będzie działać tylko ręcznie (przez przycisk 'Synchronizuj teraz').",
+            "activate_btn": "Aktywuj powiadomienia push"
         },
         "modal": {
             "select_integration": "Wybierz integrację Google",
@@ -3380,7 +3391,14 @@
         "sync_failed": "Synchronizacja nie powiodła się. Spróbuj ponownie.",
         "channel_refreshed": "Kanał powiadomień push został odświeżony.",
         "channel_refresh_failed": "Nie udało się odświeżyć kanału powiadomień push.",
-        "confirm_disconnect": "Czy na pewno chcesz rozłączyć Google Calendar? Zsynchronizowane wydarzenia pozostaną w kalendarzu."
+        "confirm_disconnect": "Czy na pewno chcesz rozłączyć Google Calendar? Zsynchronizowane wydarzenia pozostaną w kalendarzu.",
+        "oauth": {
+            "title": "Konfiguracja OAuth",
+            "description": "Aby integracja kalendarza działała poprawnie, musisz dodać poniższy adres do Authorized redirect URIs w Google Cloud Console.",
+            "important": "Ważne!",
+            "instruction": "Skopiuj poniższy adres i dodaj go do ustawień OAuth 2.0 Client ID w Google Cloud Console → Credentials → OAuth 2.0 Client IDs → Authorized redirect URIs.",
+            "redirect_uri_label": "Autoryzowany Link Zwrotny (Redirect URI) - dla Google Calendar"
+        }
     },
     "forms": {
         "title": "Formularze zapisu",
@@ -5243,6 +5261,8 @@
                 "type": "Typ zadania",
                 "priority": "Priorytet",
                 "due_date": "Termin wykonania",
+                "due_time": "Godzina",
+                "end_time": "Do",
                 "contact": "Przypisz do kontaktu",
                 "contact_placeholder": "-- Bez kontaktu --",
                 "owner": "Przypisz do handlowca",
@@ -5371,7 +5391,11 @@
             "all_owners": "Wszyscy handlowcy",
             "all_companies": "Wszystkie firmy",
             "all_statuses": "Wszystkie statusy",
-            "search_placeholder": "Szukaj kontaktów...",
+            "search_or_email": "Wyszukaj lub wpisz email",
+            "search_placeholder": "Wpisz email lub nazwę...",
+            "search_hint": "Wpisz min. 2 znaki aby wyszukać istniejącego subskrybenta lub wprowadź nowy email",
+            "existing_subscriber": "Istniejący subskrybent",
+            "found_subscribers": "Znalezieni subskrybenci",
             "new_contact": "Nowy kontakt",
             "table_contact": "Kontakt",
             "table_company": "Firma",
@@ -5414,7 +5438,8 @@
                 "source": "Źródło",
                 "notes": "Notatki",
                 "tags": "Tagi",
-                "owner": "Opiekun"
+                "owner": "Opiekun",
+                "score": "Score"
             },
             "tabs": {
                 "overview": "Przegląd",
@@ -5432,7 +5457,17 @@
             },
             "deleted": "Kontakt usunięty",
             "created": "Kontakt utworzony",
-            "updated": "Kontakt zaktualizowany"
+            "updated": "Kontakt zaktualizowany",
+            "sections": {
+                "contact_details": "Dane kontaktu",
+                "marketing_data": "Dane marketingowe",
+                "email_lists": "Listy email",
+                "sms_lists": "Listy SMS",
+                "open_deals": "Otwarte deale"
+            },
+            "activity_history": "Historia aktywności",
+            "no_activities": "Brak historii aktywności",
+            "by": "przez"
         },
         "companies": {
             "title_page": "Firmy CRM",
@@ -5586,6 +5621,7 @@
             "title": "Zadania",
             "subtitle": "Zarządzaj zadaniami i follow-upami",
             "new_task": "Nowe zadanie",
+            "add": "Dodaj zadanie",
             "search_placeholder": "Szukaj zadań...",
             "filter_all": "Wszystkie",
             "filter_today": "Na dziś",
@@ -5594,6 +5630,7 @@
             "filter_completed": "Ukończone",
             "empty_title": "Brak zadań",
             "empty_category": "Brak zadań w tej kategorii",
+            "empty_contact": "Brak zadań dla tego kontaktu",
             "empty_description": "Utwórz swoje pierwsze zadanie.",
             "create_first": "Utwórz pierwsze zadanie",
             "create_title": "Nowe zadanie",
@@ -5639,7 +5676,7 @@
             "activity_added_toast": "Aktywność została dodana do historii",
             "add_note": "Dodaj notatkę",
             "add_activity": "Dodaj aktywność",
-            "note_placeholder": "Napisz notatkę...",
+            "note_placeholder": "Dodaj notatkę lub opis aktywności...",
             "type": {
                 "note": "Notatka",
                 "email_sent": "Email wysłany",
@@ -5649,11 +5686,15 @@
                 "stage_changed": "Zmiana etapu",
                 "deal_won": "Szansa wygrana",
                 "deal_lost": "Szansa przegrana",
-                "task_completed": "Zadanie ukończone"
+                "task_completed": "Zadanie ukończone",
+                "contact_created": "Kontakt utworzony"
             },
             "created_by": "Przez",
             "system": "System",
-            "empty": "Brak aktywności"
+            "empty": "Brak aktywności",
+            "actions": {
+                "add": "Dodaj"
+            }
         },
         "import": {
             "title_page": "Import CRM",
@@ -5786,6 +5827,10 @@
                 "less_than": "Mniejsze niż"
             }
         },
+        "global_search": {
+            "open_search": "Szukaj (⌘K)",
+            "placeholder": "Szukaj..."
+        },
         "sequences": {
             "title": "Sekwencje Follow-up",
             "add": "Nowa sekwencja",
@@ -5798,22 +5843,28 @@
                 "on_deal_stage_changed": "Po zmianie etapu dealu"
             },
             "steps": {
-                "task": "Zadanie",
+                "task": "Utwórz zadanie",
+                "email": "Wyślij email",
+                "sms": "Wyślij SMS",
+                "wait_for_response": "Czekaj na odpowiedź"
+            },
+            "task_types": {
+                "call": "Telefon",
                 "email": "Email",
-                "sms": "SMS",
-                "wait_for_response": "Oczekiwanie"
+                "meeting": "Spotkanie",
+                "task": "Zadanie",
+                "follow_up": "Follow-up"
+            },
+            "priorities": {
+                "low": "Niski",
+                "medium": "Średni",
+                "high": "Wysoki"
             },
             "status": {
                 "active": "Aktywna",
                 "inactive": "Nieaktywna"
             },
-            "actions": {
-                "edit": "Edytuj",
-                "report": "Raport",
-                "duplicate": "Duplikuj",
-                "delete": "Usuń",
-                "delete_confirm": "Czy na pewno chcesz usunąć tę sekwencję? Wszystkie kroki zostaną usunięte."
-            },
+
             "banner": {
                 "title": "Automatyczne sekwencje kontaktu",
                 "description": "Twórz sekwencje zadań, które automatycznie przypomną Ci o kolejnych krokach kontaktu z klientem. Ustaw \"oddzwoń za 3 dni\", \"follow-up po mailu\" lub całe kampanie nurturingu."
@@ -5824,7 +5875,49 @@
                 "button": "Utwórz pierwszą sekwencję"
             },
             "steps_count": "{count} kroków",
-            "active_enrollments": "{count} aktywnych"
+            "active_enrollments": "{count} aktywnych",
+            "sections": {
+                "basic_info": "Podstawowe informacje",
+                "steps": "Kroki sekwencji"
+            },
+            "fields": {
+                "name": "Nazwa sekwencji",
+                "trigger": "Wyzwalacz",
+                "description": "Opis (opcjonalnie)",
+                "description_placeholder": "Opisz cel tej sekwencji...",
+                "is_active": "Sekwencja aktywna"
+            },
+            "actions": {
+                "edit": "Edytuj",
+                "report": "Raport",
+                "duplicate": "Duplikuj",
+                "delete": "Usuń",
+                "delete_confirm": "Czy na pewno chcesz usunąć tę sekwencję? Wszystkie kroki zostaną usunięte.",
+                "add_step": "Dodaj krok",
+                "create": "Utwórz sekwencję",
+                "save_changes": "Zapisz zmiany"
+            },
+            "empty_steps": "Dodaj pierwszy krok do sekwencji",
+            "delay": {
+                "label": "Opóźnienie:",
+                "days": "dni",
+                "hours": "godz.",
+                "immediate": "Natychmiast"
+            },
+            "step_fields": {
+                "action_type": "Typ akcji",
+                "task_title": "Tytuł zadania",
+                "task_type": "Typ zadania",
+                "priority": "Priorytet",
+                "if_no_response": "Jeśli brak odpowiedzi",
+                "task_description": "Opis zadania (opcjonalnie)",
+                "task_description_placeholder": "Dodatkowe szczegóły..."
+            },
+            "step_options": {
+                "continue": "Kontynuuj sekwencję",
+                "stop": "Zatrzymaj sekwencję",
+                "escalate": "Eskaluj"
+            }
         },
         "reports": {
             "title": "Raport: {name}",

@@ -850,6 +850,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::get('/guide', [CrmDashboardController::class, 'guide'])->name('guide');
 
     // CRM Contacts
+    Route::get('contacts/search-subscribers', [CrmContactController::class, 'searchSubscribers'])->name('contacts.search-subscribers');
     Route::resource('contacts', CrmContactController::class);
     Route::post('contacts/{contact}/activity', [CrmContactController::class, 'addActivity'])->name('contacts.activity');
     Route::get('contacts/{contact}/quick-view', [CrmContactController::class, 'quickView'])->name('contacts.quick-view');
@@ -885,6 +886,8 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::get('sequences', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'index'])->name('sequences.index');
     Route::get('sequences/create', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'create'])->name('sequences.create');
     Route::post('sequences', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'store'])->name('sequences.store');
+    Route::post('sequences/restore-defaults', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'restoreDefaults'])->name('sequences.restore-defaults');
+    Route::post('sequences/create-defaults', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'createDefaults'])->name('sequences.create-defaults');
     Route::get('sequences/{sequence}/edit', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'edit'])->name('sequences.edit');
     Route::put('sequences/{sequence}', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'update'])->name('sequences.update');
     Route::delete('sequences/{sequence}', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'destroy'])->name('sequences.destroy');

@@ -78,4 +78,11 @@ return [
         'resolved_local' => 'Konflikt gelöst - lokale Version verwendet.',
         'resolved_remote' => 'Konflikt gelöst - Remote-Version verwendet.',
     ]
+    'contacts' => [
+        'search_or_email' => 'Suchen oder E-Mail eingeben',
+        'search_placeholder' => 'E-Mail oder Namen eingeben...',
+        'search_hint' => 'Geben Sie mind. 2 Zeichen ein, um nach einem bestehenden Abonnenten zu suchen oder eine neue E-Mail einzugeben',
+        'existing_subscriber' => 'Bestehender Abonnent',
+        'found_subscribers' => 'Gefundene Abonnenten',
+    ],
 ];

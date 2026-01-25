@@ -18,10 +18,13 @@ class CrmFollowUpSequence extends Model
         'trigger_type',
         'trigger_conditions',
         'is_active',
+        'is_default',
+        'default_key',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
         'trigger_conditions' => 'array',
     ];
 
@@ -85,10 +88,60 @@ class CrmFollowUpSequence extends Model
         return $query->where('trigger_type', $triggerType);
     }
 
+    /**
+     * Scope to only include default sequences.
+     */
+    public function scopeDefault($query)
+    {
+        return $query->where('is_default', true);
+    }
+
+    /**
+     * Scope to filter by default key.
+     */
+    public function scopeByDefaultKey($query, string $defaultKey)
+    {
+        return $query->where('default_key', $defaultKey);
+    }
+
+    /**
+     * Get the translated name if default sequence.
+     */
+    public function getNameAttribute($value)
+    {
+        if ($this->is_default && $this->default_key) {
+            $key = 'crm.default_sequences.' . $this->default_key . '.name';
+            $translation = __($key);
+
+            if ($translation !== $key) {
+                return $translation;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Get the translated description if default sequence.
+     */
+    public function getDescriptionAttribute($value)
+    {
+        if ($this->is_default && $this->default_key) {
+            $key = 'crm.default_sequences.' . $this->default_key . '.description';
+            $translation = __($key);
+
+            if ($translation !== $key) {
+                return $translation;
+            }
+        }
+
+        return $value;
+    }
+
     // ==================== ACTIONS ====================
 
     /**
-     * Enroll a contact in this sequence.
+     * Enroll a contact into this sequence.
      */
     public function enrollContact(CrmContact $contact): CrmFollowUpEnrollment
     {

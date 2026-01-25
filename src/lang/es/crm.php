@@ -78,4 +78,11 @@ return [
         'resolved_local' => 'Conflicto resuelto - se usó la versión local.',
         'resolved_remote' => 'Conflicto resuelto - se usó la versión remota.',
     ]
+    'contacts' => [
+        'search_or_email' => 'Buscar o introducir email',
+        'search_placeholder' => 'Escriba nombre o email...',
+        'search_hint' => 'Escriba al menos 2 caracteres para buscar un suscriptor existente o introduzca un nuevo email',
+        'existing_subscriber' => 'Suscriptor existente',
+        'found_subscribers' => 'Suscriptores encontrados',
+    ],
 ];

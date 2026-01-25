@@ -1903,8 +1903,19 @@
             "refresh": "Refresh Channel"
         },
         "webhook": {
-            "title": "Webhook URL",
-            "description": "This URL receives push notifications from Google Calendar for real-time sync."
+            "title": "Real-time Sync (Webhook)",
+            "description": "To automatically sync changes from Google Calendar to NetSendo, you need to configure push notifications (webhook).",
+            "url_label": "Webhook URL",
+            "setup_required": "Setup required",
+            "setup_required_desc": "Push notifications are not yet configured. Follow the steps below to enable automatic synchronization.",
+            "instructions_title": "How to configure push notifications?",
+            "step1": "Go to Google Cloud Console → APIs & Services → Enabled APIs & services",
+            "step2": "Make sure Google Calendar API is enabled for your project",
+            "step3": "In the Domain Verification section, add your domain (premium.gregciupek.com)",
+            "step4": "Alternatively: Go to Cloud Domains and verify domain ownership via DNS or HTML file",
+            "step5": "After domain verification, click the 'Activate push notifications' button below",
+            "note": "Domain verification in Google Cloud Console is required to receive push notifications. Without it, synchronization will only work manually (via the 'Sync Now' button).",
+            "activate_btn": "Activate push notifications"
         },
         "modal": {
             "select_integration": "Select Google Integration",
@@ -1919,7 +1930,14 @@
         "sync_failed": "Sync failed. Please try again.",
         "channel_refreshed": "Push notification channel refreshed.",
         "channel_refresh_failed": "Failed to refresh push notification channel.",
-        "confirm_disconnect": "Are you sure you want to disconnect Google Calendar? Synced events will remain in Calendar."
+        "confirm_disconnect": "Are you sure you want to disconnect Google Calendar? Synced events will remain in Calendar.",
+        "oauth": {
+            "title": "OAuth Configuration",
+            "description": "For the calendar integration to work properly, you must add the address below to the Authorized redirect URIs in Google Cloud Console.",
+            "important": "Important!",
+            "instruction": "Copy the address below and add it to your OAuth 2.0 Client ID settings in Google Cloud Console → Credentials → OAuth 2.0 Client IDs → Authorized redirect URIs.",
+            "redirect_uri_label": "Authorized Redirect URI - for Google Calendar"
+        }
     },
     "forms": {
         "title": "Subscription Forms",
@@ -5162,6 +5180,8 @@
                 "type": "Task Type",
                 "priority": "Priority",
                 "due_date": "Due Date",
+                "due_time": "Time",
+                "end_time": "To",
                 "contact": "Assign to Contact",
                 "contact_placeholder": "-- No Contact --",
                 "owner": "Assign to Owner",
@@ -5290,7 +5310,11 @@
             "subtitle": "Manage your CRM contacts",
             "all_companies": "All Companies",
             "all_statuses": "All Statuses",
-            "search_placeholder": "Search contacts...",
+            "search_or_email": "Search or enter email",
+            "search_placeholder": "Type email or name...",
+            "search_hint": "Type at least 2 characters to search for an existing subscriber or enter a new email",
+            "existing_subscriber": "Existing subscriber",
+            "found_subscribers": "Found subscribers",
             "table_contact": "Contact",
             "table_company": "Company",
             "table_actions": "Actions",
@@ -5337,6 +5361,7 @@
                 "notes": "Notes",
                 "tags": "Tags",
                 "owner": "Owner",
+                "score": "Score",
                 "email_required": "Email *"
             },
             "tabs": {
@@ -5355,7 +5380,17 @@
             },
             "deleted": "Contact deleted",
             "created": "Contact created",
-            "updated": "Contact updated"
+            "updated": "Contact updated",
+            "sections": {
+                "contact_details": "Contact Details",
+                "marketing_data": "Marketing Data",
+                "email_lists": "Email Lists",
+                "sms_lists": "SMS Lists",
+                "open_deals": "Open Deals"
+            },
+            "activity_history": "Activity History",
+            "no_activities": "No activity history",
+            "by": "by"
         },
         "companies": {
             "title_page": "CRM Companies",
@@ -5509,6 +5544,7 @@
             "title": "Tasks",
             "subtitle": "Manage tasks and follow-ups",
             "new_task": "New Task",
+            "add": "Add Task",
             "search_placeholder": "Search tasks...",
             "filter_all": "All",
             "filter_today": "Today",
@@ -5517,6 +5553,7 @@
             "filter_completed": "Completed",
             "empty_title": "No tasks",
             "empty_category": "No tasks in this category",
+            "empty_contact": "No tasks for this contact",
             "empty_description": "Create your first task.",
             "create_first": "Create First Task",
             "create_title": "New Task",
@@ -5562,7 +5599,7 @@
             "activity_added_toast": "Activity has been added to history",
             "add_note": "Add Note",
             "add_activity": "Add Activity",
-            "note_placeholder": "Write a note...",
+            "note_placeholder": "Add note or activity description...",
             "type": {
                 "note": "Note",
                 "email_sent": "Email Sent",
@@ -5572,11 +5609,14 @@
                 "stage_changed": "Stage Changed",
                 "deal_won": "Deal Won",
                 "deal_lost": "Deal Lost",
-                "task_completed": "Task Completed"
+                "task_completed": "Task Completed",
+                "contact_created": "Contact Created"
             },
             "created_by": "By",
-            "system": "System",
-            "empty": "No activities"
+            "empty": "No activities",
+            "actions": {
+                "add": "Add"
+            }
         },
         "import": {
             "title_page": "CRM Import",
@@ -5709,6 +5749,10 @@
                 "less_than": "Less than"
             }
         },
+        "global_search": {
+            "open_search": "Search (⌘K)",
+            "placeholder": "Search..."
+        },
         "sequences": {
             "title": "Follow-up Sequences",
             "add": "New Sequence",
@@ -5721,22 +5765,28 @@
                 "on_deal_stage_changed": "On deal stage changed"
             },
             "steps": {
-                "task": "Task",
-                "email": "Email",
-                "sms": "SMS",
+                "task": "Create Task",
+                "email": "Send Email",
+                "sms": "Send SMS",
                 "wait_for_response": "Wait for response"
+            },
+            "task_types": {
+                "call": "Call",
+                "email": "Email",
+                "meeting": "Meeting",
+                "task": "Task",
+                "follow_up": "Follow-up"
+            },
+            "priorities": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High"
             },
             "status": {
                 "active": "Active",
                 "inactive": "Inactive"
             },
-            "actions": {
-                "edit": "Edit",
-                "report": "Report",
-                "duplicate": "Duplicate",
-                "delete": "Delete",
-                "delete_confirm": "Are you sure you want to delete this sequence? All steps will be deleted."
-            },
+
             "banner": {
                 "title": "Automatic Follow-up Sequences",
                 "description": "Create task sequences that automatically remind you of next steps with a client. Set 'call back in 3 days', 'follow-up after email' or entire nurturing campaigns."
@@ -5747,7 +5797,49 @@
                 "button": "Create First Sequence"
             },
             "steps_count": "{count} steps",
-            "active_enrollments": "{count} active"
+            "active_enrollments": "{count} active",
+            "sections": {
+                "basic_info": "Basic Information",
+                "steps": "Sequence Steps"
+            },
+            "fields": {
+                "name": "Sequence Name",
+                "trigger": "Trigger",
+                "description": "Description (optional)",
+                "description_placeholder": "Describe the purpose of this sequence...",
+                "is_active": "Sequence Active"
+            },
+            "actions": {
+                "edit": "Edit",
+                "report": "Report",
+                "duplicate": "Duplicate",
+                "delete": "Delete",
+                "delete_confirm": "Are you sure you want to delete this sequence? All steps will be deleted.",
+                "add_step": "Add Step",
+                "create": "Create Sequence",
+                "save_changes": "Save Changes"
+            },
+            "empty_steps": "Add the first step to the sequence",
+            "delay": {
+                "label": "Delay:",
+                "days": "days",
+                "hours": "hrs",
+                "immediate": "Immediate"
+            },
+            "step_fields": {
+                "action_type": "Action Type",
+                "task_title": "Task Title",
+                "task_type": "Task Type",
+                "priority": "Priority",
+                "if_no_response": "If no response",
+                "task_description": "Task Description (optional)",
+                "task_description_placeholder": "Additional details..."
+            },
+            "step_options": {
+                "continue": "Continue sequence",
+                "stop": "Stop sequence",
+                "escalate": "Escalate"
+            }
         },
         "reports": {
             "title": "Report: {name}",

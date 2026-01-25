@@ -46,6 +46,8 @@ const form = useForm({
     type: "task",
     priority: "medium",
     due_date: "",
+    due_time: "09:00",
+    end_time: "10:00",
     crm_contact_id: null,
     crm_deal_id: null,
     owner_id: null,
@@ -70,7 +72,27 @@ watch(
                 form.description = props.task.description || "";
                 form.type = props.task.type || "task";
                 form.priority = props.task.priority || "medium";
-                form.due_date = props.task.due_date?.split("T")[0] || "";
+                // Parse date and time from due_date
+                if (props.task.due_date) {
+                    const dueDateTime = new Date(props.task.due_date);
+                    form.due_date = dueDateTime.toISOString().split("T")[0];
+                    const hours = dueDateTime.getHours().toString().padStart(2, '0');
+                    const minutes = dueDateTime.getMinutes().toString().padStart(2, '0');
+                    form.due_time = `${hours}:${minutes}`;
+                } else {
+                    form.due_date = "";
+                    form.due_time = "09:00";
+                }
+                // Parse end_time from end_date if available
+                if (props.task.end_date) {
+                    const endDateTime = new Date(props.task.end_date);
+                    const endHours = endDateTime.getHours().toString().padStart(2, '0');
+                    const endMinutes = endDateTime.getMinutes().toString().padStart(2, '0');
+                    form.end_time = `${endHours}:${endMinutes}`;
+                } else {
+                    // Default: 1 hour after start
+                    form.end_time = "10:00";
+                }
                 form.crm_contact_id = props.task.crm_contact_id || null;
                 form.crm_deal_id = props.task.crm_deal_id || null;
                 form.owner_id = props.task.owner_id || null;
@@ -89,8 +111,10 @@ watch(
                 form.reset();
                 form.crm_contact_id = props.contactId;
                 form.crm_deal_id = props.dealId;
-                // Set default due date to today
+                // Set default due date to today and time to 09:00
                 form.due_date = new Date().toISOString().split("T")[0];
+                form.due_time = "09:00";
+                form.end_time = "10:00";
                 // Auto-enable calendar sync if user has auto_sync enabled
                 form.sync_to_calendar =
                     props.calendarConnection?.auto_sync_tasks || false;
@@ -327,19 +351,36 @@ const priorities = [
                     </div>
                 </div>
 
-                <!-- Due Date -->
+                <!-- Due Date and Time -->
                 <div>
                     <label
                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                     >
                         {{ $t("crm.task.fields.due_date") }}
                     </label>
-                    <input
-                        v-model="form.due_date"
-                        type="date"
-                        class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-                    />
+                    <div class="flex items-center gap-2">
+                        <input
+                            v-model="form.due_date"
+                            type="date"
+                            class="flex-1 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:[color-scheme:dark]"
+                        />
+                        <div class="flex items-center gap-1">
+                            <input
+                                v-model="form.due_time"
+                                type="time"
+                                class="w-28 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:[color-scheme:dark]"
+                            />
+                            <span class="text-slate-400 dark:text-slate-500">–</span>
+                            <input
+                                v-model="form.end_time"
+                                type="time"
+                                class="w-28 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:[color-scheme:dark]"
+                            />
+                        </div>
+                    </div>
                     <InputError :message="form.errors.due_date" class="mt-1" />
+                    <InputError :message="form.errors.due_time" class="mt-1" />
+                    <InputError :message="form.errors.end_time" class="mt-1" />
                 </div>
 
                 <!-- Recurrence Settings -->

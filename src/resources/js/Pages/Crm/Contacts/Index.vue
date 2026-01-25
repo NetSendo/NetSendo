@@ -150,7 +150,7 @@ const getStatusLabel = (status) => {
                                 Score
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                Handlowiec
+                                {{ $t('crm.contacts.fields.owner', 'Handlowiec') }}
                             </th>
                             <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 {{ $t('crm.contacts.table_actions', 'Akcje') }}

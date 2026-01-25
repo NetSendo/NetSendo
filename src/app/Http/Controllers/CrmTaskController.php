@@ -135,6 +135,8 @@ class CrmTaskController extends Controller
             'type' => 'required|in:call,email,meeting,task,follow_up',
             'priority' => 'required|in:low,medium,high',
             'due_date' => 'nullable|date',
+            'due_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
             'crm_contact_id' => 'nullable|exists:crm_contacts,id',
             'crm_deal_id' => 'nullable|exists:crm_deals,id',
             'owner_id' => 'nullable|exists:users,id',
@@ -149,6 +151,19 @@ class CrmTaskController extends Controller
             'recurrence_end_date' => 'nullable|date|after:due_date',
             'recurrence_count' => 'nullable|integer|min:1|max:999',
         ]);
+
+        // Combine date and time into datetime
+        if (!empty($validated['due_date']) && !empty($validated['due_time'])) {
+            $validated['due_date'] = Carbon::parse($validated['due_date'])
+                ->setTimeFromTimeString($validated['due_time']);
+        }
+
+        // Calculate end_date from due_date + end_time
+        if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
+            $validated['end_date'] = Carbon::parse($validated['due_date'])
+                ->setTimeFromTimeString($validated['end_time']);
+        }
+        unset($validated['due_time'], $validated['end_time']);
 
         $task = CrmTask::create([
             ...$validated,
@@ -167,6 +182,7 @@ class CrmTaskController extends Controller
         }
 
         return redirect()->back()->with('success', 'Zadanie zostało utworzone.');
+
     }
 
     /**
@@ -187,6 +203,8 @@ class CrmTaskController extends Controller
             'priority' => 'sometimes|required|in:low,medium,high',
             'status' => 'sometimes|required|in:pending,in_progress,completed,cancelled',
             'due_date' => 'nullable|date',
+            'due_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
             'owner_id' => 'nullable|exists:users,id',
             'sync_to_calendar' => 'nullable|boolean',
             'selected_calendar_id' => 'nullable|string|max:255',
@@ -199,6 +217,19 @@ class CrmTaskController extends Controller
             'recurrence_end_date' => 'nullable|date|after:due_date',
             'recurrence_count' => 'nullable|integer|min:1|max:999',
         ]);
+
+        // Combine date and time into datetime
+        if (!empty($validated['due_date']) && !empty($validated['due_time'])) {
+            $validated['due_date'] = Carbon::parse($validated['due_date'])
+                ->setTimeFromTimeString($validated['due_time']);
+        }
+
+        // Calculate end_date from due_date + end_time
+        if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
+            $validated['end_date'] = Carbon::parse($validated['due_date'])
+                ->setTimeFromTimeString($validated['end_time']);
+        }
+        unset($validated['due_time'], $validated['end_time']);
 
         $task->update($validated);
 

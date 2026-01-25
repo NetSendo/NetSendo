@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CrmFollowUpSequence;
 use App\Models\CrmFollowUpStep;
 use App\Models\CrmContact;
+use App\Services\DefaultFollowUpSequencesService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -25,8 +26,12 @@ class CrmFollowUpSequenceController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
+        $defaultService = new DefaultFollowUpSequencesService();
+
         return Inertia::render('Crm/Sequences/Index', [
             'sequences' => $sequences,
+            'hasDefaults' => $defaultService->hasDefaults($userId),
+            'defaultsCount' => $defaultService->getDefaultsCount(),
         ]);
     }
 
@@ -283,6 +288,55 @@ class CrmFollowUpSequenceController extends Controller
             'success' => true,
             'is_active' => $sequence->is_active,
         ]);
+    }
+
+    /**
+     * Restore default sequences (replaces all existing).
+     */
+    public function restoreDefaults(Request $request): RedirectResponse|JsonResponse
+    {
+        $request->validate([
+            'confirm' => 'required|accepted',
+        ]);
+
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        $service = new DefaultFollowUpSequencesService();
+        $sequences = $service->restoreDefaultsForUser($userId);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'count' => count($sequences),
+                'message' => __('crm.defaults.restored_success'),
+            ]);
+        }
+
+        return redirect()
+            ->route('crm.sequences.index')
+            ->with('success', __('crm.defaults.restored_success'));
+    }
+
+    /**
+     * Create default sequences for user (if they don't exist).
+     */
+    public function createDefaults(Request $request): RedirectResponse|JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        $service = new DefaultFollowUpSequencesService();
+        $sequences = $service->createDefaultsForUser($userId);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'count' => count($sequences),
+            ]);
+        }
+
+        return redirect()
+            ->route('crm.sequences.index')
+            ->with('success', __('crm.defaults.restored_success'));
     }
 
     // ==================== REPORTING ====================

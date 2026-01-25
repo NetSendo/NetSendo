@@ -27,6 +27,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented auto-seeding of default scoring rules when a user visits the scoring settings page for the first time.
   - Added confirmation modals for "Reset to Defaults" and "Delete Rule" actions in the Lead Scoring configuration page (`ScoringRules.vue`).
 
+- **CRM Contact Search:**
+  - Added real-time subscriber search in CRM Contact creation form with autocomplete dropdown.
+  - Implemented intelligent matching by email, name, or phone number with debounce optimization.
+  - Added auto-filling of contact forms when an existing subscriber is selected.
+  - New internal endpoint `/crm/contacts/search-subscribers` for secure searching.
+  - Full translations in PL, EN, DE, ES.
+
+- **CRM Task Time Picker:**
+  - Added start and end time selection fields to task creation and edit forms (default 09:00–10:00).
+  - Updated Google Calendar synchronization to use task's actual end time instead of default +1 hour.
+  - Updated Google Calendar synchronization to respect the user's configured timezone instead of the application default.
+  - Fixed dark mode styling for time picker icons (black icons on black background).
+  - Added `due_time` and `end_time` translations in PL, EN, DE, ES.
+
+- **CRM Default Follow-up Sequences:**
+  - **4 Professional Templates:** Implemented 4 highly effective default follow-up sequences ("New Lead Nurturing", "Contact Recovery", "After Meeting Follow-up", "Sales Closing") created automatically for new users.
+  - **Restore Functionality:** Added "Restore Defaults" option in the Sequences dashboard with a safety confirmation modal to reset sequences to their original state.
+  - **Dynamic Localization:** Implemented smart model-based translation for sequence names/descriptions, ensuring they display in the user's selected language (PL/EN) regardless of database content.
+  - **UI Indicators:** Added "Default" and "Custom" badges to easily distinguish between system templates and user-modified sequences.
+  - **Backend:** New `DefaultFollowUpSequencesService` and `restoreDefaults` endpoint structure.
+
 ### Fixed
 
 - **Lead Scoring UI:**

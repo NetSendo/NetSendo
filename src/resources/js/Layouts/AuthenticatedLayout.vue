@@ -240,7 +240,7 @@ const toggleMobileMenu = () => {
                                 />
                             </svg>
                             <span class="hidden text-sm text-slate-500 lg:inline dark:text-slate-400">
-                                {{ $t('common.search', 'Szukaj...') }}
+                                {{ $t('global_search.placeholder', 'Szukaj...') }}
                             </span>
                             <kbd
                                 class="hidden rounded bg-slate-200 px-1.5 py-0.5 text-xs text-slate-500 md:inline-block dark:bg-slate-700 dark:text-slate-400"

@@ -319,6 +319,9 @@ class GoogleCalendarService
      */
     private function taskToEventPayload(CrmTask $task): array
     {
+        // Get user's timezone from their profile
+        $userTimezone = $task->user?->timezone ?? config('app.timezone', 'UTC');
+
         $payload = [
             'summary' => $task->title,
             'description' => $this->buildEventDescription($task),
@@ -331,12 +334,13 @@ class GoogleCalendarService
             if ($task->due_date->format('H:i') !== '00:00') {
                 $payload['start'] = [
                     'dateTime' => $task->due_date->toRfc3339String(),
-                    'timeZone' => config('app.timezone', 'UTC'),
+                    'timeZone' => $userTimezone,
                 ];
-                // Default 1 hour duration
+                // Use end_date if available, otherwise default to 1 hour duration
+                $endDateTime = $task->end_date ?? $task->due_date->copy()->addHour();
                 $payload['end'] = [
-                    'dateTime' => $task->due_date->copy()->addHour()->toRfc3339String(),
-                    'timeZone' => config('app.timezone', 'UTC'),
+                    'dateTime' => $endDateTime->toRfc3339String(),
+                    'timeZone' => $userTimezone,
                 ];
             } else {
                 // All-day event

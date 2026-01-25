@@ -140,4 +140,107 @@ return [
             'create' => 'Utwórz zadanie',
         ],
     ],
+    'contacts' => [
+        'search_or_email' => 'Wyszukaj lub wpisz email',
+        'search_placeholder' => 'Wpisz email lub nazwę...',
+        'search_hint' => 'Wpisz min. 2 znaki aby wyszukać istniejącego subskrybenta lub wprowadź nowy email',
+        'existing_subscriber' => 'Istniejący subskrybent',
+        'found_subscribers' => 'Znalezieni subskrybenci',
+    ],
+    'defaults' => [
+        'badge' => 'Domyślna',
+        'badge_modified' => 'Własna',
+        'restore_button' => 'Przywróć domyślne',
+        'restore_modal' => [
+            'title' => 'Przywróć domyślne sekwencje',
+            'warning' => 'Ta operacja usunie wszystkie obecne sekwencje i utworzy nowe domyślne sekwencje. Tej operacji nie można cofnąć.',
+            'confirm_checkbox' => 'Rozumiem, że wszystkie moje obecne sekwencje zostaną usunięte',
+            'cancel' => 'Anuluj',
+            'confirm' => 'Przywróć domyślne',
+        ],
+        'restored_success' => 'Domyślne sekwencje zostały przywrócone.',
+        'no_sequences' => 'Nie masz jeszcze żadnych sekwencji.',
+    ],
+    'default_sequences' => [
+        'new_lead_nurture' => [
+            'name' => 'Nurturing nowego leada',
+            'description' => 'Automatyczna sekwencja powitalna dla nowych kontaktów. Buduje relację i prowadzi do pierwszej sprzedaży.',
+            'steps' => [
+                0 => [
+                    'title' => 'Telefon powitalny',
+                    'description' => 'Zadzwoń do nowego kontaktu, przywitaj się i zapytaj o potrzeby. Ustal kolejne kroki współpracy.',
+                ],
+                1 => [
+                    'title' => 'Follow-up email z ofertą',
+                    'description' => 'Wyślij email podsumowujący rozmowę z propozycją wartości i linkiem do materiałów.',
+                ],
+                2 => [
+                    'title' => 'Sprawdź zainteresowanie',
+                    'description' => 'Zadzwoń i zapytaj o przeczytanie materiałów. Odpowiedz na pytania i ustal termin prezentacji.',
+                ],
+                3 => [
+                    'title' => 'Oferta końcowa',
+                    'description' => 'Wyślij finalną ofertę z terminem ważności. To ostatnia szansa na zamknięcie sprzedaży.',
+                ],
+            ],
+        ],
+        'contact_recovery' => [
+            'name' => 'Odzyskanie kontaktu',
+            'description' => 'Reaktywacja nieaktywnych kontaktów. Idealne dla klientów, którzy przestali odpowiadać.',
+            'steps' => [
+                0 => [
+                    'title' => 'Pierwsza próba kontaktu',
+                    'description' => 'Zadzwoń i zapytaj czy wszystko w porządku. Przypomnij o ofercie i wartości współpracy.',
+                ],
+                1 => [
+                    'title' => 'Email przypominający',
+                    'description' => 'Wyślij email z nową propozycją wartości lub specjalną ofertą reaktywacyjną.',
+                ],
+                2 => [
+                    'title' => 'Ostatnia próba kontaktu',
+                    'description' => 'Finalna próba nawiązania kontaktu. Zaproponuj spotkanie lub rozmowę w dogodnym terminie.',
+                ],
+            ],
+        ],
+        'after_meeting' => [
+            'name' => 'Follow-up po spotkaniu',
+            'description' => 'Sekwencja po zakończonym spotkaniu. Utrzymuje momentum i prowadzi do decyzji.',
+            'steps' => [
+                0 => [
+                    'title' => 'Podsumowanie spotkania',
+                    'description' => 'Wyślij email z podsumowaniem spotkania, ustalonymi punktami i kolejnymi krokami.',
+                ],
+                1 => [
+                    'title' => 'Telefon kontrolny',
+                    'description' => 'Zadzwoń i sprawdź czy materiały dotarły. Odpowiedz na ewentualne pytania.',
+                ],
+                2 => [
+                    'title' => 'Zapytaj o decyzję',
+                    'description' => 'Zadzwoń i zapytaj o decyzję. Jeśli potrzebują więcej czasu - ustal konkretny termin.',
+                ],
+            ],
+        ],
+        'sales_closing' => [
+            'name' => 'Finalizacja sprzedaży',
+            'description' => 'Sekwencja zamykania sprzedaży. Dla kontaktów gotowych do podjęcia decyzji.',
+            'steps' => [
+                0 => [
+                    'title' => 'Wyślij ofertę',
+                    'description' => 'Przygotuj i wyślij formalną ofertę z terminem ważności i warunkami współpracy.',
+                ],
+                1 => [
+                    'title' => 'Telefon potwierdzający',
+                    'description' => 'Zadzwoń i potwierdź otrzymanie oferty. Odpowiedz na pytania dotyczące warunków.',
+                ],
+                2 => [
+                    'title' => 'Follow-up decyzja',
+                    'description' => 'Zadzwoń i delikatnie zapytaj o stan decyzji. Zaproponuj pomoc w wyjaśnieniu wątpliwości.',
+                ],
+                3 => [
+                    'title' => 'Ostatnia szansa',
+                    'description' => 'Finalne przypomnienie o kończącej się ofercie. Zaproponuj bonus za szybką decyzję.',
+                ],
+            ],
+        ],
+    ],
 ];

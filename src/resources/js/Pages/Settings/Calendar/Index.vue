@@ -17,6 +17,7 @@ const props = defineProps({
     integrations: Array,
     calendars: Array,
     webhook_url: String,
+    calendar_redirect_uri: String,
 });
 
 const showConnectModal = ref(false);
@@ -52,9 +53,24 @@ const settingsForm = useForm({
     sync_settings: props.connection?.sync_settings || {},
 });
 
+// Toast notification
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 4000);
+};
+
 const updateSettings = () => {
     settingsForm.put(route("settings.calendar.settings", props.connection.id), {
         preserveScroll: true,
+        onSuccess: () => {
+            showToast(t("calendar.settings_updated"));
+        },
+        onError: () => {
+            showToast(t("common.error_occurred"), false);
+        },
     });
 };
 
@@ -120,6 +136,76 @@ const formatDate = (dateString) => {
     <Head :title="$t('calendar.title')" />
 
     <AuthenticatedLayout>
+        <!-- Toast Notification -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-300"
+                enter-from-class="opacity-0 translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-200"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-2"
+            >
+                <div
+                    v-if="toast"
+                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
+                    :class="
+                        toast.success
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-rose-600 text-white'
+                    "
+                >
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span class="font-medium">{{ toast.message }}</span>
+                    <button
+                        @click="toast = null"
+                        class="ml-2 opacity-80 hover:opacity-100"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
+
         <template #header>
             <h2
                 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
@@ -130,6 +216,77 @@ const formatDate = (dateString) => {
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                <!-- OAuth Redirect URI Info -->
+                <div
+                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
+                >
+                    <section>
+                        <h2
+                            class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                        >
+                            {{ $t("calendar.oauth.title") }}
+                        </h2>
+                        <p
+                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                        >
+                            {{ $t("calendar.oauth.description") }}
+                        </p>
+                        <div
+                            class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+                        >
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg
+                                        class="h-5 w-5 text-amber-400"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3
+                                        class="text-sm font-medium text-amber-800 dark:text-amber-300"
+                                    >
+                                        {{ $t("calendar.oauth.important") }}
+                                    </h3>
+                                    <p
+                                        class="mt-1 text-sm text-amber-700 dark:text-amber-400"
+                                    >
+                                        {{ $t("calendar.oauth.instruction") }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >
+                                {{ $t("calendar.oauth.redirect_uri_label") }}
+                            </label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input
+                                    type="text"
+                                    readonly
+                                    :value="calendar_redirect_uri"
+                                    class="block w-full rounded-l-md border-gray-300 bg-gray-50 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                />
+                                <button
+                                    type="button"
+                                    @click="copyToClipboard(calendar_redirect_uri)"
+                                    class="relative -ml-px inline-flex items-center rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                                >
+                                    {{ $t("common.copy") }}
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
                 <!-- Connection Status -->
                 <div
                     class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
@@ -545,20 +702,107 @@ const formatDate = (dateString) => {
                         >
                             {{ $t("calendar.webhook.description") }}
                         </p>
-                        <div class="mt-4 flex rounded-md shadow-sm">
-                            <input
-                                type="text"
-                                readonly
-                                :value="webhook_url"
-                                class="block w-full rounded-l-md border-gray-300 bg-gray-50 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
-                            />
-                            <button
-                                type="button"
-                                @click="copyToClipboard(webhook_url)"
-                                class="relative -ml-px inline-flex items-center rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+
+                        <!-- Warning about push notifications -->
+                        <div
+                            v-if="!connection.has_push_notifications"
+                            class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+                        >
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg
+                                        class="h-5 w-5 text-amber-400"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3
+                                        class="text-sm font-medium text-amber-800 dark:text-amber-300"
+                                    >
+                                        {{ $t("calendar.webhook.setup_required") }}
+                                    </h3>
+                                    <p
+                                        class="mt-1 text-sm text-amber-700 dark:text-amber-400"
+                                    >
+                                        {{ $t("calendar.webhook.setup_required_desc") }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Webhook URL field -->
+                        <div class="mt-4">
+                            <label
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
-                                {{ $t("common.copy") }}
-                            </button>
+                                {{ $t("calendar.webhook.url_label") }}
+                            </label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <input
+                                    type="text"
+                                    readonly
+                                    :value="webhook_url"
+                                    class="block w-full rounded-l-md border-gray-300 bg-gray-50 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                />
+                                <button
+                                    type="button"
+                                    @click="copyToClipboard(webhook_url)"
+                                    class="relative -ml-px inline-flex items-center rounded-r-md border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                                >
+                                    {{ $t("common.copy") }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Setup Instructions -->
+                        <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/50">
+                            <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {{ $t("calendar.webhook.instructions_title") }}
+                            </h3>
+                            <ol class="mt-3 list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                                <li>{{ $t("calendar.webhook.step1") }}</li>
+                                <li>{{ $t("calendar.webhook.step2") }}</li>
+                                <li>{{ $t("calendar.webhook.step3") }}</li>
+                                <li>{{ $t("calendar.webhook.step4") }}</li>
+                                <li>{{ $t("calendar.webhook.step5") }}</li>
+                            </ol>
+
+                            <!-- Important note -->
+                            <div class="mt-4 rounded-md bg-blue-50 p-3 dark:bg-blue-900/20">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                                            {{ $t("calendar.webhook.note") }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Refresh Channel button -->
+                            <div class="mt-4">
+                                <SecondaryButton
+                                    @click="refreshChannel"
+                                    :disabled="refreshChannelForm.processing"
+                                >
+                                    <svg v-if="refreshChannelForm.processing" class="mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                    </svg>
+                                    {{ $t("calendar.webhook.activate_btn") }}
+                                </SecondaryButton>
+                            </div>
                         </div>
                     </section>
                 </div>

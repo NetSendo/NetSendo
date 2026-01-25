@@ -19,6 +19,33 @@ use Inertia\Response;
 class CrmContactController extends Controller
 {
     /**
+     * Search subscribers for autocomplete in contact creation form.
+     */
+    public function searchSubscribers(Request $request): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $query = $request->get('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json(['subscribers' => []]);
+        }
+
+        $subscribers = Subscriber::where('user_id', $userId)
+            ->where(function ($q) use ($query) {
+                $q->where('email', 'like', "%{$query}%")
+                    ->orWhere('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('phone', 'like', "%{$query}%");
+            })
+            ->select(['id', 'email', 'first_name', 'last_name', 'phone'])
+            ->orderByRaw("CASE WHEN email LIKE ? THEN 0 ELSE 1 END", ["{$query}%"])
+            ->orderBy('email')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['subscribers' => $subscribers]);
+    }
+    /**
      * Display a listing of contacts.
      */
     public function index(Request $request): Response

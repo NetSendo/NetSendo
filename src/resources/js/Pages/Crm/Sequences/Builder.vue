@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 import InputError from "@/Components/InputError.vue";
 import draggable from "vuedraggable";
 
@@ -12,6 +13,8 @@ const props = defineProps({
     taskTypes: Array,
     priorities: Array,
 });
+
+const { t } = useI18n();
 
 const isEditing = computed(() => !!props.sequence?.id);
 
@@ -74,12 +77,12 @@ const submit = () => {
 const getDelayLabel = (step) => {
     const parts = [];
     if (step.delay_days > 0) {
-        parts.push(`${step.delay_days} dni`);
+        parts.push(`${step.delay_days} ${t('crm.sequences.delay.days', 'dni')}`);
     }
     if (step.delay_hours > 0) {
-        parts.push(`${step.delay_hours} godz.`);
+        parts.push(`${step.delay_hours} ${t('crm.sequences.delay.hours', 'godz.')}`);
     }
-    return parts.length ? parts.join(" ") : "Natychmiast";
+    return parts.length ? parts.join(" ") : t('crm.sequences.delay.immediate', 'Natychmiast');
 };
 
 // Step type icons
@@ -119,7 +122,7 @@ const getStepIcon = (actionType) => {
                     </svg>
                 </Link>
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                    {{ isEditing ? "Edytuj sekwencję" : "Nowa sekwencja" }}
+                    {{ isEditing ? $t('crm.sequences.actions.edit', 'Edytuj sekwencję') : $t('crm.sequences.actions.create', 'Nowa sekwencja') }}
                 </h1>
             </div>
         </template>
@@ -130,7 +133,7 @@ const getStepIcon = (actionType) => {
                 <h2
                     class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                 >
-                    Podstawowe informacje
+                    {{ $t('crm.sequences.sections.basic_info', 'Podstawowe informacje') }}
                 </h2>
 
                 <div class="grid gap-4 md:grid-cols-2">
@@ -138,7 +141,7 @@ const getStepIcon = (actionType) => {
                         <label
                             class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                            Nazwa sekwencji *
+                            {{ $t('crm.sequences.fields.name', 'Nazwa sekwencji') }} *
                         </label>
                         <input
                             v-model="form.name"
@@ -154,7 +157,7 @@ const getStepIcon = (actionType) => {
                         <label
                             class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                         >
-                            Wyzwalacz
+                            {{ $t('crm.sequences.fields.trigger', 'Wyzwalacz') }}
                         </label>
                         <select
                             v-model="form.trigger_type"
@@ -165,7 +168,7 @@ const getStepIcon = (actionType) => {
                                 :key="trigger.value"
                                 :value="trigger.value"
                             >
-                                {{ trigger.label }}
+                                {{ $t('crm.sequences.triggers.' + trigger.value, trigger.label) }}
                             </option>
                         </select>
                     </div>
@@ -175,12 +178,12 @@ const getStepIcon = (actionType) => {
                     <label
                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                     >
-                        Opis (opcjonalnie)
+                        {{ $t('crm.sequences.fields.description', 'Opis (opcjonalnie)') }}
                     </label>
                     <textarea
                         v-model="form.description"
                         rows="2"
-                        placeholder="Opisz cel tej sekwencji..."
+                        :placeholder="$t('crm.sequences.fields.description_placeholder', 'Opisz cel tej sekwencji...')"
                         class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                     ></textarea>
                 </div>
@@ -196,7 +199,7 @@ const getStepIcon = (actionType) => {
                         for="is_active"
                         class="text-sm text-slate-700 dark:text-slate-300"
                     >
-                        Sekwencja aktywna
+                        {{ $t('crm.sequences.fields.is_active', 'Sekwencja aktywna') }}
                     </label>
                 </div>
             </div>
@@ -207,7 +210,7 @@ const getStepIcon = (actionType) => {
                     <h2
                         class="text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        Kroki sekwencji
+                        {{ $t('crm.sequences.sections.steps', 'Kroki sekwencji') }}
                     </h2>
                     <button
                         type="button"
@@ -227,7 +230,7 @@ const getStepIcon = (actionType) => {
                                 d="M12 4v16m8-8H4"
                             />
                         </svg>
-                        Dodaj krok
+                        {{ $t('crm.sequences.actions.add_step', 'Dodaj krok') }}
                     </button>
                 </div>
 
@@ -299,7 +302,7 @@ const getStepIcon = (actionType) => {
                                     <div class="flex items-center gap-4">
                                         <span
                                             class="text-sm text-slate-500 dark:text-slate-400"
-                                            >Opóźnienie:</span
+                                            >{{ $t('crm.sequences.delay.label', 'Opóźnienie:') }}</span
                                         >
                                         <div class="flex items-center gap-2">
                                             <input
@@ -310,7 +313,7 @@ const getStepIcon = (actionType) => {
                                                 class="w-20 rounded-lg border-slate-200 text-center focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                             />
                                             <span class="text-sm text-slate-500"
-                                                >dni</span
+                                                >{{ $t('crm.sequences.delay.days', 'dni') }}</span
                                             >
                                         </div>
                                         <div class="flex items-center gap-2">
@@ -324,7 +327,7 @@ const getStepIcon = (actionType) => {
                                                 class="w-20 rounded-lg border-slate-200 text-center focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                             />
                                             <span class="text-sm text-slate-500"
-                                                >godz.</span
+                                                >{{ $t('crm.sequences.delay.hours', 'godz.') }}</span
                                             >
                                         </div>
                                     </div>
@@ -334,7 +337,7 @@ const getStepIcon = (actionType) => {
                                         <label
                                             class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                                         >
-                                            Typ akcji
+                                            {{ $t('crm.sequences.step_fields.action_type', 'Typ akcji') }}
                                         </label>
                                         <div class="flex flex-wrap gap-2">
                                             <button
@@ -370,7 +373,7 @@ const getStepIcon = (actionType) => {
                                                         "
                                                     />
                                                 </svg>
-                                                {{ actionType.label }}
+                                                {{ $t('crm.sequences.steps.' + actionType.value, actionType.label) }}
                                             </button>
                                         </div>
                                     </div>
@@ -384,7 +387,7 @@ const getStepIcon = (actionType) => {
                                             <label
                                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                                             >
-                                                Tytuł zadania
+                                                {{ $t('crm.sequences.step_fields.task_title', 'Tytuł zadania') }}
                                             </label>
                                             <input
                                                 v-model="step.task_title"
@@ -398,7 +401,7 @@ const getStepIcon = (actionType) => {
                                             <label
                                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                                             >
-                                                Typ zadania
+                                                {{ $t('crm.sequences.step_fields.task_type', 'Typ zadania') }}
                                             </label>
                                             <select
                                                 v-model="step.task_type"
@@ -409,7 +412,7 @@ const getStepIcon = (actionType) => {
                                                     :key="taskType.value"
                                                     :value="taskType.value"
                                                 >
-                                                    {{ taskType.label }}
+                                                    {{ $t('crm.sequences.task_types.' + taskType.value, taskType.label) }}
                                                 </option>
                                             </select>
                                         </div>
@@ -418,7 +421,7 @@ const getStepIcon = (actionType) => {
                                             <label
                                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                                             >
-                                                Priorytet
+                                                {{ $t('crm.sequences.step_fields.priority', 'Priorytet') }}
                                             </label>
                                             <select
                                                 v-model="step.task_priority"
@@ -429,7 +432,7 @@ const getStepIcon = (actionType) => {
                                                     :key="priority.value"
                                                     :value="priority.value"
                                                 >
-                                                    {{ priority.label }}
+                                                    {{ $t('crm.sequences.priorities.' + priority.value, priority.label) }}
                                                 </option>
                                             </select>
                                         </div>
@@ -438,7 +441,7 @@ const getStepIcon = (actionType) => {
                                             <label
                                                 class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                                             >
-                                                Jeśli brak odpowiedzi
+                                                {{ $t('crm.sequences.step_fields.if_no_response', 'Jeśli brak odpowiedzi') }}
                                             </label>
                                             <select
                                                 v-model="
@@ -447,13 +450,13 @@ const getStepIcon = (actionType) => {
                                                 class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                             >
                                                 <option value="continue">
-                                                    Kontynuuj sekwencję
+                                                    {{ $t('crm.sequences.step_options.continue', 'Kontynuuj sekwencję') }}
                                                 </option>
                                                 <option value="stop">
-                                                    Zatrzymaj sekwencję
+                                                    {{ $t('crm.sequences.step_options.stop', 'Zatrzymaj sekwencję') }}
                                                 </option>
                                                 <option value="escalate">
-                                                    Eskaluj
+                                                    {{ $t('crm.sequences.step_options.escalate', 'Eskaluj') }}
                                                 </option>
                                             </select>
                                         </div>
@@ -464,12 +467,12 @@ const getStepIcon = (actionType) => {
                                         <label
                                             class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                                         >
-                                            Opis zadania (opcjonalnie)
+                                            {{ $t('crm.sequences.step_fields.task_description', 'Opis zadania (opcjonalnie)') }}
                                         </label>
                                         <textarea
                                             v-model="step.task_description"
                                             rows="2"
-                                            placeholder="Dodatkowe szczegóły..."
+                                            :placeholder="$t('crm.sequences.step_fields.task_description_placeholder', 'Dodatkowe szczegóły...')"
                                             class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                         ></textarea>
                                     </div>
@@ -504,7 +507,7 @@ const getStepIcon = (actionType) => {
                         />
                     </svg>
                     <p class="mt-4 text-slate-500 dark:text-slate-400">
-                        Dodaj pierwszy krok do sekwencji
+                        {{ $t('crm.sequences.empty_steps', 'Dodaj pierwszy krok do sekwencji') }}
                     </p>
                     <button
                         type="button"
@@ -524,7 +527,7 @@ const getStepIcon = (actionType) => {
                                 d="M12 4v16m8-8H4"
                             />
                         </svg>
-                        Dodaj krok
+                        {{ $t('crm.sequences.actions.add_step', 'Dodaj krok') }}
                     </button>
                 </div>
             </div>
@@ -535,7 +538,7 @@ const getStepIcon = (actionType) => {
                     href="/crm/sequences"
                     class="rounded-xl px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
                 >
-                    Anuluj
+                    {{ $t('common.cancel', 'Anuluj') }}
                 </Link>
                 <button
                     type="submit"
@@ -576,7 +579,7 @@ const getStepIcon = (actionType) => {
                             d="M5 13l4 4L19 7"
                         />
                     </svg>
-                    {{ isEditing ? "Zapisz zmiany" : "Utwórz sekwencję" }}
+                    {{ isEditing ? $t('crm.sequences.actions.save_changes', 'Zapisz zmiany') : $t('crm.sequences.actions.create', 'Utwórz sekwencję') }}
                 </button>
             </div>
         </form>

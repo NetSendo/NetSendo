@@ -23,6 +23,7 @@ class CrmTask extends Model
         'priority',
         'status',
         'due_date',
+        'end_date',
         'completed_at',
         'overdue_notified',
         'reminder_at',
@@ -56,6 +57,7 @@ class CrmTask extends Model
 
     protected $casts = [
         'due_date' => 'datetime',
+        'end_date' => 'datetime',
         'completed_at' => 'datetime',
         'reminder_at' => 'datetime',
         'overdue_notified' => 'boolean',

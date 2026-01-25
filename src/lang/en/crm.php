@@ -140,4 +140,107 @@ return [
             'create' => 'Create Task',
         ],
     ],
+    'contacts' => [
+        'search_or_email' => 'Search or enter email',
+        'search_placeholder' => 'Type email or name...',
+        'search_hint' => 'Type at least 2 characters to search for an existing subscriber or enter a new email',
+        'existing_subscriber' => 'Existing subscriber',
+        'found_subscribers' => 'Found subscribers',
+    ],
+    'defaults' => [
+        'badge' => 'Default',
+        'badge_modified' => 'Custom',
+        'restore_button' => 'Restore Defaults',
+        'restore_modal' => [
+            'title' => 'Restore Default Sequences',
+            'warning' => 'This will delete all current sequences and create new default ones. This action cannot be undone.',
+            'confirm_checkbox' => 'I understand that all my current sequences will be deleted',
+            'cancel' => 'Cancel',
+            'confirm' => 'Restore Defaults',
+        ],
+        'restored_success' => 'Default sequences have been restored.',
+        'no_sequences' => 'You don\'t have any sequences yet.',
+    ],
+    'default_sequences' => [
+        'new_lead_nurture' => [
+            'name' => 'New Lead Nurturing',
+            'description' => 'Automatic welcome sequence for new contacts. Builds relationships and leads to the first sale.',
+            'steps' => [
+                0 => [
+                    'title' => 'Welcome Call',
+                    'description' => 'Call the new contact, introduce yourself and ask about their needs. Establish next steps.',
+                ],
+                1 => [
+                    'title' => 'Follow-up Email with Offer',
+                    'description' => 'Send an email summarizing the call with a value proposition and link to materials.',
+                ],
+                2 => [
+                    'title' => 'Check Interest',
+                    'description' => 'Call and ask about reading the materials. Answer questions and schedule a presentation.',
+                ],
+                3 => [
+                    'title' => 'Final Offer',
+                    'description' => 'Send the final offer with an expiration date. This is the last chance to close the sale.',
+                ],
+            ],
+        ],
+        'contact_recovery' => [
+            'name' => 'Contact Recovery',
+            'description' => 'Reactivation of inactive contacts. Ideal for clients who stopped responding.',
+            'steps' => [
+                0 => [
+                    'title' => 'First Contact Attempt',
+                    'description' => 'Call and ask if everything is okay. Remind about the offer and value of cooperation.',
+                ],
+                1 => [
+                    'title' => 'Reminder Email',
+                    'description' => 'Send an email with a new value proposition or special reactivation offer.',
+                ],
+                2 => [
+                    'title' => 'Final Contact Attempt',
+                    'description' => 'Final attempt to establish contact. Suggest a meeting or call at a convenient time.',
+                ],
+            ],
+        ],
+        'after_meeting' => [
+            'name' => 'After Meeting Follow-up',
+            'description' => 'Post-meeting sequence. Maintains momentum and leads to a decision.',
+            'steps' => [
+                0 => [
+                    'title' => 'Meeting Summary',
+                    'description' => 'Send an email with meeting summary, agreed points and next steps.',
+                ],
+                1 => [
+                    'title' => 'Check-in Call',
+                    'description' => 'Call to check if materials arrived. Answer any questions.',
+                ],
+                2 => [
+                    'title' => 'Ask for Decision',
+                    'description' => 'Call and ask about the decision. If they need more time - set a specific date.',
+                ],
+            ],
+        ],
+        'sales_closing' => [
+            'name' => 'Sales Closing',
+            'description' => 'Sales closing sequence. For contacts ready to make a decision.',
+            'steps' => [
+                0 => [
+                    'title' => 'Send Proposal',
+                    'description' => 'Prepare and send a formal proposal with expiration date and terms.',
+                ],
+                1 => [
+                    'title' => 'Confirmation Call',
+                    'description' => 'Call to confirm receipt of the proposal. Answer questions about terms.',
+                ],
+                2 => [
+                    'title' => 'Decision Follow-up',
+                    'description' => 'Call and gently ask about the decision status. Offer to clarify any doubts.',
+                ],
+                3 => [
+                    'title' => 'Last Chance',
+                    'description' => 'Final reminder about the expiring offer. Suggest a bonus for quick decision.',
+                ],
+            ],
+        ],
+    ],
 ];

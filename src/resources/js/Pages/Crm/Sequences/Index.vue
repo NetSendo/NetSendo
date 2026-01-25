@@ -10,7 +10,14 @@ const { formatDate } = useDateTime();
 
 const props = defineProps({
     sequences: Object,
+    hasDefaults: Boolean,
+    defaultsCount: Number,
 });
+
+// Restore defaults modal state
+const showRestoreModal = ref(false);
+const confirmRestore = ref(false);
+const isRestoring = ref(false);
 
 // Toggle active status
 const toggleActive = async (sequence) => {
@@ -44,6 +51,34 @@ const deleteSequence = async (sequence) => {
             preserveScroll: true,
         });
     }
+};
+
+// Restore defaults
+const restoreDefaults = async () => {
+    if (!confirmRestore.value) return;
+
+    isRestoring.value = true;
+    await router.post(
+        `/crm/sequences/restore-defaults`,
+        { confirm: true },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isRestoring.value = false;
+                showRestoreModal.value = false;
+                confirmRestore.value = false;
+            }
+        },
+    );
+};
+
+// Create defaults (for empty state)
+const createDefaults = async () => {
+    await router.post(
+        `/crm/sequences/create-defaults`,
+        {},
+        { preserveScroll: true },
+    );
 };
 
 // Trigger type labels
@@ -98,25 +133,48 @@ const getTriggerIcon = (type) => {
                         {{ $t("crm.sequences.title", "Sekwencje Follow-up") }}
                     </h1>
                 </div>
-                <Link
-                    href="/crm/sequences/create"
-                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-                >
-                    <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                <div class="flex items-center gap-3">
+                    <!-- Restore Defaults Button -->
+                    <button
+                        v-if="sequences?.data?.length"
+                        @click="showRestoreModal = true"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    {{ $t("crm.sequences.add", "Nowa sekwencja") }}
-                </Link>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
+                        </svg>
+                        {{ $t("crm.defaults.restore_button", "Przywróć domyślne") }}
+                    </button>
+                    <Link
+                        href="/crm/sequences/create"
+                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v16m8-8H4"
+                            />
+                        </svg>
+                        {{ $t("crm.sequences.add", "Nowa sekwencja") }}
+                    </Link>
+                </div>
             </div>
         </template>
 
@@ -281,12 +339,30 @@ const getTriggerIcon = (type) => {
                     </div>
                 </div>
 
-                <!-- Trigger Type -->
-                <div class="mt-3">
+                <!-- Trigger Type & Default Badge -->
+                <div class="mt-3 flex flex-wrap gap-2">
                     <span
                         class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                     >
                         {{ getTriggerLabel(sequence.trigger_type) }}
+                    </span>
+                    <span
+                        v-if="sequence.is_default"
+                        class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
+                    >
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ $t("crm.defaults.badge", "Domyślna") }}
+                    </span>
+                    <span
+                        v-else
+                        class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-600 dark:bg-amber-900/30 dark:text-amber-300"
+                    >
+                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        {{ $t("crm.defaults.badge_modified", "Własna") }}
                     </span>
                 </div>
 
@@ -411,30 +487,144 @@ const getTriggerIcon = (type) => {
                     )
                 }}
             </p>
-            <Link
-                href="/crm/sequences/create"
-                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-indigo-700"
-            >
-                <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button
+                    @click="createDefaults"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-indigo-700"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
-                {{
-                    $t(
-                        "crm.sequences.empty.button",
-                        "Utwórz pierwszą sekwencję",
-                    )
-                }}
-            </Link>
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                        />
+                    </svg>
+                    {{ $t("crm.defaults.restore_button", "Utwórz domyślne sekwencje") }}
+                </button>
+                <Link
+                    href="/crm/sequences/create"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    {{
+                        $t(
+                            "crm.sequences.empty.button",
+                            "Utwórz własną sekwencję",
+                        )
+                    }}
+                </Link>
+            </div>
         </div>
+
+        <!-- Restore Defaults Modal -->
+        <Teleport to="body">
+            <div
+                v-if="showRestoreModal"
+                class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+            >
+                <!-- Backdrop -->
+                <div
+                    class="fixed inset-0 bg-black/50 transition-opacity"
+                    @click="showRestoreModal = false"
+                ></div>
+
+                <!-- Modal -->
+                <div
+                    class="relative z-10 mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
+                >
+                    <!-- Warning Icon -->
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                        <svg
+                            class="h-6 w-6 text-amber-600 dark:text-amber-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                        </svg>
+                    </div>
+
+                    <!-- Title -->
+                    <h3
+                        class="mt-4 text-center text-lg font-semibold text-slate-900 dark:text-white"
+                    >
+                        {{ $t("crm.defaults.restore_modal.title", "Przywróć domyślne sekwencje") }}
+                    </h3>
+
+                    <!-- Warning Text -->
+                    <p class="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+                        {{ $t("crm.defaults.restore_modal.warning", "Ta operacja usunie wszystkie obecne sekwencje i utworzy nowe domyślne sekwencje. Tej operacji nie można cofnąć.") }}
+                    </p>
+
+                    <!-- Confirmation Checkbox -->
+                    <div class="mt-6">
+                        <label class="flex cursor-pointer items-start gap-3">
+                            <input
+                                v-model="confirmRestore"
+                                type="checkbox"
+                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                            />
+                            <span class="text-sm text-slate-600 dark:text-slate-300">
+                                {{ $t("crm.defaults.restore_modal.confirm_checkbox", "Rozumiem, że wszystkie moje obecne sekwencje zostaną usunięte") }}
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-6 flex gap-3">
+                        <button
+                            @click="showRestoreModal = false; confirmRestore = false"
+                            class="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                        >
+                            {{ $t("crm.defaults.restore_modal.cancel", "Anuluj") }}
+                        </button>
+                        <button
+                            @click="restoreDefaults"
+                            :disabled="!confirmRestore || isRestoring"
+                            :class="[
+                                'flex-1 rounded-xl px-4 py-2 text-sm font-medium transition',
+                                confirmRestore && !isRestoring
+                                    ? 'bg-red-600 text-white hover:bg-red-700'
+                                    : 'cursor-not-allowed bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500',
+                            ]"
+                        >
+                            <span v-if="isRestoring" class="flex items-center justify-center gap-2">
+                                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                ...
+                            </span>
+                            <span v-else>
+                                {{ $t("crm.defaults.restore_modal.confirm", "Przywróć domyślne") }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

@@ -60,6 +60,7 @@ class GoogleCalendarController extends Controller
             'integrations' => $integrations,
             'calendars' => $calendars,
             'webhook_url' => route('webhooks.google-calendar'),
+            'calendar_redirect_uri' => route('settings.calendar.callback'),
         ]);
     }
 
