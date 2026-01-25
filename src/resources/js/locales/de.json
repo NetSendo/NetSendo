@@ -4860,6 +4860,88 @@
             "cold_call": "Kaltakquise",
             "other": "Sonstiges"
         },
+        "scoring": {
+            "title": "Lead Scoring",
+            "rules_title": "Bewertungsregeln",
+            "description": "Automatische Lead-Bewertung konfigurieren",
+            "history_title": "Score-Verlauf",
+            "actions": {
+                "reset_defaults": "Auf Standard zurücksetzen",
+                "add_rule": "Regel hinzufügen",
+                "edit_rule": "Regel bearbeiten",
+                "delete_rule": "Regel löschen",
+                "cancel": "Abbrechen",
+                "save": "Speichern",
+                "add": "Hinzufügen",
+                "load_defaults": "Standard laden"
+            },
+            "fields": {
+                "event_type": "Ereignistyp",
+                "points": "Punkte",
+                "name": "Regelname",
+                "description": "Beschreibung (optional)",
+                "cooldown": "Abklingzeit (Min)",
+                "priority": "Priorität",
+                "condition": "Bedingung (optional)",
+                "is_active": "Regel aktiv",
+                "condition_field": "Feld",
+                "condition_operator": "Operator",
+                "condition_value": "Wert",
+                "max_daily": "Max. täglich"
+            },
+            "messages": {
+                "no_rules": "Keine Bewertungsregeln",
+                "no_rules_desc": "Fügen Sie Ihre erste Regel hinzu oder setzen Sie auf Standardeinstellungen zurück",
+                "toast_updated": "Regel aktualisiert",
+                "toast_added": "Regel hinzugefügt",
+                "toast_deleted": "Regel gelöscht",
+                "toast_reset": "Regeln auf Standard zurückgesetzt",
+                "toast_toggled_on": "Regel aktiviert",
+                "toast_toggled_off": "Regel deaktiviert",
+                "confirm_delete_title": "Regel löschen",
+                "confirm_delete_message": "Sind Sie sicher, dass Sie die Regel \"{name}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+                "confirm_reset_title": "Auf Standard zurücksetzen",
+                "confirm_reset_message": "Sind Sie sicher, dass Sie alle Regeln auf Standard zurücksetzen möchten? Alle aktuellen Regeln werden gelöscht und durch Standardwerte ersetzt."
+            },
+            "history": {
+               "title": "Score-Verlauf",
+               "more_events": "+ {count} weitere Ereignisse",
+               "empty": "Kein Score-Verlauf",
+               "empty_desc": "Der Score wird automatisch basierend auf Aktivitäten aktualisiert",
+               "time": {
+                   "now": "gerade eben",
+                   "min_ago": "vor {n} Min",
+                   "hours_ago": "vor {n} Std",
+                   "days_ago": "vor {n} T"
+               }
+            },
+            "event_types": {
+                "email_opened": "E-Mail geöffnet",
+                "email_clicked": "Link angeklickt",
+                "email_replied": "E-Mail beantwortet",
+                "form_submitted": "Formular gesendet",
+                "page_visited": "Seite besucht",
+                "product_viewed": "Produkt angesehen",
+                "add_to_cart": "In den Warenkorb",
+                "checkout_started": "Kasse gestartet",
+                "tag_added": "Tag hinzugefügt",
+                "tag_removed": "Tag entfernt",
+                "contact_created": "Kontakt erstellt",
+                "decay_7_days": "Inaktivität 7 Tage",
+                "decay_30_days": "Inaktivität 30 Tage"
+            },
+            "operators": {
+                "equals": "Gleich",
+                "not_equals": "Ungleich",
+                "contains": "Enthält",
+                "not_contains": "Enthält nicht",
+                "starts_with": "Beginnt mit",
+                "ends_with": "Endet mit",
+                "regex": "Regex",
+                "greater_than": "Größer als",
+                "less_than": "Kleiner als"
+            }
+        },
         "sequences": {
             "title": "Follow-up Sequenzen",
             "add": "Neue Sequenz",

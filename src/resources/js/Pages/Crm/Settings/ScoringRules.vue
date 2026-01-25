@@ -87,7 +87,7 @@ const submitForm = () => {
             preserveScroll: true,
             onSuccess: () => {
                 closeModal();
-                showToast("Reguła została zaktualizowana");
+                showToast(t('crm.scoring.messages.toast_updated'));
             },
         });
     } else {
@@ -95,7 +95,7 @@ const submitForm = () => {
             preserveScroll: true,
             onSuccess: () => {
                 closeModal();
-                showToast("Reguła została dodana");
+                showToast(t('crm.scoring.messages.toast_added'));
             },
         });
     }
@@ -105,25 +105,25 @@ const toggleRule = (rule) => {
     router.post(`/crm/scoring/rules/${rule.id}/toggle`, {}, {
         preserveScroll: true,
         onSuccess: () => {
-            showToast(`Reguła ${rule.is_active ? "wyłączona" : "włączona"}`);
+            showToast(t(rule.is_active ? 'crm.scoring.messages.toast_toggled_off' : 'crm.scoring.messages.toast_toggled_on'));
         },
     });
 };
 
 const openDeleteConfirm = (rule) => {
     ruleToDelete.value = rule;
-    confirmTitle.value = "Usuń regułę";
-    confirmMessage.value = `Czy na pewno chcesz usunąć regułę "${rule.name}"? Ta operacja jest nieodwracalna.`;
-    confirmButtonText.value = "Usuń";
+    confirmTitle.value = t('crm.scoring.messages.confirm_delete_title');
+    confirmMessage.value = t('crm.scoring.messages.confirm_delete_message', { name: rule.name });
+    confirmButtonText.value = t('common.delete');
     confirmButtonClass.value = "bg-red-600 hover:bg-red-700";
     confirmAction.value = "delete";
     showConfirmModal.value = true;
 };
 
 const openResetConfirm = () => {
-    confirmTitle.value = "Resetuj do domyślnych";
-    confirmMessage.value = "Czy na pewno chcesz zresetować wszystkie reguły do domyślnych? Wszystkie obecne reguły zostaną usunięte i zastąpione domyślnymi.";
-    confirmButtonText.value = "Resetuj";
+    confirmTitle.value = t('crm.scoring.messages.confirm_reset_title');
+    confirmMessage.value = t('crm.scoring.messages.confirm_reset_message');
+    confirmButtonText.value = t('crm.scoring.actions.reset_defaults');
     confirmButtonClass.value = "bg-amber-600 hover:bg-amber-700";
     confirmAction.value = "reset";
     showConfirmModal.value = true;
@@ -140,7 +140,7 @@ const executeConfirmAction = () => {
         router.delete(`/crm/scoring/rules/${ruleToDelete.value.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-                showToast("Reguła została usunięta");
+                showToast(t('crm.scoring.messages.toast_deleted'));
                 closeConfirmModal();
             },
         });
@@ -148,7 +148,7 @@ const executeConfirmAction = () => {
         router.post("/crm/scoring/reset-defaults", {}, {
             preserveScroll: true,
             onSuccess: () => {
-                showToast("Reguły zostały zresetowane do domyślnych");
+                showToast(t('crm.scoring.messages.toast_reset'));
                 closeConfirmModal();
             },
         });
@@ -175,7 +175,7 @@ const getPointsClass = (points) => {
 </script>
 
 <template>
-    <Head title="Reguły Scoringu" />
+    <Head :title="$t('crm.scoring.rules_title')" />
 
     <AuthenticatedLayout>
         <template #header>
@@ -191,10 +191,10 @@ const getPointsClass = (points) => {
                     </Link>
                     <div>
                         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                            Reguły Scoringu
+                            {{ $t('crm.scoring.rules_title') }}
                         </h1>
                         <p class="text-slate-500 dark:text-slate-400">
-                            Konfiguruj automatyczną punktację leadów
+                            {{ $t('crm.scoring.description') }}
                         </p>
                     </div>
                 </div>
@@ -206,7 +206,7 @@ const getPointsClass = (points) => {
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
-                        Resetuj do domyślnych
+                        {{ $t('crm.scoring.actions.reset_defaults') }}
                     </button>
                     <button
                         @click="openCreateModal"
@@ -215,7 +215,7 @@ const getPointsClass = (points) => {
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        Dodaj regułę
+                        {{ $t('crm.scoring.actions.add_rule') }}
                     </button>
                 </div>
             </div>
@@ -230,10 +230,10 @@ const getPointsClass = (points) => {
             >
                 <h2 class="mb-4 flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
                     <span class="rounded-lg bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                        {{ eventTypes[eventType] || eventType }}
+                        {{ $t('crm.scoring.event_types.' + eventType) }}
                     </span>
                     <span class="text-sm font-normal text-slate-500">
-                        {{ rules.length }} {{ rules.length === 1 ? 'reguła' : 'reguł' }}
+                        {{ rules.length }} {{ $t('crm.scoring.rules_title') }}
                     </span>
                 </h2>
 
@@ -253,13 +253,13 @@ const getPointsClass = (points) => {
                                     class="rounded-full px-2 py-0.5 text-sm font-bold"
                                     :class="getPointsClass(rule.points)"
                                 >
-                                    {{ rule.points > 0 ? '+' : '' }}{{ rule.points }} pkt
+                                    {{ rule.points > 0 ? '+' : '' }}{{ rule.points }} {{ $t('crm.scoring.fields.points') }}
                                 </span>
                                 <span
                                     v-if="rule.condition_value"
                                     class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                                 >
-                                    Warunkowa
+                                    {{ $t('crm.scoring.fields.condition') }}
                                 </span>
                             </div>
                             <p v-if="rule.description" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -267,10 +267,10 @@ const getPointsClass = (points) => {
                             </p>
                             <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
                                 <span v-if="rule.cooldown_minutes > 0" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
-                                    Cooldown: {{ rule.cooldown_minutes }} min
+                                    {{ $t('crm.scoring.fields.cooldown') }}: {{ rule.cooldown_minutes }}
                                 </span>
                                 <span v-if="rule.max_daily_occurrences" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
-                                    Max dziennie: {{ rule.max_daily_occurrences }}
+                                    {{ $t('crm.scoring.fields.max_daily') }}: {{ rule.max_daily_occurrences }}
                                 </span>
                                 <span v-if="rule.condition_value" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
                                     {{ rule.condition_field }} {{ rule.condition_operator }} "{{ rule.condition_value }}"
@@ -322,23 +322,23 @@ const getPointsClass = (points) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
                 <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-white">
-                    Brak reguł scoringu
+                    {{ $t('crm.scoring.messages.no_rules') }}
                 </h3>
                 <p class="mt-2 text-slate-500 dark:text-slate-400">
-                    Dodaj pierwszą regułę lub zresetuj do domyślnych ustawień
+                    {{ $t('crm.scoring.messages.no_rules_desc') }}
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
                     <button
                         @click="openResetConfirm"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
                     >
-                        Załaduj domyślne
+                        {{ $t('crm.scoring.actions.load_defaults') }}
                     </button>
                     <button
                         @click="openCreateModal"
                         class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                     >
-                        Dodaj regułę
+                        {{ $t('crm.scoring.actions.add_rule') }}
                     </button>
                 </div>
             </div>
@@ -361,27 +361,27 @@ const getPointsClass = (points) => {
                 >
                     <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
                         <h2 class="mb-6 text-xl font-semibold text-slate-900 dark:text-white">
-                            {{ editingRule ? 'Edytuj regułę' : 'Dodaj regułę scoringu' }}
+                            {{ editingRule ? $t('crm.scoring.actions.edit_rule') : $t('crm.scoring.actions.add_rule') }}
                         </h2>
 
                         <form @submit.prevent="submitForm" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Typ zdarzenia
+                                        {{ $t('crm.scoring.fields.event_type') }}
                                     </label>
                                     <select
                                         v-model="form.event_type"
                                         class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     >
                                         <option v-for="(label, key) in eventTypes" :key="key" :value="key">
-                                            {{ label }}
+                                            {{ $t('crm.scoring.event_types.' + key) }}
                                         </option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Punkty
+                                        {{ $t('crm.scoring.fields.points') }}
                                     </label>
                                     <input
                                         v-model.number="form.points"
@@ -395,7 +395,7 @@ const getPointsClass = (points) => {
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Nazwa reguły
+                                    {{ $t('crm.scoring.fields.name') }}
                                 </label>
                                 <input
                                     v-model="form.name"
@@ -408,7 +408,7 @@ const getPointsClass = (points) => {
 
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Opis (opcjonalny)
+                                    {{ $t('crm.scoring.fields.description') }}
                                 </label>
                                 <textarea
                                     v-model="form.description"
@@ -420,7 +420,7 @@ const getPointsClass = (points) => {
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Cooldown (min)
+                                        {{ $t('crm.scoring.fields.cooldown') }}
                                     </label>
                                     <input
                                         v-model.number="form.cooldown_minutes"
@@ -431,7 +431,7 @@ const getPointsClass = (points) => {
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Priorytet
+                                        {{ $t('crm.scoring.fields.priority') }}
                                     </label>
                                     <input
                                         v-model.number="form.priority"
@@ -446,28 +446,28 @@ const getPointsClass = (points) => {
                             <!-- Warunek -->
                             <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
                                 <h3 class="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Warunek (opcjonalny)
+                                    {{ $t('crm.scoring.fields.condition') }}
                                 </h3>
                                 <div class="grid grid-cols-3 gap-3">
                                     <input
                                         v-model="form.condition_field"
                                         type="text"
-                                        placeholder="Pole (np. page_url)"
+                                        :placeholder="$t('crm.scoring.fields.condition_field')"
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     />
                                     <select
                                         v-model="form.condition_operator"
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     >
-                                        <option value="">Operator</option>
+                                        <option value="">{{ $t('crm.scoring.fields.condition_operator') }}</option>
                                         <option v-for="(label, key) in operators" :key="key" :value="key">
-                                            {{ label }}
+                                            {{ $t('crm.scoring.operators.' + key) }}
                                         </option>
                                     </select>
                                     <input
                                         v-model="form.condition_value"
                                         type="text"
-                                        placeholder="Wartość"
+                                        :placeholder="$t('crm.scoring.fields.condition_value')"
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     />
                                 </div>
@@ -481,7 +481,7 @@ const getPointsClass = (points) => {
                                     class="h-4 w-4 rounded border-slate-300 text-indigo-600"
                                 />
                                 <label for="is_active" class="text-sm text-slate-700 dark:text-slate-300">
-                                    Reguła aktywna
+                                    {{ $t('crm.scoring.fields.is_active') }}
                                 </label>
                             </div>
 
@@ -491,14 +491,14 @@ const getPointsClass = (points) => {
                                     @click="closeModal"
                                     class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
                                 >
-                                    Anuluj
+                                    {{ $t('crm.scoring.actions.cancel') }}
                                 </button>
                                 <button
                                     type="submit"
                                     :disabled="form.processing"
                                     class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
                                 >
-                                    {{ editingRule ? 'Zapisz' : 'Dodaj' }}
+                                    {{ editingRule ? $t('crm.scoring.actions.save') : $t('crm.scoring.actions.add') }}
                                 </button>
                             </div>
                         </form>

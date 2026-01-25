@@ -5704,6 +5704,88 @@
             "cold_call": "Cold call",
             "other": "Inne"
         },
+        "scoring": {
+            "title": "Lead Scoring",
+            "rules_title": "Reguły Scoringu",
+            "description": "Konfiguruj automatyczną punktację leadów",
+            "history_title": "Historia Score",
+            "actions": {
+                "reset_defaults": "Resetuj do domyślnych",
+                "add_rule": "Dodaj regułę",
+                "edit_rule": "Edytuj regułę",
+                "delete_rule": "Usuń regułę",
+                "cancel": "Anuluj",
+                "save": "Zapisz",
+                "add": "Dodaj",
+                "load_defaults": "Załaduj domyślne"
+            },
+            "fields": {
+                "event_type": "Typ zdarzenia",
+                "points": "Punkty",
+                "name": "Nazwa reguły",
+                "description": "Opis (opcjonalny)",
+                "cooldown": "Cooldown (min)",
+                "priority": "Priorytet",
+                "condition": "Warunek (opcjonalny)",
+                "is_active": "Reguła aktywna",
+                "condition_field": "Pole",
+                "condition_operator": "Operator",
+                "condition_value": "Wartość",
+                "max_daily": "Max dziennie"
+            },
+            "messages": {
+                "no_rules": "Brak reguł scoringu",
+                "no_rules_desc": "Dodaj pierwszą regułę lub zresetuj do domyślnych ustawień",
+                "toast_updated": "Reguła została zaktualizowana",
+                "toast_added": "Reguła została dodana",
+                "toast_deleted": "Reguła została usunięta",
+                "toast_reset": "Reguły zostały zresetowane do domyślnych",
+                "toast_toggled_on": "Reguła włączona",
+                "toast_toggled_off": "Reguła wyłączona",
+                "confirm_delete_title": "Usuń regułę",
+                "confirm_delete_message": "Czy na pewno chcesz usunąć regułę \"{name}\"? Ta operacja jest nieodwracalna.",
+                "confirm_reset_title": "Resetuj do domyślnych",
+                "confirm_reset_message": "Czy na pewno chcesz zresetować wszystkie reguły do domyślnych? Wszystkie obecne reguły zostaną usunięte i zastąpione domyślnymi."
+            },
+            "history": {
+               "title": "Historia Score",
+               "more_events": "+ {count} więcej wydarzeń",
+               "empty": "Brak historii punktacji",
+               "empty_desc": "Score będzie aktualizowany automatycznie na podstawie aktywności",
+               "time": {
+                   "now": "teraz",
+                   "min_ago": "{n} min temu",
+                   "hours_ago": "{n}h temu",
+                   "days_ago": "{n}d temu"
+               }
+            },
+            "event_types": {
+                "email_opened": "Otwarcie emaila",
+                "email_clicked": "Kliknięcie w link",
+                "email_replied": "Odpowiedź na email",
+                "form_submitted": "Wypełnienie formularza",
+                "page_visited": "Wizyta na stronie",
+                "product_viewed": "Przeglądanie produktu",
+                "add_to_cart": "Dodanie do koszyka",
+                "checkout_started": "Rozpoczęcie checkout",
+                "tag_added": "Dodanie tagu",
+                "tag_removed": "Usunięcie tagu",
+                "contact_created": "Utworzenie kontaktu",
+                "decay_7_days": "Brak aktywności 7 dni",
+                "decay_30_days": "Brak aktywności 30 dni"
+            },
+            "operators": {
+                "equals": "Równa się",
+                "not_equals": "Nie równa się",
+                "contains": "Zawiera",
+                "not_contains": "Nie zawiera",
+                "starts_with": "Zaczyna się od",
+                "ends_with": "Kończy się na",
+                "regex": "Regex",
+                "greater_than": "Większe niż",
+                "less_than": "Mniejsze niż"
+            }
+        },
         "sequences": {
             "title": "Sekwencje Follow-up",
             "add": "Nowa sekwencja",

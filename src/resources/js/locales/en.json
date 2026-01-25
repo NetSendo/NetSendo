@@ -5627,6 +5627,88 @@
             "cold_call": "Cold Call",
             "other": "Other"
         },
+        "scoring": {
+            "title": "Lead Scoring",
+            "rules_title": "Scoring Rules",
+            "description": "Configure automatic lead scoring",
+            "history_title": "Score History",
+            "actions": {
+                "reset_defaults": "Reset to defaults",
+                "add_rule": "Add rule",
+                "edit_rule": "Edit rule",
+                "delete_rule": "Delete rule",
+                "cancel": "Cancel",
+                "save": "Save",
+                "add": "Add",
+                "load_defaults": "Load defaults"
+            },
+            "fields": {
+                "event_type": "Event type",
+                "points": "Points",
+                "name": "Rule name",
+                "description": "Description (optional)",
+                "cooldown": "Cooldown (min)",
+                "priority": "Priority",
+                "condition": "Condition (optional)",
+                "is_active": "Rule active",
+                "condition_field": "Field",
+                "condition_operator": "Operator",
+                "condition_value": "Value",
+                "max_daily": "Max daily"
+            },
+            "messages": {
+                "no_rules": "No scoring rules",
+                "no_rules_desc": "Add your first rule or reset to default settings",
+                "toast_updated": "Rule updated",
+                "toast_added": "Rule added",
+                "toast_deleted": "Rule deleted",
+                "toast_reset": "Rules reset to defaults",
+                "toast_toggled_on": "Rule enabled",
+                "toast_toggled_off": "Rule disabled",
+                "confirm_delete_title": "Delete rule",
+                "confirm_delete_message": "Are you sure you want to delete rule \"{name}\"? This action cannot be undone.",
+                "confirm_reset_title": "Reset to defaults",
+                "confirm_reset_message": "Are you sure you want to reset all rules to defaults? All current rules will be deleted and replaced with defaults."
+            },
+            "history": {
+               "title": "Score History",
+               "more_events": "+ {count} more events",
+               "empty": "No score history",
+               "empty_desc": "Score will be updated automatically based on activity",
+               "time": {
+                   "now": "just now",
+                   "min_ago": "{n} min ago",
+                   "hours_ago": "{n}h ago",
+                   "days_ago": "{n}d ago"
+               }
+            },
+            "event_types": {
+                "email_opened": "Email opened",
+                "email_clicked": "Link clicked",
+                "email_replied": "Email replied",
+                "form_submitted": "Form submitted",
+                "page_visited": "Page visited",
+                "product_viewed": "Product viewed",
+                "add_to_cart": "Added to cart",
+                "checkout_started": "Checkout started",
+                "tag_added": "Tag added",
+                "tag_removed": "Tag removed",
+                "contact_created": "Contact created",
+                "decay_7_days": "Inactivity 7 days",
+                "decay_30_days": "Inactivity 30 days"
+            },
+            "operators": {
+                "equals": "Equals",
+                "not_equals": "Not equals",
+                "contains": "Contains",
+                "not_contains": "Not contains",
+                "starts_with": "Starts with",
+                "ends_with": "Ends with",
+                "regex": "Regex",
+                "greater_than": "Greater than",
+                "less_than": "Less than"
+            }
+        },
         "sequences": {
             "title": "Follow-up Sequences",
             "add": "New Sequence",

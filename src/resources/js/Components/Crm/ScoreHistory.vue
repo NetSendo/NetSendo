@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import axios from "axios";
 
 const props = defineProps({
@@ -12,6 +13,8 @@ const props = defineProps({
         default: 0,
     },
 });
+
+const { t } = useI18n();
 
 const loading = ref(true);
 const history = ref([]);
@@ -57,12 +60,12 @@ const formatTime = (dateString) => {
     const now = new Date();
     const diff = now - date;
 
-    if (diff < 60000) return "teraz";
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} min temu`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h temu`;
-    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d temu`;
+    if (diff < 60000) return t('crm.scoring.history.time.now');
+    if (diff < 3600000) return t('crm.scoring.history.time.min_ago', { n: Math.floor(diff / 60000) });
+    if (diff < 86400000) return t('crm.scoring.history.time.hours_ago', { n: Math.floor(diff / 3600000) });
+    if (diff < 604800000) return t('crm.scoring.history.time.days_ago', { n: Math.floor(diff / 86400000) });
 
-    return date.toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit" });
+    return date.toLocaleDateString();
 };
 </script>
 
@@ -71,7 +74,7 @@ const formatTime = (dateString) => {
         <!-- Header -->
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
-                Historia Score
+                {{ $t('crm.scoring.history.title') }}
             </h2>
             <div class="flex items-center gap-2">
                 <svg
@@ -138,7 +141,7 @@ const formatTime = (dateString) => {
             <!-- Show more link -->
             <div v-if="history.length > 10" class="pt-2 text-center">
                 <span class="text-sm text-slate-500 dark:text-slate-400">
-                    + {{ history.length - 10 }} więcej wydarzeń
+                    {{ $t('crm.scoring.history.more_events', { count: history.length - 10 }) }}
                 </span>
             </div>
         </div>
@@ -149,10 +152,10 @@ const formatTime = (dateString) => {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
-                Brak historii punktacji
+                {{ $t('crm.scoring.history.empty') }}
             </p>
             <p class="text-xs text-slate-400 dark:text-slate-500">
-                Score będzie aktualizowany automatycznie na podstawie aktywności
+                {{ $t('crm.scoring.history.empty_desc') }}
             </p>
         </div>
     </div>

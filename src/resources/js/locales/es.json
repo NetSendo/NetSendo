@@ -4945,6 +4945,88 @@
             "cold_call": "Llamada en frío",
             "other": "Otro"
         },
+        "scoring": {
+            "title": "Lead Scoring",
+            "rules_title": "Reglas de puntuación",
+            "description": "Configurar puntuación automática de clientes potenciales",
+            "history_title": "Historial de puntuación",
+            "actions": {
+                "reset_defaults": "Restablecer valores predeterminados",
+                "add_rule": "Añadir regla",
+                "edit_rule": "Editar regla",
+                "delete_rule": "Eliminar regla",
+                "cancel": "Cancelar",
+                "save": "Guardar",
+                "add": "Añadir",
+                "load_defaults": "Cargar predeterminados"
+            },
+            "fields": {
+                "event_type": "Tipo de evento",
+                "points": "Puntos",
+                "name": "Nombre de la regla",
+                "description": "Descripción (opcional)",
+                "cooldown": "Enfriamiento (min)",
+                "priority": "Prioridad",
+                "condition": "Condición (opcional)",
+                "is_active": "Regla activa",
+                "condition_field": "Campo",
+                "condition_operator": "Operador",
+                "condition_value": "Valor",
+                "max_daily": "Máx. diario"
+            },
+            "messages": {
+                "no_rules": "Sin reglas de puntuación",
+                "no_rules_desc": "Añade tu primera regla o restablece la configuración predeterminada",
+                "toast_updated": "Regla actualizada",
+                "toast_added": "Regla añadida",
+                "toast_deleted": "Regla eliminada",
+                "toast_reset": "Reglas restablecidas a valores predeterminados",
+                "toast_toggled_on": "Regla activada",
+                "toast_toggled_off": "Regla desactivada",
+                "confirm_delete_title": "Eliminar regla",
+                "confirm_delete_message": "¿Estás seguro de que deseas eliminar la regla \"{name}\"? Esta acción no se puede deshacer.",
+                "confirm_reset_title": "Restablecer a valores predeterminados",
+                "confirm_reset_message": "¿Estás seguro de que deseas restablecer todas las reglas a los valores predeterminados? Todas las reglas actuales se eliminarán y se reemplazarán con las predeterminadas."
+            },
+            "history": {
+               "title": "Historial de puntuación",
+               "more_events": "+ {count} eventos más",
+               "empty": "Sin historial de puntuación",
+               "empty_desc": "La puntuación se actualizará automáticamente según la actividad",
+               "time": {
+                   "now": "ahora",
+                   "min_ago": "hace {n} min",
+                   "hours_ago": "hace {n}h",
+                   "days_ago": "hace {n}d"
+               }
+            },
+            "event_types": {
+                "email_opened": "Email abierto",
+                "email_clicked": "Enlace clicado",
+                "email_replied": "Email respondido",
+                "form_submitted": "Formulario enviado",
+                "page_visited": "Página visitada",
+                "product_viewed": "Producto visto",
+                "add_to_cart": "Añadido al carrito",
+                "checkout_started": "Pago iniciado",
+                "tag_added": "Etiqueta añadida",
+                "tag_removed": "Etiqueta eliminada",
+                "contact_created": "Contacto creado",
+                "decay_7_days": "Inactividad 7 días",
+                "decay_30_days": "Inactividad 30 días"
+            },
+            "operators": {
+                "equals": "Igual a",
+                "not_equals": "No igual a",
+                "contains": "Contiene",
+                "not_contains": "No contiene",
+                "starts_with": "Empieza por",
+                "ends_with": "Termina por",
+                "regex": "Regex",
+                "greater_than": "Mayor que",
+                "less_than": "Menor que"
+            }
+        },
         "sequences": {
             "title": "Secuencias de seguimiento",
             "add": "Nueva secuencia",

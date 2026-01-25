@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Scheduled Command Typo:**
   - Fixed `cron:notify-overdue-tasks` command not found error by correcting the scheduled command name to `crm:check-overdue-tasks` in `console.php`.
 
+### Added
+
+- **CRM Navigation & Lead Scoring:**
+  - Added navigation links for "Lead Scoring" (`/crm/scoring`) and "Sequences" (`/crm/sequences`) to the CRM sidebar menu.
+  - Implemented auto-seeding of default scoring rules when a user visits the scoring settings page for the first time.
+  - Added confirmation modals for "Reset to Defaults" and "Delete Rule" actions in the Lead Scoring configuration page (`ScoringRules.vue`).
+
+### Fixed
+
+- **Lead Scoring UI:**
+  - Fixed "Reset to Defaults" button not working by replacing the native browser `confirm()` dialog (which was blocked or ignored) with a custom modal component.
+  - Fixed missing default rules for new users by adding an auto-seed check in `LeadScoringController`.
+
 ## [1.7.14] – Short Description
 
 **Release date:** 2026-01-25
