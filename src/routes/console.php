@@ -124,3 +124,9 @@ Schedule::command('crm:check-overdue-tasks')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/crm-overdue.log'));
 
+// CRM Score Decay - Spadek punktów dla nieaktywnych kontaktów
+Schedule::command('crm:process-score-decay')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/crm-score-decay.log'));
+

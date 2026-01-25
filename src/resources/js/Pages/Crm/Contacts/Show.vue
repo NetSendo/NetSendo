@@ -5,6 +5,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import SendEmailModal from "@/Components/Crm/SendEmailModal.vue";
 import TaskModal from "@/Components/Crm/TaskModal.vue";
+import ScoreHistory from "@/Components/Crm/ScoreHistory.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const { formatDate: formatDateBase, locale, formatCurrency } = useDateTime();
@@ -388,6 +389,12 @@ const getActivityIcon = (type) => {
                         </span>
                     </div>
                 </div>
+
+                <!-- Score History -->
+                <ScoreHistory
+                    :contact-id="contact.id"
+                    :current-score="contact.score"
+                />
 
                 <!-- Marketing Data -->
                 <div

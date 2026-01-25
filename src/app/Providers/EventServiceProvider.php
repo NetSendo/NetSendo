@@ -146,6 +146,7 @@ class EventServiceProvider extends ServiceProvider
     protected $subscribe = [
         CrmEventListener::class,
         \App\Listeners\FollowUpSequenceListener::class,
+        \App\Listeners\LeadScoringListener::class,
     ];
 
     /**

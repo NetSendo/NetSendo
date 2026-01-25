@@ -893,6 +893,18 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::get('sequences/{sequence}/report', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'report'])->name('sequences.report');
     Route::post('contacts/{contact}/enroll', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'enroll'])->name('contacts.enroll');
 
+    // Lead Scoring Configuration
+    Route::prefix('scoring')->name('scoring.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\LeadScoringController::class, 'index'])->name('index');
+        Route::post('/rules', [\App\Http\Controllers\LeadScoringController::class, 'store'])->name('rules.store');
+        Route::put('/rules/{rule}', [\App\Http\Controllers\LeadScoringController::class, 'update'])->name('rules.update');
+        Route::delete('/rules/{rule}', [\App\Http\Controllers\LeadScoringController::class, 'destroy'])->name('rules.destroy');
+        Route::post('/rules/{rule}/toggle', [\App\Http\Controllers\LeadScoringController::class, 'toggle'])->name('rules.toggle');
+        Route::post('/reset-defaults', [\App\Http\Controllers\LeadScoringController::class, 'resetDefaults'])->name('reset-defaults');
+        Route::get('/analytics', [\App\Http\Controllers\LeadScoringController::class, 'analytics'])->name('analytics');
+    });
+    Route::get('contacts/{contact}/score-history', [\App\Http\Controllers\LeadScoringController::class, 'contactHistory'])->name('contacts.score-history');
+
     // CRM Import
 
     Route::get('import', [CrmImportController::class, 'index'])->name('import.index');

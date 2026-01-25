@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use App\Events\CrmScoreThresholdReached;
+use App\Events\CrmContactStatusChanged;
 
 class CrmContact extends Model
 {
@@ -22,10 +24,29 @@ class CrmContact extends Model
         'source',
         'score',
         'position',
+        'last_activity_at',
+        'score_updated_at',
+        'last_decay_at',
     ];
 
     protected $casts = [
         'score' => 'integer',
+        'last_activity_at' => 'datetime',
+        'score_updated_at' => 'datetime',
+        'last_decay_at' => 'datetime',
+    ];
+
+    /**
+     * Score thresholds for notifications and promotions.
+     */
+    public const SCORE_THRESHOLDS = [50, 75, 100];
+
+    /**
+     * Status promotion thresholds.
+     */
+    public const STATUS_THRESHOLDS = [
+        'prospect' => 30,  // Lead -> Prospect at 30 points
+        'client' => 70,    // Prospect -> Client at 70 points
     ];
 
     /**
@@ -95,6 +116,14 @@ class CrmContact extends Model
     public function activities(): MorphMany
     {
         return $this->morphMany(CrmActivity::class, 'subject');
+    }
+
+    /**
+     * Get score history for this contact.
+     */
+    public function scoreHistory(): HasMany
+    {
+        return $this->hasMany(LeadScoreHistory::class)->orderByDesc('created_at');
     }
 
     // ==================== ACCESSOR PROXIES FROM SUBSCRIBER ====================
@@ -192,6 +221,22 @@ class CrmContact extends Model
             ->orderByDesc('score');
     }
 
+    /**
+     * Scope for contacts needing score decay.
+     */
+    public function scopeNeedsDecay($query, int $inactiveDays = 7)
+    {
+        return $query->where('score', '>', 0)
+            ->where(function ($q) use ($inactiveDays) {
+                $q->whereNull('last_activity_at')
+                    ->orWhere('last_activity_at', '<', now()->subDays($inactiveDays));
+            })
+            ->where(function ($q) use ($inactiveDays) {
+                $q->whereNull('last_decay_at')
+                    ->orWhere('last_decay_at', '<', now()->subDays($inactiveDays));
+            });
+    }
+
     // ==================== HELPERS ====================
 
     /**
@@ -222,10 +267,99 @@ class CrmContact extends Model
     }
 
     /**
-     * Update the lead score.
+     * Update the lead score with optional history logging.
      */
-    public function updateScore(int $delta): void
+    public function updateScore(int $delta, string $eventType = 'manual', ?LeadScoringRule $rule = null, array $metadata = []): int
     {
-        $this->increment('score', $delta);
+        $oldScore = $this->score;
+        $newScore = max(0, $oldScore + $delta); // Score cannot go below 0
+
+        $this->update([
+            'score' => $newScore,
+            'score_updated_at' => now(),
+            'last_activity_at' => $delta > 0 ? now() : $this->last_activity_at,
+        ]);
+
+        // Log to history
+        LeadScoreHistory::log($this, $eventType, $delta, $oldScore, $newScore, $rule, $metadata);
+
+        // Check for threshold crossings
+        $this->checkThresholds($oldScore, $newScore);
+
+        // Check for status promotion
+        $this->checkStatusPromotion($newScore);
+
+        return $newScore;
+    }
+
+    /**
+     * Check if score crossed a notification threshold.
+     */
+    protected function checkThresholds(int $oldScore, int $newScore): void
+    {
+        foreach (self::SCORE_THRESHOLDS as $threshold) {
+            // Crossed above threshold
+            if ($oldScore < $threshold && $newScore >= $threshold) {
+                event(new CrmScoreThresholdReached($this, $oldScore, $newScore, $threshold, 'above'));
+            }
+            // Crossed below threshold
+            if ($oldScore >= $threshold && $newScore < $threshold) {
+                event(new CrmScoreThresholdReached($this, $oldScore, $newScore, $threshold, 'below'));
+            }
+        }
+    }
+
+    /**
+     * Automatically promote status based on score.
+     */
+    protected function checkStatusPromotion(int $newScore): void
+    {
+        $oldStatus = $this->status;
+        $newStatus = $oldStatus;
+
+        // Only auto-promote leads and prospects
+        if ($oldStatus === 'lead' && $newScore >= self::STATUS_THRESHOLDS['prospect']) {
+            $newStatus = 'prospect';
+        } elseif ($oldStatus === 'prospect' && $newScore >= self::STATUS_THRESHOLDS['client']) {
+            $newStatus = 'client';
+        }
+
+        if ($newStatus !== $oldStatus) {
+            $this->update(['status' => $newStatus]);
+            event(new CrmContactStatusChanged($this, $oldStatus, $newStatus));
+
+            // Log the status change as activity
+            $this->logActivity('status_changed', "Status zmieniony z {$oldStatus} na {$newStatus} (automatycznie przez scoring)");
+        }
+    }
+
+    /**
+     * Record last activity timestamp.
+     */
+    public function recordActivity(): void
+    {
+        $this->update(['last_activity_at' => now()]);
+    }
+
+    /**
+     * Get recent score changes for display.
+     */
+    public function getRecentScoreChanges(int $limit = 10): \Illuminate\Support\Collection
+    {
+        return $this->scoreHistory()->limit($limit)->get();
+    }
+
+    /**
+     * Get score trend (positive, negative, stable) over the last N days.
+     */
+    public function getScoreTrend(int $days = 7): string
+    {
+        $changes = $this->scoreHistory()
+            ->where('created_at', '>=', now()->subDays($days))
+            ->sum('points_change');
+
+        if ($changes > 0) return 'positive';
+        if ($changes < 0) return 'negative';
+        return 'stable';
     }
 }
