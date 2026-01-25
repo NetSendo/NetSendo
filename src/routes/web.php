@@ -879,6 +879,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::post('tasks/{task}/snooze', [CrmTaskController::class, 'snooze'])->name('tasks.snooze');
     Route::post('tasks/{task}/follow-up', [CrmTaskController::class, 'createFollowUp'])->name('tasks.follow-up');
     Route::get('tasks/conflicts', [CrmTaskController::class, 'conflicts'])->name('tasks.conflicts');
+    Route::get('tasks/calendar-events', [CrmTaskController::class, 'calendarEvents'])->name('tasks.calendar-events');
     Route::post('tasks/{task}/resolve-local', [CrmTaskController::class, 'resolveConflictLocal'])->name('tasks.resolve-local');
     Route::post('tasks/{task}/resolve-remote', [CrmTaskController::class, 'resolveConflictRemote'])->name('tasks.resolve-remote');
 

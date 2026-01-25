@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.15] – Short Description
+
+**Release date:** 2026-01-25
+
 ### Improved
 
 - **Docker Container Startup:**
@@ -47,6 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Dynamic Localization:** Implemented smart model-based translation for sequence names/descriptions, ensuring they display in the user's selected language (PL/EN) regardless of database content.
   - **UI Indicators:** Added "Default" and "Custom" badges to easily distinguish between system templates and user-modified sequences.
   - **Backend:** New `DefaultFollowUpSequencesService` and `restoreDefaults` endpoint structure.
+
+- **CRM Tasks - Calendar View:**
+  - Added new "Calendar" tab to Tasks dashboard with Month and Week views.
+  - Implemented interactive calendar interface (`CalendarGrid.vue`) with date navigation.
+  - Added visual indicators for task priorities, completion status, and Google Calendar events.
+  - Integrated task management: clicking calendar events opens the task edit/create modal.
+  - Backend: Added `/crm/tasks/calendar-events` endpoint for efficient date-range querying.
+  - Localization: Full translations in PL and EN.
 
 ### Fixed
 

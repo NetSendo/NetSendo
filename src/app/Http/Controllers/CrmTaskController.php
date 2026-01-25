@@ -441,5 +441,127 @@ class CrmTaskController extends Controller
             'task' => $task->fresh(['contact.subscriber', 'deal']),
         ]);
     }
+
+    /**
+     * Get calendar events (tasks + optional Google Calendar events).
+     */
+    public function calendarEvents(Request $request): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        $validated = $request->validate([
+            'from' => 'required|date',
+            'to' => 'required|date|after_or_equal:from',
+            'include_google' => 'nullable|boolean',
+        ]);
+
+        $from = Carbon::parse($validated['from'])->startOfDay();
+        $to = Carbon::parse($validated['to'])->endOfDay();
+
+        // Get CRM tasks in the date range
+        $tasks = CrmTask::forUser($userId)
+            ->with(['contact.subscriber', 'deal', 'owner'])
+            ->where(function ($query) use ($from, $to) {
+                $query->whereBetween('due_date', [$from, $to])
+                    ->orWhereBetween('end_date', [$from, $to])
+                    ->orWhere(function ($q) use ($from, $to) {
+                        $q->where('due_date', '<=', $from)
+                            ->where('end_date', '>=', $to);
+                    });
+            })
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Map tasks to calendar event format
+        $events = $tasks->map(function ($task) {
+            return [
+                'id' => 'task_' . $task->id,
+                'task_id' => $task->id,
+                'title' => $task->title,
+                'start' => $task->due_date?->toIso8601String(),
+                'end' => $task->end_date?->toIso8601String() ?? $task->due_date?->addHour()->toIso8601String(),
+                'type' => 'task',
+                'task_type' => $task->type,
+                'priority' => $task->priority,
+                'status' => $task->status,
+                'is_completed' => $task->status === 'completed',
+                'contact' => $task->contact ? [
+                    'id' => $task->contact->id,
+                    'name' => $task->contact->full_name,
+                ] : null,
+                'description' => $task->description,
+                'color' => $this->getEventColor($task->priority, $task->status),
+            ];
+        })->toArray();
+
+        // Optionally get Google Calendar events
+        if ($validated['include_google'] ?? false) {
+            $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+                ->where('is_active', true)
+                ->first();
+
+            if ($calendarConnection) {
+                try {
+                    $calendarService = app(GoogleCalendarService::class);
+                    $googleEvents = $calendarService->listEvents($calendarConnection, $from, $to);
+
+                    foreach ($googleEvents['items'] ?? [] as $event) {
+                        // Skip events that are already linked to CRM tasks
+                        $eventId = $event['id'] ?? null;
+                        $isLinkedToTask = $tasks->contains(function ($task) use ($eventId) {
+                            return $task->google_calendar_event_id === $eventId;
+                        });
+
+                        if (!$isLinkedToTask) {
+                            $start = $event['start']['dateTime'] ?? $event['start']['date'] ?? null;
+                            $end = $event['end']['dateTime'] ?? $event['end']['date'] ?? null;
+
+                            $events[] = [
+                                'id' => 'google_' . ($event['id'] ?? uniqid()),
+                                'google_event_id' => $event['id'] ?? null,
+                                'title' => $event['summary'] ?? __('crm.tasks.untitled_event'),
+                                'start' => $start,
+                                'end' => $end,
+                                'type' => 'google',
+                                'description' => $event['description'] ?? null,
+                                'location' => $event['location'] ?? null,
+                                'color' => '#4285F4', // Google blue
+                            ];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Silently fail - return tasks only
+                }
+            }
+        }
+
+        // Sort all events by start date
+        usort($events, function ($a, $b) {
+            return strcmp($a['start'] ?? '', $b['start'] ?? '');
+        });
+
+        return response()->json([
+            'events' => $events,
+            'from' => $from->toIso8601String(),
+            'to' => $to->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Get event color based on priority and status.
+     */
+    private function getEventColor(string $priority, string $status): string
+    {
+        if ($status === 'completed') {
+            return '#10B981'; // Green for completed
+        }
+
+        return match ($priority) {
+            'high' => '#EF4444',    // Red
+            'medium' => '#F59E0B',  // Amber
+            'low' => '#3B82F6',     // Blue
+            default => '#6B7280',   // Gray
+        };
+    }
 }
 

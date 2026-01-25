@@ -12,11 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('crm_follow_up_sequences', function (Blueprint $table) {
-            $table->boolean('is_default')->default(false)->after('is_active');
-            $table->string('default_key')->nullable()->after('is_default');
-
-            $table->index(['user_id', 'default_key']);
+            if (!Schema::hasColumn('crm_follow_up_sequences', 'is_default')) {
+                $table->boolean('is_default')->default(false)->after('is_active');
+            }
+            if (!Schema::hasColumn('crm_follow_up_sequences', 'default_key')) {
+                $table->string('default_key')->nullable()->after('is_default');
+            }
         });
+
+        // Add index separately to handle if columns were added manually
+        $sm = Schema::getConnection()->getDoctrineSchemaManager();
+        $indexes = $sm->listTableIndexes('crm_follow_up_sequences');
+        if (!isset($indexes['crm_follow_up_sequences_user_id_default_key_index'])) {
+            Schema::table('crm_follow_up_sequences', function (Blueprint $table) {
+                $table->index(['user_id', 'default_key']);
+            });
+        }
     }
 
     /**

@@ -4,7 +4,9 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { useDateTime } from "@/Composables/useDateTime";
 import TaskModal from "@/Components/Crm/TaskModal.vue";
+import CalendarGrid from "@/Components/Crm/CalendarGrid.vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import axios from "axios";
 
 const { formatDate: formatDateBase, locale } = useDateTime();
 const props = defineProps({
@@ -20,6 +22,14 @@ const props = defineProps({
 
 const selectedView = ref(props.view || "today");
 
+// View mode: 'list' or 'calendar'
+const viewMode = ref("list");
+
+// Calendar events
+const calendarEvents = ref([]);
+const calendarLoading = ref(false);
+const newTaskDate = ref(null);
+
 // Task modal
 const showTaskModal = ref(false);
 const editingTask = ref(null);
@@ -34,9 +44,81 @@ const openEditTaskModal = (task) => {
     showTaskModal.value = true;
 };
 
+// Open task modal from calendar with pre-selected date
+const openNewTaskModalFromCalendar = (date) => {
+    newTaskDate.value = date;
+    editingTask.value = null;
+    showTaskModal.value = true;
+};
+
+// Edit task from calendar by ID
+const editTaskById = async (taskId) => {
+    // First try to find in the current list view
+    let task = props.tasks?.data?.find((t) => t.id === taskId);
+
+    if (task) {
+        openEditTaskModal(task);
+        return;
+    }
+
+    // Try to find in calendar events (create minimal task object from event data)
+    const event = calendarEvents.value.find(
+        (e) => e.type === "task" && e.task_id === taskId
+    );
+
+    if (event) {
+        // Create task object from event data for the modal
+        openEditTaskModal({
+            id: event.task_id,
+            title: event.title,
+            description: event.description,
+            type: event.task_type,
+            priority: event.priority,
+            status: event.status,
+            due_date: event.start,
+            end_date: event.end,
+            contact: event.contact,
+        });
+    } else {
+        console.error("Task not found in list or calendar events");
+    }
+};
+
 const onTaskSaved = () => {
     showTaskModal.value = false;
+    newTaskDate.value = null;
     router.reload({ only: ["tasks", "counts"] });
+    // Refresh calendar events if in calendar view
+    if (viewMode.value === "calendar" && lastCalendarDateRange.value) {
+        fetchCalendarEvents(lastCalendarDateRange.value);
+    }
+};
+
+// Fetch calendar events
+const lastCalendarDateRange = ref(null);
+const fetchCalendarEvents = async ({ from, to }) => {
+    lastCalendarDateRange.value = { from, to };
+    calendarLoading.value = true;
+    try {
+        const response = await axios.get("/crm/tasks/calendar-events", {
+            params: {
+                from: from.toISOString(),
+                to: to.toISOString(),
+                include_google: props.calendarConnection ? 1 : 0,
+            },
+        });
+        calendarEvents.value = response.data.events || [];
+    } catch (e) {
+        console.error("Failed to fetch calendar events", e);
+        calendarEvents.value = [];
+    } finally {
+        calendarLoading.value = false;
+    }
+};
+
+// Switch view mode
+const setViewMode = (mode) => {
+    viewMode.value = mode;
 };
 
 // Change view
@@ -281,10 +363,83 @@ const getCategoryBadge = (task) => {
             >
                 {{ $t("crm.tasks.filter_completed", "Zakończone") }}
             </button>
+
+            <!-- Spacer -->
+            <div class="flex-1"></div>
+
+            <!-- View Mode Toggle -->
+            <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-700">
+                <button
+                    @click="setViewMode('list')"
+                    :class="[
+                        'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition',
+                        viewMode === 'list'
+                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
+                    ]"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    {{ $t('crm.tasks.list_view', 'Lista') }}
+                </button>
+                <button
+                    @click="setViewMode('calendar')"
+                    :class="[
+                        'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition',
+                        viewMode === 'calendar'
+                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
+                    ]"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {{ $t('crm.tasks.calendar_view', 'Kalendarz') }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <CalendarGrid
+            v-if="viewMode === 'calendar'"
+            :events="calendarEvents"
+            :calendar-connection="calendarConnection"
+            @edit-task="editTaskById"
+            @create-task="openNewTaskModalFromCalendar"
+            @date-change="fetchCalendarEvents"
+        />
+
+        <!-- Loading indicator for calendar -->
+        <div
+            v-if="viewMode === 'calendar' && calendarLoading"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/10"
+        >
+            <div class="rounded-xl bg-white p-4 shadow-lg dark:bg-slate-800">
+                <svg
+                    class="h-8 w-8 animate-spin text-indigo-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                >
+                    <circle
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
+                    ></circle>
+                    <path
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                </svg>
+            </div>
         </div>
 
         <!-- Tasks List -->
-        <div class="rounded-2xl bg-white shadow-sm dark:bg-slate-800">
+        <div v-if="viewMode === 'list'" class="rounded-2xl bg-white shadow-sm dark:bg-slate-800">
             <div
                 v-if="tasks?.data?.length"
                 class="divide-y divide-slate-200 dark:divide-slate-700"
