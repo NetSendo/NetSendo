@@ -509,6 +509,7 @@ class CrmTaskController extends Controller
                 ] : null,
                 'description' => $task->description,
                 'color' => $this->getEventColor($task->priority, $task->status),
+                'google_meet_link' => $task->google_meet_link,
             ];
         })->toArray();
 
@@ -534,6 +535,14 @@ class CrmTaskController extends Controller
                             $start = $event['start']['dateTime'] ?? $event['start']['date'] ?? null;
                             $end = $event['end']['dateTime'] ?? $event['end']['date'] ?? null;
 
+                            // Extract Google Meet link from event
+                            $meetLink = $event['hangoutLink'] ?? null;
+                            if (!$meetLink && isset($event['conferenceData']['entryPoints'])) {
+                                $videoEntry = collect($event['conferenceData']['entryPoints'])
+                                    ->firstWhere('entryPointType', 'video');
+                                $meetLink = $videoEntry['uri'] ?? null;
+                            }
+
                             $events[] = [
                                 'id' => 'google_' . ($event['id'] ?? uniqid()),
                                 'google_event_id' => $event['id'] ?? null,
@@ -544,6 +553,7 @@ class CrmTaskController extends Controller
                                 'description' => $event['description'] ?? null,
                                 'location' => $event['location'] ?? null,
                                 'color' => '#4285F4', // Google blue
+                                'google_meet_link' => $meetLink,
                             ];
                         }
                     }
@@ -566,6 +576,99 @@ class CrmTaskController extends Controller
             'events' => $events,
             'from' => $from->toIso8601String(),
             'to' => $to->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Get upcoming meetings for reminder notifications.
+     * Returns meetings starting within the next 10 minutes.
+     */
+    public function upcomingMeetings(Request $request): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        // Get tasks/meetings starting within the next 10 minutes
+        $now = Carbon::now();
+        $inTenMinutes = $now->copy()->addMinutes(10);
+
+        // Get CRM tasks that are meetings with Google Meet links
+        $meetings = CrmTask::forUser($userId)
+            ->whereIn('type', ['meeting', 'call'])
+            ->whereNotNull('due_date')
+            ->whereNotNull('google_meet_link')
+            ->where('status', '!=', 'completed')
+            ->where('status', '!=', 'cancelled')
+            ->whereBetween('due_date', [$now->copy()->subMinutes(30), $inTenMinutes])
+            ->with(['contact.subscriber'])
+            ->get()
+            ->map(function ($task) {
+                return [
+                    'id' => 'task_' . $task->id,
+                    'task_id' => $task->id,
+                    'title' => $task->title,
+                    'start' => $task->due_date?->toIso8601String(),
+                    'end' => $task->end_date?->toIso8601String(),
+                    'type' => 'task',
+                    'google_meet_link' => $task->google_meet_link,
+                    'contact' => $task->contact ? [
+                        'id' => $task->contact->id,
+                        'name' => $task->contact->full_name,
+                    ] : null,
+                ];
+            });
+
+        // Also check Google Calendar events if connected
+        try {
+            $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+                ->where('is_active', true)
+                ->first();
+
+            if ($calendarConnection) {
+                $calendarService = app(GoogleCalendarService::class);
+                $googleEvents = $calendarService->listEvents(
+                    $calendarConnection,
+                    $now->copy()->subMinutes(30),
+                    $inTenMinutes
+                );
+
+                foreach ($googleEvents['items'] ?? [] as $event) {
+                    // Extract Google Meet link
+                    $meetLink = $event['hangoutLink'] ?? null;
+                    if (!$meetLink && isset($event['conferenceData']['entryPoints'])) {
+                        $videoEntry = collect($event['conferenceData']['entryPoints'])
+                            ->firstWhere('entryPointType', 'video');
+                        $meetLink = $videoEntry['uri'] ?? null;
+                    }
+
+                    // Only include events with Meet links
+                    if ($meetLink) {
+                        $start = $event['start']['dateTime'] ?? $event['start']['date'] ?? null;
+
+                        $meetings->push([
+                            'id' => 'google_' . ($event['id'] ?? uniqid()),
+                            'google_event_id' => $event['id'] ?? null,
+                            'title' => $event['summary'] ?? __('crm.tasks.untitled_event'),
+                            'start' => $start,
+                            'end' => $event['end']['dateTime'] ?? $event['end']['date'] ?? null,
+                            'type' => 'google',
+                            'google_meet_link' => $meetLink,
+                            'contact' => null,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Failed to fetch Google Calendar events for meeting reminders', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Sort by start time
+        $sortedMeetings = $meetings->sortBy('start')->values();
+
+        return response()->json([
+            'meetings' => $sortedMeetings,
         ]);
     }
 

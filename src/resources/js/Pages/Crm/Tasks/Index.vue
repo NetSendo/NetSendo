@@ -23,7 +23,8 @@ const props = defineProps({
 const selectedView = ref(props.view || "today");
 
 // View mode: 'list' or 'calendar'
-const viewMode = ref("calendar");
+// Domyślnie pokazuj listę jeśli użytkownik wybrał filtr (filtry działają tylko w widoku listy)
+const viewMode = ref(props.view ? "list" : "calendar");
 
 // Calendar events
 const calendarEvents = ref([]);
@@ -63,7 +64,7 @@ const editTaskById = async (taskId) => {
 
     // Try to find in calendar events (create minimal task object from event data)
     const event = calendarEvents.value.find(
-        (e) => e.type === "task" && e.task_id === taskId
+        (e) => e.type === "task" && e.task_id === taskId,
     );
 
     if (event) {
@@ -120,11 +121,37 @@ const fetchCalendarEvents = async ({ from, to }) => {
 // Switch view mode
 const setViewMode = (mode) => {
     viewMode.value = mode;
+    // Fetch Google events when switching to list view
+    if (
+        mode === "list" &&
+        props.calendarConnection &&
+        !calendarEvents.value.length
+    ) {
+        const today = new Date();
+        const from = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+        );
+        const to = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() + 7,
+        );
+        fetchCalendarEvents({ from, to });
+    }
 };
+
+// Google Calendar events (filtered from calendarEvents)
+const googleEvents = computed(() => {
+    return calendarEvents.value.filter((event) => event.type === "google");
+});
 
 // Change view
 const changeView = (view) => {
     selectedView.value = view;
+    // Automatycznie przełącz na widok listy, ponieważ filtry nie są widoczne w kalendarzu
+    viewMode.value = "list";
     router.get("/crm/tasks", { view }, { preserveScroll: true });
 };
 
@@ -379,10 +406,20 @@ const getCategoryBadge = (task) => {
                             : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
                     ]"
                 >
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                        />
                     </svg>
-                    {{ $t('crm.tasks.list_view', 'Lista') }}
+                    {{ $t("crm.tasks.list_view", "Lista") }}
                 </button>
                 <button
                     @click="setViewMode('calendar')"
@@ -393,10 +430,20 @@ const getCategoryBadge = (task) => {
                             : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
                     ]"
                 >
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                     </svg>
-                    {{ $t('crm.tasks.calendar_view', 'Kalendarz') }}
+                    {{ $t("crm.tasks.calendar_view", "Kalendarz") }}
                 </button>
             </div>
         </div>
@@ -440,7 +487,10 @@ const getCategoryBadge = (task) => {
         </div>
 
         <!-- Tasks List -->
-        <div v-if="viewMode === 'list'" class="rounded-2xl bg-white shadow-sm dark:bg-slate-800">
+        <div
+            v-if="viewMode === 'list'"
+            class="rounded-2xl bg-white shadow-sm dark:bg-slate-800"
+        >
             <div
                 v-if="tasks?.data?.length"
                 class="divide-y divide-slate-200 dark:divide-slate-700"
@@ -597,6 +647,27 @@ const getCategoryBadge = (task) => {
                             />
                         </svg>
                     </Link>
+
+                    <!-- Google Meet Link -->
+                    <a
+                        v-if="task.google_meet_link"
+                        :href="task.google_meet_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30"
+                        title="Dołącz do Google Meet"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM8 17v-2h2v-2H8v-2h2V9H8V7h4v10H8zm8-2v2h-4v-2h4z"
+                            />
+                        </svg>
+                        Meet
+                    </a>
 
                     <!-- Actions Dropdown -->
                     <Dropdown align="right" width="48">
@@ -790,6 +861,115 @@ const getCategoryBadge = (task) => {
                     </svg>
                     {{ $t("crm.task.empty.button", "Dodaj pierwsze zadanie") }}
                 </button>
+            </div>
+        </div>
+
+        <!-- Google Calendar Events Section (in list view) -->
+        <div
+            v-if="
+                viewMode === 'list' && calendarConnection && googleEvents.length
+            "
+            class="mt-6 rounded-2xl bg-white shadow-sm dark:bg-slate-800"
+        >
+            <div class="border-b border-slate-200 p-4 dark:border-slate-700">
+                <h3
+                    class="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    <svg
+                        class="h-5 w-5 text-blue-500"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+                        />
+                    </svg>
+                    {{
+                        $t(
+                            "crm.tasks.google_calendar_events",
+                            "Wydarzenia z Google Calendar",
+                        )
+                    }}
+                    <span
+                        class="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                    >
+                        {{ googleEvents.length }}
+                    </span>
+                </h3>
+            </div>
+            <div class="divide-y divide-slate-200 dark:divide-slate-700">
+                <div
+                    v-for="event in googleEvents"
+                    :key="event.id"
+                    class="flex items-center gap-4 p-4 transition hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                >
+                    <!-- Google Calendar Icon -->
+                    <div
+                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30"
+                    >
+                        <svg
+                            class="h-4 w-4 text-blue-600 dark:text-blue-400"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+                            />
+                        </svg>
+                    </div>
+
+                    <!-- Event Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p
+                                class="font-medium text-slate-900 dark:text-white truncate"
+                            >
+                                {{ event.title }}
+                            </p>
+                            <span
+                                class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            >
+                                📅 Google
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span
+                                v-if="event.location"
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                📍 {{ event.location }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Event Time -->
+                    <span
+                        class="text-sm whitespace-nowrap text-slate-500 dark:text-slate-400"
+                    >
+                        {{ formatDate(event.start) }}
+                    </span>
+
+                    <!-- Google Meet Link -->
+                    <a
+                        v-if="event.google_meet_link"
+                        :href="event.google_meet_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                        title="Dołącz do Google Meet"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                            />
+                        </svg>
+                        Dołącz do Meet
+                    </a>
+                </div>
             </div>
         </div>
 

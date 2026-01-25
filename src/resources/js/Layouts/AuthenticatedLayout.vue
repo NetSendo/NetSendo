@@ -10,10 +10,15 @@ import NotificationDropdown from "@/Components/NotificationDropdown.vue";
 import OnboardingModal from "@/Components/Dashboard/OnboardingModal.vue";
 import GlobalSearchPanel from "@/Components/GlobalSearchPanel.vue";
 import McpStatusIndicator from "@/Components/McpStatusIndicator.vue";
+import MeetingReminderNotification from "@/Components/MeetingReminderNotification.vue";
 import { useTheme } from "@/Composables/useTheme";
+import { useMeetingReminders } from "@/Composables/useMeetingReminders";
 
 const page = usePage();
 const { isDark } = useTheme();
+
+// Meeting reminders
+const { activeReminder, reminderMode, dismissReminder, joinMeeting } = useMeetingReminders();
 
 // Sidebar state
 const sidebarCollapsed = ref(false);
@@ -446,6 +451,14 @@ const toggleMobileMenu = () => {
         <GlobalSearchPanel
             :show="showSearchPanel"
             @close="showSearchPanel = false"
+        />
+
+        <!-- Meeting Reminder Notification -->
+        <MeetingReminderNotification
+            :meeting="activeReminder"
+            :mode="reminderMode"
+            @dismiss="dismissReminder"
+            @join="joinMeeting"
         />
     </div>
 </template>

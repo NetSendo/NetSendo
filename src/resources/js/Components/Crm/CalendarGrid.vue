@@ -15,8 +15,8 @@ const props = defineProps({
 
 const emit = defineEmits(["edit-task", "create-task", "date-change"]);
 
-// View mode: 'month' or 'week'
-const viewMode = ref("month");
+// View mode: 'month' or 'week' (default: week)
+const viewMode = ref("week");
 
 // Current date (center of the calendar view)
 const currentDate = ref(new Date());
@@ -24,6 +24,9 @@ const currentDate = ref(new Date());
 // Hover state for tooltip
 const hoveredEvent = ref(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
+
+// Ref for week view scrollable container
+const weekScrollContainer = ref(null);
 
 // Days of the week (Polish)
 const daysOfWeek = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
@@ -72,9 +75,7 @@ const monthGrid = computed(() => {
 
     const firstDayOffset = getFirstDayOfMonth(currentDate.value);
     const daysInMonth = getDaysInMonth(currentDate.value);
-    const daysInPrevMonth = getDaysInMonth(
-        new Date(year, month - 1, 1),
-    );
+    const daysInPrevMonth = getDaysInMonth(new Date(year, month - 1, 1));
 
     const grid = [];
     let dayNum = 1;
@@ -88,7 +89,8 @@ const monthGrid = computed(() => {
 
             if (cellIndex < firstDayOffset) {
                 // Previous month
-                const prevDay = daysInPrevMonth - firstDayOffset + cellIndex + 1;
+                const prevDay =
+                    daysInPrevMonth - firstDayOffset + cellIndex + 1;
                 weekDays.push({
                     day: prevDay,
                     date: new Date(year, month - 1, prevDay),
@@ -283,27 +285,31 @@ const handleEventMouseLeave = () => {
 
 // Get tooltip positioning style (safely handles window access)
 const getTooltipStyle = () => {
-    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const windowWidth =
+        typeof window !== "undefined" ? window.innerWidth : 1200;
     return {
         left: `${Math.min(tooltipPosition.value.x - 144, windowWidth - 300)}px`,
         top: `${Math.max(tooltipPosition.value.y - 10, 10)}px`,
-        transform: 'translateY(-100%)',
+        transform: "translateY(-100%)",
     };
 };
 
 // Format time for display
 const formatEventTime = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString("pl-PL", {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 };
 
 // Get priority label
 const getPriorityLabel = (priority) => {
     const labels = {
-        high: 'Wysoki',
-        medium: 'Średni',
-        low: 'Niski',
+        high: "Wysoki",
+        medium: "Średni",
+        low: "Niski",
     };
     return labels[priority] || priority;
 };
@@ -311,11 +317,11 @@ const getPriorityLabel = (priority) => {
 // Get type label
 const getTypeLabelText = (type) => {
     const labels = {
-        call: 'Telefon',
-        email: 'Email',
-        meeting: 'Spotkanie',
-        task: 'Zadanie',
-        follow_up: 'Follow-up',
+        call: "Telefon",
+        email: "Email",
+        meeting: "Spotkanie",
+        task: "Zadanie",
+        follow_up: "Follow-up",
     };
     return labels[type] || type;
 };
@@ -372,9 +378,17 @@ const getTypeIcon = (type) => {
     return icons[type] || "📌";
 };
 
-// Initial fetch
+// Initial fetch and scroll to 8:00 AM
 onMounted(() => {
     emitDateChange();
+    // Scroll to 8:00 AM in week view (8 hours * 48px per hour = 384px)
+    if (viewMode.value === "week") {
+        setTimeout(() => {
+            if (weekScrollContainer.value) {
+                weekScrollContainer.value.scrollTop = 8 * 48;
+            }
+        }, 100);
+    }
 });
 
 // Watch view mode changes
@@ -449,7 +463,11 @@ watch(viewMode, () => {
                 <h2
                     class="ml-2 text-lg font-semibold text-slate-900 dark:text-white"
                 >
-                    {{ viewMode === "month" ? currentMonthLabel : currentWeekLabel }}
+                    {{
+                        viewMode === "month"
+                            ? currentMonthLabel
+                            : currentWeekLabel
+                    }}
                 </h2>
             </div>
 
@@ -517,7 +535,10 @@ watch(viewMode, () => {
 
             <!-- Calendar grid -->
             <div class="grid grid-cols-7">
-                <template v-for="(week, weekIndex) in monthGrid" :key="weekIndex">
+                <template
+                    v-for="(week, weekIndex) in monthGrid"
+                    :key="weekIndex"
+                >
                     <div
                         v-for="(day, dayIndex) in week"
                         :key="`${weekIndex}-${dayIndex}`"
@@ -547,15 +568,21 @@ watch(viewMode, () => {
                         <!-- Events -->
                         <div class="space-y-1">
                             <div
-                                v-for="event in getEventsForDate(day.date).slice(0, 3)"
+                                v-for="event in getEventsForDate(
+                                    day.date,
+                                ).slice(0, 3)"
                                 :key="event.id"
                                 @click="handleEventClick(event, $event)"
-                                @mouseenter="handleEventMouseEnter(event, $event)"
+                                @mouseenter="
+                                    handleEventMouseEnter(event, $event)
+                                "
                                 @mouseleave="handleEventMouseLeave"
                                 :style="{ backgroundColor: event.color + '20' }"
                                 :class="[
                                     'cursor-pointer truncate rounded px-1.5 py-0.5 text-xs font-medium transition hover:opacity-80 hover:shadow-sm',
-                                    event.is_completed ? 'line-through opacity-60' : '',
+                                    event.is_completed
+                                        ? 'line-through opacity-60'
+                                        : '',
                                 ]"
                             >
                                 <span
@@ -566,14 +593,18 @@ watch(viewMode, () => {
                                     :style="{ color: event.color }"
                                     class="dark:brightness-125"
                                 >
-                                    {{ event.type === "google" ? "📅 " : "" }}{{ event.title }}
+                                    {{ event.type === "google" ? "📅 " : ""
+                                    }}{{ event.title }}
                                 </span>
                             </div>
                             <div
                                 v-if="getEventsForDate(day.date).length > 3"
                                 class="text-xs text-slate-500 dark:text-slate-400"
                             >
-                                +{{ getEventsForDate(day.date).length - 3 }} więcej
+                                +{{
+                                    getEventsForDate(day.date).length - 3
+                                }}
+                                więcej
                             </div>
                         </div>
                     </div>
@@ -590,7 +621,9 @@ watch(viewMode, () => {
             <div
                 class="grid grid-cols-8 border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"
             >
-                <div class="border-r border-slate-200 px-2 py-3 dark:border-slate-700">
+                <div
+                    class="border-r border-slate-200 px-2 py-3 dark:border-slate-700"
+                >
                     <!-- Empty corner -->
                 </div>
                 <div
@@ -601,7 +634,9 @@ watch(viewMode, () => {
                         day.isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : '',
                     ]"
                 >
-                    <div class="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    <div
+                        class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                    >
                         {{ day.dayName.substring(0, 3) }}
                     </div>
                     <div
@@ -618,7 +653,10 @@ watch(viewMode, () => {
             </div>
 
             <!-- Time grid -->
-            <div class="max-h-[600px] overflow-y-auto">
+            <div
+                ref="weekScrollContainer"
+                class="max-h-[600px] overflow-y-auto"
+            >
                 <div class="grid grid-cols-8">
                     <!-- Time column -->
                     <div
@@ -640,7 +678,9 @@ watch(viewMode, () => {
                         @click="handleDayClick(day.date)"
                         :class="[
                             'relative cursor-pointer border-r border-slate-200 dark:border-slate-700',
-                            day.isToday ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : '',
+                            day.isToday
+                                ? 'bg-indigo-50/30 dark:bg-indigo-900/10'
+                                : '',
                         ]"
                     >
                         <!-- Hour lines -->
@@ -667,9 +707,16 @@ watch(viewMode, () => {
                             <div
                                 class="truncate"
                                 :style="{ color: event.color }"
-                                :class="{ 'line-through opacity-60': event.is_completed }"
+                                :class="{
+                                    'line-through opacity-60':
+                                        event.is_completed,
+                                }"
                             >
-                                {{ event.type === "google" ? "📅 " : getTypeIcon(event.task_type) + " " }}
+                                {{
+                                    event.type === "google"
+                                        ? "📅 "
+                                        : getTypeIcon(event.task_type) + " "
+                                }}
                                 {{ event.title }}
                             </div>
                             <div
@@ -746,27 +793,41 @@ watch(viewMode, () => {
                     <div class="flex items-start gap-3 mb-3">
                         <div
                             class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-lg"
-                            :style="{ backgroundColor: hoveredEvent.color + '20', color: hoveredEvent.color }"
+                            :style="{
+                                backgroundColor: hoveredEvent.color + '20',
+                                color: hoveredEvent.color,
+                            }"
                         >
                             {{ getTypeIcon(hoveredEvent.task_type) }}
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-semibold text-slate-900 dark:text-white truncate">
+                            <h4
+                                class="font-semibold text-slate-900 dark:text-white truncate"
+                            >
                                 {{ hoveredEvent.title }}
                             </h4>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-slate-500 dark:text-slate-400">
-                                    {{ getTypeLabelText(hoveredEvent.task_type) }}
+                                <span
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{
+                                        getTypeLabelText(hoveredEvent.task_type)
+                                    }}
                                 </span>
                                 <span
                                     class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                                     :class="{
-                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': hoveredEvent.priority === 'high',
-                                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300': hoveredEvent.priority === 'medium',
-                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': hoveredEvent.priority === 'low',
+                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300':
+                                            hoveredEvent.priority === 'high',
+                                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300':
+                                            hoveredEvent.priority === 'medium',
+                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300':
+                                            hoveredEvent.priority === 'low',
                                     }"
                                 >
-                                    {{ getPriorityLabel(hoveredEvent.priority) }}
+                                    {{
+                                        getPriorityLabel(hoveredEvent.priority)
+                                    }}
                                 </span>
                             </div>
                         </div>
@@ -775,30 +836,65 @@ watch(viewMode, () => {
                     <!-- Details -->
                     <div class="space-y-2 text-sm">
                         <!-- Time -->
-                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <div
+                            class="flex items-center gap-2 text-slate-600 dark:text-slate-400"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                             </svg>
-                            <span>{{ formatEventTime(hoveredEvent.start) }} - {{ formatEventTime(hoveredEvent.end) }}</span>
+                            <span
+                                >{{ formatEventTime(hoveredEvent.start) }} -
+                                {{ formatEventTime(hoveredEvent.end) }}</span
+                            >
                         </div>
 
                         <!-- Contact -->
-                        <div v-if="hoveredEvent.contact" class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        <div
+                            v-if="hoveredEvent.contact"
+                            class="flex items-center gap-2 text-slate-600 dark:text-slate-400"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                />
                             </svg>
                             <span>{{ hoveredEvent.contact.name }}</span>
                         </div>
 
                         <!-- Description preview -->
-                        <div v-if="hoveredEvent.description" class="text-slate-500 dark:text-slate-400 line-clamp-2">
+                        <div
+                            v-if="hoveredEvent.description"
+                            class="text-slate-500 dark:text-slate-400 line-clamp-2"
+                        >
                             {{ hoveredEvent.description }}
                         </div>
                     </div>
 
                     <!-- Click hint -->
-                    <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-center">
-                        <span class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                    <div
+                        class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-center"
+                    >
+                        <span
+                            class="text-xs text-indigo-600 dark:text-indigo-400 font-medium"
+                        >
                             🖊️ Kliknij aby edytować
                         </span>
                     </div>

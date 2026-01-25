@@ -883,6 +883,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::post('tasks/{task}/follow-up', [CrmTaskController::class, 'createFollowUp'])->name('tasks.follow-up');
     Route::get('tasks/conflicts', [CrmTaskController::class, 'conflicts'])->name('tasks.conflicts');
     Route::get('tasks/calendar-events', [CrmTaskController::class, 'calendarEvents'])->name('tasks.calendar-events');
+    Route::get('tasks/upcoming-meetings', [CrmTaskController::class, 'upcomingMeetings'])->name('tasks.upcoming-meetings');
     Route::post('tasks/{task}/resolve-local', [CrmTaskController::class, 'resolveConflictLocal'])->name('tasks.resolve-local');
     Route::post('tasks/{task}/resolve-remote', [CrmTaskController::class, 'resolveConflictRemote'])->name('tasks.resolve-remote');
 

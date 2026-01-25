@@ -20,6 +20,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added dedicated Marketplace page (`/marketplace/google-meet`) with features, setup guide, and quick actions.
   - Full translations in PL, EN, DE, ES including guest status labels.
 
+- **CRM Tasks - Calendar View Improvements:**
+  - Default view changed from Monthly to Weekly for better task visibility.
+  - Calendar automatically scrolls to 8:00 AM on load instead of midnight.
+  - Clicking task filters (Overdue, Today, Upcoming, Completed) now automatically switches to List view.
+
+- **Google Calendar Events in List View:**
+  - Events from Google Calendar are now displayed in a dedicated section below tasks in List view.
+  - Events are visually marked with blue Google Calendar icon and "📅 Google" badge.
+  - Location information displayed for events that have it.
+  - Fetches events for the next 7 days when switching to List view.
+
+- **Google Meet Quick Join:**
+  - Added "Meet" button to each task in List view that has a Google Meet link.
+  - Added "Join Meet" button to Google Calendar events that have Google Meet links.
+  - All Meet buttons open in a new browser tab for seamless joining.
+
+- **Meeting Reminder Notifications:**
+  - Real-time notification system for upcoming meetings with Google Meet links.
+  - 5-minute warning: dismissible orange notification with "Prepare to join" button.
+  - 1-minute / Now alert: sticky red notification that cannot be dismissed, with prominent "Join Meeting" button.
+  - Two-tone audio notification using Web Audio API (no external files needed).
+  - Checks for upcoming meetings every 30 seconds.
+  - Works with both CRM tasks and Google Calendar events.
+  - New API endpoint `/crm/tasks/upcoming-meetings`.
+  - New composable `useMeetingReminders.js` and component `MeetingReminderNotification.vue`.
+
 ### Fixed
 
 - **Database Migration Compatibility:**
