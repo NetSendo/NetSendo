@@ -841,6 +841,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     // CRM Dashboard
     Route::get('/', [CrmDashboardController::class, 'index'])->name('dashboard');
     Route::get('/api/stats', [CrmDashboardController::class, 'stats'])->name('api.stats');
+    Route::get('/guide', [CrmDashboardController::class, 'guide'])->name('guide');
 
     // CRM Contacts
     Route::resource('contacts', CrmContactController::class);

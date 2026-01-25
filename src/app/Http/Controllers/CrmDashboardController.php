@@ -70,6 +70,14 @@ class CrmDashboardController extends Controller
     }
 
     /**
+     * Display the CRM user guide.
+     */
+    public function guide(): Response
+    {
+        return Inertia::render('Crm/Guide');
+    }
+
+    /**
      * Get CRM statistics for the dashboard.
      */
     public function stats(Request $request)
