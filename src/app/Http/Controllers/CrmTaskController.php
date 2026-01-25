@@ -6,12 +6,15 @@ use App\Models\CrmTask;
 use App\Models\CrmContact;
 use App\Models\CrmDeal;
 use App\Models\User;
+use App\Models\UserCalendarConnection;
+use App\Services\GoogleCalendarService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use Carbon\Carbon;
+
 
 class CrmTaskController extends Controller
 {
@@ -85,6 +88,21 @@ class CrmTaskController extends Controller
                 'name' => $c->full_name,
             ]);
 
+        // Get calendar connection for sync UI
+        $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+
+        $calendars = [];
+        if ($calendarConnection) {
+            try {
+                $calendarService = app(GoogleCalendarService::class);
+                $calendars = $calendarService->listCalendars($calendarConnection) ?? [];
+            } catch (\Exception $e) {
+                // Silently fail - user can still use tasks without calendar sync
+            }
+        }
+
         return Inertia::render('Crm/Tasks/Index', [
             'tasks' => $tasks,
             'counts' => $counts,
@@ -92,8 +110,17 @@ class CrmTaskController extends Controller
             'owners' => $owners,
             'contacts' => $contacts,
             'filters' => $request->only(['view', 'owner_id', 'priority', 'type']),
+            'calendarConnection' => $calendarConnection ? [
+                'id' => $calendarConnection->id,
+                'is_active' => $calendarConnection->is_active,
+                'calendar_id' => $calendarConnection->calendar_id,
+                'connected_email' => $calendarConnection->connected_email,
+                'auto_sync_tasks' => $calendarConnection->auto_sync_tasks,
+            ] : null,
+            'calendars' => $calendars,
         ]);
     }
+
 
     /**
      * Store a newly created task.
@@ -111,6 +138,16 @@ class CrmTaskController extends Controller
             'crm_contact_id' => 'nullable|exists:crm_contacts,id',
             'crm_deal_id' => 'nullable|exists:crm_deals,id',
             'owner_id' => 'nullable|exists:users,id',
+            'sync_to_calendar' => 'nullable|boolean',
+            'selected_calendar_id' => 'nullable|string|max:255',
+            // Recurrence
+            'is_recurring' => 'nullable|boolean',
+            'recurrence_type' => 'nullable|in:daily,weekly,monthly,yearly',
+            'recurrence_interval' => 'nullable|integer|min:1|max:99',
+            'recurrence_days' => 'nullable|array',
+            'recurrence_days.*' => 'integer|min:0|max:6',
+            'recurrence_end_date' => 'nullable|date|after:due_date',
+            'recurrence_count' => 'nullable|integer|min:1|max:999',
         ]);
 
         $task = CrmTask::create([
@@ -119,6 +156,11 @@ class CrmTaskController extends Controller
             'owner_id' => $validated['owner_id'] ?? auth()->id(),
             'status' => 'pending',
         ]);
+
+        // Sync to Google Calendar if enabled
+        if ($task->sync_to_calendar) {
+            \App\Jobs\SyncTaskToCalendar::dispatch($task);
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'task' => $task->load(['contact.subscriber', 'deal'])]);
@@ -146,9 +188,27 @@ class CrmTaskController extends Controller
             'status' => 'sometimes|required|in:pending,in_progress,completed,cancelled',
             'due_date' => 'nullable|date',
             'owner_id' => 'nullable|exists:users,id',
+            'sync_to_calendar' => 'nullable|boolean',
+            'selected_calendar_id' => 'nullable|string|max:255',
+            // Recurrence
+            'is_recurring' => 'nullable|boolean',
+            'recurrence_type' => 'nullable|in:daily,weekly,monthly,yearly',
+            'recurrence_interval' => 'nullable|integer|min:1|max:99',
+            'recurrence_days' => 'nullable|array',
+            'recurrence_days.*' => 'integer|min:0|max:6',
+            'recurrence_end_date' => 'nullable|date|after:due_date',
+            'recurrence_count' => 'nullable|integer|min:1|max:999',
         ]);
 
         $task->update($validated);
+
+        // Sync changes to Google Calendar
+        if ($task->sync_to_calendar) {
+            \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh());
+        } elseif ($task->isSyncedToCalendar() && isset($validated['sync_to_calendar']) && !$validated['sync_to_calendar']) {
+            // User disabled sync - delete event from Calendar
+            \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh(), 'delete');
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'task' => $task->fresh(['contact.subscriber', 'deal'])]);
@@ -169,6 +229,11 @@ class CrmTaskController extends Controller
         }
 
         $task->complete();
+
+        // Update Calendar event if synced
+        if ($task->isSyncedToCalendar()) {
+            \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh());
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true]);
@@ -216,4 +281,134 @@ class CrmTaskController extends Controller
 
         return redirect()->back()->with('success', 'Zadanie zostało usunięte.');
     }
+
+    /**
+     * Snooze task reminder.
+     */
+    public function snooze(Request $request, CrmTask $task): RedirectResponse|JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($task->user_id !== $userId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'hours' => 'nullable|integer|min:1|max:72',
+        ]);
+
+        $task->snoozeReminder($validated['hours'] ?? 1);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'task' => $task->fresh()]);
+        }
+
+        return redirect()->back()->with('success', 'Przypomnienie zostało odłożone.');
+    }
+
+    /**
+     * Create a follow-up task.
+     */
+    public function createFollowUp(Request $request, CrmTask $task): RedirectResponse|JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($task->user_id !== $userId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'days' => 'required|integer|min:1|max:365',
+            'title' => 'nullable|string|max:255',
+            'type' => 'nullable|in:call,email,meeting,task,follow_up',
+        ]);
+
+        $followUpTask = $task->createFollowUp(
+            $validated['days'],
+            $validated['title'] ?? null,
+            $validated['type'] ?? null
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'task' => $followUpTask->load(['contact.subscriber', 'deal']),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Follow-up został utworzony.');
+    }
+
+    /**
+     * Get tasks with conflicts.
+     */
+    public function conflicts(Request $request): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        $tasks = CrmTask::forUser($userId)
+            ->withConflicts()
+            ->with(['contact.subscriber'])
+            ->get();
+
+        return response()->json([
+            'tasks' => $tasks,
+            'count' => $tasks->count(),
+        ]);
+    }
+
+    /**
+     * Resolve conflict by accepting local version.
+     */
+    public function resolveConflictLocal(CrmTask $task): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($task->user_id !== $userId) {
+            abort(403);
+        }
+
+        if (!$task->has_conflict) {
+            return response()->json([
+                'success' => false,
+                'message' => __('crm.conflicts.no_conflict'),
+            ], 400);
+        }
+
+        $task->resolveConflictWithLocal();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('crm.conflicts.resolved_local'),
+            'task' => $task->fresh(['contact.subscriber', 'deal']),
+        ]);
+    }
+
+    /**
+     * Resolve conflict by accepting remote version.
+     */
+    public function resolveConflictRemote(CrmTask $task): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($task->user_id !== $userId) {
+            abort(403);
+        }
+
+        if (!$task->has_conflict) {
+            return response()->json([
+                'success' => false,
+                'message' => __('crm.conflicts.no_conflict'),
+            ], 400);
+        }
+
+        $task->resolveConflictWithRemote();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('crm.conflicts.resolved_remote'),
+            'task' => $task->fresh(['contact.subscriber', 'deal']),
+        ]);
+    }
 }
+

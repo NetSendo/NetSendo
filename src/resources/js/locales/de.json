@@ -4390,6 +4390,106 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Kontakte und Verkäufe verwalten",
+        "task": {
+            "title": {
+                "new": "Neue Aufgabe",
+                "edit": "Aufgabe bearbeiten"
+            },
+            "fields": {
+                "title": "Aufgabentitel *",
+                "title_placeholder": "z.B. Kunden wegen Angebot anrufen",
+                "type": "Aufgabentyp",
+                "priority": "Priorität",
+                "due_date": "Fälligkeitsdatum",
+                "contact": "Kontakt zuweisen",
+                "contact_placeholder": "-- Kein Kontakt --",
+                "owner": "Eigentümer zuweisen",
+                "owner_auto": "-- Automatisch (Ich) --",
+                "description": "Beschreibung (optional)",
+                "description_placeholder": "Zusätzliche Details zur Aufgabe..."
+            },
+            "calendar": {
+                "sync": "Mit Google Kalender synchronisieren",
+                "select_calendar": "Kalender auswählen",
+                "default": "Standard",
+                "primary": "Primär",
+                "synced": "Mit Kalender synchronisiert"
+            },
+            "actions": {
+                "cancel": "Abbrechen",
+                "save": "Änderungen speichern",
+                "create": "Aufgabe erstellen"
+            },
+            "empty": {
+                "button": "Erste Aufgabe hinzufügen",
+                "description": "Keine Aufgaben in dieser Kategorie"
+            }
+        },
+        "reminders": {
+            "types": {
+                "call": "Anruf",
+                "email": "E-Mail",
+                "meeting": "Meeting",
+                "follow_up": "Follow-up",
+                "other": "Aufgabe"
+            },
+            "priorities": {
+                "low": "Niedrig",
+                "medium": "Mittel",
+                "high": "Hoch"
+            }
+        },
+        "calendar": {
+            "sync_label": "Mit Google Kalender synchronisieren",
+            "select_calendar": "Kalender auswählen",
+            "google_calendar": "Google Kalender",
+            "sync_all": "Alle Aufgaben synchronisieren",
+            "syncing": "Synchronisierung...",
+            "bulk_sync_description": "Alle ausstehenden CRM-Aufgaben mit einem Klick mit Google Kalender synchronisieren.",
+            "sync_success": "{count} Aufgaben synchronisiert",
+            "synced": "Synchronisiert"
+        },
+        "recurrence": {
+            "is_recurring": "Wiederkehrende Aufgabe",
+            "helper_text": "Wiederholt sich automatisch",
+            "frequency": {
+                "label": "Wiederholen alle",
+                "daily": "{n} Tage",
+                "weekly": "{n} Wochen",
+                "monthly": "{n} Monate",
+                "yearly": "{n} Jahre"
+            },
+            "days_of_week": "Wochentage",
+            "days": {
+                "mon": "Mo",
+                "tue": "Di",
+                "wed": "Mi",
+                "thu": "Do",
+                "fri": "Fr",
+                "sat": "Sa",
+                "sun": "So"
+            },
+            "end_condition": {
+                "label": "Endet",
+                "never": "Niemals",
+                "date": "Am Datum:",
+                "count": "Nach",
+                "occurrences": "{n} Vorkommen"
+            }
+        },
+        "conflicts": {
+            "title": "Synchronisierungskonflikt erkannt",
+            "description": "Diese Aufgabe wurde sowohl lokal als auch im Google Kalender geändert",
+            "detected_at": "Konflikt erkannt: {date}",
+            "local_version": "Lokale Version (NetSendo)",
+            "remote_version": "Remote-Version (Google Kalender)",
+            "use_local": "Lokale Version verwenden",
+            "use_remote": "Remote-Version verwenden",
+            "cancel": "Abbrechen",
+            "no_conflict": "Aufgabe hat keinen Konflikt zu lösen.",
+            "resolved_local": "Konflikt gelöst - lokale Version verwendet.",
+            "resolved_remote": "Konflikt gelöst - Remote-Version verwendet."
+        },
         "dashboard": {
             "title": "CRM Dashboard",
             "overview": "Übersicht",
@@ -4409,7 +4509,10 @@
             "upcoming_tasks": "Heutige Aufgaben",
             "no_activities": "Keine Aktivitäten",
             "no_tasks_today": "Keine Aufgaben für heute",
-            "no_tasks": "Keine anstehenden Aufgaben"
+            "no_tasks": "Keine anstehenden Aufgaben",
+            "follow_ups": "Follow-ups",
+            "active_sequences": "aktive Sequenzen",
+            "due_today": "fällig heute"
         },
         "common": {
             "cancel": "Abbrechen",
@@ -4755,6 +4858,68 @@
             "event": "Event",
             "cold_call": "Kaltakquise",
             "other": "Sonstiges"
+        },
+        "sequences": {
+            "title": "Follow-up Sequenzen",
+            "add": "Neue Sequenz",
+            "trigger": "Auslöser",
+            "triggers": {
+                "manual": "Manuell",
+                "on_contact_created": "Kontakt erstellt",
+                "on_deal_created": "Deal erstellt",
+                "on_task_completed": "Aufgabe erledigt",
+                "on_deal_stage_changed": "Deal-Phase geändert"
+            },
+            "steps": {
+                "task": "Aufgabe",
+                "email": "E-Mail",
+                "sms": "SMS",
+                "wait_for_response": "Auf Antwort warten"
+            },
+            "status": {
+                "active": "Aktiv",
+                "inactive": "Inaktiv"
+            },
+            "actions": {
+                "edit": "Bearbeiten",
+                "report": "Bericht",
+                "duplicate": "Duplizieren",
+                "delete": "Löschen",
+                "delete_confirm": "Sind Sie sicher, dass Sie diese Sequenz löschen möchten? Alle Schritte werden gelöscht."
+            },
+            "banner": {
+                "title": "Automatische Follow-up Sequenzen",
+                "description": "Erstellen Sie Aufgabensequenzen, die Sie automatisch an die nächsten Schritte erinnern. Setzen Sie 'Rückruf in 3 Tagen', 'Follow-up nach E-Mail' oder ganze Nurturing-Kampagnen."
+            },
+            "empty": {
+                "title": "Keine Sequenzen",
+                "description": "Erstellen Sie Ihre erste Follow-up Sequenz, um den Kontakt zu automatisieren.",
+                "button": "Erste Sequenz erstellen"
+            },
+            "steps_count": "{count} Schritte",
+            "active_enrollments": "{count} aktiv"
+        },
+        "reports": {
+            "title": "Bericht: {name}",
+            "subtitle": "Sequenz-Effektivitätsbericht",
+            "edit_sequence": "Sequenz bearbeiten",
+            "total_enrollments": "Gesamte Anmeldungen",
+            "active": "aktiv",
+            "completed": "abgeschlossen",
+            "completion_rate": "Abschlussrate",
+            "conversion_rate": "Konversionsrate",
+            "conversions_from": "{conversions} Konversionen von {completed} abgeschlossen",
+            "avg_completion_time": "Ø Abschlusszeit",
+            "days": "Tage",
+            "tasks_completed": "Aufgaben erledigt",
+            "steps_progress": "Schritt-Fortschritt",
+            "no_steps": "Keine Schritte in Sequenz",
+            "recent_enrollments": "Neueste Anmeldungen",
+            "conversion": "Konversion",
+            "no_enrollments": "Noch keine Anmeldungen",
+            "activity_summary": "Aktivitätszusammenfassung",
+            "emails_sent": "E-Mails gesendet",
+            "responses": "Antworten"
         }
     },
     "onboarding": {

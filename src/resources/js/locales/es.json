@@ -4475,6 +4475,106 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Gestionar contactos y ventas",
+        "task": {
+            "title": {
+                "new": "Nueva tarea",
+                "edit": "Editar tarea"
+            },
+            "fields": {
+                "title": "Título de la tarea *",
+                "title_placeholder": "ej. Llamar al cliente sobre la oferta",
+                "type": "Tipo de tarea",
+                "priority": "Prioridad",
+                "due_date": "Fecha de vencimiento",
+                "contact": "Asignar a contacto",
+                "contact_placeholder": "-- Sin contacto --",
+                "owner": "Asignar a propietario",
+                "owner_auto": "-- Automáticamente (Yo) --",
+                "description": "Descripción (opcional)",
+                "description_placeholder": "Detalles adicionales sobre la tarea..."
+            },
+            "calendar": {
+                "sync": "Sincronizar con Google Calendar",
+                "select_calendar": "Seleccionar calendario",
+                "default": "Predeterminado",
+                "primary": "Principal",
+                "synced": "Sincronizado con calendario"
+            },
+            "actions": {
+                "cancel": "Cancelar",
+                "save": "Guardar cambios",
+                "create": "Crear tarea"
+            },
+            "empty": {
+                "button": "Añadir primera tarea",
+                "description": "No hay tareas en esta categoría"
+            }
+        },
+        "reminders": {
+            "types": {
+                "call": "Llamada",
+                "email": "Correo electrónico",
+                "meeting": "Reunión",
+                "follow_up": "Seguimiento",
+                "other": "Tarea"
+            },
+            "priorities": {
+                "low": "Baja",
+                "medium": "Media",
+                "high": "Alta"
+            }
+        },
+        "calendar": {
+            "sync_label": "Sincronizar con Google Calendar",
+            "select_calendar": "Seleccionar calendario",
+            "google_calendar": "Google Calendar",
+            "sync_all": "Sincronizar todas las tareas",
+            "syncing": "Sincronizando...",
+            "bulk_sync_description": "Sincronizar todas las tareas pendientes de CRM con Google Calendar con un clic.",
+            "sync_success": "Sincronizadas {count} tareas",
+            "synced": "Sincronizado"
+        },
+        "recurrence": {
+            "is_recurring": "Tarea recurrente",
+            "helper_text": "Se repite automáticamente",
+            "frequency": {
+                "label": "Repetir cada",
+                "daily": "{n} días",
+                "weekly": "{n} semanas",
+                "monthly": "{n} meses",
+                "yearly": "{n} años"
+            },
+            "days_of_week": "Días de la semana",
+            "days": {
+                "mon": "Lun",
+                "tue": "Mar",
+                "wed": "Mié",
+                "thu": "Jue",
+                "fri": "Vie",
+                "sat": "Sáb",
+                "sun": "Dom"
+            },
+            "end_condition": {
+                "label": "Termina",
+                "never": "Nunca",
+                "date": "En fecha:",
+                "count": "Después de",
+                "occurrences": "{n} ocurrencias"
+            }
+        },
+        "conflicts": {
+            "title": "Conflicto de sincronización detectado",
+            "description": "Esta tarea ha sido modificada tanto localmente como en Google Calendar",
+            "detected_at": "Conflicto detectado: {date}",
+            "local_version": "Versión local (NetSendo)",
+            "remote_version": "Versión remota (Google Calendar)",
+            "use_local": "Usar versión local",
+            "use_remote": "Usar versión remota",
+            "cancel": "Cancelar",
+            "no_conflict": "La tarea no tiene conflicto para resolver.",
+            "resolved_local": "Conflicto resuelto - se usó la versión local.",
+            "resolved_remote": "Conflicto resuelto - se usó la versión remota."
+        },
         "dashboard": {
             "title": "Panel CRM",
             "overview": "Visión general",
@@ -4494,7 +4594,10 @@
             "upcoming_tasks": "Tareas de hoy",
             "no_activities": "Sin actividades",
             "no_tasks_today": "Sin tareas para hoy",
-            "no_tasks": "Sin tareas próximas"
+            "no_tasks": "Sin tareas próximas",
+            "follow_ups": "Seguimientos",
+            "active_sequences": "secuencias activas",
+            "due_today": "vence hoy"
         },
         "common": {
             "cancel": "Cancelar",
@@ -4840,6 +4943,68 @@
             "event": "Evento",
             "cold_call": "Llamada en frío",
             "other": "Otro"
+        },
+        "sequences": {
+            "title": "Secuencias de seguimiento",
+            "add": "Nueva secuencia",
+            "trigger": "Disparador",
+            "triggers": {
+                "manual": "Manual",
+                "on_contact_created": "Al crear contacto",
+                "on_deal_created": "Al crear trato",
+                "on_task_completed": "Al completar tarea",
+                "on_deal_stage_changed": "Al cambiar etapa de trato"
+            },
+            "steps": {
+                "task": "Tarea",
+                "email": "Email",
+                "sms": "SMS",
+                "wait_for_response": "Esperar respuesta"
+            },
+            "status": {
+                "active": "Activa",
+                "inactive": "Inactiva"
+            },
+            "actions": {
+                "edit": "Editar",
+                "report": "Informe",
+                "duplicate": "Duplicar",
+                "delete": "Eliminar",
+                "delete_confirm": "¿Está seguro de que desea eliminar esta secuencia? Se eliminarán todos los pasos."
+            },
+            "banner": {
+                "title": "Secuencias automáticas",
+                "description": "Cree secuencias de tareas que le recuerden automáticamente los siguientes pasos. Configure 'llamar en 3 días', 'seguimiento tras email' o campañas completas."
+            },
+            "empty": {
+                "title": "Sin secuencias",
+                "description": "Cree su primera secuencia de seguimiento para automatizar el contacto.",
+                "button": "Crear primera secuencia"
+            },
+            "steps_count": "{count} pasos",
+            "active_enrollments": "{count} activos"
+        },
+        "reports": {
+            "title": "Informe: {name}",
+            "subtitle": "Informe de efectividad",
+            "edit_sequence": "Editar secuencia",
+            "total_enrollments": "Inscripciones totales",
+            "active": "activos",
+            "completed": "completados",
+            "completion_rate": "Tasa de finalización",
+            "conversion_rate": "Tasa de conversión",
+            "conversions_from": "{conversions} conversiones de {completed} completados",
+            "avg_completion_time": "Tiempo medio",
+            "days": "días",
+            "tasks_completed": "tareas completadas",
+            "steps_progress": "Progreso por pasos",
+            "no_steps": "Sin pasos en la secuencia",
+            "recent_enrollments": "Inscripciones recientes",
+            "conversion": "Conversión",
+            "no_enrollments": "Sin inscripciones aún",
+            "activity_summary": "Resumen de actividad",
+            "emails_sent": "Emails enviados",
+            "responses": "Respuestas"
         }
     },
     "onboarding": {

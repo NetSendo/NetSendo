@@ -6,6 +6,8 @@ use App\Models\CrmTask;
 use App\Models\CrmActivity;
 use App\Models\CrmContact;
 use App\Models\CrmDeal;
+use App\Models\CrmFollowUpEnrollment;
+use App\Models\CrmFollowUpSequence;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -107,6 +109,14 @@ class CrmDashboardController extends Controller
                 'overdue' => CrmTask::forUser($userId)->overdue()->count(),
                 'today' => CrmTask::forUser($userId)->today()->count(),
                 'upcoming' => CrmTask::forUser($userId)->upcoming()->count(),
+            ],
+            'follow_ups' => [
+                'active_enrollments' => CrmFollowUpEnrollment::whereHas('sequence', fn($q) => $q->where('user_id', $userId))->active()->count(),
+                'due_today' => CrmFollowUpEnrollment::whereHas('sequence', fn($q) => $q->where('user_id', $userId))
+                    ->active()
+                    ->whereDate('next_action_at', $now->toDateString())
+                    ->count(),
+                'sequences_active' => CrmFollowUpSequence::forUser($userId)->active()->count(),
             ],
         ];
     }

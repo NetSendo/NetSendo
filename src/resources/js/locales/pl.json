@@ -3336,6 +3336,52 @@
         },
         "confirm_delete": "Czy na pewno chcesz usunąć tę integrację?"
     },
+    "calendar": {
+        "title": "Integracja Google Calendar",
+        "connection": {
+            "title": "Połączenie z kalendarzem",
+            "description": "Połącz swój Google Calendar, aby automatycznie synchronizować zadania CRM.",
+            "connected": "Połączono",
+            "not_connected": "Nie połączono",
+            "connect_prompt": "Połącz swój Google Calendar, aby włączyć dwukierunkową synchronizację zadań.",
+            "connect": "Połącz Google Calendar",
+            "disconnect": "Rozłącz",
+            "via": "przez",
+            "no_integrations": "Brak dostępnych integracji Google.",
+            "add_integration": "Najpierw dodaj integrację Google"
+        },
+        "settings": {
+            "calendar": "Kalendarz docelowy",
+            "primary_calendar": "Główny kalendarz",
+            "auto_sync": "Automatycznie synchronizuj nowe zadania z kalendarzem",
+            "sync_now": "Synchronizuj teraz"
+        },
+        "push_notifications": {
+            "title": "Synchronizacja w czasie rzeczywistym",
+            "active": "Powiadomienia push aktywne",
+            "inactive": "Powiadomienia push nie skonfigurowane",
+            "expires": "Wygasa",
+            "refresh": "Odśwież kanał"
+        },
+        "webhook": {
+            "title": "URL Webhooka",
+            "description": "Ten URL odbiera powiadomienia push z Google Calendar do synchronizacji w czasie rzeczywistym."
+        },
+        "modal": {
+            "select_integration": "Wybierz integrację Google",
+            "select_description": "Wybierz, której integracji Google użyć do połączenia z kalendarzem."
+        },
+        "oauth_denied": "Dostęp do kalendarza został odrzucony.",
+        "connected": "Google Calendar został połączony!",
+        "disconnected": "Google Calendar został rozłączony.",
+        "connection_failed": "Nie udało się połączyć z Google Calendar.",
+        "settings_updated": "Ustawienia kalendarza zostały zaktualizowane.",
+        "sync_started": "Synchronizacja rozpoczęta dla {count} zadań.",
+        "sync_failed": "Synchronizacja nie powiodła się. Spróbuj ponownie.",
+        "channel_refreshed": "Kanał powiadomień push został odświeżony.",
+        "channel_refresh_failed": "Nie udało się odświeżyć kanału powiadomień push.",
+        "confirm_disconnect": "Czy na pewno chcesz rozłączyć Google Calendar? Zsynchronizowane wydarzenia pozostaną w kalendarzu."
+    },
     "forms": {
         "title": "Formularze zapisu",
         "create": "Nowy formularz",
@@ -5186,6 +5232,106 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Zarządzaj kontaktami i sprzedażą",
+        "task": {
+            "title": {
+                "new": "Nowe zadanie",
+                "edit": "Edytuj zadanie"
+            },
+            "fields": {
+                "title": "Tytuł zadania *",
+                "title_placeholder": "np. Zadzwoń do klienta w sprawie oferty",
+                "type": "Typ zadania",
+                "priority": "Priorytet",
+                "due_date": "Termin wykonania",
+                "contact": "Przypisz do kontaktu",
+                "contact_placeholder": "-- Bez kontaktu --",
+                "owner": "Przypisz do handlowca",
+                "owner_auto": "-- Automatycznie (ja) --",
+                "description": "Opis (opcjonalnie)",
+                "description_placeholder": "Dodatkowe szczegóły dotyczące zadania..."
+            },
+            "calendar": {
+                "sync": "Synchronizuj z kalendarzem Google",
+                "select_calendar": "Wybierz kalendarz",
+                "default": "Domyślny",
+                "primary": "Główny",
+                "synced": "Zsynchronizowane z kalendarzem"
+            },
+            "actions": {
+                "cancel": "Anuluj",
+                "save": "Zapisz zmiany",
+                "create": "Utwórz zadanie"
+            },
+            "empty": {
+                "button": "Dodaj pierwsze zadanie",
+                "description": "Brak zadań w tej kategorii"
+            }
+        },
+        "reminders": {
+            "types": {
+                "call": "Telefon",
+                "email": "Email",
+                "meeting": "Spotkanie",
+                "follow_up": "Follow-up",
+                "other": "Zadanie"
+            },
+            "priorities": {
+                "low": "Niski",
+                "medium": "Średni",
+                "high": "Wysoki"
+            }
+        },
+        "calendar": {
+            "sync_label": "Synchronizuj z Google Calendar",
+            "select_calendar": "Wybierz kalendarz",
+            "google_calendar": "Google Calendar",
+            "sync_all": "Synchronizuj wszystkie zadania",
+            "syncing": "Synchronizowanie...",
+            "bulk_sync_description": "Zsynchronizuj wszystkie oczekujące zadania CRM z kalendarzem Google jednym kliknięciem.",
+            "sync_success": "Zsynchronizowano {count} zadań",
+            "synced": "Zsynchronizowane"
+        },
+        "recurrence": {
+            "is_recurring": "Zadanie cykliczne",
+            "helper_text": "Powtarza się automatycznie",
+            "frequency": {
+                "label": "Powtarzaj co",
+                "daily": "{n} dni",
+                "weekly": "{n} tygodnie",
+                "monthly": "{n} miesiące",
+                "yearly": "{n} lata"
+            },
+            "days_of_week": "Dni tygodnia",
+            "days": {
+                "mon": "Pn",
+                "tue": "Wt",
+                "wed": "Śr",
+                "thu": "Cz",
+                "fri": "Pt",
+                "sat": "Sb",
+                "sun": "Nd"
+            },
+            "end_condition": {
+                "label": "Zakończenie",
+                "never": "Nigdy",
+                "date": "Do daty:",
+                "count": "Po",
+                "occurrences": "{n} wystąpieniach"
+            }
+        },
+        "conflicts": {
+            "title": "Wykryto konflikt synchronizacji",
+            "description": "Zadanie zostało zmienione zarówno lokalnie, jak i w Google Calendar",
+            "detected_at": "Konflikt wykryty: {date}",
+            "local_version": "Wersja lokalna (NetSendo)",
+            "remote_version": "Wersja zdalna (Google Calendar)",
+            "use_local": "Użyj wersji lokalnej",
+            "use_remote": "Użyj wersji zdalnej",
+            "cancel": "Anuluj",
+            "no_conflict": "Zadanie nie ma konfliktu do rozwiązania.",
+            "resolved_local": "Konflikt rozwiązany - użyto wersji lokalnej.",
+            "resolved_remote": "Konflikt rozwiązany - użyto wersji zdalnej."
+        },
         "dashboard": {
             "title": "Panel CRM",
             "overview": "Przegląd",
@@ -5205,7 +5351,10 @@
             "upcoming_tasks": "Zadania na dziś",
             "no_activities": "Brak aktywności",
             "no_tasks_today": "Brak zadań na dziś",
-            "no_tasks": "Brak nadchodzących zadań"
+            "no_tasks": "Brak nadchodzących zadań",
+            "follow_ups": "Follow-upy",
+            "active_sequences": "aktywnych sekwencji",
+            "due_today": "do wykonania dziś"
         },
         "common": {
             "cancel": "Anuluj",
@@ -5553,6 +5702,68 @@
             "event": "Wydarzenie",
             "cold_call": "Cold call",
             "other": "Inne"
+        },
+        "sequences": {
+            "title": "Sekwencje Follow-up",
+            "add": "Nowa sekwencja",
+            "trigger": "Wyzwalacz",
+            "triggers": {
+                "manual": "Ręczny",
+                "on_contact_created": "Po utworzeniu kontaktu",
+                "on_deal_created": "Po utworzeniu dealu",
+                "on_task_completed": "Po ukończeniu zadania",
+                "on_deal_stage_changed": "Po zmianie etapu dealu"
+            },
+            "steps": {
+                "task": "Zadanie",
+                "email": "Email",
+                "sms": "SMS",
+                "wait_for_response": "Oczekiwanie"
+            },
+            "status": {
+                "active": "Aktywna",
+                "inactive": "Nieaktywna"
+            },
+            "actions": {
+                "edit": "Edytuj",
+                "report": "Raport",
+                "duplicate": "Duplikuj",
+                "delete": "Usuń",
+                "delete_confirm": "Czy na pewno chcesz usunąć tę sekwencję? Wszystkie kroki zostaną usunięte."
+            },
+            "banner": {
+                "title": "Automatyczne sekwencje kontaktu",
+                "description": "Twórz sekwencje zadań, które automatycznie przypomną Ci o kolejnych krokach kontaktu z klientem. Ustaw \"oddzwoń za 3 dni\", \"follow-up po mailu\" lub całe kampanie nurturingu."
+            },
+            "empty": {
+                "title": "Brak sekwencji",
+                "description": "Utwórz pierwszą sekwencję follow-up, aby automatyzować kontakt z klientami.",
+                "button": "Utwórz pierwszą sekwencję"
+            },
+            "steps_count": "{count} kroków",
+            "active_enrollments": "{count} aktywnych"
+        },
+        "reports": {
+            "title": "Raport: {name}",
+            "subtitle": "Raport skuteczności sekwencji",
+            "edit_sequence": "Edytuj sekwencję",
+            "total_enrollments": "Zapisanych kontaktów",
+            "active": "aktywnych",
+            "completed": "ukończonych",
+            "completion_rate": "Wskaźnik ukończenia",
+            "conversion_rate": "Wskaźnik konwersji",
+            "conversions_from": "{conversions} konwersji z {completed} ukończonych",
+            "avg_completion_time": "Średni czas ukończenia",
+            "days": "dni",
+            "tasks_completed": "zadań wykonanych",
+            "steps_progress": "Postęp po krokach",
+            "no_steps": "Brak kroków w sekwencji",
+            "recent_enrollments": "Ostatnie zapisy",
+            "conversion": "Konwersja",
+            "no_enrollments": "Brak zapisów do sekwencji",
+            "activity_summary": "Podsumowanie aktywności",
+            "emails_sent": "Emaili wysłanych",
+            "responses": "Odpowiedzi"
         }
     },
     "onboarding": {

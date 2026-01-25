@@ -13,6 +13,7 @@ class EmailOpen extends Model
     protected $fillable = [
         'message_id',
         'subscriber_id',
+        'ab_test_variant_id',
         'ip_address',
         'user_agent',
         'opened_at',

@@ -178,9 +178,11 @@ const updateOpenGroup = () => {
         isActive("settings.backup.*") ||
         isActive("settings.stripe.*") ||
         isActive("settings.polar.*") ||
-        isActive('settings.pixel.*') ||
-        isActive('settings.woocommerce.*') ||
-        isActive('settings.names.*')
+        isActive("settings.pixel.*") ||
+        isActive("settings.woocommerce.*") ||
+        isActive("settings.names.*") ||
+        isActive("settings.calendar.*") ||
+        isActive("settings.sms-providers.*")
     ) {
         openGroup.value = "settings";
         return;
@@ -772,7 +774,9 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
 
             <!-- Listy Kontaktów (formerly CRM) -->
             <SidebarGroup
-                :label="$t('navigation.groups.contact_lists', 'Listy Kontaktów')"
+                :label="
+                    $t('navigation.groups.contact_lists', 'Listy Kontaktów')
+                "
                 :collapsed="collapsed"
                 :is-open="openGroup === 'contact_lists'"
                 @toggle="toggleGroup('contact_lists')"
@@ -1706,8 +1710,14 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     :collapsed="collapsed"
                 >
                     <template #icon>
-                        <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
-                            <path d="M23.594 9.25h-.587c-.22 0-.421.124-.52.32l-.872 1.746a.586.586 0 0 1-.52.32h-5.76a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H7.52a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 0 0 16.816v1.932c0 .847.686 1.533 1.533 1.533h20.934c.847 0 1.533-.686 1.533-1.533V9.657a.407.407 0 0 0-.406-.407zM1.533 5.72h20.934c.847 0 1.533.686 1.533 1.532v.47a.407.407 0 0 1-.406.406h-5.01a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H9.767a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 1 0 10.496V7.252c0-.847.686-1.533 1.533-1.533z"/>
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            class="h-4 w-4"
+                        >
+                            <path
+                                d="M23.594 9.25h-.587c-.22 0-.421.124-.52.32l-.872 1.746a.586.586 0 0 1-.52.32h-5.76a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H7.52a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 0 0 16.816v1.932c0 .847.686 1.533 1.533 1.533h20.934c.847 0 1.533-.686 1.533-1.533V9.657a.407.407 0 0 0-.406-.407zM1.533 5.72h20.934c.847 0 1.533.686 1.533 1.532v.47a.407.407 0 0 1-.406.406h-5.01a.586.586 0 0 0-.52.32l-.873 1.747a.586.586 0 0 1-.52.32H9.767a.586.586 0 0 0-.52.32l-.873 1.746a.586.586 0 0 1-.52.32H.406A.407.407 0 0 1 0 10.496V7.252c0-.847.686-1.533 1.533-1.533z"
+                            />
                         </svg>
                     </template>
                     {{ $t("settings.woocommerce.title", "WooCommerce") }}
@@ -1734,6 +1744,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     Integracje Google
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.calendar.index')"
+                    :active="isActive('settings.calendar.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("calendar.title") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -1851,8 +1884,6 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     {{ $t("navigation.backups") }}
                 </SidebarItem>
             </SidebarGroup>
-
-
         </nav>
 
         <!-- Help Menu (above footer) -->

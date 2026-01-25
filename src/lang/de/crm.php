@@ -1,0 +1,81 @@
+<?php
+
+return [
+    'reminders' => [
+        'email_subject' => 'Erinnerung: :title',
+        'title' => '⏰ Aufgabenerinnerung',
+        'subtitle' => 'Sie haben eine geplante Aufgabe zu erledigen',
+        'type' => 'Typ',
+        'due_date' => 'Fälligkeitsdatum',
+        'priority' => 'Priorität',
+        'contact' => 'Kontakt',
+        'view_in_crm' => 'Im CRM anzeigen',
+        'footer_auto' => 'Diese Nachricht wurde automatisch von :appName gesendet.',
+        'footer_settings' => 'Sie können die Benachrichtigungseinstellungen in Ihrem Profil ändern.',
+        'deal' => 'Deal: :name',
+        'types' => [
+            'call' => '📞 Anruf',
+            'email' => '✉️ E-Mail',
+            'meeting' => '📅 Treffen',
+            'follow_up' => '🔄 Follow-up',
+            'other' => '📋 Sonstiges',
+        ],
+        'priorities' => [
+            'high' => 'Hoch',
+            'medium' => 'Mittel',
+            'low' => 'Niedrig',
+        ]
+    ],
+    'calendar' => [
+        'sync_label' => 'Mit Google Kalender synchronisieren',
+        'select_calendar' => 'Kalender auswählen',
+        'google_calendar' => 'Google Kalender',
+        'sync_all' => 'Alle Aufgaben synchronisieren',
+        'syncing' => 'Synchronisierung...',
+        'bulk_sync_description' => 'Alle ausstehenden CRM-Aufgaben mit einem Klick mit Google Kalender synchronisieren.',
+        'sync_success' => ':count Aufgaben synchronisiert',
+        'synced' => 'Synchronisiert',
+        'sync_error' => 'Ein Fehler ist bei der Synchronisierung aufgetreten.',
+    ],
+    'recurrence' => [
+        'is_recurring' => 'Wiederkehrende Aufgabe',
+        'helper_text' => 'Wiederholt sich automatisch',
+        'frequency' => [
+            'label' => 'Wiederholen alle',
+            'daily' => '{1} Tag|{n} Tage',
+            'weekly' => '{1} Woche|{n} Wochen',
+            'monthly' => '{1} Monat|{n} Monate',
+            'yearly' => '{1} Jahr|{n} Jahre',
+        ],
+        'days_of_week' => 'Wochentage',
+        'days' => [
+            'mon' => 'Mo',
+            'tue' => 'Di',
+            'wed' => 'Mi',
+            'thu' => 'Do',
+            'fri' => 'Fr',
+            'sat' => 'Sa',
+            'sun' => 'So',
+        ],
+        'end_condition' => [
+            'label' => 'Endet',
+            'never' => 'Niemals',
+            'date' => 'Am Datum:',
+            'count' => 'Nach',
+            'occurrences' => '{1} Vorkommen|{n} Vorkommen',
+        ],
+    ],
+    'conflicts' => [
+        'title' => 'Synchronisierungskonflikt erkannt',
+        'description' => 'Diese Aufgabe wurde sowohl lokal als auch im Google Kalender geändert',
+        'detected_at' => 'Konflikt erkannt: :date',
+        'local_version' => 'Lokale Version (NetSendo)',
+        'remote_version' => 'Remote-Version (Google Kalender)',
+        'use_local' => 'Lokale Version verwenden',
+        'use_remote' => 'Remote-Version verwenden',
+        'cancel' => 'Abbrechen',
+        'no_conflict' => 'Aufgabe hat keinen Konflikt zu lösen.',
+        'resolved_local' => 'Konflikt gelöst - lokale Version verwendet.',
+        'resolved_remote' => 'Konflikt gelöst - Remote-Version verwendet.',
+    ]
+];

@@ -106,3 +106,21 @@ Schedule::job(new \App\Jobs\ProcessAbTestsJob)
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+// CRM Follow-up Sequences - Przetwarzanie zapisów i tworzenie zadań
+Schedule::command('crm:process-follow-ups')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/crm-follow-ups.log'));
+
+// CRM Task Reminders - Wysyłka przypomnień o zadaniach
+Schedule::command('crm:send-task-reminders')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/crm-reminders.log'));
+
+// CRM Overdue Tasks - Powiadomienia o zaległych zadaniach
+Schedule::command('cron:notify-overdue-tasks')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/crm-overdue.log'));
+

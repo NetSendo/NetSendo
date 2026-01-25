@@ -1875,6 +1875,52 @@
         },
         "confirm_delete": "Are you sure you want to delete this integration?"
     },
+    "calendar": {
+        "title": "Google Calendar Integration",
+        "connection": {
+            "title": "Calendar Connection",
+            "description": "Connect your Google Calendar to sync CRM tasks automatically.",
+            "connected": "Connected",
+            "not_connected": "Not Connected",
+            "connect_prompt": "Connect your Google Calendar to enable two-way task synchronization.",
+            "connect": "Connect Google Calendar",
+            "disconnect": "Disconnect",
+            "via": "via",
+            "no_integrations": "No Google integrations available.",
+            "add_integration": "Add Google Integration first"
+        },
+        "settings": {
+            "calendar": "Target Calendar",
+            "primary_calendar": "Primary Calendar",
+            "auto_sync": "Automatically sync new tasks to Calendar",
+            "sync_now": "Sync Now"
+        },
+        "push_notifications": {
+            "title": "Real-time Sync",
+            "active": "Push notifications active",
+            "inactive": "Push notifications not configured",
+            "expires": "Expires",
+            "refresh": "Refresh Channel"
+        },
+        "webhook": {
+            "title": "Webhook URL",
+            "description": "This URL receives push notifications from Google Calendar for real-time sync."
+        },
+        "modal": {
+            "select_integration": "Select Google Integration",
+            "select_description": "Choose which Google integration to use for Calendar connection."
+        },
+        "oauth_denied": "Calendar access was denied.",
+        "connected": "Google Calendar connected successfully!",
+        "disconnected": "Google Calendar disconnected.",
+        "connection_failed": "Failed to connect Google Calendar.",
+        "settings_updated": "Calendar settings updated.",
+        "sync_started": "Sync started for {count} tasks.",
+        "sync_failed": "Sync failed. Please try again.",
+        "channel_refreshed": "Push notification channel refreshed.",
+        "channel_refresh_failed": "Failed to refresh push notification channel.",
+        "confirm_disconnect": "Are you sure you want to disconnect Google Calendar? Synced events will remain in Calendar."
+    },
     "forms": {
         "title": "Subscription Forms",
         "create": "New Form",
@@ -5104,7 +5150,107 @@
     },
     "crm": {
         "title": "CRM",
-        "subtitle": "Manage contacts and sales",
+        "subtitle": "Manage your contacts and sales",
+        "task": {
+            "title": {
+                "new": "New Task",
+                "edit": "Edit Task"
+            },
+            "fields": {
+                "title": "Task Title *",
+                "title_placeholder": "e.g. Call client about offer",
+                "type": "Task Type",
+                "priority": "Priority",
+                "due_date": "Due Date",
+                "contact": "Assign to Contact",
+                "contact_placeholder": "-- No Contact --",
+                "owner": "Assign to Owner",
+                "owner_auto": "-- Automatically (Me) --",
+                "description": "Description (optional)",
+                "description_placeholder": "Additional details about the task..."
+            },
+            "calendar": {
+                "sync": "Sync to Google Calendar",
+                "select_calendar": "Select Calendar",
+                "default": "Default",
+                "primary": "Primary",
+                "synced": "Synced with Calendar"
+            },
+            "actions": {
+                "cancel": "Cancel",
+                "save": "Save Changes",
+                "create": "Create Task"
+            },
+            "empty": {
+                "button": "Add First Task",
+                "description": "No tasks in this category"
+            }
+        },
+        "reminders": {
+            "types": {
+                "call": "Call",
+                "email": "Email",
+                "meeting": "Meeting",
+                "follow_up": "Follow-up",
+                "other": "Task"
+            },
+            "priorities": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High"
+            }
+        },
+        "calendar": {
+            "sync_label": "Sync to Google Calendar",
+            "select_calendar": "Select Calendar",
+            "google_calendar": "Google Calendar",
+            "sync_all": "Sync All Tasks",
+            "syncing": "Syncing...",
+            "bulk_sync_description": "Sync all pending CRM tasks to Google Calendar with one click.",
+            "sync_success": "Synced {count} tasks",
+            "synced": "Synced"
+        },
+        "recurrence": {
+            "is_recurring": "Recurring Task",
+            "helper_text": "Repeats automatically",
+            "frequency": {
+                "label": "Repeat every",
+                "daily": "{n} days",
+                "weekly": "{n} weeks",
+                "monthly": "{n} months",
+                "yearly": "{n} years"
+            },
+            "days_of_week": "Days of Week",
+            "days": {
+                "mon": "Mon",
+                "tue": "Tue",
+                "wed": "Wed",
+                "thu": "Thu",
+                "fri": "Fri",
+                "sat": "Sat",
+                "sun": "Sun"
+            },
+            "end_condition": {
+                "label": "Ends",
+                "never": "Never",
+                "date": "On Date:",
+                "count": "After",
+                "occurrences": "{n} occurrences"
+            }
+        },
+        "conflicts": {
+            "title": "Sync Conflict Detected",
+            "description": "This task has been modified both locally and in Google Calendar",
+            "detected_at": "Conflict detected: {date}",
+            "local_version": "Local Version (NetSendo)",
+            "remote_version": "Remote Version (Google Calendar)",
+            "use_local": "Use Local Version",
+            "use_remote": "Use Remote Version",
+            "cancel": "Cancel",
+            "no_conflict": "Task has no conflict to resolve.",
+            "resolved_local": "Conflict resolved - used local version.",
+            "resolved_remote": "Conflict resolved - used remote version."
+        },
         "dashboard": {
             "title": "CRM Dashboard",
             "overview": "Overview",
@@ -5124,7 +5270,10 @@
             "upcoming_tasks": "Today's Tasks",
             "no_activities": "No activities",
             "no_tasks_today": "No tasks due today",
-            "no_tasks": "No upcoming tasks"
+            "no_tasks": "No upcoming tasks",
+            "follow_ups": "Follow-ups",
+            "active_sequences": "active sequences",
+            "due_today": "due today"
         },
         "common": {
             "cancel": "Cancel",
@@ -5476,6 +5625,68 @@
             "event": "Event",
             "cold_call": "Cold Call",
             "other": "Other"
+        },
+        "sequences": {
+            "title": "Follow-up Sequences",
+            "add": "New Sequence",
+            "trigger": "Trigger",
+            "triggers": {
+                "manual": "Manual",
+                "on_contact_created": "On contact created",
+                "on_deal_created": "On deal created",
+                "on_task_completed": "On task completed",
+                "on_deal_stage_changed": "On deal stage changed"
+            },
+            "steps": {
+                "task": "Task",
+                "email": "Email",
+                "sms": "SMS",
+                "wait_for_response": "Wait for response"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Edit",
+                "report": "Report",
+                "duplicate": "Duplicate",
+                "delete": "Delete",
+                "delete_confirm": "Are you sure you want to delete this sequence? All steps will be deleted."
+            },
+            "banner": {
+                "title": "Automatic Follow-up Sequences",
+                "description": "Create task sequences that automatically remind you of next steps with a client. Set 'call back in 3 days', 'follow-up after email' or entire nurturing campaigns."
+            },
+            "empty": {
+                "title": "No sequences",
+                "description": "Create your first follow-up sequence to automate client contact.",
+                "button": "Create First Sequence"
+            },
+            "steps_count": "{count} steps",
+            "active_enrollments": "{count} active"
+        },
+        "reports": {
+            "title": "Report: {name}",
+            "subtitle": "Sequence Effectiveness Report",
+            "edit_sequence": "Edit Sequence",
+            "total_enrollments": "Total Enrollments",
+            "active": "active",
+            "completed": "completed",
+            "completion_rate": "Completion Rate",
+            "conversion_rate": "Conversion Rate",
+            "conversions_from": "{conversions} conversions from {completed} completed",
+            "avg_completion_time": "Average Completion Time",
+            "days": "days",
+            "tasks_completed": "tasks completed",
+            "steps_progress": "Steps Progress",
+            "no_steps": "No steps in sequence",
+            "recent_enrollments": "Recent Enrollments",
+            "conversion": "Conversion",
+            "no_enrollments": "No enrollments yet",
+            "activity_summary": "Activity Summary",
+            "emails_sent": "Emails Sent",
+            "responses": "Responses"
         }
     },
     "onboarding": {

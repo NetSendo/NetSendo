@@ -263,6 +263,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/{integration}/verify', [\App\Http\Controllers\IntegrationSettingsController::class, 'verify'])->name('verify');
     });
 
+    // Google Calendar Integration
+    Route::prefix('settings/calendar')->name('settings.calendar.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\GoogleCalendarController::class, 'index'])->name('index');
+        Route::get('/connect/{integration}', [\App\Http\Controllers\GoogleCalendarController::class, 'connect'])->name('connect');
+        Route::get('/callback', [\App\Http\Controllers\GoogleCalendarController::class, 'callback'])->name('callback');
+        Route::post('/disconnect/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'disconnect'])->name('disconnect');
+        Route::put('/settings/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'updateSettings'])->name('settings');
+        Route::post('/sync/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'syncNow'])->name('sync');
+        Route::post('/bulk-sync/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'bulkSync'])->name('bulk-sync');
+        Route::post('/refresh-channel/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'refreshChannel'])->name('refresh-channel');
+        Route::get('/status', [\App\Http\Controllers\GoogleCalendarController::class, 'syncStatus'])->name('status');
+    });
+
     // System Pages (HTML pages shown after actions)
     Route::prefix('settings/system-pages')->name('settings.system-pages.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SystemPageController::class, 'index'])->name('index');
@@ -794,6 +807,9 @@ Route::post('/webhooks/woocommerce', [\App\Http\Controllers\Webhooks\WooCommerce
 // Shopify Webhook (public, HMAC + API-key authenticated)
 Route::post('/webhooks/shopify', [\App\Http\Controllers\Webhooks\ShopifyController::class, 'handle'])->name('webhooks.shopify');
 
+// Google Calendar Webhook (public, Google-verified via headers)
+Route::post('/webhooks/google-calendar', [\App\Http\Controllers\Webhooks\GoogleCalendarController::class, 'handle'])->name('webhooks.google-calendar');
+
 // Funnel Task Completion Webhook (public, for external quiz/task systems)
 Route::prefix('funnel/task')->name('funnel.task.')->group(function () {
     Route::post('/complete', [\App\Http\Controllers\Public\FunnelTaskController::class, 'complete'])->name('complete');
@@ -852,8 +868,26 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     Route::delete('tasks/{task}', [CrmTaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('tasks/{task}/complete', [CrmTaskController::class, 'complete'])->name('tasks.complete');
     Route::post('tasks/{task}/reschedule', [CrmTaskController::class, 'reschedule'])->name('tasks.reschedule');
+    Route::post('tasks/{task}/snooze', [CrmTaskController::class, 'snooze'])->name('tasks.snooze');
+    Route::post('tasks/{task}/follow-up', [CrmTaskController::class, 'createFollowUp'])->name('tasks.follow-up');
+    Route::get('tasks/conflicts', [CrmTaskController::class, 'conflicts'])->name('tasks.conflicts');
+    Route::post('tasks/{task}/resolve-local', [CrmTaskController::class, 'resolveConflictLocal'])->name('tasks.resolve-local');
+    Route::post('tasks/{task}/resolve-remote', [CrmTaskController::class, 'resolveConflictRemote'])->name('tasks.resolve-remote');
+
+    // CRM Follow-up Sequences
+    Route::get('sequences', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'index'])->name('sequences.index');
+    Route::get('sequences/create', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'create'])->name('sequences.create');
+    Route::post('sequences', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'store'])->name('sequences.store');
+    Route::get('sequences/{sequence}/edit', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'edit'])->name('sequences.edit');
+    Route::put('sequences/{sequence}', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'update'])->name('sequences.update');
+    Route::delete('sequences/{sequence}', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'destroy'])->name('sequences.destroy');
+    Route::post('sequences/{sequence}/duplicate', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'duplicate'])->name('sequences.duplicate');
+    Route::post('sequences/{sequence}/toggle', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'toggleActive'])->name('sequences.toggle');
+    Route::get('sequences/{sequence}/report', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'report'])->name('sequences.report');
+    Route::post('contacts/{contact}/enroll', [\App\Http\Controllers\CrmFollowUpSequenceController::class, 'enroll'])->name('contacts.enroll');
 
     // CRM Import
+
     Route::get('import', [CrmImportController::class, 'index'])->name('import.index');
     Route::post('import/preview', [CrmImportController::class, 'preview'])->name('import.preview');
     Route::post('import', [CrmImportController::class, 'import'])->name('import.store');

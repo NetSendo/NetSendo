@@ -13,6 +13,7 @@ class EmailClick extends Model
     protected $fillable = [
         'message_id',
         'subscriber_id',
+        'ab_test_variant_id',
         'url',
         'ip_address',
         'user_agent',

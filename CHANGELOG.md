@@ -7,11 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.14] – Short Description
+
+**Release date:** 2026-01-25
+
 ### Added
+
+- **CRM Dashboard - Follow-up Widget:**
+  - Added "Follow-ups" widget to the CRM Dashboard showing the number of active sequences.
+  - Widget links directly to the sequences list (`/crm/sequences`).
+
+- **CRM Follow-up System - Enhancements:**
+  - **Email/SMS Reminders:** Implemented `TaskReminderMail` and extended `crm:send-task-reminders` command to send email notifications based on user preferences.
+  - **Automated Triggers:** Created `FollowUpSequenceListener` to automatically enroll contacts in sequences based on CRM events: `on_deal_created`, `on_contact_created`, `on_task_completed`, `on_deal_stage_changed`.
+  - **Effectiveness Reporting:** Added comprehensive reporting pages for sequences (`/crm/sequences/{id}/report`) with funnel charts, conversion rates, and activity stats.
+  - **UI Integration:** Added "Report" button to sequence cards in the list view for quick access to statistics.
+
+### Added
+
+- **Google Calendar Integration:**
+  - **Two-Way Sync:** Implemented professional two-way synchronization between CRM tasks and Google Calendar events.
+  - **OAuth 2.0 Connection:** Full OAuth flow using existing Google Integrations for calendar access.
+  - **Push Notifications:** Real-time event change detection via Google Calendar push notifications (webhooks).
+  - **Task-to-Event:** CRM tasks with `sync_to_calendar` enabled automatically create/update Calendar events.
+  - **Event-to-Task:** Changes made in Google Calendar are reflected back in CRM tasks.
+  - **Database:** New `user_calendar_connections` table and sync fields on `crm_tasks`.
+  - **Services:** `GoogleCalendarService` for Calendar API operations, `GoogleCalendarOAuthService` for token management.
+  - **Jobs:** `SyncTaskToCalendar` for async sync, `ProcessCalendarWebhook` for handling push notifications.
+  - **Console Command:** `calendar:refresh-channels` for maintaining webhook channels.
+  - **UI:** Calendar settings page (`Settings/Calendar/Index.vue`) with connection management.
+  - **Navigation:** Integrated Calendar settings into the main Sidebar menu under Settings group.
+  - **Testing:** Added feature tests covering connection flow and sync logic (`GoogleCalendarIntegrationTest`).
+  - **Localization:** Full translations in EN and PL.
+  - **Recurring Tasks:** Implemented support for recurring tasks (Daily, Weekly, Monthly, Yearly) with RRULE compatibility for Google Calendar.
+  - **Conflict Resolution:** Added conflict detection strategies with a dedicated UI for resolving data mismatches between CRM and Google Calendar.
+  - **Bulk Sync:** Added "Sync All Tasks" functionality to the Calendar Settings page to process all pending syncs in batches.
+  - **Task UI Enhancements:** Added direct "Sync to Calendar" toggle and calendar selection dropdown in the Task Modal.
+
+- **CRM Follow-up System:**
+  - **Sequences:** Implemented comprehensive Follow-up Sequence system allowing automated task creation and contact nurturing.
+  - **Visual Builder:** Created `Sequences/Builder.vue` with drag-and-drop support for organizing sequence steps.
+  - **Step Configuration:** Support for various action types (Task, Email, SMS, Wait) with configurable delays (days/hours).
+  - **Contact Enrollment:** Added ability to enroll contacts into sequences directly from their profile or via automation.
+  - **Database:** New tables: `crm_follow_up_sequences`, `crm_follow_up_steps`, `crm_follow_up_enrollments`.
+
+- **CRM Task Enhancements:**
+  - **Full Editing:** Tasks are now fully editable via a new modal interface (Title, Description, Type, Priority, Due Date).
+  - **Quick Actions:** Added dropdown menu to task list with "Reschedule" (Tomorrow, +3 Days, +1 Week), "Create Follow-up", and "Snooze" actions.
+  - **Snooze & Reminders:** Implemented "Snooze" functionality for task reminders and added visual indicators (badges) for task categories.
+  - **Categorization:** Added visual badges for special task types: "Follow-up", "Reminder", "Important".
+  - **Backend:** Enhanced `CrmTask` model with reminder support and parent/child relationship tracking.
+
+- **Scheduled Commands:**
+  - `crm:process-follow-ups`: Processes active sequence enrollments and creates tasks/actions every 5 minutes.
+  - `crm:send-task-reminders`: Checks for due task reminders and sends notifications every 5 minutes.
 
 ### Fixed
 
+- **A/B Test Tracking:**
+  - Fixed an issue where email opens and clicks in A/B tests were not attributing to specific variants, causing 0% stats for all variants.
+  - Added `ab_test_variant_id` to `$fillable` array in `EmailOpen` and `EmailClick` models to allow mass assignment.
+
 ### Changed
+
+- **Task List UI:**
+  - Improved `Tasks/Index.vue` with responsive grid layout, better filtering, and action menus.
+  - Added direct link to "Sequences" management from the tasks dashboard.
 
 ## [1.7.13] – Short Description
 
