@@ -5636,6 +5636,7 @@
         },
         "activities": {
             "title": "Aktywności",
+            "activity_added_toast": "Aktywność została dodana do historii",
             "add_note": "Dodaj notatkę",
             "add_activity": "Dodaj aktywność",
             "note_placeholder": "Napisz notatkę...",

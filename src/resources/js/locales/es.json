@@ -4879,6 +4879,7 @@
         },
         "activities": {
             "title": "Actividades",
+            "activity_added_toast": "La actividad se ha añadido al historial",
             "add_note": "Añadir nota",
             "add_activity": "Añadir actividad",
             "note_placeholder": "Escribir una nota...",

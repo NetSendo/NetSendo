@@ -424,7 +424,7 @@ class CrmContactController extends Controller
     }
 
     /**
-     * Get campaign events for a subscriber (mock for MVP).
+     * Get campaign events for a subscriber.
      */
     private function getCampaignEvents(?Subscriber $subscriber): array
     {
@@ -432,16 +432,28 @@ class CrmContactController extends Controller
             return [];
         }
 
-        // TODO: Replace with real data from tracking tables
+        // Get real stats from tracking tables
+        $opensCount = \App\Models\EmailOpen::where('subscriber_id', $subscriber->id)->count();
+        $clicksCount = \App\Models\EmailClick::where('subscriber_id', $subscriber->id)->count();
+        $lastOpened = \App\Models\EmailOpen::where('subscriber_id', $subscriber->id)
+            ->latest('opened_at')
+            ->value('opened_at');
+        $lastClicked = \App\Models\EmailClick::where('subscriber_id', $subscriber->id)
+            ->latest('clicked_at')
+            ->value('clicked_at');
+        $emailsReceived = \App\Models\MessageQueueEntry::where('subscriber_id', $subscriber->id)
+            ->where('status', 'sent')
+            ->count();
+
         return [
             'emailLists' => $subscriber->contactLists->where('type', 'email')->values(),
             'smsLists' => $subscriber->contactLists->where('type', 'sms')->values(),
             'stats' => [
-                'emails_received' => 0, // TODO: from message queue
-                'emails_opened' => $subscriber->opens_count,
-                'emails_clicked' => $subscriber->clicks_count,
-                'last_opened' => $subscriber->last_opened_at,
-                'last_clicked' => $subscriber->last_clicked_at,
+                'emails_received' => $emailsReceived,
+                'emails_opened' => $opensCount,
+                'emails_clicked' => $clicksCount,
+                'last_opened' => $lastOpened,
+                'last_clicked' => $lastClicked,
             ],
         ];
     }

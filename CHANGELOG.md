@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Improved
+
+- **Docker Container Startup:**
+  - Enhanced `docker-entrypoint.sh` to prevent `500 Server Error` caused by missing database migrations.
+  - Added pre-flight check to display pending migrations count.
+  - Implemented automatic retry mechanism (3 attempts with 5s delay) for migration execution.
+  - Added post-execution verification to ensure database schema is fully up to date before starting the application.
+
 ## [1.7.14] – Short Description
 
 **Release date:** 2026-01-25

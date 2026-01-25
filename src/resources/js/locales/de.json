@@ -4794,6 +4794,7 @@
         },
         "activities": {
             "title": "Aktivitäten",
+            "activity_added_toast": "Aktivität wurde zur Historie hinzugefügt",
             "add_note": "Notiz hinzufügen",
             "add_activity": "Aktivität hinzufügen",
             "note_placeholder": "Notiz schreiben...",

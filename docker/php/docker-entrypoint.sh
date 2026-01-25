@@ -68,9 +68,54 @@ until php artisan tinker --execute="DB::connection()->getPdo();" 2>/dev/null; do
 done
 
 if [ $attempt -lt $max_attempts ]; then
-    # Run migrations only if database is ready
-    echo "🗄️ Running database migrations..."
-    php artisan migrate --force || echo "⚠️ Migration failed or already up to date"
+    # =============================================================================
+    # MIGRATION CHECK AND EXECUTION
+    # =============================================================================
+    
+    echo "🔍 Checking migration status..."
+    
+    # Get pending migrations count
+    PENDING_MIGRATIONS=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || echo "0")
+    echo "   Pending migrations: $PENDING_MIGRATIONS"
+    
+    if [ "$PENDING_MIGRATIONS" != "0" ]; then
+        echo "🗄️ Running $PENDING_MIGRATIONS pending migration(s)..."
+        
+        # Run migrations with retry mechanism
+        MIGRATION_ATTEMPTS=3
+        MIGRATION_SUCCESS=false
+        
+        for i in $(seq 1 $MIGRATION_ATTEMPTS); do
+            echo "   Migration attempt $i/$MIGRATION_ATTEMPTS..."
+            
+            if php artisan migrate --force 2>&1; then
+                MIGRATION_SUCCESS=true
+                echo "✅ Migrations completed successfully"
+                break
+            else
+                echo "⚠️ Migration attempt $i failed"
+                if [ $i -lt $MIGRATION_ATTEMPTS ]; then
+                    echo "   Retrying in 5 seconds..."
+                    sleep 5
+                fi
+            fi
+        done
+        
+        # Verify migrations after execution
+        STILL_PENDING=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || echo "0")
+        if [ "$STILL_PENDING" != "0" ]; then
+            echo "❌ WARNING: $STILL_PENDING migration(s) still pending after $MIGRATION_ATTEMPTS attempts!"
+            echo "   Application may not work correctly. Please check logs."
+        else
+            echo "✅ All migrations verified - database schema is up to date"
+        fi
+    else
+        echo "✅ Database schema is already up to date"
+    fi
+    
+    # =============================================================================
+    # DATABASE SEEDING
+    # =============================================================================
     
     # Check if starter templates exist and seed if needed
     STARTER_COUNT=$(php artisan tinker --execute="echo App\Models\Template::whereNull('user_id')->count();" 2>/dev/null | tail -1)
