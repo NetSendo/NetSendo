@@ -21,7 +21,15 @@ class LeadScoringController extends Controller
      */
     public function index()
     {
-        $rules = LeadScoringRule::forUser(Auth::id())
+        $userId = Auth::id();
+
+        // Auto-seed default rules if user has none
+        $rulesCount = LeadScoringRule::where('user_id', $userId)->count();
+        if ($rulesCount === 0) {
+            LeadScoringRule::seedDefaultsForUser($userId);
+        }
+
+        $rules = LeadScoringRule::forUser($userId)
             ->orderBy('event_type')
             ->orderByDesc('priority')
             ->get();

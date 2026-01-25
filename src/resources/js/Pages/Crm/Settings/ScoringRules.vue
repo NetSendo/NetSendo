@@ -25,6 +25,15 @@ const showToast = (message, success = true) => {
 const showModal = ref(false);
 const editingRule = ref(null);
 
+// Confirmation modal state
+const showConfirmModal = ref(false);
+const confirmAction = ref(null);
+const confirmTitle = ref("");
+const confirmMessage = ref("");
+const confirmButtonText = ref("");
+const confirmButtonClass = ref("");
+const ruleToDelete = ref(null);
+
 const form = useForm({
     event_type: "email_opened",
     name: "",
@@ -101,26 +110,49 @@ const toggleRule = (rule) => {
     });
 };
 
-const deleteRule = (rule) => {
-    if (!confirm("Czy na pewno chcesz usunąć tę regułę?")) return;
-
-    router.delete(`/crm/scoring/rules/${rule.id}`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            showToast("Reguła została usunięta");
-        },
-    });
+const openDeleteConfirm = (rule) => {
+    ruleToDelete.value = rule;
+    confirmTitle.value = "Usuń regułę";
+    confirmMessage.value = `Czy na pewno chcesz usunąć regułę "${rule.name}"? Ta operacja jest nieodwracalna.`;
+    confirmButtonText.value = "Usuń";
+    confirmButtonClass.value = "bg-red-600 hover:bg-red-700";
+    confirmAction.value = "delete";
+    showConfirmModal.value = true;
 };
 
-const resetDefaults = () => {
-    if (!confirm("Czy na pewno chcesz zresetować wszystkie reguły do domyślnych? Obecne reguły zostaną usunięte.")) return;
+const openResetConfirm = () => {
+    confirmTitle.value = "Resetuj do domyślnych";
+    confirmMessage.value = "Czy na pewno chcesz zresetować wszystkie reguły do domyślnych? Wszystkie obecne reguły zostaną usunięte i zastąpione domyślnymi.";
+    confirmButtonText.value = "Resetuj";
+    confirmButtonClass.value = "bg-amber-600 hover:bg-amber-700";
+    confirmAction.value = "reset";
+    showConfirmModal.value = true;
+};
 
-    router.post("/crm/scoring/reset-defaults", {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            showToast("Reguły zostały zresetowane do domyślnych");
-        },
-    });
+const closeConfirmModal = () => {
+    showConfirmModal.value = false;
+    confirmAction.value = null;
+    ruleToDelete.value = null;
+};
+
+const executeConfirmAction = () => {
+    if (confirmAction.value === "delete" && ruleToDelete.value) {
+        router.delete(`/crm/scoring/rules/${ruleToDelete.value.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast("Reguła została usunięta");
+                closeConfirmModal();
+            },
+        });
+    } else if (confirmAction.value === "reset") {
+        router.post("/crm/scoring/reset-defaults", {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast("Reguły zostały zresetowane do domyślnych");
+                closeConfirmModal();
+            },
+        });
+    }
 };
 
 // Group rules by event type for display
@@ -168,7 +200,7 @@ const getPointsClass = (points) => {
                 </div>
                 <div class="flex items-center gap-3">
                     <button
-                        @click="resetDefaults"
+                        @click="openResetConfirm"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -269,7 +301,7 @@ const getPointsClass = (points) => {
                                 </svg>
                             </button>
                             <button
-                                @click="deleteRule(rule)"
+                                @click="openDeleteConfirm(rule)"
                                 class="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                             >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -297,7 +329,7 @@ const getPointsClass = (points) => {
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
                     <button
-                        @click="resetDefaults"
+                        @click="openResetConfirm"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
                     >
                         Załaduj domyślne
@@ -470,6 +502,61 @@ const getPointsClass = (points) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+        <!-- Confirmation Modal -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showConfirmModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                    @click.self="closeConfirmModal"
+                >
+                    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+                        <div class="mb-4 flex items-center gap-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-full" :class="confirmAction === 'delete' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
+                                <svg v-if="confirmAction === 'delete'" class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <svg v-else class="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </div>
+                            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+                                {{ confirmTitle }}
+                            </h2>
+                        </div>
+
+                        <p class="mb-6 text-slate-600 dark:text-slate-400">
+                            {{ confirmMessage }}
+                        </p>
+
+                        <div class="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                @click="closeConfirmModal"
+                                class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                                Anuluj
+                            </button>
+                            <button
+                                type="button"
+                                @click="executeConfirmAction"
+                                class="rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+                                :class="confirmButtonClass"
+                            >
+                                {{ confirmButtonText }}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </Transition>
