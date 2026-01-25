@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented automatic retry mechanism (3 attempts with 5s delay) for migration execution.
   - Added post-execution verification to ensure database schema is fully up to date before starting the application.
 
+### Fixed
+
+- **Scheduled Command Typo:**
+  - Fixed `cron:notify-overdue-tasks` command not found error by correcting the scheduled command name to `crm:check-overdue-tasks` in `console.php`.
+
 ## [1.7.14] – Short Description
 
 **Release date:** 2026-01-25

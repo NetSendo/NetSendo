@@ -119,7 +119,7 @@ Schedule::command('crm:send-task-reminders')
     ->appendOutputTo(storage_path('logs/crm-reminders.log'));
 
 // CRM Overdue Tasks - Powiadomienia o zaległych zadaniach
-Schedule::command('cron:notify-overdue-tasks')
+Schedule::command('crm:check-overdue-tasks')
     ->hourly()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/crm-overdue.log'));
