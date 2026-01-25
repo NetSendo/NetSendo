@@ -21,6 +21,10 @@ const viewMode = ref("month");
 // Current date (center of the calendar view)
 const currentDate = ref(new Date());
 
+// Hover state for tooltip
+const hoveredEvent = ref(null);
+const tooltipPosition = ref({ x: 0, y: 0 });
+
 // Days of the week (Polish)
 const daysOfWeek = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
 const daysOfWeekFull = [
@@ -158,10 +162,10 @@ const weekGrid = computed(() => {
     return week;
 });
 
-// Hours for weekly view
+// Hours for weekly view (full 24 hours: 00:00 - 23:00)
 const hours = computed(() => {
     const h = [];
-    for (let i = 6; i < 22; i++) {
+    for (let i = 0; i < 24; i++) {
         h.push(i.toString().padStart(2, "0") + ":00");
     }
     return h;
@@ -257,9 +261,63 @@ const handleDayClick = (date) => {
 
 const handleEventClick = (event, e) => {
     e.stopPropagation();
+    hoveredEvent.value = null; // Close tooltip on click
     if (event.type === "task" && event.task_id) {
         emit("edit-task", event.task_id);
     }
+};
+
+// Event hover handlers
+const handleEventMouseEnter = (event, e) => {
+    hoveredEvent.value = event;
+    const rect = e.target.getBoundingClientRect();
+    tooltipPosition.value = {
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+    };
+};
+
+const handleEventMouseLeave = () => {
+    hoveredEvent.value = null;
+};
+
+// Get tooltip positioning style (safely handles window access)
+const getTooltipStyle = () => {
+    const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    return {
+        left: `${Math.min(tooltipPosition.value.x - 144, windowWidth - 300)}px`,
+        top: `${Math.max(tooltipPosition.value.y - 10, 10)}px`,
+        transform: 'translateY(-100%)',
+    };
+};
+
+// Format time for display
+const formatEventTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+};
+
+// Get priority label
+const getPriorityLabel = (priority) => {
+    const labels = {
+        high: 'Wysoki',
+        medium: 'Średni',
+        low: 'Niski',
+    };
+    return labels[priority] || priority;
+};
+
+// Get type label
+const getTypeLabelText = (type) => {
+    const labels = {
+        call: 'Telefon',
+        email: 'Email',
+        meeting: 'Spotkanie',
+        task: 'Zadanie',
+        follow_up: 'Follow-up',
+    };
+    return labels[type] || type;
 };
 
 // Get event position for weekly view
@@ -270,8 +328,8 @@ const getEventStyle = (event, dayDate) => {
     const hour = startDate.getHours();
     const minute = startDate.getMinutes();
 
-    // Calculate position (6am is top)
-    const top = (hour - 6) * 48 + (minute / 60) * 48;
+    // Calculate position (midnight is top, each hour = 48px)
+    const top = hour * 48 + (minute / 60) * 48;
 
     // Calculate height (default 1 hour)
     let height = 48;
@@ -492,12 +550,13 @@ watch(viewMode, () => {
                                 v-for="event in getEventsForDate(day.date).slice(0, 3)"
                                 :key="event.id"
                                 @click="handleEventClick(event, $event)"
+                                @mouseenter="handleEventMouseEnter(event, $event)"
+                                @mouseleave="handleEventMouseLeave"
                                 :style="{ backgroundColor: event.color + '20' }"
                                 :class="[
-                                    'cursor-pointer truncate rounded px-1.5 py-0.5 text-xs font-medium transition hover:opacity-80',
+                                    'cursor-pointer truncate rounded px-1.5 py-0.5 text-xs font-medium transition hover:opacity-80 hover:shadow-sm',
                                     event.is_completed ? 'line-through opacity-60' : '',
                                 ]"
-                                :title="event.title"
                             >
                                 <span
                                     class="mr-1 inline-block h-1.5 w-1.5 rounded-full"
@@ -596,13 +655,14 @@ watch(viewMode, () => {
                             v-for="event in getEventsForDate(day.date)"
                             :key="event.id"
                             @click="handleEventClick(event, $event)"
-                            class="absolute left-0.5 right-0.5 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-xs font-medium shadow-sm transition hover:opacity-90"
+                            @mouseenter="handleEventMouseEnter(event, $event)"
+                            @mouseleave="handleEventMouseLeave"
+                            class="absolute left-0.5 right-0.5 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-xs font-medium shadow-sm transition hover:opacity-90 hover:shadow-md hover:z-10"
                             :style="{
                                 ...getEventStyle(event, day.date),
                                 backgroundColor: event.color + '30',
                                 borderLeft: `3px solid ${event.color}`,
                             }"
-                            :title="event.title"
                         >
                             <div
                                 class="truncate"
@@ -664,6 +724,87 @@ watch(viewMode, () => {
                 Google Calendar
             </div>
         </div>
+
+        <!-- Event Tooltip/Popover -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-150 ease-out"
+                enter-from-class="opacity-0 translate-y-1"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-1"
+            >
+                <div
+                    v-if="hoveredEvent && hoveredEvent.type === 'task'"
+                    class="fixed z-50 w-72 rounded-xl bg-white p-4 shadow-xl ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700"
+                    :style="getTooltipStyle()"
+                    @mouseenter="hoveredEvent = hoveredEvent"
+                    @mouseleave="handleEventMouseLeave"
+                >
+                    <!-- Header with type icon and title -->
+                    <div class="flex items-start gap-3 mb-3">
+                        <div
+                            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-lg"
+                            :style="{ backgroundColor: hoveredEvent.color + '20', color: hoveredEvent.color }"
+                        >
+                            {{ getTypeIcon(hoveredEvent.task_type) }}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-semibold text-slate-900 dark:text-white truncate">
+                                {{ hoveredEvent.title }}
+                            </h4>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">
+                                    {{ getTypeLabelText(hoveredEvent.task_type) }}
+                                </span>
+                                <span
+                                    class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                                    :class="{
+                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': hoveredEvent.priority === 'high',
+                                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300': hoveredEvent.priority === 'medium',
+                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300': hoveredEvent.priority === 'low',
+                                    }"
+                                >
+                                    {{ getPriorityLabel(hoveredEvent.priority) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="space-y-2 text-sm">
+                        <!-- Time -->
+                        <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{{ formatEventTime(hoveredEvent.start) }} - {{ formatEventTime(hoveredEvent.end) }}</span>
+                        </div>
+
+                        <!-- Contact -->
+                        <div v-if="hoveredEvent.contact" class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span>{{ hoveredEvent.contact.name }}</span>
+                        </div>
+
+                        <!-- Description preview -->
+                        <div v-if="hoveredEvent.description" class="text-slate-500 dark:text-slate-400 line-clamp-2">
+                            {{ hoveredEvent.description }}
+                        </div>
+                    </div>
+
+                    <!-- Click hint -->
+                    <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-center">
+                        <span class="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                            🖊️ Kliknij aby edytować
+                        </span>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 

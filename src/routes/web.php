@@ -999,4 +999,10 @@ Route::middleware(['affiliate.auth'])->prefix('partner')->name('partner.')->grou
     Route::post('/password', [PartnerPortalController::class, 'updatePassword'])->name('password.update');
 });
 
+// ==================== ADMIN MIGRATION ROUTES ====================
+// Web-based migration runner for admins without SSH access
+Route::middleware(['auth', '2fa'])->prefix('admin/migrations')->name('admin.migrations.')->group(function () {
+    Route::get('/status', [\App\Http\Controllers\Admin\AdminMigrationController::class, 'status'])->name('status');
+    Route::post('/run', [\App\Http\Controllers\Admin\AdminMigrationController::class, 'migrate'])->name('run');
+});
 

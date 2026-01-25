@@ -633,8 +633,8 @@ const priorities = [
                     </div>
                 </div>
 
-                <!-- Contact Selection (only if contacts provided and no fixed contactId) -->
-                <div v-if="contacts.length && !contactId">
+                <!-- Contact Selection (show when: contacts available AND not a fixed contactId from prop) -->
+                <div v-if="contacts.length && (!props.contactId || isEditing)">
                     <label
                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                     >

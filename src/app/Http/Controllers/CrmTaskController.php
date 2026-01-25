@@ -158,19 +158,27 @@ class CrmTaskController extends Controller
                 ->setTimeFromTimeString($validated['due_time']);
         }
 
-        // Calculate end_date from due_date + end_time
+        // Calculate end_date from due_date + end_time (only if column exists)
+        $endDate = null;
         if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
-            $validated['end_date'] = Carbon::parse($validated['due_date'])
+            $endDate = Carbon::parse($validated['due_date'])
                 ->setTimeFromTimeString($validated['end_time']);
         }
         unset($validated['due_time'], $validated['end_time']);
 
-        $task = CrmTask::create([
+        $taskData = [
             ...$validated,
             'user_id' => $userId,
             'owner_id' => $validated['owner_id'] ?? auth()->id(),
             'status' => 'pending',
-        ]);
+        ];
+
+        // Only add end_date if column exists in database
+        if ($endDate && \Schema::hasColumn('crm_tasks', 'end_date')) {
+            $taskData['end_date'] = $endDate;
+        }
+
+        $task = CrmTask::create($taskData);
 
         // Sync to Google Calendar if enabled
         if ($task->sync_to_calendar) {
@@ -206,6 +214,8 @@ class CrmTaskController extends Controller
             'due_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
             'owner_id' => 'nullable|exists:users,id',
+            'crm_contact_id' => 'nullable|exists:crm_contacts,id',
+            'crm_deal_id' => 'nullable|exists:crm_deals,id',
             'sync_to_calendar' => 'nullable|boolean',
             'selected_calendar_id' => 'nullable|string|max:255',
             // Recurrence
@@ -224,12 +234,18 @@ class CrmTaskController extends Controller
                 ->setTimeFromTimeString($validated['due_time']);
         }
 
-        // Calculate end_date from due_date + end_time
+        // Calculate end_date from due_date + end_time (only if column exists)
+        $endDate = null;
         if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
-            $validated['end_date'] = Carbon::parse($validated['due_date'])
+            $endDate = Carbon::parse($validated['due_date'])
                 ->setTimeFromTimeString($validated['end_time']);
         }
         unset($validated['due_time'], $validated['end_time']);
+
+        // Only add end_date if column exists in database
+        if ($endDate && \Schema::hasColumn('crm_tasks', 'end_date')) {
+            $validated['end_date'] = $endDate;
+        }
 
         $task->update($validated);
 
@@ -461,14 +477,7 @@ class CrmTaskController extends Controller
         // Get CRM tasks in the date range
         $tasks = CrmTask::forUser($userId)
             ->with(['contact.subscriber', 'deal', 'owner'])
-            ->where(function ($query) use ($from, $to) {
-                $query->whereBetween('due_date', [$from, $to])
-                    ->orWhereBetween('end_date', [$from, $to])
-                    ->orWhere(function ($q) use ($from, $to) {
-                        $q->where('due_date', '<=', $from)
-                            ->where('end_date', '>=', $to);
-                    });
-            })
+            ->whereBetween('due_date', [$from, $to])
             ->orderBy('due_date', 'asc')
             ->get();
 

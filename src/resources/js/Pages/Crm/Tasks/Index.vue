@@ -23,7 +23,7 @@ const props = defineProps({
 const selectedView = ref(props.view || "today");
 
 // View mode: 'list' or 'calendar'
-const viewMode = ref("list");
+const viewMode = ref("calendar");
 
 // Calendar events
 const calendarEvents = ref([]);
@@ -78,6 +78,7 @@ const editTaskById = async (taskId) => {
             due_date: event.start,
             end_date: event.end,
             contact: event.contact,
+            crm_contact_id: event.contact?.id || null,
         });
     } else {
         console.error("Task not found in list or calendar events");
