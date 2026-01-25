@@ -53,6 +53,12 @@ class CrmTask extends Model
         'local_updated_at',
         'has_conflict',
         'conflict_data',
+        // Google Meet integration
+        'google_meet_link',
+        'google_meet_id',
+        'include_google_meet',
+        'attendee_emails',
+        'attendees_data',
     ];
 
     protected $casts = [
@@ -73,6 +79,10 @@ class CrmTask extends Model
         'local_updated_at' => 'datetime',
         'has_conflict' => 'boolean',
         'conflict_data' => 'array',
+        // Google Meet
+        'include_google_meet' => 'boolean',
+        'attendee_emails' => 'array',
+        'attendees_data' => 'array',
     ];
 
 

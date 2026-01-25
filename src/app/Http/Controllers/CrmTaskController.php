@@ -86,6 +86,7 @@ class CrmTaskController extends Controller
             ->map(fn($c) => [
                 'id' => $c->id,
                 'name' => $c->full_name,
+                'email' => $c->email,
             ]);
 
         // Get calendar connection for sync UI
@@ -150,6 +151,10 @@ class CrmTaskController extends Controller
             'recurrence_days.*' => 'integer|min:0|max:6',
             'recurrence_end_date' => 'nullable|date|after:due_date',
             'recurrence_count' => 'nullable|integer|min:1|max:999',
+            // Google Meet
+            'include_google_meet' => 'nullable|boolean',
+            'attendee_emails' => 'nullable|array|max:50',
+            'attendee_emails.*' => 'email|max:255',
         ]);
 
         // Combine date and time into datetime
@@ -226,6 +231,10 @@ class CrmTaskController extends Controller
             'recurrence_days.*' => 'integer|min:0|max:6',
             'recurrence_end_date' => 'nullable|date|after:due_date',
             'recurrence_count' => 'nullable|integer|min:1|max:999',
+            // Google Meet
+            'include_google_meet' => 'nullable|boolean',
+            'attendee_emails' => 'nullable|array|max:50',
+            'attendee_emails.*' => 'email|max:255',
         ]);
 
         // Combine date and time into datetime

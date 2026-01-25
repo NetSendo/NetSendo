@@ -26,8 +26,21 @@ class GoogleCalendarService
         $payload = $this->taskToEventPayload($task);
         $targetCalendarId = $calendarId ?? $connection->calendar_id;
 
-        $response = Http::withToken($accessToken)
-            ->post(self::CALENDAR_API_URL . "/calendars/{$targetCalendarId}/events", $payload);
+        // Build query parameters for Meet and attendee notifications
+        $queryParams = [];
+        if ($task->include_google_meet) {
+            $queryParams['conferenceDataVersion'] = 1;
+        }
+        if ($this->hasAttendees($task)) {
+            $queryParams['sendUpdates'] = 'all'; // Send email invitations to attendees
+        }
+
+        $url = self::CALENDAR_API_URL . "/calendars/{$targetCalendarId}/events";
+        if (!empty($queryParams)) {
+            $url .= '?' . http_build_query($queryParams);
+        }
+
+        $response = Http::withToken($accessToken)->post($url, $payload);
 
         if (!$response->successful()) {
             Log::error('Failed to create Google Calendar event', [
@@ -40,10 +53,17 @@ class GoogleCalendarService
 
         $event = $response->json();
 
+        // Extract and save Google Meet link if created
+        $this->saveMeetLinkFromEvent($task, $event);
+
+        // Save attendees data with status
+        $this->saveAttendeesData($task, $event);
+
         Log::info('Created Google Calendar event', [
             'task_id' => $task->id,
             'event_id' => $event['id'] ?? null,
             'calendar_id' => $targetCalendarId,
+            'has_meet' => isset($event['conferenceData']),
         ]);
 
         return $event;
@@ -71,10 +91,21 @@ class GoogleCalendarService
             ]);
         }
 
-        $response = $request->put(
-            self::CALENDAR_API_URL . "/calendars/{$calendarId}/events/{$task->google_calendar_event_id}",
-            $payload
-        );
+        // Build query parameters
+        $queryParams = [];
+        if ($task->include_google_meet) {
+            $queryParams['conferenceDataVersion'] = 1;
+        }
+        if ($this->hasAttendees($task)) {
+            $queryParams['sendUpdates'] = 'all'; // Send email invitations to new attendees
+        }
+
+        $url = self::CALENDAR_API_URL . "/calendars/{$calendarId}/events/{$task->google_calendar_event_id}";
+        if (!empty($queryParams)) {
+            $url .= '?' . http_build_query($queryParams);
+        }
+
+        $response = $request->put($url, $payload);
 
         if (!$response->successful()) {
             // Conflict detected (etag mismatch)
@@ -129,6 +160,12 @@ class GoogleCalendarService
             'has_conflict' => false,
             'conflict_data' => null,
         ]);
+
+        // Extract and save Google Meet link if created/updated
+        $this->saveMeetLinkFromEvent($task, $event);
+
+        // Save attendees data with status
+        $this->saveAttendeesData($task, $event);
 
         Log::info('Updated Google Calendar event', [
             'task_id' => $task->id,
@@ -392,6 +429,27 @@ class GoogleCalendarService
             }
         }
 
+        // Add Google Meet conference if requested
+        if ($task->include_google_meet) {
+            $payload['conferenceData'] = [
+                'createRequest' => [
+                    'requestId' => 'netsendo-meet-' . $task->id . '-' . time(),
+                    'conferenceSolutionKey' => [
+                        'type' => 'hangoutsMeet',
+                    ],
+                ],
+            ];
+        }
+
+        // Add attendees (guests) from contact or manual list
+        $attendees = $this->buildAttendeesList($task);
+        if (!empty($attendees)) {
+            $payload['attendees'] = $attendees;
+            $payload['guestsCanModify'] = false;
+            $payload['guestsCanInviteOthers'] = false;
+            $payload['guestsCanSeeOtherGuests'] = true;
+        }
+
         return $payload;
     }
 
@@ -498,4 +556,98 @@ class GoogleCalendarService
         $taskId = $event['extendedProperties']['private']['netsendo_task_id'] ?? null;
         return $taskId ? (int) $taskId : null;
     }
+
+    /**
+     * Save Google Meet link from event response to task.
+     */
+    private function saveMeetLinkFromEvent(CrmTask $task, array $event): void
+    {
+        if (!isset($event['conferenceData']['entryPoints'])) {
+            return;
+        }
+
+        $videoEntryPoint = collect($event['conferenceData']['entryPoints'])
+            ->firstWhere('entryPointType', 'video');
+
+        if ($videoEntryPoint && isset($videoEntryPoint['uri'])) {
+            $task->update([
+                'google_meet_link' => $videoEntryPoint['uri'],
+                'google_meet_id' => $event['conferenceData']['conferenceId'] ?? null,
+            ]);
+
+            Log::info('Saved Google Meet link to task', [
+                'task_id' => $task->id,
+                'meet_link' => $videoEntryPoint['uri'],
+            ]);
+        }
+    }
+
+    /**
+     * Build attendees list from task contact and manual attendee emails.
+     */
+    private function buildAttendeesList(CrmTask $task): array
+    {
+        $attendees = [];
+        $emails = [];
+
+        // Add contact email if available
+        if ($task->contact && $task->contact->email && !empty($task->contact->email)) {
+            $attendees[] = [
+                'email' => $task->contact->email,
+                'displayName' => $task->contact->full_name ?? $task->contact->email,
+                'responseStatus' => 'needsAction',
+            ];
+            $emails[] = strtolower($task->contact->email);
+        }
+
+        // Add manual attendee emails (avoiding duplicates)
+        if (!empty($task->attendee_emails) && is_array($task->attendee_emails)) {
+            foreach ($task->attendee_emails as $email) {
+                $email = trim($email);
+                if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $normalizedEmail = strtolower($email);
+                    if (!in_array($normalizedEmail, $emails)) {
+                        $attendees[] = [
+                            'email' => $email,
+                            'responseStatus' => 'needsAction',
+                        ];
+                        $emails[] = $normalizedEmail;
+                    }
+                }
+            }
+        }
+
+        return $attendees;
+    }
+
+    /**
+     * Check if task has any attendees.
+     */
+    private function hasAttendees(CrmTask $task): bool
+    {
+        if ($task->contact && $task->contact->email && !empty($task->contact->email)) {
+            return true;
+        }
+
+        return !empty($task->attendee_emails) && is_array($task->attendee_emails) && count($task->attendee_emails) > 0;
+    }
+
+    /**
+     * Save attendees data from event response.
+     */
+    private function saveAttendeesData(CrmTask $task, array $event): void
+    {
+        if (isset($event['attendees'])) {
+            $attendeesData = collect($event['attendees'])->map(function ($attendee) {
+                return [
+                    'email' => $attendee['email'] ?? '',
+                    'status' => $attendee['responseStatus'] ?? 'needsAction',
+                    'displayName' => $attendee['displayName'] ?? null,
+                ];
+            })->toArray();
+
+            $task->update(['attendees_data' => $attendeesData]);
+        }
+    }
 }
+

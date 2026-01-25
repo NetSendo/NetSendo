@@ -5201,6 +5201,21 @@
                 "save": "Save Changes",
                 "create": "Create Task"
             },
+            "meet": {
+                "include_meet": "Add Google Meet link",
+                "include_meet_desc": "Automatically add video conference link",
+                "attendees": "Invited guests",
+                "add_email": "Type email and press Enter...",
+                "attendees_hint": "Guests will receive invitation with meeting link",
+                "meeting_ready": "Meeting link ready",
+                "join": "Join",
+                "status": {
+                    "accepted": "Accepted",
+                    "declined": "Declined",
+                    "tentative": "Tentative",
+                    "needsAction": "Needs Action"
+                }
+            },
             "empty": {
                 "button": "Add First Task",
                 "description": "No tasks in this category"

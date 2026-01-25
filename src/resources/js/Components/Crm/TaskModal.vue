@@ -60,6 +60,9 @@ const form = useForm({
     recurrence_days: [],
     recurrence_end_date: null,
     recurrence_count: null,
+    // Google Meet
+    include_google_meet: false,
+    attendee_emails: [],
 });
 
 // Reset form when modal opens
@@ -76,8 +79,14 @@ watch(
                 if (props.task.due_date) {
                     const dueDateTime = new Date(props.task.due_date);
                     form.due_date = dueDateTime.toISOString().split("T")[0];
-                    const hours = dueDateTime.getHours().toString().padStart(2, '0');
-                    const minutes = dueDateTime.getMinutes().toString().padStart(2, '0');
+                    const hours = dueDateTime
+                        .getHours()
+                        .toString()
+                        .padStart(2, "0");
+                    const minutes = dueDateTime
+                        .getMinutes()
+                        .toString()
+                        .padStart(2, "0");
                     form.due_time = `${hours}:${minutes}`;
                 } else {
                     form.due_date = "";
@@ -86,8 +95,14 @@ watch(
                 // Parse end_time from end_date if available
                 if (props.task.end_date) {
                     const endDateTime = new Date(props.task.end_date);
-                    const endHours = endDateTime.getHours().toString().padStart(2, '0');
-                    const endMinutes = endDateTime.getMinutes().toString().padStart(2, '0');
+                    const endHours = endDateTime
+                        .getHours()
+                        .toString()
+                        .padStart(2, "0");
+                    const endMinutes = endDateTime
+                        .getMinutes()
+                        .toString()
+                        .padStart(2, "0");
                     form.end_time = `${endHours}:${endMinutes}`;
                 } else {
                     // Default: 1 hour after start
@@ -107,6 +122,10 @@ watch(
                 form.recurrence_end_date =
                     props.task.recurrence_end_date || null;
                 form.recurrence_count = props.task.recurrence_count || null;
+                // Google Meet
+                form.include_google_meet =
+                    props.task.include_google_meet || false;
+                form.attendee_emails = props.task.attendee_emails || [];
             } else {
                 form.reset();
                 form.crm_contact_id = props.contactId;
@@ -180,12 +199,65 @@ watch(
     { immediate: true },
 );
 
+// Auto-add contact email when selected if Meet is enabled
+watch(
+    () => form.crm_contact_id,
+    (newId) => {
+        if (!newId || !form.include_google_meet) return;
+
+        const contact = props.contacts.find((c) => c.id === newId);
+        if (contact && contact.email) {
+            if (!form.attendee_emails.includes(contact.email)) {
+                form.attendee_emails.push(contact.email);
+            }
+        }
+    },
+);
+
+// Auto-add contact email when Meet is enabled if contact is selected
+watch(
+    () => form.include_google_meet,
+    (enabled) => {
+        if (!enabled || !form.crm_contact_id) return;
+
+        const contact = props.contacts.find(
+            (c) => c.id === form.crm_contact_id,
+        );
+        if (contact && contact.email) {
+            if (!form.attendee_emails.includes(contact.email)) {
+                form.attendee_emails.push(contact.email);
+            }
+        }
+    },
+);
+
 const toggleRecurrenceDay = (day) => {
     const index = form.recurrence_days.indexOf(day);
     if (index === -1) {
         form.recurrence_days.push(day);
     } else {
         form.recurrence_days.splice(index, 1);
+    }
+};
+
+const getAttendeeStatus = (email) => {
+    if (!props.task?.attendees_data) return null;
+    const attendee = props.task.attendees_data.find(
+        (a) => a.email.toLowerCase() === email.toLowerCase(),
+    );
+    return attendee?.status;
+};
+
+const getAttendeeStatusIcon = (status) => {
+    switch (status) {
+        case "accepted":
+            return '<svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+        case "declined":
+            return '<svg class="w-3 h-3 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        case "tentative":
+            return '<svg class="w-3 h-3 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        default:
+            return '<svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
     }
 };
 
@@ -370,7 +442,9 @@ const priorities = [
                                 type="time"
                                 class="w-28 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:[color-scheme:dark]"
                             />
-                            <span class="text-slate-400 dark:text-slate-500">–</span>
+                            <span class="text-slate-400 dark:text-slate-500"
+                                >–</span
+                            >
                             <input
                                 v-model="form.end_time"
                                 type="time"
@@ -796,6 +870,192 @@ const priorities = [
                         </svg>
                         {{ $t("crm.task.calendar.synced") }}
                     </p>
+                </div>
+
+                <!-- Google Meet Integration (visible when sync_to_calendar is enabled and type is meeting) -->
+                <div
+                    v-if="
+                        calendarConnection &&
+                        form.sync_to_calendar &&
+                        form.type === 'meeting'
+                    "
+                    class="rounded-xl border border-emerald-200 dark:border-emerald-700/50 p-4 bg-emerald-50 dark:bg-emerald-900/20"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <svg
+                            class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                            />
+                        </svg>
+                        <span
+                            class="font-medium text-emerald-900 dark:text-emerald-100"
+                            >Google Meet</span
+                        >
+                    </div>
+
+                    <div class="flex items-center gap-3 mb-4">
+                        <label
+                            class="relative inline-flex items-center cursor-pointer"
+                        >
+                            <input
+                                type="checkbox"
+                                v-model="form.include_google_meet"
+                                class="sr-only peer"
+                            />
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"
+                            ></div>
+                        </label>
+                        <div>
+                            <span
+                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                            >
+                                {{ $t("crm.task.meet.include_meet") }}
+                            </span>
+                            <p
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("crm.task.meet.include_meet_desc") }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Attendee Emails -->
+                    <div v-if="form.include_google_meet" class="space-y-3">
+                        <label
+                            class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ $t("crm.task.meet.attendees") }}
+                        </label>
+
+                        <!-- Email Tags -->
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <span
+                                v-for="(email, index) in form.attendee_emails"
+                                :key="email"
+                                class="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 text-sm text-emerald-700 dark:text-emerald-300"
+                            >
+                                <span
+                                    v-if="getAttendeeStatus(email)"
+                                    v-html="
+                                        getAttendeeStatusIcon(
+                                            getAttendeeStatus(email),
+                                        )
+                                    "
+                                    class="mr-1"
+                                    :title="
+                                        $t(
+                                            'crm.task.meet.status.' +
+                                                getAttendeeStatus(email),
+                                        )
+                                    "
+                                ></span>
+                                {{ email }}
+                                <button
+                                    type="button"
+                                    @click="
+                                        form.attendee_emails.splice(index, 1)
+                                    "
+                                    class="ml-1 hover:text-emerald-900 dark:hover:text-emerald-100"
+                                >
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            </span>
+                        </div>
+
+                        <!-- Add Email Input -->
+                        <div class="flex gap-2">
+                            <input
+                                type="email"
+                                :placeholder="$t('crm.task.meet.add_email')"
+                                class="flex-1 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm"
+                                @keydown.enter.prevent="
+                                    (e) => {
+                                        const email = e.target.value.trim();
+                                        if (
+                                            email &&
+                                            email.includes('@') &&
+                                            !form.attendee_emails.includes(
+                                                email,
+                                            )
+                                        ) {
+                                            form.attendee_emails.push(email);
+                                            e.target.value = '';
+                                        }
+                                    }
+                                "
+                            />
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ $t("crm.task.meet.attendees_hint") }}
+                        </p>
+                        <InputError
+                            :message="form.errors.attendee_emails"
+                            class="mt-1"
+                        />
+                    </div>
+
+                    <!-- Show Meet Link if exists -->
+                    <div
+                        v-if="task?.google_meet_link"
+                        class="mt-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-emerald-200 dark:border-emerald-700/50"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <svg
+                                    class="h-5 w-5 text-emerald-500"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"
+                                    />
+                                </svg>
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.task.meet.meeting_ready") }}
+                                </span>
+                            </div>
+                            <a
+                                :href="task.google_meet_link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                    />
+                                </svg>
+                                {{ $t("crm.task.meet.join") }}
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Actions -->

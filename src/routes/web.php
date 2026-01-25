@@ -453,6 +453,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Google Calendar Integration (CRM)
     Route::get('/marketplace/google-calendar', fn() => Inertia::render('Marketplace/GoogleCalendar'))->name('marketplace.google-calendar');
 
+    // Google Meet Integration (CRM Video Meetings)
+    Route::get('/marketplace/google-meet', fn() => Inertia::render('Marketplace/GoogleMeet'))->name('marketplace.google-meet');
+
     // MCP Status API
     Route::prefix('mcp')->name('mcp.')->group(function () {
         Route::get('/status', [\App\Http\Controllers\McpStatusController::class, 'status'])->name('status');

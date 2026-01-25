@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Google Meet Integration for CRM Tasks:**
+  - Automatic Google Meet link creation when syncing meeting-type tasks to Google Calendar.
+  - Toggle "Add Google Meet link" in Task Modal (visible for meeting tasks with calendar sync enabled).
+  - Guest invitation system: add attendee emails to calendar events with automatic email invitations.
+  - Auto-add CRM contact email to attendees when Meet is enabled.
+  - Guest response status tracking: syncs attendee status (accepted, declined, tentative) from Google Calendar.
+  - Status icons displayed next to attendee emails in Task Modal.
+  - New database columns: `google_meet_link`, `google_meet_id`, `include_google_meet`, `attendee_emails`, `attendees_data`.
+  - Added dedicated Marketplace page (`/marketplace/google-meet`) with features, setup guide, and quick actions.
+  - Full translations in PL, EN, DE, ES including guest status labels.
+
+### Fixed
+
+- **Database Migration Compatibility:**
+  - Fixed migration `2026_01_25_200000_add_is_default_to_crm_follow_up_sequences` failing on Laravel 11 with error "Method getDoctrineSchemaManager does not exist".
+  - Replaced deprecated Doctrine DBAL usage with native MySQL `SHOW INDEX` query for index existence checking.
+
+- **Autoresponder List Selection:**
+  - Unified the audience selection interface for autoresponder messages to match the broadcast message experience.
+  - Replaced the simple list dropdown with the advanced group/tag-based selection component.
+  - Added support for "Excluded Lists" in autoresponder messages, allowing users to prevent sending to specific list subscribers.
+
 ## [1.7.15] – Short Description
 
 **Release date:** 2026-01-25

@@ -5282,6 +5282,21 @@
                 "save": "Zapisz zmiany",
                 "create": "Utwórz zadanie"
             },
+            "meet": {
+                "include_meet": "Dodaj link Google Meet",
+                "include_meet_desc": "Automatycznie dodaj link do wideokonferencji",
+                "attendees": "Zaproszeni goście",
+                "add_email": "Wpisz email i naciśnij Enter...",
+                "attendees_hint": "Goście dostaną zaproszenie z linkiem do spotkania",
+                "meeting_ready": "Link do spotkania gotowy",
+                "join": "Dołącz",
+                "status": {
+                    "accepted": "Zaakceptowano",
+                    "declined": "Odrzucono",
+                    "tentative": "Wstępnie zaakceptowano",
+                    "needsAction": "Oczekuje na odpowiedź"
+                }
+            },
             "empty": {
                 "button": "Dodaj pierwsze zadanie",
                 "description": "Brak zadań w tej kategorii"
@@ -5789,16 +5804,16 @@
                 "confirm_reset_message": "Czy na pewno chcesz zresetować wszystkie reguły do domyślnych? Wszystkie obecne reguły zostaną usunięte i zastąpione domyślnymi."
             },
             "history": {
-               "title": "Historia Score",
-               "more_events": "+ {count} więcej wydarzeń",
-               "empty": "Brak historii punktacji",
-               "empty_desc": "Score będzie aktualizowany automatycznie na podstawie aktywności",
-               "time": {
-                   "now": "teraz",
-                   "min_ago": "{n} min temu",
-                   "hours_ago": "{n}h temu",
-                   "days_ago": "{n}d temu"
-               }
+                "title": "Historia Score",
+                "more_events": "+ {count} więcej wydarzeń",
+                "empty": "Brak historii punktacji",
+                "empty_desc": "Score będzie aktualizowany automatycznie na podstawie aktywności",
+                "time": {
+                    "now": "teraz",
+                    "min_ago": "{n} min temu",
+                    "hours_ago": "{n}h temu",
+                    "days_ago": "{n}d temu"
+                }
             },
             "event_types": {
                 "email_opened": "Otwarcie emaila",

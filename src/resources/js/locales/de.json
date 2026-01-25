@@ -4422,6 +4422,21 @@
                 "save": "Änderungen speichern",
                 "create": "Aufgabe erstellen"
             },
+            "meet": {
+                "include_meet": "Google Meet-Link hinzufügen",
+                "include_meet_desc": "Video-Konferenz-Link automatisch hinzufügen",
+                "attendees": "Eingeladene Gäste",
+                "add_email": "E-Mail eingeben und Enter drücken...",
+                "attendees_hint": "Gäste erhalten eine Einladung mit dem Meeting-Link",
+                "meeting_ready": "Meeting-Link bereit",
+                "join": "Beitreten",
+                "status": {
+                    "accepted": "Akzeptiert",
+                    "declined": "Abgelehnt",
+                    "tentative": "Mit Vorbehalt",
+                    "needsAction": "Aktion erforderlich"
+                }
+            },
             "empty": {
                 "button": "Erste Aufgabe hinzufügen",
                 "description": "Keine Aufgaben in dieser Kategorie"

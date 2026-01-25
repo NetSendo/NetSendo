@@ -174,6 +174,14 @@ const activeIntegrations = [
         color: "blue",
         route: "marketplace.google-calendar",
     },
+    {
+        id: "google-meet",
+        name: "Google Meet",
+        description: "Video meetings for CRM tasks",
+        icon: "📹",
+        color: "green",
+        route: "marketplace.google-meet",
+    },
 ];
 
 // Future integration categories with planned platforms

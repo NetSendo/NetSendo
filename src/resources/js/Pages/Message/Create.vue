@@ -2185,85 +2185,8 @@ if (form.contact_list_ids.length > 0) {
                                 class="mb-3"
                             />
 
-                            <!-- Autoresponder: Single Select -->
-                            <div v-if="form.type === 'autoresponder'">
-                                <!-- Filter Controls -->
-                                <div class="mb-2 grid grid-cols-2 gap-2">
-                                    <!-- List Type Filter -->
-                                    <select
-                                        v-model="listTypeFilter"
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    >
-                                        <option value="">
-                                            {{
-                                                $t("subscribers.all_list_types")
-                                            }}
-                                        </option>
-                                        <option value="email">
-                                            {{
-                                                $t(
-                                                    "subscribers.list_type_email",
-                                                )
-                                            }}
-                                        </option>
-                                        <option value="sms">
-                                            {{
-                                                $t("subscribers.list_type_sms")
-                                            }}
-                                        </option>
-                                    </select>
-                                    <!-- Search -->
-                                    <input
-                                        v-model="listSearch"
-                                        type="text"
-                                        :placeholder="
-                                            $t('common.search') + '...'
-                                        "
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    />
-                                </div>
-
-                                <select
-                                    v-model="autoresponderListId"
-                                    class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                                    size="6"
-                                >
-                                    <option :value="undefined" disabled>
-                                        {{ $t("messages.fields.select_list") }}
-                                    </option>
-                                    <option
-                                        v-for="list in listsFilteredByTypeAndSearch"
-                                        :key="list.id"
-                                        :value="list.id"
-                                    >
-                                        {{ list.name }} ({{
-                                            list.type === "sms"
-                                                ? "SMS"
-                                                : "Email"
-                                        }})
-                                    </option>
-                                </select>
-                                <p
-                                    v-if="
-                                        listsFilteredByTypeAndSearch.length ===
-                                        0
-                                    "
-                                    class="mt-1 text-xs text-amber-600 dark:text-amber-400"
-                                >
-                                    {{ $t("common.no_results") }}
-                                </p>
-                                <p v-else class="mt-1 text-xs text-slate-500">
-                                    {{ listsFilteredByTypeAndSearch.length }}
-                                    {{ $t("common.of") }} {{ lists.length }}
-                                    {{ $t("common.lists_lowercase") }}
-                                </p>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    {{ $t("messages.fields.time_help") }}
-                                </p>
-                            </div>
-
-                            <!-- Broadcast: Multi Select with Groups and Tags -->
-                            <div v-else>
+                            <!-- List selection with Groups and Tags -->
+                            <div>
                                 <!-- Filter Controls -->
                                 <div class="mb-3 grid grid-cols-2 gap-2">
                                     <!-- List Type Filter -->
@@ -2516,9 +2439,8 @@ if (form.contact_list_ids.length > 0) {
                             />
                         </div>
 
-                        <!-- Excluded Lists (for broadcast only) -->
+                        <!-- Excluded Lists -->
                         <div
-                            v-if="form.type === 'broadcast'"
                             class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
                         >
                             <div class="mb-3 flex items-center gap-2">
