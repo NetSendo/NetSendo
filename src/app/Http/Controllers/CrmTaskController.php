@@ -496,12 +496,12 @@ class CrmTaskController extends Controller
 
         // Optionally get Google Calendar events
         if ($validated['include_google'] ?? false) {
-            $calendarConnection = UserCalendarConnection::where('user_id', $userId)
-                ->where('is_active', true)
-                ->first();
+            try {
+                $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+                    ->where('is_active', true)
+                    ->first();
 
-            if ($calendarConnection) {
-                try {
+                if ($calendarConnection) {
                     $calendarService = app(GoogleCalendarService::class);
                     $googleEvents = $calendarService->listEvents($calendarConnection, $from, $to);
 
@@ -529,9 +529,13 @@ class CrmTaskController extends Controller
                             ];
                         }
                     }
-                } catch (\Exception $e) {
-                    // Silently fail - return tasks only
                 }
+            } catch (\Exception $e) {
+                // Log the error but don't fail the request - return tasks only
+                \Log::warning('Failed to fetch Google Calendar events for calendar view', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
 

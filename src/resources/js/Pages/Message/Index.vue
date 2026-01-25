@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
     ref,
     watch,
@@ -49,6 +49,18 @@ const resendingMessages = ref(new Set()); // Track which messages are being rese
 const messageToResend = ref(null);
 const resendResult = ref(null);
 const messageForQueueStats = ref(null);
+
+// Toast notification state
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 5000);
+};
+
+// Highlighted message state (for newly created/scheduled messages)
+const highlightedMessageId = ref(null);
 
 // List filter search
 const listSearch = ref("");
@@ -153,6 +165,38 @@ onMounted(() => {
 
     // Click outside handler for list dropdown
     document.addEventListener("click", handleClickOutsideListDropdown);
+
+    // Handle highlight from flash session
+    const page = usePage();
+    const flashHighlightId = page.props.flash?.highlight_message_id;
+    const flashSuccess = page.props.flash?.success;
+
+    if (flashHighlightId) {
+        highlightedMessageId.value = flashHighlightId;
+
+        // Show toast notification
+        if (flashSuccess) {
+            showToast(flashSuccess, true);
+        }
+
+        // Scroll to highlighted message after a short delay
+        nextTick(() => {
+            const highlightedRow = document.querySelector(
+                `[data-message-id="${flashHighlightId}"]`
+            );
+            if (highlightedRow) {
+                highlightedRow.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+            }
+        });
+
+        // Remove highlight after 6 seconds
+        setTimeout(() => {
+            highlightedMessageId.value = null;
+        }, 6000);
+    }
 });
 
 // Cleanup on unmount
@@ -660,7 +704,13 @@ const getAttachmentTooltip = (message, trans) => {
                         <tr
                             v-for="message in messages.data"
                             :key="message.id"
-                            class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            :data-message-id="message.id"
+                            :class="[
+                                'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-500',
+                                highlightedMessageId === message.id
+                                    ? 'bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-400 ring-inset animate-pulse'
+                                    : '',
+                            ]"
                         >
                             <td
                                 class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs"
@@ -1491,5 +1541,75 @@ const getAttachmentTooltip = (message, trans) => {
             @close="messageForQueueStats = null"
             @sent="messageForQueueStats = null"
         />
+
+        <!-- Toast Notification -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transform ease-out duration-300 transition"
+                enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+                leave-active-class="transition ease-in duration-100"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="toast"
+                    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg"
+                    :class="[
+                        toast.success
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-red-500 text-white',
+                    ]"
+                >
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                    <span class="font-medium">{{ toast.message }}</span>
+                    <button
+                        @click="toast = null"
+                        class="ml-2 rounded-full p-1 hover:bg-white/20"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

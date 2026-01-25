@@ -415,8 +415,16 @@ class MessageController extends Controller
             ]);
         }
 
+        // Determine success message based on status
+        $successMessage = match($message->status) {
+            'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
+            'draft' => 'Wiadomość została zapisana jako szkic.',
+            default => 'Wiadomość została zapisana.',
+        };
+
         return redirect()->route('messages.index')
-            ->with('success', 'Wiadomość została zapisana.');
+            ->with('success', $successMessage)
+            ->with('highlight_message_id', $message->id);
     }
 
     public function edit(Message $message)
@@ -716,8 +724,16 @@ class MessageController extends Controller
             ]);
         }
 
+        // Determine success message based on status
+        $successMessage = match($message->status) {
+            'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
+            'draft' => 'Wiadomość została zapisana jako szkic.',
+            default => 'Wiadomość została zaktualizowana.',
+        };
+
         return redirect()->route('messages.index')
-            ->with('success', 'Wiadomość została zaktualizowana.');
+            ->with('success', $successMessage)
+            ->with('highlight_message_id', $message->id);
     }
 
     /**

@@ -859,3 +859,16 @@ const priorities = [
         </div>
     </Modal>
 </template>
+
+<style scoped>
+/* Fix for dark mode date/time picker icons */
+:deep(input[type="date"]::-webkit-calendar-picker-indicator),
+:deep(input[type="time"]::-webkit-calendar-picker-indicator) {
+    filter: invert(0);
+}
+
+.dark :deep(input[type="date"]::-webkit-calendar-picker-indicator),
+.dark :deep(input[type="time"]::-webkit-calendar-picker-indicator) {
+    filter: invert(1);
+}
+</style>

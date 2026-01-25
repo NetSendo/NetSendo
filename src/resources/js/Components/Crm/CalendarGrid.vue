@@ -235,8 +235,10 @@ const emitDateChange = () => {
         to = new Date(year, month + 1, 10);
     } else {
         const week = weekGrid.value;
-        from = week[0].date;
-        to = week[6].date;
+        from = new Date(week[0].date);
+        from.setHours(0, 0, 0, 0);
+        to = new Date(week[6].date);
+        to.setHours(23, 59, 59, 999);
     }
 
     emit("date-change", { from, to });

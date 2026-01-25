@@ -64,7 +64,6 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             : now();
 
         $created = 0;
-        $skipped = 0;
 
         foreach ($autoresponders as $message) {
             // Check if subscriber is excluded from this message
@@ -100,19 +99,9 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             // If no time_of_day, keep the original subscribed_at time
             // For day=0: expectedSendDateTime = subscribedAt (immediate send time)
 
-            // Only add to queue if the expected send datetime is in the future
-            // Subscribers whose time has already passed should be "missed" and handled
-            // via the "Send to missed" button
-            if ($expectedSendDateTime->lt($now)) {
-                Log::info('CreateAutoresponderQueueEntries: Skipping missed subscriber', [
-                    'subscriber_id' => $subscriber->id,
-                    'message_id' => $message->id,
-                    'expected_datetime' => $expectedSendDateTime->format('Y-m-d H:i'),
-                    'now' => $now->format('Y-m-d H:i'),
-                ]);
-                $skipped++;
-                continue;
-            }
+            // Always add to queue regardless of whether time has passed
+            // The cron job will catch up on missed operations (e.g., after container restart)
+            // This ensures subscribers are never skipped due to timing issues
 
             // Check if queue entry already exists
             $existingEntry = $message->queueEntries()
@@ -148,7 +137,6 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             'subscriber_id' => $subscriber->id,
             'list_id' => $list->id,
             'created' => $created,
-            'skipped' => $skipped,
         ]);
     }
 
