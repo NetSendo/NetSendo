@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Created `DealStageChangedNotification.php` - notifies deal owner when a deal stage changes (especially for won/lost deals).
   - Created `ContactRepliedNotification.php` - notifies when a CRM contact responds through any communication channel.
 
+- **Zoom Integration & Calendar Sync:**
+  - Fixed critical `ArgumentCountError` in `SyncTaskToCalendar` job by correctly passing `UserZoomConnection` when creating meetings.
+  - Fixed missing Zoom join link in Google Calendar events by adding it to the `location` field, enabling the native "Join" button.
+
 ### Changed
 
 ## [1.7.19] – Short Description

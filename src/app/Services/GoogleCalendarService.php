@@ -364,6 +364,11 @@ class GoogleCalendarService
             'description' => $this->buildEventDescription($task),
         ];
 
+        // Add Zoom meeting link as location for quick join button
+        if ($task->zoom_join_url) {
+            $payload['location'] = $task->zoom_join_url;
+        }
+
         // Set event timing
         if ($task->due_date) {
             // For tasks with specific time, use dateTime
