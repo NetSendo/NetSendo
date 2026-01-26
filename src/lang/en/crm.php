@@ -139,9 +139,11 @@ return [
             'include_meet_desc' => 'Automatically create video conference link',
             'attendees' => 'Meeting Attendees',
             'add_email' => 'Add attendee email and press Enter',
+            'add_guest' => 'Add',
             'attendees_hint' => 'Press Enter to add email. Contact email is added automatically.',
             'meeting_ready' => 'Meeting link ready',
             'join' => 'Join Meeting',
+            'not_connected' => 'Connect your Google account in settings to activate',
             'status' => [
                 'accepted' => 'Accepted',
                 'declined' => 'Declined',
@@ -154,6 +156,11 @@ return [
             'include_zoom_desc' => 'Automatically create Zoom video conference',
             'meeting_ready' => 'Zoom meeting ready',
             'join' => 'Join Zoom',
+            'attendees' => 'Invited Guests',
+            'add_email' => 'Enter guest email...',
+            'add_guest' => 'Add',
+            'attendees_hint' => 'Guests will receive an invitation with meeting link',
+            'not_connected' => 'Connect your Zoom account in settings to activate',
         ],
         'actions' => [
             'cancel' => 'Cancel',

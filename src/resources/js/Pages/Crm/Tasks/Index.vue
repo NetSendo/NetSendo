@@ -18,6 +18,7 @@ const props = defineProps({
     filters: Object,
     calendarConnection: Object,
     calendars: Array,
+    zoomConnection: Object,
 });
 
 const selectedView = ref(props.view || "today");
@@ -701,7 +702,9 @@ onMounted(() => {
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
-                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                            <path
+                                d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"
+                            />
                         </svg>
                         Zoom
                     </a>
@@ -1021,7 +1024,9 @@ onMounted(() => {
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
-                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                            <path
+                                d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"
+                            />
                         </svg>
                         Dołącz do Zoom
                     </a>
@@ -1037,6 +1042,7 @@ onMounted(() => {
             :owners="owners"
             :calendar-connection="calendarConnection"
             :calendars="calendars"
+            :zoom-connection="zoomConnection"
             @close="showTaskModal = false"
             @saved="onTaskSaved"
         />

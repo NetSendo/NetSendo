@@ -139,9 +139,11 @@ return [
             'include_meet_desc' => 'Automatycznie utwórz link do wideokonferencji',
             'attendees' => 'Uczestnicy spotkania',
             'add_email' => 'Dodaj email uczestnika i naciśnij Enter',
+            'add_guest' => 'Dodaj',
             'attendees_hint' => 'Naciśnij Enter aby dodać email. Email kontaktu jest dodawany automatycznie.',
             'meeting_ready' => 'Link do spotkania gotowy',
             'join' => 'Dołącz do spotkania',
+            'not_connected' => 'Połącz konto Google w ustawieniach, aby aktywować',
             'status' => [
                 'accepted' => 'Zaakceptowane',
                 'declined' => 'Odrzucone',
@@ -154,6 +156,11 @@ return [
             'include_zoom_desc' => 'Automatycznie utwórz wideokonferencję Zoom',
             'meeting_ready' => 'Spotkanie Zoom gotowe',
             'join' => 'Dołącz do Zoom',
+            'attendees' => 'Zaproszeni goście',
+            'add_email' => 'Wpisz email gościa...',
+            'add_guest' => 'Dodaj',
+            'attendees_hint' => 'Goście dostaną zaproszenie z linkiem do spotkania',
+            'not_connected' => 'Połącz konto Zoom w ustawieniach, aby aktywować',
         ],
         'actions' => [
             'cancel' => 'Anuluj',

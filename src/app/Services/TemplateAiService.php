@@ -414,7 +414,7 @@ WAŻNE: Odpowiadaj TYLKO treścią HTML, bez żadnych komentarzy czy wyjaśnień
 {$contextInfo}
 PROMPT;
 
-            $maxTokens = $integration->max_tokens_small ?: 8000; // Small for text fragments
+            $maxTokens = $integration->max_tokens_large ?? 50000; // Use large tokens for all content generation
         }
 
         $fullPrompt = $systemPrompt . "\n\nZadanie użytkownika: " . $prompt;

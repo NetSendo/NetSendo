@@ -7,6 +7,7 @@ use App\Models\CrmContact;
 use App\Models\CrmDeal;
 use App\Models\User;
 use App\Models\UserCalendarConnection;
+use App\Models\UserZoomConnection;
 use App\Services\GoogleCalendarService;
 use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
@@ -105,6 +106,11 @@ class CrmTaskController extends Controller
             }
         }
 
+        // Get Zoom connection for Zoom meeting integration
+        $zoomConnection = UserZoomConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+
         return Inertia::render('Crm/Tasks/Index', [
             'tasks' => $tasks,
             'counts' => $counts,
@@ -120,6 +126,11 @@ class CrmTaskController extends Controller
                 'auto_sync_tasks' => $calendarConnection->auto_sync_tasks,
             ] : null,
             'calendars' => $calendars,
+            'zoomConnection' => $zoomConnection ? [
+                'id' => $zoomConnection->id,
+                'is_active' => $zoomConnection->is_active,
+                'connected_email' => $zoomConnection->zoom_email,
+            ] : null,
             'userTimezone' => DateHelper::getUserTimezone(),
         ]);
     }

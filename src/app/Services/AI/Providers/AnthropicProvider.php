@@ -3,6 +3,8 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AnthropicProvider extends BaseProvider
 {
@@ -26,6 +28,60 @@ class AnthropicProvider extends BaseProvider
         ];
     }
 
+    /**
+     * Override makeRequest for Anthropic-specific handling.
+     * Uses longer timeout (120s) as Claude can take longer for complex/large requests.
+     */
+    protected function makeRequest(string $method, string $endpoint, array $data = [], array $headers = []): array
+    {
+        $url = rtrim($this->getBaseUrl(), '/') . '/' . ltrim($endpoint, '/');
+
+        $defaultHeaders = $this->getDefaultHeaders();
+        $allHeaders = array_merge($defaultHeaders, $headers);
+
+        try {
+            // Use 120 second timeout for Anthropic (Claude can be slower for large requests)
+            $response = Http::withHeaders($allHeaders)
+                ->timeout(120)
+                ->$method($url, $data);
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'data' => $response->json(),
+                ];
+            }
+
+            // Anthropic uses error.message format
+            $errorBody = $response->json();
+            $errorMessage = $errorBody['error']['message'] ?? $response->body();
+            $errorType = $errorBody['error']['type'] ?? 'unknown_error';
+
+            Log::warning("Anthropic API error", [
+                'status' => $response->status(),
+                'type' => $errorType,
+                'message' => $errorMessage,
+                'endpoint' => $endpoint,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $errorMessage,
+                'error_type' => $errorType,
+                'status' => $response->status(),
+            ];
+        } catch (\Exception $e) {
+            Log::error("Anthropic API Exception: " . $e->getMessage(), [
+                'endpoint' => $endpoint,
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
     public function testConnection(): array
     {
         // Try the configured model first, then fall back to default
@@ -34,7 +90,7 @@ class AnthropicProvider extends BaseProvider
 
         // Log debug info (only first 10 chars of API key for security)
         $keyPreview = $apiKey ? substr($apiKey, 0, 10) . '...' : 'NULL';
-        \Illuminate\Support\Facades\Log::info("Testing Anthropic: model={$model}, api_key_prefix={$keyPreview}");
+        Log::info("Testing Anthropic: model={$model}, api_key_prefix={$keyPreview}");
 
         // Anthropic doesn't have a simple test endpoint, so we send a minimal request
         $response = $this->makeRequest('post', 'v1/messages', [
@@ -52,7 +108,7 @@ class AnthropicProvider extends BaseProvider
             ];
         }
 
-        \Illuminate\Support\Facades\Log::error("Anthropic testConnection failed for model [{$model}]: " . json_encode($response));
+        Log::error("Anthropic testConnection failed for model [{$model}]: " . json_encode($response));
 
         // Check for specific error types
         $error = $response['error'] ?? 'Nieznany błąd';

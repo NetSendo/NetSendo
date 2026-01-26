@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Zoom & Google Meet Integration Improvements:**
+  - **New Guest Management for Zoom:** Implemented "Invited Guests" section for Zoom Meetings in Task Modal, matching Google Meet functionality.
+  - **Auto-Add Contact:** Enabling Zoom integration now automatically adds the assigned contact's email to the attendee list.
+  - **Smart Visibility:** Zoom and Google Meet sections are now always visible for meeting-type tasks.
+  - **Connection State Handling:** Added "Connect to activate" overlay and disabled state for integration sections when the respective service is not connected.
+  - **Localization:** Added translations for guest management and connection status messages in PL, EN, DE, ES.
+
 ### Fixed
+
+- **Anthropic AI Integration - Content Generation Timeout:**
+  - Fixed Anthropic Claude not working when generating email content, templates, or A/B tests due to insufficient API timeout.
+  - Added custom `makeRequest()` override in `AnthropicProvider.php` with 120s timeout (BaseProvider uses 30s which was too short for large prompts).
+  - Improved error handling with proper Anthropic API error structure parsing (`error.message` and `error.type`).
+  - Added detailed logging for API errors to help with debugging.
+  - Fixed text fragment generation (`mode='text'`) using `max_tokens_small` (8000) instead of `max_tokens_large` (50000), causing incomplete responses for longer content.
 
 ### Changed
 

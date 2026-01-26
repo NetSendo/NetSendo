@@ -34,6 +34,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    zoomConnection: {
+        type: Object,
+        default: null,
+    },
 });
 
 const emit = defineEmits(["close", "saved"]);
@@ -325,11 +329,12 @@ watch(
     { immediate: true },
 );
 
-// Auto-add contact email when selected if Meet is enabled
+// Auto-add contact email when selected if Meet or Zoom is enabled
 watch(
     () => form.crm_contact_id,
     (newId) => {
-        if (!newId || !form.include_google_meet) return;
+        if (!newId || (!form.include_google_meet && !form.include_zoom_meeting))
+            return;
 
         const contact = props.contacts.find((c) => c.id === newId);
         if (contact && contact.email) {
@@ -343,6 +348,23 @@ watch(
 // Auto-add contact email when Meet is enabled if contact is selected
 watch(
     () => form.include_google_meet,
+    (enabled) => {
+        if (!enabled || !form.crm_contact_id) return;
+
+        const contact = props.contacts.find(
+            (c) => c.id === form.crm_contact_id,
+        );
+        if (contact && contact.email) {
+            if (!form.attendee_emails.includes(contact.email)) {
+                form.attendee_emails.push(contact.email);
+            }
+        }
+    },
+);
+
+// Auto-add contact email when Zoom is enabled if contact is selected
+watch(
+    () => form.include_zoom_meeting,
     (enabled) => {
         if (!enabled || !form.crm_contact_id) return;
 
@@ -1028,18 +1050,36 @@ const priorities = [
                     </p>
                 </div>
 
-                <!-- Google Meet Integration (visible when sync_to_calendar is enabled and type is meeting) -->
+                <!-- Google Meet Integration (visible when type is meeting) -->
                 <div
-                    v-if="
-                        calendarConnection &&
-                        form.sync_to_calendar &&
-                        form.type === 'meeting'
-                    "
-                    class="rounded-xl border border-emerald-200 dark:border-emerald-700/50 p-4 bg-emerald-50 dark:bg-emerald-900/20"
+                    v-if="form.sync_to_calendar && form.type === 'meeting'"
+                    :class="[
+                        'rounded-xl border p-4 relative',
+                        calendarConnection
+                            ? 'border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-60',
+                    ]"
                 >
+                    <!-- Disabled overlay with message -->
+                    <div
+                        v-if="!calendarConnection"
+                        class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-900/50 z-10"
+                    >
+                        <p
+                            class="text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm"
+                        >
+                            {{ $t("crm.task.meet.not_connected") }}
+                        </p>
+                    </div>
+
                     <div class="flex items-center gap-3 mb-3">
                         <svg
-                            class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                            :class="[
+                                'h-5 w-5',
+                                calendarConnection
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-slate-400 dark:text-slate-500',
+                            ]"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
@@ -1048,22 +1088,33 @@ const priorities = [
                             />
                         </svg>
                         <span
-                            class="font-medium text-emerald-900 dark:text-emerald-100"
+                            :class="[
+                                'font-medium',
+                                calendarConnection
+                                    ? 'text-emerald-900 dark:text-emerald-100'
+                                    : 'text-slate-600 dark:text-slate-400',
+                            ]"
                             >Google Meet</span
                         >
                     </div>
 
                     <div class="flex items-center gap-3 mb-4">
                         <label
-                            class="relative inline-flex items-center cursor-pointer"
+                            class="relative inline-flex items-center"
+                            :class="
+                                calendarConnection
+                                    ? 'cursor-pointer'
+                                    : 'cursor-not-allowed'
+                            "
                         >
                             <input
                                 type="checkbox"
                                 v-model="form.include_google_meet"
+                                :disabled="!calendarConnection"
                                 class="sr-only peer"
                             />
                             <div
-                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500"
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 dark:peer-focus:ring-emerald-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-500 peer-disabled:opacity-50"
                             ></div>
                         </label>
                         <div>
@@ -1215,11 +1266,33 @@ const priorities = [
                 <!-- Zoom Meeting Integration -->
                 <div
                     v-if="form.sync_to_calendar && form.type === 'meeting'"
-                    class="rounded-xl border border-blue-200 dark:border-blue-700/50 p-4 bg-blue-50 dark:bg-blue-900/20"
+                    :class="[
+                        'rounded-xl border p-4 relative',
+                        zoomConnection
+                            ? 'border-blue-200 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-60',
+                    ]"
                 >
+                    <!-- Disabled overlay with message -->
+                    <div
+                        v-if="!zoomConnection"
+                        class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-900/50 z-10"
+                    >
+                        <p
+                            class="text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm"
+                        >
+                            {{ $t("crm.task.zoom.not_connected") }}
+                        </p>
+                    </div>
+
                     <div class="flex items-center gap-3 mb-3">
                         <svg
-                            class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                            :class="[
+                                'h-5 w-5',
+                                zoomConnection
+                                    ? 'text-blue-600 dark:text-blue-400'
+                                    : 'text-slate-400 dark:text-slate-500',
+                            ]"
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
@@ -1239,18 +1312,29 @@ const priorities = [
                             />
                         </svg>
                         <span
-                            class="font-medium text-blue-900 dark:text-blue-100"
+                            :class="[
+                                'font-medium',
+                                zoomConnection
+                                    ? 'text-blue-900 dark:text-blue-100'
+                                    : 'text-slate-600 dark:text-slate-400',
+                            ]"
                             >Zoom Meeting</span
                         >
                     </div>
 
                     <div class="flex items-center gap-3 mb-4">
                         <label
-                            class="relative inline-flex items-center cursor-pointer"
+                            class="relative inline-flex items-center"
+                            :class="
+                                zoomConnection
+                                    ? 'cursor-pointer'
+                                    : 'cursor-not-allowed'
+                            "
                         >
                             <input
                                 type="checkbox"
                                 v-model="form.include_zoom_meeting"
+                                :disabled="!zoomConnection"
                                 @change="
                                     form.include_zoom_meeting &&
                                     (form.include_google_meet = false)
@@ -1258,7 +1342,7 @@ const priorities = [
                                 class="sr-only peer"
                             />
                             <div
-                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-500"
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-500 peer-disabled:opacity-50"
                             ></div>
                         </label>
                         <div>
@@ -1273,6 +1357,76 @@ const priorities = [
                                 {{ $t("crm.task.zoom.include_zoom_desc") }}
                             </p>
                         </div>
+                    </div>
+
+                    <!-- Zoom Attendee Emails -->
+                    <div v-if="form.include_zoom_meeting" class="space-y-3">
+                        <label
+                            class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ $t("crm.task.zoom.attendees") }}
+                        </label>
+
+                        <!-- Email Tags -->
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <span
+                                v-for="(email, index) in form.attendee_emails"
+                                :key="email"
+                                class="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-3 py-1 text-sm text-blue-700 dark:text-blue-300"
+                            >
+                                {{ email }}
+                                <button
+                                    type="button"
+                                    @click="
+                                        form.attendee_emails.splice(index, 1)
+                                    "
+                                    class="ml-1 hover:text-blue-900 dark:hover:text-blue-100"
+                                >
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </button>
+                            </span>
+                        </div>
+
+                        <!-- Add Email Input -->
+                        <div class="flex gap-2">
+                            <input
+                                type="email"
+                                v-model="newAttendeeEmail"
+                                :placeholder="$t('crm.task.zoom.add_email')"
+                                class="flex-1 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm"
+                                @keydown.enter.prevent="addAttendeeEmail"
+                            />
+                            <button
+                                type="button"
+                                @click="addAttendeeEmail"
+                                :disabled="
+                                    !newAttendeeEmail ||
+                                    !newAttendeeEmail.includes('@')
+                                "
+                                class="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {{ $t("crm.task.zoom.add_guest") }}
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            {{ $t("crm.task.zoom.attendees_hint") }}
+                        </p>
+                        <InputError
+                            :message="form.errors.attendee_emails"
+                            class="mt-1"
+                        />
                     </div>
 
                     <!-- Show Zoom Link if exists -->
