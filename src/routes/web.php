@@ -138,6 +138,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('messages/{message}/toggle-active', [\App\Http\Controllers\MessageController::class, 'toggleActive'])->name('messages.toggle-active');
     Route::get('messages/{message}/queue-schedule-stats', [\App\Http\Controllers\MessageController::class, 'queueScheduleStats'])->name('messages.queue-schedule-stats');
     Route::post('messages/{message}/send-to-missed', [\App\Http\Controllers\MessageController::class, 'sendToMissedRecipients'])->name('messages.send-to-missed');
+    Route::post('messages/search-sent', [\App\Http\Controllers\MessageController::class, 'searchSentMessages'])->name('messages.search-sent');
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');

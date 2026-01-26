@@ -4513,7 +4513,8 @@
                 "include_meet": "Añadir enlace de Google Meet",
                 "include_meet_desc": "Añadir automáticamente enlace de videoconferencia",
                 "attendees": "Invitados",
-                "add_email": "Escriba el correo y presione Enter...",
+                "add_email": "Ingrese correo electrónico...",
+                "add_guest": "Añadir",
                 "attendees_hint": "Los invitados recibirán una invitación con el enlace de la reunión",
                 "meeting_ready": "Enlace de reunión listo",
                 "join": "Unirse",
@@ -4523,6 +4524,12 @@
                     "tentative": "Provisional",
                     "needsAction": "Necesita acción"
                 }
+            },
+            "zoom": {
+                "include_zoom": "Añadir reunión Zoom",
+                "include_zoom_desc": "Crear automáticamente reunión Zoom",
+                "meeting_ready": "Enlace de reunión Zoom listo",
+                "join": "Unirse"
             },
             "empty": {
                 "button": "Añadir primera tarea",

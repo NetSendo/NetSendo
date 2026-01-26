@@ -4428,7 +4428,8 @@
                 "include_meet": "Google Meet-Link hinzufügen",
                 "include_meet_desc": "Video-Konferenz-Link automatisch hinzufügen",
                 "attendees": "Eingeladene Gäste",
-                "add_email": "E-Mail eingeben und Enter drücken...",
+                "add_email": "E-Mail eingeben...",
+                "add_guest": "Hinzufügen",
                 "attendees_hint": "Gäste erhalten eine Einladung mit dem Meeting-Link",
                 "meeting_ready": "Meeting-Link bereit",
                 "join": "Beitreten",
@@ -4438,6 +4439,12 @@
                     "tentative": "Mit Vorbehalt",
                     "needsAction": "Aktion erforderlich"
                 }
+            },
+            "zoom": {
+                "include_zoom": "Zoom-Meeting hinzufügen",
+                "include_zoom_desc": "Automatisch Zoom-Meeting erstellen",
+                "meeting_ready": "Zoom-Meeting-Link bereit",
+                "join": "Beitreten"
             },
             "empty": {
                 "button": "Erste Aufgabe hinzufügen",

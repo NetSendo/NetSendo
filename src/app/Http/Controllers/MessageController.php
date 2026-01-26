@@ -259,7 +259,7 @@ class MessageController extends Controller
             'ab_variant_subject' => 'nullable|string|max:255',
             'ab_variant_content' => 'nullable|string',
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
-            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers',
+            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers,opened_message,not_opened_message',
             'trigger_config' => 'nullable|array',
             // PDF Attachments
             'attachments' => 'nullable|array|max:5',
@@ -554,7 +554,7 @@ class MessageController extends Controller
             'ab_variant_subject' => 'nullable|string|max:255',
             'ab_variant_content' => 'nullable|string',
             'ab_split_percentage' => 'nullable|integer|min:10|max:90',
-            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers',
+            'trigger_type' => 'nullable|in:signup,anniversary,birthday,inactivity,page_visit,custom,recent_subscribers,opened_message,not_opened_message',
             'trigger_config' => 'nullable|array',
             // PDF Attachments
             'attachments' => 'nullable|array|max:5',
@@ -1852,4 +1852,36 @@ class MessageController extends Controller
             'message' => "Zaplanowano wysyłkę do {$created} pominiętych subskrybentów.",
         ]);
     }
+
+    /**
+     * Search sent messages for trigger configuration.
+     * Used by opened_message and not_opened_message triggers.
+     */
+    public function searchSentMessages(Request $request)
+    {
+        $query = auth()->user()->messages()
+            ->where('status', 'sent')
+            ->select('id', 'subject', 'created_at', 'sent_count');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        $messages = $query->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(fn ($msg) => [
+                'id' => $msg->id,
+                'subject' => $msg->subject,
+                'sent_count' => $msg->sent_count,
+                'created_at' => $msg->created_at->format('Y-m-d H:i'),
+            ]);
+
+        return response()->json($messages);
+    }
 }
+

@@ -470,6 +470,13 @@ class GoogleCalendarService
             $lines[] = '';
         }
 
+        // Add Zoom meeting link if available
+        if ($task->zoom_join_url) {
+            $lines[] = '📹 Zoom Meeting:';
+            $lines[] = $task->zoom_join_url;
+            $lines[] = '';
+        }
+
         if ($task->notes) {
             $lines[] = '📝 Notes:';
             $lines[] = $task->notes;

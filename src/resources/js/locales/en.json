@@ -1253,7 +1253,9 @@
                 "inactivity": "Inactivity",
                 "page_visit": "Page visit",
                 "custom": "Custom action (tag)",
-                "recent_subscribers": "Recent signups"
+                "recent_subscribers": "Recent signups",
+                "opened_message": "Opened message",
+                "not_opened_message": "Did not open message"
             },
             "desc": {
                 "none": "Message will not be triggered automatically",
@@ -1263,7 +1265,9 @@
                 "inactivity": "Send when subscriber is inactive",
                 "page_visit": "Send when subscriber visits a page",
                 "custom": "Send when a specific tag is added",
-                "recent_subscribers": "Send only to people who signed up within the last X days"
+                "recent_subscribers": "Send only to people who signed up within the last X days",
+                "opened_message": "Send to people who opened a specific message",
+                "not_opened_message": "Do not send to people who opened a specific message"
             },
             "config": {
                 "inactive_days": "Days of inactivity",
@@ -1273,7 +1277,12 @@
                 "select_tag": "-- Select tag --",
                 "no_config_needed": "This trigger doesn't require additional configuration",
                 "recent_days": "Days since signup",
-                "recent_days_help": "Use the slider or enter a number manually (1-365 days)"
+                "recent_days_help": "Use the slider or enter a number manually (1-365 days)",
+                "select_message": "Select message",
+                "search_message_placeholder": "Search by subject or ID...",
+                "select_message_placeholder": "-- Select message --",
+                "opened_message_help": "Message will only be sent to people who opened the selected message",
+                "not_opened_message_help": "Message will NOT be sent to people who opened the selected message"
             }
         },
         "ab_testing": {
@@ -5227,7 +5236,8 @@
                 "include_meet": "Add Google Meet link",
                 "include_meet_desc": "Automatically add video conference link",
                 "attendees": "Invited guests",
-                "add_email": "Type email and press Enter...",
+                "add_email": "Enter guest email...",
+                "add_guest": "Add",
                 "attendees_hint": "Guests will receive invitation with meeting link",
                 "meeting_ready": "Meeting link ready",
                 "join": "Join",
@@ -5237,6 +5247,12 @@
                     "tentative": "Tentative",
                     "needsAction": "Needs Action"
                 }
+            },
+            "zoom": {
+                "include_zoom": "Add Zoom meeting",
+                "include_zoom_desc": "Automatically create Zoom meeting",
+                "meeting_ready": "Zoom meeting link ready",
+                "join": "Join"
             },
             "empty": {
                 "button": "Add First Task",

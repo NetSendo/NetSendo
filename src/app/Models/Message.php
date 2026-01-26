@@ -509,6 +509,24 @@ class Message extends Model
                     $q->where('contact_list_subscriber.subscribed_at', '>=', now()->subDays($days));
                 });
             })
+            ->when($this->trigger_type === 'opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
+                // Include only subscribers who opened the specified message
+                $messageId = (int) $this->trigger_config['message_id'];
+                $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
+                    ->pluck('subscriber_id')
+                    ->unique()
+                    ->toArray();
+                $query->whereIn('id', $openedSubscriberIds);
+            })
+            ->when($this->trigger_type === 'not_opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
+                // Exclude subscribers who opened the specified message
+                $messageId = (int) $this->trigger_config['message_id'];
+                $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
+                    ->pluck('subscriber_id')
+                    ->unique()
+                    ->toArray();
+                $query->whereNotIn('id', $openedSubscriberIds);
+            })
             ->get()
             ->unique('email'); // Final deduplication by email
     }

@@ -69,37 +69,49 @@ const form = useForm({
 
 // Duration options in minutes
 const durationOptions = [
-    { value: 5, label: '5 min' },
-    { value: 10, label: '10 min' },
-    { value: 15, label: '15 min' },
-    { value: 30, label: '30 min' },
-    { value: 60, label: '1h' },
-    { value: 120, label: '2h' },
-    { value: 'custom', label: 'crm.task.fields.duration_custom' },
+    { value: 5, label: "5 min" },
+    { value: 10, label: "10 min" },
+    { value: 15, label: "15 min" },
+    { value: 30, label: "30 min" },
+    { value: 60, label: "1h" },
+    { value: 120, label: "2h" },
+    { value: "custom", label: "crm.task.fields.duration_custom" },
 ];
 
 const selectedDuration = ref(30);
 const isCustomDuration = ref(false);
 const isUpdatingEndTime = ref(false);
 
+// Attendee email input
+const newAttendeeEmail = ref("");
+
+// Add attendee email function
+const addAttendeeEmail = () => {
+    const email = newAttendeeEmail.value.trim();
+    if (email && email.includes("@") && !form.attendee_emails.includes(email)) {
+        form.attendee_emails.push(email);
+        newAttendeeEmail.value = "";
+    }
+};
+
 // Calculate duration from due_time and end_time
 const calculateDurationFromTimes = (dueTime, endTime) => {
     if (!dueTime || !endTime) return 30;
-    const [dueH, dueM] = dueTime.split(':').map(Number);
-    const [endH, endM] = endTime.split(':').map(Number);
-    let duration = (endH * 60 + endM) - (dueH * 60 + dueM);
+    const [dueH, dueM] = dueTime.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+    let duration = endH * 60 + endM - (dueH * 60 + dueM);
     if (duration <= 0) duration += 24 * 60; // Handle next day
     return duration;
 };
 
 // Calculate end_time from due_time and duration
 const calculateEndTime = (dueTime, durationMinutes) => {
-    if (!dueTime) return '09:30';
-    const [hours, minutes] = dueTime.split(':').map(Number);
+    if (!dueTime) return "09:30";
+    const [hours, minutes] = dueTime.split(":").map(Number);
     const totalMinutes = hours * 60 + minutes + durationMinutes;
     const endHours = Math.floor(totalMinutes / 60) % 24;
     const endMinutes = totalMinutes % 60;
-    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+    return `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}`;
 };
 
 // Check if duration matches a preset
@@ -109,7 +121,7 @@ const isPresetDuration = (duration) => {
 
 // Watch for duration changes and update end_time
 watch(selectedDuration, (newDuration) => {
-    if (newDuration === 'custom') {
+    if (newDuration === "custom") {
         isCustomDuration.value = true;
         return;
     }
@@ -124,29 +136,42 @@ watch(selectedDuration, (newDuration) => {
 });
 
 // Watch for due_time changes and update end_time
-watch(() => form.due_time, (newDueTime) => {
-    if (!isUpdatingEndTime.value && selectedDuration.value !== 'custom' && newDueTime) {
-        isUpdatingEndTime.value = true;
-        form.end_time = calculateEndTime(newDueTime, selectedDuration.value);
-        nextTick(() => {
-            isUpdatingEndTime.value = false;
-        });
-    }
-});
+watch(
+    () => form.due_time,
+    (newDueTime) => {
+        if (
+            !isUpdatingEndTime.value &&
+            selectedDuration.value !== "custom" &&
+            newDueTime
+        ) {
+            isUpdatingEndTime.value = true;
+            form.end_time = calculateEndTime(
+                newDueTime,
+                selectedDuration.value,
+            );
+            nextTick(() => {
+                isUpdatingEndTime.value = false;
+            });
+        }
+    },
+);
 
 // Watch for manual end_time changes
-watch(() => form.end_time, (newEndTime) => {
-    if (isUpdatingEndTime.value) return;
+watch(
+    () => form.end_time,
+    (newEndTime) => {
+        if (isUpdatingEndTime.value) return;
 
-    const duration = calculateDurationFromTimes(form.due_time, newEndTime);
-    if (isPresetDuration(duration)) {
-        selectedDuration.value = duration;
-        isCustomDuration.value = false;
-    } else {
-        selectedDuration.value = 'custom';
-        isCustomDuration.value = true;
-    }
-});
+        const duration = calculateDurationFromTimes(form.due_time, newEndTime);
+        if (isPresetDuration(duration)) {
+            selectedDuration.value = duration;
+            isCustomDuration.value = false;
+        } else {
+            selectedDuration.value = "custom";
+            isCustomDuration.value = true;
+        }
+    },
+);
 
 // Reset form when modal opens
 watch(
@@ -192,12 +217,15 @@ watch(
                     form.end_time = calculateEndTime(form.due_time, 30);
                 }
                 // Calculate and set duration from times
-                const duration = calculateDurationFromTimes(form.due_time, form.end_time);
+                const duration = calculateDurationFromTimes(
+                    form.due_time,
+                    form.end_time,
+                );
                 if (isPresetDuration(duration)) {
                     selectedDuration.value = duration;
                     isCustomDuration.value = false;
                 } else {
-                    selectedDuration.value = 'custom';
+                    selectedDuration.value = "custom";
                     isCustomDuration.value = true;
                 }
                 form.crm_contact_id = props.task.crm_contact_id || null;
@@ -571,7 +599,11 @@ const priorities = [
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
                                 ]"
                             >
-                                {{ option.value === 'custom' ? $t(option.label) : option.label }}
+                                {{
+                                    option.value === "custom"
+                                        ? $t(option.label)
+                                        : option.label
+                                }}
                             </button>
                         </div>
                     </div>
@@ -1107,24 +1139,22 @@ const priorities = [
                         <div class="flex gap-2">
                             <input
                                 type="email"
+                                v-model="newAttendeeEmail"
                                 :placeholder="$t('crm.task.meet.add_email')"
                                 class="flex-1 rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-sm"
-                                @keydown.enter.prevent="
-                                    (e) => {
-                                        const email = e.target.value.trim();
-                                        if (
-                                            email &&
-                                            email.includes('@') &&
-                                            !form.attendee_emails.includes(
-                                                email,
-                                            )
-                                        ) {
-                                            form.attendee_emails.push(email);
-                                            e.target.value = '';
-                                        }
-                                    }
-                                "
+                                @keydown.enter.prevent="addAttendeeEmail"
                             />
+                            <button
+                                type="button"
+                                @click="addAttendeeEmail"
+                                :disabled="
+                                    !newAttendeeEmail ||
+                                    !newAttendeeEmail.includes('@')
+                                "
+                                class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {{ $t("crm.task.meet.add_guest") }}
+                            </button>
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
                             {{ $t("crm.task.meet.attendees_hint") }}
@@ -1193,9 +1223,20 @@ const priorities = [
                             viewBox="0 0 24 24"
                             fill="currentColor"
                         >
-                            <circle cx="12" cy="12" r="10" fill="currentColor"/>
-                            <path fill="white" d="M8 9.5v5c0 .28.22.5.5.5h5c.28 0 .5-.22.5-.5v-5c0-.28-.22-.5-.5-.5h-5c-.28 0-.5.22-.5.5z"/>
-                            <path fill="white" d="M15 10.5l2.5-1.5v6l-2.5-1.5v-3z"/>
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                fill="currentColor"
+                            />
+                            <path
+                                fill="white"
+                                d="M8 9.5v5c0 .28.22.5.5.5h5c.28 0 .5-.22.5-.5v-5c0-.28-.22-.5-.5-.5h-5c-.28 0-.5.22-.5.5z"
+                            />
+                            <path
+                                fill="white"
+                                d="M15 10.5l2.5-1.5v6l-2.5-1.5v-3z"
+                            />
                         </svg>
                         <span
                             class="font-medium text-blue-900 dark:text-blue-100"
@@ -1210,7 +1251,10 @@ const priorities = [
                             <input
                                 type="checkbox"
                                 v-model="form.include_zoom_meeting"
-                                @change="form.include_zoom_meeting && (form.include_google_meet = false)"
+                                @change="
+                                    form.include_zoom_meeting &&
+                                    (form.include_google_meet = false)
+                                "
                                 class="sr-only peer"
                             />
                             <div

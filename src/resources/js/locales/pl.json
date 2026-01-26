@@ -1257,7 +1257,9 @@
                 "inactivity": "Brak aktywności",
                 "page_visit": "Odwiedziny strony",
                 "custom": "Własna akcja (tag)",
-                "recent_subscribers": "Ostatni subskrybenci"
+                "recent_subscribers": "Ostatni subskrybenci",
+                "opened_message": "Otworzyli wiadomość",
+                "not_opened_message": "Nie otworzyli wiadomości"
             },
             "desc": {
                 "none": "Wiadomość nie będzie uruchamiana automatycznie",
@@ -1267,7 +1269,9 @@
                 "inactivity": "Wyślij gdy subskrybent jest nieaktywny",
                 "page_visit": "Wyślij gdy subskrybent odwiedzi stronę",
                 "custom": "Wyślij gdy zostanie dodany konkretny tag",
-                "recent_subscribers": "Wyślij tylko do osób zapisanych w ciągu ostatnich X dni"
+                "recent_subscribers": "Wyślij tylko do osób zapisanych w ciągu ostatnich X dni",
+                "opened_message": "Wyślij do osób, które otworzyły wybraną wiadomość",
+                "not_opened_message": "Nie wysyłaj do osób, które otworzyły wybraną wiadomość"
             },
             "config": {
                 "inactive_days": "Liczba dni nieaktywności",
@@ -1277,7 +1281,12 @@
                 "select_tag": "-- Wybierz tag --",
                 "no_config_needed": "Ten trigger nie wymaga dodatkowej konfiguracji",
                 "recent_days": "Liczba dni od zapisu",
-                "recent_days_help": "Użyj suwaka lub wpisz liczbę ręcznie (1-365 dni)"
+                "recent_days_help": "Użyj suwaka lub wpisz liczbę ręcznie (1-365 dni)",
+                "select_message": "Wybierz wiadomość",
+                "search_message_placeholder": "Szukaj po temacie lub ID...",
+                "select_message_placeholder": "-- Wybierz wiadomość --",
+                "opened_message_help": "Wiadomość zostanie wysłana tylko do osób, które otworzyły wybraną wiadomość",
+                "not_opened_message_help": "Wiadomość NIE zostanie wysłana do osób, które otworzyły wybraną wiadomość"
             }
         },
         "ab_testing": {
@@ -5308,7 +5317,8 @@
                 "include_meet": "Dodaj link Google Meet",
                 "include_meet_desc": "Automatycznie dodaj link do wideokonferencji",
                 "attendees": "Zaproszeni goście",
-                "add_email": "Wpisz email i naciśnij Enter...",
+                "add_email": "Wpisz email gościa...",
+                "add_guest": "Dodaj",
                 "attendees_hint": "Goście dostaną zaproszenie z linkiem do spotkania",
                 "meeting_ready": "Link do spotkania gotowy",
                 "join": "Dołącz",
@@ -5318,6 +5328,12 @@
                     "tentative": "Wstępnie zaakceptowano",
                     "needsAction": "Oczekuje na odpowiedź"
                 }
+            },
+            "zoom": {
+                "include_zoom": "Dodaj spotkanie Zoom",
+                "include_zoom_desc": "Automatycznie utwórz spotkanie Zoom",
+                "meeting_ready": "Link do spotkania Zoom gotowy",
+                "join": "Dołącz"
             },
             "empty": {
                 "button": "Dodaj pierwsze zadanie",

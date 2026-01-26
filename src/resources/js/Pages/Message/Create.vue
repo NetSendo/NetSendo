@@ -930,7 +930,48 @@ const triggerTypes = [
         icon: "📅",
         description: t("messages.triggers.desc.recent_subscribers"),
     },
+    {
+        value: "opened_message",
+        label: t("messages.triggers.types.opened_message"),
+        icon: "👁️",
+        description: t("messages.triggers.desc.opened_message"),
+    },
+    {
+        value: "not_opened_message",
+        label: t("messages.triggers.types.not_opened_message"),
+        icon: "🚫",
+        description: t("messages.triggers.desc.not_opened_message"),
+    },
 ];
+
+// Sent messages search for open-based triggers
+const sentMessagesSearch = ref("");
+const sentMessagesList = ref([]);
+const isSentMessagesLoading = ref(false);
+
+// Fetch sent messages for trigger selection
+const fetchSentMessages = async () => {
+    isSentMessagesLoading.value = true;
+    try {
+        const response = await axios.post(route("messages.search-sent"), {
+            search: sentMessagesSearch.value,
+        });
+        sentMessagesList.value = response.data;
+    } catch (e) {
+        console.error(e);
+    }
+    isSentMessagesLoading.value = false;
+};
+
+// Load sent messages when trigger type changes to open-based
+watch(
+    () => form.trigger_type,
+    (newType) => {
+        if (["opened_message", "not_opened_message"].includes(newType)) {
+            fetchSentMessages();
+        }
+    },
+);
 
 // Preview Logic
 const previewSubscriber = ref(null);
@@ -3112,6 +3153,85 @@ if (form.contact_list_ids.length > 0) {
                                         $t(
                                             "messages.triggers.config.recent_days_help",
                                         )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Opened message / Not opened message config -->
+                        <div
+                            v-if="
+                                [
+                                    'opened_message',
+                                    'not_opened_message',
+                                ].includes(form.trigger_type)
+                            "
+                            class="space-y-3"
+                        >
+                            <div>
+                                <InputLabel
+                                    :value="
+                                        $t(
+                                            'messages.triggers.config.select_message',
+                                        )
+                                    "
+                                />
+
+                                <!-- Search input -->
+                                <div class="mt-2">
+                                    <TextInput
+                                        v-model="sentMessagesSearch"
+                                        type="text"
+                                        class="block w-full"
+                                        :placeholder="
+                                            $t(
+                                                'messages.triggers.config.search_message_placeholder',
+                                            )
+                                        "
+                                        @input="fetchSentMessages"
+                                    />
+                                </div>
+
+                                <!-- Loading indicator -->
+                                <div
+                                    v-if="isSentMessagesLoading"
+                                    class="mt-2 text-sm text-slate-500"
+                                >
+                                    {{ $t("common.loading") }}
+                                </div>
+
+                                <!-- Messages dropdown -->
+                                <select
+                                    v-model="form.trigger_config.message_id"
+                                    class="mt-2 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                >
+                                    <option :value="null">
+                                        {{
+                                            $t(
+                                                "messages.triggers.config.select_message_placeholder",
+                                            )
+                                        }}
+                                    </option>
+                                    <option
+                                        v-for="msg in sentMessagesList"
+                                        :key="msg.id"
+                                        :value="msg.id"
+                                    >
+                                        [{{ msg.id }}] {{ msg.subject }} ({{
+                                            msg.created_at
+                                        }})
+                                    </option>
+                                </select>
+
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{
+                                        form.trigger_type === "opened_message"
+                                            ? $t(
+                                                  "messages.triggers.config.opened_message_help",
+                                              )
+                                            : $t(
+                                                  "messages.triggers.config.not_opened_message_help",
+                                              )
                                     }}
                                 </p>
                             </div>

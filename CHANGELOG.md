@@ -9,12 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Message Open Triggers:**
+  - **New Trigger Types:** Added "Opened message" (`opened_message`) and "Did not open message" (`not_opened_message`) triggers.
+  - **Targeting:** Allows sending follow-up messages based on whether a subscriber opened a specific previous message.
+  - **Filtering Logic:** Implemented backend filtering in `Message::getUniqueRecipients` using `EmailOpen` data.
+  - **UI Implementation:** Added message search and selection in the campaign wizard (`Create.vue`).
+  - **Localization:** Full translations in EN and PL.
+
 - **CRM Delete Functionality:**
   - **Company Deletion:** Implemented comprehensive delete flow for companies with `delete_contacts` option.
   - **Contact Deletion:** Added delete button and confirmation modal for contacts.
   - **Modals:** Added confirmation modals with detailed consequence information (e.g. unlinking vs deleting contacts).
   - **Backend:** Updated `CrmCompanyController::destroy` to handle optional contact deletion.
   - **UI/UX:** Added delete buttons to Show and Index pages for both Contacts and Companies.
+
+- **Zoom Integration Enhancements:**
+  - **Google Calendar Sync:** Zoom meeting links are now automatically added to the Google Calendar event description during synchronization.
+  - **Guest Management:** Unified guest management for both Zoom and Google Meet. Guests added in CRM are correctly passed to Zoom meeting attendees.
+  - **UX Improvements:** Improved "Add Guest" input with a dedicated "Add" button and better validation.
+  - **Localization:** Added missing Zoom translations for all supported languages (PL, EN, DE, ES).
 
 ## [1.7.17] – Short Description
 

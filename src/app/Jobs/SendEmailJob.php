@@ -267,6 +267,11 @@ class SendEmailJob implements ShouldQueue
 
         $entry->markAsSent();
 
+        // Refresh the message model to get current state from database
+        // This is important because the serialized model may be stale
+        // (e.g., after resendToFailed changed status back to 'scheduled')
+        $this->message->refresh();
+
         // Increment sent_count on the message
         $this->message->increment('sent_count');
 
@@ -277,8 +282,12 @@ class SendEmailJob implements ShouldQueue
                 ->count();
 
             if ($pendingCount === 0) {
-                $this->message->update(['status' => 'sent']);
-                Log::info("Broadcast message {$this->message->id} marked as sent - all entries processed");
+                // Only update to 'sent' if currently 'scheduled'
+                // (avoid overwriting other statuses like 'draft')
+                if ($this->message->status === 'scheduled') {
+                    $this->message->update(['status' => 'sent']);
+                    Log::info("Broadcast message {$this->message->id} marked as sent - all entries processed");
+                }
             }
         }
     }
