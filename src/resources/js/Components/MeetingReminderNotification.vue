@@ -98,12 +98,15 @@ const canDismissNow = computed(() => {
                     </button>
                 </div>
 
-                <div v-if="meeting.google_meet_link" class="mt-3">
+                <div v-if="meeting.google_meet_link || meeting.zoom_meeting_link" class="mt-3">
                     <button
                         @click="emit('join')"
                         class="w-full flex items-center justify-center gap-2 rounded-xl bg-white/20 hover:bg-white/30 px-4 py-2.5 text-sm font-semibold transition"
                     >
-                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg v-if="meeting.zoom_meeting_link" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                        </svg>
+                        <svg v-else class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                         </svg>
                         Przygotuj się do wejścia
@@ -144,15 +147,18 @@ const canDismissNow = computed(() => {
                     </button>
                 </div>
 
-                <div v-if="meeting.google_meet_link" class="mt-3">
+                <div v-if="meeting.google_meet_link || meeting.zoom_meeting_link" class="mt-3">
                     <button
                         @click="emit('join')"
                         class="w-full flex items-center justify-center gap-2 rounded-xl bg-white text-red-600 hover:bg-red-50 px-4 py-3 text-base font-bold shadow-lg transition transform hover:scale-105"
                     >
-                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                        <svg v-if="meeting.zoom_meeting_link" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                        </svg>
+                        <svg v-else class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                         </svg>
-                        Dołącz do spotkania
+                        {{ meeting.zoom_meeting_link ? 'Dołącz do Zoom' : 'Dołącz do spotkania' }}
                     </button>
                 </div>
 

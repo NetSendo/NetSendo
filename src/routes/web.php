@@ -456,6 +456,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Google Meet Integration (CRM Video Meetings)
     Route::get('/marketplace/google-meet', fn() => Inertia::render('Marketplace/GoogleMeet'))->name('marketplace.google-meet');
 
+    // Zoom Integration (CRM Video Meetings)
+    Route::get('/marketplace/zoom', fn() => Inertia::render('Marketplace/Zoom'))->name('marketplace.zoom');
+
+    // Zoom Settings
+    Route::prefix('settings/zoom')->name('settings.zoom.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ZoomController::class, 'index'])->name('index');
+        Route::post('/save', [\App\Http\Controllers\ZoomController::class, 'save'])->name('save');
+        Route::get('/connect', [\App\Http\Controllers\ZoomController::class, 'connect'])->name('connect');
+        Route::get('/callback', [\App\Http\Controllers\ZoomController::class, 'callback'])->name('callback');
+        Route::post('/disconnect', [\App\Http\Controllers\ZoomController::class, 'disconnect'])->name('disconnect');
+        Route::get('/status', [\App\Http\Controllers\ZoomController::class, 'status'])->name('status');
+    });
+
     // MCP Status API
     Route::prefix('mcp')->name('mcp.')->group(function () {
         Route::get('/status', [\App\Http\Controllers\McpStatusController::class, 'status'])->name('status');

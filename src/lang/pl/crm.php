@@ -134,6 +134,27 @@ return [
             'primary' => 'Główny',
             'synced' => 'Zsynchronizowane z kalendarzem',
         ],
+        'meet' => [
+            'include_meet' => 'Dodaj link Google Meet',
+            'include_meet_desc' => 'Automatycznie utwórz link do wideokonferencji',
+            'attendees' => 'Uczestnicy spotkania',
+            'add_email' => 'Dodaj email uczestnika i naciśnij Enter',
+            'attendees_hint' => 'Naciśnij Enter aby dodać email. Email kontaktu jest dodawany automatycznie.',
+            'meeting_ready' => 'Link do spotkania gotowy',
+            'join' => 'Dołącz do spotkania',
+            'status' => [
+                'accepted' => 'Zaakceptowane',
+                'declined' => 'Odrzucone',
+                'tentative' => 'Być może',
+                'needsAction' => 'Oczekuje na odpowiedź',
+            ],
+        ],
+        'zoom' => [
+            'include_zoom' => 'Dodaj link Zoom Meeting',
+            'include_zoom_desc' => 'Automatycznie utwórz wideokonferencję Zoom',
+            'meeting_ready' => 'Spotkanie Zoom gotowe',
+            'join' => 'Dołącz do Zoom',
+        ],
         'actions' => [
             'cancel' => 'Anuluj',
             'save' => 'Zapisz zmiany',

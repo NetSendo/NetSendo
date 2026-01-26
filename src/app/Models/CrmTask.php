@@ -59,6 +59,11 @@ class CrmTask extends Model
         'include_google_meet',
         'attendee_emails',
         'attendees_data',
+        // Zoom integration
+        'zoom_meeting_id',
+        'zoom_meeting_link',
+        'zoom_join_url',
+        'include_zoom_meeting',
     ];
 
     protected $casts = [
@@ -83,6 +88,8 @@ class CrmTask extends Model
         'include_google_meet' => 'boolean',
         'attendee_emails' => 'array',
         'attendees_data' => 'array',
+        // Zoom
+        'include_zoom_meeting' => 'boolean',
     ];
 
 

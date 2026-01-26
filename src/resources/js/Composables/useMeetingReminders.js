@@ -140,7 +140,9 @@ export function useMeetingReminders() {
 
     // Join the meeting
     const joinMeeting = () => {
-        if (activeReminder.value?.google_meet_link) {
+        if (activeReminder.value?.zoom_meeting_link) {
+            window.open(activeReminder.value.zoom_meeting_link, "_blank");
+        } else if (activeReminder.value?.google_meet_link) {
             window.open(activeReminder.value.google_meet_link, "_blank");
         }
     };

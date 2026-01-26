@@ -134,6 +134,27 @@ return [
             'primary' => 'Primary',
             'synced' => 'Synced with Calendar',
         ],
+        'meet' => [
+            'include_meet' => 'Add Google Meet link',
+            'include_meet_desc' => 'Automatically create video conference link',
+            'attendees' => 'Meeting Attendees',
+            'add_email' => 'Add attendee email and press Enter',
+            'attendees_hint' => 'Press Enter to add email. Contact email is added automatically.',
+            'meeting_ready' => 'Meeting link ready',
+            'join' => 'Join Meeting',
+            'status' => [
+                'accepted' => 'Accepted',
+                'declined' => 'Declined',
+                'tentative' => 'Maybe',
+                'needsAction' => 'Awaiting response',
+            ],
+        ],
+        'zoom' => [
+            'include_zoom' => 'Add Zoom Meeting link',
+            'include_zoom_desc' => 'Automatically create Zoom video conference',
+            'meeting_ready' => 'Zoom meeting ready',
+            'join' => 'Join Zoom',
+        ],
         'actions' => [
             'cancel' => 'Cancel',
             'save' => 'Save Changes',

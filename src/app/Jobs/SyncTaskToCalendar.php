@@ -79,6 +79,11 @@ class SyncTaskToCalendar implements ShouldQueue
             return;
         }
 
+        // Create Zoom meeting if enabled and not already created
+        if ($this->task->include_zoom_meeting && !$this->task->zoom_meeting_id) {
+            $this->createZoomMeeting();
+        }
+
         if ($this->task->isSyncedToCalendar()) {
             // Update existing event
             $event = $calendarService->updateEvent($this->task, $connection);
@@ -94,6 +99,37 @@ class SyncTaskToCalendar implements ShouldQueue
 
         if (!$event) {
             throw new Exception('Failed to sync event to Calendar');
+        }
+    }
+
+    /**
+     * Create Zoom meeting for the task.
+     */
+    private function createZoomMeeting(): void
+    {
+        try {
+            $zoomService = app(\App\Services\ZoomMeetingService::class);
+            $meetingData = $zoomService->createMeetingFromTask($this->task);
+
+            if ($meetingData) {
+                $this->task->update([
+                    'zoom_meeting_id' => $meetingData['id'] ?? null,
+                    'zoom_join_url' => $meetingData['join_url'] ?? null,
+                    'zoom_start_url' => $meetingData['start_url'] ?? null,
+                    'zoom_password' => $meetingData['password'] ?? null,
+                ]);
+
+                Log::info('Zoom meeting created for task', [
+                    'task_id' => $this->task->id,
+                    'zoom_meeting_id' => $meetingData['id'] ?? null,
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::warning('Failed to create Zoom meeting for task', [
+                'task_id' => $this->task->id,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't fail the entire job if Zoom fails, just log and continue
         }
     }
 

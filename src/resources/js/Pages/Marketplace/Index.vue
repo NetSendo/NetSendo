@@ -182,6 +182,14 @@ const activeIntegrations = [
         color: "green",
         route: "marketplace.google-meet",
     },
+    {
+        id: "zoom",
+        name: "Zoom",
+        description: "Video meetings for CRM tasks",
+        icon: "🎥",
+        color: "blue",
+        route: "marketplace.zoom",
+    },
 ];
 
 // Future integration categories with planned platforms

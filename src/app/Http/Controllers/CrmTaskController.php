@@ -155,6 +155,8 @@ class CrmTaskController extends Controller
             'include_google_meet' => 'nullable|boolean',
             'attendee_emails' => 'nullable|array|max:50',
             'attendee_emails.*' => 'email|max:255',
+            // Zoom
+            'include_zoom_meeting' => 'nullable|boolean',
         ]);
 
         // Combine date and time into datetime
@@ -235,6 +237,8 @@ class CrmTaskController extends Controller
             'include_google_meet' => 'nullable|boolean',
             'attendee_emails' => 'nullable|array|max:50',
             'attendee_emails.*' => 'email|max:255',
+            // Zoom
+            'include_zoom_meeting' => 'nullable|boolean',
         ]);
 
         // Combine date and time into datetime
@@ -543,6 +547,22 @@ class CrmTaskController extends Controller
                                 $meetLink = $videoEntry['uri'] ?? null;
                             }
 
+                            // Extract Zoom meeting link from location, description, or conferenceData
+                            $zoomLink = null;
+                            $zoomPattern = '/https?:\/\/[a-z0-9.-]*zoom\.us\/[jw]\/[\d\w?=&%-]+/i';
+
+                            if (!empty($event['location']) && preg_match($zoomPattern, $event['location'], $matches)) {
+                                $zoomLink = $matches[0];
+                            }
+                            if (!$zoomLink && !empty($event['description']) && preg_match($zoomPattern, $event['description'], $matches)) {
+                                $zoomLink = $matches[0];
+                            }
+                            if (!$zoomLink && isset($event['conferenceData']['entryPoints'])) {
+                                $zoomEntry = collect($event['conferenceData']['entryPoints'])
+                                    ->first(fn($entry) => isset($entry['uri']) && str_contains($entry['uri'], 'zoom.us'));
+                                $zoomLink = $zoomEntry['uri'] ?? null;
+                            }
+
                             $events[] = [
                                 'id' => 'google_' . ($event['id'] ?? uniqid()),
                                 'google_event_id' => $event['id'] ?? null,
@@ -554,6 +574,7 @@ class CrmTaskController extends Controller
                                 'location' => $event['location'] ?? null,
                                 'color' => '#4285F4', // Google blue
                                 'google_meet_link' => $meetLink,
+                                'zoom_meeting_link' => $zoomLink,
                             ];
                         }
                     }
@@ -640,8 +661,24 @@ class CrmTaskController extends Controller
                         $meetLink = $videoEntry['uri'] ?? null;
                     }
 
-                    // Only include events with Meet links
-                    if ($meetLink) {
+                    // Extract Zoom meeting link
+                    $zoomLink = null;
+                    $zoomPattern = '/https?:\/\/[a-z0-9.-]*zoom\.us\/[jw]\/[\d\w?=&%-]+/i';
+
+                    if (!empty($event['location']) && preg_match($zoomPattern, $event['location'], $matches)) {
+                        $zoomLink = $matches[0];
+                    }
+                    if (!$zoomLink && !empty($event['description']) && preg_match($zoomPattern, $event['description'], $matches)) {
+                        $zoomLink = $matches[0];
+                    }
+                    if (!$zoomLink && isset($event['conferenceData']['entryPoints'])) {
+                        $zoomEntry = collect($event['conferenceData']['entryPoints'])
+                            ->first(fn($entry) => isset($entry['uri']) && str_contains($entry['uri'], 'zoom.us'));
+                        $zoomLink = $zoomEntry['uri'] ?? null;
+                    }
+
+                    // Only include events with Meet or Zoom links
+                    if ($meetLink || $zoomLink) {
                         $start = $event['start']['dateTime'] ?? $event['start']['date'] ?? null;
 
                         $meetings->push([
@@ -652,6 +689,7 @@ class CrmTaskController extends Controller
                             'end' => $event['end']['dateTime'] ?? $event['end']['date'] ?? null,
                             'type' => 'google',
                             'google_meet_link' => $meetLink,
+                            'zoom_meeting_link' => $zoomLink,
                             'contact' => null,
                         ]);
                     }

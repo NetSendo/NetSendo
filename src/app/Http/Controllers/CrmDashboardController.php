@@ -118,6 +118,27 @@ class CrmDashboardController extends Controller
                     $meetLink = $videoEntry['uri'] ?? null;
                 }
 
+                // Extract Zoom meeting link from location, description, or conferenceData
+                $zoomLink = null;
+                $zoomPattern = '/https?:\/\/[a-z0-9.-]*zoom\.us\/[jw]\/[\d\w?=&%-]+/i';
+
+                // Check location first (most common place for Zoom links)
+                if (!empty($event['location']) && preg_match($zoomPattern, $event['location'], $matches)) {
+                    $zoomLink = $matches[0];
+                }
+                // Check description if not found in location
+                if (!$zoomLink && !empty($event['description']) && preg_match($zoomPattern, $event['description'], $matches)) {
+                    $zoomLink = $matches[0];
+                }
+                // Check conferenceData for Zoom (some Zoom integrations use this)
+                if (!$zoomLink && isset($event['conferenceData']['entryPoints'])) {
+                    $zoomEntry = collect($event['conferenceData']['entryPoints'])
+                        ->first(function ($entry) {
+                            return isset($entry['uri']) && str_contains($entry['uri'], 'zoom.us');
+                        });
+                    $zoomLink = $zoomEntry['uri'] ?? null;
+                }
+
                 return (object) [
                     'id' => 'google_' . ($event['id'] ?? uniqid()),
                     'google_event_id' => $event['id'] ?? null,
@@ -129,6 +150,7 @@ class CrmDashboardController extends Controller
                     'status' => 'pending',
                     'source' => 'google',
                     'google_meet_link' => $meetLink,
+                    'zoom_meeting_link' => $zoomLink,
                     'location' => $event['location'] ?? null,
                     'contact' => null,
                     'deal' => null,

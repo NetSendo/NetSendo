@@ -687,6 +687,25 @@ onMounted(() => {
                         Meet
                     </a>
 
+                    <!-- Zoom Meeting Link -->
+                    <a
+                        v-if="task.zoom_meeting_link"
+                        :href="task.zoom_meeting_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                        title="Dołącz do Zoom"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                        </svg>
+                        Zoom
+                    </a>
+
                     <!-- Actions Dropdown -->
                     <Dropdown align="right" width="48">
                         <template #trigger>
@@ -986,6 +1005,25 @@ onMounted(() => {
                             />
                         </svg>
                         Dołącz do Meet
+                    </a>
+
+                    <!-- Zoom Meeting Link -->
+                    <a
+                        v-if="event.zoom_meeting_link"
+                        :href="event.zoom_meeting_link"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                        title="Dołącz do Zoom"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                        </svg>
+                        Dołącz do Zoom
                     </a>
                 </div>
             </div>

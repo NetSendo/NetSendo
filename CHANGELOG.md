@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.16] – Short Description
+
+**Release date:** 2026-01-26
+
 ### Added
+
+- **Zoom Integration for CRM Tasks:**
+  - **Full Video Meeting Support:** Parallel implementation to Google Meet, allowing users to choose between Zoom and Meet for CRM tasks.
+  - **OAuth 2.0 Integration:** Secure connection via Zoom App Marketplace with token management (access/refresh tokens).
+  - **Meeting Management:**
+    - Automatic meeting creation when "Add Zoom Meeting" toggle is enabled in Task Modal.
+    - Generates unique Join URL, Start URL, and Password for each task.
+    - Stores meeting details (`zoom_meeting_id`, `zoom_join_url`, `zoom_start_url`, `zoom_password`) in `crm_tasks` table.
+  - **UI Integration:**
+    - Dedicated Marketplace page (`/marketplace/zoom`) with setup instructions.
+    - Settings page (`/settings/zoom`) for managing OAuth credentials and connection status.
+    - Seamless integration in Task Modal with automatic Google Meet mutual exclusivity (toggling one disables the other).
+  - **Backend Architecture:**
+    - `UserZoomConnection` model for secure credential storage.
+    - `ZoomOAuthService` for handling authorization flow and token refresh.
+    - `ZoomMeetingService` for API interactions.
+    - Integration with `SyncTaskToCalendar` job to ensuring meetings are created during calendar sync.
+  - **Localization:** Full translations in EN, PL, DE, ES.
 
 - **CRM Sales Funnel Improvements:**
   - **Deal Detail Modal:** Added a modal to view and edit deal details (name, value, stage, contact, company) directly from the Kanban board by clicking on a deal.

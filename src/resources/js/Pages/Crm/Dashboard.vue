@@ -529,6 +529,19 @@ const getActivityIcon = (type) => {
                                     </svg>
                                     Meet
                                 </a>
+                                <!-- Zoom button -->
+                                <a
+                                    v-if="task.zoom_meeting_link"
+                                    :href="task.zoom_meeting_link"
+                                    target="_blank"
+                                    class="flex items-center gap-1 rounded-lg bg-blue-100 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition"
+                                    @click.stop
+                                >
+                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                                    </svg>
+                                    Zoom
+                                </a>
                                 <span
                                     class="text-sm text-slate-500 dark:text-slate-400"
                                 >

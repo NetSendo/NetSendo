@@ -63,6 +63,8 @@ const form = useForm({
     // Google Meet
     include_google_meet: false,
     attendee_emails: [],
+    // Zoom
+    include_zoom_meeting: false,
 });
 
 // Reset form when modal opens
@@ -126,6 +128,9 @@ watch(
                 form.include_google_meet =
                     props.task.include_google_meet || false;
                 form.attendee_emails = props.task.attendee_emails || [];
+                // Zoom
+                form.include_zoom_meeting =
+                    props.task.include_zoom_meeting || false;
             } else {
                 form.reset();
                 form.crm_contact_id = props.contactId;
@@ -1053,6 +1058,102 @@ const priorities = [
                                     />
                                 </svg>
                                 {{ $t("crm.task.meet.join") }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zoom Meeting Integration -->
+                <div
+                    v-if="form.sync_to_calendar && form.type === 'meeting'"
+                    class="rounded-xl border border-blue-200 dark:border-blue-700/50 p-4 bg-blue-50 dark:bg-blue-900/20"
+                >
+                    <div class="flex items-center gap-3 mb-3">
+                        <svg
+                            class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                        >
+                            <circle cx="12" cy="12" r="10" fill="currentColor"/>
+                            <path fill="white" d="M8 9.5v5c0 .28.22.5.5.5h5c.28 0 .5-.22.5-.5v-5c0-.28-.22-.5-.5-.5h-5c-.28 0-.5.22-.5.5z"/>
+                            <path fill="white" d="M15 10.5l2.5-1.5v6l-2.5-1.5v-3z"/>
+                        </svg>
+                        <span
+                            class="font-medium text-blue-900 dark:text-blue-100"
+                            >Zoom Meeting</span
+                        >
+                    </div>
+
+                    <div class="flex items-center gap-3 mb-4">
+                        <label
+                            class="relative inline-flex items-center cursor-pointer"
+                        >
+                            <input
+                                type="checkbox"
+                                v-model="form.include_zoom_meeting"
+                                @change="form.include_zoom_meeting && (form.include_google_meet = false)"
+                                class="sr-only peer"
+                            />
+                            <div
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-500"
+                            ></div>
+                        </label>
+                        <div>
+                            <span
+                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                            >
+                                {{ $t("crm.task.zoom.include_zoom") }}
+                            </span>
+                            <p
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("crm.task.zoom.include_zoom_desc") }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Show Zoom Link if exists -->
+                    <div
+                        v-if="task?.zoom_join_url"
+                        class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-blue-200 dark:border-blue-700/50"
+                    >
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <svg
+                                    class="h-5 w-5 text-blue-500"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"
+                                    />
+                                </svg>
+                                <span
+                                    class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.task.zoom.meeting_ready") }}
+                                </span>
+                            </div>
+                            <a
+                                :href="task.zoom_join_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                    />
+                                </svg>
+                                {{ $t("crm.task.zoom.join") }}
                             </a>
                         </div>
                     </div>
