@@ -128,7 +128,12 @@ class FormSubmissionService
             $this->triggerIntegrations($submission);
 
             // Dispatch events for automations
-            event(new SubscriberSignedUp($subscriber, $form->contactList, $form, 'form'));
+            // IMPORTANT: Only dispatch SubscriberSignedUp for non-double-opt-in forms
+            // For double opt-in, the event is dispatched after confirmation in ActivationController
+            // This prevents duplicate autoresponder queue entries and double email sends
+            if (!$form->shouldUseDoubleOptin()) {
+                event(new SubscriberSignedUp($subscriber, $form->contactList, $form, 'form'));
+            }
             event(new FormSubmitted($submission, $subscriber, $form));
 
             // Prepare subscriber data for webhooks
