@@ -6,6 +6,7 @@ import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import SendEmailModal from "@/Components/Crm/SendEmailModal.vue";
 import TaskModal from "@/Components/Crm/TaskModal.vue";
 import ScoreHistory from "@/Components/Crm/ScoreHistory.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const { formatDate: formatDateBase, locale, formatCurrency } = useDateTime();
@@ -36,19 +37,19 @@ const activityForm = useForm({
     content: "",
 });
 
-    const { t } = useI18n();
+const { t } = useI18n();
 
-    const addActivity = () => {
-        if (!activityForm.content.trim()) return;
+const addActivity = () => {
+    if (!activityForm.content.trim()) return;
 
-        activityForm.post(`/crm/contacts/${props.contact.id}/activity`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                activityForm.reset();
-                showToast(t('crm.activities.activity_added_toast'));
-            },
-        });
-    };
+    activityForm.post(`/crm/contacts/${props.contact.id}/activity`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            activityForm.reset();
+            showToast(t("crm.activities.activity_added_toast"));
+        },
+    });
+};
 
 // Email modal state
 const showEmailModal = ref(false);
@@ -63,6 +64,20 @@ const showTaskModal = ref(false);
 
 const onTaskSaved = () => {
     router.reload({ only: ["contact", "activities"] });
+};
+
+// Delete modal state
+const showDeleteModal = ref(false);
+const isDeleting = ref(false);
+
+const deleteContact = () => {
+    isDeleting.value = true;
+    router.delete(`/crm/contacts/${props.contact.id}`, {
+        onFinish: () => {
+            isDeleting.value = false;
+            showDeleteModal.value = false;
+        },
+    });
 };
 
 // Activity type options
@@ -203,7 +218,7 @@ const getActivityIcon = (type) => {
                                 d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                             />
                         </svg>
-                        {{ $t('crm.contacts.actions.call', 'Zadzwoń') }}
+                        {{ $t("crm.contacts.actions.call", "Zadzwoń") }}
                     </button>
                     <button
                         @click="showTaskModal = true"
@@ -222,7 +237,7 @@ const getActivityIcon = (type) => {
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
                             />
                         </svg>
-                        {{ $t('crm.contacts.actions.add_task', 'Zadanie') }}
+                        {{ $t("crm.contacts.actions.add_task", "Zadanie") }}
                     </button>
                     <button
                         @click="showEmailModal = true"
@@ -241,7 +256,26 @@ const getActivityIcon = (type) => {
                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             />
                         </svg>
-                        {{ $t('crm.contacts.actions.email', 'Wyślij email') }}
+                        {{ $t("crm.contacts.actions.email", "Wyślij email") }}
+                    </button>
+                    <button
+                        @click="showDeleteModal = true"
+                        class="inline-flex items-center gap-2 rounded-xl bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
+                        {{ $t("crm.contacts.actions.delete", "Usuń") }}
                     </button>
                 </div>
             </div>
@@ -257,14 +291,19 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.sections.contact_details', 'Dane kontaktu') }}
+                        {{
+                            $t(
+                                "crm.contacts.sections.contact_details",
+                                "Dane kontaktu",
+                            )
+                        }}
                     </h2>
                     <dl class="space-y-4">
                         <div>
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.email', 'Email') }}
+                                {{ $t("crm.contacts.fields.email", "Email") }}
                             </dt>
                             <dd class="mt-1 text-slate-900 dark:text-white">
                                 {{ contact.subscriber?.email || "-" }}
@@ -274,7 +313,7 @@ const getActivityIcon = (type) => {
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.phone', 'Telefon') }}
+                                {{ $t("crm.contacts.fields.phone", "Telefon") }}
                             </dt>
                             <dd class="mt-1 text-slate-900 dark:text-white">
                                 {{ contact.subscriber?.phone || "-" }}
@@ -284,7 +323,7 @@ const getActivityIcon = (type) => {
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.status', 'Status') }}
+                                {{ $t("crm.contacts.fields.status", "Status") }}
                             </dt>
                             <dd class="mt-1">
                                 <span
@@ -301,7 +340,7 @@ const getActivityIcon = (type) => {
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.score', 'Score') }}
+                                {{ $t("crm.contacts.fields.score", "Score") }}
                             </dt>
                             <dd class="mt-1 flex items-center gap-2">
                                 <div
@@ -324,7 +363,7 @@ const getActivityIcon = (type) => {
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.source', 'Źródło') }}
+                                {{ $t("crm.contacts.fields.source", "Źródło") }}
                             </dt>
                             <dd class="mt-1 text-slate-900 dark:text-white">
                                 {{ contact.source || "-" }}
@@ -334,7 +373,12 @@ const getActivityIcon = (type) => {
                             <dt
                                 class="text-sm font-medium text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.fields.owner', 'Handlowiec') }}
+                                {{
+                                    $t(
+                                        "crm.contacts.fields.owner",
+                                        "Handlowiec",
+                                    )
+                                }}
                             </dt>
                             <dd class="mt-1 text-slate-900 dark:text-white">
                                 {{ contact.owner?.name || "Nieprzypisany" }}
@@ -351,7 +395,7 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.fields.company', 'Firma') }}
+                        {{ $t("crm.contacts.fields.company", "Firma") }}
                     </h2>
                     <Link
                         :href="`/crm/companies/${contact.company.id}`"
@@ -377,7 +421,7 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.fields.tags', 'Tagi') }}
+                        {{ $t("crm.contacts.fields.tags", "Tagi") }}
                     </h2>
                     <div class="flex flex-wrap gap-2">
                         <span
@@ -403,7 +447,12 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.sections.marketing_data', 'Dane marketingowe') }}
+                        {{
+                            $t(
+                                "crm.contacts.sections.marketing_data",
+                                "Dane marketingowe",
+                            )
+                        }}
                     </h2>
 
                     <!-- Email Lists -->
@@ -411,7 +460,12 @@ const getActivityIcon = (type) => {
                         <h3
                             class="text-sm font-medium text-slate-500 dark:text-slate-400"
                         >
-                            {{ $t('crm.contacts.sections.email_lists', 'Listy email') }}
+                            {{
+                                $t(
+                                    "crm.contacts.sections.email_lists",
+                                    "Listy email",
+                                )
+                            }}
                         </h3>
                         <div class="mt-2 flex flex-wrap gap-2">
                             <span
@@ -429,7 +483,12 @@ const getActivityIcon = (type) => {
                         <h3
                             class="text-sm font-medium text-slate-500 dark:text-slate-400"
                         >
-                            {{ $t('crm.contacts.sections.sms_lists', 'Listy SMS') }}
+                            {{
+                                $t(
+                                    "crm.contacts.sections.sms_lists",
+                                    "Listy SMS",
+                                )
+                            }}
                         </h3>
                         <div class="mt-2 flex flex-wrap gap-2">
                             <span
@@ -455,7 +514,12 @@ const getActivityIcon = (type) => {
                             <p
                                 class="text-sm text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.marketing.opens', 'Otwarcia') }}
+                                {{
+                                    $t(
+                                        "crm.contacts.marketing.opens",
+                                        "Otwarcia",
+                                    )
+                                }}
                             </p>
                         </div>
                         <div>
@@ -467,7 +531,12 @@ const getActivityIcon = (type) => {
                             <p
                                 class="text-sm text-slate-500 dark:text-slate-400"
                             >
-                                {{ $t('crm.contacts.marketing.clicks', 'Kliknięcia') }}
+                                {{
+                                    $t(
+                                        "crm.contacts.marketing.clicks",
+                                        "Kliknięcia",
+                                    )
+                                }}
                             </p>
                         </div>
                     </div>
@@ -483,7 +552,9 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.activities.add_activity', 'Dodaj aktywność') }}
+                        {{
+                            $t("crm.activities.add_activity", "Dodaj aktywność")
+                        }}
                     </h2>
                     <div class="space-y-4">
                         <div class="flex gap-2">
@@ -511,13 +582,23 @@ const getActivityIcon = (type) => {
                                         :d="type.icon"
                                     />
                                 </svg>
-                                {{ $t(`crm.activities.type.${type.value}`, type.label) }}
+                                {{
+                                    $t(
+                                        `crm.activities.type.${type.value}`,
+                                        type.label,
+                                    )
+                                }}
                             </button>
                         </div>
                         <textarea
                             v-model="activityForm.content"
                             rows="3"
-                            :placeholder="$t('crm.activities.note_placeholder', 'Dodaj notatkę lub opis aktywności...')"
+                            :placeholder="
+                                $t(
+                                    'crm.activities.note_placeholder',
+                                    'Dodaj notatkę lub opis aktywności...',
+                                )
+                            "
                             class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                         ></textarea>
                         <button
@@ -530,10 +611,10 @@ const getActivityIcon = (type) => {
                         >
                             <svg
                                 class="h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -541,7 +622,7 @@ const getActivityIcon = (type) => {
                                     d="M12 4v16m8-8H4"
                                 />
                             </svg>
-                            {{ $t('crm.activities.actions.add', 'Dodaj') }}
+                            {{ $t("crm.activities.actions.add", "Dodaj") }}
                         </button>
                     </div>
                 </div>
@@ -554,7 +635,12 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.sections.open_deals', 'Otwarte deale') }}
+                        {{
+                            $t(
+                                "crm.contacts.sections.open_deals",
+                                "Otwarte deale",
+                            )
+                        }}
                     </h2>
                     <div class="space-y-3">
                         <Link
@@ -591,7 +677,7 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 flex items-center justify-between text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.tasks.title', 'Zadania') }}
+                        {{ $t("crm.tasks.title", "Zadania") }}
                         <div class="flex items-center gap-2">
                             <button
                                 @click="showTaskModal = true"
@@ -660,7 +746,12 @@ const getActivityIcon = (type) => {
                             />
                         </svg>
                         <p class="mt-2 text-slate-500 dark:text-slate-400">
-                           {{ $t('crm.tasks.empty_contact', 'Brak zadań dla tego kontaktu') }}
+                            {{
+                                $t(
+                                    "crm.tasks.empty_contact",
+                                    "Brak zadań dla tego kontaktu",
+                                )
+                            }}
                         </p>
                         <button
                             @click="showTaskModal = true"
@@ -679,7 +770,7 @@ const getActivityIcon = (type) => {
                                     d="M12 4v16m8-8H4"
                                 />
                             </svg>
-                            {{ $t('crm.tasks.add', 'Dodaj zadanie') }}
+                            {{ $t("crm.tasks.add", "Dodaj zadanie") }}
                         </button>
                     </div>
                 </div>
@@ -691,7 +782,12 @@ const getActivityIcon = (type) => {
                     <h2
                         class="mb-4 text-lg font-semibold text-slate-900 dark:text-white"
                     >
-                        {{ $t('crm.contacts.activity_history', 'Historia aktywności') }}
+                        {{
+                            $t(
+                                "crm.contacts.activity_history",
+                                "Historia aktywności",
+                            )
+                        }}
                     </h2>
                     <div v-if="activities?.length" class="space-y-4">
                         <div
@@ -724,7 +820,11 @@ const getActivityIcon = (type) => {
                                         class="text-sm font-medium text-slate-900 dark:text-white"
                                     >
                                         {{
-                                            activity.type_label || $t(`crm.activities.type.${activity.type}`) || activity.type
+                                            activity.type_label ||
+                                            $t(
+                                                `crm.activities.type.${activity.type}`,
+                                            ) ||
+                                            activity.type
                                         }}
                                     </span>
                                     <span
@@ -742,7 +842,7 @@ const getActivityIcon = (type) => {
                                 <p
                                     class="mt-2 text-xs text-slate-500 dark:text-slate-400"
                                 >
-                                    {{ $t('crm.contacts.by', 'przez') }}
+                                    {{ $t("crm.contacts.by", "przez") }}
                                     {{ activity.created_by?.name || "System" }}
                                 </p>
                             </div>
@@ -752,7 +852,12 @@ const getActivityIcon = (type) => {
                         v-else
                         class="py-8 text-center text-slate-500 dark:text-slate-400"
                     >
-                        {{ $t('crm.contacts.no_activities', 'Brak historii aktywności') }}
+                        {{
+                            $t(
+                                "crm.contacts.no_activities",
+                                "Brak historii aktywności",
+                            )
+                        }}
                     </div>
                 </div>
             </div>
@@ -844,5 +949,21 @@ const getActivityIcon = (type) => {
                 </div>
             </Transition>
         </Teleport>
+        <!-- Delete Contact Modal -->
+        <ConfirmModal
+            :show="showDeleteModal"
+            :title="$t('crm.contacts.delete.title', 'Usuń kontakt')"
+            :message="
+                $t(
+                    'crm.contacts.delete.message',
+                    'Czy na pewno chcesz usunąć ten kontakt z CRM? Subskrybent (email) pozostanie w systemie marketingowym.',
+                )
+            "
+            :confirm-text="$t('crm.contacts.delete.confirm', 'Usuń kontakt')"
+            type="danger"
+            :processing="isDeleting"
+            @close="showDeleteModal = false"
+            @confirm="deleteContact"
+        />
     </AuthenticatedLayout>
 </template>

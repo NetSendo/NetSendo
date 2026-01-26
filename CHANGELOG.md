@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CRM Delete Functionality:**
+  - **Company Deletion:** Implemented comprehensive delete flow for companies with `delete_contacts` option.
+  - **Contact Deletion:** Added delete button and confirmation modal for contacts.
+  - **Modals:** Added confirmation modals with detailed consequence information (e.g. unlinking vs deleting contacts).
+  - **Backend:** Updated `CrmCompanyController::destroy` to handle optional contact deletion.
+  - **UI/UX:** Added delete buttons to Show and Index pages for both Contacts and Companies.
+
 ## [1.7.17] – Short Description
 
 **Release date:** 2026-01-26

@@ -202,7 +202,7 @@ class CrmCompanyController extends Controller
     /**
      * Remove the specified company.
      */
-    public function destroy(CrmCompany $company): RedirectResponse
+    public function destroy(Request $request, CrmCompany $company): RedirectResponse
     {
         $userId = auth()->user()->admin_user_id ?? auth()->id();
 
@@ -210,14 +210,25 @@ class CrmCompanyController extends Controller
             abort(403);
         }
 
-        // Unlink contacts from company
-        CrmContact::where('crm_company_id', $company->id)
-            ->update(['crm_company_id' => null]);
+        $deleteContacts = $request->boolean('delete_contacts', false);
+
+        if ($deleteContacts) {
+            // Delete all associated contacts
+            CrmContact::where('crm_company_id', $company->id)->delete();
+        } else {
+            // Just unlink contacts from company
+            CrmContact::where('crm_company_id', $company->id)
+                ->update(['crm_company_id' => null]);
+        }
 
         $company->delete();
 
+        $message = $deleteContacts
+            ? 'Firma i powiązane kontakty zostały usunięte.'
+            : 'Firma została usunięta. Kontakty zostały odłączone.';
+
         return redirect()->route('crm.companies.index')
-            ->with('success', 'Firma została usunięta.');
+            ->with('success', $message);
     }
 
     /**

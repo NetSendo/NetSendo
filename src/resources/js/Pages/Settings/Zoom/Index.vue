@@ -18,6 +18,38 @@ const form = useForm({
 });
 
 const saving = ref(false);
+const toastMessage = ref("");
+const showToast = ref(false);
+
+const displayToast = (message) => {
+    toastMessage.value = message;
+    showToast.value = true;
+    setTimeout(() => {
+        showToast.value = false;
+    }, 2000);
+};
+
+const copyToClipboard = async (text) => {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            // Fallback dla starszych przeglądarek
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+        }
+        displayToast("Copied to clipboard!");
+    } catch (err) {
+        console.error("Failed to copy: ", err);
+        displayToast("Failed to copy");
+    }
+};
 
 const saveSettings = () => {
     saving.value = true;
@@ -25,6 +57,9 @@ const saveSettings = () => {
         preserveScroll: true,
         onFinish: () => {
             saving.value = false;
+        },
+        onSuccess: () => {
+            displayToast("Credentials saved!");
         },
     });
 };
@@ -124,7 +159,7 @@ const disconnect = () => {
                         </h2>
                         <p class="text-sm text-gray-600 dark:text-slate-400 mb-6">
                             Enter your Zoom OAuth app credentials from
-                            <a href="https://marketplace.zoom.us/develop" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Zoom Marketplace</a>.
+                            <a href="https://marketplace.zoom.us/" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Zoom Marketplace</a>.
                         </p>
 
                         <form @submit.prevent="saveSettings" class="space-y-4">
@@ -168,7 +203,7 @@ const disconnect = () => {
                                     />
                                     <button
                                         type="button"
-                                        @click="navigator.clipboard.writeText(settings?.redirect_uri)"
+                                        @click="copyToClipboard(settings?.redirect_uri)"
                                         class="rounded-lg px-3 py-2.5 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                                     >
                                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,4 +271,21 @@ const disconnect = () => {
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Toast Notification -->
+    <Transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-2"
+    >
+        <div
+            v-if="showToast"
+            class="fixed bottom-6 right-6 z-50 rounded-lg bg-gray-900 dark:bg-white px-4 py-3 text-sm font-medium text-white dark:text-gray-900 shadow-lg"
+        >
+            {{ toastMessage }}
+        </div>
+    </Transition>
 </template>

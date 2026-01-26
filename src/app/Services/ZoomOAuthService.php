@@ -16,20 +16,24 @@ class ZoomOAuthService
 
     /**
      * Get Zoom Client ID from settings.
+     * Database settings take priority, config is fallback.
      */
     private function getClientId(): ?string
     {
-        return config('services.zoom.client_id') ?:
-            \App\Models\Setting::where('key', 'zoom_client_id')->value('value');
+        // Database first, then config as fallback
+        return \App\Models\Setting::where('key', 'zoom_client_id')->value('value')
+            ?: config('services.zoom.client_id');
     }
 
     /**
      * Get Zoom Client Secret from settings.
+     * Database settings take priority, config is fallback.
      */
     private function getClientSecret(): ?string
     {
-        return config('services.zoom.client_secret') ?:
-            \App\Models\Setting::where('key', 'zoom_client_secret')->value('value');
+        // Database first, then config as fallback
+        return \App\Models\Setting::where('key', 'zoom_client_secret')->value('value')
+            ?: config('services.zoom.client_secret');
     }
 
     /**

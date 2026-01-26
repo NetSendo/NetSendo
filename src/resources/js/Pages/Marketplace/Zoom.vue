@@ -153,11 +153,14 @@ const setupSteps = [
                             </h2>
                             <div class="space-y-4 text-gray-600 dark:text-slate-400">
                                 <p>
-                                    1. Go to <a href="https://marketplace.zoom.us/develop/create" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Zoom App Marketplace</a>
+                                    1. Go to <a href="https://marketplace.zoom.us/" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Zoom App Marketplace</a>
                                 </p>
                                 <p>
-                                    2. Click "Build App" and select "OAuth" app type
+                                    2. Click "Build App" and select <strong class="text-gray-900 dark:text-white">"General App"</strong> (first option)
                                 </p>
+                                <div class="rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden my-2">
+                                    <img src="/images/zoom-app-type.png" alt="Zoom App Type Selection" class="w-full max-w-md" />
+                                </div>
                                 <p>
                                     3. Fill in app information and add required scopes:
                                 </p>
