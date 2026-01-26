@@ -79,9 +79,23 @@ class SyncTaskToCalendar implements ShouldQueue
             return;
         }
 
-        // Create Zoom meeting if enabled and not already created
-        if ($this->task->include_zoom_meeting && !$this->task->zoom_meeting_id) {
-            $this->createZoomMeeting();
+        // Refresh task to get latest state (important for retries to prevent duplicate meetings)
+        $this->task->refresh();
+
+        // Handle Zoom meeting: create, update, or delete
+        if ($this->task->include_zoom_meeting) {
+            if (!$this->task->zoom_meeting_id) {
+                $this->createZoomMeeting();
+                // Refresh task after Zoom creation to get the saved meeting data
+                $this->task->refresh();
+            } else {
+                // Update existing Zoom meeting if task details changed
+                $this->updateZoomMeeting();
+            }
+        } elseif ($this->task->zoom_meeting_id) {
+            // Zoom was disabled but meeting exists - delete it
+            $this->deleteZoomMeeting();
+            $this->task->refresh();
         }
 
         if ($this->task->isSyncedToCalendar()) {
@@ -104,6 +118,7 @@ class SyncTaskToCalendar implements ShouldQueue
 
     /**
      * Create Zoom meeting for the task.
+     * Note: ZoomMeetingService::createMeetingFromTask already saves data to the task.
      */
     private function createZoomMeeting(): void
     {
@@ -123,15 +138,9 @@ class SyncTaskToCalendar implements ShouldQueue
 
             $zoomService = app(\App\Services\ZoomMeetingService::class);
             $meetingData = $zoomService->createMeetingFromTask($this->task, $zoomConnection);
+            // Note: ZoomMeetingService already saves zoom_meeting_id, zoom_meeting_link, zoom_join_url to the task
 
             if ($meetingData) {
-                $this->task->update([
-                    'zoom_meeting_id' => $meetingData['id'] ?? null,
-                    'zoom_join_url' => $meetingData['join_url'] ?? null,
-                    'zoom_start_url' => $meetingData['start_url'] ?? null,
-                    'zoom_password' => $meetingData['password'] ?? null,
-                ]);
-
                 Log::info('Zoom meeting created for task', [
                     'task_id' => $this->task->id,
                     'zoom_meeting_id' => $meetingData['id'] ?? null,
@@ -147,10 +156,84 @@ class SyncTaskToCalendar implements ShouldQueue
     }
 
     /**
+     * Update existing Zoom meeting.
+     */
+    private function updateZoomMeeting(): void
+    {
+        try {
+            $zoomConnection = \App\Models\UserZoomConnection::forUser($this->task->user_id)
+                ->active()
+                ->first();
+
+            if (!$zoomConnection) {
+                return;
+            }
+
+            $zoomService = app(\App\Services\ZoomMeetingService::class);
+            $meetingData = $zoomService->updateMeeting($this->task, $zoomConnection);
+
+            if ($meetingData) {
+                Log::info('Zoom meeting updated for task', [
+                    'task_id' => $this->task->id,
+                    'zoom_meeting_id' => $this->task->zoom_meeting_id,
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::warning('Failed to update Zoom meeting for task', [
+                'task_id' => $this->task->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Delete Zoom meeting for the task.
+     */
+    private function deleteZoomMeeting(): void
+    {
+        try {
+            $zoomConnection = \App\Models\UserZoomConnection::forUser($this->task->user_id)
+                ->active()
+                ->first();
+
+            if (!$zoomConnection || !$this->task->zoom_meeting_id) {
+                return;
+            }
+
+            $zoomService = app(\App\Services\ZoomMeetingService::class);
+            $deleted = $zoomService->deleteMeeting($this->task->zoom_meeting_id, $zoomConnection);
+
+            if ($deleted) {
+                $this->task->update([
+                    'zoom_meeting_id' => null,
+                    'zoom_join_url' => null,
+                    'zoom_start_url' => null,
+                    'zoom_password' => null,
+                ]);
+
+                Log::info('Zoom meeting deleted for task', [
+                    'task_id' => $this->task->id,
+                ]);
+            }
+        } catch (Exception $e) {
+            Log::warning('Failed to delete Zoom meeting for task', [
+                'task_id' => $this->task->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Handle delete action.
      */
     private function handleDelete(GoogleCalendarService $calendarService, UserCalendarConnection $connection): void
     {
+        // Delete Zoom meeting if exists
+        if ($this->task->zoom_meeting_id) {
+            $this->deleteZoomMeeting();
+        }
+
+        // Delete Google Calendar event if exists
         if (!$this->task->google_calendar_event_id) {
             return;
         }

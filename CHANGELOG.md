@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+### Changed
+
+## [1.7.20] – Short Description
+
+**Release date:** 2026-01-27
+
+### Added
+
+### Fixed
+
 - **Zoom Integration Translations:**
   - Fixed missing translations for Zoom integration in Task Modal (`crm.task.zoom.add_email`, `add_guest`, `attendees_hint`) in PL and EN.
   - Added missing Zoom attendees translations for German and Spanish locales.
@@ -24,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Zoom Integration & Calendar Sync:**
   - Fixed critical `ArgumentCountError` in `SyncTaskToCalendar` job by correctly passing `UserZoomConnection` when creating meetings.
   - Fixed missing Zoom join link in Google Calendar events by adding it to the `location` field, enabling the native "Join" button.
+  - **New:** Zoom meetings are now automatically deleted when a CRM task is deleted.
+  - **New:** Zoom meetings are now automatically updated when task title or time changes.
+  - **New:** Disabling "Zoom Meeting" toggle on an existing task now deletes the associated Zoom meeting.
+  - Fixed duplicate Zoom meetings being created on job retry by refreshing task state from database before checking `zoom_meeting_id`.
+  - Fixed `zoom_meeting_link` column truncation error by expanding from VARCHAR(500) to TEXT to accommodate long Zoom start URLs with JWT tokens.
 
 ### Changed
 

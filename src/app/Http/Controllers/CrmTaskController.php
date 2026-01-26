@@ -393,6 +393,27 @@ class CrmTaskController extends Controller
             abort(403);
         }
 
+        // Delete Zoom meeting if exists
+        if ($task->zoom_meeting_id) {
+            try {
+                $zoomConnection = UserZoomConnection::forUser($userId)
+                    ->active()
+                    ->first();
+
+                if ($zoomConnection) {
+                    $zoomService = app(\App\Services\ZoomMeetingService::class);
+                    $zoomService->deleteMeeting($task->zoom_meeting_id, $zoomConnection);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to delete Zoom meeting when deleting task', [
+                    'task_id' => $task->id,
+                    'zoom_meeting_id' => $task->zoom_meeting_id,
+                    'error' => $e->getMessage(),
+                ]);
+                // Continue with task deletion even if Zoom delete fails
+            }
+        }
+
         // Delete from Google Calendar if synced (dispatch sync job before deleting)
         if ($task->isSyncedToCalendar()) {
             \App\Jobs\SyncTaskToCalendar::dispatchSync($task, 'delete');
