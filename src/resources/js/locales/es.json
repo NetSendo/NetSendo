@@ -1660,6 +1660,17 @@
             "select_all_modal_title": "Todos seleccionados",
             "select_all_modal_desc": "Seleccionados {count} suscriptores de esta lista. Ahora puede realizar una operación masiva."
         },
+        "columns": {
+            "title": "Columnas visibles",
+            "custom_fields": "Campos personalizados",
+            "active": "Columnas activas",
+            "available": "Columnas disponibles"
+        },
+        "column_settings": "Configuración de columnas",
+        "sort": {
+            "asc": "Ascendente",
+            "desc": "Descendente"
+        },
         "import": {
             "title": "Importar suscriptores",
             "subtitle": "Importar contactos desde archivo CSV",
