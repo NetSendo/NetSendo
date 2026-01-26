@@ -85,6 +85,163 @@ const loadColumnSettings = () => {
 
 const visibleColumns = ref(loadColumnSettings());
 
+// Column ordering (persisted to localStorage)
+const standardColumnDefinitions = [
+    {
+        key: "email",
+        labelKey: "subscribers.table.email",
+        sortKey: "email",
+        sortable: true,
+        type: "email",
+    },
+    {
+        key: "name",
+        labelKey: "subscribers.table.name",
+        sortKey: "first_name",
+        sortable: true,
+        type: "name",
+    },
+    {
+        key: "phone",
+        labelKey: "subscribers.table.phone",
+        sortKey: "phone",
+        sortable: true,
+        type: "phone",
+    },
+    {
+        key: "status",
+        labelKey: "subscribers.table.status",
+        sortable: false,
+        type: "status",
+    },
+    {
+        key: "list",
+        labelKey: "subscribers.table.list",
+        sortable: false,
+        type: "list",
+    },
+    {
+        key: "created_at",
+        labelKey: "subscribers.table.added_at",
+        sortKey: "created_at",
+        sortable: true,
+        type: "created_at",
+    },
+];
+
+const getCustomFieldKeys = () =>
+    (props.customFields || []).map((field) => `cf_${field.id}`);
+
+const buildDefaultColumnOrder = (customKeys) => {
+    const base = ["email", "name", "phone", "status", "list", "created_at"];
+    const createdAtIndex = base.indexOf("created_at");
+    return [
+        ...base.slice(0, createdAtIndex),
+        ...customKeys,
+        ...base.slice(createdAtIndex),
+    ];
+};
+
+const insertMissingKeys = (order, missingKeys) => {
+    let next = [...order];
+    missingKeys.forEach((key) => {
+        if (key.startsWith("cf_")) {
+            const createdAtIndex = next.indexOf("created_at");
+            if (createdAtIndex === -1) {
+                next.push(key);
+            } else {
+                next.splice(createdAtIndex, 0, key);
+            }
+            return;
+        }
+        next.push(key);
+    });
+    return next;
+};
+
+const normalizeColumnOrder = (order) => {
+    const customKeys = getCustomFieldKeys();
+    const defaultOrder = buildDefaultColumnOrder(customKeys);
+    const filteredOrder = Array.isArray(order)
+        ? order.filter((key) => defaultOrder.includes(key))
+        : [];
+    if (filteredOrder.length === 0) {
+        return defaultOrder;
+    }
+    const missing = defaultOrder.filter((key) => !filteredOrder.includes(key));
+    return missing.length > 0
+        ? insertMissingKeys(filteredOrder, missing)
+        : filteredOrder;
+};
+
+const loadColumnOrder = () => {
+    const saved = localStorage.getItem("subscriberColumnOrder");
+    if (!saved) {
+        return normalizeColumnOrder([]);
+    }
+    try {
+        return normalizeColumnOrder(JSON.parse(saved));
+    } catch (e) {
+        return normalizeColumnOrder([]);
+    }
+};
+
+const saveColumnOrder = (order) => {
+    localStorage.setItem("subscriberColumnOrder", JSON.stringify(order));
+};
+
+const columnOrder = ref(loadColumnOrder());
+
+const isSameOrder = (a, b) =>
+    a.length === b.length && a.every((value, index) => value === b[index]);
+
+watch(
+    () => props.customFields,
+    () => {
+        const normalized = normalizeColumnOrder(columnOrder.value);
+        if (!isSameOrder(columnOrder.value, normalized)) {
+            columnOrder.value = normalized;
+            saveColumnOrder(columnOrder.value);
+        }
+    },
+    { deep: true }
+);
+
+const customFieldColumns = computed(() =>
+    (props.customFields || []).map((field) => ({
+        key: `cf_${field.id}`,
+        label: field.label || field.name,
+        type: "custom",
+        fieldId: field.id,
+    }))
+);
+
+const columnDefinitionMap = computed(() => {
+    const map = new Map();
+    standardColumnDefinitions.forEach((column) => {
+        map.set(column.key, column);
+    });
+    customFieldColumns.value.forEach((column) => {
+        map.set(column.key, column);
+    });
+    return map;
+});
+
+const orderedColumns = computed(() =>
+    columnOrder.value
+        .map((key) => columnDefinitionMap.value.get(key))
+        .filter(Boolean)
+);
+
+const visibleOrderedColumns = computed(() =>
+    orderedColumns.value.filter((column) => visibleColumns.value[column.key])
+);
+
+const getColumnLabel = (column) =>
+    column.labelKey ? t(column.labelKey) : column.label;
+
+const isColumnVisible = (key) => !!visibleColumns.value[key];
+
 // Computed: check if all visible subscribers are selected
 const isAllSelected = computed(() => {
     return (
@@ -116,6 +273,32 @@ const toggleColumn = (column) => {
         "subscriberColumns",
         JSON.stringify(visibleColumns.value)
     );
+};
+
+const applyVisibleOrder = (newVisibleKeys) => {
+    const visibleSet = new Set(newVisibleKeys);
+    let visibleIndex = 0;
+    columnOrder.value = columnOrder.value.map((key) => {
+        if (!visibleSet.has(key)) {
+            return key;
+        }
+        const nextKey = newVisibleKeys[visibleIndex];
+        visibleIndex += 1;
+        return nextKey;
+    });
+    saveColumnOrder(columnOrder.value);
+};
+
+const reorderColumns = ({ from, to }) => {
+    const visibleKeys = visibleOrderedColumns.value.map((column) => column.key);
+    const fromIndex = visibleKeys.indexOf(from);
+    const toIndex = visibleKeys.indexOf(to);
+    if (fromIndex === -1 || toIndex === -1) {
+        return;
+    }
+    const [moved] = visibleKeys.splice(fromIndex, 1);
+    visibleKeys.splice(toIndex, 0, moved);
+    applyVisibleOrder(visibleKeys);
 };
 
 // Toggle all selection
@@ -558,8 +741,9 @@ const getSortIcon = (column) => {
                 </div>
                 <ColumnSettingsDropdown
                     :columns="visibleColumns"
-                    :custom-fields="customFields"
+                    :ordered-columns="orderedColumns"
                     @toggle="toggleColumn"
+                    @reorder="reorderColumns"
                 />
             </div>
         </div>
@@ -602,143 +786,41 @@ const getSortIcon = (column) => {
                                     class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                                 />
                             </th>
-                            <!-- Email -->
-                            <th
-                                v-if="visibleColumns.email"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                <button
-                                    @click="handleSort('email')"
-                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                >
-                                    {{ $t("subscribers.table.email") }}
-                                    <svg
-                                        class="h-4 w-4 transition-all"
-                                        :class="getSortIcon('email')"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
-                                </button>
-                            </th>
-                            <!-- Name -->
-                            <th
-                                v-if="visibleColumns.name"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                <button
-                                    @click="handleSort('first_name')"
-                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                >
-                                    {{ $t("subscribers.table.name") }}
-                                    <svg
-                                        class="h-4 w-4 transition-all"
-                                        :class="getSortIcon('first_name')"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
-                                </button>
-                            </th>
-                            <!-- Phone -->
-                            <th
-                                v-if="visibleColumns.phone"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                <button
-                                    @click="handleSort('phone')"
-                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                >
-                                    {{ $t("subscribers.table.phone") }}
-                                    <svg
-                                        class="h-4 w-4 transition-all"
-                                        :class="getSortIcon('phone')"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
-                                </button>
-                            </th>
-                            <!-- Status -->
-                            <th
-                                v-if="visibleColumns.status"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                {{ $t("subscribers.table.status") }}
-                            </th>
-                            <!-- List -->
-                            <th
-                                v-if="visibleColumns.list"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                {{ $t("subscribers.table.list") }}
-                            </th>
-                            <!-- Custom field columns -->
                             <template
-                                v-for="field in customFields || []"
-                                :key="'th-cf-' + field.id"
+                                v-for="(column, columnIndex) in orderedColumns"
+                                :key="column?.key || `th-${columnIndex}`"
                             >
                                 <th
-                                    v-if="visibleColumns['cf_' + field.id]"
+                                    v-if="column && isColumnVisible(column.key)"
                                     scope="col"
                                     class="px-6 py-3"
                                 >
-                                    {{ field.label || field.name }}
+                                    <button
+                                        v-if="column.sortable"
+                                        @click="handleSort(column.sortKey)"
+                                        class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                                    >
+                                        {{ getColumnLabel(column) }}
+                                        <svg
+                                            class="h-4 w-4 transition-all"
+                                            :class="getSortIcon(column.sortKey)"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <span v-else>
+                                        {{ getColumnLabel(column) }}
+                                    </span>
                                 </th>
                             </template>
-                            <!-- Created at -->
-                            <th
-                                v-if="visibleColumns.created_at"
-                                scope="col"
-                                class="px-6 py-3"
-                            >
-                                <button
-                                    @click="handleSort('created_at')"
-                                    class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                >
-                                    {{ $t("subscribers.table.added_at") }}
-                                    <svg
-                                        class="h-4 w-4 transition-all"
-                                        :class="getSortIcon('created_at')"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
-                                </button>
-                            </th>
                             <!-- Actions -->
                             <th scope="col" class="px-6 py-3 text-right">
                                 {{ $t("subscribers.table.actions") }}
@@ -768,82 +850,101 @@ const getSortIcon = (column) => {
                                     class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                                 />
                             </td>
-                            <!-- Email -->
-                            <td
-                                v-if="visibleColumns.email"
-                                class="px-6 py-4 font-medium text-slate-900 dark:text-white"
-                            >
-                                <Link
-                                    :href="route('subscribers.show', subscriber.id)"
-                                    class="text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
-                                    :title="$t('subscriber_card.title')"
-                                >
-                                    {{ subscriber.email }}
-                                </Link>
-                            </td>
-                            <!-- Name -->
-                            <td v-if="visibleColumns.name" class="px-6 py-4">
-                                {{ subscriber.first_name }}
-                                {{ subscriber.last_name }}
-                            </td>
-                            <!-- Phone -->
-                            <td v-if="visibleColumns.phone" class="px-6 py-4">
-                                {{ subscriber.phone || "-" }}
-                            </td>
-                            <!-- Status -->
-                            <td v-if="visibleColumns.status" class="px-6 py-4">
-                                <span
-                                    class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
-                                    :class="{
-                                        'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400':
-                                            subscriber.status === 'active',
-                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400':
-                                            subscriber.status ===
-                                            'unsubscribed',
-                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
-                                            subscriber.status === 'inactive',
-                                        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400':
-                                            subscriber.status === 'bounced',
-                                    }"
-                                >
-                                    {{
-                                        $t(
-                                            `subscribers.statuses.${subscriber.status}`
-                                        ) || subscriber.status
-                                    }}
-                                </span>
-                            </td>
-                            <!-- List -->
-                            <td v-if="visibleColumns.list" class="px-6 py-4">
-                                {{
-                                    subscriber.lists && subscriber.lists.length
-                                        ? subscriber.lists.join(", ")
-                                        : "-"
-                                }}
-                            </td>
-                            <!-- Custom field values -->
                             <template
-                                v-for="field in customFields || []"
-                                :key="'td-cf-' + field.id + '-' + subscriber.id"
+                                v-for="(column, columnIndex) in orderedColumns"
+                                :key="
+                                    column?.key
+                                        ? `td-${column.key}-${subscriber.id}`
+                                        : `td-${columnIndex}-${subscriber.id}`
+                                "
                             >
                                 <td
-                                    v-if="visibleColumns['cf_' + field.id]"
-                                    class="px-6 py-4"
+                                    v-if="column && isColumnVisible(column.key)"
+                                    :class="[
+                                        'px-6 py-4',
+                                        column.type === 'email'
+                                            ? 'font-medium text-slate-900 dark:text-white'
+                                            : '',
+                                    ]"
                                 >
-                                    {{
-                                        subscriber.custom_fields?.[
-                                            "cf_" + field.id
-                                        ] || "-"
-                                    }}
+                                    <template v-if="column.type === 'email'">
+                                        <Link
+                                            :href="
+                                                route(
+                                                    'subscribers.show',
+                                                    subscriber.id
+                                                )
+                                            "
+                                            class="text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
+                                            :title="$t('subscriber_card.title')"
+                                        >
+                                            {{ subscriber.email }}
+                                        </Link>
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'name'"
+                                    >
+                                        {{ subscriber.first_name }}
+                                        {{ subscriber.last_name }}
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'phone'"
+                                    >
+                                        {{ subscriber.phone || "-" }}
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'status'"
+                                    >
+                                        <span
+                                            class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
+                                            :class="{
+                                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400':
+                                                    subscriber.status ===
+                                                    'active',
+                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400':
+                                                    subscriber.status ===
+                                                    'unsubscribed',
+                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
+                                                    subscriber.status ===
+                                                    'inactive',
+                                                'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400':
+                                                    subscriber.status ===
+                                                    'bounced',
+                                            }"
+                                        >
+                                            {{
+                                                $t(
+                                                    `subscribers.statuses.${subscriber.status}`
+                                                ) || subscriber.status
+                                            }}
+                                        </span>
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'list'"
+                                    >
+                                        {{
+                                            subscriber.lists &&
+                                            subscriber.lists.length
+                                                ? subscriber.lists.join(", ")
+                                                : "-"
+                                        }}
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'custom'"
+                                    >
+                                        {{
+                                            subscriber.custom_fields?.[
+                                                column.key
+                                            ] || "-"
+                                        }}
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'created_at'"
+                                    >
+                                        {{ subscriber.created_at }}
+                                    </template>
                                 </td>
                             </template>
-                            <!-- Created at -->
-                            <td
-                                v-if="visibleColumns.created_at"
-                                class="px-6 py-4"
-                            >
-                                {{ subscriber.created_at }}
-                            </td>
                             <!-- Actions -->
                             <td class="px-6 py-4 text-right">
                                 <div
@@ -918,11 +1019,7 @@ const getSortIcon = (column) => {
                         </tr>
                         <tr v-if="subscribers.data.length === 0">
                             <td
-                                :colspan="
-                                    Object.values(visibleColumns).filter(
-                                        (v) => v
-                                    ).length + 2
-                                "
+                                :colspan="visibleOrderedColumns.length + 2"
                                 class="px-6 py-8 text-center text-slate-500 dark:text-slate-400"
                             >
                                 {{ $t("subscribers.empty_state") }}

@@ -1664,7 +1664,9 @@
         },
         "columns": {
             "title": "Visible columns",
-            "custom_fields": "Custom fields"
+            "custom_fields": "Custom fields",
+            "active": "Active columns",
+            "available": "Available columns"
         },
         "column_settings": "Column settings",
         "sort": {

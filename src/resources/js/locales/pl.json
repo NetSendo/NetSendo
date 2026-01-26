@@ -1683,7 +1683,9 @@
         },
         "columns": {
             "title": "Widoczne kolumny",
-            "custom_fields": "Pola dodatkowe"
+            "custom_fields": "Pola dodatkowe",
+            "active": "Aktywne kolumny",
+            "available": "Dostępne kolumny"
         },
         "column_settings": "Ustawienia kolumn",
         "sort": {

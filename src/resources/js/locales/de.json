@@ -1649,6 +1649,17 @@
             "select_all_modal_title": "Alle ausgewählt",
             "select_all_modal_desc": "{count} Abonnenten aus dieser Liste ausgewählt. Sie können nun eine Massenaktion durchführen."
         },
+        "columns": {
+            "title": "Sichtbare Spalten",
+            "custom_fields": "Benutzerdefinierte Felder",
+            "active": "Aktive Spalten",
+            "available": "Verfügbare Spalten"
+        },
+        "column_settings": "Spalteneinstellungen",
+        "sort": {
+            "asc": "Aufsteigend",
+            "desc": "Absteigend"
+        },
         "import": {
             "title": "Abonnenten importieren",
             "subtitle": "Kontakte aus CSV-Datei importieren",

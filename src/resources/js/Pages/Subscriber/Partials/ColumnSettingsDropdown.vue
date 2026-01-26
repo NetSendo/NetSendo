@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -9,25 +9,59 @@ const props = defineProps({
         type: Object,
         required: true,
     },
-    customFields: {
+    orderedColumns: {
         type: Array,
-        default: () => [],
+        required: true,
     },
 });
 
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(['toggle', 'reorder']);
 
 const open = ref(false);
 const dropdownRef = ref(null);
 
-const standardColumns = [
-    { key: 'email', labelKey: 'subscribers.table.email' },
-    { key: 'name', labelKey: 'subscribers.table.name' },
-    { key: 'phone', labelKey: 'subscribers.table.phone' },
-    { key: 'status', labelKey: 'subscribers.table.status' },
-    { key: 'list', labelKey: 'subscribers.table.list' },
-    { key: 'created_at', labelKey: 'subscribers.table.added_at' },
-];
+const draggingKey = ref(null);
+const dragOverKey = ref(null);
+
+const safeOrderedColumns = computed(() =>
+    (props.orderedColumns || []).filter(Boolean)
+);
+
+const activeColumns = computed(() =>
+    safeOrderedColumns.value.filter((column) => props.columns[column.key])
+);
+
+const availableColumns = computed(() =>
+    safeOrderedColumns.value.filter((column) => !props.columns[column.key])
+);
+
+const getColumnLabel = (column) =>
+    column.labelKey ? t(column.labelKey) : column.label;
+
+const handleDragStart = (key) => {
+    draggingKey.value = key;
+};
+
+const handleDragOver = (key, event) => {
+    event.preventDefault();
+    dragOverKey.value = key;
+};
+
+const handleDrop = (key) => {
+    if (!draggingKey.value || draggingKey.value === key) {
+        dragOverKey.value = null;
+        draggingKey.value = null;
+        return;
+    }
+    emit('reorder', { from: draggingKey.value, to: key });
+    dragOverKey.value = null;
+    draggingKey.value = null;
+};
+
+const handleDragEnd = () => {
+    dragOverKey.value = null;
+    draggingKey.value = null;
+};
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event) => {
@@ -71,57 +105,79 @@ onUnmounted(() => {
                 class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-slate-700 z-50"
             >
                 <div class="p-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
-                        {{ t('subscribers.columns.title') }}
+                    <p
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3"
+                    >
+                        {{ t('subscribers.columns.active') }}
                     </p>
-                    
-                    <!-- Standard columns -->
                     <div class="space-y-2">
-                        <label 
-                            v-for="column in standardColumns" 
-                            :key="column.key"
-                            class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg px-2 py-1.5 -mx-2"
+                        <div
+                            v-for="column in activeColumns"
+                            :key="'active-' + column.key"
+                            class="flex items-center gap-2 rounded-lg px-2 py-1.5 -mx-2 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                            draggable="true"
+                            @dragstart="handleDragStart(column.key)"
+                            @dragover="handleDragOver(column.key, $event)"
+                            @drop="handleDrop(column.key)"
+                            @dragend="handleDragEnd"
+                            :class="{
+                                'bg-slate-100 dark:bg-slate-700/70':
+                                    dragOverKey === column.key,
+                            }"
                         >
-                            <input 
-                                type="checkbox" 
+                            <svg
+                                class="h-4 w-4 text-slate-400 cursor-grab"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M8 9h.01M8 15h.01M12 9h.01M12 15h.01M16 9h.01M16 15h.01"
+                                />
+                            </svg>
+                            <input
+                                type="checkbox"
                                 :id="'col-' + column.key"
                                 :checked="columns[column.key]"
                                 @change="$emit('toggle', column.key)"
                                 class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                             />
                             <span class="text-sm text-slate-700 dark:text-slate-300">
-                                {{ t(column.labelKey) }}
+                                {{ getColumnLabel(column) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="border-t border-slate-200 dark:border-slate-700 my-3"
+                    ></div>
+                    <p
+                        class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3"
+                    >
+                        {{ t('subscribers.columns.available') }}
+                    </p>
+
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                        <label
+                            v-for="column in availableColumns"
+                            :key="'available-' + column.key"
+                            class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg px-2 py-1.5 -mx-2"
+                        >
+                            <input
+                                type="checkbox"
+                                :id="'col-' + column.key"
+                                :checked="columns[column.key]"
+                                @change="$emit('toggle', column.key)"
+                                class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                            />
+                            <span class="text-sm text-slate-700 dark:text-slate-300">
+                                {{ getColumnLabel(column) }}
                             </span>
                         </label>
                     </div>
-                    
-                    <!-- Custom fields separator -->
-                    <template v-if="customFields.length > 0">
-                        <div class="border-t border-slate-200 dark:border-slate-700 my-3"></div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-3">
-                            {{ t('subscribers.columns.custom_fields') }}
-                        </p>
-                        
-                        <!-- Custom field columns -->
-                        <div class="space-y-2 max-h-48 overflow-y-auto">
-                            <label 
-                                v-for="field in customFields" 
-                                :key="'cf-' + field.id"
-                                class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg px-2 py-1.5 -mx-2"
-                            >
-                                <input 
-                                    type="checkbox" 
-                                    :id="'cf-' + field.id"
-                                    :checked="columns['cf_' + field.id]"
-                                    @change="$emit('toggle', 'cf_' + field.id)"
-                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
-                                />
-                                <span class="text-sm text-slate-700 dark:text-slate-300">
-                                    {{ field.label || field.name }}
-                                </span>
-                            </label>
-                        </div>
-                    </template>
                 </div>
             </div>
         </Transition>
