@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.7.18] – Short Description
+
+**Release date:** 2026-01-26
+
+### Added
+
+- **Subscriber Column Ordering:**
+  - **Drag and Drop:** Added active/available column lists with drag-and-drop ordering for subscribers.
+  - **Persistence:** Implemented local storage persistence for column order to maintain user preferences.
+  - **Localization:** Updated translations for the new column settings labels in EN, PL, DE, ES.
+
 - **Message Open Triggers:**
   - **New Trigger Types:** Added "Opened message" (`opened_message`) and "Did not open message" (`not_opened_message`) triggers.
   - **Targeting:** Allows sending follow-up messages based on whether a subscriber opened a specific previous message.
