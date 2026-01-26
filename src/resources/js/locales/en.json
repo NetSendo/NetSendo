@@ -1579,7 +1579,7 @@
             "subtitle": "Import contacts from CSV file",
             "instructions": {
                 "title": "File Format Instructions",
-                "line1": "File should be in CSV format. The system automatically detects headers. If missing, it assumes: Email, First Name, Last Name.",
+                "line1": "File should be in CSV format. After upload, match columns to subscriber fields. If headers are missing, you can still map them manually.",
                 "required_columns": "Required columns (in any order):",
                 "email": "Email (required)",
                 "first_name": "First Name (optional)",
@@ -1596,6 +1596,20 @@
                 "or_drag_drop": "or drag and drop",
                 "max_size": "CSV up to 10MB",
                 "selected": "Selected: {name}"
+            },
+            "mapping": {
+                "title": "Column mapping",
+                "subtitle": "Match columns from the first row to subscriber fields.",
+                "first_row_header": "First row contains headers",
+                "column": "Column",
+                "preview": "First row value",
+                "select_field": "Select field",
+                "ignore": "Do not import",
+                "email": "Email",
+                "phone": "Phone",
+                "first_name": "First Name",
+                "last_name": "Last Name",
+                "custom_field": "Custom field: {name}"
             },
             "importing": "Importing...",
             "import_button": "Import"

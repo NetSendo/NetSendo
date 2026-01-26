@@ -1595,7 +1595,7 @@
             "subtitle": "Zaimportuj kontakty z pliku CSV",
             "instructions": {
                 "title": "Instrukcja formatu pliku",
-                "line1": "Plik powinien być w formacie CSV. System automatycznie wykrywa nagłówki. Jeśli ich brak, przyjmuje kolejność: Email, Imię, Nazwisko.",
+                "line1": "Plik powinien być w formacie CSV. Po przesłaniu przypisz kolumny do pól subskrybenta. Jeśli brak nagłówków, możesz ustawić mapowanie ręcznie.",
                 "required_columns": "Wymagane kolumny (w dowolnej kolejności):",
                 "email": "Email (wymagane)",
                 "first_name": "Imię (opcjonalne)",
@@ -1612,6 +1612,20 @@
                 "or_drag_drop": "lub przeciągnij i upuść",
                 "max_size": "CSV do 10MB",
                 "selected": "Wybrano: {name}"
+            },
+            "mapping": {
+                "title": "Mapowanie kolumn",
+                "subtitle": "Przypisz kolumny z pierwszego wiersza do pól subskrybenta.",
+                "first_row_header": "Pierwszy wiersz zawiera nagłówki",
+                "column": "Kolumna",
+                "preview": "Wartość z 1. wiersza",
+                "select_field": "Wybierz pole",
+                "ignore": "Nie importuj",
+                "email": "Email",
+                "phone": "Telefon",
+                "first_name": "Imię",
+                "last_name": "Nazwisko",
+                "custom_field": "Pole niestandardowe: {name}"
             },
             "importing": "Importowanie...",
             "import_button": "Importuj"

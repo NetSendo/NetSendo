@@ -1676,7 +1676,7 @@
             "subtitle": "Importar contactos desde archivo CSV",
             "instructions": {
                 "title": "Instrucciones de formato de archivo",
-                "line1": "El archivo debe estar en formato CSV. La primera fila (encabezado) se ignora o se empareja automáticamente.",
+                "line1": "El archivo debe estar en formato CSV. Después de subirlo, asigna las columnas a los campos del suscriptor. Si no hay encabezados, puedes mapearlos manualmente.",
                 "required_columns": "Columnas requeridas (en cualquier orden):",
                 "email": "Email (requerido)",
                 "first_name": "Nombre (opcional)",
@@ -1693,6 +1693,20 @@
                 "or_drag_drop": "o arrastrar y soltar",
                 "max_size": "CSV hasta 10MB",
                 "selected": "Seleccionado: {name}"
+            },
+            "mapping": {
+                "title": "Mapeo de columnas",
+                "subtitle": "Asigna las columnas de la primera fila a los campos del suscriptor.",
+                "first_row_header": "La primera fila contiene encabezados",
+                "column": "Columna",
+                "preview": "Valor de la primera fila",
+                "select_field": "Seleccionar campo",
+                "ignore": "No importar",
+                "email": "Email",
+                "phone": "Teléfono",
+                "first_name": "Nombre",
+                "last_name": "Apellido",
+                "custom_field": "Campo personalizado: {name}"
             },
             "importing": "Importando...",
             "import_button": "Importar"
