@@ -130,3 +130,15 @@ Schedule::command('crm:process-score-decay')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/crm-score-decay.log'));
 
+// Google Calendar - Czyszczenie osieroconych wydarzeń (wydarzenia dla usuniętych zadań)
+Schedule::command('calendar:sync-orphaned-events')
+    ->hourly()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/calendar-orphaned-sync.log'));
+
+// Google Calendar - Odświeżanie kanałów push notification
+Schedule::command('calendar:refresh-channels')
+    ->everyThreeHours()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/calendar-channels.log'));
+

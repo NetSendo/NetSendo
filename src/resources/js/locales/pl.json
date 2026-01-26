@@ -789,6 +789,8 @@
             "resubscription_behavior_desc": "Określa, co się dzieje z datą zapisu gdy aktywny subskrybent próbuje zapisać się ponownie. Byli subskrybenci (wypisani/usunięci) zawsze mają resetowaną datę.",
             "resubscription_reset_date": "Resetuj datę dołączenia (kolejka autorespondera startuje od nowa)",
             "resubscription_keep_date": "Zachowaj oryginalną datę dołączenia",
+            "reset_autoresponders": "Resetuj autorespondera przy ponownym zapisie",
+            "reset_autoresponders_desc": "Gdy subskrybent ponownie zapisze się na listę, usuń poprzednie wpisy kolejki i wyślij autorespondera od nowa.",
             "tabs": {
                 "general": "Ogólne",
                 "settings": "Ustawienia",

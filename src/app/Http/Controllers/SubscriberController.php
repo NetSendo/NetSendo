@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\ContactList;
 use App\Models\Subscriber;
 use App\Models\SuppressionList;
+use App\Models\MessageQueueEntry;
 use App\Models\Tag;
 use App\Events\SubscriberUnsubscribed;
 use App\Events\SubscriberSignedUp;
@@ -254,6 +255,10 @@ class SubscriberController extends Controller
                     // Completely reset the subscriber - detach ALL existing contact lists
                     // This ensures subscriber doesn't "remember" old lists after being re-added
                     $subscriber->contactLists()->detach();
+
+                    // Delete all message queue entries to allow fresh autoresponder sequences
+                    // This ensures re-added subscribers receive autoresponders again
+                    MessageQueueEntry::where('subscriber_id', $subscriber->id)->delete();
 
                     // Reset subscription date on subscriber record
                     $subscriber->update([

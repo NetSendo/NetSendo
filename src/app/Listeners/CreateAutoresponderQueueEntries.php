@@ -109,12 +109,27 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                 ->first();
 
             if ($existingEntry) {
-                Log::info('CreateAutoresponderQueueEntries: Entry already exists', [
+                // Check list's reset_autoresponders_on_resubscription setting
+                // Default is true (reset autoresponders on resubscription)
+                $shouldReset = $list->reset_autoresponders_on_resubscription ?? true;
+
+                if (!$shouldReset) {
+                    // List setting says to keep existing entries
+                    Log::info('CreateAutoresponderQueueEntries: Entry exists, skipping (reset disabled)', [
+                        'subscriber_id' => $subscriber->id,
+                        'message_id' => $message->id,
+                        'status' => $existingEntry->status,
+                    ]);
+                    continue;
+                }
+
+                // Reset is enabled - delete existing entry to allow fresh start
+                $existingEntry->delete();
+                Log::info('CreateAutoresponderQueueEntries: Deleted existing entry for reset', [
                     'subscriber_id' => $subscriber->id,
                     'message_id' => $message->id,
-                    'status' => $existingEntry->status,
+                    'old_status' => $existingEntry->status,
                 ]);
-                continue;
             }
 
             // Create queue entry

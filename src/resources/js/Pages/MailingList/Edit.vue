@@ -199,6 +199,7 @@ const form = useForm({
     required_fields: props.list.required_fields || [],
     // Resubscription behavior
     resubscription_behavior: props.list.resubscription_behavior || "reset_date",
+    reset_autoresponders_on_resubscription: props.list.reset_autoresponders_on_resubscription ?? true,
 });
 
 const toggleTag = (tagId) => {
@@ -799,6 +800,50 @@ const subscribeEndpoint = computed(() => {
                                                     }}
                                                 </option>
                                             </select>
+                                        </div>
+
+                                        <!-- Reset Autoresponders on Resubscription -->
+                                        <div
+                                            class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800"
+                                        >
+                                            <div>
+                                                <span
+                                                    class="block text-sm font-medium text-slate-900 dark:text-white"
+                                                    >{{
+                                                        $t(
+                                                            "mailing_lists.settings.reset_autoresponders"
+                                                        )
+                                                    }}</span
+                                                >
+                                                <span
+                                                    class="block text-xs text-slate-500 dark:text-slate-400"
+                                                    >{{
+                                                        $t(
+                                                            "mailing_lists.settings.reset_autoresponders_desc"
+                                                        )
+                                                    }}</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                                                :class="
+                                                    form.reset_autoresponders_on_resubscription
+                                                        ? 'bg-indigo-600'
+                                                        : 'bg-slate-200 dark:bg-slate-700'
+                                                "
+                                                @click="
+                                                    form.reset_autoresponders_on_resubscription =
+                                                        !form.reset_autoresponders_on_resubscription
+                                                "
+                                            >
+                                                <span
+                                                    class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                                    :class="{
+                                                        'translate-x-5':
+                                                            form.reset_autoresponders_on_resubscription,
+                                                    }"
+                                                ></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

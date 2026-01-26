@@ -43,6 +43,7 @@ class ContactList extends Model
         'required_fields',
         // Resubscription behavior
         'resubscription_behavior', // reset_date or keep_original_date
+        'reset_autoresponders_on_resubscription', // Reset autoresponder queue on resubscription
     ];
 
     protected $casts = [
@@ -53,6 +54,7 @@ class ContactList extends Model
         'required_fields' => 'array',
         'signups_blocked' => 'boolean',
         'max_subscribers' => 'integer',
+        'reset_autoresponders_on_resubscription' => 'boolean',
     ];
 
     public function user()

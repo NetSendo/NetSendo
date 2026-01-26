@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Implemented reverse detection of duration preset when end time is manually changed.
   - Added localization for duration controls in EN, PL, DE, ES.
 
+- **Resubscription Autoresponder Reset:**
+  - Added new per-list setting `reset_autoresponders_on_resubscription` (default: enabled).
+  - When enabled, re-subscribing to a list deletes old queue entries and sends autoresponders from the beginning.
+  - When disabled, existing queue entries are preserved (original behavior).
+  - UI toggle added to list settings under "Subscription" tab.
+
 ### Improved
 
 - **Subscription Forms UX:**
@@ -44,8 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Subscriber Restoration:**
-  - Fixed an issue where re-adding a soft-deleted subscriber would retain old list memberships and original subscription date.
-  - Implemented complete reset of subscriber state on restoration: detaches all previous lists and sets a fresh `subscribed_at` timestamp.
+  - Fixed an issue where re-adding a soft-deleted subscriber would retain old list memberships, original subscription date, and message queue history.
+  - Implemented complete reset of subscriber state on restoration: detaches all previous lists, deletes all message queue entries (allowing fresh autoresponder sequences), and sets a fresh `subscribed_at` timestamp.
 
 - **Autoresponder Queue Statistics:**
   - Fixed an issue where subscribers with pending queue entries (PLANNED/QUEUED) were incorrectly counted as "Missed" for Day 0 autoresponders.

@@ -787,6 +787,8 @@
             "resubscription_behavior_desc": "Defines what happens to the subscription date when an active subscriber tries to subscribe again. Former subscribers (unsubscribed/removed) always have their date reset.",
             "resubscription_reset_date": "Reset subscription date (autoresponder queue restarts from beginning)",
             "resubscription_keep_date": "Keep original subscription date",
+            "reset_autoresponders": "Reset autoresponders on resubscription",
+            "reset_autoresponders_desc": "When a subscriber re-subscribes to the list, delete previous queue entries and send autoresponders from the beginning.",
             "tabs": {
                 "general": "General",
                 "settings": "Settings",
