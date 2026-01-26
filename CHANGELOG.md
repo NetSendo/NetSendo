@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.17] – Short Description
+
+**Release date:** 2026-01-26
+
 ### Added
+
+- **Subscription Forms - Status Toggle:**
+  - **Quick Action:** Added a toggle button in the forms list (`Index.vue`) to quickly activate/deactivate forms without entering edit mode.
+  - **Visual Feedback:** Status button changes icon and color (green checkmark for activation, orange power icon for deactivation).
+  - **Backend Support:** Implemented `toggleStatus` endpoint in `SubscriptionFormController`.
 
 - **CRM Task Duration Picker:**
   - Added duration picker with presets (5, 10, 15, 30, 60, 120 min) and "Custom" option to Task Modal.
@@ -16,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added localization for duration controls in EN, PL, DE, ES.
 
 ### Improved
+
+- **Subscription Forms UX:**
+  - **Toast Notifications:** Added clear toast notifications for all form actions (save, duplicate, delete, status change) in both List and Builder views.
+  - **Visual Feedback:** Improved success states in the Form Builder save button.
+  - **Localization:** Added full translations for form status actions in PL and EN.
 
 - **CRM Calendar - Weekly View Overlap Handling:**
   - Implemented advanced collision detection algorithm to handle overlapping events.
@@ -28,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Displays full event information including priority, contact name, and description.
 
 ### Fixed
+
+- **Subscriber Restoration:**
+  - Fixed an issue where re-adding a soft-deleted subscriber would retain old list memberships and original subscription date.
+  - Implemented complete reset of subscriber state on restoration: detaches all previous lists and sets a fresh `subscribed_at` timestamp.
 
 - **Autoresponder Queue Statistics:**
   - Fixed an issue where subscribers with pending queue entries (PLANNED/QUEUED) were incorrectly counted as "Missed" for Day 0 autoresponders.

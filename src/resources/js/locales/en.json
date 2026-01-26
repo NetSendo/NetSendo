@@ -1670,6 +1670,17 @@
         "sort": {
             "asc": "Ascending",
             "desc": "Descending"
+        },
+        "delete_modal": {
+            "title": "Delete Subscriber",
+            "description": "Select lists to remove subscriber {email} from",
+            "select_lists": "Lists to remove from",
+            "gdpr_section": "Complete Deletion (GDPR)",
+            "gdpr_description": "Permanently delete all subscriber data in accordance with the right to be forgotten.",
+            "gdpr_warning": "This operation is irreversible. All data will be permanently deleted.",
+            "remove_from_lists": "Remove from lists",
+            "delete_completely": "Delete completely",
+            "no_lists": "Subscriber does not belong to any list"
         }
     },
     "subscriber_card": {
@@ -1953,6 +1964,13 @@
         "stats_btn": "Statistics",
         "confirm_duplicate": "Do you want to duplicate this form?",
         "confirm_delete": "Are you sure you want to delete form \"{name}\"?",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "activated": "Form has been activated",
+        "deactivated": "Form has been deactivated",
+        "duplicated": "Form has been duplicated",
+        "deleted": "Form has been deleted",
+        "saved_success": "Form has been saved",
         "status": {
             "active": "Active",
             "draft": "Draft",

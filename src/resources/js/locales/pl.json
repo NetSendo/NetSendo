@@ -1689,6 +1689,17 @@
         "sort": {
             "asc": "Rosnąco",
             "desc": "Malejąco"
+        },
+        "delete_modal": {
+            "title": "Usuń subskrybenta",
+            "description": "Wybierz z których list usunąć subskrybenta {email}",
+            "select_lists": "Listy do usunięcia",
+            "gdpr_section": "Całkowite usunięcie (RODO)",
+            "gdpr_description": "Trwale usuń wszystkie dane subskrybenta zgodnie z prawem do bycia zapomnianym.",
+            "gdpr_warning": "Ta operacja jest nieodwracalna. Wszystkie dane zostaną trwale usunięte.",
+            "remove_from_lists": "Usuń z list",
+            "delete_completely": "Usuń całkowicie",
+            "no_lists": "Subskrybent nie należy do żadnej listy"
         }
     },
     "subscriber_card": {
@@ -3414,6 +3425,13 @@
         "stats_btn": "Statystyki",
         "confirm_duplicate": "Czy chcesz zduplikować ten formularz?",
         "confirm_delete": "Czy na pewno chcesz usunąć formularz \"{name}\"?",
+        "activate": "Aktywuj",
+        "deactivate": "Dezaktywuj",
+        "activated": "Formularz został aktywowany",
+        "deactivated": "Formularz został dezaktywowany",
+        "duplicated": "Formularz został zduplikowany",
+        "deleted": "Formularz został usunięty",
+        "saved_success": "Formularz został zapisany",
         "status": {
             "active": "Aktywny",
             "draft": "Szkic",

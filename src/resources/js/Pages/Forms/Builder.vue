@@ -1689,6 +1689,35 @@ const previewContainerStyle = computed(() => {
             </div>
         </div>
     </Modal>
+
+    <!-- Toast Notification for Save Success -->
+    <Transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="transform opacity-0 translate-y-2"
+        enter-to-class="transform opacity-100 translate-y-0"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="transform opacity-100 translate-y-0"
+        leave-to-class="transform opacity-0 translate-y-2"
+    >
+        <div
+            v-if="showSuccess"
+            class="fixed bottom-4 right-4 z-50 max-w-sm w-full"
+        >
+            <div class="rounded-lg shadow-lg p-4 flex items-center gap-3 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800">
+                <svg class="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span class="text-sm font-medium text-green-800 dark:text-green-200">
+                    {{ t('forms.saved_success') }}
+                </span>
+                <button @click="showSuccess = false" class="ml-auto text-gray-400 hover:text-gray-600">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </Transition>
 </template>
 
 <style scoped>

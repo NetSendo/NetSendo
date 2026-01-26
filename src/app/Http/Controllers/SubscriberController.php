@@ -133,6 +133,11 @@ class SubscriberController extends Controller
                     'status' => $sub->is_active_global ? 'active' : 'inactive',
                     'lists' => $sub->contactLists->pluck('name'),
                     'list_ids' => $sub->contactLists->pluck('id'),
+                    'subscriber_lists' => $sub->contactLists->map(fn($list) => [
+                        'id' => $list->id,
+                        'name' => $list->name,
+                        'type' => $list->type,
+                    ]),
                     'created_at' => DateHelper::formatForUser($sub->created_at),
                     'custom_fields' => $sub->fieldValues->mapWithKeys(fn($fv) => [
                         'cf_' . $fv->custom_field_id => $fv->value
@@ -242,10 +247,20 @@ class SubscriberController extends Controller
             ];
 
             if ($subscriber) {
-                // If subscriber was soft-deleted, restore it
+                // If subscriber was soft-deleted, restore it and completely reset
                 if ($subscriber->trashed()) {
                     $subscriber->restore();
-                    Log::info('Restored soft-deleted subscriber', [
+
+                    // Completely reset the subscriber - detach ALL existing contact lists
+                    // This ensures subscriber doesn't "remember" old lists after being re-added
+                    $subscriber->contactLists()->detach();
+
+                    // Reset subscription date on subscriber record
+                    $subscriber->update([
+                        'subscribed_at' => now(),
+                    ]);
+
+                    Log::info('Restored and reset soft-deleted subscriber', [
                         'subscriber_id' => $subscriber->id,
                         'email' => $subscriber->email,
                     ]);
@@ -772,6 +787,117 @@ class SubscriberController extends Controller
 
         return redirect()->route('subscribers.index')
             ->with('success', 'Subskrybent został usunięty.');
+    }
+
+    /**
+     * Advanced delete - remove from specific lists or complete GDPR deletion.
+     */
+    public function advancedDelete(Request $request, Subscriber $subscriber)
+    {
+        if ($subscriber->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'list_ids' => 'nullable|array',
+            'list_ids.*' => 'integer|exists:contact_lists,id',
+            'gdpr_forget' => 'nullable|boolean',
+        ]);
+
+        $gdprForget = $validated['gdpr_forget'] ?? false;
+
+        if ($gdprForget) {
+            // Complete GDPR deletion (right to be forgotten)
+            return $this->performGdprDeletion($subscriber);
+        }
+
+        // Remove from specific lists only
+        $listIds = $validated['list_ids'] ?? [];
+
+        if (empty($listIds)) {
+            return back()->with('error', 'Nie wybrano żadnych list.');
+        }
+
+        // Verify ownership of lists
+        $validLists = ContactList::whereIn('id', $listIds)
+            ->where('user_id', auth()->id())
+            ->pluck('id')
+            ->toArray();
+
+        if (count($validLists) !== count($listIds)) {
+            abort(403, 'Brak dostępu do jednej z wybranych list.');
+        }
+
+        // Detach from selected lists
+        $subscriber->contactLists()->detach($validLists);
+
+        // Check if subscriber still belongs to any list
+        $remainingLists = $subscriber->contactLists()->count();
+
+        if ($remainingLists === 0) {
+            // Subscriber has no lists - soft delete (keep record but mark as orphan)
+            Log::info('Subscriber removed from all lists', [
+                'subscriber_id' => $subscriber->id,
+                'email' => $subscriber->email,
+            ]);
+        }
+
+        $listCount = count($validLists);
+        return back()->with('success', "Usunięto subskrybenta z {$listCount} list.");
+    }
+
+    /**
+     * Perform complete GDPR deletion (right to be forgotten).
+     */
+    private function performGdprDeletion(Subscriber $subscriber)
+    {
+        $userId = $subscriber->user_id;
+        $email = $subscriber->email;
+
+        try {
+            DB::transaction(function () use ($subscriber, $userId, $email) {
+                // 1. Add to suppression list (to prevent re-adding)
+                SuppressionList::suppress($userId, $email, 'gdpr_erasure');
+
+                // 2. Delete all related data
+                // - Field values (custom fields)
+                $subscriber->fieldValues()->delete();
+
+                // - Tags
+                $subscriber->tags()->detach();
+
+                // - Contact list relationships
+                $subscriber->contactLists()->detach();
+
+                // - Email tracking data (if exists)
+                if (method_exists($subscriber, 'emailEvents')) {
+                    $subscriber->emailEvents()->delete();
+                }
+
+                // - Funnel subscriptions (if exists)
+                if (method_exists($subscriber, 'funnelSubscriptions')) {
+                    $subscriber->funnelSubscriptions()->delete();
+                }
+
+                // 3. Hard delete the subscriber (not soft delete)
+                $subscriber->forceDelete();
+            });
+
+            Log::info('GDPR deletion completed via admin panel', [
+                'email' => $email,
+                'user_id' => $userId,
+                'deleted_by' => auth()->id(),
+            ]);
+
+            return back()->with('success', 'Subskrybent został całkowicie usunięty zgodnie z RODO. Email dodany do listy blokad.');
+
+        } catch (\Exception $e) {
+            Log::error('GDPR deletion failed', [
+                'subscriber_id' => $subscriber->id ?? 'deleted',
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', 'Wystąpił błąd podczas usuwania danych.');
+        }
     }
 
     public function importForm()

@@ -74,6 +74,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('subscribers/{subscriber}/tags/{tag}', [\App\Http\Controllers\SubscriberController::class, 'attachTag'])->name('subscribers.tags.attach');
     Route::delete('subscribers/{subscriber}/tags/{tag}', [\App\Http\Controllers\SubscriberController::class, 'detachTag'])->name('subscribers.tags.detach');
 
+    // Advanced single subscriber delete (with list selection and GDPR)
+    Route::post('subscribers/{subscriber}/advanced-delete', [\App\Http\Controllers\SubscriberController::class, 'advancedDelete'])->name('subscribers.advanced-delete');
+
     // Groups & Tags
     Route::resource('groups', \App\Http\Controllers\ContactListGroupController::class);
     Route::resource('tags', \App\Http\Controllers\TagController::class)->except(['create', 'edit', 'show']);
@@ -149,6 +152,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('forms/{form}/duplicate', [\App\Http\Controllers\SubscriptionFormController::class, 'duplicate'])->name('forms.duplicate');
     Route::get('forms/{form}/code', [\App\Http\Controllers\SubscriptionFormController::class, 'code'])->name('forms.code');
     Route::get('forms/{form}/stats', [\App\Http\Controllers\SubscriptionFormController::class, 'stats'])->name('forms.stats');
+    Route::post('forms/{form}/toggle-status', [\App\Http\Controllers\SubscriptionFormController::class, 'toggleStatus'])->name('forms.toggle-status');
 
     // Form Integrations (webhooks)
     Route::prefix('forms/{form}/integrations')->name('forms.integrations.')->group(function () {

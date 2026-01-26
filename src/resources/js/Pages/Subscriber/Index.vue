@@ -8,6 +8,7 @@ import { useI18n } from "vue-i18n";
 import BulkActionToolbar from "./Partials/BulkActionToolbar.vue";
 import MoveToListModal from "./Partials/MoveToListModal.vue";
 import CopyToListModal from "./Partials/CopyToListModal.vue";
+import DeleteFromListModal from "./Partials/DeleteFromListModal.vue";
 import ColumnSettingsDropdown from "./Partials/ColumnSettingsDropdown.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
 
@@ -55,6 +56,10 @@ const showDeleteConfirm = ref(false);
 const showDeleteFromListConfirm = ref(false);
 const showSelectAllConfirm = ref(false);
 const pendingSelectAllCount = ref(0);
+
+// Single subscriber delete modal state
+const showDeleteSubscriberModal = ref(false);
+const subscriberToDelete = ref(null);
 
 // Column visibility state (persisted to localStorage)
 const defaultColumns = {
@@ -335,11 +340,49 @@ const confirmBulkDeleteFromList = () => {
     );
 };
 
-// Single delete action
+// Single delete action - open modal
 const deleteSubscriber = (subscriber) => {
-    if (confirm(t("subscribers.confirm_delete", { email: subscriber.email }))) {
-        router.delete(route("subscribers.destroy", subscriber.id));
-    }
+    subscriberToDelete.value = subscriber;
+    showDeleteSubscriberModal.value = true;
+};
+
+// Handle delete from selected lists
+const handleDeleteFromLists = ({ subscriber_id, list_ids }) => {
+    processing.value = true;
+    router.post(
+        route("subscribers.advanced-delete", subscriber_id),
+        {
+            list_ids: list_ids,
+            gdpr_forget: false,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                showDeleteSubscriberModal.value = false;
+                subscriberToDelete.value = null;
+            },
+        }
+    );
+};
+
+// Handle complete GDPR deletion
+const handleDeleteCompletely = ({ subscriber_id }) => {
+    processing.value = true;
+    router.post(
+        route("subscribers.advanced-delete", subscriber_id),
+        {
+            gdpr_forget: true,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                processing.value = false;
+                showDeleteSubscriberModal.value = false;
+                subscriberToDelete.value = null;
+            },
+        }
+    );
 };
 
 // Get sort icon class
@@ -981,6 +1024,18 @@ const getSortIcon = (column) => {
                 selectedIds = [];
             "
             @confirm="showSelectAllConfirm = false"
+        />
+
+        <!-- Delete Subscriber Modal -->
+        <DeleteFromListModal
+            :show="showDeleteSubscriberModal"
+            :subscriber="subscriberToDelete"
+            :lists="lists"
+            :current-list-id="listId"
+            :processing="processing"
+            @close="showDeleteSubscriberModal = false; subscriberToDelete = null"
+            @delete-from-lists="handleDeleteFromLists"
+            @delete-completely="handleDeleteCompletely"
         />
     </AuthenticatedLayout>
 </template>

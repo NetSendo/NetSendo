@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { useI18n } from "vue-i18n";
 import { useDateTime } from "@/Composables/useDateTime";
@@ -13,6 +13,21 @@ const props = defineProps({
     lists: Array,
     filters: Object,
 });
+
+// Toast notification
+const toast = ref(null);
+function showToast(message, success = true) {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 3000);
+}
+
+// Check for flash messages on page load
+const page = usePage();
+if (page.props.flash?.success) {
+    showToast(page.props.flash.success, true);
+}
 
 // Filters
 const selectedList = ref(props.filters?.list_id || "");
@@ -45,14 +60,30 @@ function onSearchInput() {
 // Actions
 function duplicateForm(form) {
     if (confirm(t("forms.confirm_duplicate"))) {
-        router.post(route("forms.duplicate", form.id));
+        router.post(route("forms.duplicate", form.id), {}, {
+            onSuccess: () => showToast(t("forms.duplicated")),
+        });
     }
 }
 
 function deleteForm(form) {
     if (confirm(t("forms.confirm_delete", { name: form.name }))) {
-        router.delete(route("forms.destroy", form.id));
+        router.delete(route("forms.destroy", form.id), {
+            onSuccess: () => showToast(t("forms.deleted")),
+        });
     }
+}
+
+function toggleStatus(form) {
+    router.post(route("forms.toggle-status", form.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            const message = form.status === 'active'
+                ? t("forms.deactivated")
+                : t("forms.activated");
+            showToast(message);
+        },
+    });
 }
 
 // Status badge
@@ -391,6 +422,40 @@ function formatDate(date) {
                                                 />
                                             </svg>
                                         </Link>
+                                        <!-- Toggle Status Button -->
+                                        <button
+                                            @click="toggleStatus(form)"
+                                            :class="[
+                                                'btn-icon',
+                                                form.status === 'active'
+                                                    ? 'text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                                    : 'text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                            ]"
+                                            :title="form.status === 'active' ? t('forms.deactivate') : t('forms.activate')"
+                                        >
+                                            <!-- Power/Toggle Icon -->
+                                            <svg
+                                                class="w-5 h-5"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    v-if="form.status === 'active'"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                                                />
+                                                <path
+                                                    v-else
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M5 13l4 4L19 7"
+                                                />
+                                            </svg>
+                                        </button>
                                         <button
                                             @click="duplicateForm(form)"
                                             class="btn-icon text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
@@ -466,6 +531,68 @@ function formatDate(date) {
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div
+            v-if="toast"
+            class="fixed bottom-4 right-4 z-50 max-w-sm w-full"
+        >
+            <div
+                :class="[
+                    'rounded-lg shadow-lg p-4 flex items-center gap-3',
+                    toast.success
+                        ? 'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800'
+                ]"
+            >
+                <svg
+                    v-if="toast.success"
+                    class="h-5 w-5 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                    />
+                </svg>
+                <svg
+                    v-else
+                    class="h-5 w-5 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                    />
+                </svg>
+                <span
+                    :class="[
+                        'text-sm font-medium',
+                        toast.success
+                            ? 'text-green-800 dark:text-green-200'
+                            : 'text-red-800 dark:text-red-200'
+                    ]"
+                >
+                    {{ toast.message }}
+                </span>
+                <button
+                    @click="toast = null"
+                    class="ml-auto text-gray-400 hover:text-gray-600"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
         </div>
     </AuthenticatedLayout>

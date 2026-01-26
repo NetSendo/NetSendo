@@ -287,4 +287,23 @@ class SubscriptionFormController extends Controller
             'dateRange' => ['from' => $from, 'to' => $to],
         ]);
     }
+
+    /**
+     * Toggle form status (activate/deactivate).
+     */
+    public function toggleStatus(SubscriptionForm $form)
+    {
+        $this->authorize('update', $form);
+
+        // Toggle between active and disabled
+        $newStatus = $form->status === 'active' ? 'disabled' : 'active';
+        $form->update(['status' => $newStatus]);
+
+        $message = $newStatus === 'active'
+            ? 'Formularz został aktywowany'
+            : 'Formularz został dezaktywowany';
+
+        return back()->with('success', $message);
+    }
 }
+
