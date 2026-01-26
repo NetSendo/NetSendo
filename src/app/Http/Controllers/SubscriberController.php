@@ -909,6 +909,9 @@ class SubscriberController extends Controller
     {
         return Inertia::render('Subscriber/Import', [
             'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
+            'customFields' => \App\Models\CustomField::where('user_id', auth()->id())
+                ->orderBy('sort_order')
+                ->get(['id', 'name', 'label', 'type']),
         ]);
     }
 
@@ -940,6 +943,11 @@ class SubscriberController extends Controller
 
         $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1];
         $startRow = 0;
+        $customFieldColumns = [];
+        $columnMapping = $request->input('column_mapping', []);
+        $hasHeader = $request->has('has_header') ? $request->boolean('has_header') : null;
+        $detectedStartRow = 0;
+        $detectedColIndices = $colIndices;
 
         if (count($lines) > 0) {
             $firstRow = str_getcsv(trim($lines[0]), $separator);
@@ -950,30 +958,57 @@ class SubscriberController extends Controller
                 if ($isDataRow) {
                     // First row is data, guess columns based on content
                     if (strpos($firstRow[0], '@') !== false) {
-                        $colIndices['email'] = 0;
+                        $detectedColIndices['email'] = 0;
                     } elseif (preg_match('/^\+?[0-9]{9,15}$/', trim($firstRow[0]))) {
-                        $colIndices['phone'] = 0;
+                        $detectedColIndices['phone'] = 0;
                     }
-                    $colIndices['first_name'] = count($firstRow) > 1 ? 1 : -1;
-                    $colIndices['last_name'] = count($firstRow) > 2 ? 2 : -1;
-                    $startRow = 0;
+                    $detectedColIndices['first_name'] = count($firstRow) > 1 ? 1 : -1;
+                    $detectedColIndices['last_name'] = count($firstRow) > 2 ? 2 : -1;
+                    $detectedStartRow = 0;
                 } else {
                     // First row is headers
                     $headers = array_map('strtolower', array_map('trim', $firstRow));
                     foreach ($map as $dbCol => $possibleNames) {
                         foreach ($headers as $index => $header) {
                             if (in_array($header, $possibleNames)) {
-                                $colIndices[$dbCol] = $index;
+                                $detectedColIndices[$dbCol] = $index;
                                 break;
                             }
                         }
                     }
                     // Fallback if no email/phone found
-                    if ($colIndices['email'] === -1 && $colIndices['phone'] === -1) {
-                        $colIndices['email'] = 0;
+                    if ($detectedColIndices['email'] === -1 && $detectedColIndices['phone'] === -1) {
+                        $detectedColIndices['email'] = 0;
                     }
-                    $startRow = 1;
+                    $detectedStartRow = 1;
                 }
+            }
+        }
+
+        $colIndices = $detectedColIndices;
+        $startRow = $detectedStartRow;
+
+        if (!empty($columnMapping) && is_array($columnMapping)) {
+            $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1];
+            foreach ($columnMapping as $index => $field) {
+                if (blank($field) || $field === 'ignore') {
+                    continue;
+                }
+
+                $columnIndex = (int) $index;
+                if (in_array($field, ['email', 'phone', 'first_name', 'last_name'], true)) {
+                    $colIndices[$field] = $columnIndex;
+                    continue;
+                }
+
+                if (str_starts_with($field, 'custom_field:')) {
+                    $fieldId = (int) substr($field, strlen('custom_field:'));
+                    $customFieldColumns[$fieldId] = $columnIndex;
+                }
+            }
+
+            if ($hasHeader !== null) {
+                $startRow = $hasHeader ? 1 : 0;
             }
         }
 
@@ -1055,6 +1090,24 @@ class SubscriberController extends Controller
                     'last_name' => $lastName,
                     'is_active_global' => true,
                 ]);
+            }
+
+            if (!empty($customFieldColumns)) {
+                foreach ($customFieldColumns as $fieldId => $columnIndex) {
+                    if (!isset($data[$columnIndex])) {
+                        continue;
+                    }
+
+                    $value = trim($data[$columnIndex]);
+                    if ($value === '') {
+                        continue;
+                    }
+
+                    $subscriber->fieldValues()->updateOrCreate(
+                        ['custom_field_id' => $fieldId],
+                        ['value' => $value]
+                    );
+                }
             }
 
             // Auto-detect gender from first name if not set

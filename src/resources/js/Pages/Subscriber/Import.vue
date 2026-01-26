@@ -1,21 +1,195 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
     lists: Array,
+    customFields: Array,
 });
 
 const form = useForm({
     file: null,
     contact_list_id: props.lists.length > 0 ? props.lists[0].id : '',
     separator: ',',
+    has_header: true,
+    column_mapping: {},
 });
 
+const fileColumns = ref([]);
+const hasHeader = ref(true);
+const columnMapping = reactive({});
+
+const hasMapping = computed(() => Object.values(columnMapping).some((value) => value && value !== 'ignore'));
+
+const resetMapping = () => {
+    Object.keys(columnMapping).forEach((key) => delete columnMapping[key]);
+};
+
+const getSeparator = () => (form.separator === 'tab' ? '\t' : form.separator);
+
+const parseCsvLine = (line, separator) => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === separator && !inQuotes) {
+            values.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    values.push(current);
+    return values.map((value) => value.trim());
+};
+
+const normalizeHeader = (value) => value.toLowerCase().trim();
+
+const detectHeaderRow = (columns) => {
+    const normalized = columns.map(normalizeHeader);
+    const headerMap = {
+        email: ['email', 'e-mail', 'mail'],
+        phone: ['phone', 'telefon', 'tel', 'mobile', 'phone_number', 'numer_telefonu', 'numer'],
+        first_name: ['first_name', 'firstname', 'imie', 'imię', 'name'],
+        last_name: ['last_name', 'lastname', 'nazwisko', 'surname'],
+    };
+    const customHeaders = (props.customFields ?? [])
+        .flatMap((field) => [field.label, field.name])
+        .filter(Boolean)
+        .map(normalizeHeader);
+
+    return normalized.some(
+        (value) =>
+            Object.values(headerMap).some((list) => list.includes(value)) ||
+            customHeaders.includes(value)
+    );
+};
+
+const applyDefaultMapping = (columns, detectedHeader) => {
+    resetMapping();
+
+    if (!columns.length) {
+        return;
+    }
+
+    columns.forEach((_, index) => {
+        columnMapping[index] = 'ignore';
+    });
+
+    if (!detectedHeader) {
+        columns.forEach((value, index) => {
+            if (value.includes('@')) {
+                columnMapping[index] = 'email';
+            }
+        });
+        return;
+    }
+
+    const normalized = columns.map(normalizeHeader);
+    const headerMap = {
+        email: ['email', 'e-mail', 'mail'],
+        phone: ['phone', 'telefon', 'tel', 'mobile', 'phone_number', 'numer_telefonu', 'numer'],
+        first_name: ['first_name', 'firstname', 'imie', 'imię', 'name'],
+        last_name: ['last_name', 'lastname', 'nazwisko', 'surname'],
+    };
+    const customFieldMap = new Map(
+        (props.customFields ?? []).flatMap((field) => {
+            const entries = [];
+            if (field.label) {
+                entries.push([normalizeHeader(field.label), field.id]);
+            }
+            if (field.name) {
+                entries.push([normalizeHeader(field.name), field.id]);
+            }
+            return entries;
+        })
+    );
+
+    normalized.forEach((value, index) => {
+        Object.entries(headerMap).forEach(([field, names]) => {
+            if (names.includes(value)) {
+                columnMapping[index] = field;
+            }
+        });
+
+        const customFieldId = customFieldMap.get(value);
+        if (customFieldId) {
+            columnMapping[index] = `custom_field:${customFieldId}`;
+        }
+    });
+};
+
+const syncMappingWithColumns = (columns) => {
+    Object.keys(columnMapping).forEach((key) => {
+        if (Number(key) >= columns.length) {
+            delete columnMapping[key];
+        }
+    });
+};
+
+const parseFilePreview = async (reset = false) => {
+    if (!form.file) {
+        fileColumns.value = [];
+        hasHeader.value = true;
+        resetMapping();
+        return;
+    }
+
+    const text = await form.file.text();
+    const firstLine = text.split(/\r?\n/).find((line) => line.trim() !== '') ?? '';
+    const cleanedLine = firstLine.replace(/^\uFEFF/, '');
+    const columns = parseCsvLine(cleanedLine, getSeparator());
+
+    fileColumns.value = columns;
+
+    if (reset) {
+        const detectedHeader = detectHeaderRow(columns);
+        hasHeader.value = detectedHeader;
+        applyDefaultMapping(columns, detectedHeader);
+    } else {
+        syncMappingWithColumns(columns);
+    }
+};
+
+watch(
+    () => form.file,
+    () => {
+        parseFilePreview(true);
+    }
+);
+
+watch(
+    () => form.separator,
+    () => {
+        if (form.file) {
+            parseFilePreview(false);
+        }
+    }
+);
+
 const submit = () => {
+    form.has_header = hasHeader.value;
+    form.column_mapping = hasMapping.value ? { ...columnMapping } : {};
     form.post(route('subscribers.import.store'), {
         preserveScroll: true,
-        onSuccess: () => form.reset('file'),
+        onSuccess: () => {
+            form.reset('file');
+            fileColumns.value = [];
+            hasHeader.value = true;
+            resetMapping();
+        },
     });
 };
 </script>
@@ -150,6 +324,62 @@ const submit = () => {
                             <progress v-if="form.progress" :value="form.progress.percentage" max="100" class="mt-2 w-full h-1">
                                 {{ form.progress.percentage }}%
                             </progress>
+                        </div>
+
+                        <div v-if="fileColumns.length" class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                        {{ $t('subscribers.import.mapping.title') }}
+                                    </h3>
+                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                        {{ $t('subscribers.import.mapping.subtitle') }}
+                                    </p>
+                                </div>
+                                <label class="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+                                    <input
+                                        v-model="hasHeader"
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
+                                    />
+                                    {{ $t('subscribers.import.mapping.first_row_header') }}
+                                </label>
+                            </div>
+
+                            <div class="mt-4 space-y-3">
+                                <div
+                                    v-for="(column, index) in fileColumns"
+                                    :key="index"
+                                    class="grid gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900 sm:grid-cols-[140px_1fr]"
+                                >
+                                    <div>
+                                        <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                            {{ $t('subscribers.import.mapping.column') }} {{ index + 1 }}
+                                        </p>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                            {{ $t('subscribers.import.mapping.preview') }}: {{ column || '—' }}
+                                        </p>
+                                    </div>
+                                    <select
+                                        v-model="columnMapping[index]"
+                                        class="w-full rounded-lg border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    >
+                                        <option value="">{{ $t('subscribers.import.mapping.select_field') }}</option>
+                                        <option value="ignore">{{ $t('subscribers.import.mapping.ignore') }}</option>
+                                        <option value="email">{{ $t('subscribers.import.mapping.email') }}</option>
+                                        <option value="phone">{{ $t('subscribers.import.mapping.phone') }}</option>
+                                        <option value="first_name">{{ $t('subscribers.import.mapping.first_name') }}</option>
+                                        <option value="last_name">{{ $t('subscribers.import.mapping.last_name') }}</option>
+                                        <option
+                                            v-for="field in customFields"
+                                            :key="field.id"
+                                            :value="`custom_field:${field.id}`"
+                                        >
+                                            {{ $t('subscribers.import.mapping.custom_field', { name: field.label || field.name }) }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Actions -->

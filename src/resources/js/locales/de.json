@@ -1665,7 +1665,7 @@
             "subtitle": "Kontakte aus CSV-Datei importieren",
             "instructions": {
                 "title": "Anweisungen zum Dateiformat",
-                "line1": "Die Datei sollte im CSV-Format vorliegen. Die erste Zeile (Header) wird ignoriert oder automatisch angepasst.",
+                "line1": "Die Datei sollte im CSV-Format vorliegen. Nach dem Upload ordnen Sie die Spalten den Feldern zu. Wenn keine Kopfzeilen vorhanden sind, können Sie die Zuordnung manuell setzen.",
                 "required_columns": "Erforderliche Spalten (in beliebiger Reihenfolge):",
                 "email": "E-Mail (erforderlich)",
                 "first_name": "Vorname (optional)",
@@ -1682,6 +1682,20 @@
                 "or_drag_drop": "oder per Drag & Drop verschieben",
                 "max_size": "CSV bis zu 10MB",
                 "selected": "Ausgewählt: {name}"
+            },
+            "mapping": {
+                "title": "Spaltenzuordnung",
+                "subtitle": "Ordnen Sie die Spalten aus der ersten Zeile den Feldern zu.",
+                "first_row_header": "Erste Zeile enthält Kopfzeilen",
+                "column": "Spalte",
+                "preview": "Wert aus der ersten Zeile",
+                "select_field": "Feld auswählen",
+                "ignore": "Nicht importieren",
+                "email": "E-Mail",
+                "phone": "Telefon",
+                "first_name": "Vorname",
+                "last_name": "Nachname",
+                "custom_field": "Benutzerdefiniertes Feld: {name}"
             },
             "importing": "Importieren...",
             "import_button": "Importieren"
