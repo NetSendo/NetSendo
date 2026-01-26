@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { useDateTime } from "@/Composables/useDateTime";
@@ -276,6 +276,24 @@ const getCategoryBadge = (task) => {
     }
     return null;
 };
+
+// Fetch Google Calendar events on mount if in list view mode
+onMounted(() => {
+    if (viewMode.value === "list" && props.calendarConnection) {
+        const today = new Date();
+        const from = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+        );
+        const to = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate() + 7,
+        );
+        fetchCalendarEvents({ from, to });
+    }
+});
 </script>
 
 <template>
