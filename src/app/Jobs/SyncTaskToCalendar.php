@@ -108,8 +108,21 @@ class SyncTaskToCalendar implements ShouldQueue
     private function createZoomMeeting(): void
     {
         try {
+            // Get the user's active Zoom connection
+            $zoomConnection = \App\Models\UserZoomConnection::forUser($this->task->user_id)
+                ->active()
+                ->first();
+
+            if (!$zoomConnection) {
+                Log::debug('No active Zoom connection for user, skipping Zoom meeting creation', [
+                    'user_id' => $this->task->user_id,
+                    'task_id' => $this->task->id,
+                ]);
+                return;
+            }
+
             $zoomService = app(\App\Services\ZoomMeetingService::class);
-            $meetingData = $zoomService->createMeetingFromTask($this->task);
+            $meetingData = $zoomService->createMeetingFromTask($this->task, $zoomConnection);
 
             if ($meetingData) {
                 $this->task->update([

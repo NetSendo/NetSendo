@@ -4469,7 +4469,11 @@
                 "include_zoom": "Zoom-Meeting hinzufügen",
                 "include_zoom_desc": "Automatisch Zoom-Meeting erstellen",
                 "meeting_ready": "Zoom-Meeting-Link bereit",
-                "join": "Beitreten"
+                "join": "Beitreten",
+                "attendees": "Eingeladene Gäste",
+                "add_email": "E-Mail eingeben...",
+                "add_guest": "Hinzufügen",
+                "attendees_hint": "Gäste erhalten eine Einladung mit dem Meeting-Link"
             },
             "empty": {
                 "button": "Erste Aufgabe hinzufügen",

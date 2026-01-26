@@ -4554,7 +4554,11 @@
                 "include_zoom": "Añadir reunión Zoom",
                 "include_zoom_desc": "Crear automáticamente reunión Zoom",
                 "meeting_ready": "Enlace de reunión Zoom listo",
-                "join": "Unirse"
+                "join": "Unirse",
+                "attendees": "Invitados",
+                "add_email": "Ingrese correo electrónico...",
+                "add_guest": "Añadir",
+                "attendees_hint": "Los invitados recibirán una invitación con el enlace de la reunión"
             },
             "empty": {
                 "button": "Añadir primera tarea",

@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Zoom Integration Translations:**
+  - Fixed missing translations for Zoom integration in Task Modal (`crm.task.zoom.add_email`, `add_guest`, `attendees_hint`) in PL and EN.
+  - Added missing Zoom attendees translations for German and Spanish locales.
+
+- **CRM Notification Classes:**
+  - Fixed production errors in `crm:check-overdue-tasks` scheduled command caused by missing notification classes.
+  - Created `TaskOverdueNotification.php` - sends email and database notification when a CRM task becomes overdue.
+  - Created `DealStageChangedNotification.php` - notifies deal owner when a deal stage changes (especially for won/lost deals).
+  - Created `ContactRepliedNotification.php` - notifies when a CRM contact responds through any communication channel.
+
 ### Changed
 
 ## [1.7.19] – Short Description

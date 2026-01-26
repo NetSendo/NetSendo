@@ -5355,7 +5355,10 @@
                 "join": "Dołącz",
                 "not_connected": "Wymagana konfiguracja Zoom",
                 "enable_sync_first": "Włącz synchronizację z kalendarzem",
-                "attendees": "Zaproszeni goście"
+                "attendees": "Zaproszeni goście",
+                "add_email": "Wpisz email gościa...",
+                "add_guest": "Dodaj",
+                "attendees_hint": "Goście otrzymają link do spotkania w wiadomości email"
             },
             "empty": {
                 "button": "Dodaj pierwsze zadanie",
