@@ -956,9 +956,25 @@ const priorities = [
 
                 <!-- Google Calendar Sync -->
                 <div
-                    v-if="calendarConnection"
-                    class="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/50"
+                    v-if="form.type === 'meeting'"
+                    :class="[
+                        'rounded-xl border p-4 relative',
+                        calendarConnection
+                            ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 opacity-60',
+                    ]"
                 >
+                    <!-- Disabled overlay when not connected -->
+                    <div
+                        v-if="!calendarConnection"
+                        class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-900/50 z-10"
+                    >
+                        <p
+                            class="text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm"
+                        >
+                            {{ $t("crm.task.calendar.not_connected") }}
+                        </p>
+                    </div>
                     <div class="flex items-center gap-3 mb-3">
                         <svg
                             class="h-5 w-5 text-blue-500"
@@ -973,6 +989,7 @@ const priorities = [
                             >Google Calendar</span
                         >
                         <span
+                            v-if="calendarConnection?.connected_email"
                             class="text-xs text-slate-500 dark:text-slate-400"
                         >
                             ({{ calendarConnection.connected_email }})
@@ -981,15 +998,21 @@ const priorities = [
 
                     <div class="flex items-center gap-3">
                         <label
-                            class="relative inline-flex items-center cursor-pointer"
+                            class="relative inline-flex items-center"
+                            :class="
+                                calendarConnection
+                                    ? 'cursor-pointer'
+                                    : 'cursor-not-allowed'
+                            "
                         >
                             <input
                                 type="checkbox"
                                 v-model="form.sync_to_calendar"
+                                :disabled="!calendarConnection"
                                 class="sr-only peer"
                             />
                             <div
-                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"
+                                class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"
                             ></div>
                         </label>
                         <span
@@ -1052,7 +1075,7 @@ const priorities = [
 
                 <!-- Google Meet Integration (visible when type is meeting) -->
                 <div
-                    v-if="form.sync_to_calendar && form.type === 'meeting'"
+                    v-if="form.type === 'meeting'"
                     :class="[
                         'rounded-xl border p-4 relative',
                         calendarConnection
@@ -1062,13 +1085,17 @@ const priorities = [
                 >
                     <!-- Disabled overlay with message -->
                     <div
-                        v-if="!calendarConnection"
+                        v-if="!calendarConnection || !form.sync_to_calendar"
                         class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-900/50 z-10"
                     >
                         <p
                             class="text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm"
                         >
-                            {{ $t("crm.task.meet.not_connected") }}
+                            {{
+                                !calendarConnection
+                                    ? $t("crm.task.meet.not_connected")
+                                    : $t("crm.task.meet.enable_sync_first")
+                            }}
                         </p>
                     </div>
 
@@ -1110,7 +1137,10 @@ const priorities = [
                             <input
                                 type="checkbox"
                                 v-model="form.include_google_meet"
-                                :disabled="!calendarConnection"
+                                :disabled="
+                                    !calendarConnection ||
+                                    !form.sync_to_calendar
+                                "
                                 class="sr-only peer"
                             />
                             <div
@@ -1265,7 +1295,7 @@ const priorities = [
 
                 <!-- Zoom Meeting Integration -->
                 <div
-                    v-if="form.sync_to_calendar && form.type === 'meeting'"
+                    v-if="form.type === 'meeting'"
                     :class="[
                         'rounded-xl border p-4 relative',
                         zoomConnection
@@ -1275,13 +1305,17 @@ const priorities = [
                 >
                     <!-- Disabled overlay with message -->
                     <div
-                        v-if="!zoomConnection"
+                        v-if="!zoomConnection || !form.sync_to_calendar"
                         class="absolute inset-0 flex items-center justify-center rounded-xl bg-slate-100/50 dark:bg-slate-900/50 z-10"
                     >
                         <p
                             class="text-sm font-medium text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg shadow-sm"
                         >
-                            {{ $t("crm.task.zoom.not_connected") }}
+                            {{
+                                !zoomConnection
+                                    ? $t("crm.task.zoom.not_connected")
+                                    : $t("crm.task.zoom.enable_sync_first")
+                            }}
                         </p>
                     </div>
 
@@ -1334,7 +1368,9 @@ const priorities = [
                             <input
                                 type="checkbox"
                                 v-model="form.include_zoom_meeting"
-                                :disabled="!zoomConnection"
+                                :disabled="
+                                    !zoomConnection || !form.sync_to_calendar
+                                "
                                 @change="
                                     form.include_zoom_meeting &&
                                     (form.include_google_meet = false)

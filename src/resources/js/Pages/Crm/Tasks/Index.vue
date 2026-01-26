@@ -6,6 +6,7 @@ import { useDateTime } from "@/Composables/useDateTime";
 import TaskModal from "@/Components/Crm/TaskModal.vue";
 import CalendarGrid from "@/Components/Crm/CalendarGrid.vue";
 import Dropdown from "@/Components/Dropdown.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 import axios from "axios";
 
 const { formatDate: formatDateBase, locale } = useDateTime();
@@ -34,6 +35,20 @@ const newTaskDate = ref(null);
 
 // Task modal
 const showTaskModal = ref(false);
+
+// Toast notification
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 3000);
+};
+
+// Delete confirmation modal
+const showDeleteModal = ref(false);
+const taskToDelete = ref(null);
+const deleteProcessing = ref(false);
 const editingTask = ref(null);
 
 const openNewTaskModal = () => {
@@ -174,7 +189,19 @@ const rescheduleTask = async (task, days) => {
         {
             due_date: newDate.toISOString().split("T")[0],
         },
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                const messages = {
+                    1: "Zadanie przełożone na jutro",
+                    3: "Zadanie przełożone o 3 dni",
+                    7: "Zadanie przełożone o tydzień",
+                };
+                showToast(messages[days] || `Zadanie przełożone o ${days} dni`);
+                // Reload task list to reflect changes in current filter
+                router.reload({ only: ["tasks", "counts"] });
+            },
+        },
     );
 };
 
@@ -185,15 +212,38 @@ const createFollowUp = async (task, days) => {
         {
             days: days,
         },
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast("Follow-up utworzony");
+                // Reload task list to show the new follow-up
+                router.reload({ only: ["tasks", "counts"] });
+            },
+        },
     );
 };
 
-// Delete task
-const deleteTask = async (task) => {
-    if (confirm("Czy na pewno chcesz usunąć to zadanie?")) {
-        await router.delete(`/crm/tasks/${task.id}`, { preserveScroll: true });
-    }
+// Delete task - open confirmation modal
+const deleteTask = (task) => {
+    taskToDelete.value = task;
+    showDeleteModal.value = true;
+};
+
+// Confirm delete task
+const confirmDeleteTask = async () => {
+    if (!taskToDelete.value) return;
+    deleteProcessing.value = true;
+    await router.delete(`/crm/tasks/${taskToDelete.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast("Zadanie zostało usunięte");
+        },
+        onFinish: () => {
+            deleteProcessing.value = false;
+            showDeleteModal.value = false;
+            taskToDelete.value = null;
+        },
+    });
 };
 
 // Format date
@@ -1046,5 +1096,87 @@ onMounted(() => {
             @close="showTaskModal = false"
             @saved="onTaskSaved"
         />
+
+        <!-- Delete Confirmation Modal -->
+        <ConfirmModal
+            :show="showDeleteModal"
+            title="Usuń zadanie"
+            message="Czy na pewno chcesz usunąć to zadanie? Tej operacji nie można cofnąć."
+            type="danger"
+            confirm-text="Usuń"
+            :processing="deleteProcessing"
+            @close="showDeleteModal = false"
+            @confirm="confirmDeleteTask"
+        />
+
+        <!-- Toast Notification -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-300"
+                enter-from-class="translate-y-2 opacity-0"
+                enter-to-class="translate-y-0 opacity-100"
+                leave-active-class="transition ease-in duration-200"
+                leave-from-class="translate-y-0 opacity-100"
+                leave-to-class="translate-y-2 opacity-0"
+            >
+                <div
+                    v-if="toast"
+                    class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg"
+                    :class="
+                        toast.success
+                            ? 'bg-green-600 text-white'
+                            : 'bg-red-600 text-white'
+                    "
+                >
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                    <span class="font-medium">{{ toast.message }}</span>
+                    <button
+                        @click="toast = null"
+                        class="ml-2 rounded-lg p-1 hover:bg-white/20 transition-colors"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

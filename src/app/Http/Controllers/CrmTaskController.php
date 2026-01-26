@@ -357,10 +357,18 @@ class CrmTaskController extends Controller
             'due_date' => 'required|date|after_or_equal:today',
         ]);
 
-        // Parse date in user's timezone and convert to UTC
+        // Parse date in user's timezone and preserve original time
         $userTimezone = DateHelper::getUserTimezone();
-        $dueDate = Carbon::parse($validated['due_date'], $userTimezone)->setTimezone('UTC');
-        $task->reschedule($dueDate);
+        $newDate = Carbon::parse($validated['due_date'], $userTimezone);
+
+        // If task has existing due_date with time, preserve the time component
+        if ($task->due_date) {
+            $originalTime = $task->due_date->setTimezone($userTimezone);
+            $newDate->setTime($originalTime->hour, $originalTime->minute, $originalTime->second);
+        }
+
+        $newDate->setTimezone('UTC');
+        $task->reschedule($newDate);
 
         // Sync changes to Google Calendar if task is synced
         if ($task->isSyncedToCalendar()) {

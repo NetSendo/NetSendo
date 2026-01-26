@@ -5241,7 +5241,8 @@
                 "select_calendar": "Select Calendar",
                 "default": "Default",
                 "primary": "Primary",
-                "synced": "Synced with Calendar"
+                "synced": "Synced with Calendar",
+                "not_connected": "Google Calendar configuration required"
             },
             "actions": {
                 "cancel": "Cancel",
@@ -5257,6 +5258,8 @@
                 "attendees_hint": "Guests will receive invitation with meeting link",
                 "meeting_ready": "Meeting link ready",
                 "join": "Join",
+                "not_connected": "Google Calendar configuration required",
+                "enable_sync_first": "Enable calendar sync first",
                 "status": {
                     "accepted": "Accepted",
                     "declined": "Declined",
@@ -5268,7 +5271,10 @@
                 "include_zoom": "Add Zoom meeting",
                 "include_zoom_desc": "Automatically create Zoom meeting",
                 "meeting_ready": "Zoom meeting link ready",
-                "join": "Join"
+                "join": "Join",
+                "not_connected": "Zoom configuration required",
+                "enable_sync_first": "Enable calendar sync first",
+                "attendees": "Invited guests"
             },
             "empty": {
                 "button": "Add First Task",

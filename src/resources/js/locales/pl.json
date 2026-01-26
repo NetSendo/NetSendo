@@ -5322,7 +5322,8 @@
                 "select_calendar": "Wybierz kalendarz",
                 "default": "Domyślny",
                 "primary": "Główny",
-                "synced": "Zsynchronizowane z kalendarzem"
+                "synced": "Zsynchronizowane z kalendarzem",
+                "not_connected": "Wymagana konfiguracja Google Calendar"
             },
             "actions": {
                 "cancel": "Anuluj",
@@ -5338,6 +5339,8 @@
                 "attendees_hint": "Goście dostaną zaproszenie z linkiem do spotkania",
                 "meeting_ready": "Link do spotkania gotowy",
                 "join": "Dołącz",
+                "not_connected": "Wymagana konfiguracja Google Calendar",
+                "enable_sync_first": "Włącz synchronizację z kalendarzem",
                 "status": {
                     "accepted": "Zaakceptowano",
                     "declined": "Odrzucono",
@@ -5349,7 +5352,10 @@
                 "include_zoom": "Dodaj spotkanie Zoom",
                 "include_zoom_desc": "Automatycznie utwórz spotkanie Zoom",
                 "meeting_ready": "Link do spotkania Zoom gotowy",
-                "join": "Dołącz"
+                "join": "Dołącz",
+                "not_connected": "Wymagana konfiguracja Zoom",
+                "enable_sync_first": "Włącz synchronizację z kalendarzem",
+                "attendees": "Zaproszeni goście"
             },
             "empty": {
                 "button": "Dodaj pierwsze zadanie",

@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.7.19] – Short Description
+
+**Release date:** 2026-01-26
+
+### Added
+
+- **CRM Task Action Feedback:**
+  - **Toast Notifications:** Added visual feedback (toast messages) for task actions: Reschedule (Tomorrow, +3 Days, +1 Week), Create Follow-up, and Delete.
+  - **Delete Confirmation:** Replaced browser-native confirm dialog with a proper "Confirm Delete" modal for tasks.
+  - **Instant Updates:** Task list now automatically refreshes after rescheduling or creating follow-ups to reflect changes in the current filter view immediately.
+
+- **Subscriber Import Column Mapping:**
+  - **Flexible Mapping:** Implemented a new interface allowing users to map CSV columns to system fields (Email, Name, Phone) and Custom Fields during import.
+  - **Smart Detection:** Automatically detects and suggests column mappings based on header names and content analysis.
+  - **Custom Field Support:** Values mapped to custom fields are automatically stored in the `fieldValues` relationship.
+  - **Header Control:** Added "First row contains headers" toggle to handle files with or without headers.
+  - **Localization:** Full translations for the mapping interface in EN, PL, DE, ES.
+
 - **Zoom & Google Meet Integration Improvements:**
   - **New Guest Management for Zoom:** Implemented "Invited Guests" section for Zoom Meetings in Task Modal, matching Google Meet functionality.
   - **Auto-Add Contact:** Enabling Zoom integration now automatically adds the assigned contact's email to the attendee list.
@@ -18,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **CRM Task Rescheduling:**
+  - Fixed an issue where rescheduling a task would reset its time to midnight (00:00). Now preserves the original time while changing the date.
+  - Fixed task visibility issue where rescheduled tasks remained visible in the "Today" filter until manual refresh.
+
 - **Anthropic AI Integration - Content Generation Timeout:**
   - Fixed Anthropic Claude not working when generating email content, templates, or A/B tests due to insufficient API timeout.
   - Added custom `makeRequest()` override in `AnthropicProvider.php` with 120s timeout (BaseProvider uses 30s which was too short for large prompts).
@@ -25,7 +51,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added detailed logging for API errors to help with debugging.
   - Fixed text fragment generation (`mode='text'`) using `max_tokens_small` (8000) instead of `max_tokens_large` (50000), causing incomplete responses for longer content.
 
+- **Task Modal Stability:**
+  - Fixed `TypeError` crash when opening task modal without an active Google Calendar connection.
+  - Added safe access to calendar connection properties in the UI.
+
 ### Changed
+
+- **Meeting Integration UX:**
+  - **Visibility:** Google Meet and Zoom options are now visible for "Meeting" tasks even when disconnected (displayed as disabled with explanatory status message), improving feature discoverability.
+  - **Status Messages:** Added clear status indicators distinguishing between "Configuration required" and "Enable sync first" states.
+  - **Localization:** Added missing translation keys for integration status messages in PL and EN.
 
 ## [1.7.18] – Short Description
 
