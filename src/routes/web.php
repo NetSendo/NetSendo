@@ -854,12 +854,14 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
 
     // CRM Contacts
     Route::get('contacts/search-subscribers', [CrmContactController::class, 'searchSubscribers'])->name('contacts.search-subscribers');
+    Route::get('contacts/search', [CrmContactController::class, 'search'])->name('contacts.search');
     Route::resource('contacts', CrmContactController::class);
     Route::post('contacts/{contact}/activity', [CrmContactController::class, 'addActivity'])->name('contacts.activity');
     Route::get('contacts/{contact}/quick-view', [CrmContactController::class, 'quickView'])->name('contacts.quick-view');
     Route::post('contacts/{contact}/send-email', [CrmContactController::class, 'sendEmail'])->name('contacts.send-email');
 
     // CRM Companies
+    Route::get('companies/search', [CrmCompanyController::class, 'search'])->name('companies.search');
     Route::get('companies/lookup', [\App\Http\Controllers\CompanyLookupController::class, 'lookup'])->name('companies.lookup');
     Route::resource('companies', CrmCompanyController::class);
     Route::post('companies/{company}/note', [CrmCompanyController::class, 'addNote'])->name('companies.note');

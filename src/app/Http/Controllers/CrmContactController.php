@@ -45,6 +45,47 @@ class CrmContactController extends Controller
 
         return response()->json(['subscribers' => $subscribers]);
     }
+
+    /**
+     * Search contacts for deal form autocomplete.
+     * Returns contacts with optional company filter.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $query = $request->get('q', '');
+        $companyId = $request->get('company_id');
+
+        $contactsQuery = CrmContact::forUser($userId)
+            ->with(['subscriber:id,email,first_name,last_name', 'company:id,name']);
+
+        // Filter by company if specified
+        if ($companyId) {
+            $contactsQuery->where('crm_company_id', $companyId);
+        }
+
+        // Search by name or email
+        if (strlen($query) >= 1) {
+            $contactsQuery->whereHas('subscriber', function ($q) use ($query) {
+                $q->where('email', 'like', "%{$query}%")
+                    ->orWhere('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%");
+            });
+        }
+
+        $contacts = $contactsQuery
+            ->limit(20)
+            ->get()
+            ->map(fn($c) => [
+                'id' => $c->id,
+                'name' => $c->full_name,
+                'email' => $c->email,
+                'crm_company_id' => $c->crm_company_id,
+                'company_name' => $c->company?->name,
+            ]);
+
+        return response()->json($contacts);
+    }
     /**
      * Display a listing of contacts.
      */

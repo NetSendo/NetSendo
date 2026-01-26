@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import DealDetailModal from "@/Components/Crm/DealDetailModal.vue";
+import SearchableSelect from "@/Components/Crm/SearchableSelect.vue";
 
 const props = defineProps({
     pipeline: Object,
@@ -30,6 +32,43 @@ const form = useForm({
     notes: "",
 });
 
+// Deal detail modal
+const showDealModal = ref(false);
+const selectedDeal = ref(null);
+
+const openDealModal = (deal) => {
+    selectedDeal.value = deal;
+    showDealModal.value = true;
+};
+
+const closeDealModal = () => {
+    showDealModal.value = false;
+    selectedDeal.value = null;
+};
+
+const onDealUpdated = () => {
+    router.reload({ only: ['stages'] });
+};
+
+const onDealDeleted = () => {
+    router.reload({ only: ['stages'] });
+};
+
+// Auto-load company when contact is selected
+const onContactSelected = (contact) => {
+    if (contact && contact.crm_company_id && !form.crm_company_id) {
+        form.crm_company_id = contact.crm_company_id;
+    }
+};
+
+// Filter params for contacts based on selected company
+const contactFilterParams = computed(() => {
+    if (form.crm_company_id) {
+        return { company_id: form.crm_company_id };
+    }
+    return {};
+});
+
 const submitDeal = () => {
     form.post("/crm/deals", {
         preserveScroll: true,
@@ -44,8 +83,10 @@ const submitDeal = () => {
 const draggedDeal = ref(null);
 const dragOverStageId = ref(null);
 
-const handleDragStart = (deal) => {
+const handleDragStart = (deal, event) => {
     draggedDeal.value = deal;
+    // Prevent click event from firing
+    event.stopPropagation();
 };
 
 const handleDragOver = (event) => {
@@ -171,9 +212,10 @@ const stageTotal = (stage) => {
                 <!-- Deals -->
                 <div class="flex-1 space-y-3 overflow-y-auto p-4">
                     <div v-for="deal in stage.deals" :key="deal.id"
-                        class="cursor-grab rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-slate-800"
+                        class="cursor-pointer rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md dark:bg-slate-800"
                         draggable="true"
-                        @dragstart="handleDragStart(deal)"
+                        @click="openDealModal(deal)"
+                        @dragstart="handleDragStart(deal, $event)"
                         @dragend="handleDragEnd">
                         <h3 class="text-lg font-medium text-slate-900 dark:text-white">{{ deal.name }}</h3>
                         <p v-if="deal.contact?.subscriber" class="mt-1 text-sm text-slate-500">
@@ -252,19 +294,25 @@ const stageTotal = (stage) => {
                     <div class="grid gap-4 md:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.contact_label') }}</label>
-                            <select v-model="form.crm_contact_id"
-                                class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="">{{ $t('crm.deals.form.none_option') }}</option>
-                                <option v-for="contact in contacts" :key="contact.id" :value="contact.id">{{ contact.name }}</option>
-                            </select>
+                            <SearchableSelect
+                                v-model="form.crm_contact_id"
+                                search-url="/crm/contacts/search"
+                                :placeholder="$t('crm.deals.form.contact_placeholder', 'Wyszukaj kontakt...')"
+                                :initial-options="contacts"
+                                :filter-params="contactFilterParams"
+                                @selected="onContactSelected"
+                                class="mt-1"
+                            />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('crm.deals.form.company_label') }}</label>
-                            <select v-model="form.crm_company_id"
-                                class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-                                <option value="">{{ $t('crm.deals.form.none_option') }}</option>
-                                <option v-for="company in companies" :key="company.id" :value="company.id">{{ company.name }}</option>
-                            </select>
+                            <SearchableSelect
+                                v-model="form.crm_company_id"
+                                search-url="/crm/companies/search"
+                                :placeholder="$t('crm.deals.form.company_placeholder', 'Wyszukaj firmę...')"
+                                :initial-options="companies"
+                                class="mt-1"
+                            />
                         </div>
                     </div>
 
@@ -287,5 +335,20 @@ const stageTotal = (stage) => {
                 </form>
             </div>
         </div>
+
+        <!-- Deal Detail Modal -->
+        <DealDetailModal
+            :show="showDealModal"
+            :deal="selectedDeal"
+            :stages="stages"
+            :contacts="contacts"
+            :companies="companies"
+            :owners="owners"
+            :currencies="currencies"
+            :default-currency="defaultCurrency"
+            @close="closeDealModal"
+            @updated="onDealUpdated"
+            @deleted="onDealDeleted"
+        />
     </AuthenticatedLayout>
 </template>

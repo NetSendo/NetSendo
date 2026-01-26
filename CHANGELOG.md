@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **CRM Sales Funnel Improvements:**
+  - **Deal Detail Modal:** Added a modal to view and edit deal details (name, value, stage, contact, company) directly from the Kanban board by clicking on a deal.
+  - **Searchable Selects:** Implemented `SearchableSelect` component for Contacts and Companies in the deal form, enabling real-time search for large datasets.
+  - **Smart Form Association:**
+    - Automatically loads the associated Company when a Contact is selected.
+    - Filters the Contact list to show only relevant employees when a Company is selected first.
+  - **Delete Confirmation:** Added a safety confirmation modal when deleting a deal from the Kanban board.
+  - **Backend Endpoints:** Added `/crm/contacts/search` and `/crm/companies/search` endpoints to support frontend search components.
+
 - **Google Meet Integration for CRM Tasks:**
   - Automatic Google Meet link creation when syncing meeting-type tasks to Google Calendar.
   - Toggle "Add Google Meet link" in Task Modal (visible for meeting tasks with calendar sync enabled).

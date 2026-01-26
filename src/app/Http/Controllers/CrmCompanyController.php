@@ -12,6 +12,31 @@ use Inertia\Response;
 class CrmCompanyController extends Controller
 {
     /**
+     * Search companies for deal form autocomplete.
+     */
+    public function search(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $query = $request->get('q', '');
+
+        $companiesQuery = CrmCompany::forUser($userId);
+
+        if (strlen($query) >= 1) {
+            $companiesQuery->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('domain', 'like', "%{$query}%");
+            });
+        }
+
+        $companies = $companiesQuery
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name']);
+
+        return response()->json($companies);
+    }
+
+    /**
      * Display a listing of companies.
      */
     public function index(Request $request): Response
