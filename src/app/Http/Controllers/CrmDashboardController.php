@@ -10,6 +10,7 @@ use App\Models\CrmFollowUpEnrollment;
 use App\Models\CrmFollowUpSequence;
 use App\Models\UserCalendarConnection;
 use App\Services\GoogleCalendarService;
+use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -78,6 +79,7 @@ class CrmDashboardController extends Controller
             'recentActivities' => $recentActivities,
             'hotLeads' => $hotLeads,
             'stats' => $stats,
+            'userTimezone' => DateHelper::getUserTimezone(),
         ]);
     }
 

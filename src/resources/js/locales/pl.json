@@ -5268,7 +5268,9 @@
                 "owner": "Przypisz do handlowca",
                 "owner_auto": "-- Automatycznie (ja) --",
                 "description": "Opis (opcjonalnie)",
-                "description_placeholder": "Dodatkowe szczegóły dotyczące zadania..."
+                "description_placeholder": "Dodatkowe szczegóły dotyczące zadania...",
+                "duration": "Czas trwania",
+                "duration_custom": "Inny"
             },
             "calendar": {
                 "sync": "Synchronizuj z kalendarzem Google",

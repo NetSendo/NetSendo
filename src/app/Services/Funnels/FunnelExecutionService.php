@@ -93,10 +93,7 @@ class FunnelExecutionService
         }
 
         // Queue the email
-        SendEmailJob::dispatch($message, $subscriber, [
-            'funnel_id' => $enrollment->funnel_id,
-            'funnel_step_id' => $step->id,
-        ]);
+        SendEmailJob::dispatch($message, $subscriber);
 
         $enrollment->addToHistory('email_queued', [
             'message_id' => $message->id,

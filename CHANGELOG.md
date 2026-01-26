@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CRM Task Duration Picker:**
+  - Added duration picker with presets (5, 10, 15, 30, 60, 120 min) and "Custom" option to Task Modal.
+  - Implemented automatic end time calculation based on selected duration and start time.
+  - Implemented reverse detection of duration preset when end time is manually changed.
+  - Added localization for duration controls in EN, PL, DE, ES.
+
+### Improved
+
+- **CRM Calendar - Weekly View Overlap Handling:**
+  - Implemented advanced collision detection algorithm to handle overlapping events.
+  - Events occurring at the same time are now displayed side-by-side (sharing column width) instead of stacking on top of each other.
+  - Improved readability for busy schedules with concurrent tasks.
+
+- **CRM Calendar - Daily View:**
+  - Added new detailed "Day" view mode accessible via view toggle and by clicking day headers.
+  - Features larger time slots (72px/hour) for better readability of event details.
+  - Displays full event information including priority, contact name, and description.
+
+### Fixed
+
+- **Autoresponder Queue Statistics:**
+  - Fixed an issue where subscribers with pending queue entries (PLANNED/QUEUED) were incorrectly counted as "Missed" for Day 0 autoresponders.
+  - Added a new `pending` statistic to `getQueueScheduleStats` to accurately track subscribers waiting for CRON processing.
+
+- **SendEmailJob Argument Validation:**
+  - Fixed critical `TypeError` exceptions in `FunnelExecutionService`, `FunnelRetryService`, and `AutomationActionExecutor` where `SendEmailJob` was instantiated with incorrect argument types (string or array instead of `Mailbox` model).
+  - Ensured email sending reliability in Funnels and Automations.
+
+- **CRM Tasks Timezone Handling:**
+  - Fixed an issue where CRM tasks were parsed in UTC instead of the user's timezone, causing a 1-hour offset when syncing to Google Calendar (e.g., Warsaw time).
+  - Updated `GoogleCalendarService` to correctly convert UTC stored dates to the user's specific timezone before sending to Google Calendar API.
+  - Fixed `CalendarGrid.vue` to compare dates using the local timezone instead of UTC, ensuring events appear on the correct days regardless of user's location.
+  - Added `userTimezone` prop to Dashboard and Task views to ensure consistent date presentation across the frontend.
+
+- **Google Calendar Synchronization:**
+  - Fixed `destroy` action not removing the event from Google Calendar before deleting the task locally.
+  - Fixed `update` action not synchronizing changes when the task was already connected to Google Calendar.
+  - Fixed `reschedule` action not updating the event date in Google Calendar.
+  - Added consistent JSON responses for `destroy`, `reschedule` and other task actions.
+
 ## [1.7.16] – Short Description
 
 **Release date:** 2026-01-26

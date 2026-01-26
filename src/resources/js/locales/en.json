@@ -5187,7 +5187,9 @@
                 "owner": "Assign to Owner",
                 "owner_auto": "-- Automatically (Me) --",
                 "description": "Description (optional)",
-                "description_placeholder": "Additional details about the task..."
+                "description_placeholder": "Additional details about the task...",
+                "duration": "Duration",
+                "duration_custom": "Custom"
             },
             "calendar": {
                 "sync": "Sync to Google Calendar",

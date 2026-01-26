@@ -75,11 +75,7 @@ class FunnelRetryService
         $subscriber = $enrollment->subscriber;
 
         // Queue the reminder email
-        SendEmailJob::dispatch($message, $subscriber, [
-            'funnel_id' => $enrollment->funnel_id,
-            'funnel_step_id' => $step->id,
-            'is_retry' => true,
-        ]);
+        SendEmailJob::dispatch($message, $subscriber);
 
         // Record the retry attempt
         $retry = FunnelStepRetry::createAttempt($enrollment->id, $step->id);

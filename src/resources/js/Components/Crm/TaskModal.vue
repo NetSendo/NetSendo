@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, nextTick } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import Modal from "@/Components/Modal.vue";
 import InputError from "@/Components/InputError.vue";
@@ -47,7 +47,7 @@ const form = useForm({
     priority: "medium",
     due_date: "",
     due_time: "09:00",
-    end_time: "10:00",
+    end_time: "09:30",
     crm_contact_id: null,
     crm_deal_id: null,
     owner_id: null,
@@ -65,6 +65,87 @@ const form = useForm({
     attendee_emails: [],
     // Zoom
     include_zoom_meeting: false,
+});
+
+// Duration options in minutes
+const durationOptions = [
+    { value: 5, label: '5 min' },
+    { value: 10, label: '10 min' },
+    { value: 15, label: '15 min' },
+    { value: 30, label: '30 min' },
+    { value: 60, label: '1h' },
+    { value: 120, label: '2h' },
+    { value: 'custom', label: 'crm.task.fields.duration_custom' },
+];
+
+const selectedDuration = ref(30);
+const isCustomDuration = ref(false);
+const isUpdatingEndTime = ref(false);
+
+// Calculate duration from due_time and end_time
+const calculateDurationFromTimes = (dueTime, endTime) => {
+    if (!dueTime || !endTime) return 30;
+    const [dueH, dueM] = dueTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    let duration = (endH * 60 + endM) - (dueH * 60 + dueM);
+    if (duration <= 0) duration += 24 * 60; // Handle next day
+    return duration;
+};
+
+// Calculate end_time from due_time and duration
+const calculateEndTime = (dueTime, durationMinutes) => {
+    if (!dueTime) return '09:30';
+    const [hours, minutes] = dueTime.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + durationMinutes;
+    const endHours = Math.floor(totalMinutes / 60) % 24;
+    const endMinutes = totalMinutes % 60;
+    return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+};
+
+// Check if duration matches a preset
+const isPresetDuration = (duration) => {
+    return [5, 10, 15, 30, 60, 120].includes(duration);
+};
+
+// Watch for duration changes and update end_time
+watch(selectedDuration, (newDuration) => {
+    if (newDuration === 'custom') {
+        isCustomDuration.value = true;
+        return;
+    }
+    isCustomDuration.value = false;
+    if (!isUpdatingEndTime.value && form.due_time) {
+        isUpdatingEndTime.value = true;
+        form.end_time = calculateEndTime(form.due_time, newDuration);
+        nextTick(() => {
+            isUpdatingEndTime.value = false;
+        });
+    }
+});
+
+// Watch for due_time changes and update end_time
+watch(() => form.due_time, (newDueTime) => {
+    if (!isUpdatingEndTime.value && selectedDuration.value !== 'custom' && newDueTime) {
+        isUpdatingEndTime.value = true;
+        form.end_time = calculateEndTime(newDueTime, selectedDuration.value);
+        nextTick(() => {
+            isUpdatingEndTime.value = false;
+        });
+    }
+});
+
+// Watch for manual end_time changes
+watch(() => form.end_time, (newEndTime) => {
+    if (isUpdatingEndTime.value) return;
+
+    const duration = calculateDurationFromTimes(form.due_time, newEndTime);
+    if (isPresetDuration(duration)) {
+        selectedDuration.value = duration;
+        isCustomDuration.value = false;
+    } else {
+        selectedDuration.value = 'custom';
+        isCustomDuration.value = true;
+    }
 });
 
 // Reset form when modal opens
@@ -107,8 +188,17 @@ watch(
                         .padStart(2, "0");
                     form.end_time = `${endHours}:${endMinutes}`;
                 } else {
-                    // Default: 1 hour after start
-                    form.end_time = "10:00";
+                    // Default: 30 minutes after start
+                    form.end_time = calculateEndTime(form.due_time, 30);
+                }
+                // Calculate and set duration from times
+                const duration = calculateDurationFromTimes(form.due_time, form.end_time);
+                if (isPresetDuration(duration)) {
+                    selectedDuration.value = duration;
+                    isCustomDuration.value = false;
+                } else {
+                    selectedDuration.value = 'custom';
+                    isCustomDuration.value = true;
                 }
                 form.crm_contact_id = props.task.crm_contact_id || null;
                 form.crm_deal_id = props.task.crm_deal_id || null;
@@ -138,7 +228,10 @@ watch(
                 // Set default due date to today and time to 09:00
                 form.due_date = new Date().toISOString().split("T")[0];
                 form.due_time = "09:00";
-                form.end_time = "10:00";
+                // Default duration: 30 minutes
+                selectedDuration.value = 30;
+                isCustomDuration.value = false;
+                form.end_time = "09:30";
                 // Auto-enable calendar sync if user has auto_sync enabled
                 form.sync_to_calendar =
                     props.calendarConnection?.auto_sync_tasks || false;
@@ -457,6 +550,32 @@ const priorities = [
                             />
                         </div>
                     </div>
+
+                    <!-- Duration Picker -->
+                    <div class="mt-2">
+                        <label
+                            class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5"
+                        >
+                            {{ $t("crm.task.fields.duration") }}
+                        </label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button
+                                v-for="option in durationOptions"
+                                :key="option.value"
+                                type="button"
+                                @click="selectedDuration = option.value"
+                                :class="[
+                                    'rounded-lg px-2.5 py-1 text-xs font-medium transition-all',
+                                    selectedDuration === option.value
+                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600',
+                                ]"
+                            >
+                                {{ option.value === 'custom' ? $t(option.label) : option.label }}
+                            </button>
+                        </div>
+                    </div>
+
                     <InputError :message="form.errors.due_date" class="mt-1" />
                     <InputError :message="form.errors.due_time" class="mt-1" />
                     <InputError :message="form.errors.end_time" class="mt-1" />

@@ -4493,7 +4493,9 @@
                 "owner": "Asignar a propietario",
                 "owner_auto": "-- Automáticamente (Yo) --",
                 "description": "Descripción (opcional)",
-                "description_placeholder": "Detalles adicionales sobre la tarea..."
+                "description_placeholder": "Detalles adicionales sobre la tarea...",
+                "duration": "Duración",
+                "duration_custom": "Otro"
             },
             "calendar": {
                 "sync": "Sincronizar con Google Calendar",

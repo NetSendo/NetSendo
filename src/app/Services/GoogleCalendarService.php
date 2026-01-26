@@ -369,25 +369,30 @@ class GoogleCalendarService
             // For tasks with specific time, use dateTime
             // For all-day tasks, use date
             if ($task->due_date->format('H:i') !== '00:00') {
+                // Convert from UTC (storage) to user's timezone for Google Calendar
+                $startInUserTz = $task->due_date->copy()->setTimezone($userTimezone);
                 $payload['start'] = [
-                    'dateTime' => $task->due_date->toRfc3339String(),
+                    'dateTime' => $startInUserTz->toRfc3339String(),
                     'timeZone' => $userTimezone,
                 ];
                 // Use end_date if available, otherwise default to 1 hour duration
                 $endDateTime = $task->end_date ?? $task->due_date->copy()->addHour();
+                $endInUserTz = $endDateTime->copy()->setTimezone($userTimezone);
                 $payload['end'] = [
-                    'dateTime' => $endDateTime->toRfc3339String(),
+                    'dateTime' => $endInUserTz->toRfc3339String(),
                     'timeZone' => $userTimezone,
                 ];
             } else {
-                // All-day event
-                $payload['start'] = ['date' => $task->due_date->format('Y-m-d')];
-                $payload['end'] = ['date' => $task->due_date->format('Y-m-d')];
+                // All-day event - convert to user's timezone for correct date
+                $dateInUserTz = $task->due_date->copy()->setTimezone($userTimezone);
+                $payload['start'] = ['date' => $dateInUserTz->format('Y-m-d')];
+                $payload['end'] = ['date' => $dateInUserTz->format('Y-m-d')];
             }
         } else {
-            // No due date - set for today as all-day
-            $payload['start'] = ['date' => now()->format('Y-m-d')];
-            $payload['end'] = ['date' => now()->format('Y-m-d')];
+            // No due date - set for today as all-day (in user's timezone)
+            $todayInUserTz = now()->setTimezone($userTimezone);
+            $payload['start'] = ['date' => $todayInUserTz->format('Y-m-d')];
+            $payload['end'] = ['date' => $todayInUserTz->format('Y-m-d')];
         }
 
         // Add color based on priority

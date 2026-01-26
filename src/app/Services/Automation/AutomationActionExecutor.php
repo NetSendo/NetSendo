@@ -70,8 +70,7 @@ class AutomationActionExecutor
         // Queue the email
         SendEmailJob::dispatch(
             $message,
-            $subscriber,
-            $subscriber->email
+            $subscriber
         );
 
         return ['message_id' => $messageId, 'queued' => true];

@@ -296,8 +296,21 @@ class Message extends Model
             ->unique()
             ->toArray();
 
+        // Get emails that have queue entries waiting to be processed (PLANNED or QUEUED)
+        // These are NOT missed - they are waiting for CRON to process them
+        $pendingEmails = $this->queueEntries()
+            ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
+            ->whereIn('message_queue_entries.status', [
+                MessageQueueEntry::STATUS_PLANNED,
+                MessageQueueEntry::STATUS_QUEUED
+            ])
+            ->pluck('subscribers.email')
+            ->unique()
+            ->toArray();
+
         $stats = [
             'sent' => count($sentEmails),
+            'pending' => count($pendingEmails), // Add pending count for visibility
             'today' => 0,
             'tomorrow' => 0,
             'day_after_tomorrow' => 0,
@@ -311,6 +324,12 @@ class Message extends Model
             // Skip if already sent (check by email for deduplication)
             if (in_array($subscriber->email, $sentEmails)) {
                 continue;
+            }
+
+            // Skip if has pending queue entry (waiting for CRON to process)
+            // This prevents false "missed" counts for day 0 messages
+            if (in_array($subscriber->email, $pendingEmails)) {
+                continue; // Already counted in 'pending' stat
             }
 
             // Get subscribed_at from the first matching list's pivot

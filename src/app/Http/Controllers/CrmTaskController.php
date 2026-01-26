@@ -8,6 +8,7 @@ use App\Models\CrmDeal;
 use App\Models\User;
 use App\Models\UserCalendarConnection;
 use App\Services\GoogleCalendarService;
+use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -119,6 +120,7 @@ class CrmTaskController extends Controller
                 'auto_sync_tasks' => $calendarConnection->auto_sync_tasks,
             ] : null,
             'calendars' => $calendars,
+            'userTimezone' => DateHelper::getUserTimezone(),
         ]);
     }
 
@@ -159,17 +161,29 @@ class CrmTaskController extends Controller
             'include_zoom_meeting' => 'nullable|boolean',
         ]);
 
-        // Combine date and time into datetime
+        // Get user's timezone for proper date parsing
+        $userTimezone = DateHelper::getUserTimezone();
+
+        // Combine date and time into datetime using user's timezone
         if (!empty($validated['due_date']) && !empty($validated['due_time'])) {
-            $validated['due_date'] = Carbon::parse($validated['due_date'])
-                ->setTimeFromTimeString($validated['due_time']);
+            // Parse in user's timezone, then convert to UTC for storage
+            $validated['due_date'] = Carbon::parse($validated['due_date'], $userTimezone)
+                ->setTimeFromTimeString($validated['due_time'])
+                ->setTimezone('UTC');
+        } elseif (!empty($validated['due_date'])) {
+            // Date only - parse in user's timezone
+            $validated['due_date'] = Carbon::parse($validated['due_date'], $userTimezone)
+                ->setTimezone('UTC');
         }
 
         // Calculate end_date from due_date + end_time (only if column exists)
         $endDate = null;
         if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
+            // Use the same date as due_date but with end_time, in user's timezone
             $endDate = Carbon::parse($validated['due_date'])
-                ->setTimeFromTimeString($validated['end_time']);
+                ->setTimezone($userTimezone)
+                ->setTimeFromTimeString($validated['end_time'])
+                ->setTimezone('UTC');
         }
         unset($validated['due_time'], $validated['end_time']);
 
@@ -241,17 +255,29 @@ class CrmTaskController extends Controller
             'include_zoom_meeting' => 'nullable|boolean',
         ]);
 
-        // Combine date and time into datetime
+        // Get user's timezone for proper date parsing
+        $userTimezone = DateHelper::getUserTimezone();
+
+        // Combine date and time into datetime using user's timezone
         if (!empty($validated['due_date']) && !empty($validated['due_time'])) {
-            $validated['due_date'] = Carbon::parse($validated['due_date'])
-                ->setTimeFromTimeString($validated['due_time']);
+            // Parse in user's timezone, then convert to UTC for storage
+            $validated['due_date'] = Carbon::parse($validated['due_date'], $userTimezone)
+                ->setTimeFromTimeString($validated['due_time'])
+                ->setTimezone('UTC');
+        } elseif (!empty($validated['due_date'])) {
+            // Date only - parse in user's timezone
+            $validated['due_date'] = Carbon::parse($validated['due_date'], $userTimezone)
+                ->setTimezone('UTC');
         }
 
         // Calculate end_date from due_date + end_time (only if column exists)
         $endDate = null;
         if (!empty($validated['due_date']) && !empty($validated['end_time'])) {
+            // Use the same date as due_date but with end_time, in user's timezone
             $endDate = Carbon::parse($validated['due_date'])
-                ->setTimeFromTimeString($validated['end_time']);
+                ->setTimezone($userTimezone)
+                ->setTimeFromTimeString($validated['end_time'])
+                ->setTimezone('UTC');
         }
         unset($validated['due_time'], $validated['end_time']);
 
@@ -263,10 +289,13 @@ class CrmTaskController extends Controller
         $task->update($validated);
 
         // Sync changes to Google Calendar
-        if ($task->sync_to_calendar) {
+        if ($task->sync_to_calendar || $task->isSyncedToCalendar()) {
+            // Sync if enabled or if already synced (to update existing event)
             \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh());
-        } elseif ($task->isSyncedToCalendar() && isset($validated['sync_to_calendar']) && !$validated['sync_to_calendar']) {
-            // User disabled sync - delete event from Calendar
+        }
+
+        // If user explicitly disabled sync, delete from calendar
+        if ($task->isSyncedToCalendar() && isset($validated['sync_to_calendar']) && !$validated['sync_to_calendar']) {
             \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh(), 'delete');
         }
 
@@ -317,7 +346,15 @@ class CrmTaskController extends Controller
             'due_date' => 'required|date|after_or_equal:today',
         ]);
 
-        $task->reschedule(Carbon::parse($validated['due_date']));
+        // Parse date in user's timezone and convert to UTC
+        $userTimezone = DateHelper::getUserTimezone();
+        $dueDate = Carbon::parse($validated['due_date'], $userTimezone)->setTimezone('UTC');
+        $task->reschedule($dueDate);
+
+        // Sync changes to Google Calendar if task is synced
+        if ($task->isSyncedToCalendar()) {
+            \App\Jobs\SyncTaskToCalendar::dispatch($task->fresh());
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['success' => true, 'task' => $task->fresh()]);
@@ -329,7 +366,7 @@ class CrmTaskController extends Controller
     /**
      * Remove the specified task.
      */
-    public function destroy(CrmTask $task): RedirectResponse
+    public function destroy(Request $request, CrmTask $task): RedirectResponse|JsonResponse
     {
         $userId = auth()->user()->admin_user_id ?? auth()->id();
 
@@ -337,7 +374,16 @@ class CrmTaskController extends Controller
             abort(403);
         }
 
+        // Delete from Google Calendar if synced (dispatch sync job before deleting)
+        if ($task->isSyncedToCalendar()) {
+            \App\Jobs\SyncTaskToCalendar::dispatchSync($task, 'delete');
+        }
+
         $task->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
 
         return redirect()->back()->with('success', 'Zadanie zostało usunięte.');
     }
@@ -484,8 +530,10 @@ class CrmTaskController extends Controller
             'include_google' => 'nullable|boolean',
         ]);
 
-        $from = Carbon::parse($validated['from'])->startOfDay();
-        $to = Carbon::parse($validated['to'])->endOfDay();
+        // Parse dates in user's timezone for accurate filtering
+        $userTimezone = DateHelper::getUserTimezone();
+        $from = Carbon::parse($validated['from'], $userTimezone)->startOfDay()->setTimezone('UTC');
+        $to = Carbon::parse($validated['to'], $userTimezone)->endOfDay()->setTimezone('UTC');
 
         // Get CRM tasks in the date range
         $tasks = CrmTask::forUser($userId)

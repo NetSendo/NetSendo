@@ -4408,7 +4408,9 @@
                 "owner": "Eigentümer zuweisen",
                 "owner_auto": "-- Automatisch (Ich) --",
                 "description": "Beschreibung (optional)",
-                "description_placeholder": "Zusätzliche Details zur Aufgabe..."
+                "description_placeholder": "Zusätzliche Details zur Aufgabe...",
+                "duration": "Dauer",
+                "duration_custom": "Andere"
             },
             "calendar": {
                 "sync": "Mit Google Kalender synchronisieren",

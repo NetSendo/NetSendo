@@ -15,8 +15,11 @@ const props = defineProps({
 
 const emit = defineEmits(["edit-task", "create-task", "date-change"]);
 
-// View mode: 'month' or 'week' (default: week)
+// View mode: 'month', 'week', or 'day' (default: week)
 const viewMode = ref("week");
+
+// Selected date for daily view (when clicking on day header)
+const selectedDate = ref(null);
 
 // Current date (center of the calendar view)
 const currentDate = ref(new Date());
@@ -27,6 +30,9 @@ const tooltipPosition = ref({ x: 0, y: 0 });
 
 // Ref for week view scrollable container
 const weekScrollContainer = ref(null);
+
+// Ref for day view scrollable container
+const dayScrollContainer = ref(null);
 
 // Days of the week (Polish)
 const daysOfWeek = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
@@ -173,14 +179,23 @@ const hours = computed(() => {
     return h;
 });
 
-// Get events for a specific date
+// Get events for a specific date (using local timezone for comparison)
 const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().split("T")[0];
+    // Format date as YYYY-MM-DD in local timezone
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const dateStr = `${year}-${month}-${day}`;
 
     return props.events.filter((event) => {
         if (!event.start) return false;
-        const eventDate = new Date(event.start).toISOString().split("T")[0];
-        return eventDate === dateStr;
+        // Parse the event date and format in local timezone
+        const eventDate = new Date(event.start);
+        const eventYear = eventDate.getFullYear();
+        const eventMonth = String(eventDate.getMonth() + 1).padStart(2, "0");
+        const eventDay = String(eventDate.getDate()).padStart(2, "0");
+        const eventDateStr = `${eventYear}-${eventMonth}-${eventDay}`;
+        return eventDateStr === dateStr;
     });
 };
 
@@ -202,31 +217,141 @@ const currentWeekLabel = computed(() => {
     }
 });
 
+// Day grid for daily view
+const dayGrid = computed(() => {
+    const date = selectedDate.value || currentDate.value;
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear();
+
+    return {
+        date: date,
+        day: date.getDate(),
+        dayName: daysOfWeekFull[(date.getDay() + 6) % 7],
+        isToday: isToday
+    };
+});
+
+// Current day label for daily view
+const currentDayLabel = computed(() => {
+    const date = selectedDate.value || currentDate.value;
+    const dayName = daysOfWeekFull[(date.getDay() + 6) % 7];
+    return `${dayName}, ${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+});
+
+// Calculate overlapping events and their positions for horizontal stacking
+const getEventsWithPositions = (date) => {
+    const events = getEventsForDate(date);
+    if (events.length === 0) return [];
+
+    // Sort by start time, then by duration (longer events first)
+    const sorted = [...events].sort((a, b) => {
+        const startA = new Date(a.start).getTime();
+        const startB = new Date(b.start).getTime();
+        if (startA !== startB) return startA - startB;
+
+        // For same start time, sort by duration (longer first)
+        const endA = a.end ? new Date(a.end).getTime() : startA + 3600000;
+        const endB = b.end ? new Date(b.end).getTime() : startB + 3600000;
+        return (endB - startB) - (endA - startA);
+    });
+
+    // Find overlapping groups and assign columns
+    const positioned = [];
+
+    for (const event of sorted) {
+        const eventStart = new Date(event.start).getTime();
+        const eventEnd = event.end ? new Date(event.end).getTime() : eventStart + 3600000;
+
+        // Find overlapping events that are already positioned
+        const overlapping = positioned.filter(p => {
+            const pStart = new Date(p.event.start).getTime();
+            const pEnd = p.event.end ? new Date(p.event.end).getTime() : pStart + 3600000;
+            return !(eventEnd <= pStart || eventStart >= pEnd);
+        });
+
+        // Find first available column
+        const usedColumns = overlapping.map(p => p.column);
+        let column = 0;
+        while (usedColumns.includes(column)) column++;
+
+        // Calculate total columns in this group
+        const maxColumn = Math.max(column, ...usedColumns, 0);
+
+        positioned.push({ event, column, totalColumns: maxColumn + 1 });
+
+        // Update totalColumns for all overlapping events
+        overlapping.forEach(p => {
+            p.totalColumns = Math.max(p.totalColumns, maxColumn + 1);
+        });
+    }
+
+    // Final pass: ensure all overlapping events share the same totalColumns
+    for (let i = 0; i < positioned.length; i++) {
+        const current = positioned[i];
+        const currentStart = new Date(current.event.start).getTime();
+        const currentEnd = current.event.end ? new Date(current.event.end).getTime() : currentStart + 3600000;
+
+        let maxTotal = current.totalColumns;
+        for (let j = 0; j < positioned.length; j++) {
+            if (i === j) continue;
+            const other = positioned[j];
+            const otherStart = new Date(other.event.start).getTime();
+            const otherEnd = other.event.end ? new Date(other.event.end).getTime() : otherStart + 3600000;
+
+            if (!(currentEnd <= otherStart || currentStart >= otherEnd)) {
+                maxTotal = Math.max(maxTotal, other.totalColumns);
+            }
+        }
+        current.totalColumns = maxTotal;
+    }
+
+    return positioned;
+};
+
 // Navigation
 const goToToday = () => {
     currentDate.value = new Date();
+    if (viewMode.value === "day") {
+        selectedDate.value = new Date();
+    }
     emitDateChange();
 };
 
 const goPrev = () => {
-    const date = new Date(currentDate.value);
-    if (viewMode.value === "month") {
-        date.setMonth(date.getMonth() - 1);
+    if (viewMode.value === "day") {
+        const date = new Date(selectedDate.value || currentDate.value);
+        date.setDate(date.getDate() - 1);
+        selectedDate.value = date;
+        currentDate.value = date;
     } else {
-        date.setDate(date.getDate() - 7);
+        const date = new Date(currentDate.value);
+        if (viewMode.value === "month") {
+            date.setMonth(date.getMonth() - 1);
+        } else {
+            date.setDate(date.getDate() - 7);
+        }
+        currentDate.value = date;
     }
-    currentDate.value = date;
     emitDateChange();
 };
 
 const goNext = () => {
-    const date = new Date(currentDate.value);
-    if (viewMode.value === "month") {
-        date.setMonth(date.getMonth() + 1);
+    if (viewMode.value === "day") {
+        const date = new Date(selectedDate.value || currentDate.value);
+        date.setDate(date.getDate() + 1);
+        selectedDate.value = date;
+        currentDate.value = date;
     } else {
-        date.setDate(date.getDate() + 7);
+        const date = new Date(currentDate.value);
+        if (viewMode.value === "month") {
+            date.setMonth(date.getMonth() + 1);
+        } else {
+            date.setDate(date.getDate() + 7);
+        }
+        currentDate.value = date;
     }
-    currentDate.value = date;
     emitDateChange();
 };
 
@@ -239,6 +364,12 @@ const emitDateChange = () => {
         const month = currentDate.value.getMonth();
         from = new Date(year, month - 1, 20);
         to = new Date(year, month + 1, 10);
+    } else if (viewMode.value === "day") {
+        const date = selectedDate.value || currentDate.value;
+        from = new Date(date);
+        from.setHours(0, 0, 0, 0);
+        to = new Date(date);
+        to.setHours(23, 59, 59, 999);
     } else {
         const week = weekGrid.value;
         from = new Date(week[0].date);
@@ -259,6 +390,14 @@ const setViewMode = (mode) => {
 // Click handlers
 const handleDayClick = (date) => {
     emit("create-task", date);
+};
+
+// Handle day header click to switch to daily view
+const handleDayHeaderClick = (day, e) => {
+    e.stopPropagation();
+    selectedDate.value = day.date;
+    viewMode.value = "day";
+    emitDateChange();
 };
 
 const handleEventClick = (event, e) => {
@@ -352,6 +491,74 @@ const getEventStyle = (event, dayDate) => {
     };
 };
 
+// Updated event style calculation with column positioning for overlapping events
+const getEventStyleWithPosition = (event, dayDate, column, totalColumns) => {
+    if (!event.start) return {};
+
+    const startDate = new Date(event.start);
+    const hour = startDate.getHours();
+    const minute = startDate.getMinutes();
+
+    // Calculate position (midnight is top, each hour = 48px)
+    const top = hour * 48 + (minute / 60) * 48;
+
+    // Calculate height (default 1 hour)
+    let height = 48;
+    if (event.end) {
+        const endDate = new Date(event.end);
+        const durationMinutes =
+            (endDate.getTime() - startDate.getTime()) / (1000 * 60);
+        height = Math.max(24, (durationMinutes / 60) * 48);
+    }
+
+    // Calculate horizontal position based on column
+    const columnWidth = 100 / totalColumns;
+    const left = column * columnWidth;
+    const width = columnWidth - 1; // Small gap between columns
+
+    return {
+        top: `${top}px`,
+        height: `${height}px`,
+        left: `${left}%`,
+        width: `${width}%`,
+        right: 'auto',
+    };
+};
+
+// Get event style for daily view (larger heights: 72px per hour)
+const getEventStyleDaily = (event, column, totalColumns) => {
+    if (!event.start) return {};
+
+    const startDate = new Date(event.start);
+    const hour = startDate.getHours();
+    const minute = startDate.getMinutes();
+
+    // Calculate position (midnight is top, each hour = 72px for daily view)
+    const top = hour * 72 + (minute / 60) * 72;
+
+    // Calculate height (default 1 hour)
+    let height = 72;
+    if (event.end) {
+        const endDate = new Date(event.end);
+        const durationMinutes =
+            (endDate.getTime() - startDate.getTime()) / (1000 * 60);
+        height = Math.max(36, (durationMinutes / 60) * 72);
+    }
+
+    // Calculate horizontal position based on column
+    const columnWidth = 100 / totalColumns;
+    const left = column * columnWidth;
+    const width = columnWidth - 0.5; // Small gap between columns
+
+    return {
+        top: `${top}px`,
+        height: `${height}px`,
+        left: `${left}%`,
+        width: `${width}%`,
+        right: 'auto',
+    };
+};
+
 // Priority icons
 const getPriorityIcon = (priority) => {
     switch (priority) {
@@ -378,22 +585,27 @@ const getTypeIcon = (type) => {
     return icons[type] || "📌";
 };
 
+// Scroll to 8:00 AM for the current view
+const scrollToWorkingHours = () => {
+    setTimeout(() => {
+        if (viewMode.value === "week" && weekScrollContainer.value) {
+            weekScrollContainer.value.scrollTop = 8 * 48; // 8 hours * 48px
+        } else if (viewMode.value === "day" && dayScrollContainer.value) {
+            dayScrollContainer.value.scrollTop = 8 * 72; // 8 hours * 72px
+        }
+    }, 100);
+};
+
 // Initial fetch and scroll to 8:00 AM
 onMounted(() => {
     emitDateChange();
-    // Scroll to 8:00 AM in week view (8 hours * 48px per hour = 384px)
-    if (viewMode.value === "week") {
-        setTimeout(() => {
-            if (weekScrollContainer.value) {
-                weekScrollContainer.value.scrollTop = 8 * 48;
-            }
-        }, 100);
-    }
+    scrollToWorkingHours();
 });
 
 // Watch view mode changes
-watch(viewMode, () => {
+watch(viewMode, (newMode) => {
     emitDateChange();
+    scrollToWorkingHours();
 });
 </script>
 
@@ -411,7 +623,9 @@ watch(viewMode, () => {
                     :title="
                         viewMode === 'month'
                             ? 'Poprzedni miesiąc'
-                            : 'Poprzedni tydzień'
+                            : viewMode === 'day'
+                              ? 'Poprzedni dzień'
+                              : 'Poprzedni tydzień'
                     "
                 >
                     <svg
@@ -442,7 +656,9 @@ watch(viewMode, () => {
                     :title="
                         viewMode === 'month'
                             ? 'Następny miesiąc'
-                            : 'Następny tydzień'
+                            : viewMode === 'day'
+                              ? 'Następny dzień'
+                              : 'Następny tydzień'
                     "
                 >
                     <svg
@@ -466,7 +682,9 @@ watch(viewMode, () => {
                     {{
                         viewMode === "month"
                             ? currentMonthLabel
-                            : currentWeekLabel
+                            : viewMode === "day"
+                              ? currentDayLabel
+                              : currentWeekLabel
                     }}
                 </h2>
             </div>
@@ -494,6 +712,17 @@ watch(viewMode, () => {
                     ]"
                 >
                     Tydzień
+                </button>
+                <button
+                    @click="setViewMode('day')"
+                    :class="[
+                        'rounded-md px-3 py-1.5 text-sm font-medium transition',
+                        viewMode === 'day'
+                            ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-600 dark:text-white'
+                            : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
+                    ]"
+                >
+                    Dzień
                 </button>
             </div>
 
@@ -629,10 +858,12 @@ watch(viewMode, () => {
                 <div
                     v-for="day in weekGrid"
                     :key="day.date.toISOString()"
+                    @click="handleDayHeaderClick(day, $event)"
                     :class="[
-                        'px-2 py-3 text-center',
+                        'cursor-pointer px-2 py-3 text-center transition hover:bg-slate-100 dark:hover:bg-slate-700/50',
                         day.isToday ? 'bg-indigo-50 dark:bg-indigo-900/20' : '',
                     ]"
+                    title="Kliknij aby zobaczyć widok dzienny"
                 >
                     <div
                         class="text-sm font-medium text-slate-600 dark:text-slate-400"
@@ -690,40 +921,179 @@ watch(viewMode, () => {
                             class="h-12 border-b border-slate-100 dark:border-slate-700/50"
                         ></div>
 
-                        <!-- Events positioned absolutely -->
+                        <!-- Events positioned absolutely with column stacking -->
                         <div
-                            v-for="event in getEventsForDate(day.date)"
-                            :key="event.id"
-                            @click="handleEventClick(event, $event)"
-                            @mouseenter="handleEventMouseEnter(event, $event)"
+                            v-for="positioned in getEventsWithPositions(day.date)"
+                            :key="positioned.event.id"
+                            @click="handleEventClick(positioned.event, $event)"
+                            @mouseenter="handleEventMouseEnter(positioned.event, $event)"
                             @mouseleave="handleEventMouseLeave"
-                            class="absolute left-0.5 right-0.5 cursor-pointer overflow-hidden rounded px-1 py-0.5 text-xs font-medium shadow-sm transition hover:opacity-90 hover:shadow-md hover:z-10"
+                            class="absolute cursor-pointer overflow-hidden rounded px-1 py-0.5 text-xs font-medium shadow-sm transition hover:opacity-90 hover:shadow-md hover:z-10"
                             :style="{
-                                ...getEventStyle(event, day.date),
-                                backgroundColor: event.color + '30',
-                                borderLeft: `3px solid ${event.color}`,
+                                ...getEventStyleWithPosition(positioned.event, day.date, positioned.column, positioned.totalColumns),
+                                backgroundColor: positioned.event.color + '30',
+                                borderLeft: `3px solid ${positioned.event.color}`,
                             }"
                         >
                             <div
                                 class="truncate"
-                                :style="{ color: event.color }"
+                                :style="{ color: positioned.event.color }"
                                 :class="{
                                     'line-through opacity-60':
-                                        event.is_completed,
+                                        positioned.event.is_completed,
                                 }"
                             >
                                 {{
-                                    event.type === "google"
+                                    positioned.event.type === "google"
                                         ? "📅 "
-                                        : getTypeIcon(event.task_type) + " "
+                                        : getTypeIcon(positioned.event.task_type) + " "
                                 }}
-                                {{ event.title }}
+                                {{ positioned.event.title }}
                             </div>
                             <div
-                                v-if="event.contact"
+                                v-if="positioned.event.contact"
                                 class="truncate text-slate-500 dark:text-slate-400"
                             >
-                                {{ event.contact.name }}
+                                {{ positioned.event.contact.name }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily View -->
+        <div
+            v-if="viewMode === 'day'"
+            class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-800"
+        >
+            <!-- Day header -->
+            <div
+                class="border-b border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+            >
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div
+                            :class="[
+                                'flex h-14 w-14 items-center justify-center rounded-xl text-2xl font-bold',
+                                dayGrid.isToday
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white',
+                            ]"
+                        >
+                            {{ dayGrid.day }}
+                        </div>
+                        <div>
+                            <div class="text-lg font-semibold text-slate-900 dark:text-white">
+                                {{ dayGrid.dayName }}
+                            </div>
+                            <div class="text-sm text-slate-500 dark:text-slate-400">
+                                {{ getEventsForDate(dayGrid.date).length }} wydarzeń na ten dzień
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        @click="setViewMode('week')"
+                        class="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Powrót do tygodnia
+                    </button>
+                </div>
+            </div>
+
+            <!-- Time grid for daily view -->
+            <div
+                ref="dayScrollContainer"
+                class="max-h-[700px] overflow-y-auto"
+            >
+                <div class="grid grid-cols-[80px_1fr]">
+                    <!-- Time column -->
+                    <div class="border-r border-slate-200 dark:border-slate-700">
+                        <div
+                            v-for="hour in hours"
+                            :key="hour"
+                            class="h-[72px] border-b border-slate-100 px-3 py-2 text-right text-sm font-medium text-slate-500 dark:border-slate-700/50 dark:text-slate-400"
+                        >
+                            {{ hour }}
+                        </div>
+                    </div>
+
+                    <!-- Events column -->
+                    <div
+                        class="relative cursor-pointer"
+                        @click="handleDayClick(dayGrid.date)"
+                    >
+                        <!-- Hour lines -->
+                        <div
+                            v-for="hour in hours"
+                            :key="hour"
+                            class="h-[72px] border-b border-slate-100 dark:border-slate-700/50"
+                        ></div>
+
+                        <!-- Events positioned absolutely with column stacking -->
+                        <div
+                            v-for="positioned in getEventsWithPositions(dayGrid.date)"
+                            :key="positioned.event.id"
+                            @click="handleEventClick(positioned.event, $event)"
+                            @mouseenter="handleEventMouseEnter(positioned.event, $event)"
+                            @mouseleave="handleEventMouseLeave"
+                            class="absolute cursor-pointer overflow-hidden rounded-lg px-3 py-2 shadow-sm transition hover:shadow-lg hover:z-10"
+                            :style="{
+                                ...getEventStyleDaily(positioned.event, positioned.column, positioned.totalColumns),
+                                backgroundColor: positioned.event.color + '20',
+                                borderLeft: `4px solid ${positioned.event.color}`,
+                            }"
+                        >
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="font-semibold"
+                                        :style="{ color: positioned.event.color }"
+                                        :class="{
+                                            'line-through opacity-60':
+                                                positioned.event.is_completed,
+                                        }"
+                                    >
+                                        {{
+                                            positioned.event.type === "google"
+                                                ? "📅 "
+                                                : getTypeIcon(positioned.event.task_type) + " "
+                                        }}
+                                        {{ positioned.event.title }}
+                                    </div>
+                                    <div class="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                        <span>{{ formatEventTime(positioned.event.start) }} - {{ formatEventTime(positioned.event.end) }}</span>
+                                        <span v-if="positioned.event.contact" class="flex items-center gap-1">
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            {{ positioned.event.contact.name }}
+                                        </span>
+                                    </div>
+                                    <div
+                                        v-if="positioned.event.description"
+                                        class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2"
+                                    >
+                                        {{ positioned.event.description }}
+                                    </div>
+                                </div>
+                                <span
+                                    v-if="positioned.event.priority"
+                                    class="flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
+                                    :class="{
+                                        'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300':
+                                            positioned.event.priority === 'high',
+                                        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300':
+                                            positioned.event.priority === 'medium',
+                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300':
+                                            positioned.event.priority === 'low',
+                                    }"
+                                >
+                                    {{ getPriorityLabel(positioned.event.priority) }}
+                                </span>
                             </div>
                         </div>
                     </div>
