@@ -1975,6 +1975,13 @@
             "important": "Important!",
             "instruction": "Copy the address below and add it to your OAuth 2.0 Client ID settings in Google Cloud Console → Credentials → OAuth 2.0 Client IDs → Authorized redirect URIs.",
             "redirect_uri_label": "Authorized Redirect URI - for Google Calendar"
+        },
+        "task_colors": {
+            "title": "Task Type Colors",
+            "description": "Customize the colors used for different task types in your calendar.",
+            "custom_color": "Custom color",
+            "reset_default": "Reset to defaults",
+            "saved": "Task colors saved successfully."
         }
     },
     "forms": {
@@ -5282,6 +5289,9 @@
             "empty": {
                 "button": "Add First Task",
                 "description": "No tasks in this category"
+            },
+            "validation": {
+                "contact_required": "Please select a contact to assign this task to"
             }
         },
         "reminders": {

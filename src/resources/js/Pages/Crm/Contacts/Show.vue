@@ -29,6 +29,18 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    calendarConnection: {
+        type: Object,
+        default: null,
+    },
+    calendars: {
+        type: Array,
+        default: () => [],
+    },
+    zoomConnection: {
+        type: Object,
+        default: null,
+    },
 });
 
 // Activity form
@@ -65,6 +77,18 @@ const showTaskModal = ref(false);
 const onTaskSaved = () => {
     router.reload({ only: ["contact", "activities"] });
 };
+
+// Prepare current contact for TaskModal contacts dropdown
+const contactsForTaskModal = computed(() => [
+    {
+        id: props.contact.id,
+        name: props.contact.subscriber
+            ? `${props.contact.subscriber.first_name || ""} ${props.contact.subscriber.last_name || ""}`.trim() ||
+              props.contact.subscriber.email
+            : "",
+        email: props.contact.subscriber?.email || "",
+    },
+]);
 
 // Delete modal state
 const showDeleteModal = ref(false);
@@ -876,7 +900,11 @@ const getActivityIcon = (type) => {
         <TaskModal
             :show="showTaskModal"
             :contact-id="contact.id"
+            :contacts="contactsForTaskModal"
             :owners="owners"
+            :calendar-connection="calendarConnection"
+            :calendars="calendars"
+            :zoom-connection="zoomConnection"
             @close="showTaskModal = false"
             @saved="onTaskSaved"
         />

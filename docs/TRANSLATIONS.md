@@ -266,3 +266,24 @@ __('affiliate.referred_by', ['name' => $partner->name])
   <p>{{ $t("affiliate.referred_signups") }}: {{ count }}</p>
 </template>
 ```
+
+### Google Calendar Task Color Settings (January 2026)
+
+The following translation keys were added to support user-customizable task type colors in Google Calendar integration:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Task Color Settings:**
+
+- `calendar.task_colors.title` - Section title
+- `calendar.task_colors.description` - Section description
+- `calendar.task_colors.custom_color` - Label for custom color picker
+- `calendar.task_colors.reset_default` - Button to reset colors
+- `calendar.task_colors.saved` - Success toast message
+
+**Usage Example:**
+
+```vue
+<h3>{{ $t("calendar.task_colors.title") }}</h3>
+<p>{{ $t("calendar.task_colors.description") }}</p>
+```

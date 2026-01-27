@@ -2427,6 +2427,77 @@
         },
         "confirm_delete": "¿Está seguro de que desea eliminar esta integración?"
     },
+    "calendar": {
+        "title": "Integración de Google Calendar",
+        "connection": {
+            "title": "Conexión del Calendario",
+            "description": "Conecte su Google Calendar para sincronizar tareas de CRM automáticamente.",
+            "connected": "Conectado",
+            "not_connected": "No conectado",
+            "connect_prompt": "Conecte su Google Calendar para habilitar la sincronización bidireccional.",
+            "connect": "Conectar Google Calendar",
+            "disconnect": "Desconectar",
+            "via": "vía",
+            "no_integrations": "No hay integraciones de Google disponibles.",
+            "add_integration": "Añada primero una integración de Google"
+        },
+        "settings": {
+            "calendar": "Calendario de destino",
+            "primary_calendar": "Calendario principal",
+            "auto_sync": "Sincronizar nuevas tareas automáticamente",
+            "sync_now": "Sincronizar ahora"
+        },
+        "push_notifications": {
+            "title": "Sincronización en tiempo real",
+            "active": "Notificaciones push activas",
+            "inactive": "Notificaciones push no configuradas",
+            "expires": "Expira",
+            "refresh": "Actualizar canal"
+        },
+        "webhook": {
+            "title": "Sincronización en tiempo real (Webhook)",
+            "description": "Para sincronizar cambios de Google Calendar automáticamente, debe configurar notificaciones push.",
+            "url_label": "URL del Webhook",
+            "setup_required": "Configuración requerida",
+            "setup_required_desc": "Las notificaciones push no están configuradas. Siga los pasos a continuación.",
+            "instructions_title": "¿Cómo configurar las notificaciones push?",
+            "step1": "Ir a Google Cloud Console → APIs & Services → Enabled APIs & services",
+            "step2": "Asegúrese de que la Google Calendar API esté habilitada",
+            "step3": "En Domain Verification, añada su dominio",
+            "step4": "Alternativamente: Verifique la propiedad del dominio en Cloud Domains",
+            "step5": "Tras verificar, haga clic en 'Activar notificaciones push'",
+            "note": "Se requiere verificación de dominio. Sin ella, la sincronización solo será manual.",
+            "activate_btn": "Activar notificaciones push"
+        },
+        "modal": {
+            "select_integration": "Seleccionar integración de Google",
+            "select_description": "Elija qué integración de Google usar."
+        },
+        "oauth_denied": "Acceso al calendario denegado.",
+        "connected": "¡Google Calendar conectado con éxito!",
+        "disconnected": "Google Calendar desconectado.",
+        "connection_failed": "Fallo al conectar Google Calendar.",
+        "settings_updated": "Ajustes del calendario actualizados.",
+        "sync_started": "Sincronización iniciada para {count} tareas.",
+        "sync_failed": "Fallo en la sincronización.",
+        "channel_refreshed": "Canal de notificaciones push actualizado.",
+        "channel_refresh_failed": "Fallo al actualizar el canal push.",
+        "confirm_disconnect": "¿Está seguro de desconectar Google Calendar? Los eventos sincronizados permanecerán.",
+        "oauth": {
+            "title": "Configuración OAuth",
+            "description": "Para que la integración funcione, añada esta dirección a las URI de redireccionamiento autorizadas en Google Cloud Console.",
+            "important": "¡Importante!",
+            "instruction": "Copie la dirección y añádala a la configuración de OAuth 2.0 Client ID.",
+            "redirect_uri_label": "URI de redireccionamiento autorizada - para Google Calendar"
+        },
+        "task_colors": {
+            "title": "Colores de tipos de tarea",
+            "description": "Personalice los colores usados para diferentes tipos de tarea en su calendario.",
+            "custom_color": "Color personalizado",
+            "reset_default": "Restablecer valores",
+            "saved": "Colores de tareas guardados."
+        }
+    },
     "forms": {
         "title": "Formularios de suscripción",
         "create": "Nuevo formulario",
@@ -4563,6 +4634,9 @@
             "empty": {
                 "button": "Añadir primera tarea",
                 "description": "No hay tareas en esta categoría"
+            },
+            "validation": {
+                "contact_required": "Por favor, seleccione un contacto para asignar esta tarea"
             }
         },
         "reminders": {

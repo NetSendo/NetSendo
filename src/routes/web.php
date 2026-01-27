@@ -279,6 +279,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/bulk-sync/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'bulkSync'])->name('bulk-sync');
         Route::post('/refresh-channel/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'refreshChannel'])->name('refresh-channel');
         Route::get('/status', [\App\Http\Controllers\GoogleCalendarController::class, 'syncStatus'])->name('status');
+        Route::put('/task-colors/{connection}', [\App\Http\Controllers\GoogleCalendarController::class, 'updateTaskColors'])->name('task-colors');
     });
 
     // System Pages (HTML pages shown after actions)

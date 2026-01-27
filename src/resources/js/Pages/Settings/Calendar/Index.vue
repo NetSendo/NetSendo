@@ -130,6 +130,61 @@ const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleString();
 };
+
+// Task type color settings
+const defaultTaskTypeColors = {
+    call: '#8B5CF6',      // Purple
+    email: '#3B82F6',     // Blue
+    meeting: '#EF4444',   // Red
+    task: '#10B981',      // Green
+    follow_up: '#F59E0B', // Amber
+};
+
+const colorPresets = [
+    '#EF4444', // Red
+    '#F59E0B', // Amber
+    '#10B981', // Green
+    '#3B82F6', // Blue
+    '#8B5CF6', // Purple
+    '#EC4899', // Pink
+    '#14B8A6', // Teal
+    '#6B7280', // Gray
+];
+
+const taskTypes = [
+    { id: 'call', icon: '📞' },
+    { id: 'email', icon: '✉️' },
+    { id: 'meeting', icon: '👥' },
+    { id: 'task', icon: '✅' },
+    { id: 'follow_up', icon: '🔄' },
+];
+
+const colorsForm = useForm({
+    task_type_colors: {
+        ...defaultTaskTypeColors,
+        ...(props.connection?.task_type_colors || {}),
+    },
+});
+
+const setTaskColor = (taskType, color) => {
+    colorsForm.task_type_colors[taskType] = color;
+};
+
+const resetColorsToDefault = () => {
+    colorsForm.task_type_colors = { ...defaultTaskTypeColors };
+};
+
+const saveTaskColors = () => {
+    colorsForm.put(route("settings.calendar.task-colors", props.connection.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast(t("calendar.task_colors.saved"));
+        },
+        onError: () => {
+            showToast(t("common.error_occurred"), false);
+        },
+    });
+};
 </script>
 
 <template>
@@ -803,6 +858,86 @@ const formatDate = (dateString) => {
                                     {{ $t("calendar.webhook.activate_btn") }}
                                 </SecondaryButton>
                             </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Task Type Colors Settings -->
+                <div
+                    v-if="isConnected"
+                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
+                >
+                    <section>
+                        <h2
+                            class="text-lg font-medium text-gray-900 dark:text-gray-100"
+                        >
+                            {{ $t("calendar.task_colors.title") }}
+                        </h2>
+                        <p
+                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
+                        >
+                            {{ $t("calendar.task_colors.description") }}
+                        </p>
+
+                        <div class="mt-6 space-y-4">
+                            <!-- Color picker for each task type -->
+                            <div
+                                v-for="taskType in taskTypes"
+                                :key="taskType.id"
+                                class="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xl">{{ taskType.icon }}</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $t('crm.task_types.' + taskType.id) }}
+                                    </span>
+                                </div>
+
+                                <!-- Color picker with presets -->
+                                <div class="flex items-center gap-2">
+                                    <!-- Preset color buttons -->
+                                    <button
+                                        v-for="preset in colorPresets"
+                                        :key="preset"
+                                        @click="setTaskColor(taskType.id, preset)"
+                                        :style="{ backgroundColor: preset }"
+                                        :class="[
+                                            'h-6 w-6 rounded-full border-2 transition-all duration-150',
+                                            colorsForm.task_type_colors[taskType.id] === preset
+                                                ? 'border-gray-900 dark:border-white ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500'
+                                                : 'border-transparent hover:scale-110'
+                                        ]"
+                                        :title="preset"
+                                    />
+
+                                    <!-- Custom color input -->
+                                    <div class="relative">
+                                        <input
+                                            type="color"
+                                            :value="colorsForm.task_type_colors[taskType.id]"
+                                            @input="setTaskColor(taskType.id, $event.target.value)"
+                                            class="h-6 w-6 cursor-pointer rounded border-0 p-0"
+                                            :title="$t('calendar.task_colors.custom_color')"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save button -->
+                        <div class="mt-6 flex items-center gap-4">
+                            <PrimaryButton
+                                @click="saveTaskColors"
+                                :disabled="colorsForm.processing"
+                            >
+                                {{ $t("common.save") }}
+                            </PrimaryButton>
+                            <SecondaryButton
+                                @click="resetColorsToDefault"
+                                :disabled="colorsForm.processing"
+                            >
+                                {{ $t("calendar.task_colors.reset_default") }}
+                            </SecondaryButton>
                         </div>
                     </section>
                 </div>

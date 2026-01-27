@@ -22,6 +22,7 @@ class UserCalendarConnection extends Model
         'is_active',
         'auto_sync_tasks',
         'sync_settings',
+        'task_type_colors',
         'sync_token',
         'last_synced_at',
     ];
@@ -33,6 +34,7 @@ class UserCalendarConnection extends Model
         'is_active' => 'boolean',
         'auto_sync_tasks' => 'boolean',
         'sync_settings' => 'array',
+        'task_type_colors' => 'array',
     ];
 
     protected $hidden = [
@@ -212,5 +214,37 @@ class UserCalendarConnection extends Model
                 $q->whereNull('channel_expires_at')
                     ->orWhere('channel_expires_at', '<', now()->addHours(1));
             });
+    }
+
+    /**
+     * Default colors for task types.
+     */
+    public const DEFAULT_TASK_TYPE_COLORS = [
+        'call' => '#8B5CF6',      // Purple
+        'email' => '#3B82F6',     // Blue
+        'meeting' => '#EF4444',   // Red
+        'task' => '#10B981',      // Green
+        'follow_up' => '#F59E0B', // Amber
+    ];
+
+    /**
+     * Get color for a specific task type.
+     */
+    public function getTaskTypeColor(string $type): string
+    {
+        $colors = $this->task_type_colors ?? [];
+
+        return $colors[$type] ?? self::DEFAULT_TASK_TYPE_COLORS[$type] ?? '#6B7280';
+    }
+
+    /**
+     * Get all task type colors (merged with defaults).
+     */
+    public function getAllTaskTypeColors(): array
+    {
+        return array_merge(
+            self::DEFAULT_TASK_TYPE_COLORS,
+            $this->task_type_colors ?? []
+        );
     }
 }

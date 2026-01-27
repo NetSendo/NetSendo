@@ -56,6 +56,7 @@ class GoogleCalendarController extends Controller
                 'channel_expires_at' => $connection->channel_expires_at?->toISOString(),
                 'integration_name' => $connection->googleIntegration?->name,
                 'sync_settings' => $connection->sync_settings ?? [],
+                'task_type_colors' => $connection->getAllTaskTypeColors(),
             ] : null,
             'integrations' => $integrations,
             'calendars' => $calendars,
@@ -365,5 +366,34 @@ class GoogleCalendarController extends Controller
                 'message' => 'Synchronizacja nie powiodła się: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Update task type colors.
+     */
+    public function updateTaskColors(Request $request, UserCalendarConnection $connection): RedirectResponse
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+
+        if ($connection->user_id !== $userId) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'task_type_colors' => 'required|array',
+            'task_type_colors.call' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'task_type_colors.email' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'task_type_colors.meeting' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'task_type_colors.task' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'task_type_colors.follow_up' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+        ]);
+
+        $connection->update([
+            'task_type_colors' => $validated['task_type_colors'],
+        ]);
+
+        return redirect()
+            ->route('settings.calendar.index')
+            ->with('success', __('calendar.task_colors.saved'));
     }
 }

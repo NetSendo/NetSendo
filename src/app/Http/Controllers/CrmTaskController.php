@@ -124,6 +124,7 @@ class CrmTaskController extends Controller
                 'calendar_id' => $calendarConnection->calendar_id,
                 'connected_email' => $calendarConnection->connected_email,
                 'auto_sync_tasks' => $calendarConnection->auto_sync_tasks,
+                'task_type_colors' => $calendarConnection->getAllTaskTypeColors(),
             ] : null,
             'calendars' => $calendars,
             'zoomConnection' => $zoomConnection ? [
@@ -151,7 +152,7 @@ class CrmTaskController extends Controller
             'due_date' => 'nullable|date',
             'due_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
-            'crm_contact_id' => 'nullable|exists:crm_contacts,id',
+            'crm_contact_id' => 'required|exists:crm_contacts,id',
             'crm_deal_id' => 'nullable|exists:crm_deals,id',
             'owner_id' => 'nullable|exists:users,id',
             'sync_to_calendar' => 'nullable|boolean',
@@ -582,8 +583,14 @@ class CrmTaskController extends Controller
             ->orderBy('due_date', 'asc')
             ->get();
 
+        // Get user's custom task type colors
+        $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+        $taskTypeColors = $calendarConnection?->getAllTaskTypeColors() ?? UserCalendarConnection::DEFAULT_TASK_TYPE_COLORS;
+
         // Map tasks to calendar event format
-        $events = $tasks->map(function ($task) {
+        $events = $tasks->map(function ($task) use ($taskTypeColors) {
             return [
                 'id' => 'task_' . $task->id,
                 'task_id' => $task->id,
@@ -600,7 +607,7 @@ class CrmTaskController extends Controller
                     'name' => $task->contact->full_name,
                 ] : null,
                 'description' => $task->description,
-                'color' => $this->getEventColor($task->priority, $task->status),
+                'color' => $this->getEventColor($task->type, $task->status, $taskTypeColors),
                 'google_meet_link' => $task->google_meet_link,
             ];
         })->toArray();
@@ -608,10 +615,6 @@ class CrmTaskController extends Controller
         // Optionally get Google Calendar events
         if ($validated['include_google'] ?? false) {
             try {
-                $calendarConnection = UserCalendarConnection::where('user_id', $userId)
-                    ->where('is_active', true)
-                    ->first();
-
                 if ($calendarConnection) {
                     $calendarService = app(GoogleCalendarService::class);
                     $googleEvents = $calendarService->listEvents($calendarConnection, $from, $to);
@@ -799,20 +802,21 @@ class CrmTaskController extends Controller
     }
 
     /**
-     * Get event color based on priority and status.
+     * Get event color based on task type, status, and custom colors.
      */
-    private function getEventColor(string $priority, string $status): string
+    private function getEventColor(string $type, string $status, ?array $taskTypeColors = null): string
     {
         if ($status === 'completed') {
             return '#10B981'; // Green for completed
         }
 
-        return match ($priority) {
-            'high' => '#EF4444',    // Red
-            'medium' => '#F59E0B',  // Amber
-            'low' => '#3B82F6',     // Blue
-            default => '#6B7280',   // Gray
-        };
+        // Use custom colors if provided
+        if ($taskTypeColors && isset($taskTypeColors[$type])) {
+            return $taskTypeColors[$type];
+        }
+
+        // Fall back to default colors based on task type
+        return UserCalendarConnection::DEFAULT_TASK_TYPE_COLORS[$type] ?? '#6B7280';
     }
 }
 

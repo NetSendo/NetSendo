@@ -3436,6 +3436,13 @@
             "important": "Ważne!",
             "instruction": "Skopiuj poniższy adres i dodaj go do ustawień OAuth 2.0 Client ID w Google Cloud Console → Credentials → OAuth 2.0 Client IDs → Authorized redirect URIs.",
             "redirect_uri_label": "Autoryzowany Link Zwrotny (Redirect URI) - dla Google Calendar"
+        },
+        "task_colors": {
+            "title": "Kolory typów zadań",
+            "description": "Dostosuj kolory używane dla różnych typów zadań w kalendarzu.",
+            "custom_color": "Własny kolor",
+            "reset_default": "Przywróć domyślne",
+            "saved": "Kolory zadań zostały zapisane."
         }
     },
     "forms": {
@@ -5363,6 +5370,9 @@
             "empty": {
                 "button": "Dodaj pierwsze zadanie",
                 "description": "Brak zadań w tej kategorii"
+            },
+            "validation": {
+                "contact_required": "Wybierz kontakt, do którego ma być przypisane zadanie"
             }
         },
         "reminders": {

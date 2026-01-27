@@ -142,3 +142,10 @@ Schedule::command('calendar:refresh-channels')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/calendar-channels.log'));
 
+// Google Calendar - Synchronizacja oczekujących zadań (safety net dla niezsynchronizowanych)
+Schedule::command('calendar:sync-pending-tasks')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/calendar-pending-sync.log'));
+

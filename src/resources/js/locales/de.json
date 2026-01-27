@@ -2525,6 +2525,77 @@
         },
         "confirm_delete": "Sind Sie sicher, dass Sie diese Integration löschen möchten?"
     },
+    "calendar": {
+        "title": "Google Kalender Integration",
+        "connection": {
+            "title": "Kalenderverbindung",
+            "description": "Verbinden Sie Ihren Google Kalender, um CRM-Aufgaben automatisch zu synchronisieren.",
+            "connected": "Verbunden",
+            "not_connected": "Nicht verbunden",
+            "connect_prompt": "Verbinden Sie Ihren Google Kalender, um die bidirektionale Synchronisierung zu aktivieren.",
+            "connect": "Google Kalender verbinden",
+            "disconnect": "Trennen",
+            "via": "via",
+            "no_integrations": "Keine Google-Integrationen verfügbar.",
+            "add_integration": "Zuerst Google-Integration hinzufügen"
+        },
+        "settings": {
+            "calendar": "Zielkalender",
+            "primary_calendar": "Primärer Kalender",
+            "auto_sync": "Neue Aufgaben automatisch synchronisieren",
+            "sync_now": "Jetzt synchronisieren"
+        },
+        "push_notifications": {
+            "title": "Echtzeit-Synchronisierung",
+            "active": "Push-Benachrichtigungen aktiv",
+            "inactive": "Push-Benachrichtigungen nicht konfiguriert",
+            "expires": "Läuft ab",
+            "refresh": "Kanal aktualisieren"
+        },
+        "webhook": {
+            "title": "Echtzeit-Synchronisierung (Webhook)",
+            "description": "Um Änderungen von Google Kalender automatisch mit NetSendo zu synchronisieren, müssen Sie Push-Benachrichtigungen (Webhook) konfigurieren.",
+            "url_label": "Webhook URL",
+            "setup_required": "Einrichtung erforderlich",
+            "setup_required_desc": "Push-Benachrichtigungen sind noch nicht konfiguriert. Folgen Sie den Schritten unten.",
+            "instructions_title": "Wie konfiguriere ich Push-Benachrichtigungen?",
+            "step1": "Gehe zu Google Cloud Console → APIs & Services → Enabled APIs & services",
+            "step2": "Stellen Sie sicher, dass die Google Calendar API für Ihr Projekt aktiviert ist",
+            "step3": "Fügen Sie im Bereich Domain Verification Ihre Domain hinzu",
+            "step4": "Alternativ: Cloud Domains und Domain-Inhaberschaft verifizieren",
+            "step5": "Klicken Sie nach der Verifizierung auf 'Push-Benachrichtigungen aktivieren'",
+            "note": "Domain-Verifizierung ist erforderlich. Ohne sie funktioniert die Synchronisierung nur manuell.",
+            "activate_btn": "Push-Benachrichtigungen aktivieren"
+        },
+        "modal": {
+            "select_integration": "Google-Integration auswählen",
+            "select_description": "Wählen Sie, welche Google-Integration verwendet werden soll."
+        },
+        "oauth_denied": "Kalenderzugriff verweigert.",
+        "connected": "Google Kalender erfolgreich verbunden!",
+        "disconnected": "Google Kalender getrennt.",
+        "connection_failed": "Verbindung zu Google Kalender fehlgeschlagen.",
+        "settings_updated": "Kalendereinstellungen aktualisiert.",
+        "sync_started": "Synchronisierung gestartet für {count} Aufgaben.",
+        "sync_failed": "Synchronisierung fehlgeschlagen.",
+        "channel_refreshed": "Push-Benachrichtigungskanal aktualisiert.",
+        "channel_refresh_failed": "Fehler beim Aktualisieren des Push-Kanals.",
+        "confirm_disconnect": "Möchten Sie Google Kalender wirklich trennen? Synchronisierte Termine bleiben bestehen.",
+        "oauth": {
+            "title": "OAuth Konfiguration",
+            "description": "Für die ordnungsgemäße Funktion müssen Sie die untenstehende Adresse zu den autorisierten Weiterleitungs-URIs in der Google Cloud Console hinzufügen.",
+            "important": "Wichtig!",
+            "instruction": "Kopieren Sie die Adresse und fügen Sie sie in den OAuth 2.0 Client ID Einstellungen hinzu.",
+            "redirect_uri_label": "Autorisierte Weiterleitungs-URI - für Google Calendar"
+        },
+        "task_colors": {
+            "title": "Aufgabentyp-Farben",
+            "description": "Passen Sie die Farben für verschiedene Aufgabentypen in Ihrem Kalender an.",
+            "custom_color": "Benutzerdefinierte Farbe",
+            "reset_default": "Auf Standard zurücksetzen",
+            "saved": "Aufgabenfarben gespeichert."
+        }
+    },
     "forms": {
         "title": "Anmeldeformulare",
         "create": "Neues Formular",
@@ -4478,6 +4549,9 @@
             "empty": {
                 "button": "Erste Aufgabe hinzufügen",
                 "description": "Keine Aufgaben in dieser Kategorie"
+            },
+            "validation": {
+                "contact_required": "Bitte wählen Sie einen Kontakt für diese Aufgabe aus"
             }
         },
         "reminders": {

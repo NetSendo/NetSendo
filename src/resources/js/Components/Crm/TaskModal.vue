@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed, nextTick } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 import Modal from "@/Components/Modal.vue";
 import InputError from "@/Components/InputError.vue";
 
@@ -41,6 +42,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close", "saved"]);
+
+const { t } = useI18n();
 
 const isEditing = computed(() => !!props.task?.id);
 
@@ -275,6 +278,12 @@ watch(
 );
 
 const submit = () => {
+    // Validate contact selection when contacts are available
+    if (props.contacts.length > 0 && !form.crm_contact_id) {
+        form.setError("crm_contact_id", t("crm.task.validation.contact_required"));
+        return;
+    }
+
     if (isEditing.value) {
         form.put(`/crm/tasks/${props.task.id}`, {
             preserveScroll: true,
@@ -885,16 +894,23 @@ const priorities = [
                     </div>
                 </div>
 
-                <!-- Contact Selection (show when: contacts available AND not a fixed contactId from prop) -->
-                <div v-if="contacts.length && (!props.contactId || isEditing)">
+                <!-- Contact Selection (show when contacts available) -->
+                <div v-if="contacts.length">
                     <label
                         class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
                     >
                         {{ $t("crm.task.fields.contact") }}
+                        <span class="text-red-500">*</span>
                     </label>
                     <select
                         v-model="form.crm_contact_id"
-                        class="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                        :class="[
+                            'w-full rounded-xl focus:ring-indigo-500 dark:bg-slate-900 dark:text-white',
+                            form.errors.crm_contact_id
+                                ? 'border-red-500 focus:border-red-500 dark:border-red-500'
+                                : 'border-slate-200 focus:border-indigo-500 dark:border-slate-700',
+                        ]"
+                        @change="form.clearErrors('crm_contact_id')"
                     >
                         <option :value="null">
                             {{ $t("crm.task.fields.contact_placeholder") }}
@@ -907,6 +923,12 @@ const priorities = [
                             {{ contact.name }}
                         </option>
                     </select>
+                    <p
+                        v-if="form.errors.crm_contact_id"
+                        class="mt-1 text-sm text-red-500"
+                    >
+                        {{ form.errors.crm_contact_id }}
+                    </p>
                 </div>
 
                 <!-- Owner Selection -->

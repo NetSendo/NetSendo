@@ -13,6 +13,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+## [1.7.21] – Short Description
+
+**Release date:** 2026-01-27
+
+### Added
+
+- **Google Calendar Synchronization:**
+  - **Auto-Sync Safety Net:** Implemented a new background process (`calendar:sync-pending-tasks`) running every minute to automatically detect and fix tasks that failed to sync with Google Calendar during creation.
+  - Ensures 100% reliability by acting as a "safety net" for tasks that have sync enabled but are missing their calendar event ID due to queue delays or errors.
+
+- **CRM Task Modal Enhancements:**
+  - **Auto-Select Contact:** Automatically pre-selects the current contact when creating a task from the Contact Profile (`Contacts/Show.vue`).
+  - **Required Contact:** Made assigning a contact mandatory for all tasks, with frontend and backend validation to ensure data integrity.
+  - **Integration Support:** Enabled Google Meet and Zoom integration toggles when creating tasks from the Contact Profile (previously only available in Tasks dashboard).
+  - **Localization:** Added missing translations for validation messages and integration labels in PL, EN, DE, ES.
+
+- **Task Type Color Customization:**
+  - **Customizable Colors:** Added a new settings section in Google Calendar integration allowing users to define custom colors for each task type (Call, Email, Meeting, Task, Follow-up).
+  - **Calendar Sync:** Updated Google Calendar synchronization to use these custom colors (mapped to the closest available Google color ID) for events.
+  - **Frontend:** Added color pickers with presets and custom hex input support. These settings are stored in `user_calendar_connections`.
+  - **Localization:** Added missing translations for task color settings in PL, EN, DE, ES.
+
+### Fixed
+
+### Changed
+
 ## [1.7.20] – Short Description
 
 **Release date:** 2026-01-27

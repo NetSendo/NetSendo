@@ -400,13 +400,10 @@ class GoogleCalendarService
             $payload['end'] = ['date' => $todayInUserTz->format('Y-m-d')];
         }
 
-        // Add color based on priority
-        $payload['colorId'] = match($task->priority) {
-            'high' => '11',    // Red
-            'medium' => '5',   // Yellow
-            'low' => '10',     // Green
-            default => '1',    // Blue
-        };
+        // Add color based on task type (using user's custom colors if available)
+        $taskTypeColors = $this->getTaskTypeColorsForUser($task->user_id);
+        $hexColor = $taskTypeColors[$task->type] ?? UserCalendarConnection::DEFAULT_TASK_TYPE_COLORS[$task->type] ?? '#6B7280';
+        $payload['colorId'] = $this->hexToGoogleColorId($hexColor);
 
         // Add reminders
         if ($task->reminder_at) {
@@ -665,6 +662,109 @@ class GoogleCalendarService
 
             $task->update(['attendees_data' => $attendeesData]);
         }
+    }
+
+    /**
+     * Get task type colors for a user.
+     */
+    private function getTaskTypeColorsForUser(int $userId): array
+    {
+        $connection = UserCalendarConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+
+        return $connection?->getAllTaskTypeColors() ?? UserCalendarConnection::DEFAULT_TASK_TYPE_COLORS;
+    }
+
+    /**
+     * Convert hex color to closest Google Calendar colorId.
+     * Google Calendar has 11 predefined colors.
+     */
+    private function hexToGoogleColorId(string $hexColor): string
+    {
+        // Google Calendar predefined colors (event colors, not calendar colors)
+        $googleColors = [
+            '1'  => '#7986CB', // Lavender
+            '2'  => '#33B679', // Sage
+            '3'  => '#8E24AA', // Grape
+            '4'  => '#E67C73', // Flamingo
+            '5'  => '#F6BF26', // Banana
+            '6'  => '#F4511E', // Tangerine
+            '7'  => '#039BE5', // Peacock
+            '8'  => '#616161', // Graphite
+            '9'  => '#3F51B5', // Blueberry
+            '10' => '#0B8043', // Basil
+            '11' => '#D50000', // Tomato
+        ];
+
+        // Normalize hex color
+        $hexColor = strtoupper(ltrim($hexColor, '#'));
+
+        // Direct mappings for common colors (for better accuracy)
+        $directMappings = [
+            'EF4444' => '11', // Red -> Tomato
+            'F59E0B' => '5',  // Amber -> Banana
+            '10B981' => '10', // Green -> Basil
+            '3B82F6' => '9',  // Blue -> Blueberry
+            '8B5CF6' => '3',  // Purple -> Grape
+            'EC4899' => '4',  // Pink -> Flamingo
+            '6B7280' => '8',  // Gray -> Graphite
+            '14B8A6' => '2',  // Teal -> Sage
+        ];
+
+        if (isset($directMappings[$hexColor])) {
+            return $directMappings[$hexColor];
+        }
+
+        // Find closest color by calculating color distance
+        $minDistance = PHP_INT_MAX;
+        $closestId = '1';
+
+        $targetRgb = $this->hexToRgb($hexColor);
+        if (!$targetRgb) {
+            return '1'; // Default to Lavender if parsing fails
+        }
+
+        foreach ($googleColors as $colorId => $googleHex) {
+            $googleRgb = $this->hexToRgb(ltrim($googleHex, '#'));
+            if (!$googleRgb) continue;
+
+            // Calculate Euclidean distance in RGB space
+            $distance = sqrt(
+                pow($targetRgb['r'] - $googleRgb['r'], 2) +
+                pow($targetRgb['g'] - $googleRgb['g'], 2) +
+                pow($targetRgb['b'] - $googleRgb['b'], 2)
+            );
+
+            if ($distance < $minDistance) {
+                $minDistance = $distance;
+                $closestId = $colorId;
+            }
+        }
+
+        return $closestId;
+    }
+
+    /**
+     * Convert hex color string to RGB array.
+     */
+    private function hexToRgb(string $hex): ?array
+    {
+        $hex = ltrim($hex, '#');
+
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        if (strlen($hex) !== 6) {
+            return null;
+        }
+
+        return [
+            'r' => hexdec(substr($hex, 0, 2)),
+            'g' => hexdec(substr($hex, 2, 2)),
+            'b' => hexdec(substr($hex, 4, 2)),
+        ];
     }
 }
 

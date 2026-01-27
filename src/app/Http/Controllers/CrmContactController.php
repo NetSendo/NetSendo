@@ -9,6 +9,9 @@ use App\Models\Subscriber;
 use App\Models\User;
 use App\Models\Tag;
 use App\Models\Mailbox;
+use App\Models\UserCalendarConnection;
+use App\Models\UserZoomConnection;
+use App\Services\GoogleCalendarService;
 use App\Services\Mail\MailProviderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -289,6 +292,26 @@ class CrmContactController extends Controller
         // Get mailboxes for email sending
         $mailboxes = Mailbox::forUser($userId)->active()->get(['id', 'name', 'from_email', 'is_default']);
 
+        // Get calendar connection for sync UI (needed for TaskModal integrations)
+        $calendarConnection = UserCalendarConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+
+        $calendars = [];
+        if ($calendarConnection) {
+            try {
+                $calendarService = app(GoogleCalendarService::class);
+                $calendars = $calendarService->listCalendars($calendarConnection) ?? [];
+            } catch (\Exception $e) {
+                // Silently fail - user can still use tasks without calendar sync
+            }
+        }
+
+        // Get Zoom connection for Zoom meeting integration
+        $zoomConnection = UserZoomConnection::where('user_id', $userId)
+            ->where('is_active', true)
+            ->first();
+
         return Inertia::render('Crm/Contacts/Show', [
             'contact' => $contact,
             'activities' => $activities,
@@ -296,6 +319,19 @@ class CrmContactController extends Controller
             'owners' => $owners,
             'companies' => $companies,
             'mailboxes' => $mailboxes,
+            'calendarConnection' => $calendarConnection ? [
+                'id' => $calendarConnection->id,
+                'is_active' => $calendarConnection->is_active,
+                'calendar_id' => $calendarConnection->calendar_id,
+                'connected_email' => $calendarConnection->connected_email,
+                'auto_sync_tasks' => $calendarConnection->auto_sync_tasks,
+            ] : null,
+            'calendars' => $calendars,
+            'zoomConnection' => $zoomConnection ? [
+                'id' => $zoomConnection->id,
+                'is_active' => $zoomConnection->is_active,
+                'connected_email' => $zoomConnection->zoom_email,
+            ] : null,
         ]);
     }
 
