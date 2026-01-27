@@ -354,8 +354,12 @@ class CrmContact extends Model
      */
     public function getScoreTrend(int $days = 7): string
     {
+        // Use contact owner's timezone for date calculations
+        $userTimezone = $this->user?->timezone ?? config('app.timezone', 'UTC');
+        $startDate = \Carbon\Carbon::now($userTimezone)->subDays($days)->startOfDay()->utc();
+
         $changes = $this->scoreHistory()
-            ->where('created_at', '>=', now()->subDays($days))
+            ->where('created_at', '>=', $startDate)
             ->sum('points_change');
 
         if ($changes > 0) return 'positive';

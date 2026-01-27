@@ -175,6 +175,16 @@ class LeadScoringRule extends Model
                 'priority' => 30,
             ],
 
+            // Contact creation
+            [
+                'event_type' => 'contact_created',
+                'name' => 'Utworzenie kontaktu CRM',
+                'description' => 'Punkty startowe przy utworzeniu kontaktu CRM',
+                'points' => 5,
+                'cooldown_minutes' => 0,
+                'priority' => 35,
+            ],
+
             // Form events
             [
                 'event_type' => 'form_submitted',

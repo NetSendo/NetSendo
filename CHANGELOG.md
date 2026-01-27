@@ -9,7 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Lead Scoring - Default Contact Created Rule:**
+  - Added missing `contact_created` event to default scoring rules (+5 points).
+  - New contacts now automatically receive initial score when created in CRM.
+
 ### Fixed
+
+- **Lead Scoring - Queue Processing:**
+  - Fixed `LeadScoringListener` using separate `scoring` queue that wasn't being processed by the default worker.
+  - Changed to use `default` queue ensuring scoring events are processed correctly.
+
+- **Lead Scoring - Timezone Handling:**
+  - Fixed `checkDailyLimit()` in `LeadScoringService` using server timezone instead of contact owner's timezone.
+  - Fixed `getAnalytics()` in `LeadScoringService` using server timezone for date calculations.
+  - Fixed `getScoreTrend()` in `CrmContact` using server timezone for trend calculations.
+  - All scoring date calculations now correctly use the user's configured timezone.
 
 ### Changed
 

@@ -6,6 +6,8 @@ use App\Models\CrmContact;
 use App\Models\Subscriber;
 use App\Models\LeadScoringRule;
 use App\Models\LeadScoreHistory;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 
@@ -159,9 +161,14 @@ class LeadScoringService
             return true;
         }
 
+        // Use contact owner's timezone to determine "today"
+        $userTimezone = $contact->user?->timezone ?? config('app.timezone', 'UTC');
+        $todayStart = Carbon::now($userTimezone)->startOfDay()->utc();
+        $todayEnd = Carbon::now($userTimezone)->endOfDay()->utc();
+
         $todayCount = LeadScoreHistory::where('crm_contact_id', $contact->id)
             ->where('lead_scoring_rule_id', $rule->id)
-            ->whereDate('created_at', today())
+            ->whereBetween('created_at', [$todayStart, $todayEnd])
             ->count();
 
         return $todayCount < $rule->max_daily_occurrences;
@@ -256,8 +263,13 @@ class LeadScoringService
     {
         $contactIds = CrmContact::forUser($userId)->pluck('id');
 
+        // Use user's timezone for date calculations
+        $user = User::find($userId);
+        $userTimezone = $user?->timezone ?? config('app.timezone', 'UTC');
+        $startDate = Carbon::now($userTimezone)->subDays($days)->startOfDay()->utc();
+
         $history = LeadScoreHistory::whereIn('crm_contact_id', $contactIds)
-            ->where('created_at', '>=', now()->subDays($days))
+            ->where('created_at', '>=', $startDate)
             ->get();
 
         return [

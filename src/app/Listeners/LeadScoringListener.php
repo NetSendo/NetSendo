@@ -28,7 +28,7 @@ class LeadScoringListener implements ShouldQueue
     /**
      * The queue name.
      */
-    public $queue = 'scoring';
+    public $queue = 'default';
 
     public function __construct(
         protected LeadScoringService $scoringService
