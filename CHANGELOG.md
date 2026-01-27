@@ -28,7 +28,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Backend Error Handling:** Added `onError` callback to form submission to catch and display server-side validation errors.
   - **Localization:** Full translations in PL, EN, DE, ES for validation messages (`messages.validation.*`).
 
+### Improved
+
+- **Message List Performance:**
+  - **Progressive Loading:** Implemented progressive loading for recipient counts and skipped counts in the message list view.
+  - **N+1 Logic:** Replaced blocking N+1 queries with a batched asynchronous loading strategy.
+  - **Optimization:** First 5 messages load stats immediately, subsequent messages load in background batches of 5 every 2 seconds, reducing initial load time from seconds to milliseconds.
+  - **Backend:** Added new `/messages/recipient-counts` endpoint for efficient batch stat retrieval in `MessageController`.
+
 ### Fixed
+
+- **Lead Scoring - Queue Connection Mismatch:**
+  - Fixed `LeadScoringListener` using hardcoded `database` queue connection while the queue worker processes `redis` (from `QUEUE_CONNECTION` in `.env`).
+  - Scoring jobs were accumulating in the `jobs` table instead of being processed.
+  - Removed explicit `$connection = 'database'` to use the default queue connection.
+  - **Action Required:** After deployment, clear stuck jobs with `php artisan tinker --execute="DB::table('jobs')->truncate();"` or process them with `php artisan queue:work database --queue=default --stop-when-empty`.
 
 - **Message Scheduling - Select Date Button:**
   - Fixed "Select date and time" prompt being unresponsive when clicked after switching tabs (e.g., A/B Testing).

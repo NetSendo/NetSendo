@@ -128,6 +128,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('api/template-blocks/defaults', [\App\Http\Controllers\TemplateBlockController::class, 'defaults'])->name('api.template-blocks.defaults');
 
     Route::get('messages/statuses', [\App\Http\Controllers\MessageController::class, 'statuses'])->name('messages.statuses');
+    Route::get('messages/recipient-counts', [\App\Http\Controllers\MessageController::class, 'recipientCounts'])->name('messages.recipient-counts');
     Route::get('messages/{message}/stats', [\App\Http\Controllers\MessageController::class, 'stats'])->name('messages.stats');
     Route::post('messages/test', [\App\Http\Controllers\MessageController::class, 'test'])->name('messages.test');
     Route::post('messages/preview', [\App\Http\Controllers\MessageController::class, 'preview'])->name('messages.preview');

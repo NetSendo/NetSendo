@@ -110,8 +110,12 @@ const localActiveStates = reactive({});
 // Reactive local state for statuses (for real-time updates)
 const localStatuses = reactive({});
 
+// Reactive local state for progressively loaded recipient counts
+const localRecipientCounts = reactive({});
+
 // Polling interval reference
 let statusPollingInterval = null;
+let progressiveLoadingInterval = null;
 
 // Initialize local states from props
 const getIsActive = (message) => {
@@ -152,6 +156,86 @@ const fetchStatuses = async () => {
     }
 };
 
+// Get recipient count (with local override from progressive loading)
+const getRecipientsCount = (message) => {
+    if (localRecipientCounts[message.id]?.recipients_count !== undefined) {
+        return localRecipientCounts[message.id].recipients_count;
+    }
+    return message.recipients_count;
+};
+
+// Get skipped count (with local override from progressive loading)
+const getSkippedCount = (message) => {
+    if (localRecipientCounts[message.id]?.skipped_count !== undefined) {
+        return localRecipientCounts[message.id].skipped_count;
+    }
+    return message.skipped_count;
+};
+
+// Progressive loading of recipient counts
+// Messages that need stats: draft/scheduled (need accurate count) and autoresponders (need skipped_count)
+const messagesNeedingStats = ref([]);
+let progressiveLoadingIndex = 0;
+
+const fetchRecipientCounts = async (messageIds) => {
+    if (messageIds.length === 0) return;
+
+    try {
+        const response = await axios.get(route("messages.recipient-counts"), {
+            params: { ids: messageIds.join(",") },
+        });
+
+        if (response.data && Array.isArray(response.data)) {
+            response.data.forEach((msg) => {
+                localRecipientCounts[msg.id] = {
+                    recipients_count: msg.recipients_count,
+                    skipped_count: msg.skipped_count,
+                };
+            });
+        }
+    } catch (error) {
+        // Silently fail
+    }
+};
+
+const startProgressiveLoading = () => {
+    // Identify messages that need accurate stats
+    messagesNeedingStats.value = props.messages.data
+        .filter(m =>
+            // Draft/scheduled broadcasts need accurate recipient count
+            (m.type === 'broadcast' && (m.status === 'draft' || m.status === 'scheduled')) ||
+            // Autoresponders need skipped_count
+            m.type === 'autoresponder'
+        )
+        .map(m => m.id);
+
+    if (messagesNeedingStats.value.length === 0) return;
+
+    // Load first 5 immediately
+    const firstBatch = messagesNeedingStats.value.slice(0, 5);
+    fetchRecipientCounts(firstBatch);
+    progressiveLoadingIndex = 5;
+
+    // Load rest progressively every 2 seconds
+    if (messagesNeedingStats.value.length > 5) {
+        progressiveLoadingInterval = setInterval(() => {
+            const nextBatch = messagesNeedingStats.value.slice(
+                progressiveLoadingIndex,
+                progressiveLoadingIndex + 5
+            );
+
+            if (nextBatch.length === 0) {
+                clearInterval(progressiveLoadingInterval);
+                progressiveLoadingInterval = null;
+                return;
+            }
+
+            fetchRecipientCounts(nextBatch);
+            progressiveLoadingIndex += 5;
+        }, 2000);
+    }
+};
+
 // Setup polling on mount
 onMounted(() => {
     // Start polling if there are scheduled messages
@@ -162,6 +246,9 @@ onMounted(() => {
         statusPollingInterval = setInterval(fetchStatuses, 15000); // Every 15 seconds
         fetchStatuses(); // Initial fetch
     }
+
+    // Start progressive loading of recipient counts
+    startProgressiveLoading();
 
     // Click outside handler for list dropdown
     document.addEventListener("click", handleClickOutsideListDropdown);
@@ -203,6 +290,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
     if (statusPollingInterval) {
         clearInterval(statusPollingInterval);
+    }
+    if (progressiveLoadingInterval) {
+        clearInterval(progressiveLoadingInterval);
     }
     document.removeEventListener("click", handleClickOutsideListDropdown);
 });
@@ -791,20 +881,20 @@ const getAttachmentTooltip = (message, trans) => {
                                         class="text-xs text-slate-500 dark:text-slate-400"
                                     >
                                         {{
-                                            message.recipients_count?.toLocaleString() ||
-                                            0
+                                            getRecipientsCount(message)?.toLocaleString() ??
+                                            '-'
                                         }}
                                         {{ $t("messages.recipients") }}
                                         <span
                                             v-if="
                                                 message.type ===
                                                     'autoresponder' &&
-                                                message.skipped_count > 0
+                                                getSkippedCount(message) > 0
                                             "
                                             class="text-orange-500 font-medium"
                                             :title="$t('messages.skipped_hint')"
                                         >
-                                            ({{ message.skipped_count }}
+                                            ({{ getSkippedCount(message) }}
                                             {{ $t("messages.skipped") }})
                                         </span>
                                     </span>

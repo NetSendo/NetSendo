@@ -116,14 +116,12 @@ class MessageController extends Controller
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)
                         : '-',
                     // For sent messages, use frozen planned_recipients_count
-                    // For draft/scheduled, calculate live count
-                    'recipients_count' => $msg->status === 'sent'
-                        ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
-                        : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
-                    // Skipped count for autoresponder messages (calculated dynamically to match modal stats)
-                    'skipped_count' => $msg->type === 'autoresponder'
-                        ? ($msg->getQueueScheduleStats()['missed'] ?? 0)
-                        : 0,
+                    // For draft/scheduled, use stored value (calculated when message is edited/scheduled)
+                    // This avoids expensive getUniqueRecipients() call for every message in the list
+                    'recipients_count' => $msg->planned_recipients_count ?? $msg->sent_count ?? null,
+                    // Skipped count removed from list view for performance
+                    // Available in message stats/edit view via getQueueScheduleStats()
+                    'skipped_count' => null,
                     'created_at' => DateHelper::formatForUser($msg->created_at),
                     'scheduled_at' => $msg->scheduled_at
                         ? DateHelper::formatForUser($msg->scheduled_at)
@@ -179,6 +177,35 @@ class MessageController extends Controller
             ]);
 
         return response()->json($messages);
+    }
+
+    /**
+     * Get recipient counts for specific messages (for progressive loading)
+     * Returns accurate counts including exclusions and filters
+     */
+    public function recipientCounts(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (!$ids) {
+            return response()->json([]);
+        }
+
+        $messageIds = is_array($ids) ? $ids : explode(',', $ids);
+
+        $messages = Message::whereIn('id', $messageIds)
+            ->where('user_id', auth()->id())
+            ->with(['contactLists', 'excludedLists'])
+            ->get();
+
+        return response()->json($messages->map(fn($msg) => [
+            'id' => $msg->id,
+            'recipients_count' => $msg->status === 'sent'
+                ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
+                : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
+            'skipped_count' => $msg->type === 'autoresponder'
+                ? ($msg->getQueueScheduleStats()['missed'] ?? 0)
+                : 0,
+        ]));
     }
 
     public function create(Request $request)

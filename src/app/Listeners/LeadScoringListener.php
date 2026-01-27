@@ -21,12 +21,8 @@ use Illuminate\Support\Facades\Log;
 class LeadScoringListener implements ShouldQueue
 {
     /**
-     * The queue connection that should handle the job.
-     */
-    public $connection = 'database';
-
-    /**
      * The queue name.
+     * Uses default connection from QUEUE_CONNECTION in .env
      */
     public $queue = 'default';
 
