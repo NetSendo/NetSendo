@@ -1095,6 +1095,7 @@ onMounted(() => {
             :zoom-connection="zoomConnection"
             @close="showTaskModal = false"
             @saved="onTaskSaved"
+            @deleted="onTaskSaved"
         />
 
         <!-- Delete Confirmation Modal -->

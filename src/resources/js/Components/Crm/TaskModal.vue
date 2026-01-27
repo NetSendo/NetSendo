@@ -1,9 +1,10 @@
 <script setup>
 import { ref, watch, computed, nextTick } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useForm, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import Modal from "@/Components/Modal.vue";
 import InputError from "@/Components/InputError.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 
 const props = defineProps({
     show: Boolean,
@@ -41,7 +42,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["close", "saved"]);
+const emit = defineEmits(["close", "saved", "deleted"]);
 
 const { t } = useI18n();
 
@@ -463,6 +464,30 @@ const priorities = [
         color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     },
 ];
+
+// Delete confirmation
+const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
+
+const openDeleteModal = () => {
+    showDeleteModal.value = true;
+};
+
+const confirmDelete = async () => {
+    if (!props.task?.id) return;
+    deleteProcessing.value = true;
+    await router.delete(`/crm/tasks/${props.task.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            emit("deleted");
+            emit("close");
+        },
+        onFinish: () => {
+            deleteProcessing.value = false;
+            showDeleteModal.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -1536,42 +1561,16 @@ const priorities = [
 
                 <!-- Actions -->
                 <div
-                    class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700"
+                    class="flex items-center pt-4 border-t border-slate-200 dark:border-slate-700"
                 >
+                    <!-- Delete button (left side, only in edit mode) -->
                     <button
+                        v-if="isEditing"
                         type="button"
-                        @click="emit('close')"
-                        class="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                        {{ $t("crm.task.actions.cancel") }}
-                    </button>
-                    <button
-                        type="submit"
-                        :disabled="form.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                        @click="openDeleteModal"
+                        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition"
                     >
                         <svg
-                            v-if="form.processing"
-                            class="h-4 w-4 animate-spin"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                            ></path>
-                        </svg>
-                        <svg
-                            v-else
                             class="h-4 w-4"
                             fill="none"
                             stroke="currentColor"
@@ -1581,19 +1580,86 @@ const priorities = [
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
                                 stroke-width="2"
-                                d="M5 13l4 4L19 7"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                             />
                         </svg>
-                        {{
-                            isEditing
-                                ? $t("crm.task.actions.save")
-                                : $t("crm.task.actions.create")
-                        }}
+                        {{ $t("crm.task.actions.delete") }}
                     </button>
+
+                    <!-- Spacer -->
+                    <div class="flex-1"></div>
+
+                    <!-- Cancel and Save buttons (right side) -->
+                    <div class="flex gap-3">
+                        <button
+                            type="button"
+                            @click="emit('close')"
+                            class="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+                        >
+                            {{ $t("crm.task.actions.cancel") }}
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="form.processing"
+                            class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            <svg
+                                v-if="form.processing"
+                                class="h-4 w-4 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    class="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                ></circle>
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                ></path>
+                            </svg>
+                            <svg
+                                v-else
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M5 13l4 4L19 7"
+                                />
+                            </svg>
+                            {{
+                                isEditing
+                                    ? $t("crm.task.actions.save")
+                                    : $t("crm.task.actions.create")
+                            }}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </Modal>
+
+    <!-- Delete Confirmation Modal -->
+    <ConfirmModal
+        :show="showDeleteModal"
+        :title="$t('crm.task.delete.title')"
+        :message="$t('crm.task.delete.message')"
+        type="danger"
+        :confirm-text="$t('crm.task.delete.confirm')"
+        :processing="deleteProcessing"
+        @close="showDeleteModal = false"
+        @confirm="confirmDelete"
+    />
 </template>
 
 <style scoped>

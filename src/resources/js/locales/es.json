@@ -4612,7 +4612,13 @@
             "actions": {
                 "cancel": "Cancelar",
                 "save": "Guardar cambios",
-                "create": "Crear tarea"
+                "create": "Crear tarea",
+                "delete": "Eliminar"
+            },
+            "delete": {
+                "title": "Eliminar tarea",
+                "message": "¿Está seguro de que desea eliminar esta tarea? Esta acción no se puede deshacer.",
+                "confirm": "Eliminar"
             },
             "meet": {
                 "include_meet": "Añadir enlace de Google Meet",

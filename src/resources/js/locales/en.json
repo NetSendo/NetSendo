@@ -5263,7 +5263,13 @@
             "actions": {
                 "cancel": "Cancel",
                 "save": "Save Changes",
-                "create": "Create Task"
+                "create": "Create Task",
+                "delete": "Delete"
+            },
+            "delete": {
+                "title": "Delete Task",
+                "message": "Are you sure you want to delete this task? This action cannot be undone.",
+                "confirm": "Delete"
             },
             "meet": {
                 "include_meet": "Add Google Meet link",

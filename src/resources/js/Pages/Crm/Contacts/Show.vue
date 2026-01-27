@@ -935,6 +935,7 @@ const getActivityIcon = (type) => {
             :zoom-connection="zoomConnection"
             @close="showTaskModal = false"
             @saved="onTaskSaved"
+            @deleted="onTaskSaved"
         />
         <!-- Toast Notification -->
         <Teleport to="body">

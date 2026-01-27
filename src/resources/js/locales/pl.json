@@ -5344,7 +5344,13 @@
             "actions": {
                 "cancel": "Anuluj",
                 "save": "Zapisz zmiany",
-                "create": "Utwórz zadanie"
+                "create": "Utwórz zadanie",
+                "delete": "Usuń"
+            },
+            "delete": {
+                "title": "Usuń zadanie",
+                "message": "Czy na pewno chcesz usunąć to zadanie? Tej operacji nie można cofnąć.",
+                "confirm": "Usuń"
             },
             "meet": {
                 "include_meet": "Dodaj link Google Meet",

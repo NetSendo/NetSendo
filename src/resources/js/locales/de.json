@@ -4527,7 +4527,13 @@
             "actions": {
                 "cancel": "Abbrechen",
                 "save": "Änderungen speichern",
-                "create": "Aufgabe erstellen"
+                "create": "Aufgabe erstellen",
+                "delete": "Löschen"
+            },
+            "delete": {
+                "title": "Aufgabe löschen",
+                "message": "Möchten Sie diese Aufgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+                "confirm": "Löschen"
             },
             "meet": {
                 "include_meet": "Google Meet-Link hinzufügen",
