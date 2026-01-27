@@ -115,7 +115,7 @@ class AbTestController extends Controller
             'sample_percentage' => 'required|integer|min:10|max:50',
             'test_duration_hours' => 'required|integer|min:1|max:168', // 1h to 7 days
             'auto_select_winner' => 'sometimes|boolean',
-            'confidence_threshold' => 'sometimes|integer|min:80|max:99',
+            'confidence_threshold' => 'sometimes|integer|min:60|max:99',
         ]);
 
         // Check if message already has an A/B test

@@ -47,7 +47,7 @@ class AbTestController extends Controller
             'sample_percentage' => 'nullable|integer|min:5|max:50',
             'test_duration_hours' => 'nullable|integer|min:1|max:168',
             'auto_select_winner' => 'nullable|boolean',
-            'confidence_threshold' => 'nullable|integer|min:80|max:99',
+            'confidence_threshold' => 'nullable|integer|min:60|max:99',
             'variants' => 'required|array|min:2|max:5',
             'variants.*.variant_letter' => 'required|string|in:A,B,C,D,E',
             'variants.*.subject' => 'nullable|string|max:255',
@@ -108,7 +108,7 @@ class AbTestController extends Controller
             'sample_percentage' => 'nullable|integer|min:5|max:50',
             'test_duration_hours' => 'nullable|integer|min:1|max:168',
             'auto_select_winner' => 'nullable|boolean',
-            'confidence_threshold' => 'nullable|integer|min:80|max:99',
+            'confidence_threshold' => 'nullable|integer|min:60|max:99',
         ]);
 
         $abTest->update($validated);

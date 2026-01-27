@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Changed non-interactive `<span>` element to a clickable `<button>` that navigates to the Settings tab.
   - Added hover effects to clearly indicate the element is interactive.
 
+- **Zoom Integration Scopes:**
+  - Fixed "Invalid scope" error during authorization by updating OAuth scopes to the new granular format (e.g., `meeting:write:meeting:admin`).
+  - Updated integration instructions in Marketplace to reflect the new strict granular permission requirements.
+  - Added UI labels for new granular scopes in the "Granted Permissions" display.
+
+- **A/B Test Confidence Threshold Validation:**
+  - Fixed validation mismatch where backend blocked saving A/B tests with confidence threshold below 80%, even though the UI allowed values down to 60%.
+  - Updated validation rules in `MessageController`, `AbTestController`, and `Api/V1/AbTestController` to accept minimum value of 60%.
+
 ## [1.7.22] – Short Description
 
 **Release date:** 2026-01-27
