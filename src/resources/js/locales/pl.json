@@ -1482,6 +1482,13 @@
             "no_subject_preview": "(brak tematu)",
             "no_mailbox_preview": "Brak skrzynki"
         },
+        "validation": {
+            "subject_required": "Temat wiadomości jest wymagany",
+            "content_required": "Treść wiadomości jest wymagana",
+            "list_required": "Wybierz co najmniej jedną listę odbiorców",
+            "unable_to_save": "Nie udało się zapisać wiadomości",
+            "fix_errors": "Popraw błędy w formularzu"
+        },
         "preview": {
             "title": "Podgląd z danymi",
             "select_subscriber": "Wybierz odbiorcę do podglądu",

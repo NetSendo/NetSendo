@@ -1507,6 +1507,13 @@
             "no_subject_preview": "(kein Betreff)",
             "no_mailbox_preview": "Kein Postfach konfiguriert"
         },
+        "validation": {
+            "subject_required": "Nachrichtenbetreff ist erforderlich",
+            "content_required": "Nachrichteninhalt ist erforderlich",
+            "list_required": "Wählen Sie mindestens eine Empfängerliste",
+            "unable_to_save": "Nachricht konnte nicht gespeichert werden",
+            "fix_errors": "Fehler im Formular beheben"
+        },
         "preview": {
             "title": "Live-Vorschau mit Daten",
             "select_subscriber": "Abonnenten für Vorschau auswählen",

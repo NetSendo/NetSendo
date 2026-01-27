@@ -114,6 +114,15 @@ const showInsertPickerModal = ref(false);
 // Reference to advanced editor for mode control
 const advancedEditorRef = ref(null);
 
+// Toast notification state
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 6000);
+};
+
 // Subject emoji picker
 const showSubjectEmojiPicker = ref(false);
 const subjectInputRef = ref(null);
@@ -642,9 +651,92 @@ const formatFileSize = (bytes) => {
 };
 // ===== End PDF Attachments Logic =====
 
+// ===== Validation Logic =====
+// Map form fields to their corresponding tabs
+const fieldToTabMap = {
+    subject: 'content',
+    content: 'content',
+    preheader: 'content',
+    type: 'content',
+    contact_list_ids: 'settings',
+    excluded_list_ids: 'settings',
+    mailbox_id: 'settings',
+    tag_ids: 'settings',
+    day: 'settings',
+    time_of_day: 'settings',
+    send_at: 'settings',
+    timezone: 'settings',
+    trigger_type: 'triggers',
+    trigger_config: 'triggers',
+    ab_test_config: 'ab_testing',
+};
+
+// Frontend validation before submit
+const validateForm = () => {
+    const errors = [];
+
+    // Check subject
+    if (!form.subject || form.subject.trim() === '') {
+        errors.push({
+            field: 'subject',
+            message: t('messages.validation.subject_required'),
+            tab: 'content'
+        });
+    }
+
+    // Check list selection
+    if (form.type === 'broadcast') {
+        if (!form.contact_list_ids || form.contact_list_ids.length === 0) {
+            errors.push({
+                field: 'contact_list_ids',
+                message: t('messages.validation.list_required'),
+                tab: 'settings'
+            });
+        }
+    } else if (form.type === 'autoresponder') {
+        if (!form.contact_list_ids || form.contact_list_ids.length === 0) {
+            errors.push({
+                field: 'contact_list_ids',
+                message: t('messages.validation.list_required'),
+                tab: 'settings'
+            });
+        }
+    }
+
+    return errors;
+};
+
+// Handle backend validation errors
+const handleValidationErrors = (errors) => {
+    // Get first error field and message
+    const errorFields = Object.keys(errors);
+    if (errorFields.length > 0) {
+        const firstField = errorFields[0];
+        const firstMessage = Array.isArray(errors[firstField])
+            ? errors[firstField][0]
+            : errors[firstField];
+
+        // Show toast with error message
+        showToast(firstMessage, false);
+
+        // Switch to the tab containing the error
+        const tabForField = fieldToTabMap[firstField] || 'content';
+        activeTab.value = tabForField;
+    }
+};
+
 const submit = (targetStatus = null) => {
     if (targetStatus) {
         form.status = targetStatus;
+    }
+
+    // Frontend validation
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+        const firstError = validationErrors[0];
+        showToast(firstError.message, false);
+        activeTab.value = firstError.tab;
+        return;
     }
 
     // For broadcast, if sending now, clear send_at.
@@ -659,10 +751,16 @@ const submit = (targetStatus = null) => {
         form.content = advancedEditorRef.value.getWrappedContent();
     }
 
+    const submitOptions = {
+        onError: (errors) => {
+            handleValidationErrors(errors);
+        },
+    };
+
     if (isEditing.value) {
-        form.put(route("messages.update", props.message.id));
+        form.put(route("messages.update", props.message.id), submitOptions);
     } else {
-        form.post(route("messages.store"));
+        form.post(route("messages.store"), submitOptions);
     }
 };
 
@@ -3437,9 +3535,11 @@ if (form.contact_list_ids.length > 0) {
                             </button>
 
                             <!-- Prompt to select date when in schedule mode without date -->
-                            <span
+                            <button
+                                type="button"
                                 v-if="scheduleMode === 'later' && !form.send_at"
-                                class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                                @click="activeTab = 'settings'"
+                                class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 cursor-pointer"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -3455,7 +3555,7 @@ if (form.contact_list_ids.length > 0) {
                                     />
                                 </svg>
                                 {{ $t("messages.actions.select_datetime") }}
-                            </span>
+                            </button>
 
                             <!-- Send Now / Submit Scheduled -->
                             <PrimaryButton
@@ -3689,4 +3789,74 @@ if (form.contact_list_ids.length > 0) {
         @close="showInsertPickerModal = false"
         @insert="handleInsert"
     />
+
+    <!-- Toast Notification -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transform ease-out duration-300 transition"
+            enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+            enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+            leave-active-class="transition ease-in duration-100"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div
+                v-if="toast"
+                class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg max-w-md"
+                :class="[
+                    toast.success
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-red-500 text-white',
+                ]"
+            >
+                <svg
+                    v-if="toast.success"
+                    class="h-5 w-5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                    />
+                </svg>
+                <svg
+                    v-else
+                    class="h-5 w-5 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                </svg>
+                <span class="font-medium">{{ toast.message }}</span>
+                <button
+                    @click="toast = null"
+                    class="ml-2 rounded-full p-1 hover:bg-white/20 flex-shrink-0"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </Transition>
+    </Teleport>
 </template>

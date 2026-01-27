@@ -66,13 +66,21 @@ const saveSettings = () => {
 
 // Zoom scope labels and descriptions
 const scopeLabels = {
-    // Meeting scopes
+    // Granular meeting scopes (new format)
+    'meeting:write:meeting:admin': 'Create Meetings',
+    'meeting:read:meeting:admin': 'View Meetings',
+    'meeting:update:meeting:admin': 'Update Meetings',
+    'meeting:delete:meeting:admin': 'Delete Meetings',
+    // Granular user scopes (new format)
+    'user:read:user:admin': 'View User Profile',
+    'user:read:list_users:admin': 'List Users',
+    // Legacy meeting scopes (for backwards compatibility)
     'meeting:write': 'Create Meetings',
     'meeting:read': 'View Meetings',
     'meeting:write:admin': 'Admin: Create Meetings',
     'meeting:read:admin': 'Admin: View Meetings',
     'meeting:master': 'Meeting Master',
-    // User scopes
+    // Legacy user scopes
     'user:read': 'View Profile',
     'user:write': 'Edit Profile',
     'user:read:admin': 'Admin: View Users',

@@ -15,6 +15,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Detailed Edit:** Added an "Edit" button to the contact details page (`Show.vue`) header.
   - **Localization:** Full translations for all edit functionality in PL, EN, DE, ES.
 
+- **CRM Task Deletion:**
+  - **Delete Action:** Added "Delete" button to the Task Modal (visible only in edit mode) allowing users to remove tasks directly from the details view.
+  - **Safety Mechanism:** Implemented a confirmation modal with "danger" styling to prevent accidental deletions.
+  - **Real-time Updates:** Task list and related views (Contact Profile) now automatically refresh upon task deletion.
+  - **Localization:** Added translations for all delete actions and confirmation messages in PL, EN, DE, ES.
+
+- **Message Validation Feedback:**
+  - **Frontend Validation:** Added client-side validation in message creation/editing form (`Create.vue`) that checks for required fields (subject, recipient lists) before submitting.
+  - **Toast Notifications:** Implemented toast notification system to display clear validation error messages when save fails.
+  - **Automatic Tab Switching:** When validation errors occur, the form automatically navigates to the tab containing the field with the error.
+  - **Backend Error Handling:** Added `onError` callback to form submission to catch and display server-side validation errors.
+  - **Localization:** Full translations in PL, EN, DE, ES for validation messages (`messages.validation.*`).
+
+### Fixed
+
+- **Message Scheduling - Select Date Button:**
+  - Fixed "Select date and time" prompt being unresponsive when clicked after switching tabs (e.g., A/B Testing).
+  - Changed non-interactive `<span>` element to a clickable `<button>` that navigates to the Settings tab.
+  - Added hover effects to clearly indicate the element is interactive.
+
 ## [1.7.22] – Short Description
 
 **Release date:** 2026-01-27

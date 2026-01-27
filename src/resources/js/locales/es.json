@@ -1521,6 +1521,13 @@
             "no_subject_preview": "(sin asunto)",
             "no_mailbox_preview": "Ningún buzón configurado"
         },
+        "validation": {
+            "subject_required": "El asunto del mensaje es obligatorio",
+            "content_required": "El contenido del mensaje es obligatorio",
+            "list_required": "Seleccione al menos una lista de destinatarios",
+            "unable_to_save": "No se pudo guardar el mensaje",
+            "fix_errors": "Corrija los errores en el formulario"
+        },
         "preview": {
             "title": "Vista previa con datos",
             "select_subscriber": "Seleccionar suscriptor para vista previa",

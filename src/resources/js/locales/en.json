@@ -1478,6 +1478,13 @@
             "no_subject_preview": "(no subject)",
             "no_mailbox_preview": "No mailbox configured"
         },
+        "validation": {
+            "subject_required": "Message subject is required",
+            "content_required": "Message content is required",
+            "list_required": "Select at least one recipient list",
+            "unable_to_save": "Unable to save message",
+            "fix_errors": "Fix errors in the form"
+        },
         "preview": {
             "title": "Live Preview with Data",
             "select_subscriber": "Select subscriber for preview",

@@ -168,10 +168,11 @@ const setupSteps = [
                                     4. Add required scopes (in <strong class="text-gray-900 dark:text-white">Meetings</strong> category):
                                 </p>
                                 <ul class="list-disc list-inside ml-4 space-y-1">
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:write:admin</code> <span class="text-xs text-gray-500">(create & update)</span></li>
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:read:admin</code> <span class="text-xs text-gray-500">(view details)</span></li>
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:delete:admin</code> <span class="text-xs text-gray-500">(delete meetings)</span></li>
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">user:read:admin</code> <span class="text-xs text-gray-500">(user info)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:write:meeting:admin</code> <span class="text-xs text-gray-500">(create meetings)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:read:meeting:admin</code> <span class="text-xs text-gray-500">(view details)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:update:meeting:admin</code> <span class="text-xs text-gray-500">(update meetings)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:delete:meeting:admin</code> <span class="text-xs text-gray-500">(delete meetings)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">user:read:user:admin</code> <span class="text-xs text-gray-500">(user info)</span></li>
                                 </ul>
                                 <p>
                                     5. Copy Client ID and Client Secret to Settings

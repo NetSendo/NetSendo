@@ -38,12 +38,15 @@ class ZoomOAuthService
 
     /**
      * Required OAuth scopes for Zoom integration.
-     * These scopes are needed for meeting management functionality.
+     * These scopes use Zoom's granular scope format (introduced 2024).
+     * See: https://developers.zoom.us/docs/integrations/oauth-scopes/
      */
     private const ZOOM_SCOPES = [
-        'user:read',           // Read user info
-        'meeting:write',       // Create and manage meetings
-        'meeting:read',        // Read meeting details
+        'user:read:user:admin',            // View a user (required to get user info after auth)
+        'meeting:write:meeting:admin',     // Create a meeting for a user
+        'meeting:read:meeting:admin',      // View a meeting
+        'meeting:update:meeting:admin',    // Update a meeting
+        'meeting:delete:meeting:admin',    // Delete a meeting
     ];
 
     /**
