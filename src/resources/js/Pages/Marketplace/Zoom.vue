@@ -162,15 +162,19 @@ const setupSteps = [
                                     <img src="/images/zoom-app-type.png" alt="Zoom App Type Selection" class="w-full max-w-md" />
                                 </div>
                                 <p>
-                                    3. Fill in app information and add required scopes:
+                                    3. Select <strong class="text-gray-900 dark:text-white">"Development"</strong> mode and <strong class="text-gray-900 dark:text-white">"Admin-managed"</strong> app type
+                                </p>
+                                <p>
+                                    4. Add required scopes (in <strong class="text-gray-900 dark:text-white">Meetings</strong> category):
                                 </p>
                                 <ul class="list-disc list-inside ml-4 space-y-1">
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:write:admin</code></li>
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:read:admin</code></li>
-                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">user:read:admin</code></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:write:admin</code> <span class="text-xs text-gray-500">(create & update)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:read:admin</code> <span class="text-xs text-gray-500">(view details)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">meeting:delete:admin</code> <span class="text-xs text-gray-500">(delete meetings)</span></li>
+                                    <li><code class="bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-sm">user:read:admin</code> <span class="text-xs text-gray-500">(user info)</span></li>
                                 </ul>
                                 <p>
-                                    4. Copy Client ID and Client Secret to Settings
+                                    5. Copy Client ID and Client Secret to Settings
                                 </p>
                             </div>
                         </div>
