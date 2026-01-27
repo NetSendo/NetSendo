@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.22] – Short Description
+
+**Release date:** 2026-01-27
+
 ### Added
 
 - **Zoom Integration Enhancements:**
@@ -17,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Lead Scoring - Default Contact Created Rule:**
   - Added missing `contact_created` event to default scoring rules (+5 points).
   - New contacts now automatically receive initial score when created in CRM.
+
+- **Message Campaign Tags:**
+  - **Tag Selector:** Added ability to assign tags to messages directly in the message creator/editor (`Create.vue`).
+  - **UI Integration:** New campaign tag selector in the "Settings" tab of the message wizard.
+  - **Backend Sync:** Updated `MessageController` to handle validation and synchronization of `tag_ids`.
+  - **Localization:** Added translations for campaign tags in PL, EN, DE, ES.
+
+- **Campaign Statistics Translations:**
+  - Complete translations for the new Campaign Statistics feature in Polish, English, German, and Spanish.
 
 ### Fixed
 
@@ -34,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Fixed `SyncPendingCalendarTasks` command failing with "Column not found: due_at". Corrected column name to `due_date`.
   - Fixed integrity constraint violations in email tracking (`email_clicks`, `email_opens`) by adding validation for deleted subscribers.
   - Fixed `SubscriberPreferencesController` error when rendering system pages for deleted subscribers (handled nullable subscriber).
+  - Fixed Global Stats page (`/settings/stats`) crashing with "Allowed memory size exhausted" error by removing unnecessary eager loading of subscribers in `GlobalStatsController`.
 
 ### Changed
 

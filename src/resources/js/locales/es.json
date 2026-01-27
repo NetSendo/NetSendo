@@ -1497,7 +1497,9 @@
             "insert_variable": "Insertar variable",
             "insert_fname": "Nombre",
             "insert_fname_vocative": "Nombre (vocativo)",
-            "insert_gender_form": "Género (m|f)"
+            "insert_gender_form": "Género (m|f)",
+            "campaign_tags": "Etiquetas de campaña",
+            "campaign_tags_help": "Asigne etiquetas a este mensaje para facilitar el análisis de las estadísticas de la campaña."
         },
         "actions": {
             "save_draft": "Guardar como borrador",
@@ -5376,6 +5378,56 @@
             "ai": "Integración IA",
             "mailbox": "Buzón de correo",
             "cron": "CRON"
+        }
+    },
+    "campaign_stats": {
+        "title": "Estadísticas de Campaña",
+        "subtitle": "Análisis de efectividad de campañas de correo electrónico",
+        "ai_badge": "Análisis IA",
+        "no_tags": "Sin etiquetas con mensajes asignados",
+        "no_tags_description": "Etiqueta tus mensajes para analizar la efectividad de campañas completas.",
+        "manage_tags": "Gestionar Etiquetas",
+        "messages": "mensajes",
+        "date_range": "Rango de fechas",
+        "view_details": "Ver Detalles",
+        "back_to_list": "Volver a la lista de campañas",
+        "export": "Exportar CSV",
+        "messages_in_campaign": "Mensajes en la campaña",
+        "status": {
+            "past": "Completada",
+            "ongoing": "En Progreso",
+            "future": "Programada",
+            "draft": "Borrador",
+            "empty": "Sin mensajes"
+        },
+        "kpi": {
+            "sent": "Enviados",
+            "opens": "Aperturas",
+            "clicks": "Clics",
+            "bounce_rate": "Tasa de Rebote",
+            "open_rate": "Tasa de Apertura",
+            "click_rate": "Tasa de Clics",
+            "failed": "fallidos"
+        },
+        "table": {
+            "subject": "Asunto",
+            "status": "Estado",
+            "sent": "Enviados",
+            "opens": "Aperturas",
+            "clicks": "Clics",
+            "date": "Fecha de envío"
+        },
+        "ai_analysis": {
+            "title": "Análisis IA",
+            "description": "Genera un análisis detallado de IA de esta campaña para descubrir fortalezas, áreas de mejora y recomendaciones.",
+            "generate": "Generar Análisis IA",
+            "generating": "Generando análisis...",
+            "regenerate": "Regenerar",
+            "summary": "Resumen",
+            "strengths": "Fortalezas",
+            "improvements": "Áreas de Mejora",
+            "recommendations": "Recomendaciones",
+            "error": "Error al generar el análisis. Por favor, inténtalo de nuevo."
         }
     }
 }

@@ -247,6 +247,15 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/statistics', [\App\Http\Controllers\CampaignAuditorController::class, 'statistics'])->name('statistics');
     });
 
+    // Campaign Statistics (Tag-based Analytics)
+    Route::prefix('campaign-stats')->name('campaign-stats.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CampaignStatsController::class, 'index'])->name('index');
+        Route::get('/{tag}', [\App\Http\Controllers\CampaignStatsController::class, 'show'])->name('show');
+        Route::get('/{tag}/stats', [\App\Http\Controllers\CampaignStatsController::class, 'getTagStats'])->name('stats');
+        Route::post('/{tag}/ai-analysis', [\App\Http\Controllers\CampaignStatsController::class, 'generateAiAnalysis'])->name('ai-analysis');
+        Route::get('/{tag}/export', [\App\Http\Controllers\CampaignStatsController::class, 'export'])->name('export');
+    });
+
     // AI Integrations
     Route::prefix('settings/ai-integrations')->name('settings.ai-integrations.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AiIntegrationController::class, 'index'])->name('index');

@@ -1442,7 +1442,9 @@
             "insert_variable": "Insert variable",
             "insert_fname": "First name",
             "insert_fname_vocative": "First name (vocative)",
-            "insert_gender_form": "Gender (m|f)"
+            "insert_gender_form": "Gender (m|f)",
+            "campaign_tags": "Campaign tags",
+            "campaign_tags_help": "Assign tags to this message for easier campaign statistics analysis."
         },
         "attachments": {
             "title": "PDF Attachments",
@@ -6104,6 +6106,56 @@
             "ai": "AI Integration",
             "mailbox": "Mailbox",
             "cron": "CRON"
+        }
+    },
+    "campaign_stats": {
+        "title": "Campaign Statistics",
+        "subtitle": "Email campaign effectiveness analysis",
+        "ai_badge": "AI Analysis",
+        "no_tags": "No tags with assigned messages",
+        "no_tags_description": "Tag your messages to analyze the effectiveness of entire campaigns.",
+        "manage_tags": "Manage Tags",
+        "messages": "messages",
+        "date_range": "Date range",
+        "view_details": "View Details",
+        "back_to_list": "Back to campaign list",
+        "export": "Export CSV",
+        "messages_in_campaign": "Messages in campaign",
+        "status": {
+            "past": "Completed",
+            "ongoing": "In Progress",
+            "future": "Scheduled",
+            "draft": "Draft",
+            "empty": "No messages"
+        },
+        "kpi": {
+            "sent": "Sent",
+            "opens": "Opens",
+            "clicks": "Clicks",
+            "bounce_rate": "Bounce Rate",
+            "open_rate": "Open Rate",
+            "click_rate": "Click Rate",
+            "failed": "failed"
+        },
+        "table": {
+            "subject": "Subject",
+            "status": "Status",
+            "sent": "Sent",
+            "opens": "Opens",
+            "clicks": "Clicks",
+            "date": "Send Date"
+        },
+        "ai_analysis": {
+            "title": "AI Analysis",
+            "description": "Generate a detailed AI analysis of this campaign to discover strengths, areas for improvement, and recommendations.",
+            "generate": "Generate AI Analysis",
+            "generating": "Generating analysis...",
+            "regenerate": "Regenerate",
+            "summary": "Summary",
+            "strengths": "Strengths",
+            "improvements": "Areas for Improvement",
+            "recommendations": "Recommendations",
+            "error": "Failed to generate analysis. Please try again."
         }
     }
 }

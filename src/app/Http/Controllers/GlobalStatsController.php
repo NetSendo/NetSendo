@@ -237,10 +237,8 @@ class GlobalStatsController extends Controller
         $openRate = $emailsSent > 0 ? round(($opens / $emailsSent) * 100, 1) : 0;
         $clickRate = $emailsSent > 0 ? round(($clicks / $emailsSent) * 100, 1) : 0;
 
-        // Per list stats
-        $lists = ContactList::with(['subscribers' => function ($q) use ($startDate, $endDate) {
-            $q->withTrashed();
-        }])->get();
+        // Per list stats - don't eager load subscribers to avoid memory exhaustion
+        $lists = ContactList::all();
 
         $listStats = [];
         foreach ($lists as $list) {

@@ -80,7 +80,8 @@ const updateOpenGroup = () => {
         isActive("funnels.*") ||
         isActive("automations.*") ||
         isActive("campaign-architect.*") ||
-        isActive("campaign-auditor.*")
+        isActive("campaign-auditor.*") ||
+        isActive("campaign-stats.*")
     ) {
         openGroup.value = "automation";
         return;
@@ -1244,6 +1245,36 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     <span class="flex items-center gap-2">
                         {{ $t("campaign_auditor.title") }}
+                        <span
+                            class="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
+                            >AI</span
+                        >
+                    </span>
+                </SidebarItem>
+
+                <!-- Campaign Statistics -->
+                <SidebarItem
+                    :href="route('campaign-stats.index')"
+                    :active="isActive('campaign-stats.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                            />
+                        </svg>
+                    </template>
+                    <span class="flex items-center gap-2">
+                        {{ $t("campaign_stats.title") }}
                         <span
                             class="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
                             >AI</span

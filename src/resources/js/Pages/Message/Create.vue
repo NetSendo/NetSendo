@@ -271,6 +271,8 @@ const form = useForm({
     webinar_auto_register: props.message?.webinar_auto_register ?? true,
     // Tracked Links
     tracked_links: props.message?.tracked_links || [],
+    // Campaign Tags
+    tag_ids: props.message?.tag_ids || [],
 });
 
 // Existing attachments from database (for editing)
@@ -2693,6 +2695,69 @@ if (form.contact_list_ids.length > 0) {
                             <InputError
                                 class="mt-2"
                                 :message="form.errors.mailbox_id"
+                            />
+                        </div>
+
+                        <!-- Campaign Tags -->
+                        <div
+                            v-if="tags.length > 0"
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <InputLabel
+                                :value="$t('messages.fields.campaign_tags')"
+                                class="mb-3"
+                            />
+                            <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                                {{ $t("messages.fields.campaign_tags_help") }}
+                            </p>
+                            <div class="flex flex-wrap gap-2">
+                                <label
+                                    v-for="tag in tags"
+                                    :key="'campaign-tag-' + tag.id"
+                                    class="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+                                    :class="
+                                        form.tag_ids.includes(tag.id)
+                                            ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/50 dark:text-indigo-300'
+                                            : 'border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                    "
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :value="tag.id"
+                                        v-model="form.tag_ids"
+                                        class="sr-only"
+                                    />
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                        />
+                                    </svg>
+                                    {{ tag.name }}
+                                    <svg
+                                        v-if="form.tag_ids.includes(tag.id)"
+                                        class="h-3.5 w-3.5"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </label>
+                            </div>
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.tag_ids"
                             />
                         </div>
 

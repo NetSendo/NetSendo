@@ -24,4 +24,12 @@ class Tag extends Model
     {
         return $this->morphedByMany(ContactList::class, 'taggable');
     }
+
+    /**
+     * Get all messages tagged with this tag (for campaign statistics).
+     */
+    public function messages()
+    {
+        return $this->morphedByMany(Message::class, 'taggable');
+    }
 }

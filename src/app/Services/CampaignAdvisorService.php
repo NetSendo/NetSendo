@@ -586,4 +586,219 @@ PROMPT;
                 : null,
         ];
     }
+
+    /**
+     * Analyze a tag-based campaign using AI.
+     * Provides structured insights for past, ongoing, or future campaigns.
+     */
+    public function analyzeTagCampaign(\App\Models\Tag $tag, User $user, string $language = 'pl'): array
+    {
+        $statsService = app(CampaignStatsService::class);
+        $stats = $statsService->getTagStats($tag);
+        $messages = $statsService->getTagMessagesStats($tag);
+        $trends = $statsService->calculateTrends($tag, $user->id);
+
+        // Build structured analysis
+        $analysis = [
+            'summary' => '',
+            'strengths' => [],
+            'improvements' => [],
+            'recommendations' => [],
+            'generated_at' => now()->toIso8601String(),
+        ];
+
+        // Try AI analysis first
+        try {
+            $integration = $this->aiService->getDefaultIntegration();
+            if ($integration) {
+                $prompt = $this->buildTagCampaignPrompt($tag, $stats, $messages, $trends, $language);
+                $response = $this->aiService->generateContent($prompt, $integration, [
+                    'max_tokens' => 1200,
+                    'temperature' => 0.4,
+                ]);
+
+                $parsed = $this->parseTagCampaignAnalysis($response);
+                if (!empty($parsed)) {
+                    return array_merge($analysis, $parsed);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('AI tag campaign analysis failed', [
+                'tag_id' => $tag->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Fallback to rule-based analysis
+        return $this->buildFallbackTagAnalysis($tag, $stats, $messages, $trends, $language);
+    }
+
+    /**
+     * Build AI prompt for tag campaign analysis.
+     */
+    protected function buildTagCampaignPrompt(
+        \App\Models\Tag $tag,
+        array $stats,
+        $messages,
+        array $trends,
+        string $language
+    ): string {
+        $languageNames = [
+            'en' => 'English',
+            'pl' => 'Polish',
+            'de' => 'German',
+            'es' => 'Spanish',
+            'fr' => 'French',
+        ];
+        $languageName = $languageNames[$language] ?? 'Polish';
+
+        $statusLabels = [
+            'past' => 'completed/finished',
+            'ongoing' => 'currently running',
+            'future' => 'scheduled for the future',
+            'draft' => 'in draft stage',
+            'empty' => 'empty (no messages)',
+        ];
+        $statusLabel = $statusLabels[$stats['status']] ?? $stats['status'];
+
+        $messagesJson = json_encode($messages->take(10)->toArray(), JSON_UNESCAPED_UNICODE);
+        $trendsJson = json_encode($trends, JSON_UNESCAPED_UNICODE);
+
+        $dateContext = \App\Services\AI\AiService::getDateContext();
+
+        return <<<PROMPT
+{$dateContext}
+
+You are an expert email marketing analyst. Analyze this campaign and provide actionable insights.
+
+IMPORTANT: Respond ONLY in {$languageName}. All text must be in {$languageName}.
+
+CAMPAIGN: "{$tag->name}"
+STATUS: {$statusLabel}
+
+STATISTICS:
+- Messages in campaign: {$stats['messages_count']}
+- Total sent: {$stats['total_sent']}
+- Total opens: {$stats['total_opens']} (Open rate: {$stats['open_rate']}%)
+- Total clicks: {$stats['total_clicks']} (Click rate: {$stats['click_rate']}%)
+- Bounce rate: {$stats['bounce_rate']}%
+- Date range: {$stats['date_range']['start']} to {$stats['date_range']['end']}
+
+MESSAGES DETAILS (last 10):
+{$messagesJson}
+
+TRENDS (comparison with other campaigns):
+{$trendsJson}
+
+Based on the campaign status:
+- For COMPLETED campaigns: Focus on lessons learned and comparison with benchmarks
+- For ONGOING campaigns: Focus on real-time optimization opportunities
+- For FUTURE campaigns: Focus on preparation and best practices
+
+RESPOND IN JSON FORMAT (but with {$languageName} text):
+{
+  "summary": "2-3 sentence executive summary of campaign performance",
+  "strengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "improvements": ["Area to improve 1", "Area to improve 2"],
+  "recommendations": ["Actionable recommendation 1", "Actionable recommendation 2", "Actionable recommendation 3"]
+}
+
+Provide specific, actionable insights based on the actual data. Do not use generic advice.
+PROMPT;
+    }
+
+    /**
+     * Parse AI response for tag campaign analysis.
+     */
+    protected function parseTagCampaignAnalysis(string $response): array
+    {
+        try {
+            if (preg_match('/\{[\s\S]*\}/', $response, $matches)) {
+                $analysis = json_decode($matches[0], true);
+                if (is_array($analysis) && isset($analysis['summary'])) {
+                    return [
+                        'summary' => $analysis['summary'] ?? '',
+                        'strengths' => $analysis['strengths'] ?? [],
+                        'improvements' => $analysis['improvements'] ?? [],
+                        'recommendations' => $analysis['recommendations'] ?? [],
+                        'generated_at' => now()->toIso8601String(),
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to parse tag campaign analysis', ['response' => $response]);
+        }
+
+        return [];
+    }
+
+    /**
+     * Build fallback analysis when AI is not available.
+     */
+    protected function buildFallbackTagAnalysis(
+        \App\Models\Tag $tag,
+        array $stats,
+        $messages,
+        array $trends,
+        string $language
+    ): array {
+        $isPl = $language === 'pl';
+
+        $summary = $isPl
+            ? "Kampania \"{$tag->name}\" zawiera {$stats['messages_count']} wiadomości. Wysłano {$stats['total_sent']} emaili z open rate {$stats['open_rate']}% i click rate {$stats['click_rate']}%."
+            : "Campaign \"{$tag->name}\" contains {$stats['messages_count']} messages. {$stats['total_sent']} emails sent with {$stats['open_rate']}% open rate and {$stats['click_rate']}% click rate.";
+
+        $strengths = [];
+        $improvements = [];
+        $recommendations = [];
+
+        // Analyze open rate
+        if ($stats['open_rate'] >= 25) {
+            $strengths[] = $isPl ? "Wysoki open rate ({$stats['open_rate']}%) - dobre tematy wiadomości" : "High open rate ({$stats['open_rate']}%) - good subject lines";
+        } elseif ($stats['open_rate'] < 15 && $stats['total_sent'] > 0) {
+            $improvements[] = $isPl ? "Niski open rate ({$stats['open_rate']}%) - rozważ poprawę tematów" : "Low open rate ({$stats['open_rate']}%) - consider improving subject lines";
+            $recommendations[] = $isPl ? "Testuj różne tematy wiadomości (A/B test)" : "Test different subject lines (A/B testing)";
+        }
+
+        // Analyze click rate
+        if ($stats['click_rate'] >= 3) {
+            $strengths[] = $isPl ? "Dobry click rate ({$stats['click_rate']}%) - angażująca treść" : "Good click rate ({$stats['click_rate']}%) - engaging content";
+        } elseif ($stats['click_rate'] < 1 && $stats['total_opens'] > 10) {
+            $improvements[] = $isPl ? "Niski click rate ({$stats['click_rate']}%) - popraw call-to-action" : "Low click rate ({$stats['click_rate']}%) - improve call-to-action";
+            $recommendations[] = $isPl ? "Dodaj wyraźniejsze przyciski CTA i bardziej przekonujące linki" : "Add clearer CTA buttons and more compelling links";
+        }
+
+        // Check trends
+        if (isset($trends['has_comparison']) && $trends['has_comparison']) {
+            if ($trends['open_rate_trend'] > 2) {
+                $strengths[] = $isPl ? "Open rate wyższy niż średnia (+{$trends['open_rate_trend']}%)" : "Open rate above average (+{$trends['open_rate_trend']}%)";
+            } elseif ($trends['open_rate_trend'] < -2) {
+                $improvements[] = $isPl ? "Open rate poniżej średniej ({$trends['open_rate_trend']}%)" : "Open rate below average ({$trends['open_rate_trend']}%)";
+            }
+        }
+
+        // Status-based recommendations
+        if ($stats['status'] === 'future') {
+            $recommendations[] = $isPl ? "Przejrzyj zaplanowane wiadomości przed wysyłką" : "Review scheduled messages before sending";
+            $recommendations[] = $isPl ? "Sprawdź poprawność linków i personalizacji" : "Check links and personalization are correct";
+        } elseif ($stats['status'] === 'ongoing') {
+            $recommendations[] = $isPl ? "Monitoruj statystyki w czasie rzeczywistym" : "Monitor real-time statistics";
+        }
+
+        // Ensure we have at least some content
+        if (empty($strengths)) {
+            $strengths[] = $isPl ? "Regularne wysyłanie kampanii" : "Regular campaign sending";
+        }
+        if (empty($recommendations)) {
+            $recommendations[] = $isPl ? "Kontynuuj analizę wyników po zakończeniu kampanii" : "Continue analyzing results after campaign ends";
+        }
+
+        return [
+            'summary' => $summary,
+            'strengths' => $strengths,
+            'improvements' => $improvements,
+            'recommendations' => $recommendations,
+            'generated_at' => now()->toIso8601String(),
+        ];
+    }
 }

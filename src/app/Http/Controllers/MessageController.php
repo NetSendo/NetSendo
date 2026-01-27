@@ -289,6 +289,9 @@ class MessageController extends Controller
             'ab_test_config.variants.*.subject' => 'nullable|string|max:255',
             'ab_test_config.variants.*.preheader' => 'nullable|string|max:500',
             'ab_test_config.variants.*.is_control' => 'nullable|boolean',
+            // Campaign Tags
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -415,6 +418,11 @@ class MessageController extends Controller
             ]);
         }
 
+        // Sync campaign tags
+        if (array_key_exists('tag_ids', $validated)) {
+            $message->tags()->sync($validated['tag_ids'] ?? []);
+        }
+
         // Determine success message based on status
         $successMessage = match($message->status) {
             'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
@@ -433,7 +441,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments', 'trackedLinks']);
+        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -481,6 +489,8 @@ class MessageController extends Controller
                 ]),
                 // A/B test configuration
                 'ab_test_config' => $this->formatAbTestConfig($message),
+                // Campaign Tags
+                'tag_ids' => $message->tags->pluck('id'),
             ],
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
@@ -586,6 +596,9 @@ class MessageController extends Controller
             'ab_test_config.variants.*.subject' => 'nullable|string|max:255',
             'ab_test_config.variants.*.preheader' => 'nullable|string|max:500',
             'ab_test_config.variants.*.is_control' => 'nullable|boolean',
+            // Campaign Tags
+            'tag_ids' => 'nullable|array',
+            'tag_ids.*' => 'integer|exists:tags,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -722,6 +735,11 @@ class MessageController extends Controller
                 'message_id' => $message->id,
                 'trigger_type' => $validated['trigger_type'] ?? null,
             ]);
+        }
+
+        // Sync campaign tags
+        if (array_key_exists('tag_ids', $validated)) {
+            $message->tags()->sync($validated['tag_ids'] ?? []);
         }
 
         // Determine success message based on status

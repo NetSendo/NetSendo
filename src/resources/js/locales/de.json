@@ -1483,7 +1483,9 @@
             "insert_variable": "Variable einfügen",
             "insert_fname": "Vorname",
             "insert_fname_vocative": "Vorname (Vokativ)",
-            "insert_gender_form": "Geschlecht (m|w)"
+            "insert_gender_form": "Geschlecht (m|w)",
+            "campaign_tags": "Kampagnen-Tags",
+            "campaign_tags_help": "Weisen Sie dieser Nachricht Tags zu, um die Kampagnenstatistiken einfacher analysieren zu können."
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",
@@ -5291,6 +5293,56 @@
             "ai": "KI-Integration",
             "mailbox": "Postfach",
             "cron": "CRON"
+        }
+    },
+    "campaign_stats": {
+        "title": "Kampagnenstatistiken",
+        "subtitle": "Analyse der Effektivität von E-Mail-Kampagnen",
+        "ai_badge": "AI Analyse",
+        "no_tags": "Keine Tags mit zugewiesenen Nachrichten",
+        "no_tags_description": "Markieren Sie Ihre Nachrichten mit Tags, um die Effektivität ganzer Kampagnen zu analysieren.",
+        "manage_tags": "Tags verwalten",
+        "messages": "Nachrichten",
+        "date_range": "Datumsbereich",
+        "view_details": "Details anzeigen",
+        "back_to_list": "Zurück zur Kampagnenliste",
+        "export": "CSV exportieren",
+        "messages_in_campaign": "Nachrichten in der Kampagne",
+        "status": {
+            "past": "Abgeschlossen",
+            "ongoing": "In Bearbeitung",
+            "future": "Geplant",
+            "draft": "Entwurf",
+            "empty": "Keine Nachrichten"
+        },
+        "kpi": {
+            "sent": "Gesendet",
+            "opens": "Öffnungen",
+            "clicks": "Klicks",
+            "bounce_rate": "Absprungrate",
+            "open_rate": "Öffnungsrate",
+            "click_rate": "Klickrate",
+            "failed": "fehlgeschlagen"
+        },
+        "table": {
+            "subject": "Betreff",
+            "status": "Status",
+            "sent": "Gesendet",
+            "opens": "Öffnungen",
+            "clicks": "Klicks",
+            "date": "Sendedatum"
+        },
+        "ai_analysis": {
+            "title": "AI Analyse",
+            "description": "Generieren Sie eine detaillierte AI-Analyse dieser Kampagne, um Stärken, Verbesserungspotenziale und Empfehlungen zu entdecken.",
+            "generate": "AI-Analyse generieren",
+            "generating": "Analyse wird generiert...",
+            "regenerate": "Neu generieren",
+            "summary": "Zusammenfassung",
+            "strengths": "Stärken",
+            "improvements": "Verbesserungspotenziale",
+            "recommendations": "Empfehlungen",
+            "error": "Analyse konnte nicht generiert werden. Bitte versuchen Sie es erneut."
         }
     }
 }

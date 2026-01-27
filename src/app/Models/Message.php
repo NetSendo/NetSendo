@@ -126,6 +126,14 @@ class Message extends Model
         return $this->belongsTo(Webinar::class);
     }
 
+    /**
+     * Get the tags associated with this message (for campaign tracking).
+     */
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
     public function contactLists()
     {
         return $this->belongsToMany(ContactList::class, 'contact_list_message');

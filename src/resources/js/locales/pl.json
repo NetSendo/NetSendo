@@ -1446,7 +1446,9 @@
             "insert_variable": "Wstaw zmienną",
             "insert_fname": "Imię",
             "insert_fname_vocative": "Imię w wołaczu",
-            "insert_gender_form": "Odmiana (m|ż)"
+            "insert_gender_form": "Odmiana (m|ż)",
+            "campaign_tags": "Tagi kampanii",
+            "campaign_tags_help": "Przypisz tagi do tej wiadomości, aby łatwiej analizować statystyki kampanii."
         },
         "attachments": {
             "title": "Załączniki PDF",
@@ -6182,6 +6184,56 @@
             "ai": "Integracja AI",
             "mailbox": "Skrzynka pocztowa",
             "cron": "CRON"
+        }
+    },
+    "campaign_stats": {
+        "title": "Statystyki Kampanii",
+        "subtitle": "Analiza skuteczności kampanii email",
+        "ai_badge": "Analiza AI",
+        "no_tags": "Brak tagów z przypisanymi wiadomościami",
+        "no_tags_description": "Oznacz swoje wiadomości tagami, aby móc analizować skuteczność całych kampanii.",
+        "manage_tags": "Zarządzaj tagami",
+        "messages": "wiadomości",
+        "date_range": "Zakres dat",
+        "view_details": "Zobacz szczegóły",
+        "back_to_list": "Powrót do listy kampanii",
+        "export": "Eksportuj CSV",
+        "messages_in_campaign": "Wiadomości w kampanii",
+        "status": {
+            "past": "Zakończona",
+            "ongoing": "W trakcie",
+            "future": "Zaplanowana",
+            "draft": "Szkic",
+            "empty": "Brak wiadomości"
+        },
+        "kpi": {
+            "sent": "Wysłane",
+            "opens": "Otwarcia",
+            "clicks": "Kliknięcia",
+            "bounce_rate": "Bounce Rate",
+            "open_rate": "Open Rate",
+            "click_rate": "Click Rate",
+            "failed": "nieudanych"
+        },
+        "table": {
+            "subject": "Temat",
+            "status": "Status",
+            "sent": "Wysłane",
+            "opens": "Otwarcia",
+            "clicks": "Kliknięcia",
+            "date": "Data wysyłki"
+        },
+        "ai_analysis": {
+            "title": "Analiza AI",
+            "description": "Wygeneruj szczegółową analizę AI tej kampanii, aby poznać mocne strony, obszary do poprawy i rekomendacje na przyszłość.",
+            "generate": "Wygeneruj analizę AI",
+            "generating": "Generowanie analizy...",
+            "regenerate": "Wygeneruj ponownie",
+            "summary": "Podsumowanie",
+            "strengths": "Mocne strony",
+            "improvements": "Obszary do poprawy",
+            "recommendations": "Rekomendacje",
+            "error": "Nie udało się wygenerować analizy. Spróbuj ponownie."
         }
     }
 }
