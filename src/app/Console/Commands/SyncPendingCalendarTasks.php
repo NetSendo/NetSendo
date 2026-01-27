@@ -53,15 +53,15 @@ class SyncPendingCalendarTasks extends Command
         // - sync_to_calendar = true
         // - google_calendar_event_id IS NULL
         // - status is not 'cancelled'
-        // - due_at is in the future or within last 7 days (to catch recently created tasks)
+        // - due_date is in the future or within last 7 days (to catch recently created tasks)
         $pendingTasks = CrmTask::query()
             ->whereIn('user_id', $activeUserIds)
             ->where('sync_to_calendar', true)
             ->whereNull('google_calendar_event_id')
             ->whereNotIn('status', ['cancelled'])
             ->where(function ($query) {
-                $query->whereNull('due_at')
-                    ->orWhere('due_at', '>=', Carbon::now()->subDays(7));
+                $query->whereNull('due_date')
+                    ->orWhere('due_date', '>=', Carbon::now()->subDays(7));
             })
             ->orderBy('created_at', 'desc')
             ->limit($limit)

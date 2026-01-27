@@ -25,6 +25,16 @@ class TrackingController extends Controller
         }
 
         try {
+            // Check if subscriber exists to prevent foreign key constraint violation
+            if (!Subscriber::where('id', $subscriberId)->exists()) {
+                Log::warning('Track open: Subscriber not found', [
+                    'subscriber_id' => $subscriberId,
+                    'message_id' => $messageId,
+                ]);
+                // Still return tracking pixel, just don't record the open
+                return $this->returnTrackingPixel();
+            }
+
             // Get variant ID from queue entry if this is an A/B test
             $variantId = MessageQueueEntry::where('message_id', $messageId)
                 ->where('subscriber_id', $subscriberId)
@@ -50,12 +60,7 @@ class TrackingController extends Controller
             Log::error('Failed to track open: ' . $e->getMessage());
         }
 
-        // Return 1x1 transparent GIF
-        $content = base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==');
-
-        return response($content)
-            ->header('Content-Type', 'image/gif')
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return $this->returnTrackingPixel();
     }
 
     public function trackClick($messageId, $subscriberId, $hash, Request $request)
@@ -74,6 +79,17 @@ class TrackingController extends Controller
         // Usually, the browser handles decoding, but if we encoded it in the email link, we get the raw URL.
 
         try {
+            // Check if subscriber exists to prevent foreign key constraint violation
+            if (!Subscriber::where('id', $subscriberId)->exists()) {
+                Log::warning('Track click: Subscriber not found', [
+                    'subscriber_id' => $subscriberId,
+                    'message_id' => $messageId,
+                    'url' => $url,
+                ]);
+                // Still redirect to URL, just don't record the click
+                return redirect()->away($url);
+            }
+
             // Get variant ID from queue entry if this is an A/B test
             $variantId = MessageQueueEntry::where('message_id', $messageId)
                 ->where('subscriber_id', $subscriberId)
@@ -323,5 +339,17 @@ class TrackingController extends Controller
     {
         $expectedHash = hash_hmac('sha256', "{$messageId}.{$subscriberId}", config('app.key'));
         return hash_equals($expectedHash, $hash);
+    }
+
+    /**
+     * Return a 1x1 transparent GIF tracking pixel.
+     */
+    private function returnTrackingPixel()
+    {
+        $content = base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==');
+
+        return response($content)
+            ->header('Content-Type', 'image/gif')
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 }

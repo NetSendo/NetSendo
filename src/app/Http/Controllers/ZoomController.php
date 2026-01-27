@@ -41,6 +41,7 @@ class ZoomController extends Controller
                 'zoom_user_id' => $connection->zoom_user_id,
                 'is_active' => $connection->is_active,
                 'connected_at' => $connection->created_at->format('Y-m-d H:i'),
+                'granted_scopes' => $connection->getParsedScopes(),
             ] : null,
             'is_configured' => $this->oauthService->isConfigured(),
         ]);
@@ -127,6 +128,7 @@ class ZoomController extends Controller
                 [
                     'zoom_user_id' => $userInfo['id'] ?? null,
                     'zoom_email' => $userInfo['email'] ?? null,
+                    'granted_scopes' => $tokens['scope'] ?? null,
                     'access_token' => Crypt::encryptString($tokens['access_token']),
                     'refresh_token' => isset($tokens['refresh_token'])
                         ? Crypt::encryptString($tokens['refresh_token'])

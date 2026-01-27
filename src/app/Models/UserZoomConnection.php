@@ -12,11 +12,24 @@ class UserZoomConnection extends Model
         'user_id',
         'zoom_user_id',
         'zoom_email',
+        'granted_scopes',
         'access_token',
         'refresh_token',
         'token_expires_at',
         'is_active',
     ];
+
+    /**
+     * Get parsed scopes as array.
+     */
+    public function getParsedScopes(): array
+    {
+        if (!$this->granted_scopes) {
+            return [];
+        }
+
+        return array_filter(array_map('trim', explode(' ', $this->granted_scopes)));
+    }
 
     protected $casts = [
         'token_expires_at' => 'datetime',

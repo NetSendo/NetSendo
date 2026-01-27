@@ -64,6 +64,61 @@ const saveSettings = () => {
     });
 };
 
+// Zoom scope labels and descriptions
+const scopeLabels = {
+    // Meeting scopes
+    'meeting:write': 'Create Meetings',
+    'meeting:read': 'View Meetings',
+    'meeting:write:admin': 'Admin: Create Meetings',
+    'meeting:read:admin': 'Admin: View Meetings',
+    'meeting:master': 'Meeting Master',
+    // User scopes
+    'user:read': 'View Profile',
+    'user:write': 'Edit Profile',
+    'user:read:admin': 'Admin: View Users',
+    'user:write:admin': 'Admin: Edit Users',
+    'user:master': 'User Master',
+    // Recording scopes
+    'recording:read': 'View Recordings',
+    'recording:write': 'Manage Recordings',
+    'recording:read:admin': 'Admin: View Recordings',
+    // Webinar scopes
+    'webinar:read': 'View Webinars',
+    'webinar:write': 'Create Webinars',
+    // Phone scopes
+    'phone:read': 'View Phone',
+    'phone:write': 'Manage Phone',
+    // Other common scopes
+    'account:read': 'View Account',
+    'dashboard:read': 'View Dashboard',
+    'report:read': 'View Reports',
+    'group:read': 'View Groups',
+    'group:write': 'Manage Groups',
+    'chat_message:read': 'Read Chat Messages',
+    'chat_message:write': 'Send Chat Messages',
+    'contact:read': 'View Contacts',
+    'contact:write': 'Manage Contacts',
+};
+
+const scopeDescriptions = {
+    'meeting:write': 'Allows creating and managing Zoom meetings',
+    'meeting:read': 'Allows viewing meeting details and lists',
+    'user:read': 'Allows viewing user profile information',
+    'user:write': 'Allows editing user profile information',
+    'recording:read': 'Allows viewing cloud recordings',
+    'recording:write': 'Allows managing cloud recordings',
+    'webinar:read': 'Allows viewing webinar details',
+    'webinar:write': 'Allows creating and managing webinars',
+};
+
+const getScopeLabel = (scope) => {
+    return scopeLabels[scope] || scope.replace(/[:_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
+
+const getScopeDescription = (scope) => {
+    return scopeDescriptions[scope] || `Permission: ${scope}`;
+};
+
 const disconnect = () => {
     if (confirm("Are you sure you want to disconnect your Zoom account?")) {
         form.post(route("settings.zoom.disconnect"), {
@@ -124,7 +179,7 @@ const disconnect = () => {
                 <div class="space-y-6">
                     <!-- Connection Status -->
                     <div v-if="connection" class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-4">
                                 <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/10">
                                     <svg class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,6 +204,29 @@ const disconnect = () => {
                             >
                                 Disconnect
                             </button>
+                        </div>
+
+                        <!-- Granted Scopes -->
+                        <div v-if="connection.granted_scopes && connection.granted_scopes.length" class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+                                Granted Permissions
+                            </h4>
+                            <div class="flex flex-wrap gap-2">
+                                <div
+                                    v-for="scope in connection.granted_scopes"
+                                    :key="scope"
+                                    class="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300 ring-1 ring-blue-100 dark:ring-blue-500/20"
+                                    :title="getScopeDescription(scope)"
+                                >
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                    </svg>
+                                    {{ getScopeLabel(scope) }}
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-slate-500 mt-3">
+                                These permissions were granted during authorization. To modify permissions, disconnect and reconnect your account.
+                            </p>
                         </div>
                     </div>
 

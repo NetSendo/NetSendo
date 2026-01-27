@@ -302,7 +302,7 @@ class SubscriberPreferencesController extends Controller
     /**
      * Render a system page with placeholder replacement.
      */
-    protected function renderSystemPage(string $slug, Subscriber $subscriber, ?ContactList $list, array $extraPlaceholders = [])
+    protected function renderSystemPage(string $slug, ?Subscriber $subscriber, ?ContactList $list, array $extraPlaceholders = [])
     {
         $listId = $list?->id;
         $systemPage = SystemPage::getBySlug($slug, $listId);
@@ -334,9 +334,11 @@ class SubscriberPreferencesController extends Controller
 
         $content = $systemPage?->content ?? $fallbackContent;
 
-        // Replace placeholders
-        $title = $this->placeholderService->replacePlaceholders($title, $subscriber);
-        $content = $this->placeholderService->replacePlaceholders($content, $subscriber);
+        // Replace placeholders (only if subscriber exists)
+        if ($subscriber) {
+            $title = $this->placeholderService->replacePlaceholders($title, $subscriber);
+            $content = $this->placeholderService->replacePlaceholders($content, $subscriber);
+        }
 
         if ($list) {
             $content = str_replace('[[list-name]]', $list->name, $content);

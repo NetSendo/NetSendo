@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Zoom Integration Enhancements:**
+  - **Granted Permissions Display:** Added functionality to display actually granted permissions (scopes) in the Zoom settings after authorization.
+  - **Connection Details:** Zoom connection information now includes a list of granted scopes with helpful descriptions (e.g., "Create Meetings").
+  - **Database Migration:** Added `granted_scopes` column to `user_zoom_connections` table to store OAuth scopes.
+
 - **Lead Scoring - Default Contact Created Rule:**
   - Added missing `contact_created` event to default scoring rules (+5 points).
   - New contacts now automatically receive initial score when created in CRM.
@@ -24,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Fixed `getAnalytics()` in `LeadScoringService` using server timezone for date calculations.
   - Fixed `getScoreTrend()` in `CrmContact` using server timezone for trend calculations.
   - All scoring date calculations now correctly use the user's configured timezone.
+
+- **Production Error Fixes:**
+  - Fixed `SyncPendingCalendarTasks` command failing with "Column not found: due_at". Corrected column name to `due_date`.
+  - Fixed integrity constraint violations in email tracking (`email_clicks`, `email_opens`) by adding validation for deleted subscribers.
+  - Fixed `SubscriberPreferencesController` error when rendering system pages for deleted subscribers (handled nullable subscriber).
 
 ### Changed
 
