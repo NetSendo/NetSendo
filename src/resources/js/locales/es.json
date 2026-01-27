@@ -4571,6 +4571,13 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Gestionar contactos y ventas",
+        "task_types": {
+            "call": "Llamada",
+            "email": "Correo",
+            "meeting": "Reunión",
+            "task": "Tarea",
+            "follow_up": "Seguimiento"
+        },
         "task": {
             "title": {
                 "new": "Nueva tarea",

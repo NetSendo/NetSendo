@@ -5302,6 +5302,13 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Zarządzaj kontaktami i sprzedażą",
+        "task_types": {
+            "call": "Telefon",
+            "email": "Email",
+            "meeting": "Spotkanie",
+            "task": "Zadanie",
+            "follow_up": "Follow-up"
+        },
         "task": {
             "title": {
                 "new": "Nowe zadanie",

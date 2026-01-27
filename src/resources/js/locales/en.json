@@ -5221,6 +5221,13 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Manage your contacts and sales",
+        "task_types": {
+            "call": "Call",
+            "email": "Email",
+            "meeting": "Meeting",
+            "task": "Task",
+            "follow_up": "Follow-up"
+        },
         "task": {
             "title": {
                 "new": "New Task",

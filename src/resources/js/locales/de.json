@@ -4486,6 +4486,13 @@
     "crm": {
         "title": "CRM",
         "subtitle": "Kontakte und Verkäufe verwalten",
+        "task_types": {
+            "call": "Anruf",
+            "email": "E-Mail",
+            "meeting": "Treffen",
+            "task": "Aufgabe",
+            "follow_up": "Follow-up"
+        },
         "task": {
             "title": {
                 "new": "Neue Aufgabe",
