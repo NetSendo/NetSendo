@@ -197,6 +197,13 @@ return [
         'search_hint' => 'Type at least 2 characters to search for an existing subscriber or enter a new email',
         'existing_subscriber' => 'Existing subscriber',
         'found_subscribers' => 'Found subscribers',
+        'title' => [
+            'edit' => 'Edit contact',
+        ],
+        'edit_success' => 'Contact has been updated',
+        'actions' => [
+            'edit' => 'Edit',
+        ],
     ],
     'defaults' => [
         'badge' => 'Default',

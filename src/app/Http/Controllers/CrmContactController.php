@@ -362,7 +362,7 @@ class CrmContactController extends Controller
             $contact->subscriber->update($request->only(['first_name', 'last_name', 'phone']));
         }
 
-        return redirect()->back()->with('success', 'Kontakt został zaktualizowany.');
+        return redirect()->back()->with('success', __('crm.contacts.edit_success'));
     }
 
     /**

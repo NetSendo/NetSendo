@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **CRM Contact Editing:**
+  - **Edit Modal:** Implemented a dedicated modal for editing contact details, including name, phone, status, score, position, source, company, and owner.
+  - **Quick Edit:** Added an "Edit" button (pencil icon) to the contact list view (`Index.vue`) for quick access.
+  - **Detailed Edit:** Added an "Edit" button to the contact details page (`Show.vue`) header.
+  - **Localization:** Full translations for all edit functionality in PL, EN, DE, ES.
+
 ## [1.7.22] – Short Description
 
 **Release date:** 2026-01-27

@@ -5421,6 +5421,7 @@
             "create_button": "Create Contact",
             "create_title": "New Contact",
             "edit_title": "Edit Contact",
+            "edit_success": "Contact has been updated",
             "show_title": "Contact Details",
             "pagination": "Showing {from}-{to} of {total} contacts",
             "leads": "leads",
@@ -5428,7 +5429,28 @@
             "actions": {
                 "call": "Call",
                 "email": "Email",
-                "details": "Details"
+                "details": "Details",
+                "edit": "Edit",
+                "add_task": "Task",
+                "delete": "Delete"
+            },
+            "delete": {
+                "title": "Delete Contact",
+                "message": "Are you sure you want to delete this contact from CRM? The subscriber (email) will remain in the marketing system.",
+                "confirm": "Delete Contact"
+            },
+            "email_modal": {
+                "title": "Send Email",
+                "to": "To:",
+                "success": "Email has been sent successfully!",
+                "mailbox": "Sender",
+                "subject": "Subject",
+                "subject_placeholder": "Subject of the message",
+                "body": "Message",
+                "body_placeholder": "Message content...",
+                "plain_text_hint": "The message will be sent as plain text.",
+                "send_button": "Send Email",
+                "error_default": "An error occurred while sending the email."
             },
             "status": {
                 "lead": "Lead",

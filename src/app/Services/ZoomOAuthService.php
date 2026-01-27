@@ -37,6 +37,16 @@ class ZoomOAuthService
     }
 
     /**
+     * Required OAuth scopes for Zoom integration.
+     * These scopes are needed for meeting management functionality.
+     */
+    private const ZOOM_SCOPES = [
+        'user:read',           // Read user info
+        'meeting:write',       // Create and manage meetings
+        'meeting:read',        // Read meeting details
+    ];
+
+    /**
      * Get authorization URL for Zoom OAuth.
      */
     public function getAuthorizationUrl(string $state): string
@@ -46,6 +56,7 @@ class ZoomOAuthService
             'redirect_uri' => route('settings.zoom.callback'),
             'response_type' => 'code',
             'state' => $state,
+            'scope' => implode(' ', self::ZOOM_SCOPES),
         ];
 
         return self::ZOOM_AUTH_URL . '?' . http_build_query($params);

@@ -118,10 +118,10 @@ const sendEmail = async () => {
             <!-- Header -->
             <div class="mb-6">
                 <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
-                    Wyślij email
+                    {{ $t('crm.email_modal.title', 'Wyślij email') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Do: <span class="font-medium text-slate-700 dark:text-slate-300">{{ recipientName }}</span>
+                    {{ $t('crm.email_modal.to', 'Do:') }} <span class="font-medium text-slate-700 dark:text-slate-300">{{ recipientName }}</span>
                     <span class="text-slate-400">&lt;{{ recipientEmail }}&gt;</span>
                 </p>
             </div>
@@ -132,7 +132,7 @@ const sendEmail = async () => {
                     <svg class="h-5 w-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span class="text-emerald-700 dark:text-emerald-300">Email został wysłany pomyślnie!</span>
+                    <span class="text-emerald-700 dark:text-emerald-300">{{ $t('crm.email_modal.success', 'Email został wysłany pomyślnie!') }}</span>
                 </div>
             </div>
 
@@ -151,7 +151,7 @@ const sendEmail = async () => {
                 <!-- Mailbox Selection (only if multiple) -->
                 <div v-if="hasMultipleMailboxes">
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Skrzynka nadawcza
+                        {{ $t('crm.email_modal.mailbox', 'Skrzynka nadawcza') }}
                     </label>
                     <select
                         v-model="form.mailbox_id"
@@ -166,13 +166,13 @@ const sendEmail = async () => {
                 <!-- Subject -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Temat <span class="text-red-500">*</span>
+                        {{ $t('crm.email_modal.subject', 'Temat') }} <span class="text-red-500">*</span>
                     </label>
                     <input
                         v-model="form.subject"
                         type="text"
                         class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        placeholder="Temat wiadomości"
+                        :placeholder="$t('crm.email_modal.subject_placeholder', 'Temat wiadomości')"
                         :disabled="sending"
                     />
                 </div>
@@ -180,17 +180,17 @@ const sendEmail = async () => {
                 <!-- Body -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Treść <span class="text-red-500">*</span>
+                        {{ $t('crm.email_modal.body', 'Treść') }} <span class="text-red-500">*</span>
                     </label>
                     <textarea
                         v-model="form.body"
                         rows="8"
                         class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        placeholder="Treść wiadomości..."
+                        :placeholder="$t('crm.email_modal.body_placeholder', 'Treść wiadomości...')"
                         :disabled="sending"
                     ></textarea>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Wiadomość zostanie wysłana jako zwykły tekst.
+                        {{ $t('crm.email_modal.plain_text_hint', 'Wiadomość zostanie wysłana jako zwykły tekst.') }}
                     </p>
                 </div>
             </div>
@@ -198,7 +198,7 @@ const sendEmail = async () => {
             <!-- Actions -->
             <div class="mt-6 flex justify-end gap-3">
                 <SecondaryButton @click="close" :disabled="sending">
-                    {{ success ? 'Zamknij' : 'Anuluj' }}
+                    {{ success ? $t('common.close', 'Zamknij') : $t('common.cancel', 'Anuluj') }}
                 </SecondaryButton>
                 <PrimaryButton
                     v-if="!success"
@@ -210,7 +210,7 @@ const sendEmail = async () => {
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {{ sending ? 'Wysyłanie...' : 'Wyślij email' }}
+                    {{ sending ? $t('common.sending', 'Wysyłanie...') : $t('crm.email_modal.send_button', 'Wyślij email') }}
                 </PrimaryButton>
             </div>
         </div>

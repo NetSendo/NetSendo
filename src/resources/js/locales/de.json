@@ -4670,7 +4670,28 @@
             "actions": {
                 "call": "Anrufen",
                 "email": "E-Mail",
-                "details": "Details"
+                "details": "Details",
+                "edit": "Bearbeiten",
+                "add_task": "Aufgabe",
+                "delete": "Löschen"
+            },
+            "delete": {
+                "title": "Kontakt löschen",
+                "message": "Möchten Sie diesen Kontakt wirklich aus dem CRM löschen? Der Abonnent (E-Mail) bleibt im Marketingsystem erhalten.",
+                "confirm": "Kontakt löschen"
+            },
+            "email_modal": {
+                "title": "E-Mail senden",
+                "to": "An:",
+                "success": "E-Mail wurde erfolgreich versendet!",
+                "mailbox": "Absender",
+                "subject": "Betreff",
+                "subject_placeholder": "Nachrichtenbetreff",
+                "body": "Nachricht",
+                "body_placeholder": "Nachrichteninhalt...",
+                "plain_text_hint": "Die Nachricht wird als Klartext gesendet.",
+                "send_button": "E-Mail senden",
+                "error_default": "Beim Senden der E-Mail ist ein Fehler aufgetreten."
             },
             "status": {
                 "lead": "Lead",
@@ -4697,6 +4718,7 @@
             "create_button": "Kontakt erstellen",
             "create_title": "Neuer Kontakt",
             "edit_title": "Kontakt bearbeiten",
+            "edit_success": "Kontakt wurde aktualisiert",
             "show_title": "Kontaktdetails",
             "placeholders": {
                 "source": "z.B. LinkedIn, Konferenz...",

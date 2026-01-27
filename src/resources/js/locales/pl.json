@@ -5503,6 +5503,7 @@
             "create_button": "Dodaj kontakt",
             "create_title": "Nowy kontakt",
             "edit_title": "Edytuj kontakt",
+            "edit_success": "Kontakt został zaktualizowany",
             "show_title": "Szczegóły kontaktu",
             "pagination": "Wyświetlanie {from}-{to} z {total} kontaktów",
             "leads": "leadów",
@@ -5510,7 +5511,28 @@
             "actions": {
                 "call": "Zadzwoń",
                 "email": "Email",
-                "details": "Szczegóły"
+                "details": "Szczegóły",
+                "edit": "Edytuj",
+                "add_task": "Zadanie",
+                "delete": "Usuń"
+            },
+            "delete": {
+                "title": "Usuń kontakt",
+                "message": "Czy na pewno chcesz usunąć ten kontakt z CRM? Subskrybent (email) pozostanie w systemie marketingowym.",
+                "confirm": "Usuń kontakt"
+            },
+            "email_modal": {
+                "title": "Wyślij email",
+                "to": "Do:",
+                "success": "Email został wysłany pomyślnie!",
+                "mailbox": "Skrzynka nadawcza",
+                "subject": "Temat",
+                "subject_placeholder": "Temat wiadomości",
+                "body": "Treść",
+                "body_placeholder": "Treść wiadomości...",
+                "plain_text_hint": "Wiadomość zostanie wysłana jako zwykły tekst.",
+                "send_button": "Wyślij email",
+                "error_default": "Wystąpił błąd podczas wysyłania emaila."
             },
             "status": {
                 "lead": "Lead",

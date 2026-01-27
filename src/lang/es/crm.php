@@ -148,5 +148,12 @@ return [
         'search_hint' => 'Escriba al menos 2 caracteres para buscar un suscriptor existente o introduzca un nuevo email',
         'existing_subscriber' => 'Suscriptor existente',
         'found_subscribers' => 'Suscriptores encontrados',
+        'title' => [
+            'edit' => 'Editar contacto',
+        ],
+        'edit_success' => 'Contacto actualizado',
+        'actions' => [
+            'edit' => 'Editar',
+        ],
     ],
 ];

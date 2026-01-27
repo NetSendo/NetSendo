@@ -4755,7 +4755,28 @@
             "actions": {
                 "call": "Llamar",
                 "email": "Email",
-                "details": "Detalles"
+                "details": "Detalles",
+                "edit": "Editar",
+                "add_task": "Tarea",
+                "delete": "Eliminar"
+            },
+            "delete": {
+                "title": "Eliminar contacto",
+                "message": "¿Está seguro de que desea eliminar este contacto del CRM? El suscriptor (correo electrónico) permanecerá en el sistema de marketing.",
+                "confirm": "Eliminar contacto"
+            },
+            "email_modal": {
+                "title": "Enviar correo",
+                "to": "Para:",
+                "success": "¡El correo ha sido enviado exitosamente!",
+                "mailbox": "Remitente",
+                "subject": "Asunto",
+                "subject_placeholder": "Asunto del mensaje",
+                "body": "Mensaje",
+                "body_placeholder": "Contenido del mensaje...",
+                "plain_text_hint": "El mensaje se enviará como texto plano.",
+                "send_button": "Enviar correo",
+                "error_default": "Ocurrió un error al enviar el correo."
             },
             "status": {
                 "lead": "Lead",
@@ -4782,6 +4803,7 @@
             "create_button": "Crear contacto",
             "create_title": "Nuevo contacto",
             "edit_title": "Editar contacto",
+            "edit_success": "Contacto actualizado",
             "show_title": "Detalles del contacto",
             "placeholders": {
                 "source": "ej. LinkedIn, Conferencia...",

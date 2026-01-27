@@ -148,5 +148,12 @@ return [
         'search_hint' => 'Geben Sie mind. 2 Zeichen ein, um nach einem bestehenden Abonnenten zu suchen oder eine neue E-Mail einzugeben',
         'existing_subscriber' => 'Bestehender Abonnent',
         'found_subscribers' => 'Gefundene Abonnenten',
+        'title' => [
+            'edit' => 'Kontakt bearbeiten',
+        ],
+        'edit_success' => 'Kontakt wurde aktualisiert',
+        'actions' => [
+            'edit' => 'Bearbeiten',
+        ],
     ],
 ];

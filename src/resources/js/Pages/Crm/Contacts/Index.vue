@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
+import EditContactModal from "@/Components/Crm/EditContactModal.vue";
 
 const props = defineProps({
     contacts: Object,
@@ -75,6 +76,19 @@ const getStatusLabel = (status) => {
 const showDeleteModal = ref(false);
 const contactToDelete = ref(null);
 const isDeleting = ref(false);
+
+// Edit modal state
+const showEditModal = ref(false);
+const contactToEdit = ref(null);
+
+const openEditModal = (contact) => {
+    contactToEdit.value = contact;
+    showEditModal.value = true;
+};
+
+const onContactEdited = () => {
+    router.reload({ only: ["contacts"] });
+};
 
 const openDeleteModal = (contact) => {
     contactToDelete.value = contact;
@@ -448,6 +462,30 @@ const getContactName = (contact) => {
                                             />
                                         </svg>
                                     </button>
+                                    <button
+                                        @click="openEditModal(contact)"
+                                        class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                                        :title="
+                                            $t(
+                                                'crm.contacts.actions.edit',
+                                                'Edytuj',
+                                            )
+                                        "
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                            />
+                                        </svg>
+                                    </button>
                                     <Link
                                         :href="`/crm/contacts/${contact.id}`"
                                         class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
@@ -599,6 +637,16 @@ const getContactName = (contact) => {
             :processing="isDeleting"
             @close="showDeleteModal = false"
             @confirm="deleteContact"
+        />
+
+        <!-- Edit Contact Modal -->
+        <EditContactModal
+            :show="showEditModal"
+            :contact="contactToEdit"
+            :companies="companies"
+            :owners="owners"
+            @close="showEditModal = false"
+            @saved="onContactEdited"
         />
     </AuthenticatedLayout>
 </template>

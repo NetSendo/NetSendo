@@ -197,6 +197,13 @@ return [
         'search_hint' => 'Wpisz min. 2 znaki aby wyszukać istniejącego subskrybenta lub wprowadź nowy email',
         'existing_subscriber' => 'Istniejący subskrybent',
         'found_subscribers' => 'Znalezieni subskrybenci',
+        'title' => [
+            'edit' => 'Edytuj kontakt',
+        ],
+        'edit_success' => 'Kontakt został zaktualizowany',
+        'actions' => [
+            'edit' => 'Edytuj',
+        ],
     ],
     'defaults' => [
         'badge' => 'Domyślna',
