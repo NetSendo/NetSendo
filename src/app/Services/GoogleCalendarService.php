@@ -185,7 +185,8 @@ class GoogleCalendarService
         $response = Http::withToken($accessToken)
             ->delete(self::CALENDAR_API_URL . "/calendars/{$calendarId}/events/{$eventId}");
 
-        if (!$response->successful() && $response->status() !== 404) {
+        // 404 = not found, 410 = gone (permanently deleted) - both mean event doesn't exist
+        if (!$response->successful() && !in_array($response->status(), [404, 410])) {
             Log::error('Failed to delete Google Calendar event', [
                 'event_id' => $eventId,
                 'status' => $response->status(),
