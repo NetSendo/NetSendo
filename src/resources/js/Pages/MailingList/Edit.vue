@@ -86,29 +86,29 @@ const form = useForm({
             notification_email: getSetting(
                 "subscription",
                 "notification_email",
-                ""
+                "",
             ),
             delete_unconfirmed: getSetting(
                 "subscription",
                 "delete_unconfirmed",
-                false
+                false,
             ),
             delete_unconfirmed_after_days: getSetting(
                 "subscription",
                 "delete_unconfirmed_after_days",
-                7
+                7,
             ),
             security_options: getSetting(
                 "subscription",
                 "security_options",
-                []
+                [],
             ),
         },
         sending: {
             mailbox_id: getSetting(
                 "sending",
                 "mailbox_id",
-                props.list.default_mailbox_id
+                props.list.default_mailbox_id,
             ),
             sms_settings: getSetting("sending", "sms_settings", null),
             from_name: getSetting("sending", "from_name", ""),
@@ -160,7 +160,7 @@ const form = useForm({
             facebook_integration: getSetting(
                 "advanced",
                 "facebook_integration",
-                null
+                null,
             ),
             queue_days: getSetting("advanced", "queue_days", [
                 "monday",
@@ -173,7 +173,11 @@ const form = useForm({
             ]),
             bounce_analysis: getSetting("advanced", "bounce_analysis", true),
             bounce_scope: getSetting("advanced", "bounce_scope", "list"),
-            soft_bounce_threshold: getSetting("advanced", "soft_bounce_threshold", 3),
+            soft_bounce_threshold: getSetting(
+                "advanced",
+                "soft_bounce_threshold",
+                3,
+            ),
         },
         cron: {
             use_custom: props.list.cron_settings?.use_custom_settings ?? false,
@@ -199,7 +203,8 @@ const form = useForm({
     required_fields: props.list.required_fields || [],
     // Resubscription behavior
     resubscription_behavior: props.list.resubscription_behavior || "reset_date",
-    reset_autoresponders_on_resubscription: props.list.reset_autoresponders_on_resubscription ?? true,
+    reset_autoresponders_on_resubscription:
+        props.list.reset_autoresponders_on_resubscription ?? true,
 });
 
 const toggleTag = (tagId) => {
@@ -214,7 +219,7 @@ const toggleTag = (tagId) => {
 const insertHeaderTemplate = (type) => {
     let email = "unsubscribe@example.com";
     const selectedMailbox = props.mailboxes.find(
-        (m) => m.id === form.settings.sending.mailbox_id
+        (m) => m.id === form.settings.sending.mailbox_id,
     );
     if (selectedMailbox && selectedMailbox.from_email) {
         email = selectedMailbox.from_email;
@@ -237,7 +242,7 @@ watch(
             if (
                 !form.settings.sending.headers.list_unsubscribe ||
                 form.settings.sending.headers.list_unsubscribe.includes(
-                    "unsubscribe@example.com"
+                    "unsubscribe@example.com",
                 )
             ) {
                 insertHeaderTemplate("list_unsubscribe");
@@ -247,11 +252,31 @@ watch(
                 insertHeaderTemplate("list_unsubscribe_post");
             }
         }
-    }
+    },
 );
 
+// Toast notification
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 4000);
+};
+
 const submit = () => {
-    form.put(route("mailing-lists.update", props.list.id));
+    form.put(route("mailing-lists.update", props.list.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast("Lista adresowa została zaktualizowana.");
+        },
+        onError: (errors) => {
+            const errorMsg =
+                Object.values(errors).flat().join(" ") ||
+                "Wystąpił błąd podczas zapisywania.";
+            showToast(errorMsg, false);
+        },
+    });
 };
 
 // Integration helpers
@@ -270,7 +295,7 @@ const copyApiKey = () => {
 const generateApiKey = () => {
     if (
         confirm(
-            "Czy na pewno chcesz wygenerować nowy klucz API? Poprzedni klucz przestanie działać."
+            "Czy na pewno chcesz wygenerować nowy klucz API? Poprzedni klucz przestanie działać.",
         )
     ) {
         apiKeyGenerating.value = true;
@@ -280,7 +305,7 @@ const generateApiKey = () => {
             {
                 preserveScroll: true,
                 onFinish: () => (apiKeyGenerating.value = false),
-            }
+            },
         );
     }
 };
@@ -293,7 +318,7 @@ const testWebhook = () => {
         {
             preserveScroll: true,
             onFinish: () => (webhookTesting.value = false),
-        }
+        },
     );
 };
 
@@ -315,6 +340,76 @@ const subscribeEndpoint = computed(() => {
     <Head :title="`${$t('mailing_lists.edit_title')}: ${list.name}`" />
 
     <AuthenticatedLayout>
+        <!-- Toast Notification -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-300"
+                enter-from-class="opacity-0 translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-200"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-2"
+            >
+                <div
+                    v-if="toast"
+                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
+                    :class="
+                        toast.success
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-rose-600 text-white'
+                    "
+                >
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span class="font-medium">{{ toast.message }}</span>
+                    <button
+                        @click="toast = null"
+                        class="ml-2 opacity-80 hover:opacity-100"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
+
         <template #header>
             <div class="flex items-center gap-4">
                 <Link
@@ -401,7 +496,7 @@ const subscribeEndpoint = computed(() => {
                                     class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                     :placeholder="
                                         $t(
-                                            'mailing_lists.fields.name_placeholder'
+                                            'mailing_lists.fields.name_placeholder',
                                         )
                                     "
                                     required
@@ -428,7 +523,7 @@ const subscribeEndpoint = computed(() => {
                                     class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                     :placeholder="
                                         $t(
-                                            'mailing_lists.fields.description_placeholder'
+                                            'mailing_lists.fields.description_placeholder',
                                         )
                                     "
                                 ></textarea>
@@ -525,7 +620,7 @@ const subscribeEndpoint = computed(() => {
                                         class="block text-xs text-slate-500 dark:text-slate-400"
                                         >{{
                                             $t(
-                                                "mailing_lists.fields.is_public_description"
+                                                "mailing_lists.fields.is_public_description",
                                             )
                                         }}</span
                                     >
@@ -562,7 +657,7 @@ const subscribeEndpoint = computed(() => {
                                     >
                                         {{
                                             $t(
-                                                `mailing_lists.settings.tabs.${tab}`
+                                                `mailing_lists.settings.tabs.${tab}`,
                                             )
                                         }}
                                     </button>
@@ -583,7 +678,7 @@ const subscribeEndpoint = computed(() => {
                                     >
                                         {{
                                             $t(
-                                                "mailing_lists.settings.subscription_section"
+                                                "mailing_lists.settings.subscription_section",
                                             )
                                         }}
                                     </h3>
@@ -597,7 +692,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.double_optin"
+                                                            "mailing_lists.settings.double_optin",
                                                         )
                                                     }}</span
                                                 >
@@ -605,7 +700,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-xs text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.double_optin_desc"
+                                                            "mailing_lists.settings.double_optin_desc",
                                                         )
                                                     }}</span
                                                 >
@@ -645,7 +740,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.delete_unconfirmed"
+                                                            "mailing_lists.settings.delete_unconfirmed",
                                                         )
                                                     }}</span
                                                 >
@@ -653,7 +748,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-xs text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.delete_unconfirmed_desc"
+                                                            "mailing_lists.settings.delete_unconfirmed_desc",
                                                         )
                                                     }}</span
                                                 >
@@ -698,14 +793,17 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.delete_unconfirmed_after_days"
+                                                        "mailing_lists.settings.delete_unconfirmed_after_days",
                                                     )
                                                 }}
                                             </label>
-                                            <div class="flex items-center gap-2">
+                                            <div
+                                                class="flex items-center gap-2"
+                                            >
                                                 <input
                                                     v-model.number="
-                                                        form.settings.subscription
+                                                        form.settings
+                                                            .subscription
                                                             .delete_unconfirmed_after_days
                                                     "
                                                     type="number"
@@ -713,18 +811,21 @@ const subscribeEndpoint = computed(() => {
                                                     max="365"
                                                     class="w-24 rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                 />
-                                                <span class="text-sm text-slate-500 dark:text-slate-400"
+                                                <span
+                                                    class="text-sm text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.delete_unconfirmed_days_label"
+                                                            "mailing_lists.settings.delete_unconfirmed_days_label",
                                                         )
                                                     }}</span
                                                 >
                                             </div>
-                                            <p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                                            <p
+                                                class="mt-1 text-xs text-slate-400 dark:text-slate-500"
+                                            >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.delete_unconfirmed_after_days_help"
+                                                        "mailing_lists.settings.delete_unconfirmed_after_days_help",
                                                     )
                                                 }}
                                             </p>
@@ -736,7 +837,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.notification_email"
+                                                        "mailing_lists.settings.notification_email",
                                                     )
                                                 }}
                                             </label>
@@ -749,7 +850,7 @@ const subscribeEndpoint = computed(() => {
                                                 class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                 :placeholder="
                                                     $t(
-                                                        'mailing_lists.settings.notification_email_placeholder'
+                                                        'mailing_lists.settings.notification_email_placeholder',
                                                     )
                                                 "
                                             />
@@ -764,7 +865,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.resubscription_behavior"
+                                                        "mailing_lists.settings.resubscription_behavior",
                                                     )
                                                 }}
                                             </label>
@@ -773,7 +874,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.resubscription_behavior_desc"
+                                                        "mailing_lists.settings.resubscription_behavior_desc",
                                                     )
                                                 }}
                                             </p>
@@ -786,7 +887,7 @@ const subscribeEndpoint = computed(() => {
                                                 <option value="reset_date">
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.resubscription_reset_date"
+                                                            "mailing_lists.settings.resubscription_reset_date",
                                                         )
                                                     }}
                                                 </option>
@@ -795,7 +896,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.resubscription_keep_date"
+                                                            "mailing_lists.settings.resubscription_keep_date",
                                                         )
                                                     }}
                                                 </option>
@@ -811,7 +912,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.reset_autoresponders"
+                                                            "mailing_lists.settings.reset_autoresponders",
                                                         )
                                                     }}</span
                                                 >
@@ -819,7 +920,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-xs text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.reset_autoresponders_desc"
+                                                            "mailing_lists.settings.reset_autoresponders_desc",
                                                         )
                                                     }}</span
                                                 >
@@ -859,7 +960,7 @@ const subscribeEndpoint = computed(() => {
                                         >
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.sending_section"
+                                                    "mailing_lists.settings.sending_section",
                                                 )
                                             }}
                                         </h3>
@@ -873,7 +974,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.mailbox_defaults_label"
+                                                        "mailing_lists.settings.mailbox_defaults_label",
                                                     )
                                                 }}
                                             </label>
@@ -882,7 +983,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.mailbox_defaults_desc"
+                                                        "mailing_lists.settings.mailbox_defaults_desc",
                                                     )
                                                 }}
                                             </p>
@@ -896,7 +997,7 @@ const subscribeEndpoint = computed(() => {
                                                 <option :value="null">
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.mailbox_defaults_none"
+                                                            "mailing_lists.settings.mailbox_defaults_none",
                                                         )
                                                     }}
                                                 </option>
@@ -919,7 +1020,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.from_name"
+                                                            "mailing_lists.settings.from_name",
                                                         )
                                                     }}
                                                 </label>
@@ -932,7 +1033,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                     :placeholder="
                                                         $t(
-                                                            'mailing_lists.settings.from_name_placeholder'
+                                                            'mailing_lists.settings.from_name_placeholder',
                                                         )
                                                     "
                                                 />
@@ -943,7 +1044,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.reply_to"
+                                                            "mailing_lists.settings.reply_to",
                                                         )
                                                     }}
                                                 </label>
@@ -956,7 +1057,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                     :placeholder="
                                                         $t(
-                                                            'mailing_lists.settings.reply_to_placeholder'
+                                                            'mailing_lists.settings.reply_to_placeholder',
                                                         )
                                                     "
                                                 />
@@ -970,7 +1071,7 @@ const subscribeEndpoint = computed(() => {
                                         >
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.company_section"
+                                                    "mailing_lists.settings.company_section",
                                                 )
                                             }}
                                         </h3>
@@ -981,7 +1082,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.company_name"
+                                                            "mailing_lists.settings.company_name",
                                                         )
                                                     }}
                                                 </label>
@@ -1000,7 +1101,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.company_address"
+                                                            "mailing_lists.settings.company_address",
                                                         )
                                                     }}
                                                 </label>
@@ -1022,7 +1123,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.company_city"
+                                                                "mailing_lists.settings.company_city",
                                                             )
                                                         }}
                                                     </label>
@@ -1042,7 +1143,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.company_zip"
+                                                                "mailing_lists.settings.company_zip",
                                                             )
                                                         }}
                                                     </label>
@@ -1062,7 +1163,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.company_country"
+                                                                "mailing_lists.settings.company_country",
                                                             )
                                                         }}
                                                     </label>
@@ -1085,7 +1186,7 @@ const subscribeEndpoint = computed(() => {
                                         >
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.headers_section"
+                                                    "mailing_lists.settings.headers_section",
                                                 )
                                             }}
                                         </h3>
@@ -1103,14 +1204,14 @@ const subscribeEndpoint = computed(() => {
                                                         type="button"
                                                         @click="
                                                             insertHeaderTemplate(
-                                                                'list_unsubscribe'
+                                                                'list_unsubscribe',
                                                             )
                                                         "
                                                         class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.insert_template"
+                                                                "mailing_lists.settings.insert_template",
                                                             )
                                                         }}
                                                     </button>
@@ -1135,7 +1236,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.headers_inherit_help"
+                                                            "mailing_lists.settings.headers_inherit_help",
                                                         )
                                                     }}
                                                 </p>
@@ -1153,14 +1254,14 @@ const subscribeEndpoint = computed(() => {
                                                         type="button"
                                                         @click="
                                                             insertHeaderTemplate(
-                                                                'list_unsubscribe_post'
+                                                                'list_unsubscribe_post',
                                                             )
                                                         "
                                                         class="text-xs font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.insert_template"
+                                                                "mailing_lists.settings.insert_template",
                                                             )
                                                         }}
                                                     </button>
@@ -1195,7 +1296,7 @@ const subscribeEndpoint = computed(() => {
                                     >
                                         {{
                                             $t(
-                                                "mailing_lists.settings.pages_section"
+                                                "mailing_lists.settings.pages_section",
                                             )
                                         }}
                                     </h3>
@@ -1215,7 +1316,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            `mailing_lists.settings.pages.${key}`
+                                                            `mailing_lists.settings.pages.${key}`,
                                                         )
                                                     }}
                                                 </h4>
@@ -1227,7 +1328,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            `mailing_lists.settings.pages.defaults.${key}`
+                                                            `mailing_lists.settings.pages.defaults.${key}`,
                                                         )
                                                     }}
                                                 </p>
@@ -1249,7 +1350,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.pages.types.system"
+                                                            "mailing_lists.settings.pages.types.system",
                                                         )
                                                     }}
                                                 </button>
@@ -1267,7 +1368,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.pages.types.custom"
+                                                            "mailing_lists.settings.pages.types.custom",
                                                         )
                                                     }}
                                                 </button>
@@ -1285,7 +1386,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.pages.types.external_page"
+                                                            "mailing_lists.settings.pages.types.external_page",
                                                         )
                                                     }}
                                                 </button>
@@ -1318,7 +1419,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.pages.select_page"
+                                                            "mailing_lists.settings.pages.select_page",
                                                         )
                                                     }}
                                                 </option>
@@ -1344,7 +1445,7 @@ const subscribeEndpoint = computed(() => {
                                     >
                                         {{
                                             $t(
-                                                "mailing_lists.settings.cron_section"
+                                                "mailing_lists.settings.cron_section",
                                             )
                                         }}
                                     </h3>
@@ -1361,7 +1462,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.use_custom_cron"
+                                                            "mailing_lists.settings.use_custom_cron",
                                                         )
                                                     }}</span
                                                 >
@@ -1370,7 +1471,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.use_custom_cron_desc"
+                                                            "mailing_lists.settings.use_custom_cron_desc",
                                                         )
                                                     }}
                                                 </span>
@@ -1426,7 +1527,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.using_global_cron"
+                                                            "mailing_lists.settings.using_global_cron",
                                                         )
                                                     }}
                                                 </p>
@@ -1437,11 +1538,11 @@ const subscribeEndpoint = computed(() => {
                                                             'mailing_lists.settings.using_global_cron_desc',
                                                             {
                                                                 link: `<a href='${route(
-                                                                    'settings.cron.index'
+                                                                    'settings.cron.index',
                                                                 )}' class='underline hover:no-underline'>${$t(
-                                                                    'navigation.settings'
+                                                                    'navigation.settings',
                                                                 )} CRON</a>`,
-                                                            }
+                                                            },
                                                         )
                                                     "
                                                 ></p>
@@ -1460,7 +1561,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.cron_limit_label"
+                                                        "mailing_lists.settings.cron_limit_label",
                                                     )
                                                 }}
                                             </label>
@@ -1475,7 +1576,7 @@ const subscribeEndpoint = computed(() => {
                                                 class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                                                 :placeholder="
                                                     $t(
-                                                        'mailing_lists.settings.cron_limit_placeholder'
+                                                        'mailing_lists.settings.cron_limit_placeholder',
                                                     )
                                                 "
                                             />
@@ -1484,7 +1585,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.cron_limit_help"
+                                                        "mailing_lists.settings.cron_limit_help",
                                                     )
                                                 }}
                                             </p>
@@ -1497,7 +1598,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.weekly_schedule"
+                                                        "mailing_lists.settings.weekly_schedule",
                                                     )
                                                 }}
                                             </label>
@@ -1529,7 +1630,7 @@ const subscribeEndpoint = computed(() => {
                                                                 {{
                                                                     $t(
                                                                         "common.days." +
-                                                                            day.label
+                                                                            day.label,
                                                                     )
                                                                 }}
                                                             </span>
@@ -1552,7 +1653,7 @@ const subscribeEndpoint = computed(() => {
                                                                 class="text-xs text-slate-500"
                                                                 >{{
                                                                     $t(
-                                                                        "mailing_lists.settings.cron_from"
+                                                                        "mailing_lists.settings.cron_from",
                                                                     )
                                                                 }}</label
                                                             >
@@ -1566,7 +1667,7 @@ const subscribeEndpoint = computed(() => {
                                                                             .schedule[
                                                                             day
                                                                                 .key
-                                                                        ].start
+                                                                        ].start,
                                                                     )
                                                                 "
                                                                 @input="
@@ -1576,7 +1677,7 @@ const subscribeEndpoint = computed(() => {
                                                                         timeToMinutes(
                                                                             $event
                                                                                 .target
-                                                                                .value
+                                                                                .value,
                                                                         )
                                                                 "
                                                                 class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm dark:bg-slate-700 dark:text-white"
@@ -1589,7 +1690,7 @@ const subscribeEndpoint = computed(() => {
                                                                 class="text-xs text-slate-500"
                                                                 >{{
                                                                     $t(
-                                                                        "mailing_lists.settings.cron_to"
+                                                                        "mailing_lists.settings.cron_to",
                                                                     )
                                                                 }}</label
                                                             >
@@ -1603,7 +1704,7 @@ const subscribeEndpoint = computed(() => {
                                                                             .schedule[
                                                                             day
                                                                                 .key
-                                                                        ].end
+                                                                        ].end,
                                                                     )
                                                                 "
                                                                 @input="
@@ -1613,7 +1714,7 @@ const subscribeEndpoint = computed(() => {
                                                                         timeToMinutes(
                                                                             $event
                                                                                 .target
-                                                                                .value
+                                                                                .value,
                                                                         )
                                                                 "
                                                                 class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-sm dark:bg-slate-700 dark:text-white"
@@ -1661,7 +1762,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                "mailing_lists.settings.cron_disabled"
+                                                                "mailing_lists.settings.cron_disabled",
                                                             )
                                                         }}
                                                     </div>
@@ -1681,7 +1782,7 @@ const subscribeEndpoint = computed(() => {
                                     >
                                         {{
                                             $t(
-                                                "mailing_lists.settings.advanced_section"
+                                                "mailing_lists.settings.advanced_section",
                                             )
                                         }}
                                     </h3>
@@ -1706,7 +1807,7 @@ const subscribeEndpoint = computed(() => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.advanced.coregistration_section"
+                                                    "mailing_lists.settings.advanced.coregistration_section",
                                                 )
                                             }}
                                         </h4>
@@ -1719,7 +1820,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.advanced.parent_list"
+                                                        "mailing_lists.settings.advanced.parent_list",
                                                     )
                                                 }}
                                             </label>
@@ -1730,7 +1831,7 @@ const subscribeEndpoint = computed(() => {
                                                 <option :value="null">
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.advanced.no_parent"
+                                                            "mailing_lists.settings.advanced.no_parent",
                                                         )
                                                     }}
                                                 </option>
@@ -1747,7 +1848,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.advanced.parent_list_desc"
+                                                        "mailing_lists.settings.advanced.parent_list_desc",
                                                     )
                                                 }}
                                             </p>
@@ -1765,7 +1866,7 @@ const subscribeEndpoint = computed(() => {
                                                         class="block text-sm font-medium text-slate-900 dark:text-white"
                                                         >{{
                                                             $t(
-                                                                "mailing_lists.settings.advanced.sync_on_subscribe"
+                                                                "mailing_lists.settings.advanced.sync_on_subscribe",
                                                             )
                                                         }}</span
                                                     >
@@ -1803,7 +1904,7 @@ const subscribeEndpoint = computed(() => {
                                                         class="block text-sm font-medium text-slate-900 dark:text-white"
                                                         >{{
                                                             $t(
-                                                                "mailing_lists.settings.advanced.sync_on_unsubscribe"
+                                                                "mailing_lists.settings.advanced.sync_on_unsubscribe",
                                                             )
                                                         }}</span
                                                     >
@@ -1856,7 +1957,7 @@ const subscribeEndpoint = computed(() => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.advanced.limits_section"
+                                                    "mailing_lists.settings.advanced.limits_section",
                                                 )
                                             }}
                                         </h4>
@@ -1869,7 +1970,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.advanced.max_subscribers"
+                                                        "mailing_lists.settings.advanced.max_subscribers",
                                                     )
                                                 }}
                                             </label>
@@ -1887,7 +1988,7 @@ const subscribeEndpoint = computed(() => {
                                             >
                                                 {{
                                                     $t(
-                                                        "mailing_lists.settings.advanced.max_subscribers_help"
+                                                        "mailing_lists.settings.advanced.max_subscribers_help",
                                                     )
                                                 }}
                                             </p>
@@ -1901,7 +2002,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.advanced.block_signups"
+                                                            "mailing_lists.settings.advanced.block_signups",
                                                         )
                                                     }}</span
                                                 >
@@ -1909,7 +2010,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-xs text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.advanced.block_signups_desc"
+                                                            "mailing_lists.settings.advanced.block_signups_desc",
                                                         )
                                                     }}</span
                                                 >
@@ -1949,7 +2050,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-sm font-medium text-slate-900 dark:text-white"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.bounce_section"
+                                                            "mailing_lists.settings.bounce_section",
                                                         )
                                                     }}</span
                                                 >
@@ -1957,7 +2058,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block text-xs text-slate-500 dark:text-slate-400"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.bounce_desc"
+                                                            "mailing_lists.settings.bounce_desc",
                                                         )
                                                     }}</span
                                                 >
@@ -1989,42 +2090,93 @@ const subscribeEndpoint = computed(() => {
                                         </div>
 
                                         <!-- Extended options when bounce_analysis is enabled -->
-                                        <template v-if="form.settings.advanced.bounce_analysis">
+                                        <template
+                                            v-if="
+                                                form.settings.advanced
+                                                    .bounce_analysis
+                                            "
+                                        >
                                             <!-- Bounce Scope -->
-                                            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                                                <label class="block text-sm font-medium text-slate-900 dark:text-white mb-3">
-                                                    {{ $t('mailing_lists.settings.advanced.bounce_scope_label') }}
+                                            <div
+                                                class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"
+                                            >
+                                                <label
+                                                    class="block text-sm font-medium text-slate-900 dark:text-white mb-3"
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "mailing_lists.settings.advanced.bounce_scope_label",
+                                                        )
+                                                    }}
                                                 </label>
-                                                <div class="flex flex-col gap-3 sm:flex-row sm:gap-6">
-                                                    <label class="flex items-start gap-3 cursor-pointer group">
+                                                <div
+                                                    class="flex flex-col gap-3 sm:flex-row sm:gap-6"
+                                                >
+                                                    <label
+                                                        class="flex items-start gap-3 cursor-pointer group"
+                                                    >
                                                         <input
                                                             type="radio"
-                                                            v-model="form.settings.advanced.bounce_scope"
+                                                            v-model="
+                                                                form.settings
+                                                                    .advanced
+                                                                    .bounce_scope
+                                                            "
                                                             value="list"
                                                             class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"
                                                         />
                                                         <div>
-                                                            <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">
-                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_list') }}
+                                                            <span
+                                                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600"
+                                                            >
+                                                                {{
+                                                                    $t(
+                                                                        "mailing_lists.settings.advanced.bounce_scope_list",
+                                                                    )
+                                                                }}
                                                             </span>
-                                                            <span class="block text-xs text-slate-500 dark:text-slate-400">
-                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_list_desc') }}
+                                                            <span
+                                                                class="block text-xs text-slate-500 dark:text-slate-400"
+                                                            >
+                                                                {{
+                                                                    $t(
+                                                                        "mailing_lists.settings.advanced.bounce_scope_list_desc",
+                                                                    )
+                                                                }}
                                                             </span>
                                                         </div>
                                                     </label>
-                                                    <label class="flex items-start gap-3 cursor-pointer group">
+                                                    <label
+                                                        class="flex items-start gap-3 cursor-pointer group"
+                                                    >
                                                         <input
                                                             type="radio"
-                                                            v-model="form.settings.advanced.bounce_scope"
+                                                            v-model="
+                                                                form.settings
+                                                                    .advanced
+                                                                    .bounce_scope
+                                                            "
                                                             value="global"
                                                             class="mt-0.5 w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600"
                                                         />
                                                         <div>
-                                                            <span class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600">
-                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_global') }}
+                                                            <span
+                                                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600"
+                                                            >
+                                                                {{
+                                                                    $t(
+                                                                        "mailing_lists.settings.advanced.bounce_scope_global",
+                                                                    )
+                                                                }}
                                                             </span>
-                                                            <span class="block text-xs text-slate-500 dark:text-slate-400">
-                                                                {{ $t('mailing_lists.settings.advanced.bounce_scope_global_desc') }}
+                                                            <span
+                                                                class="block text-xs text-slate-500 dark:text-slate-400"
+                                                            >
+                                                                {{
+                                                                    $t(
+                                                                        "mailing_lists.settings.advanced.bounce_scope_global_desc",
+                                                                    )
+                                                                }}
                                                             </span>
                                                         </div>
                                                     </label>
@@ -2032,19 +2184,36 @@ const subscribeEndpoint = computed(() => {
                                             </div>
 
                                             <!-- Soft Bounce Threshold -->
-                                            <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                                                <label class="block text-sm font-medium text-slate-900 dark:text-white mb-2">
-                                                    {{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_label') }}
+                                            <div
+                                                class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700"
+                                            >
+                                                <label
+                                                    class="block text-sm font-medium text-slate-900 dark:text-white mb-2"
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "mailing_lists.settings.advanced.soft_bounce_threshold_label",
+                                                        )
+                                                    }}
                                                 </label>
                                                 <input
-                                                    v-model.number="form.settings.advanced.soft_bounce_threshold"
+                                                    v-model.number="
+                                                        form.settings.advanced
+                                                            .soft_bounce_threshold
+                                                    "
                                                     type="number"
                                                     min="1"
                                                     max="10"
                                                     class="w-24 rounded-lg border-slate-200 bg-white px-3 py-2 text-center placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
                                                 />
-                                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                                    {{ $t('mailing_lists.settings.advanced.soft_bounce_threshold_help') }}
+                                                <p
+                                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "mailing_lists.settings.advanced.soft_bounce_threshold_help",
+                                                        )
+                                                    }}
                                                 </p>
                                             </div>
                                         </template>
@@ -2056,7 +2225,7 @@ const subscribeEndpoint = computed(() => {
                                         >
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.advanced.facebook_label"
+                                                    "mailing_lists.settings.advanced.facebook_label",
                                                 )
                                             }}
                                         </label>
@@ -2069,7 +2238,7 @@ const subscribeEndpoint = computed(() => {
                                             class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                             :placeholder="
                                                 $t(
-                                                    'mailing_lists.settings.advanced.facebook_placeholder'
+                                                    'mailing_lists.settings.advanced.facebook_placeholder',
                                                 )
                                             "
                                         />
@@ -2081,7 +2250,7 @@ const subscribeEndpoint = computed(() => {
                                         >
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.queue_days_label"
+                                                    "mailing_lists.settings.queue_days_label",
                                                 )
                                             }}
                                         </label>
@@ -2100,7 +2269,7 @@ const subscribeEndpoint = computed(() => {
                                                 class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
                                                 :class="
                                                     form.settings.advanced.queue_days.includes(
-                                                        day
+                                                        day,
                                                     )
                                                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
                                                         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
@@ -2109,16 +2278,16 @@ const subscribeEndpoint = computed(() => {
                                                     () => {
                                                         const idx =
                                                             form.settings.advanced.queue_days.indexOf(
-                                                                day
+                                                                day,
                                                             );
                                                         if (idx === -1)
                                                             form.settings.advanced.queue_days.push(
-                                                                day
+                                                                day,
                                                             );
                                                         else
                                                             form.settings.advanced.queue_days.splice(
                                                                 idx,
-                                                                1
+                                                                1,
                                                             );
                                                     }
                                                 "
@@ -2126,7 +2295,7 @@ const subscribeEndpoint = computed(() => {
                                                 {{
                                                     $t(
                                                         "common.shorthand_days." +
-                                                            day.substring(0, 3)
+                                                            day.substring(0, 3),
                                                     )
                                                 }}
                                             </div>
@@ -2134,7 +2303,7 @@ const subscribeEndpoint = computed(() => {
                                         <p class="mt-1 text-xs text-slate-500">
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.queue_days_help"
+                                                    "mailing_lists.settings.queue_days_help",
                                                 )
                                             }}
                                         </p>
@@ -2154,7 +2323,7 @@ const subscribeEndpoint = computed(() => {
                                         🔗
                                         {{
                                             $t(
-                                                "mailing_lists.settings.integration.title"
+                                                "mailing_lists.settings.integration.title",
                                             )
                                         }}
                                     </h3>
@@ -2179,14 +2348,14 @@ const subscribeEndpoint = computed(() => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.integration.api_key_section"
+                                                    "mailing_lists.settings.integration.api_key_section",
                                                 )
                                             }}
                                         </h4>
                                         <p class="text-xs text-slate-500">
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.integration.api_key_desc"
+                                                    "mailing_lists.settings.integration.api_key_desc",
                                                 )
                                             }}
                                         </p>
@@ -2202,7 +2371,7 @@ const subscribeEndpoint = computed(() => {
                                                         class="text-xs text-slate-500 block mb-1"
                                                         >{{
                                                             $t(
-                                                                "mailing_lists.settings.integration.list_id_label"
+                                                                "mailing_lists.settings.integration.list_id_label",
                                                             )
                                                         }}</label
                                                     >
@@ -2219,7 +2388,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="text-xs text-slate-500 block mb-1"
                                                     >{{
                                                         $t(
-                                                            "mailing_lists.settings.integration.api_key_label"
+                                                            "mailing_lists.settings.integration.api_key_label",
                                                         )
                                                     }}</label
                                                 >
@@ -2245,10 +2414,10 @@ const subscribeEndpoint = computed(() => {
                                                         {{
                                                             apiKeyCopied
                                                                 ? $t(
-                                                                      "mailing_lists.settings.integration.copied"
+                                                                      "mailing_lists.settings.integration.copied",
                                                                   )
                                                                 : $t(
-                                                                      "mailing_lists.settings.integration.copy_key"
+                                                                      "mailing_lists.settings.integration.copy_key",
                                                                   )
                                                         }}
                                                     </button>
@@ -2259,7 +2428,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.integration.no_api_key"
+                                                            "mailing_lists.settings.integration.no_api_key",
                                                         )
                                                     }}
                                                 </div>
@@ -2274,10 +2443,10 @@ const subscribeEndpoint = computed(() => {
                                                 {{
                                                     apiKeyGenerating
                                                         ? $t(
-                                                              "common.processing"
+                                                              "common.processing",
                                                           )
                                                         : $t(
-                                                              "mailing_lists.settings.integration.generate_key"
+                                                              "mailing_lists.settings.integration.generate_key",
                                                           )
                                                 }}
                                             </button>
@@ -2304,7 +2473,7 @@ const subscribeEndpoint = computed(() => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.integration.webhook_section"
+                                                    "mailing_lists.settings.integration.webhook_section",
                                                 )
                                             }}
                                         </h4>
@@ -2318,7 +2487,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.integration.webhook_url"
+                                                            "mailing_lists.settings.integration.webhook_url",
                                                         )
                                                     }}
                                                 </label>
@@ -2328,7 +2497,7 @@ const subscribeEndpoint = computed(() => {
                                                     class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                                     :placeholder="
                                                         $t(
-                                                            'mailing_lists.settings.integration.webhook_url_placeholder'
+                                                            'mailing_lists.settings.integration.webhook_url_placeholder',
                                                         )
                                                     "
                                                 />
@@ -2340,7 +2509,7 @@ const subscribeEndpoint = computed(() => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "mailing_lists.settings.integration.webhook_events"
+                                                            "mailing_lists.settings.integration.webhook_events",
                                                         )
                                                     }}
                                                 </label>
@@ -2357,13 +2526,13 @@ const subscribeEndpoint = computed(() => {
                                                         :key="event"
                                                         @click="
                                                             toggleWebhookEvent(
-                                                                event
+                                                                event,
                                                             )
                                                         "
                                                         class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
                                                         :class="
                                                             form.webhook_events.includes(
-                                                                event
+                                                                event,
                                                             )
                                                                 ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
                                                                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
@@ -2371,7 +2540,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                `mailing_lists.settings.integration.event_${event}`
+                                                                `mailing_lists.settings.integration.event_${event}`,
                                                             )
                                                         }}
                                                     </div>
@@ -2388,10 +2557,10 @@ const subscribeEndpoint = computed(() => {
                                                 {{
                                                     webhookTesting
                                                         ? $t(
-                                                              "common.processing"
+                                                              "common.processing",
                                                           )
                                                         : $t(
-                                                              "mailing_lists.settings.integration.test_webhook"
+                                                              "mailing_lists.settings.integration.test_webhook",
                                                           )
                                                 }}
                                             </button>
@@ -2418,14 +2587,14 @@ const subscribeEndpoint = computed(() => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.integration.endpoint_section"
+                                                    "mailing_lists.settings.integration.endpoint_section",
                                                 )
                                             }}
                                         </h4>
                                         <p class="text-xs text-slate-500">
                                             {{
                                                 $t(
-                                                    "mailing_lists.settings.integration.endpoint_desc"
+                                                    "mailing_lists.settings.integration.endpoint_desc",
                                                 )
                                             }}
                                         </p>
