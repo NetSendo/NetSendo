@@ -269,9 +269,6 @@ const showToast = (message, success = true) => {
 const submit = () => {
     form.put(route("mailing-lists.update", props.list.id), {
         preserveScroll: true,
-        onSuccess: () => {
-            showToast("Lista adresowa została zaktualizowana.");
-        },
         onError: (errors) => {
             const errorMsg =
                 Object.values(errors).flat().join(" ") ||

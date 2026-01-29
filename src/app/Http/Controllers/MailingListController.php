@@ -359,7 +359,8 @@ class MailingListController extends Controller
             $mailingList->tags()->sync($validated['tags']);
         }
 
-        return back()->with('success', 'Lista adresowa została zaktualizowana.');
+        return redirect()->route('mailing-lists.index')
+            ->with('success', 'Lista adresowa została zaktualizowana.');
     }
 
     public function destroy(Request $request, ContactList $mailingList)

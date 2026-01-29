@@ -1,9 +1,9 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import DeleteListModal from "./Partials/DeleteListModal.vue";
 
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { debounce } from "lodash";
 
 const props = defineProps({
@@ -71,6 +71,25 @@ const viewMode = ref(localStorage.getItem("mailingList_viewMode") || "grid");
 watch(viewMode, (newMode) => {
     localStorage.setItem("mailingList_viewMode", newMode);
 });
+
+// Toast notification for flash messages
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 4000);
+};
+
+onMounted(() => {
+    const flash = usePage().props.flash;
+    if (flash?.success) {
+        showToast(flash.success);
+    }
+    if (flash?.error) {
+        showToast(flash.error, false);
+    }
+});
 </script>
 
 <template>
@@ -84,6 +103,76 @@ watch(viewMode, (newMode) => {
     />
 
     <AuthenticatedLayout>
+        <!-- Toast Notification -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-300"
+                enter-from-class="opacity-0 translate-y-2"
+                enter-to-class="opacity-100 translate-y-0"
+                leave-active-class="transition ease-in duration-200"
+                leave-from-class="opacity-100 translate-y-0"
+                leave-to-class="opacity-0 translate-y-2"
+            >
+                <div
+                    v-if="toast"
+                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
+                    :class="
+                        toast.success
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-rose-600 text-white'
+                    "
+                >
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <svg
+                        v-else
+                        class="h-5 w-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                    </svg>
+                    <span class="font-medium">{{ toast.message }}</span>
+                    <button
+                        @click="toast = null"
+                        class="ml-2 opacity-80 hover:opacity-100"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
+
         <template #header>
             <div class="flex items-center justify-between">
                 <div>
