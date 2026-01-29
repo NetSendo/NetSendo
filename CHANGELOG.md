@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Mailing List UX:**
+  - **Toast Notifications:** Implemented toast notification system in Mailing List Edit form to display success/error messages.
+  - **Feedback:** Added visual feedback for save actions with `onSuccess` and `onError` handling.
 - **CRM Contact Editing:**
   - **Edit Modal:** Implemented a dedicated modal for editing contact details, including name, phone, status, score, position, source, company, and owner.
   - **Quick Edit:** Added an "Edit" button (pencil icon) to the contact list view (`Index.vue`) for quick access.
@@ -38,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Mailing List Saving:**
+  - **Redirect Issue:** Fixed `update` action redirecting to index instead of back, causing flash messages to be lost and confusing UX. Now resolves to `back()`.
+  - **Tags Validation:** Fixed strict `exists` validation for tags failing on production because it didn't account for user scope. Now validates tags against the authenticated user's available tags.
+  - **Frontend Mapping:** Fixed tags mapping in `Edit.vue` to correctly handle both array of IDs and array of objects, preventing data loss during save.
+  - **Scroll Position:** Added `preserveScroll: true` to form submission to maintain user context after save.
 - **Lead Scoring - Queue Connection Mismatch:**
   - Fixed `LeadScoringListener` using hardcoded `database` queue connection while the queue worker processes `redis` (from `QUEUE_CONNECTION` in `.env`).
   - Scoring jobs were accumulating in the `jobs` table instead of being processed.

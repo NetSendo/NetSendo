@@ -78,7 +78,9 @@ const form = useForm({
     name: props.list.name,
     description: props.list.description,
     contact_list_group_id: props.list.contact_list_group_id,
-    tags: props.list.tags.map((t) => t.id),
+    tags: Array.isArray(props.list.tags)
+        ? props.list.tags.map((t) => typeof t === 'object' ? t.id : t)
+        : [],
     is_public: !!props.list.is_public,
     settings: {
         subscription: {

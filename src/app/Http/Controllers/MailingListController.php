@@ -276,12 +276,17 @@ class MailingListController extends Controller
              abort(403, 'Brak uprawnień do edycji tej listy.');
         }
 
+        $scopeUser = auth()->user()->getAdminUser();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'contact_list_group_id' => 'nullable|exists:contact_list_groups,id',
             'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
+            'tags.*' => [
+                'integer',
+                \Illuminate\Validation\Rule::exists('tags', 'id')->where('user_id', $scopeUser->id),
+            ],
             'is_public' => 'boolean',
             'settings' => 'nullable|array',
 
