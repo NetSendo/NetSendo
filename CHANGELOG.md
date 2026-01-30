@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Calendly Integration - OAuth Connect Route:**
+  - Fixed "405 Method Not Allowed" error when connecting Calendly account.
+  - Changed `/settings/calendly/connect` route from GET to POST to match frontend form submission.
+
+- **Calendly Integration - Migration Safety:**
+  - Fixed "Table already exists" error (`SQLSTATE[42S01]`) when running migrations on servers with existing `calendly_integrations` table.
+  - Added `Schema::hasTable()` check to prevent duplicate table creation.
+
 ## [1.8.0] – Short Description
 
 **Release date:** 2026-01-30
