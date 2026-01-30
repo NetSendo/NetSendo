@@ -14,6 +14,21 @@ const props = defineProps({
 const page = usePage();
 const flash = computed(() => page.props.flash);
 
+// Filtered lists based on search
+const filteredMailingLists = computed(() => {
+    if (!mailingListSearch.value) return props.mailingLists;
+    const search = mailingListSearch.value.toLowerCase();
+    return props.mailingLists.filter((list) =>
+        list.name.toLowerCase().includes(search),
+    );
+});
+
+const filteredTags = computed(() => {
+    if (!tagSearch.value) return props.tags;
+    const search = tagSearch.value.toLowerCase();
+    return props.tags.filter((tag) => tag.name.toLowerCase().includes(search));
+});
+
 const activeIntegration = ref(props.integrations?.[0] || null);
 const showSettingsModal = ref(false);
 const showConnectModal = ref(false);
@@ -23,6 +38,10 @@ const testing = ref(false);
 const connecting = ref(false);
 const toastMessage = ref("");
 const showToast = ref(false);
+
+// Search filters for lists
+const mailingListSearch = ref("");
+const tagSearch = ref("");
 
 // Connect form for API credentials
 const connectForm = useForm({
@@ -873,50 +892,142 @@ function formatDateTime(dateString) {
                                 </label>
                                 <div>
                                     <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-1"
+                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
                                         >Default Mailing Lists</label
                                     >
-                                    <select
-                                        v-model="
-                                            settingsForm.settings.mailing_lists
-                                                .default_list_ids
-                                        "
-                                        multiple
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500"
-                                    >
-                                        <option
-                                            v-for="list in mailingLists"
-                                            :key="list.id"
-                                            :value="list.id"
+                                    <!-- Search Input -->
+                                    <div class="relative mb-2">
+                                        <svg
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
                                         >
-                                            {{ list.name }}
-                                        </option>
-                                    </select>
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        Hold Ctrl/Cmd to select multiple
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                            />
+                                        </svg>
+                                        <input
+                                            v-model="mailingListSearch"
+                                            type="text"
+                                            placeholder="Search lists..."
+                                            class="w-full pl-9 pr-4 py-2 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <!-- Checkbox List -->
+                                    <div
+                                        class="max-h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
+                                    >
+                                        <div
+                                            v-if="
+                                                filteredMailingLists.length ===
+                                                0
+                                            "
+                                            class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
+                                        >
+                                            No lists found
+                                        </div>
+                                        <label
+                                            v-for="list in filteredMailingLists"
+                                            :key="list.id"
+                                            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                        >
+                                            <input
+                                                :value="list.id"
+                                                v-model="
+                                                    settingsForm.settings
+                                                        .mailing_lists
+                                                        .default_list_ids
+                                                "
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span
+                                                class="text-sm text-gray-900 dark:text-white"
+                                                >{{ list.name }}</span
+                                            >
+                                        </label>
+                                    </div>
+                                    <p
+                                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            settingsForm.settings.mailing_lists
+                                                .default_list_ids?.length || 0
+                                        }}
+                                        selected
                                     </p>
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-1"
+                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
                                         >Default Tags</label
                                     >
-                                    <select
-                                        v-model="
-                                            settingsForm.settings.mailing_lists
-                                                .default_tag_ids
-                                        "
-                                        multiple
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500"
-                                    >
-                                        <option
-                                            v-for="tag in tags"
-                                            :key="tag.id"
-                                            :value="tag.id"
+                                    <!-- Search Input -->
+                                    <div class="relative mb-2">
+                                        <svg
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
                                         >
-                                            {{ tag.name }}
-                                        </option>
-                                    </select>
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                            />
+                                        </svg>
+                                        <input
+                                            v-model="tagSearch"
+                                            type="text"
+                                            placeholder="Search tags..."
+                                            class="w-full pl-9 pr-4 py-2 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                                        />
+                                    </div>
+                                    <!-- Checkbox List -->
+                                    <div
+                                        class="max-h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
+                                    >
+                                        <div
+                                            v-if="filteredTags.length === 0"
+                                            class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
+                                        >
+                                            No tags found
+                                        </div>
+                                        <label
+                                            v-for="tag in filteredTags"
+                                            :key="tag.id"
+                                            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                        >
+                                            <input
+                                                :value="tag.id"
+                                                v-model="
+                                                    settingsForm.settings
+                                                        .mailing_lists
+                                                        .default_tag_ids
+                                                "
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span
+                                                class="text-sm text-gray-900 dark:text-white"
+                                                >{{ tag.name }}</span
+                                            >
+                                        </label>
+                                    </div>
+                                    <p
+                                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            settingsForm.settings.mailing_lists
+                                                .default_tag_ids?.length || 0
+                                        }}
+                                        selected
+                                    </p>
                                 </div>
                             </div>
                         </div>
