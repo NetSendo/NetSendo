@@ -85,7 +85,7 @@ class CalendlyController extends Controller
     /**
      * Save API credentials and initiate OAuth connection.
      */
-    public function connect(Request $request): RedirectResponse
+    public function connect(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $validated = $request->validate([
             'client_id' => 'required|string|min:10',
@@ -132,7 +132,9 @@ class CalendlyController extends Controller
             $state
         );
 
-        return redirect($authUrl);
+        // Use Inertia::location() for external redirects to avoid CORS issues
+        // Inertia makes XHR requests, so we need to tell it to do a full page redirect
+        return Inertia::location($authUrl);
     }
 
     /**
