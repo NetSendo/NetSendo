@@ -2545,6 +2545,7 @@
             "name_label": "Nazwa",
             "api_key_label": "Klucz API",
             "api_key_help": "(pozostaw puste, aby nie zmieniać)",
+            "optional": "opcjonalne",
             "base_url_label": "URL serwera",
             "base_url_help": "(opcjonalne)",
             "base_url_default": "Domyślnie: {url}",
@@ -3683,6 +3684,10 @@
         "executions": "Wykonania",
         "confirm_duplicate": "Czy chcesz zduplikować tę automatyzację?",
         "confirm_delete": "Czy na pewno chcesz usunąć tę automatyzację?",
+        "restore_defaults": "Przywróć domyślne",
+        "confirm_restore": "Spowoduje to przywrócenie 6 domyślnych automatyzacji AutoTag Pro. Istniejące domyślne automatyzacje zostaną zresetowane do ustawień fabrycznych.",
+        "restore": "Przywróć",
+        "default": "Domyślna",
         "builder": {
             "basic_info": "Podstawowe informacje",
             "name_placeholder": "Nazwa automatyzacji",
@@ -3760,6 +3765,54 @@
             },
             "empty": "Brak wykonań",
             "empty_hint": "Ta automatyzacja nie została jeszcze wykonana."
+        }
+    },
+    "segmentation": {
+        "title": "Segmentacja Behawioralna",
+        "subtitle": "Analiza tagów, scoringu i automatyzacji",
+        "description": "Dashboard segmentacji behawioralnej pokazuje rozkład tagów, segmenty scoringu i statystyki automatyzacji.",
+        "stats": {
+            "total_rules": "Wszystkie Reguły",
+            "active_rules": "Aktywne Reguły",
+            "executions_30d": "Wykonań (30 dni)",
+            "executions_24h": "Wykonań (24h)",
+            "success_rate": "Wskaźnik Sukcesu"
+        },
+        "score_segments": {
+            "title": "Segmenty Scoringu",
+            "cold": "Zimne (0-20)",
+            "warm": "Ciepłe (21-50)",
+            "hot": "Gorące (51-80)",
+            "very_hot": "Bardzo Gorące (81+)",
+            "no_score": "Brak Score"
+        },
+        "tag_distribution": {
+            "title": "Rozkład Tagów",
+            "empty": "Brak tagów",
+            "empty_hint": "Utwórz tagi i przypisz je do subskrybentów.",
+            "subscribers": "subskrybentów"
+        },
+        "engagement_trends": {
+            "title": "Trendy Zaangażowania",
+            "subtitle": "Wykonania automatyzacji (ostatnie 7 dni)",
+            "executions": "Wykonania"
+        },
+        "recent_activity": {
+            "title": "Ostatnia Aktywność",
+            "empty": "Brak aktywności",
+            "empty_hint": "Automatyzacje nie były jeszcze uruchamiane.",
+            "view_all": "Zobacz wszystkie"
+        },
+        "top_triggers": {
+            "title": "Najczęstsze Triggery",
+            "empty": "Brak triggerów",
+            "executions": "wykonań"
+        },
+        "quick_actions": {
+            "title": "Szybkie Akcje",
+            "create_rule": "Utwórz regułę",
+            "manage_tags": "Zarządzaj tagami",
+            "view_logs": "Zobacz logi"
         }
     },
     "campaign_architect": {

@@ -97,6 +97,8 @@ class AiIntegration extends Model
                 'name' => 'Ollama',
                 'description' => 'Lokalne modele AI (Llama, Mistral, etc.)',
                 'requires_api_key' => false,
+                'supports_optional_api_key' => true,
+                'optional_api_key_hint' => 'Opcjonalnie: Bearer token lub klucz dla serwerów za proxy',
                 'supports_base_url' => true,
                 'default_base_url' => 'http://localhost:11434',
                 'logo' => 'ollama',
@@ -150,6 +152,7 @@ class AiIntegration extends Model
                 ['model_id' => 'meta-llama/llama-4-405b', 'display_name' => 'Llama 4 (Full)'],
                 ['model_id' => 'x-ai/grok-3-ultra', 'display_name' => 'Grok 3 Ultra'],
                 ['model_id' => 'mistralai/mistral-large-3', 'display_name' => 'Mistral Large 3'],
+                ['model_id' => 'moonshotai/kimi-k2.5', 'display_name' => 'MoonshotAI Kimi K2.5'],
             ],
             'ollama' => [
                 ['model_id' => 'llama4.1', 'display_name' => 'Llama 4.1 (Latest)'],
@@ -158,6 +161,7 @@ class AiIntegration extends Model
                 ['model_id' => 'mistral4', 'display_name' => 'Mistral 4'],
                 ['model_id' => 'phi5', 'display_name' => 'Phi-5'],
                 ['model_id' => 'deepseek-v4', 'display_name' => 'DeepSeek V4'],
+                ['model_id' => 'kimi-k2.5:cloud', 'display_name' => 'Kimi K2.5 Cloud (Multimodal Agentic)'],
             ],
             'gemini' => [
                 ['model_id' => 'gemini-2.5-pro', 'display_name' => 'Gemini 2.5 Pro (Styczeń 2026)'],

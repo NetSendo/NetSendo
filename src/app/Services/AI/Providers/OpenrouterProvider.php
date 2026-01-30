@@ -68,6 +68,7 @@ class OpenrouterProvider extends BaseProvider
             'mistralai/mistral-large-3',
             'x-ai/grok-3',
             'deepseek/deepseek-v3',
+            'moonshotai/kimi-k2.5',
             // Free Models
             'google/gemini-2.0-flash-exp:free',
             'meta-llama/llama-4-8b-instruct:free',
@@ -75,15 +76,37 @@ class OpenrouterProvider extends BaseProvider
 
         foreach ($data as $model) {
             $id = $model['id'] ?? '';
-            if (in_array($id, $popularModels) || count($models) < 50) {
-                $models[] = [
+            if (in_array($id, $popularModels)) {
+                // Add popular models first with their proper names
+                $models[$id] = [
                     'model_id' => $id,
                     'display_name' => $model['name'] ?? $id,
                 ];
             }
         }
 
-        return $models;
+        // Add any popular models that weren't in API response (new models)
+        foreach ($popularModels as $modelId) {
+            if (!isset($models[$modelId])) {
+                $models[$modelId] = [
+                    'model_id' => $modelId,
+                    'display_name' => $this->formatModelName($modelId),
+                ];
+            }
+        }
+
+        // Add remaining models from API up to 50 total
+        foreach ($data as $model) {
+            $id = $model['id'] ?? '';
+            if (!isset($models[$id]) && count($models) < 50) {
+                $models[$id] = [
+                    'model_id' => $id,
+                    'display_name' => $model['name'] ?? $id,
+                ];
+            }
+        }
+
+        return array_values($models);
     }
 
     public function generateText(string $prompt, ?string $model = null, array $options = []): string
@@ -102,5 +125,25 @@ class OpenrouterProvider extends BaseProvider
         }
 
         return $response['data']['choices'][0]['message']['content'] ?? '';
+    }
+
+    /**
+     * Format model ID to human-readable name
+     */
+    protected function formatModelName(string $modelId): string
+    {
+        // Remove :free suffix if present
+        $cleanId = preg_replace('/:free$/', ' (Free)', $modelId);
+
+        // Split by /
+        $parts = explode('/', $cleanId);
+
+        if (count($parts) === 2) {
+            $provider = ucwords(str_replace(['-', 'ai'], [' ', 'AI'], $parts[0]));
+            $model = ucwords(str_replace('-', ' ', $parts[1]));
+            return trim($provider) . ': ' . trim($model);
+        }
+
+        return $modelId;
     }
 }

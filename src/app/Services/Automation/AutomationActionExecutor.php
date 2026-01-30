@@ -36,7 +36,11 @@ class AutomationActionExecutor
             'unsubscribe' => $this->unsubscribe($actionConfig, $subscriber, $context),
             'call_webhook' => $this->callWebhook($actionConfig, $subscriber, $context),
             'start_funnel' => $this->startFunnel($actionConfig, $subscriber),
+            'stop_funnel' => $this->stopFunnel($actionConfig, $subscriber),
+            'start_sequence' => $this->startFunnel($actionConfig, $subscriber), // Alias
+            'stop_sequence' => $this->stopFunnel($actionConfig, $subscriber),   // Alias
             'update_field' => $this->updateField($actionConfig, $subscriber),
+            'add_score' => $this->addScore($actionConfig, $subscriber, $context),
             'notify_admin' => $this->notifyAdmin($actionConfig, $subscriber, $context),
             // CRM Actions
             'crm_create_task' => $this->createCrmTask($actionConfig, $subscriber, $context),
@@ -333,6 +337,92 @@ class AutomationActionExecutor
         $funnelService->enrollSubscriber($funnel, $subscriber);
 
         return ['funnel_id' => $funnelId, 'enrolled' => true];
+    }
+
+    /**
+     * Stop/remove a subscriber from a funnel.
+     */
+    protected function stopFunnel(array $config, ?Subscriber $subscriber): array
+    {
+        if (!$subscriber) {
+            throw new \InvalidArgumentException('Subscriber required for stop_funnel action');
+        }
+
+        $funnelId = $config['funnel_id'] ?? $config['sequence_id'] ?? null;
+
+        if (!$funnelId) {
+            throw new \InvalidArgumentException('Funnel ID required');
+        }
+
+        $funnel = Funnel::find($funnelId);
+        if (!$funnel) {
+            throw new \InvalidArgumentException("Funnel not found: {$funnelId}");
+        }
+
+        // Remove subscriber from funnel
+        $enrollment = \App\Models\FunnelSubscriber::where('funnel_id', $funnelId)
+            ->where('subscriber_id', $subscriber->id)
+            ->whereIn('status', ['active', 'pending'])
+            ->first();
+
+        if ($enrollment) {
+            $enrollment->update([
+                'status' => 'stopped',
+                'stopped_at' => now(),
+            ]);
+        }
+
+        return ['funnel_id' => $funnelId, 'stopped' => true];
+    }
+
+    /**
+     * Add lead score points to subscriber.
+     */
+    protected function addScore(array $config, ?Subscriber $subscriber, array $context): array
+    {
+        if (!$subscriber) {
+            throw new \InvalidArgumentException('Subscriber required for add_score action');
+        }
+
+        $points = (int) ($config['points'] ?? $config['score'] ?? 0);
+        $field = $config['field'] ?? 'lead_score';
+
+        // Find CRM contact for this subscriber
+        $contact = \App\Models\CrmContact::where('subscriber_id', $subscriber->id)->first();
+
+        if ($contact) {
+            // Use existing LeadScoringService via CRM contact
+            $oldScore = $contact->score;
+            $newScore = $contact->updateScore($points, 'automation_rule', null, [
+                'source' => 'automation',
+                'config' => $config,
+            ]);
+
+            return [
+                'contact_id' => $contact->id,
+                'points_added' => $points,
+                'old_score' => $oldScore,
+                'new_score' => $newScore,
+            ];
+        }
+
+        // If no CRM contact, create one automatically
+        $contact = \App\Models\CrmContact::createFromSubscriber($subscriber, [
+            'status' => 'lead',
+            'source' => 'automation',
+        ]);
+
+        $newScore = $contact->updateScore($points, 'automation_rule', null, [
+            'source' => 'automation_auto_create',
+            'config' => $config,
+        ]);
+
+        return [
+            'contact_id' => $contact->id,
+            'contact_created' => true,
+            'points_added' => $points,
+            'new_score' => $newScore,
+        ];
     }
 
     /**

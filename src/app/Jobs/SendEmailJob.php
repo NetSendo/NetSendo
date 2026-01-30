@@ -13,7 +13,6 @@ use App\Services\EmailImageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
 class SendEmailJob implements ShouldQueue
@@ -200,43 +199,31 @@ class SendEmailJob implements ShouldQueue
                 'mime_type' => $a->mime_type,
             ])->filter(fn($a) => file_exists($a['path']))->values()->toArray();
 
-            if ($mailbox) {
-                // Use custom mailbox provider
-                $provider = $providerService->getProvider($mailbox);
-                // Resolve custom headers
-                $headers = $this->resolveHeaders($placeholderService);
-
-                $provider->send(
-                    $this->subscriber->email,
-                    $recipientName ?: $this->subscriber->email,
-                    $subject,
-                    $content,
-                    $headers,
-                    $attachments
+            // Mailbox is required - throw exception if not available
+            if (!$mailbox) {
+                throw new \RuntimeException(
+                    "Brak skonfigurowanej skrzynki pocztowej. Skonfiguruj skrzynkę w ustawieniach przed wysyłką wiadomości."
                 );
-
-                // Track sent count for rate limiting
-                $mailbox->incrementSentCount();
-
-                Log::info("Email sent via {$mailbox->provider} ({$mailbox->name}) to {$this->subscriber->email}");
-            } else {
-                // Fall back to default Laravel mailer
-                Mail::html($content, function ($mail) use ($subject, $attachments) {
-                    $mail->to($this->subscriber->email, ($this->subscriber->first_name . ' ' . $this->subscriber->last_name));
-                    $mail->subject($subject);
-                    $mail->from(config('mail.from.address'), config('mail.from.name'));
-
-                    // Add attachments
-                    foreach ($attachments as $attachment) {
-                        $mail->attach($attachment['path'], [
-                            'as' => $attachment['name'],
-                            'mime' => $attachment['mime_type'],
-                        ]);
-                    }
-                });
-
-                Log::info("Email sent via default mailer to {$this->subscriber->email}");
             }
+
+            // Use custom mailbox provider
+            $provider = $providerService->getProvider($mailbox);
+            // Resolve custom headers
+            $headers = $this->resolveHeaders($placeholderService);
+
+            $provider->send(
+                $this->subscriber->email,
+                $recipientName ?: $this->subscriber->email,
+                $subject,
+                $content,
+                $headers,
+                $attachments
+            );
+
+            // Track sent count for rate limiting
+            $mailbox->incrementSentCount();
+
+            Log::info("Email sent via {$mailbox->provider} ({$mailbox->name}) to {$this->subscriber->email}");
 
             // 7. Update queue entry status on successful delivery
             $this->markQueueEntryAsSent();

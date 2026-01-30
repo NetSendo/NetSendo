@@ -7,7 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.1] – Short Description
+
+**Release date:** 2026-01-31
+
+### Added
+
+- **AI Integration:**
+  - Added support for **MoonshotAI Kimi K2.5** model via OpenRouter (`moonshotai/kimi-k2.5`) in all AI assistants.
+  - Updated AI settings to include the new model in the selection list.
+  - Improved model fetching to prioritize popular models even if not yet returned by API.
+  - Added support for **Kimi K2.5** model in Ollama (`kimi-k2.5:cloud`) integration.
+  - Added Optional API Key support for Ollama provider (allowing connection to secured/proxied Ollama instances).
+
+- **AutoTag Pro - Behavioral Segmentation Engine:**
+  - **Automations System:** Complete rule-based automation engine with visual builder for creating subscriber tagging and scoring rules.
+  - **Trigger Events:** Support for 30+ trigger types including email opens/clicks, form submissions, purchases, pixel tracking (cart abandonment, product views), CRM events (deal stage changes, task completion), and subscriber lifecycle events.
+  - **Actions:** Automated actions include adding/removing tags, adjusting lead scores, subscribing to lists, sending notifications, and creating CRM tasks.
+  - **Condition Builder:** Advanced condition logic (AND/OR) for filtering which subscribers trigger automations.
+  - **Execution Logging:** Full audit trail with `AutomationRuleLog` tracking trigger events, actions executed, and success/failure status.
+  - **Segmentation Dashboard:** New `/segmentation` page with real-time analytics:
+    - Tag distribution chart showing top 15 tags by subscriber count.
+    - Score-based segments (Cold, Warm, Hot, Super Hot) with CRM contact counts.
+    - Automation statistics: total rules, active rules, executions (24h/7d), success rate.
+    - Top triggers breakdown showing most active automation triggers.
+    - Recent activity feed with last 10 automation executions.
+    - 7-day engagement trend chart showing daily execution volume.
+  - **UI Components:** `Automations/Index.vue` for rule management, `Automations/Builder.vue` for visual rule creation.
+  - **Sidebar Integration:** Added Segmentation Dashboard link to sidebar under automation group.
+  - **Database:** `AutomationRule` and `AutomationRuleLog` models with full relationship support.
+  - Full translations in PL, EN, DE, ES.
+
+- **Default Automations System:**
+  - Added 6 pre-configured automation templates that are seeded for each user on fresh install.
+  - Templates include: Cold Lead Detection, Engaged Reader, Purchase Behavior, Click Champion, Welcome Sequence Trigger, and Cart Abandonment.
+  - Added `is_system` and `system_key` columns to `automation_rules` table for identifying default automations.
+  - Created `DefaultAutomationsSeeder` with factory templates and restore functionality.
+  - Created `php artisan automations:seed-defaults` command for manual seeding.
+  - Added "Restore Defaults" button to Automations page header with confirmation modal.
+  - Added "Default" badge displayed next to system automation names in the list.
+  - Expanded `trigger_event` ENUM to support all modern triggers including `subscriber_inactive`, `purchase`, `pixel_cart_abandoned`, and CRM events.
+  - Full translations for restore functionality in PL, EN, DE, ES.
+
 ### Improved
+
+- **A/B Testing Distribution:**
+  - Implemented balanced round-robin style distribution for variant assignment instead of pure random selection.
+  - Ensures accurate 50/50 split even for small sample sizes (e.g., 2 recipients), preventing scenarios where all recipients are assigned to a single variant.
+
+- **A/B Testing Results - Sample Period Statistics:**
+  - A/B test results now show only statistics from the test period (sample), excluding winner rollout to remaining audience.
+  - All variant metrics (sent, opens, clicks, rates) are filtered to only include data before `test_ended_at`.
+  - Added `getTotalMetrics()` method for accessing complete statistics including post-test winner sends.
 
 - **Calendly Integration Settings UI:**
   - **Enhanced List Selection:** Replaced standard multi-select inputs with searchable checkbox lists for "Mailing Lists" and "Tags" in the settings modal.
@@ -17,6 +68,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Per Event Type Configuration:** Added ability to configure different mailing lists and tags for each Calendly event type independently.
 
 ### Fixed
+
+- **AI Model Selection:**
+  - Fixed an issue where newly added default models (like MoonshotAI Kimi K2.5) were not visible in assistant dropdowns for existing integrations.
+  - Updated `ActiveAiModelsController` to always merge default models with stored integration models.
+
+- **Email Sending - Mailbox Configuration:**
+  - Fixed an issue where emails were marked as "sent" even when no mailbox was configured (default mailer fallback removed).
+  - System now throws a clear exception when trying to send without a valid mailbox, ensuring failed sends are properly tracked.
 
 - **Calendly Integration - Webhook Subscription:**
   - Fixed "Invalid Argument" error when creating webhook subscription.

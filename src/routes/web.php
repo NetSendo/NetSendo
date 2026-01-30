@@ -207,6 +207,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('automations/{automation}/toggle-status', [\App\Http\Controllers\AutomationController::class, 'toggleStatus'])->name('automations.toggle-status');
     Route::get('automations/{automation}/logs', [\App\Http\Controllers\AutomationController::class, 'logs'])->name('automations.logs');
     Route::get('api/automations/stats', [\App\Http\Controllers\AutomationController::class, 'stats'])->name('api.automations.stats');
+    Route::post('automations/restore-defaults', [\App\Http\Controllers\AutomationController::class, 'restoreDefaults'])->name('automations.restore-defaults');
+
+    // AutoTag Pro - Segmentation Dashboard
+    Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index');
 
     // AI Campaign Architect
     Route::prefix('campaign-architect')->name('campaign-architect.')->group(function () {

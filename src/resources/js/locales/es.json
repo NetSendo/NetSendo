@@ -2822,6 +2822,10 @@
         "executions": "Ejecuciones",
         "confirm_duplicate": "¿Desea duplicar esta automatización?",
         "confirm_delete": "¿Está seguro de que desea eliminar esta automatización?",
+        "restore_defaults": "Restaurar predeterminados",
+        "confirm_restore": "Esto restaurará 6 automatizaciones predeterminadas de AutoTag Pro. Las automatizaciones predeterminadas existentes se restablecerán a la configuración de fábrica.",
+        "restore": "Restaurar",
+        "default": "Predeterminada",
         "builder": {
             "basic_info": "Información básica",
             "name_placeholder": "Nombre de la automatización",
@@ -2899,6 +2903,53 @@
             },
             "empty": "No hay ejecuciones",
             "empty_hint": "Esta automatización aún no se ha ejecutado."
+        }
+    },
+    "segmentation": {
+        "title": "Segmentación Conductual",
+        "subtitle": "Análisis de etiquetas, puntuación y automatización",
+        "description": "El panel de segmentación muestra la distribución de etiquetas, segmentos de puntuación y estadísticas de automatización.",
+        "stats": {
+            "total_rules": "Reglas Totales",
+            "active_rules": "Reglas Activas",
+            "executions_30d": "Ejecuciones (30d)",
+            "success_rate": "Tasa de Éxito"
+        },
+        "score_segments": {
+            "title": "Segmentos de Puntuación",
+            "cold": "Frío (0-20)",
+            "warm": "Tibio (21-50)",
+            "hot": "Caliente (51-80)",
+            "very_hot": "Muy Caliente (81+)",
+            "no_score": "Sin Puntuación"
+        },
+        "tag_distribution": {
+            "title": "Distribución de Etiquetas",
+            "empty": "Sin etiquetas",
+            "empty_hint": "Cree etiquetas y asígnelas a suscriptores.",
+            "subscribers": "suscriptores"
+        },
+        "engagement_trends": {
+            "title": "Tendencias de Engagement",
+            "subtitle": "Ejecuciones de automatización (últimos 7 días)",
+            "executions": "Ejecuciones"
+        },
+        "recent_activity": {
+            "title": "Actividad Reciente",
+            "empty": "Sin actividad",
+            "empty_hint": "Las automatizaciones aún no se han activado.",
+            "view_all": "Ver todo"
+        },
+        "top_triggers": {
+            "title": "Principales Disparadores",
+            "empty": "Sin disparadores",
+            "executions": "ejecuciones"
+        },
+        "quick_actions": {
+            "title": "Acciones Rápidas",
+            "create_rule": "Crear regla",
+            "manage_tags": "Gestionar etiquetas",
+            "view_logs": "Ver registros"
         }
     },
     "backup": {

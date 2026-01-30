@@ -287,3 +287,51 @@ The following translation keys were added to support user-customizable task type
 <h3>{{ $t("calendar.task_colors.title") }}</h3>
 <p>{{ $t("calendar.task_colors.description") }}</p>
 ```
+
+### Segmentation Dashboard (January 2026)
+
+The following translation keys were added to support the AutoTag Pro Segmentation Dashboard feature:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Segmentation Section (`segmentation.*`):**
+
+- `segmentation.title` - Dashboard title
+- `segmentation.subtitle` - Dashboard subtitle/description
+- `segmentation.stats.total_rules` - Total rules stat card
+- `segmentation.stats.active_rules` - Active rules stat card
+- `segmentation.stats.executions_30d` - Executions (30 days) stat card
+- `segmentation.stats.success_rate` - Success rate stat card
+- `segmentation.score_segments.title` - Score segments section title
+- `segmentation.score_segments.cold` - Cold (0-20) segment label
+- `segmentation.score_segments.warm` - Warm (21-50) segment label
+- `segmentation.score_segments.hot` - Hot (51-80) segment label
+- `segmentation.score_segments.very_hot` - Very Hot (81+) segment label
+- `segmentation.score_segments.no_score` - No score segment label
+- `segmentation.tag_distribution.title` - Tag distribution section title
+- `segmentation.tag_distribution.empty` - Empty state message
+- `segmentation.tag_distribution.subscribers` - Subscribers count label
+- `segmentation.engagement_trends.title` - Engagement trends section title
+- `segmentation.engagement_trends.subtitle` - Chart subtitle
+- `segmentation.engagement_trends.executions` - Y-axis label
+- `segmentation.recent_activity.title` - Recent activity section title
+- `segmentation.recent_activity.empty` - Empty state message
+- `segmentation.recent_activity.view_all` - View all link
+- `segmentation.top_triggers.title` - Top triggers section title
+- `segmentation.top_triggers.executions` - Executions count label
+- `segmentation.quick_actions.title` - Quick actions section title
+- `segmentation.quick_actions.create_rule` - Create rule button
+- `segmentation.quick_actions.manage_tags` - Manage tags button
+- `segmentation.quick_actions.view_logs` - View logs button
+
+**Usage Example:**
+
+```vue
+<h1>{{ $t("segmentation.title") }}</h1>
+<p>{{ $t("segmentation.subtitle") }}</p>
+
+<div class="stat-card">
+  <span>{{ $t("segmentation.stats.total_rules") }}</span>
+  <span>{{ stats.totalRules }}</span>
+</div>
+```

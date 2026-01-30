@@ -21,6 +21,8 @@ class AutomationRule extends Model
         'condition_logic',
         'actions',
         'is_active',
+        'is_system',
+        'system_key',
         'execution_count',
         'last_executed_at',
         'limit_per_subscriber',
@@ -35,6 +37,7 @@ class AutomationRule extends Model
         'conditions' => 'array',
         'actions' => 'array',
         'is_active' => 'boolean',
+        'is_system' => 'boolean',
         'limit_per_subscriber' => 'boolean',
         'last_executed_at' => 'datetime',
     ];
@@ -45,6 +48,7 @@ class AutomationRule extends Model
     public const TRIGGER_EVENTS = [
         'subscriber_signup' => 'Zapis na listę',
         'subscriber_activated' => 'Aktywacja subskrybenta',
+        'list_join' => 'Dołączenie do listy',
         'email_opened' => 'Otwarcie emaila',
         'email_clicked' => 'Kliknięcie w link',
         'subscriber_unsubscribed' => 'Wypisanie z listy',
@@ -61,6 +65,8 @@ class AutomationRule extends Model
         'subscriber_birthday' => 'Urodziny subskrybenta',
         'subscription_anniversary' => 'Rocznica zapisu',
         'subscriber_inactive' => 'Brak aktywności',
+        // E-commerce / Purchase triggers
+        'purchase' => '🛒 Zakup (webhook)',
         // Pixel tracking triggers (e-commerce)
         'pixel_page_visited' => '🎯 Pixel: Odwiedziny strony',
         'pixel_product_viewed' => '🎯 Pixel: Wyświetlenie produktu',
@@ -94,7 +100,11 @@ class AutomationRule extends Model
         'unsubscribe' => 'Wypisz z listy',
         'call_webhook' => 'Wywołaj webhook',
         'start_funnel' => 'Uruchom lejek',
+        'stop_funnel' => 'Zatrzymaj lejek',
+        'start_sequence' => 'Uruchom sekwencję',
+        'stop_sequence' => 'Zatrzymaj sekwencję',
         'update_field' => 'Zaktualizuj pole',
+        'add_score' => 'Dodaj punkty scoring',
         'notify_admin' => 'Powiadom administratora',
         // CRM Actions
         'crm_create_task' => '💼 CRM: Utwórz zadanie',

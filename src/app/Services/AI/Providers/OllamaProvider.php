@@ -18,11 +18,18 @@ class OllamaProvider extends BaseProvider
 
     protected function getDefaultHeaders(): array
     {
-        // Ollama doesn't require authentication
-        return [
+        $headers = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
         ];
+
+        // Optional: Add Authorization header if API key is configured
+        // Useful for Ollama servers behind reverse proxy with auth
+        if (!empty($this->apiKey)) {
+            $headers['Authorization'] = 'Bearer ' . $this->apiKey;
+        }
+
+        return $headers;
     }
 
     public function testConnection(): array
@@ -98,6 +105,7 @@ class OllamaProvider extends BaseProvider
             'mistral4' => 'Mistral 4',
             'phi5' => 'Phi-5',
             'qwen3' => 'Qwen 3',
+            'kimi-k2.5' => 'Kimi K2.5 (Multimodal Agentic)',
         ];
 
         return $names[$name] ?? ucfirst(str_replace(['-', '_'], ' ', $name));

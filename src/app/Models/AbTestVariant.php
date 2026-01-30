@@ -70,43 +70,85 @@ class AbTestVariant extends Model
     }
 
     /**
-     * Get the number of emails sent with this variant.
+     * Get the number of emails sent with this variant during the test period.
+     * Excludes winner sends to remaining audience after test completion.
+     *
+     * @param bool $testPeriodOnly If true, only count sends during test period
      */
-    public function getSentCount(): int
+    public function getSentCount(bool $testPeriodOnly = true): int
     {
-        return $this->queueEntries()->where('status', 'sent')->count();
+        $query = $this->queueEntries()->where('status', 'sent');
+
+        // If test has ended, only count sends before test ended (test sample only)
+        if ($testPeriodOnly && $this->abTest?->test_ended_at) {
+            $query->where('sent_at', '<=', $this->abTest->test_ended_at);
+        }
+
+        return $query->count();
     }
 
     /**
-     * Get the total number of opens.
+     * Get the total number of emails sent with this variant (including winner rollout).
      */
-    public function getOpenCount(): int
+    public function getTotalSentCount(): int
     {
-        return $this->opens()->count();
+        return $this->getSentCount(false);
     }
 
     /**
-     * Get the number of unique opens (one per subscriber).
+     * Get the total number of opens during test period.
      */
-    public function getUniqueOpenCount(): int
+    public function getOpenCount(bool $testPeriodOnly = true): int
     {
-        return $this->opens()->distinct('subscriber_id')->count('subscriber_id');
+        $query = $this->opens();
+
+        if ($testPeriodOnly && $this->abTest?->test_ended_at) {
+            $query->where('created_at', '<=', $this->abTest->test_ended_at);
+        }
+
+        return $query->count();
     }
 
     /**
-     * Get the total number of clicks.
+     * Get the number of unique opens (one per subscriber) during test period.
      */
-    public function getClickCount(): int
+    public function getUniqueOpenCount(bool $testPeriodOnly = true): int
     {
-        return $this->clicks()->count();
+        $query = $this->opens();
+
+        if ($testPeriodOnly && $this->abTest?->test_ended_at) {
+            $query->where('created_at', '<=', $this->abTest->test_ended_at);
+        }
+
+        return $query->distinct('subscriber_id')->count('subscriber_id');
     }
 
     /**
-     * Get the number of unique clicks (one per subscriber).
+     * Get the total number of clicks during test period.
      */
-    public function getUniqueClickCount(): int
+    public function getClickCount(bool $testPeriodOnly = true): int
     {
-        return $this->clicks()->distinct('subscriber_id')->count('subscriber_id');
+        $query = $this->clicks();
+
+        if ($testPeriodOnly && $this->abTest?->test_ended_at) {
+            $query->where('created_at', '<=', $this->abTest->test_ended_at);
+        }
+
+        return $query->count();
+    }
+
+    /**
+     * Get the number of unique clicks (one per subscriber) during test period.
+     */
+    public function getUniqueClickCount(bool $testPeriodOnly = true): int
+    {
+        $query = $this->clicks();
+
+        if ($testPeriodOnly && $this->abTest?->test_ended_at) {
+            $query->where('created_at', '<=', $this->abTest->test_ended_at);
+        }
+
+        return $query->distinct('subscriber_id')->count('subscriber_id');
     }
 
     /**
@@ -158,7 +200,7 @@ class AbTestVariant extends Model
     }
 
     /**
-     * Get all metrics as an array.
+     * Get all metrics as an array (test period only by default).
      */
     public function getMetrics(): array
     {
@@ -171,6 +213,27 @@ class AbTestVariant extends Model
             'open_rate' => $this->getOpenRate(),
             'click_rate' => $this->getClickRate(),
             'click_to_open_rate' => $this->getClickToOpenRate(),
+        ];
+    }
+
+    /**
+     * Get all metrics including the winner rollout to remaining audience.
+     */
+    public function getTotalMetrics(): array
+    {
+        $sent = $this->getSentCount(false);
+        $uniqueOpens = $this->getUniqueOpenCount(false);
+        $uniqueClicks = $this->getUniqueClickCount(false);
+
+        return [
+            'sent' => $sent,
+            'opens' => $this->getOpenCount(false),
+            'unique_opens' => $uniqueOpens,
+            'clicks' => $this->getClickCount(false),
+            'unique_clicks' => $uniqueClicks,
+            'open_rate' => $sent > 0 ? round(($uniqueOpens / $sent) * 100, 2) : 0.0,
+            'click_rate' => $sent > 0 ? round(($uniqueClicks / $sent) * 100, 2) : 0.0,
+            'click_to_open_rate' => $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 2) : 0.0,
         ];
     }
 

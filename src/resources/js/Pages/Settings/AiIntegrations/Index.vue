@@ -417,6 +417,10 @@ const defaultModels = {
             model_id: "mistralai/mistral-large-3",
             display_name: "Mistral Large 3",
         },
+        {
+            model_id: "moonshotai/kimi-k2.5",
+            display_name: "MoonshotAI Kimi K2.5",
+        },
     ],
     ollama: [
         { model_id: "llama4.1", display_name: "Llama 4.1 (Latest)" },
@@ -425,6 +429,10 @@ const defaultModels = {
         { model_id: "mistral4", display_name: "Mistral 4" },
         { model_id: "phi5", display_name: "Phi-5" },
         { model_id: "deepseek-v4", display_name: "DeepSeek V4" },
+        {
+            model_id: "kimi-k2.5:cloud",
+            display_name: "Kimi K2.5 Cloud (Multimodal)",
+        },
     ],
     gemini: [
         {
@@ -442,14 +450,22 @@ const currentProviderModels = computed(() => {
     if (!form.provider) return [];
 
     const integration = getIntegration(form.provider);
-    let models = [];
+    const defaults = defaultModels[form.provider] || [];
 
-    // Use API models if available, otherwise use defaults
+    // Always start with default models
+    const modelMap = new Map();
+    defaults.forEach((m) => modelMap.set(m.model_id, m));
+
+    // Add API models (will not override defaults)
     if (integration && integration.models && integration.models.length > 0) {
-        models = integration.models;
-    } else {
-        models = defaultModels[form.provider] || [];
+        integration.models.forEach((m) => {
+            if (!modelMap.has(m.model_id)) {
+                modelMap.set(m.model_id, m);
+            }
+        });
     }
+
+    let models = Array.from(modelMap.values());
 
     // Filter by search
     if (modelSearch.value) {
@@ -914,17 +930,45 @@ const currentProviderModels = computed(() => {
                         </div>
 
                         <!-- API Key -->
-                        <div v-if="providers[form.provider]?.requires_api_key">
+                        <div
+                            v-if="
+                                providers[form.provider]?.requires_api_key ||
+                                providers[form.provider]
+                                    ?.supports_optional_api_key
+                            "
+                        >
                             <label
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                             >
                                 {{ $t("ai.modal.api_key_label") }}
+                                <span
+                                    v-if="
+                                        providers[form.provider]
+                                            ?.supports_optional_api_key &&
+                                        !providers[form.provider]
+                                            ?.requires_api_key
+                                    "
+                                    class="font-normal text-gray-500"
+                                    >({{ $t("ai.modal.optional") }})</span
+                                >
                                 <span
                                     v-if="modalMode === 'edit'"
                                     class="font-normal text-gray-500"
                                     >{{ $t("ai.modal.api_key_help") }}</span
                                 >
                             </label>
+                            <p
+                                v-if="
+                                    providers[form.provider]
+                                        ?.optional_api_key_hint
+                                "
+                                class="text-xs text-gray-500 mb-1"
+                            >
+                                {{
+                                    providers[form.provider]
+                                        .optional_api_key_hint
+                                }}
+                            </p>
                             <div class="relative mt-1">
                                 <input
                                     v-model="form.api_key"

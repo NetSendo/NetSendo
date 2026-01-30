@@ -228,3 +228,9 @@ Route::get('mcp/test', [McpController::class, 'test'])
 Route::post('webhooks/calendly', [\App\Http\Controllers\Webhooks\CalendlyController::class, 'handle'])
     ->name('api.webhooks.calendly');
 
+// AutoTag Pro - Purchase Webhook (for e-commerce integrations)
+// Requires API key authentication for security
+Route::post('webhooks/purchase', \App\Http\Controllers\Api\PurchaseWebhookController::class)
+    ->middleware(['api.key', 'throttle:api'])
+    ->name('api.webhooks.purchase');
+

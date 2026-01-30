@@ -161,29 +161,69 @@ class AbTestService
     }
 
     /**
-     * Assign a variant to a subscriber using weighted random selection.
+     * Assign a variant to a subscriber using balanced distribution.
+     *
+     * Instead of pure random selection (which can cause uneven distribution with small samples),
+     * this method assigns subscribers to the variant that is most "behind" its target ratio.
+     * This ensures even distribution (e.g., 1-1-1-1 instead of potentially 4-0 with random).
      */
     public function assignVariant(AbTest $test, Subscriber $subscriber): AbTestVariant
     {
         $variants = $test->variants()->get();
 
-        // Calculate total weight
+        if ($variants->count() === 0) {
+            throw new \RuntimeException('No variants available for assignment');
+        }
+
+        if ($variants->count() === 1) {
+            return $variants->first();
+        }
+
+        // Get current counts for each variant
+        $variantCounts = [];
         $totalWeight = $variants->sum('weight');
 
-        // Random number from 0 to total weight
-        $random = mt_rand(0, $totalWeight - 1);
-
-        // Select variant based on weight
-        $cumulativeWeight = 0;
         foreach ($variants as $variant) {
-            $cumulativeWeight += $variant->weight;
-            if ($random < $cumulativeWeight) {
-                return $variant;
+            $variantCounts[$variant->id] = [
+                'variant' => $variant,
+                'count' => MessageQueueEntry::where('ab_test_variant_id', $variant->id)
+                    ->whereIn('status', [
+                        MessageQueueEntry::STATUS_PLANNED,
+                        MessageQueueEntry::STATUS_QUEUED,
+                        MessageQueueEntry::STATUS_SENT,
+                    ])
+                    ->count(),
+                'weight' => $variant->weight,
+                'target_ratio' => $variant->weight / $totalWeight,
+            ];
+        }
+
+        // Calculate total assigned so far
+        $totalAssigned = array_sum(array_column($variantCounts, 'count'));
+
+        // Find the variant that is most "behind" its target ratio
+        // Formula: (current_count / (total + 1)) vs target_ratio
+        // We pick the variant where adding one more would bring it closest to its target
+        $bestVariant = null;
+        $bestScore = PHP_INT_MAX;
+
+        foreach ($variantCounts as $data) {
+            // Calculate how far this variant would be from its target if we assign to it
+            $newCount = $data['count'] + 1;
+            $newTotal = $totalAssigned + 1;
+            $newRatio = $newCount / $newTotal;
+            $deviation = abs($newRatio - $data['target_ratio']);
+
+            // In case of tie (both equally close to target), add small random factor
+            $score = $deviation + (mt_rand(0, 1000) / 10000000);
+
+            if ($score < $bestScore) {
+                $bestScore = $score;
+                $bestVariant = $data['variant'];
             }
         }
 
-        // Fallback to first variant
-        return $variants->first();
+        return $bestVariant ?? $variants->first();
     }
 
     /**

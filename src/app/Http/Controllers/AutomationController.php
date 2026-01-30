@@ -299,4 +299,27 @@ class AutomationController extends Controller
 
         return response()->json($stats);
     }
+
+    /**
+     * Restore default automations for the current user.
+     */
+    public function restoreDefaults()
+    {
+        $user = Auth::user();
+
+        $seeder = new \Database\Seeders\DefaultAutomationsSeeder();
+        $count = $seeder->restoreForUser($user);
+
+        return back()->with('success', __('Przywrócono :count domyślnych automatyzacji.', ['count' => $count]));
+    }
+
+    /**
+     * Check if user has any system automations.
+     */
+    public function hasSystemAutomations(): bool
+    {
+        return AutomationRule::forUser(Auth::id())
+            ->where('is_system', true)
+            ->exists();
+    }
 }

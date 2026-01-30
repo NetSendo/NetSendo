@@ -265,6 +265,52 @@ class AutomationService
             }
         }
 
+        // ===== AutoTag Pro - Purchase Trigger Filters =====
+
+        // Check product_id filter (for purchase trigger)
+        if (!empty($config['product_id'])) {
+            $contextProductId = $context['product_id'] ?? '';
+            if ($contextProductId !== $config['product_id']) {
+                return false;
+            }
+        }
+
+        // Check product_category filter (for purchase trigger)
+        if (!empty($config['product_category'])) {
+            $contextCategory = $context['product_category'] ?? '';
+            if ($contextCategory !== $config['product_category']) {
+                return false;
+            }
+        }
+
+        // Check min_value filter (for purchase trigger)
+        if (!empty($config['min_value'])) {
+            $purchaseValue = (float) ($context['value'] ?? 0);
+            $minValue = (float) $config['min_value'];
+            if ($purchaseValue < $minValue) {
+                return false;
+            }
+        }
+
+        // Check max_value filter (for purchase trigger)
+        if (!empty($config['max_value'])) {
+            $purchaseValue = (float) ($context['value'] ?? 0);
+            $maxValue = (float) $config['max_value'];
+            if ($purchaseValue > $maxValue) {
+                return false;
+            }
+        }
+
+        // ===== AutoTag Pro - Link Category Filter =====
+
+        // Check link_category filter (for email_clicked trigger)
+        if (!empty($config['link_category'])) {
+            $linkCategory = $context['link_category'] ?? $context['category'] ?? '';
+            if ($linkCategory !== $config['link_category']) {
+                return false;
+            }
+        }
+
         return true;
     }
 

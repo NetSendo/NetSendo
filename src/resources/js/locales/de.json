@@ -2834,6 +2834,10 @@
         "executions": "Ausführungen",
         "confirm_duplicate": "Möchten Sie diese Automatisierung duplizieren?",
         "confirm_delete": "Sind Sie sicher, dass Sie diese Automatisierung löschen möchten?",
+        "restore_defaults": "Standardeinstellungen wiederherstellen",
+        "confirm_restore": "Dadurch werden 6 Standard-AutoTag Pro-Automatisierungen wiederhergestellt. Bestehende Standardautomatisierungen werden auf Werkseinstellungen zurückgesetzt.",
+        "restore": "Wiederherstellen",
+        "default": "Standard",
         "builder": {
             "basic_info": "Basis-Informationen",
             "name_placeholder": "Name der Automatisierung",
@@ -2911,6 +2915,53 @@
             },
             "empty": "Keine Ausführungen",
             "empty_hint": "Diese Automatisierung wurde noch nicht ausgeführt."
+        }
+    },
+    "segmentation": {
+        "title": "Verhaltens-Segmentierung",
+        "subtitle": "Tag-, Scoring- und Automatisierungsanalyse",
+        "description": "Das Segmentierungs-Dashboard zeigt Tag-Verteilung, Scoring-Segmente und Automatisierungsstatistiken.",
+        "stats": {
+            "total_rules": "Gesamt Regeln",
+            "active_rules": "Aktive Regeln",
+            "executions_30d": "Ausführungen (30T)",
+            "success_rate": "Erfolgsrate"
+        },
+        "score_segments": {
+            "title": "Scoring-Segmente",
+            "cold": "Kalt (0-20)",
+            "warm": "Warm (21-50)",
+            "hot": "Heiß (51-80)",
+            "very_hot": "Sehr Heiß (81+)",
+            "no_score": "Kein Score"
+        },
+        "tag_distribution": {
+            "title": "Tag-Verteilung",
+            "empty": "Keine Tags",
+            "empty_hint": "Erstellen Sie Tags und weisen Sie sie Abonnenten zu.",
+            "subscribers": "Abonnenten"
+        },
+        "engagement_trends": {
+            "title": "Engagement-Trends",
+            "subtitle": "Automatisierungsausführungen (letzte 7 Tage)",
+            "executions": "Ausführungen"
+        },
+        "recent_activity": {
+            "title": "Letzte Aktivität",
+            "empty": "Keine Aktivität",
+            "empty_hint": "Automatisierungen wurden noch nicht ausgelöst.",
+            "view_all": "Alle anzeigen"
+        },
+        "top_triggers": {
+            "title": "Top-Trigger",
+            "empty": "Keine Trigger",
+            "executions": "Ausführungen"
+        },
+        "quick_actions": {
+            "title": "Schnellaktionen",
+            "create_rule": "Regel erstellen",
+            "manage_tags": "Tags verwalten",
+            "view_logs": "Logs anzeigen"
         }
     },
     "backup": {
