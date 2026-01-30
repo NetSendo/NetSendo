@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Fixed "Table already exists" error (`SQLSTATE[42S01]`) when running migrations on servers with existing `calendly_integrations` table.
   - Added `Schema::hasTable()` check to prevent duplicate table creation.
 
+- **Calendly Integration - OAuth Token Storage:**
+  - Fixed "Column 'access_token' cannot be null" error (`SQLSTATE[23000]`) during OAuth connection flow.
+  - Made `access_token` and `refresh_token` columns nullable to support two-phase OAuth (credentials saved first, tokens obtained after callback).
+
 ## [1.8.0] – Short Description
 
 **Release date:** 2026-01-30
