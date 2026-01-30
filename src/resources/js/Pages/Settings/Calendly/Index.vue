@@ -14,6 +14,44 @@ const props = defineProps({
 const page = usePage();
 const flash = computed(() => page.props.flash);
 
+// Expanded event types for per-event-type configuration
+const expandedEventTypes = ref({});
+
+// Get event type mapping or defaults to global settings
+function getEventTypeMapping(eventTypeUri) {
+    const mappings = settingsForm.settings.event_type_mappings || {};
+    if (mappings[eventTypeUri]) {
+        return mappings[eventTypeUri];
+    }
+    // Return default structure for new mapping
+    return {
+        use_custom: false,
+        list_ids: [],
+        tag_ids: [],
+    };
+}
+
+// Toggle event type expansion
+function toggleEventType(eventTypeUri) {
+    expandedEventTypes.value[eventTypeUri] =
+        !expandedEventTypes.value[eventTypeUri];
+}
+
+// Update event type mapping
+function updateEventTypeMapping(eventTypeUri, field, value) {
+    if (!settingsForm.settings.event_type_mappings) {
+        settingsForm.settings.event_type_mappings = {};
+    }
+    if (!settingsForm.settings.event_type_mappings[eventTypeUri]) {
+        settingsForm.settings.event_type_mappings[eventTypeUri] = {
+            use_custom: false,
+            list_ids: [],
+            tag_ids: [],
+        };
+    }
+    settingsForm.settings.event_type_mappings[eventTypeUri][field] = value;
+}
+
 // Filtered lists based on search
 const filteredMailingLists = computed(() => {
     if (!mailingListSearch.value) return props.mailingLists;
@@ -1028,6 +1066,272 @@ function formatDateTime(dateString) {
                                         }}
                                         selected
                                     </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Event Type Specific Mappings -->
+                        <div
+                            v-if="
+                                activeIntegration?.event_types?.length > 0 &&
+                                settingsForm.settings.mailing_lists.enabled
+                            "
+                        >
+                            <h4
+                                class="text-sm font-medium text-gray-900 dark:text-white mb-2"
+                            >
+                                Per Event Type Settings
+                            </h4>
+                            <p
+                                class="text-xs text-gray-500 dark:text-gray-400 mb-4"
+                            >
+                                Override default mailing list settings for
+                                specific event types. If "Use custom settings"
+                                is disabled, the default settings above will be
+                                used.
+                            </p>
+                            <div class="space-y-3">
+                                <div
+                                    v-for="eventType in activeIntegration.event_types"
+                                    :key="eventType.uri"
+                                    class="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
+                                >
+                                    <!-- Event Type Header -->
+                                    <button
+                                        @click="toggleEventType(eventType.uri)"
+                                        type="button"
+                                        class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors text-left"
+                                    >
+                                        <div class="flex items-center gap-3">
+                                            <span
+                                                class="text-sm font-medium text-gray-900 dark:text-white"
+                                            >
+                                                {{ eventType.name }}
+                                            </span>
+                                            <span
+                                                v-if="
+                                                    getEventTypeMapping(
+                                                        eventType.uri,
+                                                    ).use_custom
+                                                "
+                                                class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400"
+                                            >
+                                                Custom
+                                            </span>
+                                        </div>
+                                        <svg
+                                            :class="[
+                                                'h-5 w-5 text-gray-400 transition-transform',
+                                                expandedEventTypes[
+                                                    eventType.uri
+                                                ]
+                                                    ? 'rotate-180'
+                                                    : '',
+                                            ]"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 9l-7 7-7-7"
+                                            />
+                                        </svg>
+                                    </button>
+
+                                    <!-- Event Type Settings (Expandable) -->
+                                    <div
+                                        v-if="expandedEventTypes[eventType.uri]"
+                                        class="p-4 space-y-4 bg-white dark:bg-slate-800"
+                                    >
+                                        <label class="flex items-center gap-3">
+                                            <input
+                                                :checked="
+                                                    getEventTypeMapping(
+                                                        eventType.uri,
+                                                    ).use_custom
+                                                "
+                                                @change="
+                                                    updateEventTypeMapping(
+                                                        eventType.uri,
+                                                        'use_custom',
+                                                        $event.target.checked,
+                                                    )
+                                                "
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                                            />
+                                            <span
+                                                class="text-sm text-gray-700 dark:text-gray-300"
+                                            >
+                                                Use custom settings for this
+                                                event type
+                                            </span>
+                                        </label>
+
+                                        <div
+                                            v-if="
+                                                getEventTypeMapping(
+                                                    eventType.uri,
+                                                ).use_custom
+                                            "
+                                            class="pl-6 space-y-4"
+                                        >
+                                            <!-- Mailing Lists for this event type -->
+                                            <div>
+                                                <label
+                                                    class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
+                                                >
+                                                    Mailing Lists
+                                                </label>
+                                                <div
+                                                    class="max-h-32 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
+                                                >
+                                                    <label
+                                                        v-for="list in mailingLists"
+                                                        :key="list.id"
+                                                        class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                                    >
+                                                        <input
+                                                            :value="list.id"
+                                                            :checked="
+                                                                getEventTypeMapping(
+                                                                    eventType.uri,
+                                                                ).list_ids?.includes(
+                                                                    list.id,
+                                                                )
+                                                            "
+                                                            @change="
+                                                                (e) => {
+                                                                    const mapping =
+                                                                        getEventTypeMapping(
+                                                                            eventType.uri,
+                                                                        );
+                                                                    let ids = [
+                                                                        ...(mapping.list_ids ||
+                                                                            []),
+                                                                    ];
+                                                                    if (
+                                                                        e.target
+                                                                            .checked
+                                                                    ) {
+                                                                        if (
+                                                                            !ids.includes(
+                                                                                list.id,
+                                                                            )
+                                                                        ) {
+                                                                            ids.push(
+                                                                                list.id,
+                                                                            );
+                                                                        }
+                                                                    } else {
+                                                                        ids =
+                                                                            ids.filter(
+                                                                                (
+                                                                                    id,
+                                                                                ) =>
+                                                                                    id !==
+                                                                                    list.id,
+                                                                            );
+                                                                    }
+                                                                    updateEventTypeMapping(
+                                                                        eventType.uri,
+                                                                        'list_ids',
+                                                                        ids,
+                                                                    );
+                                                                }
+                                                            "
+                                                            type="checkbox"
+                                                            class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span
+                                                            class="text-sm text-gray-900 dark:text-white"
+                                                        >
+                                                            {{ list.name }}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tags for this event type -->
+                                            <div>
+                                                <label
+                                                    class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
+                                                >
+                                                    Tags
+                                                </label>
+                                                <div
+                                                    class="max-h-32 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
+                                                >
+                                                    <label
+                                                        v-for="tag in tags"
+                                                        :key="tag.id"
+                                                        class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                                                    >
+                                                        <input
+                                                            :value="tag.id"
+                                                            :checked="
+                                                                getEventTypeMapping(
+                                                                    eventType.uri,
+                                                                ).tag_ids?.includes(
+                                                                    tag.id,
+                                                                )
+                                                            "
+                                                            @change="
+                                                                (e) => {
+                                                                    const mapping =
+                                                                        getEventTypeMapping(
+                                                                            eventType.uri,
+                                                                        );
+                                                                    let ids = [
+                                                                        ...(mapping.tag_ids ||
+                                                                            []),
+                                                                    ];
+                                                                    if (
+                                                                        e.target
+                                                                            .checked
+                                                                    ) {
+                                                                        if (
+                                                                            !ids.includes(
+                                                                                tag.id,
+                                                                            )
+                                                                        ) {
+                                                                            ids.push(
+                                                                                tag.id,
+                                                                            );
+                                                                        }
+                                                                    } else {
+                                                                        ids =
+                                                                            ids.filter(
+                                                                                (
+                                                                                    id,
+                                                                                ) =>
+                                                                                    id !==
+                                                                                    tag.id,
+                                                                            );
+                                                                    }
+                                                                    updateEventTypeMapping(
+                                                                        eventType.uri,
+                                                                        'tag_ids',
+                                                                        ids,
+                                                                    );
+                                                                }
+                                                            "
+                                                            type="checkbox"
+                                                            class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span
+                                                            class="text-sm text-gray-900 dark:text-white"
+                                                        >
+                                                            {{ tag.name }}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

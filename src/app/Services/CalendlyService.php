@@ -147,7 +147,7 @@ class CalendlyService
     public function createWebhookSubscription(
         CalendlyIntegration $integration,
         string $callbackUrl,
-        array $events = ['invitee.created', 'invitee.canceled', 'invitee.no_show']
+        array $events = ['invitee.created', 'invitee.canceled', 'invitee_no_show.created']
     ): array {
         $organizationUri = $integration->calendly_organization_uri;
 

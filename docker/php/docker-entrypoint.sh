@@ -131,6 +131,20 @@ if [ $attempt -lt $max_attempts ]; then
         echo "🔗 Creating storage link..."
         php artisan storage:link 2>/dev/null || true
     fi
+    
+    # =============================================================================
+    # CLEANUP STALE DATABASE QUEUE JOBS
+    # =============================================================================
+    # Jobs may have accumulated in the database queue before switching to Redis.
+    # These jobs (scoring, notifications, default) will never be processed since
+    # the queue worker now uses Redis. Clean them up to prevent confusion.
+    
+    STALE_JOBS=$(php artisan tinker --execute="echo DB::table('jobs')->count();" 2>/dev/null | tail -1)
+    if [ -n "$STALE_JOBS" ] && [ "$STALE_JOBS" != "0" ]; then
+        echo "🧹 Cleaning up $STALE_JOBS stale job(s) from database queue..."
+        php artisan tinker --execute="DB::table('jobs')->truncate();" 2>/dev/null || true
+        echo "✅ Stale jobs cleaned up (queue now uses Redis)"
+    fi
 fi
 
 # =============================================================================

@@ -275,7 +275,7 @@ class CalendlyController extends Controller
     /**
      * Update integration settings.
      */
-    public function updateSettings(Request $request, CalendlyIntegration $integration): JsonResponse
+    public function updateSettings(Request $request, CalendlyIntegration $integration): RedirectResponse
     {
         // Verify ownership
         if ($integration->user_id !== $request->user()->id) {
@@ -299,10 +299,7 @@ class CalendlyController extends Controller
 
         $integration->update(['settings' => $validated['settings']]);
 
-        return response()->json([
-            'success' => true,
-            'message' => __('Settings updated successfully.'),
-        ]);
+        return redirect()->back()->with('success', __('Settings updated successfully.'));
     }
 
     /**
@@ -334,7 +331,7 @@ class CalendlyController extends Controller
     /**
      * Sync event types from Calendly.
      */
-    public function syncEventTypes(Request $request, CalendlyIntegration $integration): JsonResponse
+    public function syncEventTypes(Request $request, CalendlyIntegration $integration): RedirectResponse
     {
         // Verify ownership
         if ($integration->user_id !== $request->user()->id) {
@@ -345,23 +342,16 @@ class CalendlyController extends Controller
             $eventTypes = $this->calendlyService->getEventTypes($integration);
             $integration->update(['event_types' => $eventTypes]);
 
-            return response()->json([
-                'success' => true,
-                'event_types' => $eventTypes,
-                'message' => __('Event types synced successfully.'),
-            ]);
+            return redirect()->back()->with('success', __('Event types synced successfully.'));
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => __('Failed to sync event types: ') . $e->getMessage(),
-            ], 500);
+            return redirect()->back()->with('error', __('Failed to sync event types: ') . $e->getMessage());
         }
     }
 
     /**
      * Test webhook configuration.
      */
-    public function testWebhook(Request $request, CalendlyIntegration $integration): JsonResponse
+    public function testWebhook(Request $request, CalendlyIntegration $integration): RedirectResponse
     {
         // Verify ownership
         if ($integration->user_id !== $request->user()->id) {
@@ -381,23 +371,12 @@ class CalendlyController extends Controller
                     'webhook_signing_key' => $webhook['signing_key'] ?? null,
                 ]);
 
-                return response()->json([
-                    'success' => true,
-                    'message' => __('Webhook subscription recreated successfully.'),
-                    'webhook' => $webhook,
-                ]);
+                return redirect()->back()->with('success', __('Webhook subscription recreated successfully.'));
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => __('Webhook subscription is active.'),
-                'webhook' => $webhook,
-            ]);
+            return redirect()->back()->with('success', __('Webhook subscription is active.'));
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => __('Webhook test failed: ') . $e->getMessage(),
-            ], 500);
+            return redirect()->back()->with('error', __('Webhook test failed: ') . $e->getMessage());
         }
     }
 

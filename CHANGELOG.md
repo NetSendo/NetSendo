@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Improved
+
+- **Calendly Integration Settings UI:**
+  - **Enhanced List Selection:** Replaced standard multi-select inputs with searchable checkbox lists for "Mailing Lists" and "Tags" in the settings modal.
+  - **Better UX:** Added search functionality to easily find specific lists/tags in large collections.
+  - **Dark Mode Support:** Fixed text visibility issues on dark backgrounds for list items.
+  - **Clear Feedback:** Added "No results found" states and selected item counters.
+  - **Per Event Type Configuration:** Added ability to configure different mailing lists and tags for each Calendly event type independently.
+
 ### Fixed
+
+- **Calendly Integration - Webhook Subscription:**
+  - Fixed "Invalid Argument" error when creating webhook subscription.
+  - Corrected event name from `invitee.no_show` to `invitee_no_show.created` per Calendly API specs.
+
+- **Calendly Integration - Inertia Response Errors:**
+  - Fixed "plain JSON response was received" errors for Sync Event Types, Test Webhook, and Update Settings actions.
+  - Changed controller methods to return proper Inertia-compatible redirect responses.
 
 - **Calendly Integration - OAuth Connect Route:**
   - Fixed "405 Method Not Allowed" error when connecting Calendly account.
