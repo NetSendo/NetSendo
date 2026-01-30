@@ -494,7 +494,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Calendly Integration
     Route::prefix('settings/calendly')->name('settings.calendly.')->group(function () {
         Route::get('/', [\App\Http\Controllers\CalendlyController::class, 'index'])->name('index');
-        Route::get('/connect', [\App\Http\Controllers\CalendlyController::class, 'connect'])->name('connect');
+        Route::post('/connect', [\App\Http\Controllers\CalendlyController::class, 'connect'])->name('connect');
         Route::get('/callback', [\App\Http\Controllers\CalendlyController::class, 'callback'])->name('callback');
         Route::post('/{integration}/disconnect', [\App\Http\Controllers\CalendlyController::class, 'disconnect'])->name('disconnect');
         Route::put('/{integration}/settings', [\App\Http\Controllers\CalendlyController::class, 'updateSettings'])->name('settings');
