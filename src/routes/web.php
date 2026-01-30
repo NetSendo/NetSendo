@@ -491,6 +491,20 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/test', [\App\Http\Controllers\McpStatusController::class, 'test'])->name('test');
     });
 
+    // Calendly Integration
+    Route::prefix('settings/calendly')->name('settings.calendly.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CalendlyController::class, 'index'])->name('index');
+        Route::get('/connect', [\App\Http\Controllers\CalendlyController::class, 'connect'])->name('connect');
+        Route::get('/callback', [\App\Http\Controllers\CalendlyController::class, 'callback'])->name('callback');
+        Route::post('/{integration}/disconnect', [\App\Http\Controllers\CalendlyController::class, 'disconnect'])->name('disconnect');
+        Route::put('/{integration}/settings', [\App\Http\Controllers\CalendlyController::class, 'updateSettings'])->name('settings');
+        Route::post('/{integration}/sync-event-types', [\App\Http\Controllers\CalendlyController::class, 'syncEventTypes'])->name('sync-event-types');
+        Route::post('/{integration}/test-webhook', [\App\Http\Controllers\CalendlyController::class, 'testWebhook'])->name('test-webhook');
+        Route::get('/{integration}/events', [\App\Http\Controllers\CalendlyController::class, 'events'])->name('events');
+    });
+
+    // Calendly Marketplace
+    Route::get('/marketplace/calendly', fn() => Inertia::render('Marketplace/Calendly'))->name('marketplace.calendly');
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {

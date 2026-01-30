@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.0] – Short Description
+
+**Release date:** 2026-01-30
+
 ### Added
+
+- **Calendly Integration:**
+  - **Full OAuth 2.0 Integration:** Implemented complete Calendly integration with secure OAuth flow for connecting user accounts.
+  - **Per-User API Credentials:** Users can now enter their own Calendly Client ID and Client Secret directly in the UI, eliminating the need for `.env` configuration.
+  - **Encrypted Credential Storage:** API credentials are encrypted at rest using Laravel's Crypt facade for security.
+  - **Webhook Support:** Automatic webhook registration for real-time sync of booking events (`invitee.created`, `invitee.canceled`, `invitee.no_show`).
+  - **CRM Integration:** Bookings automatically create CRM contacts and tasks based on configurable settings.
+  - **Mailing List Integration:** Invitees can be automatically added to selected mailing lists with optional tags.
+  - **Event Type Sync:** Pulls and displays available Calendly event types from connected accounts.
+  - **Marketplace Entry:** Added Calendly to the Marketplace active integrations list.
+  - **Database:** New `calendly_integrations` table with encrypted token and credential storage.
+  - **UI Components:** Connect modal with API credential input, settings modal for CRM/mailing list configuration.
 
 - **Mailing List UX:**
   - **Toast Notifications:** Implemented toast notification system in Mailing List Edit form to display success/error messages.
@@ -40,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Backend:** Added new `/messages/recipient-counts` endpoint for efficient batch stat retrieval in `MessageController`.
 
 ### Fixed
+
+- **Calendly Integration - Team Members Query:**
+  - Fixed `Unknown column 'parent_id'` SQL error in CalendlyController by using the correct `teamMembers()` relationship with `admin_user_id` column.
 
 - **Mailing List Saving:**
   - **Redirect Issue:** Fixed `update` action redirecting to index instead of back, causing flash messages to be lost and confusing UX. Now resolves to `back()`.

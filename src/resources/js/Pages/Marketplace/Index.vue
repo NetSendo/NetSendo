@@ -190,6 +190,14 @@ const activeIntegrations = [
         color: "blue",
         route: "marketplace.zoom",
     },
+    {
+        id: "calendly",
+        name: "Calendly",
+        description: "Booking sync with CRM & mailing lists",
+        icon: "📅",
+        color: "cyan",
+        route: "marketplace.calendly",
+    },
 ];
 
 // Future integration categories with planned platforms

@@ -220,3 +220,11 @@ Route::get('mcp/test', [McpController::class, 'test'])
     ->middleware(['api.key', 'throttle:api'])
     ->name('api.mcp.test');
 
+// ============================================================================
+// External Webhook Endpoints (Public, No Auth)
+// ============================================================================
+
+// Calendly Webhook (for receiving booking notifications)
+Route::post('webhooks/calendly', [\App\Http\Controllers\Webhooks\CalendlyController::class, 'handle'])
+    ->name('api.webhooks.calendly');
+
