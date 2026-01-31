@@ -301,7 +301,9 @@
         "hours": "hours",
         "first_name": "First Name",
         "last_name": "Last Name",
-        "phone": "Phone"
+        "phone": "Phone",
+        "status": "Status",
+        "name": "Name"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -3572,10 +3574,10 @@
         },
         "score_segments": {
             "title": "Score Segments",
-            "cold": "Cold (0-20)",
-            "warm": "Warm (21-50)",
-            "hot": "Hot (51-80)",
-            "very_hot": "Very Hot (81+)",
+            "cold": "Cold 🥶",
+            "warm": "Warm 🌡️",
+            "hot": "Hot 🔥",
+            "super_hot": "Super Hot 🚀",
             "no_score": "No Score"
         },
         "tag_distribution": {

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Default Automations Not Loading on Production:**
+  - Fixed issue where default AutoTag Pro automations were not automatically seeded on existing installations.
+  - Added `php artisan automations:seed-defaults` to `docker-entrypoint.sh` startup script, ensuring default automations are seeded for all users on every container restart.
+  - Added `DefaultAutomationsSeeder` to `DatabaseSeeder` for new installations via `php artisan db:seed`.
+  - The seeder is idempotent (safe to run multiple times) - it skips users who already have system automations.
+
+- **Lead Scoring Not Working (Score = 0 for all contacts):**
+  - Fixed issue where Lead Scoring rules were only seeded when a user visited the Lead Scoring settings page, causing all contacts to have a score of 0.
+  - Added auto-seeding of default Lead Scoring rules in `User` model when new admin users are created.
+  - Created `php artisan netsendo:seed-lead-scoring-rules` command to seed rules for existing users without any rules.
+  - Added Lead Scoring rules seeding to `docker-entrypoint.sh` startup script, ensuring all containers automatically seed rules on startup.
+  - The seeder is idempotent (safe to run multiple times) - it only creates rules for users who don't have any.
+
 ## [1.8.1] – Short Description
 
 **Release date:** 2026-01-31

@@ -287,7 +287,9 @@
         "hours": "horas",
         "soon": "Pronto",
         "days_unit": "días",
-        "source_placeholder": "Escriba o pegue el código HTML..."
+        "source_placeholder": "Escriba o pegue el código HTML...",
+        "status": "Estado",
+        "name": "Nombre"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -2917,10 +2919,10 @@
         },
         "score_segments": {
             "title": "Segmentos de Puntuación",
-            "cold": "Frío (0-20)",
-            "warm": "Tibio (21-50)",
-            "hot": "Caliente (51-80)",
-            "very_hot": "Muy Caliente (81+)",
+            "cold": "Frío 🥶",
+            "warm": "Cálido 🌡️",
+            "hot": "Caliente 🔥",
+            "super_hot": "Súper Caliente 🚀",
             "no_score": "Sin Puntuación"
         },
         "tag_distribution": {

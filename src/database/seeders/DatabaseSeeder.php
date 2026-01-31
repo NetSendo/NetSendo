@@ -24,5 +24,8 @@ class DatabaseSeeder extends Seeder
         // Seed name databases for gender detection
         $this->call(PolishNamesSeeder::class);
         $this->call(InternationalNamesSeeder::class);
+
+        // Seed default automations for all existing users
+        $this->call(DefaultAutomationsSeeder::class);
     }
 }

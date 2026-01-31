@@ -133,6 +133,24 @@ if [ $attempt -lt $max_attempts ]; then
     fi
     
     # =============================================================================
+    # SEED DEFAULT AUTOMATIONS
+    # =============================================================================
+    # Ensure default AutoTag Pro automations exist for all users.
+    # This is safe to run on every startup - the seeder skips existing automations.
+    
+    echo "🤖 Ensuring default automations exist for all users..."
+    php artisan automations:seed-defaults 2>/dev/null || echo "⚠️ Default automations seeding skipped"
+    
+    # =============================================================================
+    # SEED LEAD SCORING RULES
+    # =============================================================================
+    # Ensure Lead Scoring rules exist for all admin users.
+    # This is safe to run on every startup - the seeder only creates rules for users who don't have any.
+    
+    echo "📊 Ensuring Lead Scoring rules exist for all users..."
+    php artisan netsendo:seed-lead-scoring-rules 2>/dev/null || echo "⚠️ Lead Scoring rules seeding skipped"
+    
+    # =============================================================================
     # CLEANUP STALE DATABASE QUEUE JOBS
     # =============================================================================
     # Jobs may have accumulated in the database queue before switching to Redis.

@@ -63,6 +63,19 @@ class User extends Authenticatable
      */
     protected static function booted(): void
     {
+        // Auto-seed Lead Scoring rules for new admin users
+        static::created(function (User $user) {
+            // Only seed for admin users (not team members)
+            if ($user->isAdmin()) {
+                try {
+                    LeadScoringRule::seedDefaultsForUser($user->id);
+                    \Log::info("Lead Scoring rules seeded for new user {$user->id}");
+                } catch (\Exception $e) {
+                    \Log::error("Failed to seed Lead Scoring rules for user {$user->id}: " . $e->getMessage());
+                }
+            }
+        });
+
         static::updated(function (User $user) {
             if ($user->wasChanged('timezone')) {
                 event(new \App\Events\UserTimezoneUpdated($user, $user->getOriginal('timezone')));
@@ -251,6 +264,14 @@ class User extends Authenticatable
     public function brands()
     {
         return $this->hasMany(Brand::class);
+    }
+
+    /**
+     * Get the lead scoring rules for the user.
+     */
+    public function leadScoringRules()
+    {
+        return $this->hasMany(LeadScoringRule::class);
     }
 
     /**

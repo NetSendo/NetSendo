@@ -63,10 +63,10 @@ class SegmentationController extends Controller
         $contacts = CrmContact::forUser($userId)->get();
 
         $segments = [
-            'cold' => ['min' => 0, 'max' => 25, 'label' => 'Zimny 🥶', 'color' => '#3b82f6', 'count' => 0],
-            'warm' => ['min' => 26, 'max' => 50, 'label' => 'Ciepły 🌡️', 'color' => '#eab308', 'count' => 0],
-            'hot' => ['min' => 51, 'max' => 75, 'label' => 'Gorący 🔥', 'color' => '#f97316', 'count' => 0],
-            'super_hot' => ['min' => 76, 'max' => PHP_INT_MAX, 'label' => 'Super Hot 🚀', 'color' => '#ef4444', 'count' => 0],
+            'cold' => ['min' => 0, 'max' => 25, 'key' => 'cold', 'label' => 'Zimny 🥶', 'color' => '#3b82f6', 'count' => 0],
+            'warm' => ['min' => 26, 'max' => 50, 'key' => 'warm', 'label' => 'Ciepły 🌡️', 'color' => '#eab308', 'count' => 0],
+            'hot' => ['min' => 51, 'max' => 75, 'key' => 'hot', 'label' => 'Gorący 🔥', 'color' => '#f97316', 'count' => 0],
+            'super_hot' => ['min' => 76, 'max' => PHP_INT_MAX, 'key' => 'super_hot', 'label' => 'Super Hot 🚀', 'color' => '#ef4444', 'count' => 0],
         ];
 
         foreach ($contacts as $contact) {

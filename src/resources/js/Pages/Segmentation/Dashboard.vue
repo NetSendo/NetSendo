@@ -165,7 +165,12 @@ const maxTrendCount = computed(() =>
                             ></div>
                             <span
                                 class="text-sm text-slate-700 dark:text-slate-300"
-                                >{{ segment.label }}</span
+                                >{{
+                                    t(
+                                        "segmentation.score_segments." +
+                                            segment.key,
+                                    )
+                                }}</span
                             >
                         </div>
                         <span

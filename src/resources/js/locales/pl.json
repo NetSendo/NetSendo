@@ -302,7 +302,9 @@
         "hours": "godzin",
         "first_name": "Imię",
         "last_name": "Nazwisko",
-        "phone": "Telefon"
+        "phone": "Telefon",
+        "status": "Status",
+        "name": "Nazwa"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -3780,10 +3782,10 @@
         },
         "score_segments": {
             "title": "Segmenty Scoringu",
-            "cold": "Zimne (0-20)",
-            "warm": "Ciepłe (21-50)",
-            "hot": "Gorące (51-80)",
-            "very_hot": "Bardzo Gorące (81+)",
+            "cold": "Zimny 🥶",
+            "warm": "Ciepły 🌡️",
+            "hot": "Gorący 🔥",
+            "super_hot": "Super Hot 🚀",
             "no_score": "Brak Score"
         },
         "tag_distribution": {
