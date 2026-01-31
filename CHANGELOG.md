@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added Lead Scoring rules seeding to `docker-entrypoint.sh` startup script, ensuring all containers automatically seed rules on startup.
   - The seeder is idempotent (safe to run multiple times) - it only creates rules for users who don't have any.
 
+- **Automation Restore Defaults - 500 Error:**
+  - Fixed 500 error when clicking "Restore Defaults" button on Automations page.
+  - Added missing trigger events to database ENUM: `crm_deal_created`, `crm_contact_status_changed`, `crm_score_threshold`, `crm_activity_logged`.
+  - Changed restore logic to ADD missing default automations instead of deleting and recreating all system automations.
+  - Default automations are now set to ACTIVE immediately upon creation (previously inactive).
+  - Existing user automations (both custom and system) are preserved when restoring defaults.
+
 ## [1.8.1] – Short Description
 
 **Release date:** 2026-01-31

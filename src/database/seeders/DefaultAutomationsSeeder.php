@@ -32,7 +32,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['points' => -10],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
         [
             'system_key' => 'engaged_reader',
@@ -52,7 +52,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['points' => 5],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
         [
             'system_key' => 'purchase_behavior',
@@ -72,7 +72,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['points' => 25],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
         [
             'system_key' => 'click_champion',
@@ -92,7 +92,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['points' => 10],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
         [
             'system_key' => 'welcome_sequence',
@@ -108,7 +108,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['tag' => 'new_subscriber'],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
         [
             'system_key' => 'cart_abandonment',
@@ -128,7 +128,7 @@ class DefaultAutomationsSeeder extends Seeder
                     'config' => ['points' => 15],
                 ],
             ],
-            'is_active' => false,
+            'is_active' => true,
         ],
     ];
 
@@ -181,17 +181,27 @@ class DefaultAutomationsSeeder extends Seeder
     }
 
     /**
-     * Restore default automations for a user (delete and recreate).
+     * Restore default automations for a user.
+     * Adds any missing system automations without deleting existing ones or user's custom automations.
+     * All restored automations are set to ACTIVE.
      */
     public function restoreForUser(User $user): int
     {
-        // Delete existing system automations
-        $deleted = AutomationRule::where('user_id', $user->id)
-            ->where('is_system', true)
-            ->delete();
+        $count = 0;
 
-        // Recreate them
         foreach ($this->defaultAutomations as $automation) {
+            $systemKey = $automation['system_key'];
+
+            // Skip if this system automation already exists for this user
+            $exists = AutomationRule::where('user_id', $user->id)
+                ->where('system_key', $systemKey)
+                ->exists();
+
+            if ($exists) {
+                continue;
+            }
+
+            // Create the missing default automation as ACTIVE
             AutomationRule::create([
                 'user_id' => $user->id,
                 'name' => $automation['name'],
@@ -201,16 +211,18 @@ class DefaultAutomationsSeeder extends Seeder
                 'conditions' => $automation['conditions'],
                 'condition_logic' => $automation['condition_logic'],
                 'actions' => $automation['actions'],
-                'is_active' => $automation['is_active'],
+                'is_active' => true, // Always active when restored
                 'is_system' => true,
-                'system_key' => $automation['system_key'],
+                'system_key' => $systemKey,
                 'limit_per_subscriber' => true,
                 'limit_count' => 1,
                 'limit_period' => 'day',
             ]);
+
+            $count++;
         }
 
-        return count($this->defaultAutomations);
+        return $count;
     }
 
     /**

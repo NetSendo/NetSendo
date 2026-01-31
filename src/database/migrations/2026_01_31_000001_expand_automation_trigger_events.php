@@ -41,11 +41,15 @@ return new class extends Migration
                 'crm_deal_stage_changed',
                 'crm_deal_won',
                 'crm_deal_lost',
+                'crm_deal_created',
                 'crm_deal_idle',
                 'crm_task_overdue',
                 'crm_score_changed',
                 'crm_contact_created',
-                'crm_task_completed'
+                'crm_task_completed',
+                'crm_contact_status_changed',
+                'crm_score_threshold',
+                'crm_activity_logged'
             )");
         }
     }

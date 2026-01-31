@@ -310,7 +310,11 @@ class AutomationController extends Controller
         $seeder = new \Database\Seeders\DefaultAutomationsSeeder();
         $count = $seeder->restoreForUser($user);
 
-        return back()->with('success', __('Przywrócono :count domyślnych automatyzacji.', ['count' => $count]));
+        if ($count === 0) {
+            return back()->with('info', __('Wszystkie domyślne automatyzacje są już aktywne.'));
+        }
+
+        return back()->with('success', __('Dodano :count brakujących automatyzacji.', ['count' => $count]));
     }
 
     /**
