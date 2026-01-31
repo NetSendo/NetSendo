@@ -16,26 +16,30 @@ return new class extends Migration
     public function up(): void
     {
         // Create pivot table for target CRM contacts
-        Schema::create('message_crm_contact', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('message_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('crm_contact_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+        if (!Schema::hasTable('message_crm_contact')) {
+            Schema::create('message_crm_contact', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('message_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('crm_contact_id')->constrained()->cascadeOnDelete();
+                $table->timestamps();
 
-            // Prevent duplicate selections
-            $table->unique(['message_id', 'crm_contact_id'], 'message_crm_contact_unique');
-        });
+                // Prevent duplicate selections
+                $table->unique(['message_id', 'crm_contact_id'], 'message_crm_contact_unique');
+            });
+        }
 
         // Create pivot table for excluded CRM contacts
-        Schema::create('excluded_crm_contact_message', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('message_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('crm_contact_id')->constrained()->cascadeOnDelete();
-            $table->timestamps();
+        if (!Schema::hasTable('excluded_crm_contact_message')) {
+            Schema::create('excluded_crm_contact_message', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('message_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('crm_contact_id')->constrained()->cascadeOnDelete();
+                $table->timestamps();
 
-            // Prevent duplicate exclusions
-            $table->unique(['message_id', 'crm_contact_id'], 'excluded_crm_contact_unique');
-        });
+                // Prevent duplicate exclusions
+                $table->unique(['message_id', 'crm_contact_id'], 'excluded_crm_contact_unique');
+            });
+        }
     }
 
     /**
