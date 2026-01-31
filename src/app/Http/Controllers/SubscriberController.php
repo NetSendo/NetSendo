@@ -143,6 +143,7 @@ class SubscriberController extends Controller
                     'custom_fields' => $sub->fieldValues->mapWithKeys(fn($fv) => [
                         'cf_' . $fv->custom_field_id => $fv->value
                     ]),
+                    'has_crm_contact' => \App\Models\CrmContact::where('subscriber_id', $sub->id)->exists(),
                 ]),
             'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => $customFields,
@@ -902,6 +903,45 @@ class SubscriberController extends Controller
                 'error' => $e->getMessage(),
             ]);
             return back()->with('error', 'Wystąpił błąd podczas usuwania danych.');
+        }
+    }
+
+    /**
+     * Quick add subscriber to CRM as a lead.
+     */
+    public function addToCrm(Subscriber $subscriber)
+    {
+        // Authorization check
+        if ($subscriber->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Check if CRM contact already exists for this subscriber
+        $existingContact = \App\Models\CrmContact::where('subscriber_id', $subscriber->id)->first();
+        if ($existingContact) {
+            return back()->with('warning', __('subscribers.crm_already_exists'));
+        }
+
+        try {
+            // Create CRM contact from subscriber using the model method
+            $contact = \App\Models\CrmContact::createFromSubscriber($subscriber);
+
+            // Log activity
+            $contact->logActivity('contact_created_from_subscriber', __('subscribers.crm_log_activity'));
+
+            Log::info('Subscriber added to CRM as lead', [
+                'subscriber_id' => $subscriber->id,
+                'contact_id' => $contact->id,
+                'user_id' => auth()->id(),
+            ]);
+
+            return back()->with('success', __('subscribers.crm_added_success'));
+        } catch (\Exception $e) {
+            Log::error('Failed to add subscriber to CRM', [
+                'subscriber_id' => $subscriber->id,
+                'error' => $e->getMessage(),
+            ]);
+            return back()->with('error', __('subscribers.crm_add_failed'));
         }
     }
 

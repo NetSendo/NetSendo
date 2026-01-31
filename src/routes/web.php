@@ -77,6 +77,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Advanced single subscriber delete (with list selection and GDPR)
     Route::post('subscribers/{subscriber}/advanced-delete', [\App\Http\Controllers\SubscriberController::class, 'advancedDelete'])->name('subscribers.advanced-delete');
 
+    // Quick add subscriber to CRM as lead
+    Route::post('subscribers/{subscriber}/add-to-crm', [\App\Http\Controllers\SubscriberController::class, 'addToCrm'])->name('subscribers.add-to-crm');
+
     // Groups & Tags
     Route::resource('groups', \App\Http\Controllers\ContactListGroupController::class);
     Route::resource('tags', \App\Http\Controllers\TagController::class)->except(['create', 'edit', 'show']);
@@ -140,6 +143,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('messages/{message}/queue-schedule-stats', [\App\Http\Controllers\MessageController::class, 'queueScheduleStats'])->name('messages.queue-schedule-stats');
     Route::post('messages/{message}/send-to-missed', [\App\Http\Controllers\MessageController::class, 'sendToMissedRecipients'])->name('messages.send-to-missed');
     Route::post('messages/search-sent', [\App\Http\Controllers\MessageController::class, 'searchSentMessages'])->name('messages.search-sent');
+    Route::get('messages/search-crm-contacts', [\App\Http\Controllers\MessageController::class, 'searchCrmContacts'])->name('messages.search-crm-contacts');
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');

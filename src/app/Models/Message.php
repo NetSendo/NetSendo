@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use App\Traits\LogsActivity;
+use App\Models\CrmContact;
 
 class Message extends Model
 {
@@ -145,6 +146,22 @@ class Message extends Model
     public function excludedLists()
     {
         return $this->belongsToMany(ContactList::class, 'excluded_contact_list_message');
+    }
+
+    /**
+     * CRM contacts selected to receive this message.
+     */
+    public function crmContacts()
+    {
+        return $this->belongsToMany(CrmContact::class, 'message_crm_contact');
+    }
+
+    /**
+     * CRM contacts excluded from receiving this message.
+     */
+    public function excludedCrmContacts()
+    {
+        return $this->belongsToMany(CrmContact::class, 'excluded_crm_contact_message');
     }
 
     /**
@@ -487,6 +504,7 @@ class Message extends Model
     /**
      * Get unique active subscribers for this message with exclusions applied.
      * Ensures each email is only included once (deduplication).
+     * Includes both list-based subscribers and individually selected CRM contacts.
      *
      * @return \Illuminate\Support\Collection
      */
@@ -495,48 +513,80 @@ class Message extends Model
         $includedListIds = $this->contactLists->pluck('id')->toArray();
         $excludedListIds = $this->excludedLists->pluck('id')->toArray();
 
-        if (empty($includedListIds)) {
+        // Get subscriber IDs from selected CRM contacts
+        $crmContactSubscriberIds = $this->crmContacts
+            ->pluck('subscriber_id')
+            ->filter()
+            ->toArray();
+
+        // Get subscriber IDs to exclude from CRM contact exclusions
+        $excludedCrmSubscriberIds = $this->excludedCrmContacts
+            ->pluck('subscriber_id')
+            ->filter()
+            ->toArray();
+
+        // If no lists selected and no CRM contacts, return empty
+        if (empty($includedListIds) && empty($crmContactSubscriberIds)) {
             return collect();
         }
 
-        return Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
-                $query->whereIn('contact_lists.id', $includedListIds)
-                    ->where('contact_list_subscriber.status', 'active');
-            })
-            ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
-                // Exclude subscribers that are on any of the excluded lists
-                $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
-                    $q->whereIn('contact_lists.id', $excludedListIds);
-                })->pluck('email')->toArray();
-                $query->whereNotIn('email', $excludedEmails);
-            })
-            ->when($this->trigger_type === 'recent_subscribers' && !empty($this->trigger_config['recent_days']), function ($query) {
-                // Filter to only include subscribers who joined within the recent X days
-                $days = (int) $this->trigger_config['recent_days'];
-                $query->whereHas('contactLists', function ($q) use ($days) {
-                    $q->where('contact_list_subscriber.subscribed_at', '>=', now()->subDays($days));
-                });
-            })
-            ->when($this->trigger_type === 'opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
-                // Include only subscribers who opened the specified message
-                $messageId = (int) $this->trigger_config['message_id'];
-                $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
-                    ->pluck('subscriber_id')
-                    ->unique()
-                    ->toArray();
-                $query->whereIn('id', $openedSubscriberIds);
-            })
-            ->when($this->trigger_type === 'not_opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
-                // Exclude subscribers who opened the specified message
-                $messageId = (int) $this->trigger_config['message_id'];
-                $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
-                    ->pluck('subscriber_id')
-                    ->unique()
-                    ->toArray();
-                $query->whereNotIn('id', $openedSubscriberIds);
-            })
-            ->get()
-            ->unique('email'); // Final deduplication by email
+        // Base query for list-based subscribers
+        $listSubscribers = collect();
+        if (!empty($includedListIds)) {
+            $listSubscribers = Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
+                    $query->whereIn('contact_lists.id', $includedListIds)
+                        ->where('contact_list_subscriber.status', 'active');
+                })
+                ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
+                    // Exclude subscribers that are on any of the excluded lists
+                    $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
+                        $q->whereIn('contact_lists.id', $excludedListIds);
+                    })->pluck('email')->toArray();
+                    $query->whereNotIn('email', $excludedEmails);
+                })
+                ->when(!empty($excludedCrmSubscriberIds), function ($query) use ($excludedCrmSubscriberIds) {
+                    // Exclude CRM contacts from list recipients
+                    $query->whereNotIn('id', $excludedCrmSubscriberIds);
+                })
+                ->when($this->trigger_type === 'recent_subscribers' && !empty($this->trigger_config['recent_days']), function ($query) {
+                    // Filter to only include subscribers who joined within the recent X days
+                    $days = (int) $this->trigger_config['recent_days'];
+                    $query->whereHas('contactLists', function ($q) use ($days) {
+                        $q->where('contact_list_subscriber.subscribed_at', '>=', now()->subDays($days));
+                    });
+                })
+                ->when($this->trigger_type === 'opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
+                    // Include only subscribers who opened the specified message
+                    $messageId = (int) $this->trigger_config['message_id'];
+                    $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
+                        ->pluck('subscriber_id')
+                        ->unique()
+                        ->toArray();
+                    $query->whereIn('id', $openedSubscriberIds);
+                })
+                ->when($this->trigger_type === 'not_opened_message' && !empty($this->trigger_config['message_id']), function ($query) {
+                    // Exclude subscribers who opened the specified message
+                    $messageId = (int) $this->trigger_config['message_id'];
+                    $openedSubscriberIds = EmailOpen::where('message_id', $messageId)
+                        ->pluck('subscriber_id')
+                        ->unique()
+                        ->toArray();
+                    $query->whereNotIn('id', $openedSubscriberIds);
+                })
+                ->get();
+        }
+
+        // Get individually selected CRM contact subscribers (not excluded)
+        $crmSubscribers = collect();
+        if (!empty($crmContactSubscriberIds)) {
+            $includableCrmIds = array_diff($crmContactSubscriberIds, $excludedCrmSubscriberIds);
+            if (!empty($includableCrmIds)) {
+                $crmSubscribers = Subscriber::whereIn('id', $includableCrmIds)->get();
+            }
+        }
+
+        // Merge both collections and deduplicate by email
+        return $listSubscribers->merge($crmSubscribers)->unique('email');
     }
 
     // TODO: Implement tracking models when stats feature is ready

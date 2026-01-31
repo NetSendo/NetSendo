@@ -14,6 +14,7 @@ import InsertPickerModal from "@/Components/InsertPickerModal.vue";
 import ResponsiveTabs from "@/Components/ResponsiveTabs.vue";
 import TrackedLinksSection from "@/Components/TrackedLinksSection.vue";
 import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
+import CrmContactSelector from "@/Components/CrmContactSelector.vue";
 import { computed, ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import mjml2html from "mjml-browser";
@@ -282,10 +283,19 @@ const form = useForm({
     tracked_links: props.message?.tracked_links || [],
     // Campaign Tags
     tag_ids: props.message?.tag_ids || [],
+    // CRM Contacts
+    crm_contact_ids: props.message?.crm_contact_ids || [],
+    excluded_crm_contact_ids: props.message?.excluded_crm_contact_ids || [],
 });
 
 // Existing attachments from database (for editing)
 const existingAttachments = ref(props.message?.attachments || []);
+
+// Pre-loaded CRM contacts for editing
+const preloadedCrmContacts = ref(props.message?.crm_contacts || []);
+const preloadedExcludedCrmContacts = ref(
+    props.message?.excluded_crm_contacts || [],
+);
 
 // Pending files to upload (File objects)
 const pendingFiles = ref([]);
@@ -654,21 +664,21 @@ const formatFileSize = (bytes) => {
 // ===== Validation Logic =====
 // Map form fields to their corresponding tabs
 const fieldToTabMap = {
-    subject: 'content',
-    content: 'content',
-    preheader: 'content',
-    type: 'content',
-    contact_list_ids: 'settings',
-    excluded_list_ids: 'settings',
-    mailbox_id: 'settings',
-    tag_ids: 'settings',
-    day: 'settings',
-    time_of_day: 'settings',
-    send_at: 'settings',
-    timezone: 'settings',
-    trigger_type: 'triggers',
-    trigger_config: 'triggers',
-    ab_test_config: 'ab_testing',
+    subject: "content",
+    content: "content",
+    preheader: "content",
+    type: "content",
+    contact_list_ids: "settings",
+    excluded_list_ids: "settings",
+    mailbox_id: "settings",
+    tag_ids: "settings",
+    day: "settings",
+    time_of_day: "settings",
+    send_at: "settings",
+    timezone: "settings",
+    trigger_type: "triggers",
+    trigger_config: "triggers",
+    ab_test_config: "ab_testing",
 };
 
 // Frontend validation before submit
@@ -676,29 +686,34 @@ const validateForm = () => {
     const errors = [];
 
     // Check subject
-    if (!form.subject || form.subject.trim() === '') {
+    if (!form.subject || form.subject.trim() === "") {
         errors.push({
-            field: 'subject',
-            message: t('messages.validation.subject_required'),
-            tab: 'content'
+            field: "subject",
+            message: t("messages.validation.subject_required"),
+            tab: "content",
         });
     }
 
-    // Check list selection
-    if (form.type === 'broadcast') {
-        if (!form.contact_list_ids || form.contact_list_ids.length === 0) {
+    // Check list selection (allow CRM contacts as alternative)
+    const hasLists = form.contact_list_ids && form.contact_list_ids.length > 0;
+    const hasCrmContacts =
+        form.crm_contact_ids && form.crm_contact_ids.length > 0;
+
+    if (form.type === "broadcast") {
+        if (!hasLists && !hasCrmContacts) {
             errors.push({
-                field: 'contact_list_ids',
-                message: t('messages.validation.list_required'),
-                tab: 'settings'
+                field: "contact_list_ids",
+                message: t("messages.validation.list_required"),
+                tab: "settings",
             });
         }
-    } else if (form.type === 'autoresponder') {
-        if (!form.contact_list_ids || form.contact_list_ids.length === 0) {
+    } else if (form.type === "autoresponder") {
+        // Autoresponder still requires a list (CRM contacts alone don't make sense for autoresponders)
+        if (!hasLists) {
             errors.push({
-                field: 'contact_list_ids',
-                message: t('messages.validation.list_required'),
-                tab: 'settings'
+                field: "contact_list_ids",
+                message: t("messages.validation.list_required"),
+                tab: "settings",
             });
         }
     }
@@ -720,7 +735,7 @@ const handleValidationErrors = (errors) => {
         showToast(firstMessage, false);
 
         // Switch to the tab containing the error
-        const tabForField = fieldToTabMap[firstField] || 'content';
+        const tabForField = fieldToTabMap[firstField] || "content";
         activeTab.value = tabForField;
     }
 };
@@ -2697,6 +2712,92 @@ if (form.contact_list_ids.length > 0) {
                             />
                         </div>
 
+                        <!-- CRM Contacts Selection -->
+                        <div
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <div class="mb-3 flex items-center gap-2">
+                                <svg
+                                    class="h-4 w-4 text-primary-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                </svg>
+                                <InputLabel
+                                    :value="$t('messages.fields.crm_contacts')"
+                                />
+                            </div>
+                            <CrmContactSelector
+                                v-model="form.crm_contact_ids"
+                                :preloaded-contacts="preloadedCrmContacts"
+                                :label="''"
+                                :help-text="
+                                    $t('messages.fields.crm_contacts_help')
+                                "
+                                :placeholder="
+                                    $t('messages.fields.search_crm_contacts')
+                                "
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.crm_contact_ids"
+                            />
+                        </div>
+
+                        <!-- Excluded CRM Contacts -->
+                        <div
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <div class="mb-3 flex items-center gap-2">
+                                <svg
+                                    class="h-4 w-4 text-red-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"
+                                    />
+                                </svg>
+                                <InputLabel
+                                    :value="
+                                        $t(
+                                            'messages.fields.excluded_crm_contacts',
+                                        )
+                                    "
+                                />
+                            </div>
+                            <CrmContactSelector
+                                v-model="form.excluded_crm_contact_ids"
+                                :preloaded-contacts="
+                                    preloadedExcludedCrmContacts
+                                "
+                                :label="''"
+                                :help-text="
+                                    $t(
+                                        'messages.fields.excluded_crm_contacts_help',
+                                    )
+                                "
+                                :placeholder="
+                                    $t('messages.fields.search_crm_contacts')
+                                "
+                            />
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.excluded_crm_contact_ids"
+                            />
+                        </div>
+
                         <!-- Mailbox Selection -->
                         <div
                             class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
@@ -2805,7 +2906,9 @@ if (form.contact_list_ids.length > 0) {
                                 :value="$t('messages.fields.campaign_tags')"
                                 class="mb-3"
                             />
-                            <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                            <p
+                                class="mb-3 text-xs text-slate-500 dark:text-slate-400"
+                            >
                                 {{ $t("messages.fields.campaign_tags_help") }}
                             </p>
                             <div class="flex flex-wrap gap-2">

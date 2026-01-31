@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+### Changed
+
+## [1.8.2] – Short Description
+
+**Release date:** 2026-01-31
+
+### Added
+
+- **CRM Lead Quick Action:**
+  - **Quick Add to CRM:** Added "Add to CRM" quick action button in the subscribers list (`subscribers.index`).
+  - **Status Indicator:** Implemented visual feedback using a green icon for subscribers who are already CRM contacts.
+  - **Duplicate Prevention:** Clicking the action for an existing contact shows a warning toast instead of creating a duplicate.
+  - **Backend Logic:** Added `addToCrm` endpoint in `SubscriberController` to create a new CRM lead from subscriber data.
+  - **UX:** Added toast notifications for successful addition or error states.
+  - **Localization:** Full translations for the new action in PL and EN.
+
+- **CRM Contact Selection for Email:**
+  - **Direct CRM Targeting:** Added ability to select individual CRM contacts as recipients for broadcast messages, independent of email lists.
+  - **Exclusions:** Implemented ability to specifically exclude individual CRM contacts from a campaign.
+  - **CRM Contact Selector:** New Vue component with real-time search, status badges, and multi-selection support.
+  - **Backend Integration:** Updated `MessageController` to handle `crm_contact_ids` and `excluded_crm_contact_ids`, including proper unique recipient calculation.
+  - **API:** Added `searchCrmContacts` endpoint with support for searching by email, name, phone, and company.
+  - **Localization:** Full translations for all CRM contact selection features in PL, EN, DE, ES.
+
+### Fixed
+
+- **CRM Contact Integration:**
+  - **Search Fix:** Fixed 500 error in `searchCrmContacts` by correctly joining `subscribers` table to search by email/name/phone.
+  - **UI Styling:** Fixed dark mode visibility issues in CRM contact selector badges.
+  - **Validation:** Updated message validation to allow sending broadcasts with only CRM contacts (no list required).
+
 ### Fixed
 
 - **Default Automations Not Loading on Production:**

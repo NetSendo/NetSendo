@@ -1450,7 +1450,13 @@
             "insert_fname_vocative": "Imię w wołaczu",
             "insert_gender_form": "Odmiana (m|ż)",
             "campaign_tags": "Tagi kampanii",
-            "campaign_tags_help": "Przypisz tagi do tej wiadomości, aby łatwiej analizować statystyki kampanii."
+            "campaign_tags_help": "Przypisz tagi do tej wiadomości, aby łatwiej analizować statystyki kampanii.",
+            "crm_contacts": "Kontakty CRM",
+            "crm_contacts_help": "Wyszukaj i wybierz indywidualne kontakty CRM jako odbiorców wiadomości.",
+            "excluded_crm_contacts": "Wykluczone kontakty CRM",
+            "excluded_crm_contacts_help": "Te kontakty nie otrzymają wiadomości, nawet jeśli są na wybranych listach.",
+            "search_crm_contacts": "Szukaj kontaktów CRM...",
+            "selected_crm_contacts": "Wybrano {count} kontakt(ów) CRM"
         },
         "attachments": {
             "title": "Załączniki PDF",
@@ -1738,7 +1744,12 @@
             "remove_from_lists": "Usuń z list",
             "delete_completely": "Usuń całkowicie",
             "no_lists": "Subskrybent nie należy do żadnej listy"
-        }
+        },
+        "add_to_crm": "Dodaj do CRM",
+        "crm_already_exists": "Kontakt CRM już istnieje dla tego subskrybenta.",
+        "crm_added_success": "Subskrybent został dodany do CRM jako lead.",
+        "crm_add_failed": "Nie udało się dodać subskrybenta do CRM.",
+        "crm_log_activity": "Subskrybent dodany do CRM jako lead"
     },
     "subscriber_card": {
         "title": "Karta Subskrybenta",

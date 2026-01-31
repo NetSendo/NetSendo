@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted } from "vue";
 import axios from "axios";
 import debounce from "lodash/debounce";
@@ -44,6 +44,27 @@ const sortOrder = ref(props.filters.sort_order || "desc");
 // Selection state
 const selectedIds = ref([]);
 const processing = ref(false);
+
+// Toast notification
+const toast = ref(null);
+function showToast(message, success = true) {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 4000);
+}
+
+// Check for flash messages on page load
+const page = usePage();
+if (page.props.flash?.success) {
+    showToast(page.props.flash.success, true);
+}
+if (page.props.flash?.warning) {
+    showToast(page.props.flash.warning, false);
+}
+if (page.props.flash?.error) {
+    showToast(page.props.flash.error, false);
+}
 
 // Move modal state
 const showMoveModal = ref(false);
@@ -204,7 +225,7 @@ watch(
             saveColumnOrder(columnOrder.value);
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 const customFieldColumns = computed(() =>
@@ -213,7 +234,7 @@ const customFieldColumns = computed(() =>
         label: field.label || field.name,
         type: "custom",
         fieldId: field.id,
-    }))
+    })),
 );
 
 const columnDefinitionMap = computed(() => {
@@ -230,11 +251,11 @@ const columnDefinitionMap = computed(() => {
 const orderedColumns = computed(() =>
     columnOrder.value
         .map((key) => columnDefinitionMap.value.get(key))
-        .filter(Boolean)
+        .filter(Boolean),
 );
 
 const visibleOrderedColumns = computed(() =>
-    orderedColumns.value.filter((column) => visibleColumns.value[column.key])
+    orderedColumns.value.filter((column) => visibleColumns.value[column.key]),
 );
 
 const getColumnLabel = (column) =>
@@ -271,7 +292,7 @@ const toggleColumn = (column) => {
     visibleColumns.value[column] = !visibleColumns.value[column];
     localStorage.setItem(
         "subscriberColumns",
-        JSON.stringify(visibleColumns.value)
+        JSON.stringify(visibleColumns.value),
     );
 };
 
@@ -372,7 +393,7 @@ const applyFilters = () => {
         {
             preserveState: true,
             replace: true,
-        }
+        },
     );
 };
 
@@ -388,7 +409,7 @@ watch(
     [search, listId, listType],
     debounce(() => {
         applyFilters();
-    }, 300)
+    }, 300),
 );
 
 // Clear selection when data changes (e.g., after bulk action)
@@ -396,7 +417,7 @@ watch(
     () => props.subscribers.data,
     () => {
         selectedIds.value = [];
-    }
+    },
 );
 
 // Bulk delete action
@@ -421,7 +442,7 @@ const confirmBulkDelete = () => {
                 selectedIds.value = [];
                 showDeleteConfirm.value = false;
             },
-        }
+        },
     );
 };
 
@@ -444,7 +465,7 @@ const bulkMove = ({ source_list_id, target_list_id }) => {
                 selectedIds.value = [];
                 showMoveModal.value = false;
             },
-        }
+        },
     );
 };
 
@@ -465,7 +486,7 @@ const bulkChangeStatus = (status) => {
                 processing.value = false;
                 selectedIds.value = [];
             },
-        }
+        },
     );
 };
 
@@ -492,7 +513,7 @@ const submitCopy = (data) => {
                 selectedIds.value = [];
                 showCopyModal.value = false;
             },
-        }
+        },
     );
 };
 
@@ -519,7 +540,7 @@ const confirmBulkDeleteFromList = () => {
                 selectedIds.value = [];
                 showDeleteFromListConfirm.value = false;
             },
-        }
+        },
     );
 };
 
@@ -545,7 +566,7 @@ const handleDeleteFromLists = ({ subscriber_id, list_ids }) => {
                 showDeleteSubscriberModal.value = false;
                 subscriberToDelete.value = null;
             },
-        }
+        },
     );
 };
 
@@ -564,7 +585,28 @@ const handleDeleteCompletely = ({ subscriber_id }) => {
                 showDeleteSubscriberModal.value = false;
                 subscriberToDelete.value = null;
             },
-        }
+        },
+    );
+};
+
+// Quick add subscriber to CRM as lead
+const addToCrm = (subscriber) => {
+    if (subscriber.has_crm_contact) {
+        showToast(t("subscribers.crm_already_exists"), false);
+        return;
+    }
+    router.post(
+        route("subscribers.add-to-crm", subscriber.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(t("subscribers.crm_added_success"), true);
+            },
+            onError: () => {
+                showToast(t("subscribers.crm_add_failed"), false);
+            },
+        },
     );
 };
 
@@ -872,7 +914,7 @@ const getSortIcon = (column) => {
                                             :href="
                                                 route(
                                                     'subscribers.show',
-                                                    subscriber.id
+                                                    subscriber.id,
                                                 )
                                             "
                                             class="text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -914,7 +956,7 @@ const getSortIcon = (column) => {
                                         >
                                             {{
                                                 $t(
-                                                    `subscribers.statuses.${subscriber.status}`
+                                                    `subscribers.statuses.${subscriber.status}`,
                                                 ) || subscriber.status
                                             }}
                                         </span>
@@ -952,7 +994,12 @@ const getSortIcon = (column) => {
                                 >
                                     <!-- View Card -->
                                     <Link
-                                        :href="route('subscribers.show', subscriber.id)"
+                                        :href="
+                                            route(
+                                                'subscribers.show',
+                                                subscriber.id,
+                                            )
+                                        "
                                         class="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
                                         :title="$t('subscriber_card.title')"
                                     >
@@ -975,7 +1022,7 @@ const getSortIcon = (column) => {
                                         :href="
                                             route(
                                                 'subscribers.edit',
-                                                subscriber.id
+                                                subscriber.id,
                                             )
                                         "
                                         class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -995,6 +1042,36 @@ const getSortIcon = (column) => {
                                             />
                                         </svg>
                                     </Link>
+                                    <!-- Add to CRM -->
+                                    <button
+                                        @click="addToCrm(subscriber)"
+                                        :class="[
+                                            subscriber.has_crm_contact
+                                                ? 'text-green-500 dark:text-green-400 cursor-default'
+                                                : 'text-slate-400 hover:text-purple-600 dark:hover:text-purple-400',
+                                        ]"
+                                        :title="
+                                            subscriber.has_crm_contact
+                                                ? $t(
+                                                      'subscribers.crm_already_exists',
+                                                  )
+                                                : $t('subscribers.add_to_crm')
+                                        "
+                                    >
+                                        <svg
+                                            class="h-5 w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                            />
+                                        </svg>
+                                    </button>
                                     <button
                                         @click="deleteSubscriber(subscriber)"
                                         class="text-slate-400 hover:text-red-600 dark:hover:text-red-400"
@@ -1130,9 +1207,81 @@ const getSortIcon = (column) => {
             :lists="lists"
             :current-list-id="listId"
             :processing="processing"
-            @close="showDeleteSubscriberModal = false; subscriberToDelete = null"
+            @close="
+                showDeleteSubscriberModal = false;
+                subscriberToDelete = null;
+            "
             @delete-from-lists="handleDeleteFromLists"
             @delete-completely="handleDeleteCompletely"
         />
+
+        <!-- Toast Notification -->
+        <div v-if="toast" class="fixed bottom-4 right-4 z-50 max-w-sm w-full">
+            <div
+                :class="[
+                    'rounded-lg shadow-lg p-4 flex items-center gap-3',
+                    toast.success
+                        ? 'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800'
+                        : 'bg-amber-50 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800',
+                ]"
+            >
+                <svg
+                    v-if="toast.success"
+                    class="h-5 w-5 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                    />
+                </svg>
+                <svg
+                    v-else
+                    class="h-5 w-5 text-amber-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                </svg>
+                <span
+                    :class="[
+                        'text-sm font-medium',
+                        toast.success
+                            ? 'text-green-800 dark:text-green-200'
+                            : 'text-amber-800 dark:text-amber-200',
+                    ]"
+                >
+                    {{ toast.message }}
+                </span>
+                <button
+                    @click="toast = null"
+                    class="ml-auto text-gray-400 hover:text-gray-600"
+                >
+                    <svg
+                        class="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>

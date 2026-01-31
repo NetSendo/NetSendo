@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
 use App\Models\AutomationRule;
+use App\Models\CrmContact;
 use App\Models\EmailClick;
 use App\Models\EmailOpen;
 use App\Models\EmailReadSession;
@@ -319,6 +320,11 @@ class MessageController extends Controller
             // Campaign Tags
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer|exists:tags,id',
+            // CRM Contacts
+            'crm_contact_ids' => 'nullable|array',
+            'crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
+            'excluded_crm_contact_ids' => 'nullable|array',
+            'excluded_crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -399,6 +405,16 @@ class MessageController extends Controller
             $message->excludedLists()->sync($validated['excluded_list_ids']);
         }
 
+        // Sync CRM contacts
+        if (array_key_exists('crm_contact_ids', $validated)) {
+            $message->crmContacts()->sync($validated['crm_contact_ids'] ?? []);
+        }
+
+        // Sync excluded CRM contacts
+        if (array_key_exists('excluded_crm_contact_ids', $validated)) {
+            $message->excludedCrmContacts()->sync($validated['excluded_crm_contact_ids'] ?? []);
+        }
+
         // Handle PDF attachments upload
         if ($request->hasFile('attachments')) {
             $userId = auth()->id();
@@ -468,7 +484,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags']);
+        $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -518,6 +534,28 @@ class MessageController extends Controller
                 'ab_test_config' => $this->formatAbTestConfig($message),
                 // Campaign Tags
                 'tag_ids' => $message->tags->pluck('id'),
+                // CRM Contacts
+                'crm_contact_ids' => $message->crmContacts->pluck('id'),
+                'excluded_crm_contact_ids' => $message->excludedCrmContacts->pluck('id'),
+                // Pre-loaded CRM contacts for display
+                'crm_contacts' => $message->crmContacts->map(fn($c) => [
+                    'id' => $c->id,
+                    'email' => $c->email,
+                    'first_name' => $c->first_name,
+                    'last_name' => $c->last_name,
+                    'full_name' => trim("{$c->first_name} {$c->last_name}") ?: null,
+                    'company' => $c->company,
+                    'status' => $c->status,
+                ]),
+                'excluded_crm_contacts' => $message->excludedCrmContacts->map(fn($c) => [
+                    'id' => $c->id,
+                    'email' => $c->email,
+                    'first_name' => $c->first_name,
+                    'last_name' => $c->last_name,
+                    'full_name' => trim("{$c->first_name} {$c->last_name}") ?: null,
+                    'company' => $c->company,
+                    'status' => $c->status,
+                ]),
             ],
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
@@ -626,6 +664,11 @@ class MessageController extends Controller
             // Campaign Tags
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer|exists:tags,id',
+            // CRM Contacts
+            'crm_contact_ids' => 'nullable|array',
+            'crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
+            'excluded_crm_contact_ids' => 'nullable|array',
+            'excluded_crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -702,6 +745,16 @@ class MessageController extends Controller
         // Sync excluded lists
         if (array_key_exists('excluded_list_ids', $validated)) {
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
+        }
+
+        // Sync CRM contacts
+        if (array_key_exists('crm_contact_ids', $validated)) {
+            $message->crmContacts()->sync($validated['crm_contact_ids'] ?? []);
+        }
+
+        // Sync excluded CRM contacts
+        if (array_key_exists('excluded_crm_contact_ids', $validated)) {
+            $message->excludedCrmContacts()->sync($validated['excluded_crm_contact_ids'] ?? []);
         }
 
         // Handle attachment removals
@@ -1927,6 +1980,66 @@ class MessageController extends Controller
             ]);
 
         return response()->json($messages);
+    }
+
+    /**
+     * Search CRM contacts for message recipient selection.
+     * Returns contacts with their subscriber info for email sending.
+     */
+    public function searchCrmContacts(Request $request)
+    {
+        $userId = auth()->user()->admin_user_id ?? auth()->id();
+        $query = $request->get('q', '');
+        $excludeIds = $request->get('exclude', []); // IDs to exclude (already selected)
+
+        $contactsQuery = CrmContact::where('crm_contacts.user_id', $userId)
+            ->whereNotNull('crm_contacts.subscriber_id')
+            ->join('subscribers', 'crm_contacts.subscriber_id', '=', 'subscribers.id')
+            ->leftJoin('crm_companies', 'crm_contacts.crm_company_id', '=', 'crm_companies.id');
+
+        // Search by subscriber fields and company name
+        if (strlen($query) >= 2) {
+            $contactsQuery->where(function ($q) use ($query) {
+                $q->where('subscribers.email', 'like', "%{$query}%")
+                  ->orWhere('subscribers.first_name', 'like', "%{$query}%")
+                  ->orWhere('subscribers.last_name', 'like', "%{$query}%")
+                  ->orWhere('subscribers.phone', 'like', "%{$query}%")
+                  ->orWhere('crm_companies.name', 'like', "%{$query}%");
+            });
+        }
+
+        // Exclude already selected
+        if (!empty($excludeIds) && is_array($excludeIds)) {
+            $contactsQuery->whereNotIn('crm_contacts.id', $excludeIds);
+        }
+
+        $contacts = $contactsQuery
+            ->select([
+                'crm_contacts.id',
+                'crm_contacts.status',
+                'crm_contacts.subscriber_id',
+                'subscribers.email',
+                'subscribers.first_name',
+                'subscribers.last_name',
+                'subscribers.phone',
+                'crm_companies.name as company',
+            ])
+            ->orderByRaw("CASE WHEN subscribers.email LIKE ? THEN 0 ELSE 1 END", ["{$query}%"])
+            ->orderBy('subscribers.last_name')
+            ->orderBy('subscribers.first_name')
+            ->limit(30)
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'email' => $c->email,
+                'first_name' => $c->first_name,
+                'last_name' => $c->last_name,
+                'full_name' => trim("{$c->first_name} {$c->last_name}") ?: null,
+                'company' => $c->company,
+                'status' => $c->status,
+            ]);
+
+        return response()->json(['contacts' => $contacts]);
     }
 }
 

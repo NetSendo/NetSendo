@@ -1446,7 +1446,13 @@
             "insert_fname_vocative": "First name (vocative)",
             "insert_gender_form": "Gender (m|f)",
             "campaign_tags": "Campaign tags",
-            "campaign_tags_help": "Assign tags to this message for easier campaign statistics analysis."
+            "campaign_tags_help": "Assign tags to this message for easier campaign statistics analysis.",
+            "crm_contacts": "CRM Contacts",
+            "crm_contacts_help": "Search and select individual CRM contacts as message recipients.",
+            "excluded_crm_contacts": "Excluded CRM Contacts",
+            "excluded_crm_contacts_help": "These contacts will not receive the message, even if they are on selected lists.",
+            "search_crm_contacts": "Search CRM contacts...",
+            "selected_crm_contacts": "Selected {count} CRM contact(s)"
         },
         "attachments": {
             "title": "PDF Attachments",
@@ -1719,7 +1725,12 @@
             "remove_from_lists": "Remove from lists",
             "delete_completely": "Delete completely",
             "no_lists": "Subscriber does not belong to any list"
-        }
+        },
+        "add_to_crm": "Add to CRM",
+        "crm_already_exists": "CRM contact already exists for this subscriber.",
+        "crm_added_success": "Subscriber has been added to CRM as a lead.",
+        "crm_add_failed": "Failed to add subscriber to CRM.",
+        "crm_log_activity": "Subscriber added to CRM as a lead"
     },
     "subscriber_card": {
         "title": "Subscriber Card",

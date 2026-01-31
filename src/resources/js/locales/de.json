@@ -1487,7 +1487,13 @@
             "insert_fname_vocative": "Vorname (Vokativ)",
             "insert_gender_form": "Geschlecht (m|w)",
             "campaign_tags": "Kampagnen-Tags",
-            "campaign_tags_help": "Weisen Sie dieser Nachricht Tags zu, um die Kampagnenstatistiken einfacher analysieren zu können."
+            "campaign_tags_help": "Weisen Sie dieser Nachricht Tags zu, um die Kampagnenstatistiken einfacher analysieren zu können.",
+            "crm_contacts": "CRM-Kontakte",
+            "crm_contacts_help": "Suchen und wählen Sie einzelne CRM-Kontakte als Nachrichtenempfänger aus.",
+            "excluded_crm_contacts": "Ausgeschlossene CRM-Kontakte",
+            "excluded_crm_contacts_help": "Diese Kontakte erhalten die Nachricht nicht, auch wenn sie in ausgewählten Listen sind.",
+            "search_crm_contacts": "CRM-Kontakte suchen...",
+            "selected_crm_contacts": "{count} CRM-Kontakt(e) ausgewählt"
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",

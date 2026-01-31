@@ -1501,7 +1501,13 @@
             "insert_fname_vocative": "Nombre (vocativo)",
             "insert_gender_form": "Género (m|f)",
             "campaign_tags": "Etiquetas de campaña",
-            "campaign_tags_help": "Asigne etiquetas a este mensaje para facilitar el análisis de las estadísticas de la campaña."
+            "campaign_tags_help": "Asigne etiquetas a este mensaje para facilitar el análisis de las estadísticas de la campaña.",
+            "crm_contacts": "Contactos CRM",
+            "crm_contacts_help": "Busque y seleccione contactos CRM individuales como destinatarios del mensaje.",
+            "excluded_crm_contacts": "Contactos CRM excluidos",
+            "excluded_crm_contacts_help": "Estos contactos no recibirán el mensaje, aunque estén en las listas seleccionadas.",
+            "search_crm_contacts": "Buscar contactos CRM...",
+            "selected_crm_contacts": "{count} contacto(s) CRM seleccionado(s)"
         },
         "actions": {
             "save_draft": "Guardar como borrador",
