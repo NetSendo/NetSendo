@@ -29,6 +29,7 @@ const showManualInput = ref(false);
 const requestSent = ref(false);
 const errorMessage = ref("");
 const successMessage = ref("");
+const showComingSoonModal = ref(false);
 const showLicenseKey = ref(false);
 
 // Polling state
@@ -52,7 +53,7 @@ const pollForLicense = () => {
             const elapsed = Date.now() - startTime;
             pollingProgress.value = Math.min(
                 100,
-                (elapsed / maxDuration) * 100
+                (elapsed / maxDuration) * 100,
             );
 
             const response = await axios.get(route("license.status"));
@@ -700,7 +701,7 @@ const checkLicenseStatus = async () => {
                                 <div class="grid gap-6 md:grid-cols-2">
                                     <div
                                         v-for="(section, idx) in planCards.find(
-                                            (p) => p.key === 'GOLD'
+                                            (p) => p.key === 'GOLD',
                                         )?.sections || []"
                                         :key="idx"
                                         class="rounded-xl bg-amber-50/50 p-4 dark:bg-amber-900/10"
@@ -751,7 +752,7 @@ const checkLicenseStatus = async () => {
                                                 class="text-3xl font-bold text-gray-900 dark:text-white"
                                                 >{{
                                                     $t(
-                                                        "license.plans.gold.price"
+                                                        "license.plans.gold.price",
                                                     )
                                                 }}</span
                                             >
@@ -759,7 +760,7 @@ const checkLicenseStatus = async () => {
                                                 class="text-gray-500 dark:text-gray-400"
                                                 >{{
                                                     $t(
-                                                        "license.plans.gold.suffix"
+                                                        "license.plans.gold.suffix",
                                                     )
                                                 }}</span
                                             >
@@ -771,16 +772,17 @@ const checkLicenseStatus = async () => {
                                         </p>
                                     </div>
                                     <button
-                                        v-if="stripeGoldPaymentLink"
                                         @click="
-                                            window.open(
-                                                stripeGoldPaymentLink,
-                                                '_blank'
-                                            )
+                                            stripeGoldPaymentLink
+                                                ? window.open(
+                                                      stripeGoldPaymentLink,
+                                                      '_blank',
+                                                  )
+                                                : (showComingSoonModal = true)
                                         "
                                         class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl md:w-auto"
                                     >
-                                        {{ $t("license.buy_gold") }}
+                                        {{ $t("license.upgrade_to_gold") }}
                                         <svg
                                             class="h-5 w-5 transition-transform group-hover:translate-x-1"
                                             fill="none"
@@ -1179,7 +1181,7 @@ const checkLicenseStatus = async () => {
                                         class="w-full rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                         :placeholder="
                                             $t(
-                                                'license.license_key_placeholder'
+                                                'license.license_key_placeholder',
                                             )
                                         "
                                     ></textarea>
@@ -1256,5 +1258,102 @@ const checkLicenseStatus = async () => {
                 </div>
             </div>
         </div>
+
+        <!-- Coming Soon Modal -->
+        <Teleport to="body">
+            <Transition name="modal">
+                <div
+                    v-if="showComingSoonModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                >
+                    <!-- Backdrop -->
+                    <div
+                        class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                        @click="showComingSoonModal = false"
+                    ></div>
+
+                    <!-- Modal Content -->
+                    <div
+                        class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 text-center shadow-2xl dark:bg-gray-800"
+                    >
+                        <!-- Close button -->
+                        <button
+                            @click="showComingSoonModal = false"
+                            class="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
+                        </button>
+
+                        <!-- Icon -->
+                        <div
+                            class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-amber-500"
+                        >
+                            <svg
+                                class="h-8 w-8 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        </div>
+
+                        <!-- Title -->
+                        <h3
+                            class="mb-2 text-2xl font-bold text-gray-900 dark:text-white"
+                        >
+                            {{ $t("license.coming_soon") }}
+                        </h3>
+
+                        <!-- Description -->
+                        <p class="mb-6 text-gray-600 dark:text-gray-400">
+                            {{ $t("license.gold_coming_soon_msg") }}
+                        </p>
+
+                        <!-- Button -->
+                        <button
+                            @click="showComingSoonModal = false"
+                            class="w-full rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
+                        >
+                            {{ $t("common.ok") }}
+                        </button>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+    transition: all 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+.modal-enter-from > div:last-child,
+.modal-leave-to > div:last-child {
+    transform: scale(0.9);
+}
+</style>
