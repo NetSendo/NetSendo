@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.8.3] – Short Description
+
+**Release date:** 2026-02-01
+
+### Added
+
 - **Message Statistics - Add to List:**
   - Added "Actions" column to "Recent Opens" and "Recent Clicks" tables on the message statistics page.
   - New `AddToListDropdown` component allowing quick subscriber addition to mailing lists directly from statistics view.
