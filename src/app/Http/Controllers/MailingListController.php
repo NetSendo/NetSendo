@@ -451,4 +451,106 @@ class MailingListController extends Controller
         }
     }
 
+    /**
+     * Copy a mailing list with its settings, system messages, and system pages.
+     */
+    public function copy(Request $request, ContactList $mailing_list)
+    {
+        // Authorization check
+        if (!auth()->user()->canEditList($mailing_list)) {
+            abort(403, 'Brak uprawnień do kopiowania tej listy.');
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'is_public' => 'required|boolean',
+            'copy_subscribers' => 'required|boolean',
+            'copy_system_messages' => 'required|boolean',
+            'copy_system_pages' => 'required|boolean',
+        ]);
+
+        // Create new list with copied settings
+        $newList = auth()->user()->contactLists()->create([
+            'name' => $validated['name'],
+            'type' => 'email',
+            'description' => $mailing_list->description,
+            'contact_list_group_id' => $mailing_list->contact_list_group_id,
+            'default_mailbox_id' => $mailing_list->default_mailbox_id,
+            'is_public' => $validated['is_public'],
+            'timezone' => $mailing_list->timezone,
+            'settings' => $mailing_list->settings,
+            'parent_list_id' => $mailing_list->parent_list_id,
+            'sync_settings' => $mailing_list->sync_settings,
+            'max_subscribers' => $mailing_list->max_subscribers,
+            'signups_blocked' => false, // New list should be open for signups
+            'required_fields' => $mailing_list->required_fields,
+            'resubscription_behavior' => $mailing_list->resubscription_behavior,
+            'reset_autoresponders_on_resubscription' => $mailing_list->reset_autoresponders_on_resubscription,
+        ]);
+
+        // Copy tags
+        if ($mailing_list->tags->isNotEmpty()) {
+            $newList->tags()->sync($mailing_list->tags->pluck('id'));
+        }
+
+        // Copy subscribers if requested
+        if ($validated['copy_subscribers']) {
+            $subscribers = $mailing_list->subscribers()->get();
+            foreach ($subscribers as $subscriber) {
+                $newList->subscribers()->attach($subscriber->id, [
+                    'status' => $subscriber->pivot->status,
+                    'source' => 'copy',
+                    'subscribed_at' => $subscriber->pivot->subscribed_at,
+                    'unsubscribed_at' => $subscriber->pivot->unsubscribed_at,
+                    'soft_bounce_count' => $subscriber->pivot->soft_bounce_count,
+                ]);
+            }
+        }
+
+        // Copy system messages if requested
+        if ($validated['copy_system_messages']) {
+            $systemEmails = \App\Models\SystemEmail::where('contact_list_id', $mailing_list->id)->get();
+            foreach ($systemEmails as $email) {
+                \App\Models\SystemEmail::create([
+                    'slug' => $email->slug,
+                    'contact_list_id' => $newList->id,
+                    'name' => $email->name,
+                    'subject' => $email->subject,
+                    'content' => $email->content,
+                    'is_active' => $email->is_active,
+                ]);
+            }
+        }
+
+        // Copy system pages if requested
+        if ($validated['copy_system_pages']) {
+            $systemPages = \App\Models\SystemPage::where('contact_list_id', $mailing_list->id)->get();
+            foreach ($systemPages as $page) {
+                \App\Models\SystemPage::create([
+                    'slug' => $page->slug,
+                    'contact_list_id' => $newList->id,
+                    'name' => $page->name,
+                    'title' => $page->title,
+                    'content' => $page->content,
+                    'access' => $page->access,
+                ]);
+            }
+        }
+
+        // Copy CRON settings if they exist
+        $cronSettings = $mailing_list->cronSettings;
+        if ($cronSettings) {
+            \App\Models\ContactListCronSetting::create([
+                'contact_list_id' => $newList->id,
+                'use_custom' => $cronSettings->use_custom,
+                'limit_per_minute' => $cronSettings->limit_per_minute,
+                'schedule' => $cronSettings->schedule,
+            ]);
+        }
+
+        return redirect()->route('mailing-lists.index')
+            ->with('success', __('mailing_lists.copy_success'));
+    }
+
 }

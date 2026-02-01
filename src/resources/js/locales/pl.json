@@ -742,6 +742,24 @@
             "confirm_empty": "Czy na pewno chcesz usunąć tę listę? Procesu nie można cofnąć.",
             "submit": "Usuń listę"
         },
+        "copy": "Kopiuj",
+        "copy_success": "Lista została skopiowana pomyślnie!",
+        "copy_modal": {
+            "title": "Kopiuj listę \"{name}\"",
+            "description": "Utwórz kopię tej listy z wybranymi opcjami.",
+            "new_name": "Nazwa nowej listy",
+            "visibility": "Widoczność",
+            "options_title": "Opcje kopiowania",
+            "copy_subscribers": "Kopiuj subskrybentów",
+            "copy_subscribers_desc": "Skopiuj wszystkich {count} subskrybentów do nowej listy.",
+            "copy_system_messages": "Kopiuj wiadomości systemowe",
+            "copy_system_messages_desc": "Skopiuj niestandardowe powiadomienia e-mail dla tej listy.",
+            "copy_system_pages": "Kopiuj strony systemowe",
+            "copy_system_pages_desc": "Skopiuj niestandardowe strony (rezygnacja, potwierdzenie itp.).",
+            "always_copied": "Zawsze kopiowane",
+            "always_copied_list": "ustawienia listy, grupa, tagi, ustawienia harmonogramu wysyłki",
+            "submit": "Kopiuj listę"
+        },
         "tabs": {
             "general": "Ogólne",
             "settings": "Ustawienia"
@@ -943,6 +961,20 @@
             "delete_all_label": "Usuń trwale subskrybentów i listę",
             "confirm_empty": "Czy na pewno chcesz usunąć tę listę SMS? Procesu nie można cofnąć.",
             "submit": "Usuń listę"
+        },
+        "copy": "Kopiuj",
+        "copy_success": "Lista SMS została skopiowana pomyślnie!",
+        "copy_modal": {
+            "title": "Kopiuj listę SMS \"{name}\"",
+            "description": "Utwórz kopię tej listy SMS z wybranymi opcjami.",
+            "new_name": "Nazwa nowej listy",
+            "visibility": "Widoczność",
+            "options_title": "Opcje kopiowania",
+            "copy_subscribers": "Kopiuj subskrybentów",
+            "copy_subscribers_desc": "Skopiuj wszystkich {count} subskrybentów do nowej listy.",
+            "always_copied": "Zawsze kopiowane",
+            "always_copied_list": "ustawienia listy, grupa, tagi, ustawienia harmonogramu wysyłki",
+            "submit": "Kopiuj listę"
         },
         "tabs": {
             "general": "Ogólne",

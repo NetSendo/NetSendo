@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Campaign Auditor - User Currency Support:**
+  - Revenue loss amounts are now displayed in the user's preferred currency (from Profile settings) instead of hardcoded USD.
+  - Added automatic currency conversion using NBP exchange rates via `CurrencyExchangeService`.
+  - If no currency is set in user profile, defaults to USD for backward compatibility.
+
+- **Copy List Feature:**
+  - **Email Lists:** Added ability to copy mailing lists with customizable options.
+  - **SMS Lists:** Added ability to copy SMS lists with customizable options.
+  - **Copy Options:**
+    - Copy subscribers (optional)
+    - Copy system messages and pages (email lists only)
+    - Set custom name for the new list
+    - Set visibility (public/private) for the new list
+  - **Preserved Data:** Group assignment, tags, and list settings are always copied.
+  - **UI:** New `CopyListModal.vue` components for both list types, integrated into grid and table views.
+  - **Backend:** New `copy` method in `MailingListController` and `SmsListController` with dedicated routes.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+
 ### Fixed
 
 ### Changed

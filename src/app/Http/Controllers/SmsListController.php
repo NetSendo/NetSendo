@@ -331,4 +331,76 @@ class SmsListController extends Controller
             return back()->with('error', 'Nie udało się wysłać testowego webhooka. Sprawdź URL i logi.');
         }
     }
+
+    /**
+     * Copy an SMS list with its settings.
+     */
+    public function copy(Request $request, ContactList $sms_list)
+    {
+        // Authorization check
+        if (!auth()->user()->canEditList($sms_list)) {
+            abort(403, 'Brak uprawnień do kopiowania tej listy.');
+        }
+
+        if ($sms_list->type !== 'sms') {
+            abort(404, 'Lista nie jest listą SMS.');
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'is_public' => 'required|boolean',
+            'copy_subscribers' => 'required|boolean',
+        ]);
+
+        // Create new list with copied settings
+        $newList = auth()->user()->contactLists()->create([
+            'name' => $validated['name'],
+            'type' => 'sms',
+            'description' => $sms_list->description,
+            'contact_list_group_id' => $sms_list->contact_list_group_id,
+            'default_sms_provider_id' => $sms_list->default_sms_provider_id,
+            'is_public' => $validated['is_public'],
+            'timezone' => $sms_list->timezone,
+            'settings' => $sms_list->settings,
+            'parent_list_id' => $sms_list->parent_list_id,
+            'sync_settings' => $sms_list->sync_settings,
+            'max_subscribers' => $sms_list->max_subscribers,
+            'signups_blocked' => false, // New list should be open for signups
+            'required_fields' => $sms_list->required_fields,
+        ]);
+
+        // Copy tags
+        if ($sms_list->tags->isNotEmpty()) {
+            $newList->tags()->sync($sms_list->tags->pluck('id'));
+        }
+
+        // Copy subscribers if requested
+        if ($validated['copy_subscribers']) {
+            $subscribers = $sms_list->subscribers()->get();
+            foreach ($subscribers as $subscriber) {
+                $newList->subscribers()->attach($subscriber->id, [
+                    'status' => $subscriber->pivot->status,
+                    'source' => 'copy',
+                    'subscribed_at' => $subscriber->pivot->subscribed_at,
+                    'unsubscribed_at' => $subscriber->pivot->unsubscribed_at,
+                    'soft_bounce_count' => $subscriber->pivot->soft_bounce_count,
+                ]);
+            }
+        }
+
+        // Copy CRON settings if they exist
+        $cronSettings = $sms_list->cronSettings;
+        if ($cronSettings) {
+            \App\Models\ContactListCronSetting::create([
+                'contact_list_id' => $newList->id,
+                'use_custom' => $cronSettings->use_custom,
+                'limit_per_minute' => $cronSettings->limit_per_minute,
+                'schedule' => $cronSettings->schedule,
+            ]);
+        }
+
+        return redirect()->route('sms-lists.index')
+            ->with('success', __('sms_lists.copy_success'));
+    }
 }

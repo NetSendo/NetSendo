@@ -51,6 +51,14 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    userCurrency: {
+        type: String,
+        default: "USD",
+    },
+    exchangeRates: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const isLoading = ref(false);
@@ -113,7 +121,7 @@ const filteredIssues = computed(() => {
     if (!currentAudit.value?.issues) return [];
     if (activeCategory.value === "all") return currentAudit.value.issues;
     return currentAudit.value.issues.filter(
-        (i) => i.category === activeCategory.value
+        (i) => i.category === activeCategory.value,
     );
 });
 
@@ -190,15 +198,38 @@ const getSeverityClass = (severity) => {
     );
 };
 
-// Format currency
+// Convert value from USD to user's preferred currency
+const convertFromUSD = (value) => {
+    if (!value || props.userCurrency === "USD") return value;
+
+    // Exchange rates are relative to PLN (from NBP API)
+    // To convert: USD -> PLN -> target currency
+    const usdToPlnRate = props.exchangeRates["USD"] || 3.98;
+    const targetToPlnRate =
+        props.userCurrency === "PLN"
+            ? 1
+            : props.exchangeRates[props.userCurrency] || 1;
+
+    return (value * usdToPlnRate) / targetToPlnRate;
+};
+
+// Format currency - converts from USD to user's preferred currency
 const formatCurrency = (value) => {
-    if (!value) return "$0";
+    if (!value)
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: props.userCurrency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(0);
+
+    const convertedValue = convertFromUSD(value);
     return new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "USD",
+        currency: props.userCurrency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-    }).format(value);
+    }).format(convertedValue);
 };
 
 // Toggle issue details
@@ -210,7 +241,7 @@ const toggleDetails = (issueId) => {
 const markAsFixed = async (issue) => {
     try {
         await axios.post(
-            route("campaign-auditor.mark-fixed", { issue: issue.id })
+            route("campaign-auditor.mark-fixed", { issue: issue.id }),
         );
         issue.is_fixed = true;
         issue.fixed_at = new Date().toISOString();
@@ -294,7 +325,7 @@ const applyRecommendation = async (recommendation) => {
         await axios.post(
             route("campaign-auditor.recommendations.apply", {
                 recommendation: recommendation.id,
-            })
+            }),
         );
         recommendation.is_applied = true;
         recommendation.applied_at = new Date().toISOString();
@@ -315,7 +346,7 @@ const saveAdvisorSettings = async () => {
     try {
         await axios.put(
             route("campaign-auditor.advisor.settings.update"),
-            settingsForm.value
+            settingsForm.value,
         );
         showSettingsPanel.value = false;
     } catch (error) {
@@ -498,12 +529,12 @@ const saveAdvisorSettings = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "campaign_auditor.last_audit"
+                                                    "campaign_auditor.last_audit",
                                                 )
                                             }}:
                                             {{
                                                 new Date(
-                                                    currentAudit.created_at
+                                                    currentAudit.created_at,
                                                 ).toLocaleDateString()
                                             }}
                                         </p>
@@ -521,7 +552,7 @@ const saveAdvisorSettings = async () => {
                                                 }}
                                                 {{
                                                     $t(
-                                                        "campaign_auditor.critical"
+                                                        "campaign_auditor.critical",
                                                     )
                                                 }}
                                             </span>
@@ -534,7 +565,7 @@ const saveAdvisorSettings = async () => {
                                                 {{ currentAudit.warning_count }}
                                                 {{
                                                     $t(
-                                                        "campaign_auditor.warnings"
+                                                        "campaign_auditor.warnings",
                                                     )
                                                 }}
                                             </span>
@@ -567,7 +598,7 @@ const saveAdvisorSettings = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "campaign_auditor.revenue_loss"
+                                                    "campaign_auditor.revenue_loss",
                                                 )
                                             }}
                                         </p>
@@ -576,14 +607,14 @@ const saveAdvisorSettings = async () => {
                                         >
                                             {{
                                                 formatCurrency(
-                                                    currentAudit.estimated_revenue_loss
+                                                    currentAudit.estimated_revenue_loss,
                                                 )
                                             }}
                                         </p>
                                         <p class="text-xs text-gray-400">
                                             {{
                                                 $t(
-                                                    "campaign_auditor.estimated_monthly"
+                                                    "campaign_auditor.estimated_monthly",
                                                 )
                                             }}
                                         </p>
@@ -610,7 +641,7 @@ const saveAdvisorSettings = async () => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "campaign_auditor.based_on_real_data"
+                                                    "campaign_auditor.based_on_real_data",
                                                 )
                                             }}
                                         </p>
@@ -633,7 +664,7 @@ const saveAdvisorSettings = async () => {
                                             </svg>
                                             {{
                                                 $t(
-                                                    "campaign_auditor.based_on_estimates"
+                                                    "campaign_auditor.based_on_estimates",
                                                 )
                                             }}
                                         </p>
@@ -681,7 +712,7 @@ const saveAdvisorSettings = async () => {
                                             isLoading
                                                 ? $t("campaign_auditor.running")
                                                 : $t(
-                                                      "campaign_auditor.run_new_audit"
+                                                      "campaign_auditor.run_new_audit",
                                                   )
                                         }}
                                     </button>
@@ -722,7 +753,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_auditor.ai_executive_summary"
+                                                "campaign_auditor.ai_executive_summary",
                                             )
                                         }}
                                     </span>
@@ -734,7 +765,7 @@ const saveAdvisorSettings = async () => {
                                         v-for="(
                                             paragraph, idx
                                         ) in currentAudit.ai_summary.split(
-                                            '\n\n'
+                                            '\n\n',
                                         )"
                                         :key="idx"
                                         class="mb-3 last:mb-0"
@@ -811,7 +842,7 @@ const saveAdvisorSettings = async () => {
                                                     stroke-width="2"
                                                     :d="
                                                         getCategoryIcon(
-                                                            issue.category
+                                                            issue.category,
                                                         )
                                                     "
                                                 />
@@ -828,7 +859,7 @@ const saveAdvisorSettings = async () => {
                                             >
                                                 {{
                                                     getCategoryLabel(
-                                                        issue.category
+                                                        issue.category,
                                                     )
                                                 }}
                                             </p>
@@ -875,7 +906,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_auditor.recommendation"
+                                                "campaign_auditor.recommendation",
                                             )
                                         }}
                                     </h4>
@@ -896,7 +927,7 @@ const saveAdvisorSettings = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "campaign_auditor.mark_as_fixed"
+                                                    "campaign_auditor.mark_as_fixed",
                                                 )
                                             }}
                                         </button>
@@ -971,7 +1002,7 @@ const saveAdvisorSettings = async () => {
                                                     stroke-width="2"
                                                     :d="
                                                         getCategoryIcon(
-                                                            issue.category
+                                                            issue.category,
                                                         )
                                                     "
                                                 />
@@ -988,7 +1019,7 @@ const saveAdvisorSettings = async () => {
                                             >
                                                 {{
                                                     getCategoryLabel(
-                                                        issue.category
+                                                        issue.category,
                                                     )
                                                 }}
                                             </p>
@@ -1035,7 +1066,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_auditor.recommendation"
+                                                "campaign_auditor.recommendation",
                                             )
                                         }}
                                     </h4>
@@ -1095,7 +1126,7 @@ const saveAdvisorSettings = async () => {
                                                     stroke-width="2"
                                                     :d="
                                                         getCategoryIcon(
-                                                            issue.category
+                                                            issue.category,
                                                         )
                                                     "
                                                 />
@@ -1112,7 +1143,7 @@ const saveAdvisorSettings = async () => {
                                             >
                                                 {{
                                                     getCategoryLabel(
-                                                        issue.category
+                                                        issue.category,
                                                     )
                                                 }}
                                             </p>
@@ -1150,7 +1181,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_auditor.recommendation"
+                                                "campaign_auditor.recommendation",
                                             )
                                         }}
                                     </h4>
@@ -1276,7 +1307,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_advisor.recommendation_count"
+                                                "campaign_advisor.recommendation_count",
                                             )
                                         }}
                                     </label>
@@ -1298,7 +1329,7 @@ const saveAdvisorSettings = async () => {
                                     >
                                         {{
                                             $t(
-                                                "campaign_advisor.analysis_language"
+                                                "campaign_advisor.analysis_language",
                                             )
                                         }}
                                     </label>
@@ -1404,7 +1435,7 @@ const saveAdvisorSettings = async () => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "campaign_advisor.applied"
+                                                            "campaign_advisor.applied",
                                                         )
                                                     }}
                                                 </span>
@@ -1427,20 +1458,20 @@ const saveAdvisorSettings = async () => {
                                                 >
                                                     {{
                                                         $t(
-                                                            "campaign_advisor.expected_impact"
+                                                            "campaign_advisor.expected_impact",
                                                         )
                                                     }}
                                                 </p>
                                             </div>
                                             <span
                                                 :class="`rounded-full px-2 py-1 text-xs font-medium bg-${getEffortColor(
-                                                    rec.effort_level
+                                                    rec.effort_level,
                                                 )}-100 text-${getEffortColor(
-                                                    rec.effort_level
+                                                    rec.effort_level,
                                                 )}-800 dark:bg-${getEffortColor(
-                                                    rec.effort_level
+                                                    rec.effort_level,
                                                 )}-900/30 dark:text-${getEffortColor(
-                                                    rec.effort_level
+                                                    rec.effort_level,
                                                 )}-400`"
                                             >
                                                 {{ rec.effort_level }}
@@ -1458,7 +1489,7 @@ const saveAdvisorSettings = async () => {
                                         >
                                             {{
                                                 $t(
-                                                    "campaign_advisor.action_steps"
+                                                    "campaign_advisor.action_steps",
                                                 )
                                             }}
                                         </h4>
@@ -1479,7 +1510,7 @@ const saveAdvisorSettings = async () => {
                                         <button
                                             @click="
                                                 toggleRecommendationDetails(
-                                                    rec.id
+                                                    rec.id,
                                                 )
                                             "
                                             class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
@@ -1560,7 +1591,7 @@ const saveAdvisorSettings = async () => {
                                         <button
                                             @click="
                                                 toggleRecommendationDetails(
-                                                    rec.id
+                                                    rec.id,
                                                 )
                                             "
                                             class="text-sm text-gray-500 hover:text-gray-700"
@@ -1669,7 +1700,7 @@ const saveAdvisorSettings = async () => {
                                         <button
                                             @click="
                                                 toggleRecommendationDetails(
-                                                    rec.id
+                                                    rec.id,
                                                 )
                                             "
                                             class="text-sm text-gray-500 hover:text-gray-700"

@@ -7,6 +7,7 @@ use App\Models\CampaignAuditIssue;
 use App\Models\CampaignRecommendation;
 use App\Services\CampaignAdvisorService;
 use App\Services\CampaignAuditorService;
+use App\Services\CurrencyExchangeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -15,7 +16,8 @@ class CampaignAuditorController extends Controller
 {
     public function __construct(
         protected CampaignAuditorService $auditorService,
-        protected CampaignAdvisorService $advisorService
+        protected CampaignAdvisorService $advisorService,
+        protected CurrencyExchangeService $currencyService
     ) {}
 
     /**
@@ -70,6 +72,9 @@ class CampaignAuditorController extends Controller
                 ];
             });
 
+        // Get user's default currency
+        $userCurrency = $user->settings['default_currency'] ?? 'USD';
+
         return Inertia::render('CampaignAuditor/Index', [
             'latestAudit' => $latestAudit,
             'hasRecentAudit' => $hasRecentAudit,
@@ -81,6 +86,8 @@ class CampaignAuditorController extends Controller
             'effortLevels' => CampaignRecommendation::EFFORT_LABELS,
             'effectiveness' => $effectiveness,
             'aiIntegrations' => $aiIntegrations,
+            'userCurrency' => $userCurrency,
+            'exchangeRates' => $this->currencyService->getRates(),
         ]);
     }
 

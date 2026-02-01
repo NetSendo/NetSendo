@@ -2,6 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import DeleteListModal from "./Partials/DeleteListModal.vue";
+import CopyListModal from "./Partials/CopyListModal.vue";
 
 import { ref, watch, onMounted } from "vue";
 import { debounce } from "lodash";
@@ -41,7 +42,7 @@ watch(
             replace: true,
         });
     }, 300),
-    { deep: true }
+    { deep: true },
 );
 
 // Delete Modal Logic
@@ -63,6 +64,22 @@ const closeDeleteModal = () => {
 const availableListsHelper = (currentListId) => {
     if (!props.allLists) return [];
     return props.allLists.filter((l) => l.id !== currentListId);
+};
+
+// Copy Modal Logic
+const confirmingListCopy = ref(false);
+const listToCopy = ref(null);
+
+const confirmCopyList = (list) => {
+    listToCopy.value = list;
+    confirmingListCopy.value = true;
+};
+
+const closeCopyModal = () => {
+    confirmingListCopy.value = false;
+    setTimeout(() => {
+        listToCopy.value = null;
+    }, 300);
 };
 
 // View Mode Logic
@@ -100,6 +117,12 @@ onMounted(() => {
         :list="listToDelete"
         :available-lists="availableListsHelper(listToDelete?.id)"
         @close="closeDeleteModal"
+    />
+
+    <CopyListModal
+        :show="confirmingListCopy"
+        :list="listToCopy"
+        @close="closeCopyModal"
     />
 
     <AuthenticatedLayout>
@@ -423,7 +446,12 @@ onMounted(() => {
                         </div>
                         <div class="flex items-center gap-1">
                             <Link
-                                :href="route('subscribers.index', { list_id: list.id, list_type: 'email' })"
+                                :href="
+                                    route('subscribers.index', {
+                                        list_id: list.id,
+                                        list_type: 'email',
+                                    })
+                                "
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                                 :title="$t('mailing_lists.view_subscribers')"
                             >
@@ -442,7 +470,11 @@ onMounted(() => {
                                 </svg>
                             </Link>
                             <Link
-                                :href="route('messages.create', { list_id: list.id })"
+                                :href="
+                                    route('messages.create', {
+                                        list_id: list.id,
+                                    })
+                                "
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
                                 :title="$t('mailing_lists.create_message')"
                             >
@@ -479,6 +511,25 @@ onMounted(() => {
                                     />
                                 </svg>
                             </Link>
+                            <button
+                                @click="confirmCopyList(list)"
+                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
+                                :title="$t('mailing_lists.copy')"
+                            >
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                    />
+                                </svg>
+                            </button>
                             <button
                                 @click="confirmDeleteList(list)"
                                 class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
@@ -761,13 +812,16 @@ onMounted(() => {
                                             : 'desc';
                                 "
                             >
-                                <div class="flex items-center justify-center gap-1">
+                                <div
+                                    class="flex items-center justify-center gap-1"
+                                >
                                     {{ $t("mailing_lists.table.subscribers") }}
                                     <span class="flex flex-col">
                                         <svg
                                             class="h-2 w-2"
                                             :class="
-                                                form.sort_col === 'subscribers_count' &&
+                                                form.sort_col ===
+                                                    'subscribers_count' &&
                                                 form.sort_dir === 'asc'
                                                     ? 'text-indigo-600 dark:text-indigo-400'
                                                     : 'text-slate-300 dark:text-slate-600'
@@ -786,7 +840,8 @@ onMounted(() => {
                                         <svg
                                             class="h-2 w-2"
                                             :class="
-                                                form.sort_col === 'subscribers_count' &&
+                                                form.sort_col ===
+                                                    'subscribers_count' &&
                                                 form.sort_dir === 'desc'
                                                     ? 'text-indigo-600 dark:text-indigo-400'
                                                     : 'text-slate-300 dark:text-slate-600'
@@ -877,7 +932,9 @@ onMounted(() => {
                             :key="list.id"
                             class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
                         >
-                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs">
+                            <td
+                                class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs"
+                            >
                                 {{ list.id }}
                             </td>
                             <td
@@ -896,7 +953,7 @@ onMounted(() => {
                                         list.description
                                             ? list.description.substring(
                                                   0,
-                                                  50
+                                                  50,
                                               ) +
                                               (list.description.length > 50
                                                   ? "..."
@@ -976,9 +1033,16 @@ onMounted(() => {
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end gap-2">
                                     <Link
-                                        :href="route('subscribers.index', { list_id: list.id, list_type: 'email' })"
+                                        :href="
+                                            route('subscribers.index', {
+                                                list_id: list.id,
+                                                list_type: 'email',
+                                            })
+                                        "
                                         class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                        :title="$t('mailing_lists.view_subscribers')"
+                                        :title="
+                                            $t('mailing_lists.view_subscribers')
+                                        "
                                     >
                                         <svg
                                             class="h-5 w-5"
@@ -995,9 +1059,15 @@ onMounted(() => {
                                         </svg>
                                     </Link>
                                     <Link
-                                        :href="route('messages.create', { list_id: list.id })"
+                                        :href="
+                                            route('messages.create', {
+                                                list_id: list.id,
+                                            })
+                                        "
                                         class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
-                                        :title="$t('mailing_lists.create_message')"
+                                        :title="
+                                            $t('mailing_lists.create_message')
+                                        "
                                     >
                                         <svg
                                             class="h-5 w-5"
@@ -1035,6 +1105,25 @@ onMounted(() => {
                                         </svg>
                                     </Link>
                                     <button
+                                        @click="confirmCopyList(list)"
+                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
+                                        :title="$t('mailing_lists.copy')"
+                                    >
+                                        <svg
+                                            class="h-5 w-5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <button
                                         @click="confirmDeleteList(list)"
                                         class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                                         :title="$t('mailing_lists.delete')"
@@ -1067,8 +1156,8 @@ onMounted(() => {
             class="mt-6 flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm dark:bg-slate-900"
         >
             <div class="text-sm text-slate-500 dark:text-slate-400">
-                {{ $t("common.showing") }} {{ lists.from }} -
-                {{ lists.to }} {{ $t("common.of") }}
+                {{ $t("common.showing") }} {{ lists.from }} - {{ lists.to }}
+                {{ $t("common.of") }}
                 {{ lists.total }}
             </div>
             <div class="flex gap-1">

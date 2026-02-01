@@ -983,6 +983,24 @@
             "confirm_empty": "¿Estás seguro de que quieres eliminar esta lista? Este proceso no se puede deshacer.",
             "submit": "Eliminar lista"
         },
+        "copy": "Copiar",
+        "copy_success": "¡Lista copiada con éxito!",
+        "copy_modal": {
+            "title": "Copiar lista \"{name}\"",
+            "description": "Crea una copia de esta lista con las opciones seleccionadas.",
+            "new_name": "Nombre de la nueva lista",
+            "visibility": "Visibilidad",
+            "options_title": "Opciones de copia",
+            "copy_subscribers": "Copiar suscriptores",
+            "copy_subscribers_desc": "Copiar todos los {count} suscriptores a la nueva lista.",
+            "copy_system_messages": "Copiar mensajes del sistema",
+            "copy_system_messages_desc": "Copiar notificaciones de correo personalizadas para esta lista.",
+            "copy_system_pages": "Copiar páginas del sistema",
+            "copy_system_pages_desc": "Copiar páginas personalizadas (baja, confirmación, etc.).",
+            "always_copied": "Siempre copiado",
+            "always_copied_list": "configuración de lista, grupo, etiquetas, configuración de programación de envío",
+            "submit": "Copiar lista"
+        },
         "tabs": {
             "general": "General",
             "settings": "Configuración"
@@ -1154,6 +1172,20 @@
             "delete_all_label": "Eliminar permanentemente los suscriptores y la lista",
             "confirm_empty": "¿Estás seguro de que quieres eliminar esta lista de SMS? Este proceso no se puede deshacer.",
             "submit": "Eliminar lista"
+        },
+        "copy": "Copiar",
+        "copy_success": "¡Lista SMS copiada con éxito!",
+        "copy_modal": {
+            "title": "Copiar lista SMS \"{name}\"",
+            "description": "Crea una copia de esta lista SMS con las opciones seleccionadas.",
+            "new_name": "Nombre de la nueva lista",
+            "visibility": "Visibilidad",
+            "options_title": "Opciones de copia",
+            "copy_subscribers": "Copiar suscriptores",
+            "copy_subscribers_desc": "Copiar todos los {count} suscriptores a la nueva lista.",
+            "always_copied": "Siempre copiado",
+            "always_copied_list": "configuración de lista, grupo, etiquetas, configuración de programación de envío",
+            "submit": "Copiar lista"
         }
     },
     "sms": {

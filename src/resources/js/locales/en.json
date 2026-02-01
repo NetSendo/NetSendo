@@ -740,6 +740,24 @@
             "confirm_empty": "Are you sure you want to delete this list? This process cannot be undone.",
             "submit": "Delete list"
         },
+        "copy": "Copy",
+        "copy_success": "List copied successfully!",
+        "copy_modal": {
+            "title": "Copy list \"{name}\"",
+            "description": "Create a copy of this list with selected options.",
+            "new_name": "New list name",
+            "visibility": "Visibility",
+            "options_title": "Copy options",
+            "copy_subscribers": "Copy subscribers",
+            "copy_subscribers_desc": "Copy all {count} subscribers to the new list.",
+            "copy_system_messages": "Copy system messages",
+            "copy_system_messages_desc": "Copy custom email notifications for this list.",
+            "copy_system_pages": "Copy system pages",
+            "copy_system_pages_desc": "Copy custom pages (unsubscribe, confirmation, etc.).",
+            "always_copied": "Always copied",
+            "always_copied_list": "list settings, group, tags, sending schedule settings",
+            "submit": "Copy list"
+        },
         "tabs": {
             "general": "General",
             "settings": "Settings"
@@ -940,6 +958,20 @@
             "delete_all_label": "Permanently delete subscribers and list",
             "confirm_empty": "Are you sure you want to delete this SMS list? This process cannot be undone.",
             "submit": "Delete list"
+        },
+        "copy": "Copy",
+        "copy_success": "SMS list copied successfully!",
+        "copy_modal": {
+            "title": "Copy SMS list \"{name}\"",
+            "description": "Create a copy of this SMS list with selected options.",
+            "new_name": "New list name",
+            "visibility": "Visibility",
+            "options_title": "Copy options",
+            "copy_subscribers": "Copy subscribers",
+            "copy_subscribers_desc": "Copy all {count} subscribers to the new list.",
+            "always_copied": "Always copied",
+            "always_copied_list": "list settings, group, tags, sending schedule settings",
+            "submit": "Copy list"
         },
         "tabs": {
             "general": "General",

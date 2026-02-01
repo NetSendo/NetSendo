@@ -954,6 +954,24 @@
             "confirm_empty": "Sind Sie sicher, dass Sie diese Liste löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.",
             "submit": "Liste löschen"
         },
+        "copy": "Kopieren",
+        "copy_success": "Liste erfolgreich kopiert!",
+        "copy_modal": {
+            "title": "Liste \"{name}\" kopieren",
+            "description": "Erstellen Sie eine Kopie dieser Liste mit den ausgewählten Optionen.",
+            "new_name": "Name der neuen Liste",
+            "visibility": "Sichtbarkeit",
+            "options_title": "Kopieroptionen",
+            "copy_subscribers": "Abonnenten kopieren",
+            "copy_subscribers_desc": "Alle {count} Abonnenten in die neue Liste kopieren.",
+            "copy_system_messages": "Systemnachrichten kopieren",
+            "copy_system_messages_desc": "Benutzerdefinierte E-Mail-Benachrichtigungen für diese Liste kopieren.",
+            "copy_system_pages": "Systemseiten kopieren",
+            "copy_system_pages_desc": "Benutzerdefinierte Seiten (Abmeldung, Bestätigung usw.) kopieren.",
+            "always_copied": "Wird immer kopiert",
+            "always_copied_list": "Listeneinstellungen, Gruppe, Tags, Sendezeitplan-Einstellungen",
+            "submit": "Liste kopieren"
+        },
         "tabs": {
             "general": "Allgemein",
             "settings": "Einstellungen"
@@ -1140,6 +1158,20 @@
             "delete_all_label": "Abonnenten und Liste dauerhaft löschen",
             "confirm_empty": "Sind Sie sicher, dass Sie diese SMS-Liste löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.",
             "submit": "Liste löschen"
+        },
+        "copy": "Kopieren",
+        "copy_success": "SMS-Liste erfolgreich kopiert!",
+        "copy_modal": {
+            "title": "SMS-Liste \"{name}\" kopieren",
+            "description": "Erstellen Sie eine Kopie dieser SMS-Liste mit den ausgewählten Optionen.",
+            "new_name": "Name der neuen Liste",
+            "visibility": "Sichtbarkeit",
+            "options_title": "Kopieroptionen",
+            "copy_subscribers": "Abonnenten kopieren",
+            "copy_subscribers_desc": "Alle {count} Abonnenten in die neue Liste kopieren.",
+            "always_copied": "Wird immer kopiert",
+            "always_copied_list": "Listeneinstellungen, Gruppe, Tags, Sendezeitplan-Einstellungen",
+            "submit": "Liste kopieren"
         }
     },
     "sms": {

@@ -335,3 +335,62 @@ The following translation keys were added to support the AutoTag Pro Segmentatio
   <span>{{ stats.totalRules }}</span>
 </div>
 ```
+
+### Copy List Feature (February 2026)
+
+The following translation keys were added to support the Copy List feature for both email and SMS lists:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Mailing Lists (`mailing_lists.*`):**
+
+- `mailing_lists.copy` - Copy button label
+- `mailing_lists.copy_success` - Success toast message after copying
+- `mailing_lists.copy_modal.title` - Modal title with list name placeholder
+- `mailing_lists.copy_modal.description` - Modal description
+- `mailing_lists.copy_modal.new_name` - New list name field label
+- `mailing_lists.copy_modal.visibility` - Visibility toggle label
+- `mailing_lists.copy_modal.options_title` - Copy options section title
+- `mailing_lists.copy_modal.copy_subscribers` - Copy subscribers checkbox label
+- `mailing_lists.copy_modal.copy_subscribers_desc` - Copy subscribers description with count placeholder
+- `mailing_lists.copy_modal.copy_system_messages` - Copy system messages checkbox label
+- `mailing_lists.copy_modal.copy_system_messages_desc` - Copy system messages description
+- `mailing_lists.copy_modal.copy_system_pages` - Copy system pages checkbox label
+- `mailing_lists.copy_modal.copy_system_pages_desc` - Copy system pages description
+- `mailing_lists.copy_modal.always_copied` - "Always copied" section title
+- `mailing_lists.copy_modal.always_copied_list` - List of always-copied items
+- `mailing_lists.copy_modal.submit` - Submit button label
+
+**SMS Lists (`sms_lists.*`):**
+
+- `sms_lists.copy` - Copy button label
+- `sms_lists.copy_success` - Success toast message after copying
+- `sms_lists.copy_modal.title` - Modal title with list name placeholder
+- `sms_lists.copy_modal.description` - Modal description
+- `sms_lists.copy_modal.new_name` - New list name field label
+- `sms_lists.copy_modal.visibility` - Visibility toggle label
+- `sms_lists.copy_modal.options_title` - Copy options section title
+- `sms_lists.copy_modal.copy_subscribers` - Copy subscribers checkbox label
+- `sms_lists.copy_modal.copy_subscribers_desc` - Copy subscribers description with count placeholder
+- `sms_lists.copy_modal.always_copied` - "Always copied" section title
+- `sms_lists.copy_modal.always_copied_list` - List of always-copied items
+- `sms_lists.copy_modal.submit` - Submit button label
+
+**Usage Example:**
+
+```vue
+<template>
+  <Modal :show="show" @close="$emit('close')">
+    <h2>{{ $t("mailing_lists.copy_modal.title", { name: list.name }) }}</h2>
+    <p>{{ $t("mailing_lists.copy_modal.description") }}</p>
+
+    <Checkbox v-model="form.copy_subscribers">
+      {{ $t("mailing_lists.copy_modal.copy_subscribers") }}
+    </Checkbox>
+
+    <Button @click="submit">
+      {{ $t("mailing_lists.copy_modal.submit") }}
+    </Button>
+  </Modal>
+</template>
+```
