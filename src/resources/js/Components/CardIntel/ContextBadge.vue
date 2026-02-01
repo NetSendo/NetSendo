@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
+
 defineProps({
     level: {
         type: String,
@@ -22,14 +26,14 @@ const getLevelConfig = (level) => {
     switch (level) {
         case "HIGH":
             return {
-                label: "Wysoki",
+                labelKey: "crm.cardintel.context.high",
                 bgClass: "bg-green-100 dark:bg-green-900/30",
                 textClass: "text-green-800 dark:text-green-400",
                 dotClass: "bg-green-500",
             };
         case "MEDIUM":
             return {
-                label: "Średni",
+                labelKey: "crm.cardintel.context.medium",
                 bgClass: "bg-yellow-100 dark:bg-yellow-900/30",
                 textClass: "text-yellow-800 dark:text-yellow-400",
                 dotClass: "bg-yellow-500",
@@ -37,7 +41,7 @@ const getLevelConfig = (level) => {
         case "LOW":
         default:
             return {
-                label: "Niski",
+                labelKey: "crm.cardintel.context.low",
                 bgClass: "bg-gray-100 dark:bg-gray-700",
                 textClass: "text-gray-600 dark:text-gray-400",
                 dotClass: "bg-gray-400",
@@ -80,7 +84,7 @@ const getSizeClasses = (size) => {
             class="rounded-full"
             :class="[getLevelConfig(level).dotClass, getSizeClasses(size).dot]"
         ></span>
-        <span>{{ getLevelConfig(level).label }}</span>
+        <span>{{ t(getLevelConfig(level).labelKey) }}</span>
         <span v-if="showScore" class="opacity-75">({{ score }})</span>
     </span>
 </template>

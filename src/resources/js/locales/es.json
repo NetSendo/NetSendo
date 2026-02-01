@@ -852,6 +852,7 @@
         "collapse": "Contraer",
         "expand": "Expandir",
         "webinars": "Webinarios",
+        "api_keys": "Claves API",
         "new": "NUEVO",
         "groups": {
             "address_list": "Lista de direcciones",
@@ -3282,7 +3283,10 @@
         },
         "system_messages": {
             "title": "Mensajes del sistema",
-            "all_lists": "Todos (Global por defecto)",
+            "show_for": "Mostrar para:",
+            "select_list_hint": "Selecciona una lista para editar solo para ella",
+            "global_templates_info": "Las plantillas globales se utilizan por defecto para todas las listas. Selecciona una lista específica del menú de arriba para personalizar las plantillas solo para ella.",
+            "all_lists": "Plantillas globales",
             "select_list": "Seleccionar lista",
             "search_list": "Buscar lista...",
             "no_lists_found": "No se encontraron listas",
@@ -3903,6 +3907,9 @@
     "system_pages": {
         "title": "Páginas del sistema",
         "subtitle": "Administre páginas HTML mostradas a los usuarios tras acciones",
+        "show_for": "Mostrar para:",
+        "select_list_hint": "Selecciona una lista para editar solo para ella",
+        "global_templates_info": "Las plantillas globales se utilizan por defecto para todas las listas. Selecciona una lista específica del menú de arriba para personalizar las plantillas solo para ella.",
         "all_lists": "Plantillas globales",
         "select_list": "Seleccionar lista",
         "search_list": "Buscar lista...",
@@ -3944,6 +3951,31 @@
         "system_placeholders": "Marcadores del sistema",
         "custom_fields": "Campos personalizados",
         "no_placeholders": "No hay marcadores disponibles"
+    },
+    "system_emails": {
+        "title": "Correos del sistema",
+        "subtitle": "Gestiona los correos electrónicos enviados automáticamente",
+        "show_for": "Mostrar para:",
+        "select_list_hint": "Selecciona una lista para editar solo para ella",
+        "global_templates_info": "Las plantillas globales se utilizan por defecto para todas las listas. Selecciona una lista específica del menú de arriba para personalizar las plantillas solo para ella.",
+        "all_lists": "Plantillas globales",
+        "select_list": "Seleccionar lista",
+        "search_list": "Buscar lista...",
+        "no_lists_found": "No se encontraron listas",
+        "global_default": "Plantilla global (por defecto)",
+        "edit_for_list": "Editando correos para la lista: {name}",
+        "table": {
+            "name": "Nombre",
+            "subject": "Asunto",
+            "slug": "Identificador",
+            "active": "Activo",
+            "status": "Estado"
+        },
+        "customized": "Personalizado",
+        "default": "Por defecto",
+        "customize": "Personalizar",
+        "click_to_enable": "Clic para activar",
+        "click_to_disable": "Clic para desactivar"
     },
     "stripe": {
         "products": "Productos Stripe",
@@ -5539,10 +5571,26 @@
             "scan": {
                 "title": "Escanear tarjeta de visita",
                 "description": "Sube una foto o PDF de una tarjeta de visita y el Agente CardIntel extraerá automáticamente los datos de contacto",
+                "upload_mode": {
+                    "label": "Modo de carga",
+                    "single": "Archivo único",
+                    "single_desc": "Procesar una tarjeta inmediatamente",
+                    "batch": "Múltiples archivos",
+                    "batch_desc": "Añadir varias tarjetas a la cola"
+                },
                 "upload": {
                     "cta": "Haga clic para cargar",
                     "or_drag": "o arrastrar y soltar",
-                    "formats": "JPG, PNG, WebP o PDF hasta 10MB"
+                    "formats": "JPG, PNG, WebP o PDF hasta 10MB",
+                    "uploading": "Subiendo tarjeta de visita...",
+                    "error": "Se produjo un error al subir el archivo",
+                    "selected_files": "Archivos seleccionados",
+                    "clear_all": "Limpiar todo",
+                    "process_all": "Procesar todos",
+                    "instructions_title": "Consejos:",
+                    "instruction_1": "Modo \"Archivo único\" - selecciona un archivo, se procesará inmediatamente",
+                    "instruction_2": "Modo \"Múltiples archivos\" - añade varias tarjetas, luego haz clic en \"Procesar todos\"",
+                    "instruction_3": "Formatos soportados: JPG, PNG, WebP, HEIC, PDF (máx 10MB)"
                 },
                 "mode": {
                     "label": "Modo de procesamiento",
@@ -5707,6 +5755,8 @@
                 "about_company": "Sobre la empresa",
                 "use_case_hypothesis": "Hipótesis de uso",
                 "proposed_message": "Mensaje propuesto",
+                "subject_label": "Asunto",
+                "body_label": "Cuerpo",
                 "actions": "Acciones",
                 "action_history": "Historial de acciones",
                 "no_text": "Sin texto",
@@ -5722,6 +5772,7 @@
                 "website": "Sitio Web",
                 "address": "Dirección",
                 "nip": "NIF/CIF",
+                "regon": "REGON",
                 "notes": "Notas"
             },
             "context": {
@@ -5745,10 +5796,12 @@
                 "generating": "Generando...",
                 "copy": "Copiar",
                 "copied": "¡Copiado!",
-                "level": "Nivel de Contexto"
+                "level": "Nivel de Contexto",
+                "hint": "Haga clic en \"Generar\" para crear una propuesta de mensaje"
             },
             "actions": {
                 "edit": "Editar",
+                "preview": "Vista previa",
                 "cancel": "Cancelar",
                 "save": "Guardar",
                 "save_memory": "Guardar en memoria",
@@ -5760,6 +5813,29 @@
                 "send_sms": "Enviar SMS",
                 "archive": "Archivar",
                 "delete": "Eliminar"
+            },
+            "reasoning": {
+                "has_email": "Tiene dirección de email",
+                "no_email": "Sin dirección de email",
+                "has_phone": "Tiene número de teléfono",
+                "no_phone": "Sin número de teléfono",
+                "has_website": "Tiene sitio web",
+                "no_website": "Sin sitio web",
+                "has_nip_regon": "Tiene NIP o REGON",
+                "no_nip_regon": "Sin NIP/REGON",
+                "has_company": "Nombre de empresa proporcionado",
+                "no_company": "Sin nombre de empresa",
+                "has_position": "Cargo proporcionado",
+                "no_position": "Sin cargo",
+                "complete_name": "Nombre y apellido completos",
+                "incomplete_name": "Datos personales incompletos",
+                "corporate_email": "Email corporativo",
+                "personal_email": "Email personal (gmail/yahoo)",
+                "company_not_personal": "Empresa ≠ nombre personal",
+                "company_is_personal": "Empresa = nombre personal",
+                "nip_valid": "Formato NIP válido",
+                "high_confidence": "Datos de alta confianza",
+                "low_confidence": "Datos de baja confianza"
             },
 
             "vision": {

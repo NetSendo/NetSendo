@@ -595,6 +595,7 @@
         "collapse": "Collapse",
         "expand": "Expand",
         "webinars": "Webinars",
+        "api_keys": "API Keys",
         "new": "NEW",
         "groups": {
             "address_list": "Address List",
@@ -3897,7 +3898,10 @@
         },
         "system_messages": {
             "title": "System Messages",
-            "all_lists": "All (Default Global)",
+            "show_for": "Show for:",
+            "select_list_hint": "Select a list to edit only for that list",
+            "global_templates_info": "Global templates are used by default for all lists. Select a specific list from the menu above to customize templates only for that list.",
+            "all_lists": "Global Templates",
             "select_list": "Select list",
             "search_list": "Search list...",
             "no_lists_found": "No lists found",
@@ -4400,6 +4404,9 @@
     "system_pages": {
         "title": "System Pages",
         "subtitle": "Manage HTML pages displayed to users after actions",
+        "show_for": "Show for:",
+        "select_list_hint": "Select a list to edit only for that list",
+        "global_templates_info": "Global templates are used by default for all lists. Select a specific list from the menu above to customize templates only for that list.",
         "all_lists": "Global Templates",
         "select_list": "Select list",
         "search_list": "Search list...",
@@ -4445,6 +4452,9 @@
     "system_emails": {
         "title": "System Emails",
         "subtitle": "Manage automatically sent system emails",
+        "show_for": "Show for:",
+        "select_list_hint": "Select a list to edit only for that list",
+        "global_templates_info": "Global templates are used by default for all lists. Select a specific list from the menu above to customize templates only for that list.",
         "all_lists": "Global Templates",
         "select_list": "Select list",
         "search_list": "Search list...",
@@ -6270,10 +6280,26 @@
             "scan": {
                 "title": "Scan Business Card",
                 "description": "Upload a photo or PDF of a business card, and CardIntel Agent will automatically extract contact data",
+                "upload_mode": {
+                    "label": "Upload Mode",
+                    "single": "Single File",
+                    "single_desc": "Process one card immediately",
+                    "batch": "Multiple Files",
+                    "batch_desc": "Add multiple cards to queue"
+                },
                 "upload": {
                     "cta": "Click to upload",
                     "or_drag": "or drag and drop",
-                    "formats": "JPG, PNG, WebP or PDF up to 10MB"
+                    "formats": "JPG, PNG, WebP or PDF up to 10MB",
+                    "uploading": "Uploading business card...",
+                    "error": "An error occurred while uploading the file",
+                    "selected_files": "Selected files",
+                    "clear_all": "Clear all",
+                    "process_all": "Process all",
+                    "instructions_title": "Tips:",
+                    "instruction_1": "\"Single File\" mode - select one file, it will be processed immediately",
+                    "instruction_2": "\"Multiple Files\" mode - add several cards, then click \"Process all\"",
+                    "instruction_3": "Supported formats: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
                 },
                 "mode": {
                     "label": "Processing Mode",
@@ -6438,6 +6464,8 @@
                 "about_company": "About Company",
                 "use_case_hypothesis": "Use-case Hypothesis",
                 "proposed_message": "Proposed Message",
+                "subject_label": "Subject",
+                "body_label": "Body",
                 "actions": "Actions",
                 "action_history": "Action History",
                 "no_text": "No text",
@@ -6453,6 +6481,7 @@
                 "website": "Website",
                 "address": "Address",
                 "nip": "Tax ID (NIP)",
+                "regon": "REGON",
                 "notes": "Notes"
             },
             "context": {
@@ -6476,10 +6505,12 @@
                 "generating": "Generating...",
                 "copy": "Copy",
                 "copied": "Copied!",
-                "level": "Context Level"
+                "level": "Context Level",
+                "hint": "Click \"Generate\" to create a message proposal"
             },
             "actions": {
                 "edit": "Edit",
+                "preview": "Preview",
                 "cancel": "Cancel",
                 "save": "Save",
                 "save_memory": "Save to Memory",
@@ -6491,6 +6522,29 @@
                 "send_sms": "Send SMS",
                 "archive": "Archive",
                 "delete": "Delete"
+            },
+            "reasoning": {
+                "has_email": "Has email address",
+                "no_email": "No email address",
+                "has_phone": "Has phone number",
+                "no_phone": "No phone number",
+                "has_website": "Has website",
+                "no_website": "No website",
+                "has_nip_regon": "Has NIP or REGON",
+                "no_nip_regon": "No NIP/REGON",
+                "has_company": "Company name provided",
+                "no_company": "No company name",
+                "has_position": "Position provided",
+                "no_position": "No position",
+                "complete_name": "Complete first and last name",
+                "incomplete_name": "Incomplete personal data",
+                "corporate_email": "Corporate email",
+                "personal_email": "Personal email (gmail/yahoo)",
+                "company_not_personal": "Company ≠ personal name",
+                "company_is_personal": "Company = personal name",
+                "nip_valid": "Valid NIP format",
+                "high_confidence": "High confidence data",
+                "low_confidence": "Low confidence data"
             },
 
             "vision": {

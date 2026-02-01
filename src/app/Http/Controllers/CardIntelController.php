@@ -186,6 +186,17 @@ class CardIntelController extends Controller
         $settings = CardIntelSettings::getForUser($request->user()->id);
         $settings->update($validated);
 
+        // Return JSON for pure AJAX requests (mode quick-switch from Index.vue)
+        // Exclude Inertia requests which also use AJAX but expect redirects
+        $isInertiaRequest = $request->header('X-Inertia') === 'true';
+        if (!$isInertiaRequest && ($request->wantsJson() || $request->ajax())) {
+            return response()->json([
+                'success' => true,
+                'message' => __('crm.cardintel.settings.saved'),
+                'settings' => $settings->fresh(),
+            ]);
+        }
+
         return redirect()->back()->with('success', __('crm.cardintel.settings.saved'));
     }
 
@@ -206,9 +217,7 @@ class CardIntelController extends Controller
         return Inertia::render('Crm/CardIntel/Show', [
             'scan' => $this->formatScanResponse($scan),
             'settings' => $settings,
-            'recommendations' => app(CardIntelService::class)
-                ->decisionEngine
-                ->getRecommendations($scan),
+            'recommendations' => $this->cardIntelService->getRecommendations($scan),
         ]);
     }
 
@@ -272,9 +281,10 @@ class CardIntelController extends Controller
 
         try {
             if ($request->input('all_versions')) {
-                $messages = app(CardIntelService::class)
-                    ->decisionEngine
-                    ->generateAllVersions($scan, $request->input('tone'));
+                $messages = $this->cardIntelService->generateAllVersions(
+                    $scan,
+                    $request->input('tone')
+                );
 
                 return response()->json([
                     'success' => true,
@@ -304,10 +314,13 @@ class CardIntelController extends Controller
     /**
      * Update extracted fields manually.
      */
-    public function updateExtraction(Request $request, CardIntelScan $scan): JsonResponse
+    public function updateExtraction(Request $request, CardIntelScan $scan)
     {
         // Authorization check
         if ($scan->user_id !== $request->user()->id) {
+            if ($request->header('X-Inertia')) {
+                abort(403);
+            }
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -328,6 +341,9 @@ class CardIntelController extends Controller
             $extraction = $scan->extraction;
 
             if (!$extraction) {
+                if ($request->header('X-Inertia')) {
+                    return redirect()->back()->with('error', 'Brak danych ekstrakcji');
+                }
                 return response()->json([
                     'success' => false,
                     'message' => 'Brak danych ekstrakcji',
@@ -338,16 +354,25 @@ class CardIntelController extends Controller
             $extraction->updateFields($request->input('fields'));
 
             // Re-score after update
-            $context = $this->cardIntelService->rescoreScan($scan);
+            $this->cardIntelService->rescoreScan($scan);
 
+            // Return Inertia redirect for Inertia requests
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('success', 'Dane zaktualizowane');
+            }
+
+            // Return JSON for pure AJAX requests
             return response()->json([
                 'success' => true,
                 'message' => 'Dane zaktualizowane',
                 'extraction' => $extraction->fresh(),
-                'context' => $context,
+                'context' => $scan->context->fresh(),
             ]);
 
         } catch (\Exception $e) {
+            if ($request->header('X-Inertia')) {
+                return redirect()->back()->with('error', 'Błąd aktualizacji: ' . $e->getMessage());
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Błąd aktualizacji: ' . $e->getMessage(),

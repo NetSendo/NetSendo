@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed } from "vue";
 import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ContextBadge from "@/Components/CardIntel/ContextBadge.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
     scan: Object,
@@ -11,6 +14,7 @@ const props = defineProps({
 });
 
 const isEditing = ref(false);
+const isEditingBody = ref(false);
 const selectedContextLevel = ref(props.scan.context?.context_level || "LOW");
 const generatedMessage = ref(null);
 const isGenerating = ref(false);
@@ -26,6 +30,22 @@ const contextLevels = [
     { value: "MEDIUM", label: "crm.cardintel.context.medium", color: "yellow" },
     { value: "HIGH", label: "crm.cardintel.context.high", color: "green" },
 ];
+
+// Function to translate reasoning keys [[key]] to actual translations
+const translateReasoning = (text) => {
+    if (!text) return text;
+    return text.replace(/\[\[([^\]]+)\]\]/g, (match, key) => {
+        return t(`crm.cardintel.reasoning.${key}`);
+    });
+};
+
+// Computed property for translated reasoning list
+const translatedReasoning = computed(() => {
+    if (!props.scan.context?.reasoning) return [];
+    return props.scan.context.reasoning.map((reason) =>
+        translateReasoning(reason),
+    );
+});
 
 const formatConfidence = (value) => {
     return Math.round((value || 0) * 100);
@@ -258,15 +278,16 @@ const hasAction = (actionType) => {
                                 </div>
 
                                 <div
-                                    v-if="scan.context.reasoning?.length"
+                                    v-if="translatedReasoning.length"
                                     class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
                                 >
                                     <ul
                                         class="space-y-1 text-sm text-gray-600 dark:text-gray-400"
                                     >
                                         <li
-                                            v-for="(reason, i) in scan.context
-                                                .reasoning"
+                                            v-for="(
+                                                reason, i
+                                            ) in translatedReasoning"
                                             :key="i"
                                             class="flex items-start gap-2"
                                         >
@@ -478,7 +499,7 @@ const hasAction = (actionType) => {
                                 <div class="flex items-center gap-2">
                                     <select
                                         v-model="selectedContextLevel"
-                                        class="text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+                                        class="text-sm border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     >
                                         <option
                                             v-for="level in contextLevels"
@@ -518,8 +539,8 @@ const hasAction = (actionType) => {
                                             class="text-xs text-gray-500 dark:text-gray-400"
                                             >{{
                                                 $t(
-                                                    "crm.cardintel.campaign_stats.table.subject",
-                                                ) || "Subject"
+                                                    "crm.cardintel.show.subject_label",
+                                                )
                                             }}</label
                                         >
                                         <input
@@ -533,11 +554,33 @@ const hasAction = (actionType) => {
                                         />
                                     </div>
                                     <div>
-                                        <label
-                                            class="text-xs text-gray-500 dark:text-gray-400"
-                                            >Body</label
+                                        <div
+                                            class="flex items-center justify-between"
                                         >
+                                            <label
+                                                class="text-xs text-gray-500 dark:text-gray-400"
+                                                >Body</label
+                                            >
+                                            <button
+                                                @click="
+                                                    isEditingBody =
+                                                        !isEditingBody
+                                                "
+                                                class="text-xs text-violet-600 hover:text-violet-700"
+                                            >
+                                                {{
+                                                    isEditingBody
+                                                        ? $t(
+                                                              "crm.cardintel.actions.preview",
+                                                          ) || "Preview"
+                                                        : $t(
+                                                              "crm.cardintel.actions.edit",
+                                                          )
+                                                }}
+                                            </button>
+                                        </div>
                                         <textarea
+                                            v-if="isEditingBody"
                                             v-model="
                                                 generatedMessage[
                                                     selectedContextLevel
@@ -546,6 +589,15 @@ const hasAction = (actionType) => {
                                             rows="6"
                                             class="w-full mt-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                         ></textarea>
+                                        <div
+                                            v-else
+                                            class="w-full mt-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-h-[150px] prose prose-sm dark:prose-invert max-w-none"
+                                            v-html="
+                                                generatedMessage[
+                                                    selectedContextLevel
+                                                ].body
+                                            "
+                                        ></div>
                                     </div>
                                 </div>
                                 <div
@@ -553,11 +605,11 @@ const hasAction = (actionType) => {
                                     class="text-center py-8 text-gray-500 dark:text-gray-400"
                                 >
                                     <p>
-                                        Kliknij "{{
+                                        {{
                                             $t(
-                                                "crm.cardintel.message_generation.generate",
+                                                "crm.cardintel.message_generation.hint",
                                             )
-                                        }}", aby utworzyć propozycję wiadomości
+                                        }}
                                     </p>
                                 </div>
                             </div>
@@ -588,7 +640,7 @@ const hasAction = (actionType) => {
                                         :class="
                                             hasAction('save_memory')
                                                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                                                : 'border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20'
+                                                : 'border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-gray-700 dark:text-gray-200'
                                         "
                                     >
                                         <svg
@@ -624,7 +676,7 @@ const hasAction = (actionType) => {
                                         :class="
                                             hasAction('add_crm')
                                                 ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                                                : 'border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20'
+                                                : 'border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-gray-700 dark:text-gray-200'
                                         "
                                     >
                                         <svg
@@ -651,7 +703,7 @@ const hasAction = (actionType) => {
                                     </button>
 
                                     <button
-                                        class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+                                        class="flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 text-gray-700 dark:text-gray-200 transition-colors"
                                     >
                                         <span>{{
                                             $t(

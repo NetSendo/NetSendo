@@ -596,6 +596,7 @@
         "collapse": "Zwiń",
         "expand": "Rozwiń",
         "webinars": "Webinary",
+        "api_keys": "Klucze API",
         "new": "NOWE",
         "groups": {
             "address_list": "Lista adresowa",
@@ -4340,7 +4341,10 @@
         },
         "system_messages": {
             "title": "Wiadomości Systemowe",
-            "all_lists": "Wszystkie (Domyślne Globalne)",
+            "show_for": "Pokaż dla:",
+            "select_list_hint": "Wybierz listę, aby edytować tylko dla niej",
+            "global_templates_info": "Szablony globalne są używane domyślnie dla wszystkich list. Wybierz konkretną listę z menu powyżej, aby dostosować szablony tylko dla niej.",
+            "all_lists": "Szablony globalne",
             "select_list": "Wybierz listę",
             "search_list": "Szukaj listy...",
             "no_lists_found": "Nie znaleziono list",
@@ -4492,6 +4496,9 @@
     "system_pages": {
         "title": "Strony systemowe",
         "subtitle": "Zarządzaj stronami HTML wyświetlanymi użytkownikom po akcjach",
+        "show_for": "Pokaż dla:",
+        "select_list_hint": "Wybierz listę, aby edytować tylko dla niej",
+        "global_templates_info": "Szablony globalne są używane domyślnie dla wszystkich list. Wybierz konkretną listę z menu powyżej, aby dostosować szablony tylko dla niej.",
         "all_lists": "Szablony globalne",
         "select_list": "Wybierz listę",
         "search_list": "Szukaj listy...",
@@ -4537,6 +4544,9 @@
     "system_emails": {
         "title": "Wiadomości systemowe",
         "subtitle": "Zarządzaj szablonami emaili wysyłanymi automatycznie",
+        "show_for": "Pokaż dla:",
+        "select_list_hint": "Wybierz listę, aby edytować tylko dla niej",
+        "global_templates_info": "Szablony globalne są używane domyślnie dla wszystkich list. Wybierz konkretną listę z menu powyżej, aby dostosować szablony tylko dla niej.",
         "all_lists": "Szablony globalne",
         "select_list": "Wybierz listę",
         "search_list": "Szukaj listy...",
@@ -6348,10 +6358,26 @@
             "scan": {
                 "title": "Zeskanuj wizytówkę",
                 "description": "Prześlij zdjęcie lub PDF wizytówki, a CardIntel Agent automatycznie wydobędzie dane kontaktowe",
+                "upload_mode": {
+                    "label": "Tryb przesyłania",
+                    "single": "Pojedynczy plik",
+                    "single_desc": "Przetwórz jedną wizytówkę od razu",
+                    "batch": "Wiele plików",
+                    "batch_desc": "Dodaj wiele wizytówek do kolejki"
+                },
                 "upload": {
                     "cta": "Kliknij, aby przesłać",
                     "or_drag": "lub przeciągnij i upuść",
-                    "formats": "JPG, PNG, WebP lub PDF do 10MB"
+                    "formats": "JPG, PNG, WebP lub PDF do 10MB",
+                    "uploading": "Przesyłanie wizytówki...",
+                    "error": "Wystąpił błąd podczas przesyłania pliku",
+                    "selected_files": "Wybrane pliki",
+                    "clear_all": "Wyczyść wszystkie",
+                    "process_all": "Przetwórz wszystkie",
+                    "instructions_title": "Wskazówki:",
+                    "instruction_1": "Tryb \"Pojedynczy plik\" - wybierz jeden plik, zostanie od razu przetworzony",
+                    "instruction_2": "Tryb \"Wiele plików\" - dodaj kilka wizytówek, potem kliknij \"Przetwórz wszystkie\"",
+                    "instruction_3": "Obsługiwane formaty: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
                 },
                 "mode": {
                     "label": "Tryb przetwarzania",
@@ -6447,10 +6473,10 @@
                         "high_only": "Tylko HIGH",
                         "never": "Nigdy"
                     },
-                    "always_desc": "All contacts added to CRM",
-                    "approve_desc": "Requires approval before adding",
-                    "high_only_desc": "Only contacts with high context",
-                    "never_desc": "Never add automatically",
+                    "always_desc": "Wszystkie kontakty dodawane do CRM automatycznie",
+                    "approve_desc": "Wymaga zatwierdzenia przed dodaniem",
+                    "high_only_desc": "Tylko kontakty z wysokim kontekstem (HIGH)",
+                    "never_desc": "Nigdy nie dodawaj automatycznie",
                     "min_score": "Minimalny quality score dla auto-sync: {score}"
                 },
                 "enrichment": {
@@ -6510,6 +6536,8 @@
                 "about_company": "O firmie",
                 "use_case_hypothesis": "Hipoteza use-case",
                 "proposed_message": "Proponowana wiadomość",
+                "subject_label": "Temat",
+                "body_label": "Treść",
                 "actions": "Akcje",
                 "action_history": "Historia akcji",
                 "no_text": "Brak tekstu",
@@ -6525,6 +6553,7 @@
                 "website": "Strona WWW",
                 "address": "Adres",
                 "nip": "NIP",
+                "regon": "REGON",
                 "notes": "Notatki"
             },
             "context": {
@@ -6548,10 +6577,12 @@
                 "generating": "Generowanie...",
                 "copy": "Kopiuj",
                 "copied": "Skopiowano!",
-                "level": "Poziom kontekstu"
+                "level": "Poziom kontekstu",
+                "hint": "Kliknij \"Generuj\", aby utworzyć propozycję wiadomości"
             },
             "actions": {
                 "edit": "Edytuj",
+                "preview": "Podgląd",
                 "cancel": "Anuluj",
                 "save": "Zapisz",
                 "save_memory": "Zapisz do pamięci",
@@ -6563,6 +6594,29 @@
                 "send_sms": "Wyślij SMS",
                 "archive": "Archiwizuj",
                 "delete": "Usuń"
+            },
+            "reasoning": {
+                "has_email": "Ma adres email",
+                "no_email": "Brak adresu email",
+                "has_phone": "Ma numer telefonu",
+                "no_phone": "Brak numeru telefonu",
+                "has_website": "Ma stronę www",
+                "no_website": "Brak strony www",
+                "has_nip_regon": "Ma NIP lub REGON",
+                "no_nip_regon": "Brak NIP/REGON",
+                "has_company": "Podana nazwa firmy",
+                "no_company": "Brak nazwy firmy",
+                "has_position": "Podane stanowisko",
+                "no_position": "Brak stanowiska",
+                "complete_name": "Pełne imię i nazwisko",
+                "incomplete_name": "Niepełne dane osobowe",
+                "corporate_email": "Email firmowy",
+                "personal_email": "Email prywatny (gmail/wp)",
+                "company_not_personal": "Firma ≠ osoba fizyczna",
+                "company_is_personal": "Firma = osoba fizyczna",
+                "nip_valid": "NIP prawidłowy format",
+                "high_confidence": "Dane wysokiej pewności",
+                "low_confidence": "Niska pewność danych"
             },
             "status": {
                 "completed": "Zakończone",

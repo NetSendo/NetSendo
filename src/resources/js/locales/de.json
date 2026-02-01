@@ -822,6 +822,7 @@
         "collapse": "Einklappen",
         "expand": "Ausklappen",
         "webinars": "Webinare",
+        "api_keys": "API-Schlüssel",
         "new": "NEU",
         "groups": {
             "address_list": "Adressliste",
@@ -3281,7 +3282,10 @@
         },
         "system_messages": {
             "title": "Systemnachrichten",
-            "all_lists": "Alle (Globaler Standard)",
+            "show_for": "Anzeigen für:",
+            "select_list_hint": "Wählen Sie eine Liste, um nur für diese zu bearbeiten",
+            "global_templates_info": "Globale Vorlagen werden standardmäßig für alle Listen verwendet. Wählen Sie eine bestimmte Liste aus dem obigen Menü, um Vorlagen nur für diese anzupassen.",
+            "all_lists": "Globale Vorlagen",
             "select_list": "Liste auswählen",
             "search_list": "Liste suchen...",
             "no_lists_found": "Keine Listen gefunden",
@@ -3818,6 +3822,9 @@
     "system_pages": {
         "title": "Systemseiten",
         "subtitle": "Verwalten Sie HTML-Seiten, die Benutzern nach Aktionen angezeigt werden",
+        "show_for": "Anzeigen für:",
+        "select_list_hint": "Wählen Sie eine Liste, um nur für diese zu bearbeiten",
+        "global_templates_info": "Globale Vorlagen werden standardmäßig für alle Listen verwendet. Wählen Sie eine bestimmte Liste aus dem obigen Menü, um Vorlagen nur für diese anzupassen.",
         "all_lists": "Globale Vorlagen",
         "select_list": "Liste auswählen",
         "search_list": "Liste suchen...",
@@ -3859,6 +3866,31 @@
         "system_placeholders": "System-Platzhalter",
         "custom_fields": "Benutzerdefinierte Felder",
         "no_placeholders": "Keine Platzhalter verfügbar"
+    },
+    "system_emails": {
+        "title": "System-E-Mails",
+        "subtitle": "Verwalten Sie automatisch gesendete System-E-Mails",
+        "show_for": "Anzeigen für:",
+        "select_list_hint": "Wählen Sie eine Liste, um nur für diese zu bearbeiten",
+        "global_templates_info": "Globale Vorlagen werden standardmäßig für alle Listen verwendet. Wählen Sie eine bestimmte Liste aus dem obigen Menü, um Vorlagen nur für diese anzupassen.",
+        "all_lists": "Globale Vorlagen",
+        "select_list": "Liste auswählen",
+        "search_list": "Liste suchen...",
+        "no_lists_found": "Keine Listen gefunden",
+        "global_default": "Globale Vorlage (Standard)",
+        "edit_for_list": "Bearbeiten von E-Mails für Liste: {name}",
+        "table": {
+            "name": "Name",
+            "subject": "Betreff",
+            "slug": "Identifikator",
+            "active": "Aktiv",
+            "status": "Status"
+        },
+        "customized": "Angepasst",
+        "default": "Standard",
+        "customize": "Anpassen",
+        "click_to_enable": "Zum Aktivieren klicken",
+        "click_to_disable": "Zum Deaktivieren klicken"
     },
     "stripe": {
         "products": "Stripe Produkte",
@@ -5454,10 +5486,26 @@
             "scan": {
                 "title": "Visitenkarte scannen",
                 "description": "Laden Sie ein Foto oder PDF einer Visitenkarte hoch, und der CardIntel Agent extrahiert automatisch die Kontaktdaten",
+                "upload_mode": {
+                    "label": "Upload-Modus",
+                    "single": "Einzelne Datei",
+                    "single_desc": "Eine Karte sofort verarbeiten",
+                    "batch": "Mehrere Dateien",
+                    "batch_desc": "Mehrere Karten zur Warteschlange hinzufügen"
+                },
                 "upload": {
                     "cta": "Klicken zum Hochladen",
                     "or_drag": "oder per Drag & Drop",
-                    "formats": "JPG, PNG, WebP oder PDF bis 10MB"
+                    "formats": "JPG, PNG, WebP oder PDF bis 10MB",
+                    "uploading": "Visitenkarte wird hochgeladen...",
+                    "error": "Beim Hochladen der Datei ist ein Fehler aufgetreten",
+                    "selected_files": "Ausgewählte Dateien",
+                    "clear_all": "Alle löschen",
+                    "process_all": "Alle verarbeiten",
+                    "instructions_title": "Tipps:",
+                    "instruction_1": "Modus \"Einzelne Datei\" - wählen Sie eine Datei, sie wird sofort verarbeitet",
+                    "instruction_2": "Modus \"Mehrere Dateien\" - fügen Sie mehrere Karten hinzu, dann klicken Sie \"Alle verarbeiten\"",
+                    "instruction_3": "Unterstützte Formate: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
                 },
                 "mode": {
                     "label": "Verarbeitungsmodus",
@@ -5622,6 +5670,8 @@
                 "about_company": "Über das Unternehmen",
                 "use_case_hypothesis": "Anwendungsfall-Hypothese",
                 "proposed_message": "Vorgeschlagene Nachricht",
+                "subject_label": "Betreff",
+                "body_label": "Nachricht",
                 "actions": "Aktionen",
                 "action_history": "Aktionsverlauf",
                 "no_text": "Kein Text",
@@ -5637,6 +5687,7 @@
                 "website": "Webseite",
                 "address": "Adresse",
                 "nip": "Steuer-ID (NIP)",
+                "regon": "REGON",
                 "notes": "Notizen"
             },
             "context": {
@@ -5660,10 +5711,12 @@
                 "generating": "Generierung...",
                 "copy": "Kopieren",
                 "copied": "Kopiert!",
-                "level": "Kontextstufe"
+                "level": "Kontextstufe",
+                "hint": "Klicken Sie auf \"Generieren\", um einen Nachrichtenvorschlag zu erstellen"
             },
             "actions": {
                 "edit": "Bearbeiten",
+                "preview": "Vorschau",
                 "cancel": "Abbrechen",
                 "save": "Speichern",
                 "save_memory": "Im Speicher speichern",
@@ -5675,6 +5728,29 @@
                 "send_sms": "SMS senden",
                 "archive": "Archivieren",
                 "delete": "Löschen"
+            },
+            "reasoning": {
+                "has_email": "Hat E-Mail-Adresse",
+                "no_email": "Keine E-Mail-Adresse",
+                "has_phone": "Hat Telefonnummer",
+                "no_phone": "Keine Telefonnummer",
+                "has_website": "Hat Webseite",
+                "no_website": "Keine Webseite",
+                "has_nip_regon": "Hat NIP oder REGON",
+                "no_nip_regon": "Kein NIP/REGON",
+                "has_company": "Firmenname vorhanden",
+                "no_company": "Kein Firmenname",
+                "has_position": "Position vorhanden",
+                "no_position": "Keine Position",
+                "complete_name": "Vollständiger Vor- und Nachname",
+                "incomplete_name": "Unvollständige Personendaten",
+                "corporate_email": "Firmen-E-Mail",
+                "personal_email": "Private E-Mail (gmail/yahoo)",
+                "company_not_personal": "Firma ≠ Personenname",
+                "company_is_personal": "Firma = Personenname",
+                "nip_valid": "Gültiges NIP-Format",
+                "high_confidence": "Hohe Datenqualität",
+                "low_confidence": "Niedrige Datenqualität"
             },
 
             "vision": {

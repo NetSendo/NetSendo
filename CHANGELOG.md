@@ -13,6 +13,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+## [1.8.5] – Short Description
+
+**Release date:** 2026-02-02
+
+### Added
+
+- **CardIntel File Upload:**
+  - **Multi-file Support:** Added ability to upload multiple business cards at once with batch processing.
+  - **Upload Mode Selection:** Users can choose between "Single File" (immediate processing) and "Multiple Files" (queue batch processing) modes.
+  - **Drag & Drop:** Implemented drag-and-drop file upload for better UX.
+  - **File Management:** Added file list with individual file removal and "Clear All" functionality for batch mode.
+  - **Progress Tracking:** Visual upload progress bar with percentage indicator.
+  - **User Instructions:** Added helpful tips section explaining both upload modes and supported formats.
+  - **Localization:** Full translations for file upload functionality in PL, EN, DE, ES.
+
+- **CardIntel Enhancements:**
+  - **HTML Formatting:** Added ability for AI to generate HTML formatted emails with configurable allowed tags (`allowed_html_tags`).
+  - **Structure:** AI messages now include a subject and preheader for better inbox presentation.
+  - **Email Sending:** Implemented full email sending flow integrated with CRM.
+    - Automatically creates or links a CRM Contact for the recipient.
+    - Logs the "Email Sent" activity in the contact's history.
+    - Uses the configured Default Mailbox or system default.
+  - **Custom AI Prompt:** Added setting to provide custom instructions to the AI generation engine.
+  - **Localization:** Full translations for new settings and features in PL, EN, DE, ES.
+
+- **System Messages & Pages UX:**
+  - **Context Label:** Added "Show for:" label above the list selector to clarify context switching.
+  - **Helper Text:** Added hint text "Select a list to edit only for that list" to the dropdown trigger.
+  - **Info Box:** Added informational box explaining the hierarchy between global defaults and list-specific templates.
+  - **Consistency:** Applied consistent UX pattern to both "System Emails" and "System Pages" sections.
+  - **Localization:** Added new UX translation keys to PL, EN, DE, ES.
+
+### Fixed
+
+- **CardIntel Controller:**
+  - Fixed access to protected property `$decisionEngine` by implementing a public `getRecommendations` accessor in `CardIntelService`.
+
+- **CardIntel Mode Switching:**
+  - Fixed non-functional mode selection buttons (Manual, Agent, Auto) in the Scan tab.
+  - Mode changes now persist to backend settings immediately via AJAX.
+  - Header badge updates in real-time when switching modes (no page refresh needed).
+  - Added mode descriptions under each button for better UX clarity.
+  - UI now consistent with the Settings tab mode selection pattern.
+
+- **CardIntel Settings JSON Response:**
+  - Fixed Inertia JSON error when saving settings (was returning plain JSON instead of redirect).
+  - Backend now correctly distinguishes between pure AJAX and Inertia requests.
+
+- **CardIntel Translations:**
+  - Fixed missing Polish translations for CRM sync mode descriptions.
+  - Added `navigation.api_keys` translation to all languages (PL, EN, DE, ES).
+
+### Changed
+
 ## [1.8.4] – Short Description
 
 **Release date:** 2026-02-01

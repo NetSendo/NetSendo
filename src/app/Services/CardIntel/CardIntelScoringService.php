@@ -219,38 +219,39 @@ class CardIntelScoringService
 
     /**
      * Generate human-readable reasoning for the score.
+     * Returns translation keys that will be resolved by the frontend.
      */
     protected function generateReasoning(array $signals, int $score, string $level): string
     {
         $positive = [];
         $negative = [];
 
-        // Map signals to Polish descriptions
-        $descriptions = [
-            'has_email' => ['Ma adres email', 'Brak adresu email'],
-            'has_phone' => ['Ma numer telefonu', 'Brak numeru telefonu'],
-            'has_website' => ['Ma stronę www', 'Brak strony www'],
-            'has_nip_or_regon' => ['Ma NIP lub REGON', 'Brak NIP/REGON'],
-            'has_company' => ['Podana nazwa firmy', 'Brak nazwy firmy'],
-            'has_position' => ['Podane stanowisko', 'Brak stanowiska'],
-            'complete_name' => ['Pełne imię i nazwisko', 'Niepełne dane osobowe'],
-            'corporate_email' => ['Email firmowy', 'Email prywatny (gmail/wp)'],
-            'company_not_personal' => ['Firma ≠ osoba fizyczna', 'Firma = osoba fizyczna'],
-            'nip_valid_format' => ['NIP prawidłowy format', ''],
-            'high_confidence_data' => ['Dane wysokiej pewności', 'Niska pewność danych'],
+        // Map signals to translation key suffixes (will be resolved as crm.cardintel.reasoning.{key})
+        $signalKeys = [
+            'has_email' => ['has_email', 'no_email'],
+            'has_phone' => ['has_phone', 'no_phone'],
+            'has_website' => ['has_website', 'no_website'],
+            'has_nip_or_regon' => ['has_nip_regon', 'no_nip_regon'],
+            'has_company' => ['has_company', 'no_company'],
+            'has_position' => ['has_position', 'no_position'],
+            'complete_name' => ['complete_name', 'incomplete_name'],
+            'corporate_email' => ['corporate_email', 'personal_email'],
+            'company_not_personal' => ['company_not_personal', 'company_is_personal'],
+            'nip_valid_format' => ['nip_valid', ''],
+            'high_confidence_data' => ['high_confidence', 'low_confidence'],
         ];
 
         foreach ($signals as $key => $value) {
-            if (!isset($descriptions[$key])) {
+            if (!isset($signalKeys[$key])) {
                 continue;
             }
 
-            [$positiveText, $negativeText] = $descriptions[$key];
+            [$positiveKey, $negativeKey] = $signalKeys[$key];
 
-            if ($value && $positiveText) {
-                $positive[] = "• " . $positiveText;
-            } elseif (!$value && $negativeText) {
-                $negative[] = "• " . $negativeText;
+            if ($value && $positiveKey) {
+                $positive[] = "• [[" . $positiveKey . "]]";
+            } elseif (!$value && $negativeKey) {
+                $negative[] = "• [[" . $negativeKey . "]]";
             }
         }
 

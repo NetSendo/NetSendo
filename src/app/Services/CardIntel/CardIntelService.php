@@ -331,6 +331,14 @@ class CardIntelService
     }
 
     /**
+     * Generate all message versions (LOW, MEDIUM, HIGH) for a scan.
+     */
+    public function generateAllVersions(CardIntelScan $scan, ?string $tone = null): array
+    {
+        return $this->decisionEngine->generateAllVersions($scan, $tone);
+    }
+
+    /**
      * Get queue of scans pending review.
      */
     public function getReviewQueue(int $userId, int $limit = 20): \Illuminate\Database\Eloquent\Collection
@@ -341,6 +349,14 @@ class CardIntelService
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Get recommendations for a scan.
+     */
+    public function getRecommendations(CardIntelScan $scan): array
+    {
+        return $this->decisionEngine->getRecommendations($scan);
     }
 
     /**
