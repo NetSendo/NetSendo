@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
+import AddToListDropdown from "@/Components/AddToListDropdown.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import {
     Chart as ChartJS,
@@ -1078,6 +1079,9 @@ const resendToFailed = () => {
                                             }}
                                             ⇅
                                         </th>
+                                        <th class="px-4 py-2">
+                                            {{ $t("messages.stats.actions") }}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1093,6 +1097,15 @@ const resendToFailed = () => {
                                         <td class="px-4 py-2">
                                             {{ log.occurred_at }}
                                         </td>
+                                        <td class="px-4 py-2">
+                                            <AddToListDropdown
+                                                v-if="log.subscriber_id"
+                                                :subscriber-id="
+                                                    log.subscriber_id
+                                                "
+                                                :subscriber-email="log.email"
+                                            />
+                                        </td>
                                     </tr>
                                     <tr
                                         v-if="
@@ -1102,7 +1115,7 @@ const resendToFailed = () => {
                                         "
                                     >
                                         <td
-                                            colspan="2"
+                                            colspan="3"
                                             class="px-4 py-2 text-center"
                                         >
                                             {{
@@ -1164,7 +1177,7 @@ const resendToFailed = () => {
                                     v-model="searchClicks"
                                     type="text"
                                     :placeholder="
-                                        $t('common.search_placeholder')
+                                        $t('messages.stats.search_email_or_url')
                                     "
                                     class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                                 />
@@ -1248,6 +1261,9 @@ const resendToFailed = () => {
                                             }}
                                             ⇅
                                         </th>
+                                        <th class="px-4 py-2">
+                                            {{ $t("messages.stats.actions") }}
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1272,6 +1288,15 @@ const resendToFailed = () => {
                                         <td class="px-4 py-2">
                                             {{ log.occurred_at }}
                                         </td>
+                                        <td class="px-4 py-2">
+                                            <AddToListDropdown
+                                                v-if="log.subscriber_id"
+                                                :subscriber-id="
+                                                    log.subscriber_id
+                                                "
+                                                :subscriber-email="log.email"
+                                            />
+                                        </td>
                                     </tr>
                                     <tr
                                         v-if="
@@ -1281,7 +1306,7 @@ const resendToFailed = () => {
                                         "
                                     >
                                         <td
-                                            colspan="3"
+                                            colspan="4"
                                             class="px-4 py-2 text-center"
                                         >
                                             {{

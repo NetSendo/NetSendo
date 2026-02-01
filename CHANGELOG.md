@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Message Statistics - Add to List:**
+  - Added "Actions" column to "Recent Opens" and "Recent Clicks" tables on the message statistics page.
+  - New `AddToListDropdown` component allowing quick subscriber addition to mailing lists directly from statistics view.
+  - Dropdown features searchable list selection and success/error feedback.
+  - Backend extended to support URL search in "Recent Clicks" table and include `subscriber_id` in response.
+  - Full translations in PL, EN, DE, ES.
+
 ### Fixed
 
 ### Changed

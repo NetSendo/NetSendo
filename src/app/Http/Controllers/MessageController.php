@@ -1111,6 +1111,7 @@ class MessageController extends Controller
             ->withQueryString()
             ->through(fn($open) => [
                 'id' => $open->id,
+                'subscriber_id' => $open->subscriber_id,
                 'email' => $open->subscriber?->email ?? 'Nieznany',
                 'name' => trim(($open->subscriber?->first_name ?? '') . ' ' . ($open->subscriber?->last_name ?? '')),
                 'ip' => $open->ip_address,
@@ -1121,13 +1122,16 @@ class MessageController extends Controller
         $clicksQuery = EmailClick::where('message_id', $message->id)
             ->with('subscriber:id,email,first_name,last_name');
 
-        // Search filter for clicks
+        // Search filter for clicks - search by email, name, or URL
         if ($request->filled('search_clicks')) {
             $search = $request->input('search_clicks');
-            $clicksQuery->whereHas('subscriber', function ($q) use ($search) {
-                $q->where('email', 'like', "%{$search}%")
-                  ->orWhere('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
+            $clicksQuery->where(function ($q) use ($search) {
+                $q->whereHas('subscriber', function ($sub) use ($search) {
+                    $sub->where('email', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })
+                ->orWhere('url', 'like', "%{$search}%");
             });
         }
 
@@ -1152,6 +1156,7 @@ class MessageController extends Controller
             ->withQueryString()
             ->through(fn($click) => [
                 'id' => $click->id,
+                'subscriber_id' => $click->subscriber_id,
                 'email' => $click->subscriber?->email ?? 'Nieznany',
                 'name' => trim(($click->subscriber?->first_name ?? '') . ' ' . ($click->subscriber?->last_name ?? '')),
                 'url' => $click->url,

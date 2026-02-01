@@ -1578,7 +1578,14 @@
                     "failed": "Błąd",
                     "skipped": "Pominięty"
                 }
-            }
+            },
+            "actions": "Akcje",
+            "search_email_or_url": "Szukaj email lub URL...",
+            "add_to_list": "Dodaj do listy",
+            "select_list": "Wybierz listę",
+            "search_lists": "Szukaj listy...",
+            "no_lists": "Brak list",
+            "added_to_list": "Dodano do listy"
         },
         "tracked_links": {
             "title": "Śledzone linki",

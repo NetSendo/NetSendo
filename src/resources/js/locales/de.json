@@ -1591,6 +1591,17 @@
                     "failed": "Fehlgeschlagen",
                     "skipped": "Übersprungen"
                 }
+            },
+            "add_to_list": {
+                "title": "Zu Liste hinzufügen",
+                "actions": "Aktionen",
+                "search": "Listen durchsuchen...",
+                "select_list": "Zielliste auswählen",
+                "no_lists": "Keine Listen verfügbar",
+                "loading": "Laden...",
+                "adding": "Hinzufügen...",
+                "success": "Abonnent erfolgreich zur Liste hinzugefügt",
+                "error": "Fehler beim Hinzufügen des Abonnenten zur Liste"
             }
         },
         "tracked_links": {

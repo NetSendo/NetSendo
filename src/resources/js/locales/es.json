@@ -1601,6 +1601,17 @@
                     "failed": "Fallido",
                     "skipped": "Omitido"
                 }
+            },
+            "add_to_list": {
+                "title": "Añadir a lista",
+                "actions": "Acciones",
+                "search": "Buscar listas...",
+                "select_list": "Seleccionar lista de destino",
+                "no_lists": "No hay listas disponibles",
+                "loading": "Cargando...",
+                "adding": "Añadiendo...",
+                "success": "Suscriptor añadido a la lista con éxito",
+                "error": "Error al añadir suscriptor a la lista"
             }
         },
         "tracked_links": {
