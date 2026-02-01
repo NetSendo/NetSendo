@@ -5334,6 +5334,7 @@
         "palette": "Palette"
     },
     "crm": {
+
         "title": "CRM",
         "subtitle": "Manage your contacts and sales",
         "task_types": {
@@ -6237,6 +6238,266 @@
                     "workflow4": "Review upcoming tasks and prepare for tomorrow",
                     "workflow5": "End the day with 0 overdue tasks!"
                 }
+            }
+        },
+        "cardintel": {
+            "title": "CardIntel Agent",
+            "subtitle": "AI-powered business card scanner",
+            "dashboard": {
+                "title": "CardIntel Agent",
+                "subtitle": "Intelligent scanning and business card management",
+                "tabs": {
+                    "overview": "Overview",
+                    "scan": "Scan",
+                    "queue": "Queue",
+                    "memory": "Memory",
+                    "settings": "Settings"
+                },
+                "stats": {
+                    "total_scans": "All Scans",
+                    "pending_review": "Pending Review",
+                    "memory": "In Memory",
+                    "in_crm": "In CRM"
+                },
+                "recent_scans": {
+                    "title": "Recent Scans",
+                    "empty": "No scans",
+                    "scan_first": "Scan your first card",
+                    "no_data": "No data",
+                    "scan_label": "Scan"
+                }
+            },
+            "scan": {
+                "title": "Scan Business Card",
+                "description": "Upload a photo or PDF of a business card, and CardIntel Agent will automatically extract contact data",
+                "upload": {
+                    "cta": "Click to upload",
+                    "or_drag": "or drag and drop",
+                    "formats": "JPG, PNG, WebP or PDF up to 10MB"
+                },
+                "mode": {
+                    "label": "Processing Mode",
+                    "manual": "Manual",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                }
+            },
+            "queue": {
+                "title": "Scan Queue",
+                "subtitle": "{count} pending review",
+                "stats": {
+                    "all": "All",
+                    "pending": "Pending Review",
+                    "completed": "Completed",
+                    "failed": "Failed"
+                },
+                "table": {
+                    "card": "Card",
+                    "data": "Data",
+                    "context": "Context",
+                    "mode": "Mode",
+                    "status": "Status",
+                    "date": "Date",
+                    "view": "View"
+                },
+                "empty": {
+                    "title": "No scans in queue",
+                    "cta": "Scan business card"
+                },
+                "pagination": "Showing {from} - {to} of {total}"
+            },
+            "memory": {
+                "title": "Memory - CardIntel",
+                "header": "NetSendo Memory",
+                "stats": "{total} contacts | {synced} synced to CRM",
+                "info_banner": {
+                    "title": "Contact Intelligence Records (CIR)",
+                    "description": "NetSendo Context Memory stores all information about business card contacts - regardless of whether they have been added to CRM. Each record combines data from all scans of the same contact."
+                },
+                "record": {
+                    "synced": "In CRM",
+                    "memory_only": "Memory Only",
+                    "view_scan": "View Scan",
+                    "open_crm": "Open in CRM"
+                },
+                "empty": {
+                    "title": "Memory is empty",
+                    "description": "Scan business cards and save them to memory to start building your contact database.",
+                    "cta": "Scan business card"
+                }
+            },
+            "status": {
+                "completed": "Completed",
+                "processing": "Processing",
+                "failed": "Failed",
+                "pending": "Pending"
+            },
+            "settings": {
+                "title": "CardIntel Settings",
+                "subtitle": "Configure agent behavior",
+                "default_mode": {
+                    "title": "Default Mode",
+                    "description": "Select automation level for new scans",
+                    "manual": "Manual",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                },
+                "mode": {
+                    "manual_desc": "Full control - every decision requires your approval",
+                    "agent_desc": "Agent suggests - you approve or modify",
+                    "auto_desc": "Automation - agent acts according to defined rules"
+                },
+                "vision": {
+                    "ready": "AI Vision integration ready",
+                    "required": "AI Vision integration required",
+                    "configure_ai": "Configure OpenAI or Google Gemini for business card scanning",
+                    "supported_models": "Supported AI Vision models:"
+                },
+                "context_thresholds": {
+                    "title": "Context Thresholds",
+                    "description": "Set score values for context level classification",
+                    "medium_threshold": "Threshold for MEDIUM ({points} pts)",
+                    "high_threshold": "Threshold for HIGH ({points} pts)",
+                    "low_range": "Low < {0} | Medium >= {1}",
+                    "mid_range": "Medium < {0} | High >= {1}",
+                    "legend": {
+                        "low": "LOW: 0 - {0}",
+                        "medium": "MEDIUM: {0} - {1}",
+                        "high": "HIGH: {0}+"
+                    }
+                },
+                "crm_sync": {
+                    "title": "CRM Synchronization",
+                    "description": "When contacts should be added to CRM",
+                    "modes": {
+                        "always": "Always",
+                        "approve": "Require Approval",
+                        "high_only": "High Only",
+                        "never": "Never"
+                    },
+                    "always_desc": "All contacts added to CRM",
+                    "approve_desc": "Requires approval before adding",
+                    "high_only_desc": "Only contacts with high context",
+                    "never_desc": "Never add automatically",
+                    "min_score": "Minimum quality score for auto-sync: {score}"
+                },
+                "enrichment": {
+                    "title": "Data Enrichment",
+                    "description": "Automatically complete company information",
+                    "enable": "Enable Enrichment",
+                    "only_medium_high": "Only for MEDIUM and HIGH",
+                    "timeout": "Timeout (seconds): {seconds}"
+                },
+                "auto_send": {
+                    "title": "Auto-send (Auto mode)",
+                    "description": "Guardrails for automatic message sending",
+                    "enable": "Enable Auto-send",
+                    "guardrails_active": "Guardrails Active",
+                    "rules": {
+                        "high_score": "• Only HIGH contacts with score >= {score}",
+                        "corporate_only": "• Corporate email only (no Gmail/Yahoo etc.)",
+                        "max_daily": "• Maximum 5 sends per day"
+                    },
+                    "min_score": "Minimum score: {score}",
+                    "corporate_only_label": "Corporate email only (no Gmail/Yahoo)"
+                },
+                "messages": {
+                    "title": "Message Generation",
+                    "default_tone": "Default Tone",
+                    "tones": {
+                        "professional": "Professional",
+                        "friendly": "Friendly",
+                        "formal": "Formal"
+                    },
+                    "show_all_context_levels": "Show all context versions",
+                    "show_all_context_levels_desc": "Generate messages for LOW, MEDIUM and HIGH simultaneously",
+                    "custom_prompt": "Custom AI instructions",
+                    "custom_prompt_placeholder": "E.g. 'Always mention 10% discount for new customers' or 'Write briefly and concisely'...",
+                    "custom_prompt_help": "Add custom instructions that AI will consider when generating messages (max 2000 characters)",
+                    "allowed_html_tags": "Allowed HTML tags",
+                    "allowed_html_tags_help": "Comma-separated list of HTML tags that AI can use when formatting messages"
+                },
+                "sending": {
+                    "title": "Sending Settings",
+                    "description": "Configure default mailbox for messages generated by CardIntel",
+                    "default_mailbox": "Default SMTP Mailbox",
+                    "no_mailbox": "Use system default",
+                    "mailbox_help": "Select the mailbox from which messages will be sent to business card contacts"
+                },
+
+                "page_title": "Settings - CardIntel",
+                "saved": "Saved",
+                "saving": "Saving...",
+                "save_button": "Save Settings"
+            },
+            "show": {
+                "title": "Scan Details",
+                "extracted_data": "Extracted Data",
+                "ocr_raw_title": "OCR Text (Raw)",
+                "enrichment": "Data Enrichment",
+                "about_company": "About Company",
+                "use_case_hypothesis": "Use-case Hypothesis",
+                "proposed_message": "Proposed Message",
+                "actions": "Actions",
+                "action_history": "Action History",
+                "no_text": "No text",
+                "no_actions": "No history actions"
+            },
+            "fields": {
+                "first_name": "First Name",
+                "last_name": "Last Name",
+                "email": "Email",
+                "phone": "Phone",
+                "company": "Company",
+                "position": "Position",
+                "website": "Website",
+                "address": "Address",
+                "nip": "Tax ID (NIP)",
+                "notes": "Notes"
+            },
+            "context": {
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "quality_score": "Quality Score"
+            },
+            "signals": {
+                "has_email": "Email present",
+                "has_phone": "Phone present",
+                "has_company": "Company present",
+                "corporate_email": "Corporate email",
+                "has_website": "Website present",
+                "has_position": "Position present",
+                "has_nip": "Tax ID present"
+            },
+            "message_generation": {
+                "title": "Generate Message",
+                "generate": "Generate",
+                "generating": "Generating...",
+                "copy": "Copy",
+                "copied": "Copied!",
+                "level": "Context Level"
+            },
+            "actions": {
+                "edit": "Edit",
+                "cancel": "Cancel",
+                "save": "Save",
+                "save_memory": "Save to Memory",
+                "saved_memory": "Saved",
+                "save_to_crm": "Save to CRM",
+                "save_contact": "Save Contact",
+                "add_to_list": "Add to List",
+                "send_email": "Send Email",
+                "send_sms": "Send SMS",
+                "archive": "Archive",
+                "delete": "Delete"
+            },
+
+            "vision": {
+                "ready": "Business card recognition ready",
+                "required": "AI Vision integration required",
+                "supported_models": "Supported AI Vision models:",
+                "configure_ai": "Configure AI"
             }
         }
     },

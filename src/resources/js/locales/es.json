@@ -4681,6 +4681,7 @@
         "palette": "Paleta"
     },
     "crm": {
+
         "title": "CRM",
         "subtitle": "Gestionar contactos y ventas",
         "task_types": {
@@ -5506,6 +5507,266 @@
                     "workflow4": "Revisa tareas próximas y prepárate para mañana",
                     "workflow5": "¡Termina el día con 0 tareas vencidas!"
                 }
+            }
+        },
+        "cardintel": {
+            "title": "CardIntel Agent",
+            "subtitle": "Escáner de tarjetas de visita con IA",
+            "dashboard": {
+                "title": "Agente CardIntel",
+                "subtitle": "Escaneo inteligente y gestión de tarjetas de visita",
+                "tabs": {
+                    "overview": "Resumen",
+                    "scan": "Escanear",
+                    "queue": "Cola",
+                    "memory": "Memoria",
+                    "settings": "Ajustes"
+                },
+                "stats": {
+                    "total_scans": "Todos los escaneos",
+                    "pending_review": "Pendiente de revisión",
+                    "memory": "En memoria",
+                    "in_crm": "En CRM"
+                },
+                "recent_scans": {
+                    "title": "Escaneos recientes",
+                    "empty": "Sin escaneos",
+                    "scan_first": "Escanear primera tarjeta",
+                    "no_data": "Sin datos",
+                    "scan_label": "Escaneo"
+                }
+            },
+            "scan": {
+                "title": "Escanear tarjeta de visita",
+                "description": "Sube una foto o PDF de una tarjeta de visita y el Agente CardIntel extraerá automáticamente los datos de contacto",
+                "upload": {
+                    "cta": "Haga clic para cargar",
+                    "or_drag": "o arrastrar y soltar",
+                    "formats": "JPG, PNG, WebP o PDF hasta 10MB"
+                },
+                "mode": {
+                    "label": "Modo de procesamiento",
+                    "manual": "Manual",
+                    "agent": "Agente",
+                    "auto": "Auto"
+                }
+            },
+            "queue": {
+                "title": "Cola de escaneos",
+                "subtitle": "{count} pendiente de revisión",
+                "stats": {
+                    "all": "Todos",
+                    "pending": "Pendiente de revisión",
+                    "completed": "Completado",
+                    "failed": "Fallidos"
+                },
+                "table": {
+                    "card": "Tarjeta",
+                    "data": "Datos",
+                    "context": "Contexto",
+                    "mode": "Modo",
+                    "status": "Estado",
+                    "date": "Fecha",
+                    "view": "Ver"
+                },
+                "empty": {
+                    "title": "No hay escaneos en cola",
+                    "cta": "Escanear tarjeta"
+                },
+                "pagination": "Mostrando {from} - {to} de {total}"
+            },
+            "memory": {
+                "title": "Memoria - CardIntel",
+                "header": "Memoria NetSendo",
+                "stats": "{total} contactos | {synced} sincronizados con CRM",
+                "info_banner": {
+                    "title": "Registros de Inteligencia de Contactos (CIR)",
+                    "description": "La Memoria Contextual de NetSendo almacena toda la información sobre los contactos de las tarjetas de visita, independientemente de si se han añadido al CRM. Cada registro combina datos de todos los escaneos del mismo contacto."
+                },
+                "record": {
+                    "synced": "En CRM",
+                    "memory_only": "Solo memoria",
+                    "view_scan": "Ver escaneo",
+                    "open_crm": "Abrir en CRM"
+                },
+                "empty": {
+                    "title": "La memoria está vacía",
+                    "description": "Escanee tarjetas de visita y guárdelas en la memoria para comenzar a construir su base de datos de contactos.",
+                    "cta": "Escanear tarjeta"
+                }
+            },
+            "status": {
+                "completed": "Completado",
+                "processing": "Procesando",
+                "failed": "Fallido",
+                "pending": "Pendiente"
+            },
+            "settings": {
+                "title": "Configuración de CardIntel",
+                "subtitle": "Configurar el comportamiento del agente",
+                "default_mode": {
+                    "title": "Modo predeterminado",
+                    "description": "Seleccione el nivel de automatización para nuevos escaneos",
+                    "manual": "Manual",
+                    "agent": "Agente",
+                    "auto": "Auto"
+                },
+                "mode": {
+                    "manual_desc": "Control total: cada decisión requiere su aprobación",
+                    "agent_desc": "El agente sugiere: usted aprueba o modifica",
+                    "auto_desc": "Automatización: el agente actúa según las reglas definidas"
+                },
+                "vision": {
+                    "ready": "Integración de Visión IA lista",
+                    "required": "Integración de Visión IA necesaria",
+                    "configure_ai": "Configure OpenAI o Google Gemini para escanear tarjetas de visita",
+                    "supported_models": "Modelos de Visión IA soportados:"
+                },
+                "context_thresholds": {
+                    "title": "Umbrales de contexto",
+                    "description": "Establecer valores de puntuación para la clasificación del nivel de contexto",
+                    "medium_threshold": "Umbral para MEDIUM ({points} pts)",
+                    "high_threshold": "Umbral para HIGH ({points} pts)",
+                    "low_range": "Bajo < {0} | Medio >= {1}",
+                    "mid_range": "Medio < {0} | Alto >= {1}",
+                    "legend": {
+                        "low": "LOW: 0 - {0}",
+                        "medium": "MEDIUM: {0} - {1}",
+                        "high": "HIGH: {0}+"
+                    }
+                },
+                "crm_sync": {
+                    "title": "Sincronización con CRM",
+                    "description": "Cuándo se deben añadir los contactos al CRM",
+                    "modes": {
+                        "always": "Siempre",
+                        "approve": "Requerir aprobación",
+                        "high_only": "Solo HIGH",
+                        "never": "Nunca"
+                    },
+                    "always_desc": "Todos los contactos añadidos al CRM",
+                    "approve_desc": "Requiere aprobación antes de añadir",
+                    "high_only_desc": "Solo contactos con contexto alto",
+                    "never_desc": "Nunca añadir automáticamente",
+                    "min_score": "Puntuación de calidad mínima para auto-sync: {score}"
+                },
+                "enrichment": {
+                    "title": "Enriquecimiento de datos",
+                    "description": "Completar automáticamente la información de la empresa",
+                    "enable": "Habilitar enriquecimiento",
+                    "only_medium_high": "Solo para MEDIUM y HIGH",
+                    "timeout": "Tiempo de espera (segundos): {seconds}"
+                },
+                "auto_send": {
+                    "title": "Envío automático (Modo Auto)",
+                    "description": "Medidas de seguridad para el envío automático de mensajes",
+                    "enable": "Habilitar envío automático",
+                    "guardrails_active": "Medidas de seguridad activas",
+                    "rules": {
+                        "high_score": "• Solo contactos HIGH con puntuación >= {score}",
+                        "corporate_only": "• Solo correo corporativo (no Gmail/Yahoo, etc.)",
+                        "max_daily": "• Máximo 5 envíos por día"
+                    },
+                    "min_score": "Puntuación mínima: {score}",
+                    "corporate_only_label": "Solo correo corporativo (no Gmail/Yahoo)"
+                },
+                "messages": {
+                    "title": "Generación de mensajes",
+                    "default_tone": "Tono predeterminado",
+                    "tones": {
+                        "professional": "Profesional",
+                        "friendly": "Amigable",
+                        "formal": "Formal"
+                    },
+                    "show_all_context_levels": "Mostrar todas las versiones de contexto",
+                    "show_all_context_levels_desc": "Generar mensajes para LOW, MEDIUM y HIGH simultáneamente",
+                    "custom_prompt": "Instrucciones personalizadas para IA",
+                    "custom_prompt_placeholder": "Ej. 'Siempre mencionar 10% de descuento para nuevos clientes' o 'Escribir brevemente y concisamente'...",
+                    "custom_prompt_help": "Añade instrucciones personalizadas que la IA considerará al generar mensajes (máx 2000 caracteres)",
+                    "allowed_html_tags": "Etiquetas HTML permitidas",
+                    "allowed_html_tags_help": "Lista de etiquetas HTML separadas por comas que la IA puede usar al formatear mensajes"
+                },
+                "sending": {
+                    "title": "Configuración de envío",
+                    "description": "Configura el buzón predeterminado para mensajes generados por CardIntel",
+                    "default_mailbox": "Buzón SMTP predeterminado",
+                    "no_mailbox": "Usar predeterminado del sistema",
+                    "mailbox_help": "Selecciona el buzón desde el cual se enviarán mensajes a los contactos de las tarjetas de visita"
+                },
+
+                "page_title": "Ajustes - CardIntel",
+                "saved": "Guardado",
+                "saving": "Guardando...",
+                "save_button": "Guardar ajustes"
+            },
+            "show": {
+                "title": "Detalles del Escaneo",
+                "extracted_data": "Datos Extraídos",
+                "ocr_raw_title": "Texto OCR (sin procesar)",
+                "enrichment": "Datos Enriquecidos",
+                "about_company": "Sobre la empresa",
+                "use_case_hypothesis": "Hipótesis de uso",
+                "proposed_message": "Mensaje propuesto",
+                "actions": "Acciones",
+                "action_history": "Historial de acciones",
+                "no_text": "Sin texto",
+                "no_actions": "Sin acciones en el historial"
+            },
+            "fields": {
+                "first_name": "Nombre",
+                "last_name": "Apellido",
+                "email": "Email",
+                "phone": "Teléfono",
+                "company": "Empresa",
+                "position": "Cargo",
+                "website": "Sitio Web",
+                "address": "Dirección",
+                "nip": "NIF/CIF",
+                "notes": "Notas"
+            },
+            "context": {
+                "low": "Bajo",
+                "medium": "Medio",
+                "high": "Alto",
+                "quality_score": "Puntuación de Calidad"
+            },
+            "signals": {
+                "has_email": "Email presente",
+                "has_phone": "Teléfono presente",
+                "has_company": "Empresa presente",
+                "corporate_email": "Email corporativo",
+                "has_website": "Sitio web presente",
+                "has_position": "Cargo presente",
+                "has_nip": "NIF/CIF presente"
+            },
+            "message_generation": {
+                "title": "Generar Mensaje",
+                "generate": "Generar",
+                "generating": "Generando...",
+                "copy": "Copiar",
+                "copied": "¡Copiado!",
+                "level": "Nivel de Contexto"
+            },
+            "actions": {
+                "edit": "Editar",
+                "cancel": "Cancelar",
+                "save": "Guardar",
+                "save_memory": "Guardar en memoria",
+                "saved_memory": "Guardado",
+                "save_to_crm": "Guardar en CRM",
+                "save_contact": "Guardar Contacto",
+                "add_to_list": "Añadir a Lista",
+                "send_email": "Enviar Email",
+                "send_sms": "Enviar SMS",
+                "archive": "Archivar",
+                "delete": "Eliminar"
+            },
+
+            "vision": {
+                "ready": "Reconocimiento de tarjetas listo",
+                "required": "Integración AI Vision requerida",
+                "supported_models": "Modelos AI Vision compatibles:",
+                "configure_ai": "Configurar IA"
             }
         }
     },

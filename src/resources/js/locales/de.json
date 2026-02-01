@@ -4596,6 +4596,7 @@
         "palette": "Palette"
     },
     "crm": {
+
         "title": "CRM",
         "subtitle": "Kontakte und Verkäufe verwalten",
         "task_types": {
@@ -5421,6 +5422,266 @@
                     "workflow4": "Überprüfen Sie anstehende Aufgaben und bereiten Sie sich auf morgen vor",
                     "workflow5": "Beenden Sie den Tag mit 0 überfälligen Aufgaben!"
                 }
+            }
+        },
+        "cardintel": {
+            "title": "CardIntel Agent",
+            "subtitle": "KI-gesteuerter Visitenkartenscanner",
+            "dashboard": {
+                "title": "CardIntel Agent",
+                "subtitle": "Intelligentes Scannen und Visitenkartenverwaltung",
+                "tabs": {
+                    "overview": "Übersicht",
+                    "scan": "Scannen",
+                    "queue": "Warteschlange",
+                    "memory": "Speicher",
+                    "settings": "Einstellungen"
+                },
+                "stats": {
+                    "total_scans": "Alle Scans",
+                    "pending_review": "Zur Überprüfung",
+                    "memory": "Im Speicher",
+                    "in_crm": "Im CRM"
+                },
+                "recent_scans": {
+                    "title": "Letzte Scans",
+                    "empty": "Keine Scans",
+                    "scan_first": "Erste Karte scannen",
+                    "no_data": "Keine Daten",
+                    "scan_label": "Scan"
+                }
+            },
+            "scan": {
+                "title": "Visitenkarte scannen",
+                "description": "Laden Sie ein Foto oder PDF einer Visitenkarte hoch, und der CardIntel Agent extrahiert automatisch die Kontaktdaten",
+                "upload": {
+                    "cta": "Klicken zum Hochladen",
+                    "or_drag": "oder per Drag & Drop",
+                    "formats": "JPG, PNG, WebP oder PDF bis 10MB"
+                },
+                "mode": {
+                    "label": "Verarbeitungsmodus",
+                    "manual": "Manuell",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                }
+            },
+            "queue": {
+                "title": "Scan-Warteschlange",
+                "subtitle": "{count} zur Überprüfung",
+                "stats": {
+                    "all": "Alle",
+                    "pending": "Zur Überprüfung",
+                    "completed": "Abgeschlossen",
+                    "failed": "Fehler"
+                },
+                "table": {
+                    "card": "Karte",
+                    "data": "Daten",
+                    "context": "Kontext",
+                    "mode": "Modus",
+                    "status": "Status",
+                    "date": "Datum",
+                    "view": "Anzeigen"
+                },
+                "empty": {
+                    "title": "Keine Scans in der Warteschlange",
+                    "cta": "Visitenkarte scannen"
+                },
+                "pagination": "Zeige {from} - {to} von {total}"
+            },
+            "memory": {
+                "title": "Speicher - CardIntel",
+                "header": "NetSendo Speicher",
+                "stats": "{total} Kontakte | {synced} mit CRM synchronisiert",
+                "info_banner": {
+                    "title": "Contact Intelligence Records (CIR)",
+                    "description": "Der NetSendo Kontextspeicher speichert alle Informationen über Visitenkartenkontakte - unabhängig davon, ob sie bereits zum CRM hinzugefügt wurden. Jeder Datensatz kombiniert Daten aus allen Scans desselben Kontakts."
+                },
+                "record": {
+                    "synced": "Im CRM",
+                    "memory_only": "Nur Speicher",
+                    "view_scan": "Scan anzeigen",
+                    "open_crm": "Im CRM öffnen"
+                },
+                "empty": {
+                    "title": "Der Speicher ist leer",
+                    "description": "Scannen Sie Visitenkarten und speichern Sie sie im Speicher, um Ihre Kontaktdatenbank aufzubauen.",
+                    "cta": "Visitenkarte scannen"
+                }
+            },
+            "status": {
+                "completed": "Abgeschlossen",
+                "processing": "Verarbeitung",
+                "failed": "Fehlgeschlagen",
+                "pending": "Ausstehend"
+            },
+            "settings": {
+                "title": "CardIntel Einstellungen",
+                "subtitle": "Agent-Verhalten konfigurieren",
+                "default_mode": {
+                    "title": "Standardmodus",
+                    "description": "Wählen Sie die Automatisierungsstufe für neue Scans",
+                    "manual": "Manuell",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                },
+                "mode": {
+                    "manual_desc": "Volle Kontrolle - jede Entscheidung erfordert Ihre Genehmigung",
+                    "agent_desc": "Agent schlägt vor - Sie genehmigen oder ändern",
+                    "auto_desc": "Automatisierung - Agent handelt nach definierten Regeln"
+                },
+                "vision": {
+                    "ready": "KI Vision Integration bereit",
+                    "required": "KI Vision Integration erforderlich",
+                    "configure_ai": "Konfigurieren Sie OpenAI oder Google Gemini für das Scannen von Visitenkarten",
+                    "supported_models": "Unterstützte KI Vision Modelle:"
+                },
+                "context_thresholds": {
+                    "title": "Kontext-Schwellenwerte",
+                    "description": "Punktwerte für die Klassifizierung des Kontextniveaus festlegen",
+                    "medium_threshold": "Schwelle für MEDIUM ({points} Pkt)",
+                    "high_threshold": "Schwelle für HIGH ({points} Pkt)",
+                    "low_range": "Niedrig < {0} | Mittel >= {1}",
+                    "mid_range": "Mittel < {0} | Hoch >= {1}",
+                    "legend": {
+                        "low": "LOW: 0 - {0}",
+                        "medium": "MEDIUM: {0} - {1}",
+                        "high": "HIGH: {0}+"
+                    }
+                },
+                "crm_sync": {
+                    "title": "CRM-Synchronisation",
+                    "description": "Wann Kontakte zum CRM hinzugefügt werden sollen",
+                    "modes": {
+                        "always": "Immer",
+                        "approve": "Genehmigung erforderlich",
+                        "high_only": "Nur HIGH",
+                        "never": "Niemals"
+                    },
+                    "always_desc": "Alle Kontakte zum CRM hinzugefügt",
+                    "approve_desc": "Erfordert Genehmigung vor dem Hinzufügen",
+                    "high_only_desc": "Nur Kontakte mit hohem Kontext",
+                    "never_desc": "Niemals automatisch hinzufügen",
+                    "min_score": "Minimale Qualitätsbewertung für Auto-Sync: {score}"
+                },
+                "enrichment": {
+                    "title": "Datenanreicherung",
+                    "description": "Unternehmensinformationen automatisch vervollständigen",
+                    "enable": "Anreicherung aktivieren",
+                    "only_medium_high": "Nur für MEDIUM und HIGH",
+                    "timeout": "Zeitüberschreitung (Sekunden): {seconds}"
+                },
+                "auto_send": {
+                    "title": "Automatisches Senden (Auto-Modus)",
+                    "description": "Schutzmaßnahmen für den automatischen Nachrichtenversand",
+                    "enable": "Automatisches Senden aktivieren",
+                    "guardrails_active": "Schutzmaßnahmen aktiv",
+                    "rules": {
+                        "high_score": "• Nur HIGH Kontakte mit Score >= {score}",
+                        "corporate_only": "• Nur Firmen-E-Mail (kein Gmail/Yahoo usw.)",
+                        "max_daily": "• Maximal 5 Sendungen pro Tag"
+                    },
+                    "min_score": "Mindestpunkzahl: {score}",
+                    "corporate_only_label": "Nur Firmen-E-Mail (kein Gmail/Yahoo)"
+                },
+                "messages": {
+                    "title": "Nachrichtenerstellung",
+                    "default_tone": "Standardton",
+                    "tones": {
+                        "professional": "Professionell",
+                        "friendly": "Freundlich",
+                        "formal": "Formell"
+                    },
+                    "show_all_context_levels": "Alle Kontextversionen anzeigen",
+                    "show_all_context_levels_desc": "Nachrichten für LOW, MEDIUM und HIGH gleichzeitig generieren",
+                    "custom_prompt": "Benutzerdefinierte KI-Anweisungen",
+                    "custom_prompt_placeholder": "Z.B. 'Erwähne immer 10% Rabatt für Neukunden' oder 'Schreibe kurz und prägnant'...",
+                    "custom_prompt_help": "Fügen Sie benutzerdefinierte Anweisungen hinzu, die die KI bei der Nachrichtenerstellung berücksichtigt (max 2000 Zeichen)",
+                    "allowed_html_tags": "Erlaubte HTML-Tags",
+                    "allowed_html_tags_help": "Kommagetrennte Liste von HTML-Tags, die die KI beim Formatieren von Nachrichten verwenden kann"
+                },
+                "sending": {
+                    "title": "Versandeinstellungen",
+                    "description": "Standardpostfach für von CardIntel generierte Nachrichten konfigurieren",
+                    "default_mailbox": "Standard-SMTP-Postfach",
+                    "no_mailbox": "Systemstandard verwenden",
+                    "mailbox_help": "Wählen Sie das Postfach aus, über das Nachrichten an Visitenkartenkontakte gesendet werden"
+                },
+
+                "page_title": "Einstellungen - CardIntel",
+                "saved": "Gespeichert",
+                "saving": "Speichern...",
+                "save_button": "Einstellungen speichern"
+            },
+            "show": {
+                "title": "Scan-Details",
+                "extracted_data": "Extrahierte Daten",
+                "ocr_raw_title": "OCR-Text (roh)",
+                "enrichment": "Angereicherte Daten",
+                "about_company": "Über das Unternehmen",
+                "use_case_hypothesis": "Anwendungsfall-Hypothese",
+                "proposed_message": "Vorgeschlagene Nachricht",
+                "actions": "Aktionen",
+                "action_history": "Aktionsverlauf",
+                "no_text": "Kein Text",
+                "no_actions": "Keine Aktionen im Verlauf"
+            },
+            "fields": {
+                "first_name": "Vorname",
+                "last_name": "Nachname",
+                "email": "E-Mail",
+                "phone": "Telefon",
+                "company": "Firma",
+                "position": "Position",
+                "website": "Webseite",
+                "address": "Adresse",
+                "nip": "Steuer-ID (NIP)",
+                "notes": "Notizen"
+            },
+            "context": {
+                "low": "Niedrig",
+                "medium": "Mittel",
+                "high": "Hoch",
+                "quality_score": "Qualitätspunktzahl"
+            },
+            "signals": {
+                "has_email": "E-Mail vorhanden",
+                "has_phone": "Telefon vorhanden",
+                "has_company": "Firma vorhanden",
+                "corporate_email": "Firmen-E-Mail",
+                "has_website": "Webseite vorhanden",
+                "has_position": "Position vorhanden",
+                "has_nip": "Steuer-ID vorhanden"
+            },
+            "message_generation": {
+                "title": "Nachricht Generieren",
+                "generate": "Generieren",
+                "generating": "Generierung...",
+                "copy": "Kopieren",
+                "copied": "Kopiert!",
+                "level": "Kontextstufe"
+            },
+            "actions": {
+                "edit": "Bearbeiten",
+                "cancel": "Abbrechen",
+                "save": "Speichern",
+                "save_memory": "Im Speicher speichern",
+                "saved_memory": "Gespeichert",
+                "save_to_crm": "Im CRM speichern",
+                "save_contact": "Kontakt speichern",
+                "add_to_list": "Zur Liste hinzufügen",
+                "send_email": "E-Mail senden",
+                "send_sms": "SMS senden",
+                "archive": "Archivieren",
+                "delete": "Löschen"
+            },
+
+            "vision": {
+                "ready": "Visitenkartenerkennung bereit",
+                "required": "AI Vision-Integration erforderlich",
+                "supported_models": "Unterstützte AI Vision-Modelle:",
+                "configure_ai": "KI konfigurieren"
             }
         }
     },

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.8.4] – Short Description
+
+**Release date:** 2026-02-01
+
+### Added
+
 - **Campaign Auditor - User Currency Support:**
   - Revenue loss amounts are now displayed in the user's preferred currency (from Profile settings) instead of hardcoded USD.
   - Added automatic currency conversion using NBP exchange rates via `CurrencyExchangeService`.
@@ -26,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **UI:** New `CopyListModal.vue` components for both list types, integrated into grid and table views.
   - **Backend:** New `copy` method in `MailingListController` and `SmsListController` with dedicated routes.
   - **Localization:** Full translations in PL, EN, DE, ES.
+
+- **CardIntel AI Vision Integration:**
+  - **Vision Providers:** Added `supportsVision()` and `generateWithImage()` methods to `OpenAiProvider` and `GeminiProvider` for image-based AI analysis.
+  - **Settings Status:** CardIntel settings page now displays AI Vision provider status with visual indicators (green/red) showing which providers are configured and active.
+  - **Provider Detection:** Backend automatically detects vision-capable providers (OpenAI GPT-4o, Google Gemini) and their integration status.
+  - **UI Feedback:** Added direct link to AI settings when no vision provider is configured.
+  - **Localization:** Full CardIntel translations added for Spanish (ES) and German (DE), including all dashboard, settings, queue, memory, and vision status strings.
 
 ### Fixed
 

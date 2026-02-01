@@ -96,4 +96,54 @@ class OpenAiProvider extends BaseProvider
 
         return $names[$modelId] ?? strtoupper(str_replace('-', ' ', $modelId));
     }
+
+    /**
+     * Check if this provider supports vision/image analysis.
+     */
+    public function supportsVision(): bool
+    {
+        return true; // GPT-4o and GPT-4o-mini support vision
+    }
+
+    /**
+     * Generate text from a prompt with an image.
+     */
+    public function generateWithImage(
+        string $prompt,
+        string $base64Image,
+        string $mimeType,
+        array $options = []
+    ): string {
+        $model = $options['model'] ?? 'gpt-4o'; // GPT-4o supports vision
+
+        $response = $this->makeRequest('post', 'chat/completions', [
+            'model' => $model,
+            'messages' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'text',
+                            'text' => $prompt,
+                        ],
+                        [
+                            'type' => 'image_url',
+                            'image_url' => [
+                                'url' => "data:{$mimeType};base64,{$base64Image}",
+                                'detail' => $options['detail'] ?? 'high',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'max_tokens' => $options['max_tokens'] ?? 2000,
+            'temperature' => $options['temperature'] ?? 0.3,
+        ]);
+
+        if (!$response['success']) {
+            throw new \Exception('OpenAI Vision Error: ' . ($response['error'] ?? 'Unknown error'));
+        }
+
+        return $response['data']['choices'][0]['message']['content'] ?? '';
+    }
 }

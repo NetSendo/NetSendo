@@ -968,6 +968,21 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     });
     Route::get('contacts/{contact}/score-history', [\App\Http\Controllers\LeadScoringController::class, 'contactHistory'])->name('contacts.score-history');
 
+    // CardIntel Agent (Business Card Intelligence)
+    Route::prefix('cardintel')->name('cardintel.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\CardIntelController::class, 'index'])->name('index');
+        Route::post('/scan', [\App\Http\Controllers\CardIntelController::class, 'scan'])->name('scan');
+        Route::get('/queue', [\App\Http\Controllers\CardIntelController::class, 'queue'])->name('queue');
+        Route::get('/memory', [\App\Http\Controllers\CardIntelController::class, 'memory'])->name('memory');
+        Route::get('/settings', [\App\Http\Controllers\CardIntelController::class, 'settings'])->name('settings');
+        Route::post('/settings', [\App\Http\Controllers\CardIntelController::class, 'updateSettings'])->name('settings.update');
+        Route::get('/api/stats', [\App\Http\Controllers\CardIntelController::class, 'apiStats'])->name('api.stats');
+        Route::get('/{scan}', [\App\Http\Controllers\CardIntelController::class, 'show'])->name('show');
+        Route::post('/{scan}/action', [\App\Http\Controllers\CardIntelController::class, 'executeAction'])->name('action');
+        Route::post('/{scan}/message', [\App\Http\Controllers\CardIntelController::class, 'generateMessage'])->name('message');
+        Route::put('/{scan}/extraction', [\App\Http\Controllers\CardIntelController::class, 'updateExtraction'])->name('extraction.update');
+    });
+
     // CRM Import
 
     Route::get('import', [CrmImportController::class, 'index'])->name('import.index');

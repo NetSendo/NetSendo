@@ -5415,6 +5415,7 @@
         "palette": "Paleta"
     },
     "crm": {
+
         "title": "CRM",
         "subtitle": "Zarządzaj kontaktami i sprzedażą",
         "task_types": {
@@ -6315,6 +6316,265 @@
                     "workflow4": "Przejrzyj nadchodzące zadania i przygotuj się na jutro",
                     "workflow5": "Zakończ dzień z 0 zaległymi zadaniami!"
                 }
+            }
+        },
+        "cardintel": {
+            "title": "CardIntel Agent",
+            "subtitle": "Inteligentny skaner wizytówek z AI",
+            "dashboard": {
+                "title": "CardIntel Agent",
+                "subtitle": "Inteligentne skanowanie i zarządzanie wizytówkami",
+                "tabs": {
+                    "overview": "Przegląd",
+                    "scan": "Skanuj",
+                    "queue": "Kolejka",
+                    "memory": "Pamięć",
+                    "settings": "Ustawienia"
+                },
+                "stats": {
+                    "total_scans": "Wszystkie skany",
+                    "pending_review": "Do weryfikacji",
+                    "memory": "W pamięci",
+                    "in_crm": "W CRM"
+                },
+                "recent_scans": {
+                    "title": "Ostatnie skany",
+                    "empty": "Brak skanów",
+                    "scan_first": "Zeskanuj pierwszą wizytówkę",
+                    "no_data": "Brak danych",
+                    "scan_label": "Skan"
+                }
+            },
+            "scan": {
+                "title": "Zeskanuj wizytówkę",
+                "description": "Prześlij zdjęcie lub PDF wizytówki, a CardIntel Agent automatycznie wydobędzie dane kontaktowe",
+                "upload": {
+                    "cta": "Kliknij, aby przesłać",
+                    "or_drag": "lub przeciągnij i upuść",
+                    "formats": "JPG, PNG, WebP lub PDF do 10MB"
+                },
+                "mode": {
+                    "label": "Tryb przetwarzania",
+                    "manual": "Manual",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                }
+            },
+            "queue": {
+                "title": "Kolejka skanów",
+                "subtitle": "{count} do weryfikacji",
+                "stats": {
+                    "all": "Wszystkie",
+                    "pending": "Do weryfikacji",
+                    "completed": "Zakończone",
+                    "failed": "Błędy"
+                },
+                "table": {
+                    "card": "Wizytówka",
+                    "data": "Dane",
+                    "context": "Kontekst",
+                    "mode": "Tryb",
+                    "status": "Status",
+                    "date": "Data",
+                    "view": "Zobacz"
+                },
+                "empty": {
+                    "title": "Brak skanów w kolejce",
+                    "cta": "Zeskanuj wizytówkę"
+                },
+                "pagination": "Pokazuję {from} - {to} z {total}"
+            },
+            "memory": {
+                "title": "Pamięć - CardIntel",
+                "header": "NetSendo Memory",
+                "stats": "{total} kontaktów | {synced} zsynchronizowanych z CRM",
+                "info_banner": {
+                    "title": "Contact Intelligence Records (CIR)",
+                    "description": "Pamięć kontekstowa NetSendo przechowuje wszystkie informacje o kontaktach z wizytówek - niezależnie od tego, czy zostały już dodane do CRM. Każdy rekord łączy dane ze wszystkich skanów tego samego kontaktu."
+                },
+                "record": {
+                    "synced": "W CRM",
+                    "memory_only": "Tylko pamięć",
+                    "view_scan": "Zobacz skan",
+                    "open_crm": "Otwórz w CRM"
+                },
+                "empty": {
+                    "title": "Pamięć jest pusta",
+                    "description": "Zeskanuj wizytówki i zapisz je do pamięci, aby zacząć budować bazę kontaktów.",
+                    "cta": "Zeskanuj wizytówkę"
+                }
+            },
+            "settings": {
+                "title": "Ustawienia CardIntel",
+                "subtitle": "Skonfiguruj działanie agenta",
+                "default_mode": {
+                    "title": "Tryb domyślny",
+                    "description": "Wybierz poziom automatyzacji dla nowych skanów",
+                    "manual": "Manual",
+                    "agent": "Agent",
+                    "auto": "Auto"
+                },
+                "mode": {
+                    "manual_desc": "Pełna kontrola - każda decyzja wymaga Twojej akceptacji",
+                    "agent_desc": "Agent sugeruje - Ty zatwierdzasz lub modyfikujesz",
+                    "auto_desc": "Automatyzacja - agent działa według zdefiniowanych reguł"
+                },
+                "vision": {
+                    "ready": "AI Vision integration ready",
+                    "required": "AI Vision integration required",
+                    "configure_ai": "Skonfiguruj OpenAI lub Google Gemini do skanowania wizytówek",
+                    "supported_models": "Supported AI Vision models:"
+                },
+                "context_thresholds": {
+                    "title": "Progi kontekstu",
+                    "description": "Ustaw wartości punktowe dla klasyfikacji poziomu kontekstu",
+                    "medium_threshold": "Próg dla MEDIUM ({points} pkt)",
+                    "high_threshold": "Próg dla HIGH ({points} pkt)",
+                    "low_range": "Niski < {0} | Średni >= {1}",
+                    "mid_range": "Średni < {0} | Wysoki >= {1}",
+                    "legend": {
+                        "low": "LOW: 0 - {0}",
+                        "medium": "MEDIUM: {0} - {1}",
+                        "high": "HIGH: {0}+"
+                    }
+                },
+                "crm_sync": {
+                    "title": "Synchronizacja z CRM",
+                    "description": "Kiedy kontakty mają być dodawane do CRM",
+                    "modes": {
+                        "always": "Zawsze",
+                        "approve": "Wymagaj zgody",
+                        "high_only": "Tylko HIGH",
+                        "never": "Nigdy"
+                    },
+                    "always_desc": "All contacts added to CRM",
+                    "approve_desc": "Requires approval before adding",
+                    "high_only_desc": "Only contacts with high context",
+                    "never_desc": "Never add automatically",
+                    "min_score": "Minimalny quality score dla auto-sync: {score}"
+                },
+                "enrichment": {
+                    "title": "Wzbogacanie danych",
+                    "description": "Automatyczne uzupełnianie informacji o firmie",
+                    "enable": "Włącz wzbogacanie",
+                    "only_medium_high": "Tylko dla MEDIUM i HIGH",
+                    "timeout": "Timeout (sekund): {seconds}"
+                },
+                "auto_send": {
+                    "title": "Auto-wysyłka (tryb Auto)",
+                    "description": "Guardrails dla automatycznego wysyłania wiadomości",
+                    "enable": "Włącz auto-wysyłkę",
+                    "guardrails_active": "Guardrails aktywne",
+                    "rules": {
+                        "high_score": "• Tylko kontakty HIGH z score >= {score}",
+                        "corporate_only": "• Tylko email firmowy (nie Gmail/Yahoo itp.)",
+                        "max_daily": "• Maksymalnie 5 wysyłek dziennie"
+                    },
+                    "min_score": "Minimalny score: {score}",
+                    "corporate_only_label": "Tylko email firmowy (nie Gmail/Yahoo)"
+                },
+                "messages": {
+                    "title": "Generowanie wiadomości",
+                    "default_tone": "Domyślny ton",
+                    "tones": {
+                        "professional": "Profesjonalny",
+                        "friendly": "Przyjazny",
+                        "formal": "Formalny"
+                    },
+                    "show_all_context_levels": "Pokaż wszystkie wersje kontekstu",
+                    "show_all_context_levels_desc": "Generuj wiadomości dla LOW, MEDIUM i HIGH jednocześnie",
+                    "custom_prompt": "Własne instrukcje dla AI",
+                    "custom_prompt_placeholder": "Np. 'Zawsze wspominaj o 10% zniżce dla nowych klientów' lub 'Pisz krótko i konkretnie'...",
+                    "custom_prompt_help": "Dodaj własne instrukcje, które AI uwzględni przy generowaniu wiadomości (max 2000 znaków)",
+                    "allowed_html_tags": "Dozwolone tagi HTML",
+                    "allowed_html_tags_help": "Lista tagów HTML oddzielonych przecinkami, które AI może używać przy formatowaniu wiadomości"
+                },
+                "sending": {
+                    "title": "Ustawienia wysyłki",
+                    "description": "Konfiguruj domyślną skrzynkę dla wiadomości generowanych przez CardIntel",
+                    "default_mailbox": "Domyślna skrzynka SMTP",
+                    "no_mailbox": "Użyj domyślnej systemowej",
+                    "mailbox_help": "Wybierz skrzynkę, z której będą wysyłane wiadomości do kontaktów z wizytówek"
+                },
+
+                "page_title": "Ustawienia - CardIntel",
+                "saved": "Zapisano",
+                "saving": "Zapisywanie...",
+                "save_button": "Zapisz ustawienia"
+            },
+            "show": {
+                "title": "Szczegóły skanu",
+                "extracted_data": "Dane ekstrakcji",
+                "ocr_raw_title": "Tekst OCR (surowy)",
+                "enrichment": "Wzbogacanie danych",
+                "about_company": "O firmie",
+                "use_case_hypothesis": "Hipoteza use-case",
+                "proposed_message": "Proponowana wiadomość",
+                "actions": "Akcje",
+                "action_history": "Historia akcji",
+                "no_text": "Brak tekstu",
+                "no_actions": "Brak akcji w historii"
+            },
+            "fields": {
+                "first_name": "Imię",
+                "last_name": "Nazwisko",
+                "email": "Email",
+                "phone": "Telefon",
+                "company": "Firma",
+                "position": "Stanowisko",
+                "website": "Strona WWW",
+                "address": "Adres",
+                "nip": "NIP",
+                "notes": "Notatki"
+            },
+            "context": {
+                "low": "Niski",
+                "medium": "Średni",
+                "high": "Wysoki",
+                "quality_score": "Punkty jakości"
+            },
+            "signals": {
+                "has_email": "Email obecny",
+                "has_phone": "Telefon obecny",
+                "has_company": "Firma obecna",
+                "corporate_email": "Email firmowy",
+                "has_website": "Strona WWW obecna",
+                "has_position": "Stanowisko obecne",
+                "has_nip": "NIP obecny"
+            },
+            "message_generation": {
+                "title": "Generuj wiadomość",
+                "generate": "Generuj",
+                "generating": "Generowanie...",
+                "copy": "Kopiuj",
+                "copied": "Skopiowano!",
+                "level": "Poziom kontekstu"
+            },
+            "actions": {
+                "edit": "Edytuj",
+                "cancel": "Anuluj",
+                "save": "Zapisz",
+                "save_memory": "Zapisz do pamięci",
+                "saved_memory": "Zapisane",
+                "save_to_crm": "Zapisz do CRM",
+                "save_contact": "Zapisz kontakt",
+                "add_to_list": "Dodaj do listy",
+                "send_email": "Wyślij email",
+                "send_sms": "Wyślij SMS",
+                "archive": "Archiwizuj",
+                "delete": "Usuń"
+            },
+            "status": {
+                "completed": "Zakończone",
+                "processing": "Przetwarzanie",
+                "failed": "Błąd",
+                "pending": "Oczekuje"
+            },
+            "vision": {
+                "ready": "Rozpoznawanie wizytówek gotowe",
+                "required": "Wymagana integracja AI Vision",
+                "supported_models": "Obsługiwane modele AI Vision:",
+                "configure_ai": "Skonfiguruj AI"
             }
         }
     },

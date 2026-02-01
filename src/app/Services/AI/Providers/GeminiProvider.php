@@ -141,4 +141,68 @@ class GeminiProvider extends BaseProvider
 
         return $names[$modelId] ?? ucfirst(str_replace('-', ' ', $modelId));
     }
+
+    /**
+     * Check if this provider supports vision/image analysis.
+     */
+    public function supportsVision(): bool
+    {
+        return true; // All Gemini models support vision
+    }
+
+    /**
+     * Generate text from a prompt with an image.
+     */
+    public function generateWithImage(
+        string $prompt,
+        string $base64Image,
+        string $mimeType,
+        array $options = []
+    ): string {
+        $modelId = $this->getModel($options['model'] ?? null);
+        $url = $this->getBaseUrl() . "/models/{$modelId}:generateContent?key=" . $this->getApiKey();
+
+        try {
+            $response = Http::timeout(60)
+                ->post($url, [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                                [
+                                    'inline_data' => [
+                                        'mime_type' => $mimeType,
+                                        'data' => $base64Image,
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'maxOutputTokens' => $options['max_tokens'] ?? 2000,
+                        'temperature' => $options['temperature'] ?? 0.3,
+                    ],
+                ]);
+
+            if (!$response->successful()) {
+                $error = $response->json('error.message') ?? $response->body();
+                throw new \Exception('Gemini Vision Error: ' . $error);
+            }
+
+            $candidates = $response->json('candidates') ?? [];
+            if (empty($candidates)) {
+                return '';
+            }
+
+            $content = $candidates[0]['content']['parts'] ?? [];
+            $text = '';
+            foreach ($content as $part) {
+                $text .= $part['text'] ?? '';
+            }
+
+            return $text;
+        } catch (\Exception $e) {
+            throw new \Exception('Gemini Vision Error: ' . $e->getMessage());
+        }
+    }
 }
