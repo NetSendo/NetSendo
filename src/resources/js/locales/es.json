@@ -831,7 +831,10 @@
             "dns_propagation_info": "Los cambios en el DNS pueden tardar hasta 48 horas en propagarse. Puede verificar en cualquier momento.",
             "add_and_verify": "Añadir y comprobar verificación"
         },
-        "domain_name": "Nombre de dominio"
+        "domain_name": "Nombre de dominio",
+        "record_type": "Tipo de registro",
+        "host": "Host",
+        "target": "Valor objetivo"
     },
     "navigation": {
         "dashboard": "Tablero",

@@ -98,6 +98,7 @@ class DeliverabilityController extends Controller
 
         return Inertia::render('Deliverability/DmarcWiz', [
             'existingDomains' => $existingDomains,
+            'verifyTarget' => parse_url(config('app.url'), PHP_URL_HOST),
         ]);
     }
 

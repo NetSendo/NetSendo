@@ -801,7 +801,10 @@
             "dns_propagation_info": "DNS-Änderungen können bis zu 48 Stunden dauern. Sie können jederzeit verifizieren.",
             "add_and_verify": "Hinzufügen & Verifizierung prüfen"
         },
-        "domain_name": "Domainname"
+        "domain_name": "Domainname",
+        "record_type": "Eintragstyp",
+        "host": "Host",
+        "target": "Zielwert"
     },
     "navigation": {
         "dashboard": "Dashboard",

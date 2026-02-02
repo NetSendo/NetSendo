@@ -103,7 +103,7 @@ class DomainConfiguration extends Model
         return [
             'record_type' => 'CNAME',
             'host' => '_netsendo.' . $this->domain,
-            'value' => $this->cname_selector . '.verify.netsendo.app',
+            'value' => $this->cname_selector . '.' . parse_url(config('app.url'), PHP_URL_HOST),
             'ttl' => 3600,
         ];
     }

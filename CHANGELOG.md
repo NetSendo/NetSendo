@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **DMARC Wizard:**
+  - Added "Copy to clipboard" buttons for Host and Target fields in the DNS setup step for better UX.
+
 ### Fixed
+
+- **DMARC Verification:**
+  - Fixed CNAME verification target to dynamically use the installation's domain (from `APP_URL`) instead of a hardcoded value, ensuring correct verification for white-label installations.
 
 ### Changed
 

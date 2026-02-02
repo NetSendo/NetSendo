@@ -12,6 +12,16 @@ class DomainVerificationService
     ) {}
 
     /**
+     * Get the verify domain from APP_URL
+     */
+    private function getVerifyDomain(): string
+    {
+        $appUrl = config('app.url');
+        $parsed = parse_url($appUrl);
+        return $parsed['host'] ?? 'localhost';
+    }
+
+    /**
      * Generate CNAME instruction for user
      */
     public function generateCnameInstruction(DomainConfiguration $config): array
@@ -19,7 +29,7 @@ class DomainVerificationService
         return [
             'record_type' => 'CNAME',
             'host' => '_netsendo.' . $config->domain,
-            'target' => $config->cname_selector . '.verify.netsendo.app',
+            'target' => $config->cname_selector . '.' . $this->getVerifyDomain(),
             'ttl' => 3600,
             'display_host' => '_netsendo', // Simplified for user
         ];
@@ -31,7 +41,7 @@ class DomainVerificationService
     public function verifyCname(DomainConfiguration $config): bool
     {
         $expectedHost = '_netsendo.' . $config->domain;
-        $expectedTarget = $config->cname_selector . '.verify.netsendo.app';
+        $expectedTarget = $config->cname_selector . '.' . $this->getVerifyDomain();
 
         // Clear cache to get fresh result
         $this->dnsLookup->clearCache($config->domain);

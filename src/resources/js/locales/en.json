@@ -574,7 +574,10 @@
             "dns_propagation_info": "DNS changes may take up to 48 hours to propagate. You can verify anytime.",
             "add_and_verify": "Add & Check Verification"
         },
-        "domain_name": "Domain name"
+        "domain_name": "Domain name",
+        "record_type": "Record Type",
+        "host": "Host",
+        "target": "Target Value"
     },
     "navigation": {
         "dashboard": "Dashboard",

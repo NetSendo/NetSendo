@@ -1,13 +1,14 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, Link } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
 const props = defineProps({
     existingDomains: { type: Array, default: () => [] },
+    verifyTarget: { type: String, required: true },
 });
 
 const form = useForm({
@@ -17,11 +18,29 @@ const form = useForm({
 
 const step = ref(1);
 const domainValid = ref(false);
+const copiedField = ref(null);
+
+// Computed CNAME values
+const cnameHost = computed(() => `_netsendo.${form.domain}`);
+const cnameTarget = computed(() => props.verifyTarget);
 
 // Validate domain format
 const validateDomain = () => {
     const pattern = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/;
     domainValid.value = pattern.test(form.domain.trim());
+};
+
+// Copy to clipboard
+const copyToClipboard = async (text, fieldName) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        copiedField.value = fieldName;
+        setTimeout(() => {
+            copiedField.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error("Failed to copy:", err);
+    }
 };
 
 // Submit domain
@@ -284,27 +303,115 @@ const nextStep = () => {
                             </p>
                         </div>
                         <div class="col-span-2">
-                            <p
-                                class="font-medium text-gray-500 dark:text-gray-400"
-                            >
-                                {{ $t("deliverability.host") }}
-                            </p>
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="font-medium text-gray-500 dark:text-gray-400"
+                                >
+                                    {{ $t("deliverability.host") }}
+                                </p>
+                                <button
+                                    @click="copyToClipboard(cnameHost, 'host')"
+                                    class="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors"
+                                    :class="
+                                        copiedField === 'host'
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600'
+                                    "
+                                >
+                                    <svg
+                                        v-if="copiedField === 'host'"
+                                        class="h-3.5 w-3.5"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    {{
+                                        copiedField === "host"
+                                            ? $t("common.copied")
+                                            : $t("common.copy")
+                                    }}
+                                </button>
+                            </div>
                             <p
                                 class="mt-1 font-mono font-semibold text-indigo-600 dark:text-indigo-400 break-all"
                             >
-                                _netsendo.{{ form.domain }}
+                                {{ cnameHost }}
                             </p>
                         </div>
                         <div class="col-span-2">
-                            <p
-                                class="font-medium text-gray-500 dark:text-gray-400"
-                            >
-                                {{ $t("deliverability.target") }}
-                            </p>
+                            <div class="flex items-center justify-between">
+                                <p
+                                    class="font-medium text-gray-500 dark:text-gray-400"
+                                >
+                                    {{ $t("deliverability.target") }}
+                                </p>
+                                <button
+                                    @click="
+                                        copyToClipboard(cnameTarget, 'target')
+                                    "
+                                    class="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors"
+                                    :class="
+                                        copiedField === 'target'
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600'
+                                    "
+                                >
+                                    <svg
+                                        v-if="copiedField === 'target'"
+                                        class="h-3.5 w-3.5"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                    <svg
+                                        v-else
+                                        class="h-3.5 w-3.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    {{
+                                        copiedField === "target"
+                                            ? $t("common.copied")
+                                            : $t("common.copy")
+                                    }}
+                                </button>
+                            </div>
                             <p
                                 class="mt-1 font-mono font-semibold text-gray-900 dark:text-white break-all"
                             >
-                                verify.netsendo.app
+                                {{ cnameTarget }}
                             </p>
                         </div>
                     </div>

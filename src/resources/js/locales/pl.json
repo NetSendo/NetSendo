@@ -575,7 +575,10 @@
             "dns_propagation_info": "Propagacja zmian DNS może potrwać do 48 godzin. Możesz weryfikować w dowolnym momencie.",
             "add_and_verify": "Dodaj i sprawdź weryfikację"
         },
-        "domain_name": "Nazwa domeny"
+        "domain_name": "Nazwa domeny",
+        "record_type": "Typ rekordu",
+        "host": "Host",
+        "target": "Wartość docelowa"
     },
     "navigation": {
         "dashboard": "Pulpit",
