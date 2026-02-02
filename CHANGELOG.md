@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **System Messages Improvements:**
+  - **Fixed Ordering:** Implemented a fixed, logical order for system emails (Signup → Activation → Welcome → Resubscribe → Management → Unsubscribe → Admin) to ensure consistency across all lists.
+  - **UI Descriptions:** Added descriptive helper text for each system email in both desktop (table view) and mobile (card view) interfaces.
+  - **Localization:** Added full descriptions for all 12 system emails in PL, EN, DE, ES.
+
+- **System Pages Improvements:**
+  - **Fixed Ordering:** Implemented a fixed, logical order for system pages (Signup → Activation → Unsubscribe) to ensure consistency across all lists.
+  - **UI Descriptions:** Added descriptive helper text for each system page in the table view.
+  - **Localization:** Added full descriptions for all 8 system pages in PL, EN, DE, ES.
+
+- **Deliverability Shield:**
+  - Implemented **Provider-Aware DNS Verification** for improved accuracy.
+  - Added specific SPF checks for **SendGrid** (`sendgrid.net`) and **Gmail** (`_spf.google.com`).
+  - Added support for checking multiple DKIM selectors based on the provider (e.g., `s1`, `s2`, `sendgrid` for SendGrid).
+  - Added detailed error messages identifying exactly which required includes or selectors are missing.
+  - Added translations for provider-specific DNS issues in PL, EN, DE, ES.
+
+### Fixed
+
+- **System Message Preview:**
+  - Fixed link navigation in system message preview by allowing popups and top navigation in the iframe sandbox.
+
+- **Automation System:**
+  - Fixed `Data truncated` error by adding missing `status_changed` value to `crm_activities` type ENUM.
+  - Fixed `add_tag` action failure by adding support for `tag` key in configuration payload.
+
+- **CRM Lead Scoring:**
+  - Fixed `TypeError` in `LeadScoreHistory` when logging score updates for contacts with null initial score.
+
 ## [1.8.7] – Short Description
 
 **Release date:** 2026-02-02

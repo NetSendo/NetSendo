@@ -27,6 +27,18 @@ class SystemPageController extends Controller
             $listPages = SystemPage::where('contact_list_id', $selectedListId)->get()->keyBy('slug');
         }
 
+        // Define fixed page order (logical flow: signup → activation → error states → unsubscribe)
+        $pageOrder = [
+            'signup_success',
+            'signup_exists',
+            'signup_error',
+            'activation_success',
+            'activation_error',
+            'unsubscribe_confirm',
+            'unsubscribe_success',
+            'unsubscribe_error',
+        ];
+
         // Merge: Use List specific if exists, otherwise Global
         $pages = $globalPages->map(function ($globalPage) use ($listPages, $selectedListId) {
             if ($listPages->has($globalPage->slug)) {
@@ -39,6 +51,12 @@ class SystemPageController extends Controller
             $page->is_custom = false;
             $page->context_list_id = $selectedListId;
             return $page;
+        })->values();
+
+        // Sort pages by defined order
+        $pages = $pages->sortBy(function ($page) use ($pageOrder) {
+            $index = array_search($page->slug, $pageOrder);
+            return $index !== false ? $index : 999;
         })->values();
 
         return Inertia::render('SystemPage/Index', [

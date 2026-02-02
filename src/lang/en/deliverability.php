@@ -65,6 +65,24 @@ return [
         'description' => 'Get notified when there are issues with your domain deliverability',
     ],
 
+    // Domain issues
+    'domain' => [
+        'spf_warning' => 'SPF record has a warning status - may affect deliverability',
+        'dmarc_policy_none' => 'DMARC policy is set to "none" - emails may land in spam',
+    ],
+
+    // DNS Issues (detailed)
+    'issues' => [
+        'spf_missing' => 'No SPF record found for this domain',
+        'spf_no_include' => 'SPF record is missing required include',
+        'spf_no_provider_include' => 'SPF record is missing :provider include (:required)',
+        'spf_permissive' => 'SPF record is too permissive (+all or ?all)',
+        'dkim_missing' => 'No DKIM record found (checked selectors: :selectors_checked)',
+        'dkim_invalid' => 'DKIM record is invalid (missing public key)',
+        'dmarc_missing' => 'No DMARC record found for this domain',
+        'dmarc_none' => 'DMARC policy is set to "none"',
+    ],
+
     // Test email
     'test_email' => 'Test Your Email',
     'test_email_description' => 'Run a simulation to check deliverability before sending',

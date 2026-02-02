@@ -612,11 +612,21 @@
         "email_content": "Treść wiadomości",
         "content_placeholder": "Wpisz treść wiadomości...",
         "run_simulation": "Uruchom symulację",
+        "verified": "Zweryfikowana",
+        "analyzing": "Analizowanie...",
         "spam_words": "Słowa spamowe",
         "subject_analysis": "Analiza tematu",
         "link_check": "Sprawdzanie linków",
         "html_structure": "Struktura HTML",
         "formatting_title": "Formatowanie",
+        "simulation_result": "Wynik symulacji",
+        "predicted_folder": "Przewidywany folder",
+        "provider_predictions": "Predykcje dostawców",
+        "confidence": "pewności",
+        "issues_found": "Znalezione problemy",
+        "run_new_simulation": "Uruchom nową symulację",
+        "view_history": "Zobacz historię",
+        "last_check": "Ostatnie sprawdzenie: ",
         "inbox_passport": {
             "subtitle": "Sprawdź dostarczalność przed wysyłką",
             "how_it_works": "Jak to działa?",
@@ -4698,7 +4708,17 @@
         "standard_fields": "Pola standardowe",
         "system_placeholders": "Pola systemowe",
         "custom_fields": "Pola niestandardowe",
-        "no_placeholders": "Brak dostępnych wstawek"
+        "no_placeholders": "Brak dostępnych wstawek",
+        "descriptions": {
+            "signup_success": "Strona wyświetlana po pomyślnym zapisie na listę.",
+            "signup_exists": "Strona wyświetlana gdy email jest już na liście.",
+            "signup_error": "Strona wyświetlana gdy zapis się nie powiedzie.",
+            "activation_success": "Strona potwierdzająca aktywację adresu email.",
+            "activation_error": "Strona błędu gdy link aktywacyjny jest nieprawidłowy.",
+            "unsubscribe_confirm": "Strona z prośbą o potwierdzenie wypisania.",
+            "unsubscribe_success": "Strona potwierdzająca wypisanie z listy.",
+            "unsubscribe_error": "Strona błędu gdy wypisanie się nie powiedzie."
+        }
     },
     "system_emails": {
         "title": "Wiadomości systemowe",
@@ -4742,6 +4762,20 @@
             "date": "Bieżąca data",
             "activation_link": "Link do aktywacji subskrypcji",
             "unsubscribe_link": "Link do wypisania z listy"
+        },
+        "descriptions": {
+            "signup_confirmation": "Email weryfikacyjny double opt-in. Wysyłany po zapisie na listę, aby potwierdzić adres email.",
+            "activation_email": "Email z linkiem aktywacyjnym do potwierdzenia adresu email subskrybenta.",
+            "activation_confirmation": "Email potwierdzający aktywację. Wysyłany po kliknięciu linku aktywacyjnego.",
+            "subscription_welcome": "Powitanie po zapisie. Wysyłane automatycznie po potwierdzeniu subskrypcji.",
+            "welcome_email": "Alternatywny email powitalny dla nowych subskrybentów.",
+            "already_active_resubscribe": "Informacja gdy aktywny użytkownik próbuje się ponownie zapisać na listę.",
+            "inactive_resubscribe": "Powiadomienie o ponownej subskrypcji nieaktywnego użytkownika.",
+            "preference_confirm": "Potwierdzenie zmiany preferencji subskrypcji (np. zmiana kategorii).",
+            "data_edit_access": "Email z bezpiecznym linkiem do edycji danych subskrybenta.",
+            "unsubscribe_request": "Prośba o potwierdzenie wypisania z listy mailingowej.",
+            "unsubscribed_confirmation": "Potwierdzenie usunięcia z listy mailingowej.",
+            "new_subscriber_notification": "Powiadomienie dla administratora o nowym subskrybencie na liście."
         },
         "updated": "Email został zaktualizowany.",
         "custom_created": "Utworzono dostosowaną wersję emaila dla tej listy.",

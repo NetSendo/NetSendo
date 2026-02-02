@@ -26,6 +26,11 @@ const searchQuery = ref("");
 const isDropdownOpen = ref(false);
 const togglingEmail = ref(null);
 
+// Get description for each email type
+const getEmailDescription = (slug) => {
+    return t(`system_emails.descriptions.${slug}`, "");
+};
+
 // Filtered lists
 const filteredLists = computed(() => {
     if (!searchQuery.value) return props.lists;
@@ -291,10 +296,22 @@ watch(selectedList, (newVal) => {
                                     :key="email.id || email.slug"
                                     class="group bg-white transition-colors hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700/50"
                                 >
-                                    <td
-                                        class="px-6 py-4 font-medium text-gray-900 dark:text-white"
-                                    >
-                                        {{ email.name }}
+                                    <td class="px-6 py-4">
+                                        <div
+                                            class="font-medium text-gray-900 dark:text-white"
+                                        >
+                                            {{ email.name }}
+                                        </div>
+                                        <div
+                                            v-if="
+                                                getEmailDescription(email.slug)
+                                            "
+                                            class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                                        >
+                                            {{
+                                                getEmailDescription(email.slug)
+                                            }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ email.subject }}
@@ -419,6 +436,12 @@ watch(selectedList, (newVal) => {
                                     >
                                         {{ email.name }}
                                     </h3>
+                                    <p
+                                        v-if="getEmailDescription(email.slug)"
+                                        class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ getEmailDescription(email.slug) }}
+                                    </p>
                                     <code
                                         class="mt-1 inline-block rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                                     >

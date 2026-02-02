@@ -65,6 +65,24 @@ return [
         'description' => 'Otrzymuj powiadomienia o problemach z dostarczalnością Twojej domeny',
     ],
 
+    // Domain issues
+    'domain' => [
+        'spf_warning' => 'Rekord SPF ma status ostrzegawczy - może wpływać na dostarczalność',
+        'dmarc_policy_none' => 'Polityka DMARC jest ustawiona na "none" - wiadomości mogą trafić do spamu',
+    ],
+
+    // DNS Issues (detailed)
+    'issues' => [
+        'spf_missing' => 'Brak rekordu SPF dla domeny',
+        'spf_no_include' => 'Rekord SPF nie zawiera wymaganego include',
+        'spf_no_provider_include' => 'Rekord SPF nie zawiera include dla :provider (:required)',
+        'spf_permissive' => 'Rekord SPF jest zbyt permisywny (+all lub ?all)',
+        'dkim_missing' => 'Brak rekordu DKIM (sprawdzono selektory: :selectors_checked)',
+        'dkim_invalid' => 'Rekord DKIM jest nieprawidłowy (brak klucza publicznego)',
+        'dmarc_missing' => 'Brak rekordu DMARC dla domeny',
+        'dmarc_none' => 'Polityka DMARC ustawiona na "none"',
+    ],
+
     // Test email
     'test_email' => 'Przetestuj swój e-mail',
     'test_email_description' => 'Uruchom symulację, aby sprawdzić dostarczalność przed wysłaniem',

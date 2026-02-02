@@ -3634,7 +3634,7 @@ const btnClass = (isActive = false) => {
                                 ? 'transform-origin: top center;'
                                 : ''
                         "
-                        sandbox="allow-same-origin allow-scripts"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-top-navigation"
                     ></iframe>
                 </div>
             </div>

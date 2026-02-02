@@ -93,6 +93,7 @@ class CrmActivity extends Model
             'deal_won' => 'Deal wygrany',
             'deal_lost' => 'Deal przegrany',
             'contact_created' => 'Kontakt utworzony',
+            'status_changed' => 'Zmiana statusu',
             'system' => 'System',
             default => $this->type,
         };
@@ -114,6 +115,7 @@ class CrmActivity extends Model
             'deal_won' => 'trophy',
             'deal_lost' => 'x-circle',
             'contact_created' => 'user-plus',
+            'status_changed' => 'refresh-cw',
             'system' => 'settings',
             default => 'activity',
         };
@@ -135,6 +137,7 @@ class CrmActivity extends Model
             'deal_won' => '#10b981',
             'deal_lost' => '#ef4444',
             'contact_created' => '#3b82f6',
+            'status_changed' => '#f59e0b',
             'system' => '#6b7280',
             default => '#6b7280',
         };

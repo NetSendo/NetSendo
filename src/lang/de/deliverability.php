@@ -65,6 +65,24 @@ return [
         'description' => 'Erhalten Sie Benachrichtigungen bei Problemen mit der Zustellbarkeit Ihrer Domain',
     ],
 
+    // Domain issues
+    'domain' => [
+        'spf_warning' => 'SPF-Eintrag hat einen Warnstatus - kann die Zustellbarkeit beeinflussen',
+        'dmarc_policy_none' => 'DMARC-Richtlinie ist auf "none" gesetzt - E-Mails können im Spam landen',
+    ],
+
+    // DNS Issues (detailed)
+    'issues' => [
+        'spf_missing' => 'Kein SPF-Eintrag für diese Domain gefunden',
+        'spf_no_include' => 'SPF-Eintrag enthält nicht das erforderliche Include',
+        'spf_no_provider_include' => 'SPF-Eintrag enthält kein :provider Include (:required)',
+        'spf_permissive' => 'SPF-Eintrag ist zu permissiv (+all oder ?all)',
+        'dkim_missing' => 'Kein DKIM-Eintrag gefunden (geprüfte Selektoren: :selectors_checked)',
+        'dkim_invalid' => 'DKIM-Eintrag ist ungültig (fehlender öffentlicher Schlüssel)',
+        'dmarc_missing' => 'Kein DMARC-Eintrag für diese Domain gefunden',
+        'dmarc_none' => 'DMARC-Richtlinie ist auf "none" gesetzt',
+    ],
+
     // Test email
     'test_email' => 'E-Mail testen',
     'test_email_description' => 'Führen Sie eine Simulation durch, um die Zustellbarkeit vor dem Senden zu prüfen',

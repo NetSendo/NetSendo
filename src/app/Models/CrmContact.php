@@ -271,7 +271,7 @@ class CrmContact extends Model
      */
     public function updateScore(int $delta, string $eventType = 'manual', ?LeadScoringRule $rule = null, array $metadata = []): int
     {
-        $oldScore = $this->score;
+        $oldScore = $this->score ?? 0;
         $newScore = max(0, $oldScore + $delta); // Score cannot go below 0
 
         $this->update([

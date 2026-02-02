@@ -1191,6 +1191,12 @@ const handleBulkSuccess = ({ listId, count }) => {
                                 {{ $t("messages.stats.bulk_add_to_list") }}
                             </button>
                             <button
+                                @click="toggleAllOpens"
+                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            >
+                                {{ $t("common.select_all") }}
+                            </button>
+                            <button
                                 @click="clearOpensSelection"
                                 class="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                             >
@@ -1427,6 +1433,12 @@ const handleBulkSuccess = ({ listId, count }) => {
                                     />
                                 </svg>
                                 {{ $t("messages.stats.bulk_add_to_list") }}
+                            </button>
+                            <button
+                                @click="toggleAllClicks"
+                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                            >
+                                {{ $t("common.select_all") }}
                             </button>
                             <button
                                 @click="clearClicksSelection"

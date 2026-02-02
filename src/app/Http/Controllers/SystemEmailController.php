@@ -17,9 +17,26 @@ class SystemEmailController extends Controller
         $lists = auth()->user()->contactLists()->select('id', 'name')->get();
         $selectedListId = $request->list_id;
 
+        // Define logical order for system emails
+        // Categories: Signup → Activation → Welcome → Resubscribe → Management → Unsubscribe → Admin
+        $emailOrder = [
+            'signup_confirmation',        // 1. Double opt-in verification
+            'activation_email',           // 2. Activation link email
+            'activation_confirmation',    // 3. Post-activation confirmation
+            'subscription_welcome',       // 4. Welcome after subscription
+            'welcome_email',              // 5. Alternative welcome email
+            'already_active_resubscribe', // 6. Already active user tries to resubscribe
+            'inactive_resubscribe',       // 7. Inactive user resubscribes
+            'preference_confirm',         // 8. Preference change confirmation
+            'data_edit_access',           // 9. Data edit access link
+            'unsubscribe_request',        // 10. Unsubscribe confirmation request
+            'unsubscribed_confirmation',  // 11. Unsubscribe confirmed
+            'new_subscriber_notification', // 12. Admin notification
+        ];
+
         // Get Global Defaults
         $globalEmails = SystemEmail::whereNull('contact_list_id')->get()->keyBy('slug');
-        
+
         // If a list is selected, get its overrides
         $listEmails = collect();
         if ($selectedListId) {
@@ -36,12 +53,22 @@ class SystemEmailController extends Controller
             // Use global, but mark as default
             $email = $globalEmail;
             $email->is_custom = false;
-            $email->context_list_id = $selectedListId; 
+            $email->context_list_id = $selectedListId;
             return $email;
-        })->values();
+        });
+
+        // Sort by defined order
+        $sortedEmails = collect($emailOrder)
+            ->filter(fn($slug) => $emails->has($slug))
+            ->map(fn($slug) => $emails->get($slug))
+            ->values();
+
+        // Add any emails not in the order list at the end
+        $remainingEmails = $emails->filter(fn($email, $slug) => !in_array($slug, $emailOrder))->values();
+        $sortedEmails = $sortedEmails->merge($remainingEmails);
 
         return Inertia::render('SystemEmail/Index', [
-            'emails' => $emails,
+            'emails' => $sortedEmails,
             'lists' => $lists,
             'currentListId' => $selectedListId,
         ]);
@@ -53,7 +80,7 @@ class SystemEmailController extends Controller
     public function edit(Request $request, SystemEmail $systemEmail)
     {
         $listId = $systemEmail->contact_list_id ?? $request->list_id;
-        
+
         $listName = __('system_emails.global_defaults');
         if ($listId) {
             $list = ContactList::find($listId);
@@ -102,7 +129,7 @@ class SystemEmailController extends Controller
                 'is_active' => $validated['is_active'] ?? true,
                 'contact_list_id' => $listId,
             ]);
-            
+
             return redirect()->route('settings.system-emails.index', ['list_id' => $listId])
                 ->with('success', __('system_emails.custom_created'));
         }

@@ -12,6 +12,43 @@ class DomainVerificationService
     ) {}
 
     /**
+     * Get provider-specific configuration for DNS verification
+     */
+    public function getProviderConfig(?string $provider): array
+    {
+        if ($provider === null) {
+            return [
+                'spf_includes' => ['netsendo', 'sendgrid', 'amazonses'], // Generic fallback
+                'dkim_selectors' => ['netsendo', 'default'],
+                'provider_name' => null,
+            ];
+        }
+
+        return match($provider) {
+            'sendgrid' => [
+                'spf_includes' => ['sendgrid.net'],
+                'dkim_selectors' => ['s1', 's2', 'sendgrid'],
+                'provider_name' => 'SendGrid',
+            ],
+            'gmail' => [
+                'spf_includes' => ['_spf.google.com'],
+                'dkim_selectors' => ['google', 'default'],
+                'provider_name' => 'Gmail',
+            ],
+            'smtp' => [
+                'spf_includes' => [], // Custom SMTP - user manages their own SPF
+                'dkim_selectors' => ['default', 'mail', 'dkim'],
+                'provider_name' => 'SMTP',
+            ],
+            default => [
+                'spf_includes' => [],
+                'dkim_selectors' => ['default'],
+                'provider_name' => null,
+            ],
+        };
+    }
+
+    /**
      * Get the verify domain from APP_URL
      */
     private function getVerifyDomain(): string
@@ -107,13 +144,25 @@ class DomainVerificationService
         // Clear cache for fresh lookup
         $this->dnsLookup->clearCache($config->domain);
 
-        // Check SPF
-        $spfRecord = $this->dnsLookup->getSpfRecord($config->domain);
-        $result->spf = $this->analyzeSpfRecord($spfRecord);
+        // Get provider from linked mailbox (if any)
+        $provider = $config->mailbox?->provider;
+        $providerConfig = $this->getProviderConfig($provider);
 
-        // Check DKIM (using NetSendo selector)
-        $dkimRecord = $this->dnsLookup->getDkimRecord($config->domain, 'netsendo');
-        $result->dkim = $this->analyzeDkimRecord($dkimRecord);
+        // Check SPF with provider-specific includes
+        $spfRecord = $this->dnsLookup->getSpfRecord($config->domain);
+        $result->spf = $this->analyzeSpfRecord($spfRecord, $providerConfig);
+
+        // Check DKIM using provider-specific selectors
+        $dkimRecord = null;
+        $checkedSelectors = [];
+        foreach ($providerConfig['dkim_selectors'] as $selector) {
+            $dkimRecord = $this->dnsLookup->getDkimRecord($config->domain, $selector);
+            $checkedSelectors[] = $selector;
+            if ($dkimRecord !== null) {
+                break; // Found a valid DKIM record
+            }
+        }
+        $result->dkim = $this->analyzeDkimRecord($dkimRecord, $checkedSelectors);
 
         // Check DMARC
         $dmarcRecord = $this->dnsLookup->getDmarcRecord($config->domain);
@@ -124,6 +173,8 @@ class DomainVerificationService
             'spf' => $spfRecord,
             'dkim' => $dkimRecord,
             'dmarc' => $dmarcRecord,
+            'provider' => $providerConfig['provider_name'],
+            'dkim_selectors_checked' => $checkedSelectors,
         ];
 
         // Update domain configuration
@@ -131,11 +182,10 @@ class DomainVerificationService
 
         return $result;
     }
-
     /**
      * Analyze SPF record and return status
      */
-    private function analyzeSpfRecord(?string $record): RecordAnalysis
+    private function analyzeSpfRecord(?string $record, array $providerConfig = []): RecordAnalysis
     {
         $analysis = new RecordAnalysis('spf');
 
@@ -152,22 +202,34 @@ class DomainVerificationService
         $parsed = $this->dnsLookup->parseSpfRecord($record);
         $analysis->parsed = $parsed;
 
-        // Check for NetSendo include
-        $hasNetsendoInclude = false;
-        foreach ($parsed['includes'] as $include) {
-            if (str_contains($include, 'netsendo') || str_contains($include, 'sendgrid') || str_contains($include, 'amazonses')) {
-                $hasNetsendoInclude = true;
-                break;
-            }
-        }
+        // Get required SPF includes for the provider
+        $requiredIncludes = $providerConfig['spf_includes'] ?? ['netsendo', 'sendgrid', 'amazonses'];
+        $providerName = $providerConfig['provider_name'] ?? null;
 
-        if (!$hasNetsendoInclude) {
-            $analysis->status = DomainConfiguration::STATUS_WARNING;
-            $analysis->issues[] = [
-                'code' => 'spf_no_include',
-                'severity' => 'warning',
-                'message_key' => 'deliverability.issues.spf_no_include',
-            ];
+        // Skip include check if provider doesn't require specific includes (e.g., custom SMTP)
+        if (!empty($requiredIncludes)) {
+            $hasRequiredInclude = false;
+            foreach ($parsed['includes'] as $include) {
+                foreach ($requiredIncludes as $required) {
+                    if (str_contains($include, $required)) {
+                        $hasRequiredInclude = true;
+                        break 2;
+                    }
+                }
+            }
+
+            if (!$hasRequiredInclude) {
+                $analysis->status = DomainConfiguration::STATUS_WARNING;
+                $analysis->issues[] = [
+                    'code' => 'spf_no_include',
+                    'severity' => 'warning',
+                    'message_key' => 'deliverability.issues.spf_no_provider_include',
+                    'context' => [
+                        'provider' => $providerName,
+                        'required' => implode(', ', $requiredIncludes),
+                    ],
+                ];
+            }
         }
 
         // Check for -all (hard fail) vs ~all (soft fail)
@@ -198,7 +260,7 @@ class DomainVerificationService
     /**
      * Analyze DKIM record and return status
      */
-    private function analyzeDkimRecord(?string $record): RecordAnalysis
+    private function analyzeDkimRecord(?string $record, array $checkedSelectors = []): RecordAnalysis
     {
         $analysis = new RecordAnalysis('dkim');
 
@@ -208,6 +270,9 @@ class DomainVerificationService
                 'code' => 'dkim_missing',
                 'severity' => 'warning',
                 'message_key' => 'deliverability.issues.dkim_missing',
+                'context' => [
+                    'selectors_checked' => implode(', ', $checkedSelectors),
+                ],
             ];
             return $analysis;
         }

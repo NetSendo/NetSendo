@@ -611,11 +611,21 @@
         "email_content": "Email Content",
         "content_placeholder": "Enter email content...",
         "run_simulation": "Run Simulation",
+        "verified": "Verified",
+        "analyzing": "Analyzing...",
         "spam_words": "Spam Words",
         "subject_analysis": "Subject Analysis",
         "link_check": "Link Check",
         "html_structure": "HTML Structure",
         "formatting_title": "Formatting",
+        "simulation_result": "Simulation Result",
+        "predicted_folder": "Predicted Folder",
+        "provider_predictions": "Provider Predictions",
+        "confidence": "confidence",
+        "issues_found": "Issues Found",
+        "run_new_simulation": "Run New Simulation",
+        "view_history": "View History",
+        "last_check": "Last check: ",
         "inbox_passport": {
             "subtitle": "Check deliverability before sending",
             "how_it_works": "How it works?",
@@ -4606,7 +4616,17 @@
         "standard_fields": "Standard Fields",
         "system_placeholders": "System Placeholders",
         "custom_fields": "Custom Fields",
-        "no_placeholders": "No placeholders available"
+        "no_placeholders": "No placeholders available",
+        "descriptions": {
+            "signup_success": "Page displayed after successful subscription.",
+            "signup_exists": "Page displayed when email is already subscribed.",
+            "signup_error": "Page displayed when subscription fails.",
+            "activation_success": "Page confirming email address activation.",
+            "activation_error": "Page displayed when activation link is invalid.",
+            "unsubscribe_confirm": "Page asking to confirm unsubscription.",
+            "unsubscribe_success": "Page confirming removal from the list.",
+            "unsubscribe_error": "Page displayed when unsubscription fails."
+        }
     },
     "system_emails": {
         "title": "System Emails",
@@ -4646,7 +4666,21 @@
         "click_to_enable": "Click to enable",
         "click_to_disable": "Click to disable",
         "cannot_delete_global": "Cannot delete global email template.",
-        "global_defaults": "Global Templates"
+        "global_defaults": "Global Templates",
+        "descriptions": {
+            "signup_confirmation": "Double opt-in verification email. Sent after signup to confirm the email address.",
+            "activation_email": "Email with activation link to confirm subscriber's email address.",
+            "activation_confirmation": "Activation confirmation email. Sent after clicking the activation link.",
+            "subscription_welcome": "Welcome email after signup. Sent automatically after subscription is confirmed.",
+            "welcome_email": "Alternative welcome email for new subscribers.",
+            "already_active_resubscribe": "Notification when an active user tries to subscribe again.",
+            "inactive_resubscribe": "Notification about resubscription of an inactive user.",
+            "preference_confirm": "Confirmation of subscription preference changes (e.g., category changes).",
+            "data_edit_access": "Email with secure link to edit subscriber data.",
+            "unsubscribe_request": "Request to confirm unsubscription from the mailing list.",
+            "unsubscribed_confirmation": "Confirmation of removal from the mailing list.",
+            "new_subscriber_notification": "Admin notification about a new subscriber on the list."
+        }
     },
     "notifications": {
         "title": "Notifications",

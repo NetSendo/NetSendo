@@ -252,6 +252,7 @@
         "next": "Weiter",
         "select": "Auswählen",
         "deselect_all": "Alle abwählen",
+        "select_all": "Alle auswählen",
         "select_option": "Option wählen",
         "none": "Keine",
         "filter": "Filtern",
@@ -839,11 +840,21 @@
         "email_content": "E-Mail-Inhalt",
         "content_placeholder": "E-Mail-Inhalt eingeben...",
         "run_simulation": "Simulation starten",
+        "verified": "Verifiziert",
+        "analyzing": "Analysiere...",
         "spam_words": "Spam-Wörter",
         "subject_analysis": "Betreff-Analyse",
         "link_check": "Link-Prüfung",
         "html_structure": "HTML-Struktur",
         "formatting_title": "Formatierung",
+        "simulation_result": "Simulationsergebnis",
+        "predicted_folder": "Vorhergesagter Ordner",
+        "provider_predictions": "Anbieter-Vorhersagen",
+        "confidence": "Vertrauen",
+        "issues_found": "Gefundene Probleme",
+        "run_new_simulation": "Neue Simulation starten",
+        "view_history": "Verlauf anzeigen",
+        "last_check": "Letzte Prüfung: ",
         "inbox_passport": {
             "subtitle": "Zustellbarkeit vor dem Senden prüfen",
             "how_it_works": "Wie funktioniert es?",
@@ -4032,7 +4043,17 @@
         "standard_fields": "Standardfelder",
         "system_placeholders": "System-Platzhalter",
         "custom_fields": "Benutzerdefinierte Felder",
-        "no_placeholders": "Keine Platzhalter verfügbar"
+        "no_placeholders": "Keine Platzhalter verfügbar",
+        "descriptions": {
+            "signup_success": "Seite nach erfolgreicher Anmeldung.",
+            "signup_exists": "Seite wenn die E-Mail bereits angemeldet ist.",
+            "signup_error": "Seite wenn die Anmeldung fehlschlägt.",
+            "activation_success": "Bestätigungsseite nach E-Mail-Aktivierung.",
+            "activation_error": "Seite wenn der Aktivierungslink ungültig ist.",
+            "unsubscribe_confirm": "Seite zur Bestätigung der Abmeldung.",
+            "unsubscribe_success": "Bestätigungsseite nach Abmeldung von der Liste.",
+            "unsubscribe_error": "Seite wenn die Abmeldung fehlschlägt."
+        }
     },
     "system_emails": {
         "title": "System-E-Mails",
@@ -4057,7 +4078,21 @@
         "default": "Standard",
         "customize": "Anpassen",
         "click_to_enable": "Zum Aktivieren klicken",
-        "click_to_disable": "Zum Deaktivieren klicken"
+        "click_to_disable": "Zum Deaktivieren klicken",
+        "descriptions": {
+            "signup_confirmation": "Double-Opt-In-Bestätigungs-E-Mail. Wird nach der Anmeldung gesendet, um die E-Mail-Adresse zu bestätigen.",
+            "activation_email": "E-Mail mit Aktivierungslink zur Bestätigung der E-Mail-Adresse des Abonnenten.",
+            "activation_confirmation": "Aktivierungsbestätigung. Wird nach dem Klick auf den Aktivierungslink gesendet.",
+            "subscription_welcome": "Willkommens-E-Mail nach der Anmeldung. Wird automatisch nach Bestätigung des Abonnements gesendet.",
+            "welcome_email": "Alternative Willkommens-E-Mail für neue Abonnenten.",
+            "already_active_resubscribe": "Benachrichtigung, wenn ein aktiver Benutzer versucht, sich erneut anzumelden.",
+            "inactive_resubscribe": "Benachrichtigung über die erneute Anmeldung eines inaktiven Benutzers.",
+            "preference_confirm": "Bestätigung von Änderungen der Abonnement-Einstellungen (z.B. Kategorie-Änderungen).",
+            "data_edit_access": "E-Mail mit sicherem Link zur Bearbeitung der Abonnentendaten.",
+            "unsubscribe_request": "Anfrage zur Bestätigung der Abmeldung von der Mailingliste.",
+            "unsubscribed_confirmation": "Bestätigung der Entfernung von der Mailingliste.",
+            "new_subscriber_notification": "Admin-Benachrichtigung über einen neuen Abonnenten auf der Liste."
+        }
     },
     "stripe": {
         "products": "Stripe Produkte",

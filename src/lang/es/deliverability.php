@@ -65,6 +65,24 @@ return [
         'description' => 'Reciba notificaciones cuando haya problemas con la entregabilidad de su dominio',
     ],
 
+    // Domain issues
+    'domain' => [
+        'spf_warning' => 'El registro SPF tiene estado de advertencia - puede afectar la entregabilidad',
+        'dmarc_policy_none' => 'La política DMARC está configurada como "none" - los correos pueden llegar al spam',
+    ],
+
+    // DNS Issues (detailed)
+    'issues' => [
+        'spf_missing' => 'No se encontró registro SPF para este dominio',
+        'spf_no_include' => 'El registro SPF no contiene el include requerido',
+        'spf_no_provider_include' => 'El registro SPF no contiene include de :provider (:required)',
+        'spf_permissive' => 'El registro SPF es demasiado permisivo (+all o ?all)',
+        'dkim_missing' => 'No se encontró registro DKIM (selectores comprobados: :selectors_checked)',
+        'dkim_invalid' => 'El registro DKIM es inválido (falta la clave pública)',
+        'dmarc_missing' => 'No se encontró registro DMARC para este dominio',
+        'dmarc_none' => 'La política DMARC está configurada como "none"',
+    ],
+
     // Test email
     'test_email' => 'Pruebe su correo electrónico',
     'test_email_description' => 'Ejecute una simulación para comprobar la entregabilidad antes de enviar',

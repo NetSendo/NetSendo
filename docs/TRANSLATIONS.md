@@ -441,3 +441,57 @@ The following translation keys were added to support the Deliverability Shield f
 - `deliverability.upsell.description` - Upsell description
 - `deliverability.upsell.featureX` - Feature bullets (1-4)
 - `deliverability.upsell.cta` - Upgrade button
+
+### System Email Descriptions (February 2026)
+
+The following translation keys were added to provide descriptions for system emails in the UI:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**System Emails (`system_emails.descriptions.*`):**
+
+- `system_emails.descriptions.signup_confirmation` - Double opt-in verification email
+- `system_emails.descriptions.activation_email` - Activation link email
+- `system_emails.descriptions.activation_confirmation` - Post-activation confirmation
+- `system_emails.descriptions.subscription_welcome` - Welcome email
+- `system_emails.descriptions.welcome_email` - Alternative welcome email
+- `system_emails.descriptions.already_active_resubscribe` - Resubscribe attempt (active user)
+- `system_emails.descriptions.inactive_resubscribe` - Resubscribe attempt (inactive user)
+- `system_emails.descriptions.preference_confirm` - Preference update confirmation
+- `system_emails.descriptions.data_edit_access` - Data edit link
+- `system_emails.descriptions.unsubscribe_request` - Unsubscribe confirmation request
+- `system_emails.descriptions.unsubscribed_confirmation` - Unsubscribe confirmed
+- `system_emails.descriptions.new_subscriber_notification` - Admin notification about new subscriber
+
+**Usage Example:**
+
+```vue
+<p v-if="getEmailDescription(email.slug)">
+  {{ $t(`system_emails.descriptions.${email.slug}`) }}
+</p>
+```
+
+### System Page Descriptions (February 2026)
+
+The following translation keys were added to provide descriptions for system pages in the UI:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**System Pages (`system_pages.descriptions.*`):**
+
+- `system_pages.descriptions.signup_success` - Page after successful signup
+- `system_pages.descriptions.signup_exists` - Page when email already exists
+- `system_pages.descriptions.signup_error` - Page when signup fails
+- `system_pages.descriptions.activation_success` - Page after successful activation
+- `system_pages.descriptions.activation_error` - Page when activation link is invalid
+- `system_pages.descriptions.unsubscribe_confirm` - Page requesting unsubscribe confirmation
+- `system_pages.descriptions.unsubscribe_success` - Page after successful unsubscription
+- `system_pages.descriptions.unsubscribe_error` - Page when unsubscription fails
+
+**Usage Example:**
+
+```vue
+<p v-if="getPageDescription(page.slug)">
+  {{ $t(`system_pages.descriptions.${page.slug}`) }}
+</p>
+```

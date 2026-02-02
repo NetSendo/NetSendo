@@ -25,6 +25,11 @@ const selectedList = ref(props.currentListId);
 const searchQuery = ref("");
 const isDropdownOpen = ref(false);
 
+// Get description for each page type
+const getPageDescription = (slug) => {
+    return t(`system_pages.descriptions.${slug}`, "");
+};
+
 // Filtered lists based on search query
 const filteredLists = computed(() => {
     if (!searchQuery.value) return props.lists;
@@ -265,7 +270,23 @@ watch(selectedList, (newVal) => {
                                         <td
                                             class="px-6 py-4 font-medium text-gray-900 dark:text-white"
                                         >
-                                            {{ page.name }}
+                                            <div>
+                                                {{ page.name }}
+                                                <p
+                                                    v-if="
+                                                        getPageDescription(
+                                                            page.slug,
+                                                        )
+                                                    "
+                                                    class="text-xs font-normal text-gray-500 dark:text-gray-400"
+                                                >
+                                                    {{
+                                                        getPageDescription(
+                                                            page.slug,
+                                                        )
+                                                    }}
+                                                </p>
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4">
                                             {{ page.title }}

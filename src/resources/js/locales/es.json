@@ -210,6 +210,7 @@
         "next": "Siguiente",
         "select": "Seleccionar",
         "deselect_all": "Deseleccionar todo",
+        "select_all": "Seleccionar todo",
         "select_option": "Seleccione una opción",
         "all": "Todos",
         "none": "Ninguno",
@@ -869,11 +870,21 @@
         "email_content": "Contenido del correo",
         "content_placeholder": "Ingrese el contenido del correo...",
         "run_simulation": "Ejecutar simulación",
+        "verified": "Verificado",
+        "analyzing": "Analizando...",
         "spam_words": "Palabras spam",
         "subject_analysis": "Análisis del asunto",
         "link_check": "Comprobación de enlaces",
         "html_structure": "Estructura HTML",
         "formatting_title": "Formato",
+        "simulation_result": "Resultado de la simulación",
+        "predicted_folder": "Carpeta prevista",
+        "provider_predictions": "Predicciones de proveedores",
+        "confidence": "confianza",
+        "issues_found": "Problemas encontrados",
+        "run_new_simulation": "Ejecutar nueva simulación",
+        "view_history": "Ver historial",
+        "last_check": "Última comprobación: ",
         "inbox_passport": {
             "subtitle": "Comprobar entregabilidad antes de enviar",
             "how_it_works": "¿Cómo funciona?",
@@ -4117,7 +4128,17 @@
         "standard_fields": "Campos estándar",
         "system_placeholders": "Marcadores del sistema",
         "custom_fields": "Campos personalizados",
-        "no_placeholders": "No hay marcadores disponibles"
+        "no_placeholders": "No hay marcadores disponibles",
+        "descriptions": {
+            "signup_success": "Página mostrada tras suscripción exitosa.",
+            "signup_exists": "Página mostrada cuando el email ya está suscrito.",
+            "signup_error": "Página mostrada cuando falla la suscripción.",
+            "activation_success": "Página de confirmación de activación de email.",
+            "activation_error": "Página mostrada cuando el enlace de activación es inválido.",
+            "unsubscribe_confirm": "Página que solicita confirmar la baja.",
+            "unsubscribe_success": "Página de confirmación de eliminación de la lista.",
+            "unsubscribe_error": "Página mostrada cuando falla la baja."
+        }
     },
     "system_emails": {
         "title": "Correos del sistema",
@@ -4142,7 +4163,21 @@
         "default": "Por defecto",
         "customize": "Personalizar",
         "click_to_enable": "Clic para activar",
-        "click_to_disable": "Clic para desactivar"
+        "click_to_disable": "Clic para desactivar",
+        "descriptions": {
+            "signup_confirmation": "Correo de verificación double opt-in. Enviado tras la suscripción para confirmar el email.",
+            "activation_email": "Correo con enlace de activación para confirmar el email del suscriptor.",
+            "activation_confirmation": "Confirmación de activación. Enviado tras hacer clic en el enlace de activación.",
+            "subscription_welcome": "Correo de bienvenida. Enviado automáticamente tras confirmar la suscripción.",
+            "welcome_email": "Correo de bienvenida alternativo para nuevos suscriptores.",
+            "already_active_resubscribe": "Notificación cuando un usuario activo intenta suscribirse de nuevo.",
+            "inactive_resubscribe": "Notificación sobre la resuscripción de un usuario inactivo.",
+            "preference_confirm": "Confirmación de cambios en preferencias de suscripción (ej. cambio de categorías).",
+            "data_edit_access": "Correo con enlace seguro para editar datos del suscriptor.",
+            "unsubscribe_request": "Solicitud de confirmación de baja de la lista de correo.",
+            "unsubscribed_confirmation": "Confirmación de eliminación de la lista de correo.",
+            "new_subscriber_notification": "Notificación al administrador sobre un nuevo suscriptor en la lista."
+        }
     },
     "stripe": {
         "products": "Productos Stripe",

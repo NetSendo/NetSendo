@@ -90,12 +90,15 @@ class AutomationActionExecutor
         }
 
         $tagId = $config['tag_id'] ?? null;
-        $tagName = $config['tag_name'] ?? null;
+        $tagName = $config['tag_name'] ?? $config['tag'] ?? null;
 
         if ($tagId) {
             $tag = Tag::find($tagId);
         } elseif ($tagName) {
-            $tag = Tag::firstOrCreate(['name' => $tagName]);
+            $tag = Tag::firstOrCreate([
+                'name' => $tagName,
+                'user_id' => $subscriber->user_id,
+            ]);
         } else {
             throw new \InvalidArgumentException('Tag ID or name required');
         }
