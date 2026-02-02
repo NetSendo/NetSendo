@@ -80,6 +80,45 @@ Note: A background worker (`netsendo-scheduler`) is also started to handle sched
 
 ---
 
+## 📧 NMI - NetSendo Mail Infrastructure (Optional)
+
+NMI provides professional email sending with dedicated IPs, IP warming, DKIM, and blacklist monitoring.
+
+### Enable NMI
+
+**1. Add NMI variables to `.env`:**
+
+```env
+NMI_ENABLED=true
+NMI_MTA_HOST=netsendo-mta
+NMI_MTA_PORT=25
+```
+
+> See `.env.example` for all NMI configuration options.
+
+**2. Start with NMI profile:**
+
+```bash
+docker compose --profile nmi up -d
+```
+
+**3. Access NMI Dashboard:**
+
+Navigate to **Settings → Mail Infrastructure** in NetSendo UI.
+
+### NMI Volumes
+
+| Volume      | Purpose             |
+| ----------- | ------------------- |
+| `nmi_queue` | Email queue storage |
+| `nmi_logs`  | MTA log files       |
+| `nmi_dkim`  | DKIM private keys   |
+| `nmi_tls`   | TLS certificates    |
+
+> 📖 Full documentation: [docs/NMI.md](docs/NMI.md)
+
+---
+
 ## 🔄 Updates
 
 NetSendo supports the standard Docker update workflow:
