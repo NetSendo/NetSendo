@@ -91,6 +91,7 @@ return [
                 'unlimited_campaigns' => 'Unlimited AI Campaigns',
                 'advanced_ai' => 'Advanced AI Models (Local LLMs)',
                 'ab_testing' => 'A/B Testing in Campaigns',
+                'deliverability_shield' => 'Deliverability Shield (DMARC Wiz, InboxPassport AI)',
                 'auto_webinars' => 'Auto-Webinars with Scenarios',
                 'hybrid_webinars' => 'Hybrid Webinars',
                 'openrouter' => 'OpenRouter (Llama, Mistral)',

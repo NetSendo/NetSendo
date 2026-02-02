@@ -757,6 +757,29 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/browse', [\App\Http\Controllers\MediaController::class, 'search'])->name('browse');
         Route::get('/colors', [\App\Http\Controllers\MediaController::class, 'allUserColors'])->name('colors');
     });
+
+    // ==================== DELIVERABILITY SHIELD (GOLD) ====================
+
+    // Deliverability Shield - DMARC Wiz & InboxPassport AI
+    Route::prefix('deliverability')->name('deliverability.')->group(function () {
+        // Dashboard
+        Route::get('/', [\App\Http\Controllers\DeliverabilityController::class, 'index'])->name('index');
+
+        // DMARC Wiz - Domain Management
+        Route::get('/domains/add', [\App\Http\Controllers\DeliverabilityController::class, 'createDomain'])->name('domains.create');
+        Route::post('/domains', [\App\Http\Controllers\DeliverabilityController::class, 'addDomain'])->name('domains.store');
+        Route::get('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'showDomain'])->name('domains.show');
+        Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify');
+        Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh');
+        Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts');
+        Route::delete('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'removeDomain'])->name('domains.destroy');
+
+        // InboxPassport AI - Simulation
+        Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator');
+        Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate');
+        Route::get('/simulations', [\App\Http\Controllers\DeliverabilityController::class, 'simulationHistory'])->name('simulations.index');
+        Route::get('/simulations/{simulation}', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulation'])->name('simulations.show');
+    });
 });
 
 // Public Webinar Routes (no auth)

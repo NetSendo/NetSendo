@@ -95,6 +95,7 @@ return [
                 'hybrid_webinars' => 'Webinars híbridos',
                 'openrouter' => 'OpenRouter (Llama, Mistral)',
                 'ollama' => 'Ollama (LLMs locales)',
+                'deliverability_shield' => 'Deliverability Shield',
                 'priority_support' => 'Soporte prioritario',
             ],
             'summary' => 'Poder completo de IA y webinars automáticos',

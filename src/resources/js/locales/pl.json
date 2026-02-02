@@ -162,6 +162,7 @@
         }
     },
     "common": {
+        "continue": "Kontynuuj",
         "save": "Zapisz",
         "saved": "Zapisano",
         "documentation": "Dokumentacja",
@@ -537,6 +538,44 @@
         "edit_image": "Edytuj obraz",
         "refresh": "Odśwież",
         "refresh_preview": "Odśwież podgląd"
+    },
+    "deliverability": {
+        "title": "Deliverability Shield",
+        "subtitle": "Chroń swoją reputację nadawcy i upewnij się, że Twoje e-maile trafiają do skrzynki odbiorczej.",
+        "add_domain": "Dodaj domenę",
+        "upsell": {
+            "title": "Odblokuj Deliverability Shield",
+            "description": "Maksymalizuj dostarczalność e-maili dzięki zaawansowanym narzędziom. Upewnij się, że każdy e-mail trafia do skrzynki, nie do spamu.",
+            "feature1": "DMARC Wiz - Łatwa konfiguracja domeny",
+            "feature2": "InboxPassport AI - Test przed wysyłką",
+            "feature3": "Monitoring DNS 24/7",
+            "feature4": "Automatyczne alerty i rekomendacje",
+            "cta": "Uaktualnij do GOLD"
+        },
+        "domains": {
+            "title": "Twoje domeny",
+            "empty": {
+                "title": "Nie dodano jeszcze domen",
+                "description": "Dodaj swoją pierwszą domenę, aby rozpocząć monitorowanie jej statusu."
+            }
+        },
+        "simulations": {
+            "recent": "Ostatnie symulacje",
+            "empty": "Brak przeprowadzonych symulacji."
+        },
+        "dmarc_wiz": {
+            "title": "DMARC Wiz",
+            "subtitle": "Dodaj domenę w jednym kroku",
+            "step_domain": "Domena",
+            "step_verify": "Weryfikacja",
+            "enter_domain_title": "Wprowadź domenę",
+            "enter_domain_description": "To domena, z której wysyłasz e-maile",
+            "add_record_title": "Dodaj rekord DNS",
+            "add_record_description": "Dodaj ten rekord CNAME do ustawień DNS Twojej domeny",
+            "dns_propagation_info": "Propagacja zmian DNS może potrwać do 48 godzin. Możesz weryfikować w dowolnym momencie.",
+            "add_and_verify": "Dodaj i sprawdź weryfikację"
+        },
+        "domain_name": "Nazwa domeny"
     },
     "navigation": {
         "dashboard": "Pulpit",

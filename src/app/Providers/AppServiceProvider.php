@@ -65,6 +65,18 @@ class AppServiceProvider extends ServiceProvider
             \App\Models\AffiliatePayout::class,
             \App\Policies\AffiliatePayoutPolicy::class
         );
+
+        // Register DomainConfiguration policy (Deliverability Shield)
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\DomainConfiguration::class,
+            \App\Policies\DomainConfigurationPolicy::class
+        );
+
+        // Register InboxSimulation policy (Deliverability Shield)
+        \Illuminate\Support\Facades\Gate::policy(
+            \App\Models\InboxSimulation::class,
+            \App\Policies\InboxSimulationPolicy::class
+        );
     }
 
     /**

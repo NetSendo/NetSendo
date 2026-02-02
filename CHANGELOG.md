@@ -13,6 +13,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+## [1.8.6] – Short Description
+
+**Release date:** 2026-02-02
+
+### Added
+
+- **Deliverability Shield:**
+  - **Dashboard:** New comprehensive dashboard (`/deliverability`) for monitoring domain health and inbox placement.
+  - **DMARC Wiz:** Step-by-step wizard for adding and verifying sending domains with automatic CNAME generation.
+  - **InboxPassport AI:** AI-powered simulation tool that predicts inbox placement (Primary/Promotions/Spam) before sending.
+    - Analyzes content for spam triggers, link reputation, and HTML/formatting issues.
+    - Provides detailed recommendations and confidence scores.
+  - **Domain Monitoring:** Continuous checking of DNS records (SPF, DKIM, DMARC) with historical tracking.
+  - **Alerts System:** Automated notifications for critical deliverability issues (e.g., DMARC policy changes, DNS failures).
+  - **Scheduler Integration:** New cron jobs (`deliverability:check-domains`, `deliverability:upgrade-dmarc`) for background monitoring.
+  - **Sidebar Integration:** Added "Deliverability Shield" link to Settings group (visible to all users).
+  - **License Integration:** GOLD users get full access; SILVER users see feature preview and upgrade options.
+  - **Localization:** Full translations for all features in PL, EN, DE.
+
+### Fixed
+
+### Changed
+
+- **CardIntel Token Limits:**
+  - Increased token limits for AI operations to prevent truncation on large inputs:
+    - OCR Extraction: 1500 -> 4000 tokens
+    - Message Generation: 800 -> 4000 tokens
+    - Website Summary: 300 -> 1000 tokens
+    - AI Analysis: 200 -> 800 tokens
+
 ## [1.8.5] – Short Description
 
 **Release date:** 2026-02-02

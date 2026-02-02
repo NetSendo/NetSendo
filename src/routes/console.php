@@ -149,3 +149,21 @@ Schedule::command('calendar:sync-pending-tasks')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/calendar-pending-sync.log'));
 
+/*
+|--------------------------------------------------------------------------
+| Deliverability Shield Jobs
+|--------------------------------------------------------------------------
+*/
+
+// Sprawdzanie konfiguracji DNS domen - co 6 godzin
+Schedule::command('deliverability:check-domains')
+    ->everySixHours()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/deliverability-dns.log'));
+
+// Analiza możliwych upgrade'ów polityki DMARC - raz dziennie o 7:00
+Schedule::command('deliverability:upgrade-dmarc')
+    ->dailyAt('07:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/deliverability-dmarc.log'));
+

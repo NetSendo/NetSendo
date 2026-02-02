@@ -161,6 +161,7 @@
         }
     },
     "common": {
+        "continue": "Continue",
         "save": "Save",
         "cancel": "Cancel",
         "delete": "Delete",
@@ -536,6 +537,44 @@
         "edit_image": "Edit image",
         "refresh": "Refresh",
         "refresh_preview": "Refresh preview"
+    },
+    "deliverability": {
+        "title": "Deliverability Shield",
+        "subtitle": "Protect your sending reputation and ensure your emails land in the inbox.",
+        "add_domain": "Add Domain",
+        "upsell": {
+            "title": "Unlock Deliverability Shield",
+            "description": "Maximize your email deliverability with advanced tools. Ensure every email lands in the inbox, not spam.",
+            "feature1": "DMARC Wiz - Easy Domain Setup",
+            "feature2": "InboxPassport AI - Pre-send Testing",
+            "feature3": "DNS Monitoring 24/7",
+            "feature4": "Automated Alerts & Recommendations",
+            "cta": "Upgrade to GOLD"
+        },
+        "domains": {
+            "title": "Your Domains",
+            "empty": {
+                "title": "No domains added yet",
+                "description": "Add your first domain to start monitoring its health."
+            }
+        },
+        "simulations": {
+            "recent": "Recent Simulations",
+            "empty": "No simulations run yet."
+        },
+        "dmarc_wiz": {
+            "title": "DMARC Wiz",
+            "subtitle": "Add your domain in just one step",
+            "step_domain": "Domain",
+            "step_verify": "Verify",
+            "enter_domain_title": "Enter your domain",
+            "enter_domain_description": "This is the domain from which you send emails",
+            "add_record_title": "Add DNS record",
+            "add_record_description": "Add this CNAME record to your domain's DNS settings",
+            "dns_propagation_info": "DNS changes may take up to 48 hours to propagate. You can verify anytime.",
+            "add_and_verify": "Add & Check Verification"
+        },
+        "domain_name": "Domain name"
     },
     "navigation": {
         "dashboard": "Dashboard",

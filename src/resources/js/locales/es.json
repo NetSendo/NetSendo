@@ -161,6 +161,7 @@
         }
     },
     "common": {
+        "continue": "Continuar",
         "save": "Guardar",
         "saved": "Guardado",
         "documentation": "Documentación",
@@ -793,6 +794,44 @@
         "request_success_title": "¡Gracias!",
         "request_success_desc": "Su solicitud de integración ha sido enviada. Nos pondremos en contacto pronto.",
         "request_error": "No se pudo enviar la solicitud. Inténtelo de nuevo."
+    },
+    "deliverability": {
+        "title": "Deliverability Shield",
+        "subtitle": "Proteja su reputación de envío y asegure que sus correos lleguen a la bandeja de entrada.",
+        "add_domain": "Añadir dominio",
+        "upsell": {
+            "title": "Desbloquear Deliverability Shield",
+            "description": "Maximice su entregabilidad de correo electrónico con herramientas avanzadas. Asegure que cada correo llegue a la bandeja de entrada, no al spam.",
+            "feature1": "DMARC Wiz - Configuración fácil de dominio",
+            "feature2": "InboxPassport AI - Pruebas previas al envío",
+            "feature3": "Monitoreo DNS 24/7",
+            "feature4": "Alertas y recomendaciones automatizadas",
+            "cta": "Actualizar a GOLD"
+        },
+        "domains": {
+            "title": "Sus dominios",
+            "empty": {
+                "title": "Aún no hay dominios añadidos",
+                "description": "Añada su primer dominio para comenzar a monitorear su salud."
+            }
+        },
+        "simulations": {
+            "recent": "Simulaciones recientes",
+            "empty": "No hay simulaciones todavía."
+        },
+        "dmarc_wiz": {
+            "title": "DMARC Wiz",
+            "subtitle": "Añada su dominio en un solo paso",
+            "step_domain": "Dominio",
+            "step_verify": "Verificar",
+            "enter_domain_title": "Introduzca su dominio",
+            "enter_domain_description": "Este es el dominio desde el que envía correos electrónicos",
+            "add_record_title": "Añadir registro DNS",
+            "add_record_description": "Añada este registro CNAME a la configuración DNS de su dominio",
+            "dns_propagation_info": "Los cambios en el DNS pueden tardar hasta 48 horas en propagarse. Puede verificar en cualquier momento.",
+            "add_and_verify": "Añadir y comprobar verificación"
+        },
+        "domain_name": "Nombre de dominio"
     },
     "navigation": {
         "dashboard": "Tablero",

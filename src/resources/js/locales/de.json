@@ -201,6 +201,7 @@
         }
     },
     "common": {
+        "continue": "Weiter",
         "save": "Speichern",
         "days_unit": "Tage",
         "cancel": "Abbrechen",
@@ -763,6 +764,44 @@
         "request_success_title": "Danke!",
         "request_success_desc": "Ihre Integrationsanfrage wurde gesendet. Wir werden uns bald bei Ihnen melden.",
         "request_error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "deliverability": {
+        "title": "Deliverability Shield",
+        "subtitle": "Schützen Sie Ihren Senderruf und stellen Sie sicher, dass Ihre E-Mails im Posteingang landen.",
+        "add_domain": "Domain hinzufügen",
+        "upsell": {
+            "title": "Deliverability Shield freischalten",
+            "description": "Maximieren Sie Ihre E-Mail-Zustellbarkeit mit erweiterten Tools. Stellen Sie sicher, dass jede E-Mail im Posteingang landet, nicht im Spam.",
+            "feature1": "DMARC Wiz - Einfache Domain-Einrichtung",
+            "feature2": "InboxPassport AI - Vor dem Senden testen",
+            "feature3": "DNS-Überwachung 24/7",
+            "feature4": "Automatische Benachrichtigungen & Empfehlungen",
+            "cta": "Auf GOLD upgraden"
+        },
+        "domains": {
+            "title": "Ihre Domains",
+            "empty": {
+                "title": "Noch keine Domains hinzugefügt",
+                "description": "Fügen Sie Ihre erste Domain hinzu, um deren Status zu überwachen."
+            }
+        },
+        "simulations": {
+            "recent": "Letzte Simulationen",
+            "empty": "Noch keine Simulationen durchgeführt."
+        },
+        "dmarc_wiz": {
+            "title": "DMARC Wiz",
+            "subtitle": "Fügen Sie Ihre Domain in nur einem Schritt hinzu",
+            "step_domain": "Domain",
+            "step_verify": "Verifizieren",
+            "enter_domain_title": "Domain eingeben",
+            "enter_domain_description": "Dies ist die Domain, von der Sie E-Mails senden",
+            "add_record_title": "DNS-Eintrag hinzufügen",
+            "add_record_description": "Fügen Sie diesen CNAME-Eintrag zu den DNS-Einstellungen Ihrer Domain hinzu",
+            "dns_propagation_info": "DNS-Änderungen können bis zu 48 Stunden dauern. Sie können jederzeit verifizieren.",
+            "add_and_verify": "Hinzufügen & Verifizierung prüfen"
+        },
+        "domain_name": "Domainname"
     },
     "navigation": {
         "dashboard": "Dashboard",

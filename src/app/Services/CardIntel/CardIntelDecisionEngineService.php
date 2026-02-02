@@ -48,7 +48,7 @@ class CardIntelDecisionEngineService
 
         try {
             $response = $this->aiService->generateContent($prompt, $integration, [
-                'max_tokens' => 800,
+                'max_tokens' => 4000,
                 'temperature' => 0.7,
             ]);
 

@@ -231,7 +231,7 @@ PROMPT;
 
         try {
             $summary = $this->aiService->generateContent($prompt, $integration, [
-                'max_tokens' => 300,
+                'max_tokens' => 1000,
                 'temperature' => 0.3,
             ]);
 
@@ -292,7 +292,7 @@ PROMPT;
 
         try {
             $response = $this->aiService->generateContent($prompt, $integration, [
-                'max_tokens' => 200,
+                'max_tokens' => 800,
                 'temperature' => 0.4,
             ]);
 
