@@ -305,7 +305,8 @@
         "last_name": "Last Name",
         "phone": "Phone",
         "status": "Status",
-        "name": "Name"
+        "name": "Name",
+        "characters": "characters"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -572,12 +573,66 @@
             "add_record_title": "Add DNS record",
             "add_record_description": "Add this CNAME record to your domain's DNS settings",
             "dns_propagation_info": "DNS changes may take up to 48 hours to propagate. You can verify anytime.",
-            "add_and_verify": "Add & Check Verification"
+            "add_and_verify": "Add & Check Verification",
+            "add_domain_btn": "Add Domain"
         },
         "domain_name": "Domain name",
         "record_type": "Record Type",
         "host": "Host",
-        "target": "Target Value"
+        "target": "Target Value",
+        "never_checked": "Never checked",
+        "refresh": "Refresh",
+        "verification_required": "Verification Required",
+        "verification_description": "To verify domain, add the following DNS record at your provider. After adding, click 'Verify Now'.",
+        "add_this_record": "Add this record:",
+        "type": "Type",
+        "verify_now": "Verify Now",
+        "status_overview": "Status Overview",
+        "spf": {
+            "pending": "Verification Pending"
+        },
+        "dkim": {
+            "pending": "Verification Pending"
+        },
+        "dmarc": {
+            "pending": "Verification Pending"
+        },
+        "alerts": {
+            "title": "DMARC Alerts",
+            "description": "Authentication issue notifications."
+        },
+        "test_email": "Send Test Email",
+        "test_email_description": "Send email to InboxPassport AI to check deliverability.",
+        "pending_verification": "Pending Verification",
+        "select_domain": "Select Domain",
+        "no_verified_domains": "No verified domains",
+        "email_subject": "Email Subject",
+        "subject_placeholder": "Enter subject...",
+        "email_content": "Email Content",
+        "content_placeholder": "Enter email content...",
+        "run_simulation": "Run Simulation",
+        "spam_words": "Spam Words",
+        "subject_analysis": "Subject Analysis",
+        "link_check": "Link Check",
+        "html_structure": "HTML Structure",
+        "formatting": "Formatting",
+        "inbox_passport": {
+            "subtitle": "Check deliverability before sending",
+            "how_it_works": "How it works?",
+            "step1_title": "Select Domain",
+            "step1_desc": "Choose a verified domain you are sending from.",
+            "step2_title": "Enter Content",
+            "step2_desc": "Provide the subject and content of the message you want to check.",
+            "step3_title": "AI Analysis",
+            "step3_desc": "Our AI will analyze the message for spam filters.",
+            "what_we_check": "What we check?"
+        },
+        "delete_domain": "Delete Domain",
+        "confirm_delete_message": "Are you sure you want to delete domain \"{domain}\"? All associated data will be permanently removed.",
+        "localhost_warning": {
+            "title": "Local Environment Detected",
+            "description": "Domain verification is not available in localhost environment. Deploy to a production server to configure Deliverability Shield."
+        }
     },
     "navigation": {
         "dashboard": "Dashboard",
@@ -6341,7 +6396,11 @@
                     "instructions_title": "Tips:",
                     "instruction_1": "\"Single File\" mode - select one file, it will be processed immediately",
                     "instruction_2": "\"Multiple Files\" mode - add several cards, then click \"Process all\"",
-                    "instruction_3": "Supported formats: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
+                    "instruction_3": "Supported formats: JPG, PNG, WebP, HEIC, PDF (max 10MB)",
+                    "take_photo": "Take photo",
+                    "take_photo_desc": "Open device camera",
+                    "choose_from_gallery": "Choose from gallery",
+                    "choose_from_gallery_desc": "Select photo from phone"
                 },
                 "mode": {
                     "label": "Processing Mode",

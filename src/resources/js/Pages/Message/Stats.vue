@@ -1261,7 +1261,9 @@ const resendToFailed = () => {
                                             }}
                                             ⇅
                                         </th>
-                                        <th class="px-4 py-2">
+                                        <th
+                                            class="px-4 py-2 sticky right-0 bg-gray-50 dark:bg-gray-700"
+                                        >
                                             {{ $t("messages.stats.actions") }}
                                         </th>
                                     </tr>
@@ -1276,7 +1278,9 @@ const resendToFailed = () => {
                                         <td class="px-4 py-2">
                                             {{ log.email }}
                                         </td>
-                                        <td class="px-4 py-2 truncate max-w-xs">
+                                        <td
+                                            class="px-4 py-2 truncate max-w-[200px]"
+                                        >
                                             <a
                                                 :href="log.url"
                                                 target="_blank"
@@ -1288,7 +1292,9 @@ const resendToFailed = () => {
                                         <td class="px-4 py-2">
                                             {{ log.occurred_at }}
                                         </td>
-                                        <td class="px-4 py-2">
+                                        <td
+                                            class="px-4 py-2 sticky right-0 bg-white dark:bg-gray-800"
+                                        >
                                             <AddToListDropdown
                                                 v-if="log.subscriber_id"
                                                 :subscriber-id="

@@ -327,7 +327,8 @@
         "hour": "Stunde",
         "hours": "Stunden",
         "status": "Status",
-        "name": "Name"
+        "name": "Name",
+        "characters": "Zeichen"
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -799,12 +800,66 @@
             "add_record_title": "DNS-Eintrag hinzufügen",
             "add_record_description": "Fügen Sie diesen CNAME-Eintrag zu den DNS-Einstellungen Ihrer Domain hinzu",
             "dns_propagation_info": "DNS-Änderungen können bis zu 48 Stunden dauern. Sie können jederzeit verifizieren.",
-            "add_and_verify": "Hinzufügen & Verifizierung prüfen"
+            "add_and_verify": "Hinzufügen & Verifizierung prüfen",
+            "add_domain_btn": "Domain hinzufügen"
         },
         "domain_name": "Domainname",
         "record_type": "Eintragstyp",
         "host": "Host",
-        "target": "Zielwert"
+        "target": "Zielwert",
+        "never_checked": "Nie überprüft",
+        "refresh": "Aktualisieren",
+        "verification_required": "Überprüfung erforderlich",
+        "verification_description": "Um die Domain zu überprüfen, fügen Sie den folgenden DNS-Eintrag bei Ihrem Anbieter hinzu. Klicken Sie danach auf 'Jetzt überprüfen'.",
+        "add_this_record": "Diesen Eintrag hinzufügen:",
+        "type": "Typ",
+        "verify_now": "Jetzt überprüfen",
+        "status_overview": "Statusübersicht",
+        "spf": {
+            "pending": "Überprüfung ausstehend"
+        },
+        "dkim": {
+            "pending": "Überprüfung ausstehend"
+        },
+        "dmarc": {
+            "pending": "Überprüfung ausstehend"
+        },
+        "alerts": {
+            "title": "DMARC Warnungen",
+            "description": "Benachrichtigungen über Authentifizierungsprobleme."
+        },
+        "test_email": "Test-E-Mail senden",
+        "test_email_description": "Senden Sie eine E-Mail an InboxPassport AI, um die Zustellbarkeit zu prüfen.",
+        "pending_verification": "Überprüfung ausstehend",
+        "select_domain": "Domain auswählen",
+        "no_verified_domains": "Keine verifizierten Domains",
+        "email_subject": "E-Mail-Betreff",
+        "subject_placeholder": "Betreff eingeben...",
+        "email_content": "E-Mail-Inhalt",
+        "content_placeholder": "E-Mail-Inhalt eingeben...",
+        "run_simulation": "Simulation starten",
+        "spam_words": "Spam-Wörter",
+        "subject_analysis": "Betreff-Analyse",
+        "link_check": "Link-Prüfung",
+        "html_structure": "HTML-Struktur",
+        "formatting": "Formatierung",
+        "inbox_passport": {
+            "subtitle": "Zustellbarkeit vor dem Senden prüfen",
+            "how_it_works": "Wie funktioniert es?",
+            "step1_title": "Domain auswählen",
+            "step1_desc": "Wählen Sie eine verifizierte Domain, von der Sie senden.",
+            "step2_title": "Inhalt eingeben",
+            "step2_desc": "Geben Sie Betreff und Inhalt der Nachricht ein, die Sie prüfen möchten.",
+            "step3_title": "KI-Analyse",
+            "step3_desc": "Unsere KI analysiert die Nachricht auf Spam-Filter.",
+            "what_we_check": "Was prüfen wir?"
+        },
+        "delete_domain": "Domain löschen",
+        "confirm_delete_message": "Sind Sie sicher, dass Sie die Domain \"{domain}\" löschen möchten? Alle zugehörigen Daten werden dauerhaft entfernt.",
+        "localhost_warning": {
+            "title": "Lokale Umgebung erkannt",
+            "description": "Domainverifizierung ist in der localhost-Umgebung nicht verfügbar. Stellen Sie auf einem Produktionsserver bereit, um Deliverability Shield zu konfigurieren."
+        }
     },
     "navigation": {
         "dashboard": "Dashboard",
@@ -5547,7 +5602,11 @@
                     "instructions_title": "Tipps:",
                     "instruction_1": "Modus \"Einzelne Datei\" - wählen Sie eine Datei, sie wird sofort verarbeitet",
                     "instruction_2": "Modus \"Mehrere Dateien\" - fügen Sie mehrere Karten hinzu, dann klicken Sie \"Alle verarbeiten\"",
-                    "instruction_3": "Unterstützte Formate: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
+                    "instruction_3": "Unterstützte Formate: JPG, PNG, WebP, HEIC, PDF (max 10MB)",
+                    "take_photo": "Foto aufnehmen",
+                    "take_photo_desc": "Gerätekamera öffnen",
+                    "choose_from_gallery": "Aus Galerie wählen",
+                    "choose_from_gallery_desc": "Foto vom Handy auswählen"
                 },
                 "mode": {
                     "label": "Verarbeitungsmodus",

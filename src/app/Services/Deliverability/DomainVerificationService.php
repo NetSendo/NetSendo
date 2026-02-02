@@ -22,6 +22,31 @@ class DomainVerificationService
     }
 
     /**
+     * Check if the application is running on localhost/development environment
+     * DNS verification cannot work in this environment
+     */
+    public static function isLocalhostEnvironment(): bool
+    {
+        $appUrl = config('app.url');
+        $parsed = parse_url($appUrl);
+        $host = $parsed['host'] ?? 'localhost';
+
+        $localHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+
+        // Check direct match
+        if (in_array($host, $localHosts, true)) {
+            return true;
+        }
+
+        // Check for .local or .test domains (common dev domains)
+        if (preg_match('/\.(local|test|localhost|dev)$/i', $host)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Generate CNAME instruction for user
      */
     public function generateCnameInstruction(DomainConfiguration $config): array

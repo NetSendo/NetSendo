@@ -33,7 +33,7 @@ return [
     // DMARC Wiz
     'dmarc_wiz' => [
         'title' => 'DMARC Wiz',
-        'subtitle' => 'Dodaj domenę w jednym kroku',
+        'subtitle' => 'Dodaj domenę w kilka sekund',
         'step_domain' => 'Domena',
         'step_verify' => 'Weryfikacja',
         'enter_domain_title' => 'Wprowadź domenę',
@@ -42,6 +42,7 @@ return [
         'add_record_description' => 'Dodaj ten rekord CNAME do ustawień DNS Twojej domeny',
         'dns_propagation_info' => 'Propagacja zmian DNS może potrwać do 48 godzin. Możesz weryfikować w dowolnym momencie.',
         'add_and_verify' => 'Dodaj i sprawdź weryfikację',
+        'add_domain_btn' => 'Dodaj domenę',
     ],
 
     // Domain fields
@@ -158,6 +159,12 @@ return [
     'validation' => [
         'domain_format' => 'Wprowadź poprawną nazwę domeny',
         'domain_exists' => 'Ta domena jest już dodana',
+    ],
+
+    // Localhost/Development Environment Warning
+    'localhost_warning' => [
+        'title' => 'Wykryto środowisko deweloperskie',
+        'description' => 'NetSendo działa na localhost. Weryfikacja DNS wymaga publicznej domeny. Rekordy CNAME wskazujące na localhost nie mogą być zweryfikowane.',
     ],
 
     // Upsell for non-GOLD users

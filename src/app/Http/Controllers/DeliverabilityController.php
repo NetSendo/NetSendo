@@ -99,6 +99,7 @@ class DeliverabilityController extends Controller
         return Inertia::render('Deliverability/DmarcWiz', [
             'existingDomains' => $existingDomains,
             'verifyTarget' => parse_url(config('app.url'), PHP_URL_HOST),
+            'isLocalhost' => DomainVerificationService::isLocalhostEnvironment(),
         ]);
     }
 
@@ -108,6 +109,11 @@ class DeliverabilityController extends Controller
     public function addDomain(Request $request)
     {
         $user = $request->user();
+
+        // Normalize domain before validation
+        $request->merge([
+            'domain' => strtolower(trim($request->input('domain', ''))),
+        ]);
 
         $validated = $request->validate([
             'domain' => [
@@ -125,8 +131,8 @@ class DeliverabilityController extends Controller
             'domain.unique' => __('deliverability.validation.domain_exists'),
         ]);
 
-        // Normalize domain
-        $domain = strtolower(trim($validated['domain']));
+        // Domain already normalized
+        $domain = $validated['domain'];
 
         // Create domain configuration
         $config = DomainConfiguration::create([
@@ -172,6 +178,7 @@ class DeliverabilityController extends Controller
             });
 
         return Inertia::render('Deliverability/DomainStatus', [
+            'isLocalhost' => DomainVerificationService::isLocalhostEnvironment(),
             'domain' => [
                 'id' => $domain->id,
                 'domain' => $domain->domain,
@@ -242,7 +249,9 @@ class DeliverabilityController extends Controller
     {
         $this->authorize('delete', $domain);
 
-        $domain->delete();
+        // Use forceDelete to permanently remove the record
+        // This allows re-adding the same domain later (soft delete would conflict with unique constraint)
+        $domain->forceDelete();
 
         return redirect()->route('deliverability.index')
             ->with('success', __('deliverability.messages.domain_removed'));

@@ -394,3 +394,50 @@ The following translation keys were added to support the Copy List feature for b
   </Modal>
 </template>
 ```
+
+### Deliverability Shield (February 2026)
+
+The following translation keys were added to support the Deliverability Shield feature (DMARC Wiz, Domain Monitoring, InboxPassport AI):
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Deliverability Section (`deliverability.*`):**
+
+- `deliverability.title` - Feature title
+- `deliverability.subtitle` - Feature subtitle
+- `deliverability.add_domain` - Button to add domain
+- `deliverability.domain_name` - Domain name label
+- `deliverability.record_type` - DNS record type label
+- `deliverability.host` - DNS host label
+- `deliverability.target` - DNS target value label
+
+**DMARC Wizard (`deliverability.dmarc_wiz.*`):**
+
+- `deliverability.dmarc_wiz.title` - Wizard title
+- `deliverability.dmarc_wiz.subtitle` - Wizard subtitle
+- `deliverability.dmarc_wiz.step_domain` - Step 1 label
+- `deliverability.dmarc_wiz.step_verify` - Step 2 label
+- `deliverability.dmarc_wiz.enter_domain_title` - Step 1 title
+- `deliverability.dmarc_wiz.enter_domain_description` - Step 1 description
+- `deliverability.dmarc_wiz.add_record_title` - Step 2 title
+- `deliverability.dmarc_wiz.add_record_description` - Step 2 description
+- `deliverability.dmarc_wiz.dns_propagation_info` - DNS propagation note
+- `deliverability.dmarc_wiz.add_and_verify` - Action button
+
+**Dashboard & Domains (`deliverability.domains.*`):**
+
+- `deliverability.domains.title` - Section title for domains
+- `deliverability.domains.empty.title` - Empty state title
+- `deliverability.domains.empty.description` - Empty state description
+
+**InboxPassport AI (`deliverability.simulations.*`):**
+
+- `deliverability.simulations.recent` - Recent simulations section
+- `deliverability.simulations.empty` - Empty state for simulations
+
+**Upsell Screens (`deliverability.upsell.*`):**
+
+- `deliverability.upsell.title` - Upsell title
+- `deliverability.upsell.description` - Upsell description
+- `deliverability.upsell.featureX` - Feature bullets (1-4)
+- `deliverability.upsell.cta` - Upgrade button

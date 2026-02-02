@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -11,10 +12,27 @@ const props = defineProps({
     cnameInstruction: { type: Object, required: true },
     humanStatus: { type: Object, required: true },
     simulations: { type: Array, default: () => [] },
+    isLocalhost: { type: Boolean, default: false },
 });
 
 const refreshing = ref(false);
 const verifying = ref(false);
+const showDeleteModal = ref(false);
+const deleteProcessing = ref(false);
+const copiedField = ref(null);
+
+// Copy to clipboard
+const copyToClipboard = async (text, fieldName) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        copiedField.value = fieldName;
+        setTimeout(() => {
+            copiedField.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error("Failed to copy:", err);
+    }
+};
 
 // Status colors
 const statusColors = {
@@ -85,9 +103,13 @@ const toggleAlerts = () => {
 
 // Delete domain
 const deleteDomain = () => {
-    if (confirm(t("deliverability.confirm_delete"))) {
-        router.delete(route("deliverability.domains.destroy", props.domain.id));
-    }
+    deleteProcessing.value = true;
+    router.delete(route("deliverability.domains.destroy", props.domain.id), {
+        onFinish: () => {
+            deleteProcessing.value = false;
+            showDeleteModal.value = false;
+        },
+    });
 };
 </script>
 
@@ -154,7 +176,7 @@ const deleteDomain = () => {
                         {{ $t("deliverability.refresh") }}
                     </button>
                     <button
-                        @click="deleteDomain"
+                        @click="showDeleteModal = true"
                         class="rounded-lg p-2 text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-900/20"
                     >
                         <svg
@@ -209,6 +231,46 @@ const deleteDomain = () => {
                             {{ $t("deliverability.verification_description") }}
                         </p>
 
+                        <!-- Localhost Warning -->
+                        <div
+                            v-if="isLocalhost"
+                            class="mt-4 rounded-lg border border-rose-300 bg-rose-50 p-3 dark:border-rose-700 dark:bg-rose-900/20"
+                        >
+                            <div class="flex gap-2">
+                                <svg
+                                    class="h-5 w-5 flex-shrink-0 text-rose-600 dark:text-rose-400"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                                <div>
+                                    <h4
+                                        class="text-sm font-medium text-rose-800 dark:text-rose-200"
+                                    >
+                                        {{
+                                            $t(
+                                                "deliverability.localhost_warning.title",
+                                            )
+                                        }}
+                                    </h4>
+                                    <p
+                                        class="mt-1 text-xs text-rose-700 dark:text-rose-300"
+                                    >
+                                        {{
+                                            $t(
+                                                "deliverability.localhost_warning.description",
+                                            )
+                                        }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- CNAME Instructions -->
                         <div
                             class="mt-4 rounded-lg bg-white p-4 dark:bg-slate-800"
@@ -241,27 +303,123 @@ const deleteDomain = () => {
                                         >{{ cnameInstruction.ttl }}</span
                                     >
                                 </div>
-                                <div class="col-span-2">
-                                    <span
-                                        class="text-gray-500 dark:text-gray-400"
-                                        >{{ $t("deliverability.host") }}:</span
+                                <div
+                                    class="col-span-2 flex items-center justify-between"
+                                >
+                                    <div>
+                                        <span
+                                            class="text-gray-500 dark:text-gray-400"
+                                            >{{
+                                                $t("deliverability.host")
+                                            }}:</span
+                                        >
+                                        <span
+                                            class="ml-2 font-mono font-semibold text-indigo-600 dark:text-indigo-400"
+                                            >{{ cnameInstruction.host }}</span
+                                        >
+                                    </div>
+                                    <button
+                                        @click="
+                                            copyToClipboard(
+                                                cnameInstruction.host,
+                                                'host',
+                                            )
+                                        "
+                                        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-slate-700 dark:hover:text-gray-200"
                                     >
-                                    <span
-                                        class="ml-2 font-mono font-semibold text-indigo-600 dark:text-indigo-400"
-                                        >{{ cnameInstruction.host }}</span
-                                    >
+                                        <svg
+                                            v-if="copiedField === 'host'"
+                                            class="h-4 w-4 text-emerald-500"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M5 13l4 4L19 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            v-else
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        {{
+                                            copiedField === "host"
+                                                ? $t("common.copied")
+                                                : $t("common.copy")
+                                        }}
+                                    </button>
                                 </div>
-                                <div class="col-span-2">
-                                    <span
-                                        class="text-gray-500 dark:text-gray-400"
-                                        >{{
-                                            $t("deliverability.target")
-                                        }}:</span
+                                <div
+                                    class="col-span-2 flex items-center justify-between"
+                                >
+                                    <div>
+                                        <span
+                                            class="text-gray-500 dark:text-gray-400"
+                                            >{{
+                                                $t("deliverability.target")
+                                            }}:</span
+                                        >
+                                        <span
+                                            class="ml-2 font-mono font-semibold text-gray-900 dark:text-white"
+                                            >{{ cnameInstruction.target }}</span
+                                        >
+                                    </div>
+                                    <button
+                                        @click="
+                                            copyToClipboard(
+                                                cnameInstruction.target,
+                                                'target',
+                                            )
+                                        "
+                                        class="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-slate-700 dark:hover:text-gray-200"
                                     >
-                                    <span
-                                        class="ml-2 font-mono font-semibold text-gray-900 dark:text-white"
-                                        >{{ cnameInstruction.target }}</span
-                                    >
+                                        <svg
+                                            v-if="copiedField === 'target'"
+                                            class="h-4 w-4 text-emerald-500"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M5 13l4 4L19 7"
+                                            />
+                                        </svg>
+                                        <svg
+                                            v-else
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        {{
+                                            copiedField === "target"
+                                                ? $t("common.copied")
+                                                : $t("common.copy")
+                                        }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -545,5 +703,21 @@ const deleteDomain = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Delete Confirmation Modal -->
+        <ConfirmModal
+            :show="showDeleteModal"
+            :title="$t('deliverability.delete_domain')"
+            :message="
+                $t('deliverability.confirm_delete_message', {
+                    domain: domain.domain,
+                })
+            "
+            :confirm-text="$t('common.delete')"
+            type="danger"
+            :processing="deleteProcessing"
+            @close="showDeleteModal = false"
+            @confirm="deleteDomain"
+        />
     </AuthenticatedLayout>
 </template>

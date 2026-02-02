@@ -33,7 +33,7 @@ return [
     // DMARC Wiz
     'dmarc_wiz' => [
         'title' => 'DMARC Wiz',
-        'subtitle' => 'Add your domain in just one step',
+        'subtitle' => 'Add your domain in just a few seconds',
         'step_domain' => 'Domain',
         'step_verify' => 'Verify',
         'enter_domain_title' => 'Enter your domain',
@@ -42,6 +42,7 @@ return [
         'add_record_description' => 'Add this CNAME record to your domain\'s DNS settings',
         'dns_propagation_info' => 'DNS changes may take up to 48 hours to propagate. You can verify anytime.',
         'add_and_verify' => 'Add & Check Verification',
+        'add_domain_btn' => 'Add Domain',
     ],
 
     // Domain fields
@@ -158,6 +159,12 @@ return [
     'validation' => [
         'domain_format' => 'Please enter a valid domain name',
         'domain_exists' => 'This domain is already added',
+    ],
+
+    // Localhost/Development Environment Warning
+    'localhost_warning' => [
+        'title' => 'Development Environment Detected',
+        'description' => 'You are running NetSendo on localhost. DNS verification requires a public domain. CNAME records pointing to localhost cannot be verified.',
     ],
 
     // Upsell for non-GOLD users

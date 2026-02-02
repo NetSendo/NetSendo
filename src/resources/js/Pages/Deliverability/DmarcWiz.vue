@@ -9,6 +9,7 @@ const { t } = useI18n();
 const props = defineProps({
     existingDomains: { type: Array, default: () => [] },
     verifyTarget: { type: String, required: true },
+    isLocalhost: { type: Boolean, default: false },
 });
 
 const form = useForm({
@@ -56,7 +57,8 @@ const submitDomain = () => {
 // Go to next step
 const nextStep = () => {
     if (step.value === 1 && domainValid.value) {
-        step.value = 2;
+        // Submit directly - step 2 will be shown on DomainStatus page with correct CNAME values
+        submitDomain();
     }
 };
 </script>
@@ -94,6 +96,42 @@ const nextStep = () => {
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {{ $t("deliverability.dmarc_wiz.subtitle") }}
                     </p>
+                </div>
+            </div>
+
+            <!-- Localhost Warning -->
+            <div
+                v-if="isLocalhost"
+                class="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20"
+            >
+                <div class="flex gap-3">
+                    <svg
+                        class="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                    >
+                        <path
+                            fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd"
+                        />
+                    </svg>
+                    <div>
+                        <h4
+                            class="font-medium text-amber-800 dark:text-amber-200"
+                        >
+                            {{ $t("deliverability.localhost_warning.title") }}
+                        </h4>
+                        <p
+                            class="mt-1 text-sm text-amber-700 dark:text-amber-300"
+                        >
+                            {{
+                                $t(
+                                    "deliverability.localhost_warning.description",
+                                )
+                            }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </template>
@@ -231,9 +269,29 @@ const nextStep = () => {
                     <button
                         @click="nextStep"
                         :disabled="!domainValid || form.processing"
-                        class="w-full rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {{ $t("common.continue") }}
+                        <svg
+                            v-if="form.processing"
+                            class="h-4 w-4 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                        {{ $t("deliverability.dmarc_wiz.add_domain_btn") }}
                     </button>
                 </div>
             </div>

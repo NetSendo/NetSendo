@@ -306,7 +306,8 @@
         "last_name": "Nazwisko",
         "phone": "Telefon",
         "status": "Status",
-        "name": "Nazwa"
+        "name": "Nazwa",
+        "characters": "znaków"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -573,12 +574,66 @@
             "add_record_title": "Dodaj rekord DNS",
             "add_record_description": "Dodaj ten rekord CNAME do ustawień DNS Twojej domeny",
             "dns_propagation_info": "Propagacja zmian DNS może potrwać do 48 godzin. Możesz weryfikować w dowolnym momencie.",
-            "add_and_verify": "Dodaj i sprawdź weryfikację"
+            "add_and_verify": "Dodaj i sprawdź weryfikację",
+            "add_domain_btn": "Dodaj domenę"
         },
         "domain_name": "Nazwa domeny",
         "record_type": "Typ rekordu",
         "host": "Host",
-        "target": "Wartość docelowa"
+        "target": "Wartość docelowa",
+        "never_checked": "Nigdy nie sprawdzano",
+        "refresh": "Odśwież",
+        "verification_required": "Wymagana weryfikacja",
+        "verification_description": "Aby zweryfikować domenę, dodaj poniższy rekord DNS u swojego dostawcy. Po dodaniu kliknij 'Weryfikuj teraz'.",
+        "add_this_record": "Dodaj ten rekord:",
+        "type": "Typ",
+        "verify_now": "Weryfikuj teraz",
+        "status_overview": "Przegląd statusu",
+        "spf": {
+            "pending": "Oczekuje na weryfikację"
+        },
+        "dkim": {
+            "pending": "Oczekuje na weryfikację"
+        },
+        "dmarc": {
+            "pending": "Oczekuje na weryfikację"
+        },
+        "alerts": {
+            "title": "Alerty DMARC",
+            "description": "Powiadomienia o problemach z uwierzytelnianiem."
+        },
+        "test_email": "Wyślij e-mail testowy",
+        "test_email_description": "Wyślij e-mail do InboxPassport AI, aby sprawdzić dostarczalność.",
+        "pending_verification": "Oczekuje na weryfikację",
+        "select_domain": "Wybierz domenę",
+        "no_verified_domains": "Brak zweryfikowanych domen",
+        "email_subject": "Temat wiadomości",
+        "subject_placeholder": "Wpisz temat...",
+        "email_content": "Treść wiadomości",
+        "content_placeholder": "Wpisz treść wiadomości...",
+        "run_simulation": "Uruchom symulację",
+        "spam_words": "Słowa spamowe",
+        "subject_analysis": "Analiza tematu",
+        "link_check": "Sprawdzanie linków",
+        "html_structure": "Struktura HTML",
+        "formatting": "Formatowanie",
+        "inbox_passport": {
+            "subtitle": "Sprawdź dostarczalność przed wysyłką",
+            "how_it_works": "Jak to działa?",
+            "step1_title": "Wybierz domenę",
+            "step1_desc": "Wybierz zweryfikowaną domenę, z której wysyłasz.",
+            "step2_title": "Wpisz treść",
+            "step2_desc": "Podaj temat i treść wiadomości, którą chcesz sprawdzić.",
+            "step3_title": "Analiza AI",
+            "step3_desc": "Nasza AI przeanalizuje wiadomość pod kątem filtrów antyspamowych.",
+            "what_we_check": "Co sprawdzamy?"
+        },
+        "delete_domain": "Usuń domenę",
+        "confirm_delete_message": "Czy na pewno chcesz usunąć domenę \"{domain}\"? Wszystkie powiązane dane zostaną trwale usunięte.",
+        "localhost_warning": {
+            "title": "Środowisko lokalne wykryte",
+            "description": "Weryfikacja domeny nie jest dostępna w środowisku localhost. Wdróż na serwer produkcyjny, aby skonfigurować Deliverability Shield."
+        }
     },
     "navigation": {
         "dashboard": "Pulpit",
@@ -6419,7 +6474,11 @@
                     "instructions_title": "Wskazówki:",
                     "instruction_1": "Tryb \"Pojedynczy plik\" - wybierz jeden plik, zostanie od razu przetworzony",
                     "instruction_2": "Tryb \"Wiele plików\" - dodaj kilka wizytówek, potem kliknij \"Przetwórz wszystkie\"",
-                    "instruction_3": "Obsługiwane formaty: JPG, PNG, WebP, HEIC, PDF (max 10MB)"
+                    "instruction_3": "Obsługiwane formaty: JPG, PNG, WebP, HEIC, PDF (max 10MB)",
+                    "take_photo": "Zrób zdjęcie",
+                    "take_photo_desc": "Otwórz kamerę urządzenia",
+                    "choose_from_gallery": "Wybierz z galerii",
+                    "choose_from_gallery_desc": "Wybierz zdjęcie z telefonu"
                 },
                 "mode": {
                     "label": "Tryb przetwarzania",

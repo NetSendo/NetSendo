@@ -12,12 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **DMARC Wizard:**
   - Added "Copy to clipboard" buttons for Host and Target fields in the DNS setup step for better UX.
 
+- **Deliverability Shield:**
+  - Added localhost environment detection for Domain Verification.
+  - Added warning banners in DmarcWiz and DomainStatus when running on localhost (DNS verification disabled).
+
 ### Fixed
 
 - **DMARC Verification:**
   - Fixed CNAME verification target to dynamically use the installation's domain (from `APP_URL`) instead of a hardcoded value, ensuring correct verification for white-label installations.
 
+- **Domain Management:**
+  - Fixed `UniqueConstraintViolationException` when re-adding a previously deleted domain by changing soft deletes to force deletes for `DomainConfiguration`.
+  - Fixed domain validation logic to normalize domains to lowercase before uniqueness check.
+
 ### Changed
+
+- **DMARC Wizard:**
+  - Simplified domain addition flow to a single step (removed redundant preview step).
+  - Improved "Continue" button label to "Add Domain" for clarity.
 
 ## [1.8.6] – Short Description
 
