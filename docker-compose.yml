@@ -288,6 +288,46 @@ services:
     stdin_open: true
     tty: true
 
+  # =============================================================================
+  # NMI - NetSendo Mail Infrastructure (Haraka MTA)
+  # =============================================================================
+  # Built-in mail transfer agent for sending emails with dedicated IPs.
+  # Only enable if NMI feature is activated.
+  nmi-mta:
+    build:
+      context: ./docker/haraka
+      dockerfile: Dockerfile
+    container_name: netsendo-mta
+    restart: unless-stopped
+    profiles:
+      - nmi  # Only starts when explicitly enabled with --profile nmi
+    ports:
+      - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
+      - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
+    volumes:
+      - ./docker/haraka/config:/opt/haraka/config:ro
+      - nmi-queue:/opt/haraka/queue
+      - nmi-logs:/opt/haraka/logs
+      # DKIM keys - managed by application
+      - nmi-dkim:/opt/haraka/config/dkim
+      # TLS certificates
+      - nmi-tls:/opt/haraka/config/tls
+    environment:
+      - NODE_ENV=production
+    networks:
+      - netsendo-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 25 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
 networks:
   netsendo-network:
     driver: bridge
@@ -308,4 +348,13 @@ volumes:
     driver: local
   # Public assets (synced from app on startup)
   netsendo-public:
+    driver: local
+  # NMI (NetSendo Mail Infrastructure) volumes
+  nmi-queue:
+    driver: local
+  nmi-logs:
+    driver: local
+  nmi-dkim:
+    driver: local
+  nmi-tls:
     driver: local

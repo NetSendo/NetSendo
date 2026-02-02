@@ -6,6 +6,7 @@ use App\Models\ContactList;
 use App\Models\Mailbox;
 use App\Models\Webinar;
 use App\Services\Mail\Providers\GmailProvider;
+use App\Services\Mail\Providers\NmiProvider;
 use App\Services\Mail\Providers\SendGridProvider;
 use App\Services\Mail\Providers\SmtpProvider;
 use App\Services\Mail\GmailOAuthService;
@@ -46,6 +47,14 @@ class MailProviderService
                 mailbox: $mailbox,
                 fromEmail: $mailbox->from_email,
                 fromName: $mailbox->from_name
+            ),
+
+            Mailbox::PROVIDER_NMI => new NmiProvider(
+                domain: $mailbox->domainConfiguration,
+                dedicatedIp: $mailbox->dedicatedIp,
+                fromEmail: $mailbox->from_email,
+                fromName: $mailbox->from_name,
+                replyTo: $mailbox->reply_to
             ),
 
             default => throw new InvalidArgumentException("Unknown provider: {$mailbox->provider}"),
@@ -112,6 +121,11 @@ class MailProviderService
 
             Mailbox::PROVIDER_GMAIL => [
                 // OAuth flow doesn't use manual input fields
+            ],
+
+            Mailbox::PROVIDER_NMI => [
+                // NMI requires domain configuration, not manual credentials
+                // Configuration is done through Domain Settings page
             ],
 
             default => [],

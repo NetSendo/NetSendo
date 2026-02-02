@@ -970,6 +970,7 @@
         "logout": "Abmelden",
         "ai_integrations": "KI-Integrationen",
         "mailboxes": "Postfächer",
+        "nmi": "Mail-Infrastruktur",
         "sms_providers": "SMS-Anbieter",
         "groups_nav": "Gruppen",
         "tags": "Tags",
@@ -6082,5 +6083,86 @@
             "recommendations": "Empfehlungen",
             "error": "Analyse konnte nicht generiert werden. Bitte versuchen Sie es erneut."
         }
+    },
+    "nmi": {
+        "title": "NetSendo Mail Infrastruktur",
+        "subtitle": "Verwalten Sie dedizierte IP-Adressen und Absender-Reputation",
+        "pool_details": "Pool-Details",
+        "pool_dedicated": "Dediziert",
+        "pool_shared": "Geteilt",
+        "pool_information": "Pool-Informationen",
+        "max_ips": "Max. IPs",
+        "dedicated_ips_list": "Dedizierte IP-Adressen",
+        "no_ips_in_pool": "Keine IP-Adressen in diesem Pool",
+        "setup_required": "EINRICHTUNG ERFORDERLICH",
+        "banner": {
+            "title": "Professionelle Mail-Infrastruktur",
+            "description": "Bauen Sie Ihre Absender-Reputation mit dedizierten IP-Adressen, intelligentem IP-Warming und automatischer DKIM-Signierung auf."
+        },
+        "features": {
+            "dedicated_ips": "Dedizierte IP-Adressen",
+            "ip_warming": "Intelligentes IP-Warming",
+            "dkim_signing": "Automatische DKIM-Signierung",
+            "blacklist_monitoring": "24/7 Blacklist-Überwachung"
+        },
+        "create_pool": "IP-Pool erstellen",
+        "pool_name": "Pool-Name",
+        "pool_type": "Pool-Typ",
+        "type_dedicated": "Dediziert",
+        "type_shared": "Geteilt",
+        "description": "Beschreibung",
+        "ips": "IPs",
+        "stats": {
+            "pools": "IP-Pools",
+            "total_ips": "Gesamt IPs",
+            "warming": "Im Warming",
+            "reputation": "Durchschn. Reputation"
+        },
+        "pools": {
+            "title": "IP-Adress-Pools",
+            "empty": {
+                "title": "Keine IP-Pools",
+                "description": "Erstellen Sie Ihren ersten Pool, um mit der Verwaltung dedizierter IP-Adressen zu beginnen."
+            }
+        },
+        "dedicated_ips": {
+            "title": "Dedizierte IP-Adressen",
+            "empty": "Keine dedizierten IP-Adressen."
+        },
+        "no_hostname": "Kein Hostname",
+        "warming_status": "Warming-Status",
+        "day": "Tag",
+        "daily_limit": "Tageslimit",
+        "emails": "E-Mails",
+        "start_warming": "Warming starten",
+        "reputation": "Reputation",
+        "delivery_rate": "Zustellrate",
+        "emails_sent": "E-Mails gesendet",
+        "blacklist_status": "Blacklist-Status",
+        "listed": "Gelistet",
+        "clean": "Sauber",
+        "lists_checked": "Listen geprüft",
+        "check_now": "Jetzt prüfen",
+        "dkim_config": "DKIM-Konfiguration",
+        "dkim_description": "DKIM-Signaturschlüssel",
+        "configured": "Konfiguriert",
+        "dns_name": "DNS-Name",
+        "dns_value": "Eintragswert",
+        "verify_dkim": "DKIM überprüfen",
+        "rotate_keys": "Schlüssel rotieren",
+        "dkim_not_configured": "DKIM ist für diese IP-Adresse nicht konfiguriert.",
+        "generate_dkim": "DKIM-Schlüssel generieren",
+        "sending_stats": "Versandstatistiken",
+        "total_sent": "Gesendet",
+        "delivered": "Zugestellt",
+        "bounced": "Bounced",
+        "complaints": "Beschwerden",
+        "pool_created": "IP-Pool erfolgreich erstellt!",
+        "pool_deleted": "IP-Pool gelöscht.",
+        "pool_not_empty": "Ein Pool, der IP-Adressen enthält, kann nicht gelöscht werden.",
+        "warming_started": "IP-Warming gestartet!",
+        "dkim_generated": "DKIM-Schlüssel erfolgreich generiert!",
+        "dkim_verified": "DKIM erfolgreich verifiziert!",
+        "dkim_not_verified": "DKIM-Eintrag nicht gefunden. Überprüfen Sie Ihre DNS-Konfiguration."
     }
 }

@@ -164,6 +164,39 @@ services:
     networks:
       - netsendo-network
 
+  # =============================================================================
+  # NMI - NetSendo Mail Infrastructure (Haraka MTA)
+  # =============================================================================
+  # Development Haraka MTA for testing NMI features.
+  # Usage: docker compose -f docker-compose.dev.yml --profile nmi up -d
+  nmi-mta:
+    build:
+      context: ./docker/haraka
+      dockerfile: Dockerfile
+    container_name: netsendo-mta
+    restart: unless-stopped
+    profiles:
+      - nmi  # Only starts when explicitly enabled with --profile nmi
+    ports:
+      - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
+      - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
+    volumes:
+      - ./docker/haraka/config:/opt/haraka/config:ro
+      - nmi-queue:/opt/haraka/queue
+      - nmi-logs:/opt/haraka/logs
+      - nmi-dkim:/opt/haraka/config/dkim
+      - nmi-tls:/opt/haraka/config/tls
+    environment:
+      - NODE_ENV=development
+    networks:
+      - netsendo-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 25 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 networks:
   netsendo-network:
     driver: bridge
@@ -171,3 +204,8 @@ networks:
 volumes:
   dbdata:
   redisdata:
+  # NMI (NetSendo Mail Infrastructure) volumes
+  nmi-queue:
+  nmi-logs:
+  nmi-dkim:
+  nmi-tls:

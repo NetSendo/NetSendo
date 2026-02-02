@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.9.0] – Short Description
+
+**Release date:** 2026-02-03
+
+### Added
+
+- **NMI (NetSendo Mail Infrastructure) - Complete Feature Set:**
+  - **Core Backend:**
+    - Created `IpPool` and `DedicatedIpAddress` models for managing sending infrastructure (Shared/Dedicated).
+    - Implemented `IpWarmingService` with intelligent 28-day warming schedule and automated daily limit enforcement.
+    - Implemented `DkimKeyManager` for generating 2048-bit RSA keys, managing selectors, and validating DNS records.
+    - Implemented `BlacklistMonitorService` for real-time IP reputation checking against major DNSBLs (Zen, SpamCop, etc.).
+    - Updated `DomainConfiguration` to support direct assignment of dedicated IPs.
+  - **Frontend - Management Dashboard:**
+    - **Dashboard:** New NMI Dashboard (`/settings/nmi`) with real-time health metrics, IP pool management, and dedicated IP inventory.
+    - **IP Detail View:** Comprehensive IP management page (`/settings/nmi/ips/{ip}`) displaying warming progress, daily limits, and sending stats.
+    - **Warming Controls:** UI controls for initiating/pausing IP warming and visualizing progress/schedule.
+    - **DKIM Management:** Built-in tools for generating, rotating, and verifying DKIM keys with "One-Click Copy" DNS records.
+    - **Blacklist Monitor:** On-demand and scheduled blacklist status checking with visual status indicators.
+  - **Infrastructure (Docker/Haraka):**
+    - Integrated **Haraka MTA** (Mail Transfer Agent) as a dedicated container (`nmi-mta`) for high-performance email delivery.
+    - Added NMI service to `docker-compose.yml` (Production) and `docker-compose.dev.yml` (Development).
+    - Configured persistent volumes for NMI queues, logs, DKIM keys, and TLS certificates.
+  - **Localization:**
+    - Complete, native-quality translations for all NMI interfaces in **Polish, English, German, and Spanish**.
+
+### Fixed
+
+- **NMI Localization:**
+  - Fixed missing translations for NMI Pool Detail page in all supported languages.
+  - Resolved `dedicated_ips` key conflict in Polish locale.
+
+### Documentation
+
+- **NMI Documentation:**
+  - Added `docs/NMI.md` with complete user guide, configuration reference, and migration instructions.
+  - Updated `.env.example` with all NMI environment variables.
+  - Added NMI feature mention in `README.md`.
+
 ## [1.8.8] – Short Description
 
 **Release date:** 2026-02-02

@@ -742,6 +742,7 @@
         "logout": "Wyloguj",
         "ai_integrations": "Integracje AI",
         "mailboxes": "Skrzynki pocztowe",
+        "nmi": "Infrastruktura Pocztowa",
         "sms_providers": "Dostawcy SMS",
         "groups_nav": "Grupy",
         "tags": "Tagi",
@@ -6944,5 +6945,86 @@
             "recommendations": "Rekomendacje",
             "error": "Nie udało się wygenerować analizy. Spróbuj ponownie."
         }
+    },
+    "nmi": {
+        "title": "NetSendo Mail Infrastructure",
+        "subtitle": "Zarządzaj dedykowanymi adresami IP i reputacją nadawcy",
+        "pool_details": "Szczegóły puli",
+        "pool_dedicated": "Dedykowana",
+        "pool_shared": "Współdzielona",
+        "pool_information": "Informacje o puli",
+        "pool_name": "Nazwa puli",
+        "pool_type": "Typ puli",
+        "max_ips": "Maks. IP",
+        "description": "Opis",
+        "dedicated_ips_list": "Dedykowane adresy IP",
+        "no_ips_in_pool": "Brak adresów IP w tej puli",
+        "setup_required": "WYMAGA KONFIGURACJI",
+        "banner": {
+            "title": "Profesjonalna infrastruktura mailowa",
+            "description": "Buduj reputację nadawcy z dedykowanymi adresami IP, inteligentnym ogrzewaniem IP i automatycznym podpisywaniem DKIM."
+        },
+        "features": {
+            "dedicated_ips": "Dedykowane adresy IP",
+            "ip_warming": "Inteligentne ogrzewanie IP",
+            "dkim_signing": "Automatyczne podpisywanie DKIM",
+            "blacklist_monitoring": "Monitoring blacklist 24/7"
+        },
+        "create_pool": "Utwórz pulę IP",
+        "type_dedicated": "Dedykowana",
+        "type_shared": "Współdzielona",
+        "ips": "IP",
+        "stats": {
+            "pools": "Pule IP",
+            "total_ips": "Wszystkie IP",
+            "warming": "W ogrzewaniu",
+            "reputation": "Średnia reputacja"
+        },
+        "pools": {
+            "title": "Pule adresów IP",
+            "empty": {
+                "title": "Brak pul adresów IP",
+                "description": "Utwórz pierwszą pulę, aby rozpocząć zarządzanie dedykowanymi adresami IP."
+            }
+        },
+        "dedicated_ips": {
+            "title": "Dedykowane adresy IP",
+            "empty": "Brak dedykowanych adresów IP."
+        },
+        "no_hostname": "Brak hostname",
+        "warming_status": "Status ogrzewania",
+        "day": "Dzień",
+        "daily_limit": "Limit dzienny",
+        "emails": "emaili",
+        "start_warming": "Rozpocznij ogrzewanie",
+        "reputation": "Reputacja",
+        "delivery_rate": "Współczynnik dostarczenia",
+        "emails_sent": "emaili wysłano",
+        "blacklist_status": "Status blacklist",
+        "listed": "Na liście",
+        "clean": "Czyste",
+        "lists_checked": "list sprawdzono",
+        "check_now": "Sprawdź teraz",
+        "dkim_config": "Konfiguracja DKIM",
+        "dkim_description": "Klucze do podpisywania wiadomości DKIM",
+        "configured": "Skonfigurowane",
+        "dns_name": "Nazwa DNS",
+        "dns_value": "Wartość rekordu",
+        "verify_dkim": "Weryfikuj DKIM",
+        "rotate_keys": "Rotuj klucze",
+        "dkim_not_configured": "DKIM nie jest skonfigurowany dla tego adresu IP.",
+        "generate_dkim": "Wygeneruj klucze DKIM",
+        "sending_stats": "Statystyki wysyłki",
+        "total_sent": "Wysłano",
+        "delivered": "Dostarczono",
+        "bounced": "Odbite",
+        "complaints": "Skargi",
+        "pool_created": "Pula IP została utworzona!",
+        "pool_deleted": "Pula IP została usunięta.",
+        "pool_not_empty": "Nie można usunąć puli zawierającej adresy IP.",
+        "warming_started": "Ogrzewanie IP zostało rozpoczęte!",
+        "dkim_generated": "Klucze DKIM zostały wygenerowane!",
+        "dkim_verified": "DKIM zweryfikowany pomyślnie!",
+        "dkim_not_verified": "Rekord DKIM nie został znaleziony. Sprawdź konfigurację DNS."
     }
 }

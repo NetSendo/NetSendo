@@ -53,6 +53,7 @@ class Mailbox extends Model
     public const PROVIDER_SMTP = 'smtp';
     public const PROVIDER_SENDGRID = 'sendgrid';
     public const PROVIDER_GMAIL = 'gmail';
+    public const PROVIDER_NMI = 'nmi';
 
     /**
      * Message type constants
@@ -81,6 +82,11 @@ class Mailbox extends Model
                 'label' => 'Gmail',
                 'icon' => 'mail',
                 'description' => 'Gmail (OAuth 2.0)',
+            ],
+            self::PROVIDER_NMI => [
+                'label' => 'NetSendo MTA',
+                'icon' => 'zap',
+                'description' => 'Built-in mail infrastructure with dedicated IP',
             ],
         ];
     }
@@ -115,6 +121,22 @@ class Mailbox extends Model
     public function googleIntegration()
     {
         return $this->belongsTo(GoogleIntegration::class, 'google_integration_id');
+    }
+
+    /**
+     * Relationship: Domain configuration (for NMI)
+     */
+    public function domainConfiguration()
+    {
+        return $this->belongsTo(DomainConfiguration::class);
+    }
+
+    /**
+     * Relationship: Dedicated IP (for NMI)
+     */
+    public function dedicatedIp()
+    {
+        return $this->belongsTo(DedicatedIpAddress::class, 'dedicated_ip_id');
     }
 
     /**

@@ -788,6 +788,27 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/simulations', [\App\Http\Controllers\DeliverabilityController::class, 'simulationHistory'])->name('simulations.index');
         Route::get('/simulations/{simulation}', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulation'])->name('simulations.show');
     });
+
+    // ==================== NETSENDO MAIL INFRASTRUCTURE (NMI) ====================
+
+    // NetSendo Mail Infrastructure - IP Pool & Dedicated IP Management
+    Route::prefix('settings/nmi')->name('settings.nmi.')->group(function () {
+        // Dashboard
+        Route::get('/', [\App\Http\Controllers\NmiController::class, 'dashboard'])->name('dashboard');
+
+        // IP Pools
+        Route::get('/pools', [\App\Http\Controllers\NmiController::class, 'listPools'])->name('pools.index');
+        Route::post('/pools', [\App\Http\Controllers\NmiController::class, 'createPool'])->name('pools.store');
+        Route::get('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'getPool'])->name('pools.show');
+        Route::delete('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'deletePool'])->name('pools.destroy');
+
+        // Dedicated IPs
+        Route::get('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'getIp'])->name('ips.show');
+        Route::post('/ips/{ip}/warming/start', [\App\Http\Controllers\NmiController::class, 'startWarming'])->name('ips.warming.start');
+        Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate');
+        Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
+        Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check');
+    });
 });
 
 // Public Webinar Routes (no auth)

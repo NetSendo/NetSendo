@@ -167,3 +167,29 @@ Schedule::command('deliverability:upgrade-dmarc')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/deliverability-dmarc.log'));
 
+/*
+|--------------------------------------------------------------------------
+| NetSendo Mail Infrastructure (NMI) Jobs
+|--------------------------------------------------------------------------
+| These jobs only run when NMI is enabled.
+*/
+
+// NMI - Procesowanie aktualizacji IP warming - raz dziennie o 6:00
+Schedule::command('nmi:process-warming')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/nmi-warming.log'));
+
+// NMI - Sprawdzanie IP na blacklistach - co 6 godzin
+Schedule::command('nmi:check-blacklists')
+    ->everySixHours()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/nmi-blacklists.log'));
+
+// NMI - Rotacja kluczy DKIM (jeśli auto-rotate włączone) - raz w tygodniu
+Schedule::command('nmi:rotate-dkim')
+    ->weekly()
+    ->sundays()
+    ->at('04:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/nmi-dkim.log'));

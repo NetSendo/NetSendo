@@ -1,0 +1,35 @@
+# =============================================================================
+# Haraka Plugins for NetSendo Mail Infrastructure
+# =============================================================================
+# Order matters! Plugins are executed in the order listed.
+# Each plugin hooks into different stages of the email delivery process.
+
+# -----------------------------------------------------------------------------
+# Connection & Authentication
+# -----------------------------------------------------------------------------
+# TLS encryption for secure connections
+tls
+
+# Rate limiting to prevent abuse
+limit
+
+# Authentication (required for sending)
+auth/flat_file
+
+# -----------------------------------------------------------------------------
+# Message Processing
+# -----------------------------------------------------------------------------
+# DKIM signing for authenticated messages
+dkim_sign
+
+# Add required headers
+add_headers
+
+# Validate message size
+max_message_size
+
+# -----------------------------------------------------------------------------
+# Outbound Delivery
+# -----------------------------------------------------------------------------
+# Queue management
+queue/smtp_forward

@@ -1000,6 +1000,7 @@
         "logout": "Cerrar sesión",
         "ai_integrations": "Integraciones de IA",
         "mailboxes": "Buzones de envío",
+        "nmi": "Infraestructura de Correo",
         "sms_providers": "Proveedores SMS",
         "groups_nav": "Grupos",
         "tags": "Etiquetas",
@@ -6156,5 +6157,86 @@
             "recommendations": "Recomendaciones",
             "error": "Error al generar el análisis. Por favor, inténtalo de nuevo."
         }
+    },
+    "nmi": {
+        "title": "Infraestructura de Correo NetSendo",
+        "subtitle": "Gestione direcciones IP dedicadas y reputación del remitente",
+        "pool_details": "Detalles del Pool",
+        "pool_dedicated": "Dedicado",
+        "pool_shared": "Compartido",
+        "pool_information": "Información del Pool",
+        "max_ips": "Máx. IPs",
+        "dedicated_ips_list": "Direcciones IP dedicadas",
+        "no_ips_in_pool": "No hay direcciones IP en este pool",
+        "setup_required": "REQUIERE CONFIGURACIÓN",
+        "banner": {
+            "title": "Infraestructura de Correo Profesional",
+            "description": "Construya su reputación de remitente con direcciones IP dedicadas, calentamiento inteligente de IP y firma DKIM automática."
+        },
+        "features": {
+            "dedicated_ips": "Direcciones IP Dedicadas",
+            "ip_warming": "Calentamiento Inteligente de IP",
+            "dkim_signing": "Firma DKIM Automática",
+            "blacklist_monitoring": "Monitoreo de Listas Negras 24/7"
+        },
+        "create_pool": "Crear Pool de IP",
+        "pool_name": "Nombre del Pool",
+        "pool_type": "Tipo de Pool",
+        "type_dedicated": "Dedicado",
+        "type_shared": "Compartido",
+        "description": "Descripción",
+        "ips": "IPs",
+        "stats": {
+            "pools": "Pools de IP",
+            "total_ips": "Total IPs",
+            "warming": "En Calentamiento",
+            "reputation": "Reputación Prom."
+        },
+        "pools": {
+            "title": "Pools de Direcciones IP",
+            "empty": {
+                "title": "No hay pools de IP",
+                "description": "Cree su primer pool para comenzar a gestionar direcciones IP dedicadas."
+            }
+        },
+        "dedicated_ips": {
+            "title": "Direcciones IP Dedicadas",
+            "empty": "No hay direcciones IP dedicadas."
+        },
+        "no_hostname": "Sin nombre de host",
+        "warming_status": "Estado de Calentamiento",
+        "day": "Día",
+        "daily_limit": "Límite Diario",
+        "emails": "correos",
+        "start_warming": "Iniciar Calentamiento",
+        "reputation": "Reputación",
+        "delivery_rate": "Tasa de Entrega",
+        "emails_sent": "correos enviados",
+        "blacklist_status": "Estado de Listas Negras",
+        "listed": "Listado",
+        "clean": "Limpio",
+        "lists_checked": "listas verificadas",
+        "check_now": "Verificar Ahora",
+        "dkim_config": "Configuración DKIM",
+        "dkim_description": "Claves de firma de mensajes DKIM",
+        "configured": "Configurado",
+        "dns_name": "Nombre DNS",
+        "dns_value": "Valor del Registro",
+        "verify_dkim": "Verificar DKIM",
+        "rotate_keys": "Rotar Claves",
+        "dkim_not_configured": "DKIM no está configurado para esta dirección IP.",
+        "generate_dkim": "Generar Claves DKIM",
+        "sending_stats": "Estadísticas de Envío",
+        "total_sent": "Enviado",
+        "delivered": "Entregado",
+        "bounced": "Rebotado",
+        "complaints": "Quejas",
+        "pool_created": "¡Pool de IP creado exitosamente!",
+        "pool_deleted": "Pool de IP eliminado.",
+        "pool_not_empty": "No se puede eliminar un pool que contiene direcciones IP.",
+        "warming_started": "¡Calentamiento de IP iniciado!",
+        "dkim_generated": "¡Claves DKIM generadas exitosamente!",
+        "dkim_verified": "¡DKIM verificado exitosamente!",
+        "dkim_not_verified": "Registro DKIM no encontrado. Verifique su configuración DNS."
     }
 }
