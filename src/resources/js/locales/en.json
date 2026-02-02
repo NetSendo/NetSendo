@@ -552,6 +552,10 @@
             "feature4": "Automated Alerts & Recommendations",
             "cta": "Upgrade to GOLD"
         },
+        "domain": {
+            "spf_warning": "SPF record has a warning status - may affect deliverability",
+            "dmarc_policy_none": "DMARC policy is set to \"none\" - emails may land in spam"
+        },
         "domains": {
             "title": "Your Domains",
             "empty": {

@@ -781,6 +781,10 @@
             "feature4": "Automatische Benachrichtigungen & Empfehlungen",
             "cta": "Auf GOLD upgraden"
         },
+        "domain": {
+            "spf_warning": "SPF-Eintrag hat einen Warnstatus - kann die Zustellbarkeit beeinflussen",
+            "dmarc_policy_none": "DMARC-Richtlinie ist auf \"none\" gesetzt - E-Mails können im Spam landen"
+        },
         "domains": {
             "title": "Ihre Domains",
             "empty": {

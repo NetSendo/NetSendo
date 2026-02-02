@@ -218,7 +218,8 @@ class Subscriber extends Model
      */
     public function addTag(Tag $tag): void
     {
-        if (!$this->tags->contains($tag->id)) {
+        $currentTags = $this->tags ?? collect();
+        if (!$currentTags->contains('id', $tag->id)) {
             $this->tags()->attach($tag->id);
             $this->load('tags'); // Refresh relationship
 
@@ -231,7 +232,8 @@ class Subscriber extends Model
      */
     public function removeTag(Tag $tag): void
     {
-        if ($this->tags->contains($tag->id)) {
+        $currentTags = $this->tags ?? collect();
+        if ($currentTags->contains('id', $tag->id)) {
             $this->tags()->detach($tag->id);
             $this->load('tags'); // Refresh relationship
 
@@ -244,7 +246,8 @@ class Subscriber extends Model
      */
     public function syncTagsWithEvents(array $tagIds): void
     {
-        $currentTagIds = $this->tags->pluck('id')->toArray();
+        $currentTags = $this->tags ?? collect();
+        $currentTagIds = $currentTags->pluck('id')->toArray();
 
         // Find tags to add
         $toAdd = array_diff($tagIds, $currentTagIds);

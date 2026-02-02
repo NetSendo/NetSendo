@@ -553,6 +553,10 @@
             "feature4": "Automatyczne alerty i rekomendacje",
             "cta": "Uaktualnij do GOLD"
         },
+        "domain": {
+            "spf_warning": "Rekord SPF ma status ostrzegawczy - może wpływać na dostarczalność",
+            "dmarc_policy_none": "Polityka DMARC jest ustawiona na \"none\" - wiadomości mogą trafić do spamu"
+        },
         "domains": {
             "title": "Twoje domeny",
             "empty": {

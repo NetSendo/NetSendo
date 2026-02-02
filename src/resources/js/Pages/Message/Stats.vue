@@ -332,7 +332,7 @@ const toggleSelectClick = (subscriberId) => {
     }
 };
 
-// Select/deselect all opens
+// Select/deselect all opens (toggle for checkbox)
 const toggleAllOpens = () => {
     const data = props.recent_activity?.opens?.data || [];
     const subscriberIds = data
@@ -350,7 +350,19 @@ const toggleAllOpens = () => {
     }
 };
 
-// Select/deselect all clicks
+// Select all opens (always adds, never removes)
+const selectAllOpens = () => {
+    const data = props.recent_activity?.opens?.data || [];
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    const newIds = subscriberIds.filter(
+        (id) => !selectedOpens.value.includes(id),
+    );
+    selectedOpens.value = [...selectedOpens.value, ...newIds];
+};
+
+// Select/deselect all clicks (toggle for checkbox)
 const toggleAllClicks = () => {
     const data = props.recent_activity?.clicks?.data || [];
     const subscriberIds = data
@@ -366,6 +378,18 @@ const toggleAllClicks = () => {
         );
         selectedClicks.value = [...selectedClicks.value, ...newIds];
     }
+};
+
+// Select all clicks (always adds, never removes)
+const selectAllClicks = () => {
+    const data = props.recent_activity?.clicks?.data || [];
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    const newIds = subscriberIds.filter(
+        (id) => !selectedClicks.value.includes(id),
+    );
+    selectedClicks.value = [...selectedClicks.value, ...newIds];
 };
 
 // Clear selections
@@ -1191,7 +1215,7 @@ const handleBulkSuccess = ({ listId, count }) => {
                                 {{ $t("messages.stats.bulk_add_to_list") }}
                             </button>
                             <button
-                                @click="toggleAllOpens"
+                                @click="selectAllOpens"
                                 class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
                             >
                                 {{ $t("common.select_all") }}
@@ -1435,7 +1459,7 @@ const handleBulkSuccess = ({ listId, count }) => {
                                 {{ $t("messages.stats.bulk_add_to_list") }}
                             </button>
                             <button
-                                @click="toggleAllClicks"
+                                @click="selectAllClicks"
                                 class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
                             >
                                 {{ $t("common.select_all") }}

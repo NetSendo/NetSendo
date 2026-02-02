@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Subscriber Management:**
+  - Fixed `Call to a member function contains() on null` error by adding safe null checks for `tags` relationship in `addTag`, `removeTag`, and `syncTagsWithEvents` methods.
+
+- **Message Statistics:**
+  - Fixed "Select All" functionality in "Recent Opens" and "Recent Clicks" sections to correctly add all visible items to selection instead of toggling them off when already selected.
+
 - **System Message Preview:**
   - Fixed link navigation in system message preview by allowing popups and top navigation in the iframe sandbox.
 
