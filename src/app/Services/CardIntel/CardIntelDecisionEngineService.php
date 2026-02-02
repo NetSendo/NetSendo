@@ -23,7 +23,9 @@ class CardIntelDecisionEngineService
     public function generateMessage(
         CardIntelScan $scan,
         ?string $contextLevel = null,
-        ?string $tone = null
+        ?string $tone = null,
+        ?string $formality = null,
+        ?string $gender = null
     ): array {
         $extraction = $scan->extraction;
         $context = $scan->context;
@@ -37,8 +39,15 @@ class CardIntelDecisionEngineService
         // Use provided or detected context level
         $contextLevel ??= $context?->context_level ?? CardIntelContext::LEVEL_LOW;
         $tone ??= $settings->default_tone;
+        $formality ??= 'formal';
 
-        $prompt = $this->buildPrompt($extraction, $enrichment, $contextLevel, $tone);
+        // Detect gender from first name if auto
+        $firstName = $extraction->fields['first_name'] ?? '';
+        if ($gender === 'auto' || $gender === null) {
+            $gender = $this->detectGenderFromName($firstName);
+        }
+
+        $prompt = $this->buildPrompt($extraction, $enrichment, $contextLevel, $tone, $formality, $gender);
 
         $integration = $this->aiService->getDefaultIntegration();
 
@@ -66,13 +75,13 @@ class CardIntelDecisionEngineService
     /**
      * Generate all three context level versions at once.
      */
-    public function generateAllVersions(CardIntelScan $scan, ?string $tone = null): array
+    public function generateAllVersions(CardIntelScan $scan, ?string $tone = null, ?string $formality = null, ?string $gender = null): array
     {
         $versions = [];
 
         foreach ([CardIntelContext::LEVEL_LOW, CardIntelContext::LEVEL_MEDIUM, CardIntelContext::LEVEL_HIGH] as $level) {
             try {
-                $versions[$level] = $this->generateMessage($scan, $level, $tone);
+                $versions[$level] = $this->generateMessage($scan, $level, $tone, $formality, $gender);
             } catch (\Exception $e) {
                 $versions[$level] = [
                     'subject' => '',
@@ -87,13 +96,50 @@ class CardIntelDecisionEngineService
     }
 
     /**
+     * Detect gender from Polish first name.
+     */
+    protected function detectGenderFromName(string $firstName): string
+    {
+        $firstName = mb_strtolower(trim($firstName));
+
+        if (empty($firstName)) {
+            return 'male'; // default
+        }
+
+        // Common Polish female name endings
+        $femaleEndings = ['a', 'ia', 'ja', 'cia', 'sia', 'nia', 'la', 'ela', 'ola'];
+
+        // Exceptions - male names ending in 'a'
+        $maleNamesEndingInA = [
+            'kuba', 'barnaba', 'kosma', 'bonawentura', 'boryna', 'sasza', 'dyzma',
+            'jarema', 'kosma', 'cezaria', 'nikita', 'ezra', 'nehemia'
+        ];
+
+        // Check exceptions first
+        if (in_array($firstName, $maleNamesEndingInA)) {
+            return 'male';
+        }
+
+        // Check if name ends with female suffix
+        foreach ($femaleEndings as $ending) {
+            if (str_ends_with($firstName, $ending)) {
+                return 'female';
+            }
+        }
+
+        return 'male';
+    }
+
+    /**
      * Build the message generation prompt.
      */
     protected function buildPrompt(
         $extraction,
         $enrichment,
         string $contextLevel,
-        string $tone
+        string $tone,
+        string $formality,
+        string $gender
     ): string {
         $fields = $extraction->fields;
 
@@ -181,6 +227,30 @@ EOT,
             }
         }
 
+        // Build personalization instructions
+        $formalityDesc = $formality === 'informal'
+            ? 'NIEFORMALNA (na Ty) - zwracaj się "Cześć", "Witaj", używaj form "Ty", "Ci", "Twój"'
+            : 'FORMALNA (na Pan/Pani) - zwracaj się "Szanowny Panie/Szanowna Pani", używaj form "Pan", "Pana", "Pani"';
+
+        $genderDesc = $gender === 'female'
+            ? 'KOBIETA - używaj form żeńskich: "chciałabyś", "mogłabyś", "zainteresowana", "Pani"'
+            : 'MĘŻCZYZNA - używaj form męskich: "chciałbyś", "mógłbyś", "zainteresowany", "Pan"';
+
+        $personalizationInstructions = <<<EOT
+
+PERSONALIZACJA:
+FORMA ZWRACANIA SIĘ: {$formalityDesc}
+PŁEĆ ODBIORCY: {$genderDesc}
+
+PRZYKŁADY POPRAWNYCH FORM:
+- Formalna + mężczyzna: "Szanowny Panie Janie, czy byłby Pan zainteresowany..."
+- Formalna + kobieta: "Szanowna Pani Anno, czy byłaby Pani zainteresowana..."
+- Nieformalna + mężczyzna: "Cześć Janie! Zastanawiałem się, czy chciałbyś..."
+- Nieformalna + kobieta: "Cześć Anno! Zastanawiałem się, czy chciałabyś..."
+
+ZAWZE stosuj odpowiednią odmianę czasowników i zaimków zgodną z płcią!
+EOT;
+
         $prompt = <<<PROMPT
 Wygeneruj email biznesowy do nowego kontaktu.
 
@@ -188,6 +258,7 @@ Wygeneruj email biznesowy do nowego kontaktu.
 {$enrichmentInfo}
 
 TON: {$toneDesc}
+{$personalizationInstructions}
 
 {$levelInstructions}
 {$customInstructions}
@@ -204,7 +275,7 @@ FORMAT ODPOWIEDZI (JSON):
 {
   "subject": "Temat emaila (krótki, angażujący)",
   "preheader": "Krótki podgląd widoczny w skrzynce odbiorczej (max 100 znaków)",
-  "greeting": "Szanowny Panie [Imię]" lub odpowiednie,
+  "greeting": "Szanowny Panie [Imię]" lub odpowiednie zgodne z formalnością i płcią,
   "body": "<p>Treść emaila w HTML bez pozdrowień końcowych</p>"
 }
 
@@ -215,6 +286,7 @@ WAŻNE:
 - Zacznij od sedna
 - Podpis zostanie dodany automatycznie - NIE dodawaj go
 - ZAWSZE dodaj preheader - krótkie podsumowanie zachęcające do otwarcia
+- BEZWZGLĘDNIE przestrzegaj wybranej formy zwracania się i odmiany zgodnej z płcią!
 PROMPT;
 
         return $prompt;

@@ -167,6 +167,55 @@ return [
         'description' => 'Está ejecutando NetSendo en localhost. La verificación DNS requiere un dominio público. Los registros CNAME que apuntan a localhost no pueden ser verificados.',
     ],
 
+    // HTML Analysis Issues
+    'html' => [
+        'ratio_low' => 'Baja proporción de texto a HTML - su correo contiene demasiado código HTML',
+        'hidden_text' => 'Texto oculto detectado (display:none) - esto es un indicador de spam',
+        'tiny_font' => 'Tamaño de fuente muy pequeño detectado - esto es un indicador de spam',
+        'image_heavy' => 'Correo con muchas imágenes y poco texto - añada más contenido de texto',
+    ],
+
+    // Subject Analysis Issues
+    'subject' => [
+        'too_long' => 'El asunto es demasiado largo (más de 60 caracteres)',
+        'too_short' => 'El asunto es demasiado corto (menos de 5 caracteres)',
+        'all_caps' => 'El asunto contiene demasiadas mayúsculas',
+        'exclamations' => 'El asunto contiene demasiados signos de exclamación',
+        'questions' => 'El asunto contiene demasiados signos de interrogación',
+        'fake_reply' => 'El asunto comienza con RE: o FW: lo que parece una respuesta falsa',
+    ],
+
+    // Link Issues
+    'links' => [
+        'shortener' => 'Acortador de URL detectado - use URLs completas',
+        'suspicious_tld' => 'Extensión de dominio sospechosa detectada',
+        'ip_address' => 'Dirección IP en URL detectada - use nombres de dominio apropiados',
+        'too_many' => 'Demasiados enlaces en el correo (más de 20)',
+    ],
+
+    // Formatting Issues
+    'formatting' => [
+        'caps' => 'El contenido contiene demasiadas mayúsculas',
+        'symbols' => 'El contenido contiene demasiados símbolos especiales',
+    ],
+
+    // Spam Words
+    'spam' => [
+        'word_detected' => 'Palabra desencadenante de spam detectada',
+    ],
+
+    // Recommendations
+    'recommendations' => [
+        'fix_domain' => 'Corrija los problemas de configuración DNS de su dominio',
+        'upgrade_dmarc' => 'Actualice su política DMARC de "none" a "quarantine" o "reject"',
+        'remove_spam_words' => 'Elimine o reemplace las palabras desencadenantes de spam en su contenido',
+        'improve_subject' => 'Mejore su línea de asunto - evite mayúsculas y puntuación excesiva',
+        'fix_html' => 'Corrija los problemas de estructura HTML - mejore la proporción texto/HTML',
+        'fix_links' => 'Corrija los problemas de enlaces - evite acortadores de URL y dominios sospechosos',
+        'looks_good' => '¡Su correo se ve bien! No se detectaron problemas importantes',
+        'add_domain' => 'Añada y verifique un dominio en DMARC Wiz para un análisis completo de entregabilidad',
+    ],
+
     // Upsell for non-GOLD users
     'upsell' => [
         'title' => 'Desbloquear Deliverability Shield',

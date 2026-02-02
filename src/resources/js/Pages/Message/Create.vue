@@ -957,6 +957,49 @@ const showScheduleModal = ref(false);
 const testEmail = ref("");
 const sendingTest = ref(false);
 
+// Deliverability check modal
+const showDeliverabilityModal = ref(false);
+const deliverabilityResult = ref(null);
+const isDeliverabilityLoading = ref(false);
+
+// Check deliverability via InboxPassport AI
+const checkDeliverability = async () => {
+    if (!form.subject || !form.content) {
+        showToast(t("messages.deliverability.missing_content"), false);
+        return;
+    }
+
+    showDeliverabilityModal.value = true;
+    isDeliverabilityLoading.value = true;
+    deliverabilityResult.value = null;
+
+    try {
+        // Use wrapped content for proper analysis
+        const contentToCheck =
+            !selectedTemplate.value &&
+            advancedEditorRef.value?.getWrappedContent
+                ? advancedEditorRef.value.getWrappedContent()
+                : form.content;
+
+        const response = await axios.post(
+            route("deliverability.quick-simulate"),
+            {
+                subject: form.subject,
+                content: contentToCheck,
+                mailbox_id: form.mailbox_id,
+            },
+        );
+
+        deliverabilityResult.value = response.data;
+    } catch (error) {
+        console.error("Deliverability check failed:", error);
+        showToast(t("messages.deliverability.error"), false);
+        showDeliverabilityModal.value = false;
+    } finally {
+        isDeliverabilityLoading.value = false;
+    }
+};
+
 // Send test email
 const sendTestEmail = async () => {
     if (!testEmail.value) return;
@@ -3601,6 +3644,28 @@ if (form.contact_list_ids.length > 0) {
                             {{ $t("messages.actions.test") }}
                         </button>
 
+                        <!-- Check Deliverability Button -->
+                        <button
+                            type="button"
+                            @click="checkDeliverability"
+                            class="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                />
+                            </svg>
+                            {{ $t("messages.deliverability.check_button") }}
+                        </button>
+
                         <template v-if="form.type === 'broadcast'">
                             <!-- Save Draft -->
                             <SecondaryButton
@@ -3878,6 +3943,342 @@ if (form.contact_list_ids.length > 0) {
                                 : $t("messages.test.send")
                         }}
                     </PrimaryButton>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deliverability Check Modal -->
+        <div
+            v-if="showDeliverabilityModal"
+            class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 backdrop-blur-sm"
+        >
+            <div
+                class="relative mx-4 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800"
+            >
+                <button
+                    @click="showDeliverabilityModal = false"
+                    class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+
+                <div class="flex items-center gap-3 mb-4">
+                    <div
+                        class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30"
+                    >
+                        <svg
+                            class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                            />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3
+                            class="text-lg font-semibold text-slate-900 dark:text-white"
+                        >
+                            {{ $t("messages.deliverability.title") }}
+                        </h3>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">
+                            {{ $t("messages.deliverability.subtitle") }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div
+                    v-if="isDeliverabilityLoading"
+                    class="flex flex-col items-center justify-center py-12"
+                >
+                    <svg
+                        class="h-10 w-10 animate-spin text-emerald-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                    >
+                        <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                        />
+                        <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                    </svg>
+                    <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                        {{ $t("messages.deliverability.loading") }}
+                    </p>
+                </div>
+
+                <!-- Results -->
+                <div v-else-if="deliverabilityResult" class="space-y-6">
+                    <!-- Domain Warning -->
+                    <div
+                        v-if="!deliverabilityResult.has_domain"
+                        class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20"
+                    >
+                        <p class="text-sm text-amber-700 dark:text-amber-300">
+                            ⚠️ {{ $t("messages.deliverability.no_domain") }}
+                        </p>
+                    </div>
+
+                    <!-- Score and Folder -->
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Inbox Score -->
+                        <div
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <p
+                                class="text-sm font-medium text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("messages.deliverability.inbox_score") }}
+                            </p>
+                            <div class="mt-2 flex items-end gap-2">
+                                <span
+                                    class="text-4xl font-bold"
+                                    :class="{
+                                        'text-green-600 dark:text-green-400':
+                                            deliverabilityResult.inbox_score >=
+                                            80,
+                                        'text-yellow-600 dark:text-yellow-400':
+                                            deliverabilityResult.inbox_score >=
+                                                60 &&
+                                            deliverabilityResult.inbox_score <
+                                                80,
+                                        'text-red-600 dark:text-red-400':
+                                            deliverabilityResult.inbox_score <
+                                            60,
+                                    }"
+                                >
+                                    {{ deliverabilityResult.inbox_score }}
+                                </span>
+                                <span
+                                    class="mb-1 text-sm text-slate-400 dark:text-slate-500"
+                                    >/100</span
+                                >
+                            </div>
+                            <div
+                                class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700"
+                            >
+                                <div
+                                    class="h-full rounded-full transition-all"
+                                    :class="{
+                                        'bg-green-500':
+                                            deliverabilityResult.inbox_score >=
+                                            80,
+                                        'bg-yellow-500':
+                                            deliverabilityResult.inbox_score >=
+                                                60 &&
+                                            deliverabilityResult.inbox_score <
+                                                80,
+                                        'bg-red-500':
+                                            deliverabilityResult.inbox_score <
+                                            60,
+                                    }"
+                                    :style="{
+                                        width:
+                                            deliverabilityResult.inbox_score +
+                                            '%',
+                                    }"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Predicted Folder -->
+                        <div
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <p
+                                class="text-sm font-medium text-slate-500 dark:text-slate-400"
+                            >
+                                {{
+                                    $t(
+                                        "messages.deliverability.predicted_folder",
+                                    )
+                                }}
+                            </p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span
+                                    class="text-2xl"
+                                    v-if="
+                                        deliverabilityResult.predicted_folder ===
+                                        'inbox'
+                                    "
+                                    >📥</span
+                                >
+                                <span
+                                    class="text-2xl"
+                                    v-else-if="
+                                        deliverabilityResult.predicted_folder ===
+                                        'promotions'
+                                    "
+                                    >📢</span
+                                >
+                                <span class="text-2xl" v-else>🗑️</span>
+                                <span
+                                    class="text-xl font-semibold text-slate-900 dark:text-white"
+                                >
+                                    {{
+                                        $t(
+                                            "messages.deliverability.folders." +
+                                                deliverabilityResult.predicted_folder,
+                                        )
+                                    }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Provider Predictions -->
+                    <div
+                        v-if="deliverabilityResult.provider_predictions"
+                        class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
+                        <p
+                            class="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ $t("messages.deliverability.by_provider") }}
+                        </p>
+                        <div class="grid gap-2 sm:grid-cols-3">
+                            <div
+                                v-for="(
+                                    prediction, provider
+                                ) in deliverabilityResult.provider_predictions"
+                                :key="provider"
+                                class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-700/50"
+                            >
+                                <span
+                                    class="text-sm font-medium capitalize text-slate-700 dark:text-slate-300"
+                                    >{{ provider }}</span
+                                >
+                                <span
+                                    class="ml-auto text-xs font-medium"
+                                    :class="{
+                                        'text-green-600 dark:text-green-400':
+                                            prediction.folder === 'inbox',
+                                        'text-yellow-600 dark:text-yellow-400':
+                                            prediction.folder === 'promotions',
+                                        'text-red-600 dark:text-red-400':
+                                            prediction.folder === 'spam',
+                                    }"
+                                >
+                                    {{
+                                        $t(
+                                            "messages.deliverability.folders." +
+                                                prediction.folder,
+                                        )
+                                    }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Issues -->
+                    <div
+                        v-if="
+                            deliverabilityResult.issues &&
+                            deliverabilityResult.issues.length > 0
+                        "
+                        class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
+                        <p
+                            class="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ $t("messages.deliverability.issues") }}
+                        </p>
+                        <ul class="space-y-2">
+                            <li
+                                v-for="(
+                                    issue, index
+                                ) in deliverabilityResult.issues.slice(0, 5)"
+                                :key="index"
+                                class="flex items-start gap-2 text-sm"
+                            >
+                                <span
+                                    :class="{
+                                        'text-red-500':
+                                            issue.severity === 'critical',
+                                        'text-yellow-500':
+                                            issue.severity === 'warning',
+                                        'text-blue-500':
+                                            issue.severity === 'info',
+                                    }"
+                                >
+                                    {{
+                                        issue.severity === "critical"
+                                            ? "🔴"
+                                            : issue.severity === "warning"
+                                              ? "🟡"
+                                              : "🔵"
+                                    }}
+                                </span>
+                                <span
+                                    class="text-slate-600 dark:text-slate-400"
+                                >
+                                    {{ $t(issue.message_key) }}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div
+                        v-if="
+                            deliverabilityResult.recommendations &&
+                            deliverabilityResult.recommendations.length > 0
+                        "
+                        class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-900/20"
+                    >
+                        <p
+                            class="mb-3 text-sm font-medium text-emerald-700 dark:text-emerald-300"
+                        >
+                            💡
+                            {{ $t("messages.deliverability.recommendations") }}
+                        </p>
+                        <ul class="space-y-2">
+                            <li
+                                v-for="(
+                                    rec, index
+                                ) in deliverabilityResult.recommendations.slice(
+                                    0,
+                                    3,
+                                )"
+                                :key="index"
+                                class="text-sm text-emerald-700 dark:text-emerald-300"
+                            >
+                                • {{ $t(rec.message_key) }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <SecondaryButton @click="showDeliverabilityModal = false">
+                        {{ $t("common.close") }}
+                    </SecondaryButton>
                 </div>
             </div>
         </div>

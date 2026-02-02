@@ -777,6 +777,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // InboxPassport AI - Simulation
         Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator');
         Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate');
+        Route::post('/inbox-passport/quick-simulate', [\App\Http\Controllers\DeliverabilityController::class, 'quickSimulateInbox'])->name('quick-simulate');
         Route::get('/simulations', [\App\Http\Controllers\DeliverabilityController::class, 'simulationHistory'])->name('simulations.index');
         Route::get('/simulations/{simulation}', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulation'])->name('simulations.show');
     });

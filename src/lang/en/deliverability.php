@@ -167,6 +167,55 @@ return [
         'description' => 'You are running NetSendo on localhost. DNS verification requires a public domain. CNAME records pointing to localhost cannot be verified.',
     ],
 
+    // HTML Analysis Issues
+    'html' => [
+        'ratio_low' => 'Low text to HTML ratio - your email is too heavy on HTML code',
+        'hidden_text' => 'Hidden text detected (display:none) - this is a spam indicator',
+        'tiny_font' => 'Very small font size detected - this is a spam indicator',
+        'image_heavy' => 'Image-heavy email with little text - add more text content',
+    ],
+
+    // Subject Analysis Issues
+    'subject' => [
+        'too_long' => 'Subject line is too long (over 60 characters)',
+        'too_short' => 'Subject line is too short (under 5 characters)',
+        'all_caps' => 'Subject contains too many capital letters',
+        'exclamations' => 'Subject contains excessive exclamation marks',
+        'questions' => 'Subject contains too many question marks',
+        'fake_reply' => 'Subject starts with RE: or FW: which looks like a fake reply',
+    ],
+
+    // Link Issues
+    'links' => [
+        'shortener' => 'URL shortener detected - use full URLs instead',
+        'suspicious_tld' => 'Suspicious domain extension detected',
+        'ip_address' => 'IP address in URL detected - use proper domain names',
+        'too_many' => 'Too many links in email (over 20)',
+    ],
+
+    // Formatting Issues
+    'formatting' => [
+        'caps' => 'Content contains too many capital letters',
+        'symbols' => 'Content contains excessive special symbols',
+    ],
+
+    // Spam Words
+    'spam' => [
+        'word_detected' => 'Spam trigger word detected',
+    ],
+
+    // Recommendations
+    'recommendations' => [
+        'fix_domain' => 'Fix your domain DNS configuration issues',
+        'upgrade_dmarc' => 'Upgrade your DMARC policy from "none" to "quarantine" or "reject"',
+        'remove_spam_words' => 'Remove or replace spam trigger words in your content',
+        'improve_subject' => 'Improve your subject line - avoid caps, excessive punctuation',
+        'fix_html' => 'Fix HTML structure issues - improve text/HTML ratio',
+        'fix_links' => 'Fix link issues - avoid URL shorteners and suspicious domains',
+        'looks_good' => 'Your email looks good! No major issues detected',
+        'add_domain' => 'Add and verify a domain in DMARC Wiz for full deliverability analysis',
+    ],
+
     // Upsell for non-GOLD users
     'upsell' => [
         'title' => 'Unlock Deliverability Shield',

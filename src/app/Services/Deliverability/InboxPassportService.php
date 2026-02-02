@@ -409,4 +409,110 @@ class InboxPassportService
 
         return $recommendations;
     }
+
+    /**
+     * Analyze content only (without domain) for quick simulations
+     */
+    public function analyzeContentOnly(string $subject, string $htmlContent): array
+    {
+        // Analyze content
+        $contentAnalysis = $this->spamAnalyzer->analyze($subject, $htmlContent);
+
+        // Calculate content score (content is 40% of full score, but we scale to 100)
+        $contentScore = (int) round(($contentAnalysis->contentScore / 40) * 70); // Max 70 without domain
+
+        // Collect content issues
+        $issues = [];
+
+        if (!empty($contentAnalysis->spamWords)) {
+            foreach (array_slice($contentAnalysis->spamWords, 0, 5) as $word) {
+                $issues[] = [
+                    'code' => 'spam_word',
+                    'severity' => 'warning',
+                    'message_key' => 'deliverability.content.spam_word',
+                    'context' => ['word' => $word],
+                ];
+            }
+        }
+
+        foreach ($contentAnalysis->subjectIssues as $issue) {
+            $issues[] = [
+                'code' => $issue['code'],
+                'severity' => $issue['severity'] ?? 'warning',
+                'message_key' => $issue['message_key'],
+            ];
+        }
+
+        foreach ($contentAnalysis->htmlIssues as $issue) {
+            $issues[] = [
+                'code' => $issue['code'],
+                'severity' => $issue['severity'] ?? 'warning',
+                'message_key' => $issue['message_key'],
+            ];
+        }
+
+        foreach ($contentAnalysis->linkIssues as $issue) {
+            $issues[] = [
+                'code' => $issue['code'],
+                'severity' => $issue['severity'] ?? 'warning',
+                'message_key' => $issue['message_key'],
+            ];
+        }
+
+        // Predict folder based on content only
+        $predictedFolder = InboxSimulation::FOLDER_INBOX;
+        if (count($contentAnalysis->getCriticalIssues()) >= 3) {
+            $predictedFolder = InboxSimulation::FOLDER_SPAM;
+        } elseif ($contentScore < 50) {
+            $predictedFolder = InboxSimulation::FOLDER_SPAM;
+        } elseif ($contentScore < 65 || $this->hasPromotionalContent($contentAnalysis)) {
+            $predictedFolder = InboxSimulation::FOLDER_PROMOTIONS;
+        }
+
+        // Generate recommendations
+        $recommendations = [];
+
+        if (!empty($contentAnalysis->spamWords)) {
+            $recommendations[] = [
+                'priority' => 'high',
+                'category' => 'content',
+                'message_key' => 'deliverability.recommendations.remove_spam_words',
+            ];
+        }
+
+        if (!empty($contentAnalysis->subjectIssues)) {
+            $recommendations[] = [
+                'priority' => 'medium',
+                'category' => 'subject',
+                'message_key' => 'deliverability.recommendations.improve_subject',
+            ];
+        }
+
+        // Add domain recommendation since no domain is configured
+        $recommendations[] = [
+            'priority' => 'high',
+            'category' => 'domain',
+            'message_key' => 'deliverability.recommendations.add_domain',
+        ];
+
+        return [
+            'score' => $contentScore,
+            'predicted_folder' => $predictedFolder,
+            'issues' => $issues,
+            'recommendations' => $recommendations,
+            'score_breakdown' => [
+                'content' => [
+                    'score' => $contentAnalysis->contentScore,
+                    'max' => 40,
+                    'weight' => 0.7,
+                ],
+                'domain' => [
+                    'score' => 0,
+                    'max' => 30,
+                    'weight' => 0.3,
+                    'note' => 'no_domain_configured',
+                ],
+            ],
+        ];
+    }
 }

@@ -318,9 +318,11 @@ class CardIntelService
     public function generateMessage(
         CardIntelScan $scan,
         ?string $contextLevel = null,
-        ?string $tone = null
+        ?string $tone = null,
+        ?string $formality = null,
+        ?string $gender = null
     ): array {
-        $message = $this->decisionEngine->generateMessage($scan, $contextLevel, $tone);
+        $message = $this->decisionEngine->generateMessage($scan, $contextLevel, $tone, $formality, $gender);
 
         // Log action
         CardIntelAction::createForScan($scan, CardIntelAction::TYPE_GENERATE_MESSAGE, [
@@ -333,9 +335,9 @@ class CardIntelService
     /**
      * Generate all message versions (LOW, MEDIUM, HIGH) for a scan.
      */
-    public function generateAllVersions(CardIntelScan $scan, ?string $tone = null): array
+    public function generateAllVersions(CardIntelScan $scan, ?string $tone = null, ?string $formality = null, ?string $gender = null): array
     {
-        return $this->decisionEngine->generateAllVersions($scan, $tone);
+        return $this->decisionEngine->generateAllVersions($scan, $tone, $formality, $gender);
     }
 
     /**

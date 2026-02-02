@@ -615,7 +615,7 @@
         "subject_analysis": "Subject Analysis",
         "link_check": "Link Check",
         "html_structure": "HTML Structure",
-        "formatting": "Formatting",
+        "formatting_title": "Formatting",
         "inbox_passport": {
             "subtitle": "Check deliverability before sending",
             "how_it_works": "How it works?",
@@ -632,6 +632,43 @@
         "localhost_warning": {
             "title": "Local Environment Detected",
             "description": "Domain verification is not available in localhost environment. Deploy to a production server to configure Deliverability Shield."
+        },
+        "html": {
+            "ratio_low": "Low text to HTML ratio - your email is too heavy on HTML code",
+            "hidden_text": "Hidden text detected (display:none) - this is a spam indicator",
+            "tiny_font": "Very small font size detected - this is a spam indicator",
+            "image_heavy": "Image-heavy email with little text - add more text content"
+        },
+        "subject": {
+            "too_long": "Subject line is too long (over 60 characters)",
+            "too_short": "Subject line is too short (under 5 characters)",
+            "all_caps": "Subject contains too many capital letters",
+            "exclamations": "Subject contains excessive exclamation marks",
+            "questions": "Subject contains too many question marks",
+            "fake_reply": "Subject starts with RE: or FW: which looks like a fake reply"
+        },
+        "links": {
+            "shortener": "URL shortener detected - use full URLs instead",
+            "suspicious_tld": "Suspicious domain extension detected",
+            "ip_address": "IP address in URL detected - use proper domain names",
+            "too_many": "Too many links in email (over 20)"
+        },
+        "formatting": {
+            "caps": "Content contains too many capital letters",
+            "symbols": "Content contains excessive special symbols"
+        },
+        "spam": {
+            "word_detected": "Spam trigger word detected"
+        },
+        "recommendations": {
+            "fix_domain": "Fix your domain DNS configuration issues",
+            "upgrade_dmarc": "Upgrade your DMARC policy from \"none\" to \"quarantine\" or \"reject\"",
+            "remove_spam_words": "Remove or replace spam trigger words in your content",
+            "improve_subject": "Improve your subject line - avoid caps, excessive punctuation",
+            "fix_html": "Fix HTML structure issues - improve text/HTML ratio",
+            "fix_links": "Fix link issues - avoid URL shorteners and suspicious domains",
+            "looks_good": "Your email looks good! No major issues detected",
+            "add_domain": "Add and verify a domain in DMARC Wiz for full deliverability analysis"
         }
     },
     "navigation": {
@@ -1617,6 +1654,25 @@
             "no_subject_preview": "(no subject)",
             "no_mailbox_preview": "No mailbox configured"
         },
+        "deliverability": {
+            "check_button": "Check Deliverability",
+            "title": "Deliverability Check",
+            "subtitle": "InboxPassport AI analysis of your message",
+            "loading": "Analyzing your message...",
+            "missing_content": "Please add subject and content before checking deliverability",
+            "error": "Failed to check deliverability. Please try again.",
+            "no_domain": "No verified domain found. Showing content analysis only. For full results, configure your domain in DMARC Wiz.",
+            "inbox_score": "Inbox Score",
+            "predicted_folder": "Predicted Folder",
+            "by_provider": "Predictions by Provider",
+            "issues": "Issues Found",
+            "recommendations": "Recommendations",
+            "folders": {
+                "inbox": "Primary Inbox",
+                "promotions": "Promotions",
+                "spam": "Spam"
+            }
+        },
         "validation": {
             "subject_required": "Message subject is required",
             "content_required": "Message content is required",
@@ -1698,7 +1754,13 @@
             "select_list": "Select list",
             "search_lists": "Search lists...",
             "no_lists": "No lists",
-            "added_to_list": "Added to list"
+            "added_to_list": "Added to list",
+            "bulk_selected": "selected",
+            "bulk_add_to_list": "Add to list",
+            "bulk_add_title": "Add to list",
+            "bulk_add_description": "{count} unique subscribers will be added to the selected list",
+            "bulk_add_button": "Add to list",
+            "bulk_add_success": "Added to list \"{list}\""
         },
         "tracked_links": {
             "title": "Tracked Links",
@@ -6619,10 +6681,21 @@
                 "save_to_crm": "Save to CRM",
                 "save_contact": "Save Contact",
                 "add_to_list": "Add to List",
+                "select_list": "Select list",
+                "select_list_desc": "Choose the mailing list you want to add this contact to",
                 "send_email": "Send Email",
                 "send_sms": "Send SMS",
                 "archive": "Archive",
                 "delete": "Delete"
+            },
+            "personalization": {
+                "formality": "Formality",
+                "formal": "Formal (Mr/Ms)",
+                "informal": "Informal",
+                "gender": "Gender",
+                "gender_auto": "Automatic",
+                "gender_male": "Male",
+                "gender_female": "Female"
             },
             "reasoning": {
                 "has_email": "Has email address",

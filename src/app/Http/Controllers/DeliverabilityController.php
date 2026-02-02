@@ -373,4 +373,95 @@ class DeliverabilityController extends Controller
             'simulations' => $simulations,
         ]);
     }
+
+    /**
+     * Quick inbox simulation for message editor (returns JSON)
+     */
+    public function quickSimulateInbox(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'content' => 'required|string|max:100000',
+            'mailbox_id' => 'nullable|exists:mailboxes,id',
+        ]);
+
+        // Find a domain to use for simulation
+        // Priority: domain linked to mailbox > any verified domain
+        $domain = null;
+
+        if (!empty($validated['mailbox_id'])) {
+            $mailbox = \App\Models\Mailbox::find($validated['mailbox_id']);
+            if ($mailbox) {
+                // Try to find domain configuration linked to this mailbox
+                $domain = DomainConfiguration::forUser($user->id)
+                    ->where('mailbox_id', $mailbox->id)
+                    ->verified()
+                    ->first();
+
+                // If no direct link, try to find by domain from mailbox email
+                if (!$domain && $mailbox->from_email) {
+                    $emailDomain = substr(strrchr($mailbox->from_email, '@'), 1);
+                    $domain = DomainConfiguration::forUser($user->id)
+                        ->where('domain', $emailDomain)
+                        ->verified()
+                        ->first();
+                }
+            }
+        }
+
+        // Fallback: use any verified domain
+        if (!$domain) {
+            $domain = DomainConfiguration::forUser($user->id)
+                ->verified()
+                ->orderBy('overall_status', 'asc') // Prefer healthier domains
+                ->first();
+        }
+
+        // If still no domain, return a warning but still do content analysis
+        if (!$domain) {
+            // Create a minimal content-only analysis
+            $contentAnalysis = $this->inboxPassportService->analyzeContentOnly(
+                $validated['subject'],
+                $validated['content']
+            );
+
+            return response()->json([
+                'success' => true,
+                'has_domain' => false,
+                'inbox_score' => $contentAnalysis['score'],
+                'predicted_folder' => $contentAnalysis['predicted_folder'],
+                'provider_predictions' => null,
+                'issues' => $contentAnalysis['issues'],
+                'recommendations' => $contentAnalysis['recommendations'],
+                'score_breakdown' => $contentAnalysis['score_breakdown'],
+                'message' => __('deliverability.messages.no_domain_warning'),
+            ]);
+        }
+
+        // Run full simulation
+        $simulation = $this->inboxPassportService->simulate(
+            $user,
+            $domain,
+            $validated['subject'],
+            $validated['content'],
+            null // No message_id for quick simulation
+        );
+
+        return response()->json([
+            'success' => true,
+            'has_domain' => true,
+            'domain' => $domain->domain,
+            'simulation_id' => $simulation->id,
+            'inbox_score' => $simulation->inbox_score,
+            'score_info' => $simulation->getScoreInfo(),
+            'predicted_folder' => $simulation->predicted_folder,
+            'folder_info' => $simulation->getFolderInfo(),
+            'provider_predictions' => $simulation->provider_predictions,
+            'issues' => $simulation->issues,
+            'recommendations' => $simulation->recommendations,
+            'score_breakdown' => $simulation->score_breakdown,
+        ]);
+    }
 }

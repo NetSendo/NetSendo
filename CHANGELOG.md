@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.7] – Short Description
+
+**Release date:** 2026-02-02
+
 ### Added
 
 - **DMARC Wizard:**
@@ -16,7 +20,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added localhost environment detection for Domain Verification.
   - Added warning banners in DmarcWiz and DomainStatus when running on localhost (DNS verification disabled).
 
+- **InboxPassport AI - Message Editor Integration:**
+  - Added "Check Deliverability" button to the message editor (next to Test button).
+  - Quick content analysis available directly while composing messages.
+  - Displays Inbox Score, Predicted Folder (Inbox/Promotions/Spam), issues, and recommendations in a modal.
+  - Works in two modes: full simulation (with verified domain) and content-only analysis (without domain).
+  - Full translations in PL, EN, DE, ES.
+
+- **Statistics Bulk Actions:**
+  - **Bulk Selection:** Added checkboxes to "Recent Opens" and "Recent Clicks" tables on the message statistics page, allowing multi-selection of subscribers.
+  - **Bulk Action Bar:** Implemented a contextual action bar that appears when items are selected, offering "Add to List" and "Deselect All" options.
+  - **Bulk Add to List:** Added `BulkAddToListModal` component for adding multiple selected subscribers to a mailing list at once.
+  - **Localization:** Full translations for bulk operations in PL, EN, DE, ES.
+
+- **CardIntel Personalization:**
+  - **Message Personalization:** Added options for Formality (Formal/Informal) and Gender (Auto/Male/Female) to customize message generation.
+  - **Smart Gender Detection:** Implemented automatic gender detection from Polish first names for correct grammatical inflection.
+  - **Enhanced AI Prompts:** Updated decision engine to generate grammatically correct Polish forms based on selected gender and formality.
+  - **Add to List:** Added full support for adding scanned contacts directly to mailing lists via a new modal.
+  - **Localization:** Added translations for all new personalization UI elements in PL, EN, DE.
+
 ### Fixed
+
+- **CardIntel Actions:**
+  - Fixed "Send Email" button not functioning (missing event handler).
+  - Fixed "Add to List" button not functioning and implemented missing list selection modal.
 
 - **DMARC Verification:**
   - Fixed CNAME verification target to dynamically use the installation's domain (from `APP_URL`) instead of a hardcoded value, ensuring correct verification for white-label installations.

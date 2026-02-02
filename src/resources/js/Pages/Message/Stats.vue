@@ -1,8 +1,9 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import AddToListDropdown from "@/Components/AddToListDropdown.vue";
+import BulkAddToListModal from "@/Components/BulkAddToListModal.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import {
     Chart as ChartJS,
@@ -277,6 +278,118 @@ const resendToFailed = () => {
             },
         },
     );
+};
+
+// Bulk selection state
+const selectedOpens = ref([]);
+const selectedClicks = ref([]);
+const showBulkModal = ref(false);
+const bulkModalType = ref("opens");
+
+// Check if all visible opens are selected
+const allOpensSelected = computed(() => {
+    const data = props.recent_activity?.opens?.data || [];
+    if (data.length === 0) return false;
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    return (
+        subscriberIds.length > 0 &&
+        subscriberIds.every((id) => selectedOpens.value.includes(id))
+    );
+});
+
+// Check if all visible clicks are selected
+const allClicksSelected = computed(() => {
+    const data = props.recent_activity?.clicks?.data || [];
+    if (data.length === 0) return false;
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    return (
+        subscriberIds.length > 0 &&
+        subscriberIds.every((id) => selectedClicks.value.includes(id))
+    );
+});
+
+// Toggle select open
+const toggleSelectOpen = (subscriberId) => {
+    const idx = selectedOpens.value.indexOf(subscriberId);
+    if (idx === -1) {
+        selectedOpens.value.push(subscriberId);
+    } else {
+        selectedOpens.value.splice(idx, 1);
+    }
+};
+
+// Toggle select click
+const toggleSelectClick = (subscriberId) => {
+    const idx = selectedClicks.value.indexOf(subscriberId);
+    if (idx === -1) {
+        selectedClicks.value.push(subscriberId);
+    } else {
+        selectedClicks.value.splice(idx, 1);
+    }
+};
+
+// Select/deselect all opens
+const toggleAllOpens = () => {
+    const data = props.recent_activity?.opens?.data || [];
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    if (allOpensSelected.value) {
+        selectedOpens.value = selectedOpens.value.filter(
+            (id) => !subscriberIds.includes(id),
+        );
+    } else {
+        const newIds = subscriberIds.filter(
+            (id) => !selectedOpens.value.includes(id),
+        );
+        selectedOpens.value = [...selectedOpens.value, ...newIds];
+    }
+};
+
+// Select/deselect all clicks
+const toggleAllClicks = () => {
+    const data = props.recent_activity?.clicks?.data || [];
+    const subscriberIds = data
+        .filter((log) => log.subscriber_id)
+        .map((log) => log.subscriber_id);
+    if (allClicksSelected.value) {
+        selectedClicks.value = selectedClicks.value.filter(
+            (id) => !subscriberIds.includes(id),
+        );
+    } else {
+        const newIds = subscriberIds.filter(
+            (id) => !selectedClicks.value.includes(id),
+        );
+        selectedClicks.value = [...selectedClicks.value, ...newIds];
+    }
+};
+
+// Clear selections
+const clearOpensSelection = () => {
+    selectedOpens.value = [];
+};
+
+const clearClicksSelection = () => {
+    selectedClicks.value = [];
+};
+
+// Open bulk modal
+const openBulkModal = (type) => {
+    bulkModalType.value = type;
+    showBulkModal.value = true;
+};
+
+// Handle bulk add success
+const handleBulkSuccess = ({ listId, count }) => {
+    if (bulkModalType.value === "opens") {
+        selectedOpens.value = [];
+    } else {
+        selectedClicks.value = [];
+    }
 };
 </script>
 
@@ -1047,6 +1160,43 @@ const resendToFailed = () => {
                                 </button>
                             </div>
                         </div>
+                        <!-- Bulk Actions Bar for Opens -->
+                        <div
+                            v-if="selectedOpens.length > 0"
+                            class="mb-3 flex items-center gap-3 rounded-lg bg-indigo-50 px-4 py-2 dark:bg-indigo-900/30"
+                        >
+                            <span
+                                class="text-sm font-medium text-indigo-700 dark:text-indigo-300"
+                            >
+                                {{ selectedOpens.length }}
+                                {{ $t("messages.stats.bulk_selected") }}
+                            </span>
+                            <button
+                                @click="openBulkModal('opens')"
+                                class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                                {{ $t("messages.stats.bulk_add_to_list") }}
+                            </button>
+                            <button
+                                @click="clearOpensSelection"
+                                class="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                                {{ $t("common.deselect_all") }}
+                            </button>
+                        </div>
                         <div class="overflow-x-auto">
                             <table
                                 class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
@@ -1055,6 +1205,14 @@ const resendToFailed = () => {
                                     class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
                                 >
                                     <tr>
+                                        <th class="px-2 py-2 w-10">
+                                            <input
+                                                type="checkbox"
+                                                :checked="allOpensSelected"
+                                                @change="toggleAllOpens"
+                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                                            />
+                                        </th>
                                         <th
                                             class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                                             @click="
@@ -1090,7 +1248,31 @@ const resendToFailed = () => {
                                             .data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
+                                        :class="
+                                            selectedOpens.includes(
+                                                log.subscriber_id,
+                                            )
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                                                : ''
+                                        "
                                     >
+                                        <td class="px-2 py-2">
+                                            <input
+                                                v-if="log.subscriber_id"
+                                                type="checkbox"
+                                                :checked="
+                                                    selectedOpens.includes(
+                                                        log.subscriber_id,
+                                                    )
+                                                "
+                                                @change="
+                                                    toggleSelectOpen(
+                                                        log.subscriber_id,
+                                                    )
+                                                "
+                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                                            />
+                                        </td>
                                         <td class="px-4 py-2">
                                             {{ log.email }}
                                         </td>
@@ -1115,7 +1297,7 @@ const resendToFailed = () => {
                                         "
                                     >
                                         <td
-                                            colspan="3"
+                                            colspan="4"
                                             class="px-4 py-2 text-center"
                                         >
                                             {{
@@ -1216,16 +1398,61 @@ const resendToFailed = () => {
                                 </button>
                             </div>
                         </div>
+                        <!-- Bulk Actions Bar for Clicks -->
+                        <div
+                            v-if="selectedClicks.length > 0"
+                            class="mb-3 flex items-center gap-3 rounded-lg bg-indigo-50 px-4 py-2 dark:bg-indigo-900/30"
+                        >
+                            <span
+                                class="text-sm font-medium text-indigo-700 dark:text-indigo-300"
+                            >
+                                {{ selectedClicks.length }}
+                                {{ $t("messages.stats.bulk_selected") }}
+                            </span>
+                            <button
+                                @click="openBulkModal('clicks')"
+                                class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                                {{ $t("messages.stats.bulk_add_to_list") }}
+                            </button>
+                            <button
+                                @click="clearClicksSelection"
+                                class="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                                {{ $t("common.deselect_all") }}
+                            </button>
+                        </div>
                         <div class="overflow-x-auto">
                             <table
-                                class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
+                                class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-fixed"
                             >
                                 <thead
                                     class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
                                 >
                                     <tr>
+                                        <th class="px-2 py-2 w-10">
+                                            <input
+                                                type="checkbox"
+                                                :checked="allClicksSelected"
+                                                @change="toggleAllClicks"
+                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                                            />
+                                        </th>
                                         <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/4"
                                             @click="
                                                 handleSort('clicks', 'email')
                                             "
@@ -1238,7 +1465,7 @@ const resendToFailed = () => {
                                             ⇅
                                         </th>
                                         <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-2/5"
                                             @click="handleSort('clicks', 'url')"
                                         >
                                             {{
@@ -1249,7 +1476,7 @@ const resendToFailed = () => {
                                             ⇅
                                         </th>
                                         <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/5"
                                             @click="
                                                 handleSort('clicks', 'time')
                                             "
@@ -1262,7 +1489,7 @@ const resendToFailed = () => {
                                             ⇅
                                         </th>
                                         <th
-                                            class="px-4 py-2 sticky right-0 bg-gray-50 dark:bg-gray-700"
+                                            class="px-4 py-2 w-24 bg-gray-50 dark:bg-gray-700 text-center"
                                         >
                                             {{ $t("messages.stats.actions") }}
                                         </th>
@@ -1274,7 +1501,31 @@ const resendToFailed = () => {
                                             .clicks.data"
                                         :key="i"
                                         class="border-b dark:border-gray-700"
+                                        :class="
+                                            selectedClicks.includes(
+                                                log.subscriber_id,
+                                            )
+                                                ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                                                : ''
+                                        "
                                     >
+                                        <td class="px-2 py-2">
+                                            <input
+                                                v-if="log.subscriber_id"
+                                                type="checkbox"
+                                                :checked="
+                                                    selectedClicks.includes(
+                                                        log.subscriber_id,
+                                                    )
+                                                "
+                                                @change="
+                                                    toggleSelectClick(
+                                                        log.subscriber_id,
+                                                    )
+                                                "
+                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                                            />
+                                        </td>
                                         <td class="px-4 py-2">
                                             {{ log.email }}
                                         </td>
@@ -1293,7 +1544,7 @@ const resendToFailed = () => {
                                             {{ log.occurred_at }}
                                         </td>
                                         <td
-                                            class="px-4 py-2 sticky right-0 bg-white dark:bg-gray-800"
+                                            class="px-4 py-2 bg-white dark:bg-gray-800 text-center"
                                         >
                                             <AddToListDropdown
                                                 v-if="log.subscriber_id"
@@ -1312,7 +1563,7 @@ const resendToFailed = () => {
                                         "
                                     >
                                         <td
-                                            colspan="4"
+                                            colspan="5"
                                             class="px-4 py-2 text-center"
                                         >
                                             {{
@@ -1408,4 +1659,15 @@ const resendToFailed = () => {
             </div>
         </div>
     </Modal>
+
+    <!-- Bulk Add to List Modal -->
+    <BulkAddToListModal
+        :show="showBulkModal"
+        :subscriber-ids="
+            bulkModalType === 'opens' ? selectedOpens : selectedClicks
+        "
+        :type="bulkModalType"
+        @close="showBulkModal = false"
+        @success="handleBulkSuccess"
+    />
 </template>

@@ -167,6 +167,55 @@ return [
         'description' => 'NetSendo działa na localhost. Weryfikacja DNS wymaga publicznej domeny. Rekordy CNAME wskazujące na localhost nie mogą być zweryfikowane.',
     ],
 
+    // HTML Analysis Issues
+    'html' => [
+        'ratio_low' => 'Niski stosunek tekstu do HTML - Twój e-mail zawiera zbyt dużo kodu HTML',
+        'hidden_text' => 'Wykryto ukryty tekst (display:none) - to wskaźnik spamu',
+        'tiny_font' => 'Wykryto bardzo małą czcionkę - to wskaźnik spamu',
+        'image_heavy' => 'E-mail z dużą ilością obrazów i małą ilością tekstu - dodaj więcej tekstu',
+    ],
+
+    // Subject Analysis Issues
+    'subject' => [
+        'too_long' => 'Temat jest zbyt długi (ponad 60 znaków)',
+        'too_short' => 'Temat jest zbyt krótki (poniżej 5 znaków)',
+        'all_caps' => 'Temat zawiera zbyt dużo wielkich liter',
+        'exclamations' => 'Temat zawiera zbyt dużo wykrzykników',
+        'questions' => 'Temat zawiera zbyt dużo znaków zapytania',
+        'fake_reply' => 'Temat zaczyna się od RE: lub FW: co wygląda jak fałszywa odpowiedź',
+    ],
+
+    // Link Issues
+    'links' => [
+        'shortener' => 'Wykryto skracacz URL - używaj pełnych adresów URL',
+        'suspicious_tld' => 'Wykryto podejrzane rozszerzenie domeny',
+        'ip_address' => 'Wykryto adres IP w URL - używaj prawidłowych nazw domen',
+        'too_many' => 'Zbyt dużo linków w e-mailu (ponad 20)',
+    ],
+
+    // Formatting Issues
+    'formatting' => [
+        'caps' => 'Treść zawiera zbyt dużo wielkich liter',
+        'symbols' => 'Treść zawiera nadmierną ilość symboli specjalnych',
+    ],
+
+    // Spam Words
+    'spam' => [
+        'word_detected' => 'Wykryto słowo wyzwalające spam',
+    ],
+
+    // Recommendations
+    'recommendations' => [
+        'fix_domain' => 'Napraw problemy z konfiguracją DNS domeny',
+        'upgrade_dmarc' => 'Ulepsz politykę DMARC z "none" na "quarantine" lub "reject"',
+        'remove_spam_words' => 'Usuń lub zamień słowa wyzwalające spam w treści',
+        'improve_subject' => 'Popraw temat - unikaj wielkich liter i nadmiernej interpunkcji',
+        'fix_html' => 'Napraw problemy struktury HTML - popraw stosunek tekstu do HTML',
+        'fix_links' => 'Napraw problemy z linkami - unikaj skracaczy URL i podejrzanych domen',
+        'looks_good' => 'Twój e-mail wygląda dobrze! Nie wykryto poważnych problemów',
+        'add_domain' => 'Dodaj i zweryfikuj domenę w DMARC Wiz, aby uzyskać pełną analizę dostarczalności',
+    ],
+
     // Upsell for non-GOLD users
     'upsell' => [
         'title' => 'Odblokuj Deliverability Shield',

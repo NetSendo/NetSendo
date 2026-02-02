@@ -277,13 +277,17 @@ class CardIntelController extends Controller
             'context_level' => 'nullable|in:LOW,MEDIUM,HIGH',
             'tone' => 'nullable|in:professional,friendly,formal',
             'all_versions' => 'nullable|boolean',
+            'formality' => 'nullable|in:formal,informal',
+            'gender' => 'nullable|in:auto,male,female',
         ]);
 
         try {
             if ($request->input('all_versions')) {
                 $messages = $this->cardIntelService->generateAllVersions(
                     $scan,
-                    $request->input('tone')
+                    $request->input('tone'),
+                    $request->input('formality'),
+                    $request->input('gender')
                 );
 
                 return response()->json([
@@ -295,7 +299,9 @@ class CardIntelController extends Controller
             $message = $this->cardIntelService->generateMessage(
                 $scan,
                 $request->input('context_level'),
-                $request->input('tone')
+                $request->input('tone'),
+                $request->input('formality'),
+                $request->input('gender')
             );
 
             return response()->json([

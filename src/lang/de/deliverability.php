@@ -167,6 +167,55 @@ return [
         'description' => 'Sie betreiben NetSendo auf localhost. DNS-Verifizierung erfordert eine öffentliche Domain. CNAME-Einträge, die auf localhost verweisen, können nicht verifiziert werden.',
     ],
 
+    // HTML Analysis Issues
+    'html' => [
+        'ratio_low' => 'Niedriges Text-zu-HTML-Verhältnis - Ihre E-Mail enthält zu viel HTML-Code',
+        'hidden_text' => 'Versteckter Text erkannt (display:none) - dies ist ein Spam-Indikator',
+        'tiny_font' => 'Sehr kleine Schriftgröße erkannt - dies ist ein Spam-Indikator',
+        'image_heavy' => 'Bildlastige E-Mail mit wenig Text - fügen Sie mehr Textinhalt hinzu',
+    ],
+
+    // Subject Analysis Issues
+    'subject' => [
+        'too_long' => 'Betreffzeile ist zu lang (über 60 Zeichen)',
+        'too_short' => 'Betreffzeile ist zu kurz (unter 5 Zeichen)',
+        'all_caps' => 'Betreff enthält zu viele Großbuchstaben',
+        'exclamations' => 'Betreff enthält übermäßig viele Ausrufezeichen',
+        'questions' => 'Betreff enthält zu viele Fragezeichen',
+        'fake_reply' => 'Betreff beginnt mit RE: oder FW: was wie eine gefälschte Antwort aussieht',
+    ],
+
+    // Link Issues
+    'links' => [
+        'shortener' => 'URL-Verkürzung erkannt - verwenden Sie vollständige URLs',
+        'suspicious_tld' => 'Verdächtige Domain-Endung erkannt',
+        'ip_address' => 'IP-Adresse in URL erkannt - verwenden Sie richtige Domainnamen',
+        'too_many' => 'Zu viele Links in der E-Mail (über 20)',
+    ],
+
+    // Formatting Issues
+    'formatting' => [
+        'caps' => 'Inhalt enthält zu viele Großbuchstaben',
+        'symbols' => 'Inhalt enthält übermäßig viele Sonderzeichen',
+    ],
+
+    // Spam Words
+    'spam' => [
+        'word_detected' => 'Spam-Auslösewort erkannt',
+    ],
+
+    // Recommendations
+    'recommendations' => [
+        'fix_domain' => 'Beheben Sie die DNS-Konfigurationsprobleme Ihrer Domain',
+        'upgrade_dmarc' => 'Aktualisieren Sie Ihre DMARC-Richtlinie von "none" auf "quarantine" oder "reject"',
+        'remove_spam_words' => 'Entfernen oder ersetzen Sie Spam-Auslösewörter in Ihrem Inhalt',
+        'improve_subject' => 'Verbessern Sie Ihre Betreffzeile - vermeiden Sie Großbuchstaben und übermäßige Interpunktion',
+        'fix_html' => 'Beheben Sie HTML-Strukturprobleme - verbessern Sie das Text-zu-HTML-Verhältnis',
+        'fix_links' => 'Beheben Sie Link-Probleme - vermeiden Sie URL-Verkürzungen und verdächtige Domains',
+        'looks_good' => 'Ihre E-Mail sieht gut aus! Keine größeren Probleme erkannt',
+        'add_domain' => 'Fügen Sie eine Domain im DMARC Wiz hinzu und verifizieren Sie sie für eine vollständige Zustellbarkeitsanalyse',
+    ],
+
     // Upsell for non-GOLD users
     'upsell' => [
         'title' => 'Deliverability Shield freischalten',

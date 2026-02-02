@@ -475,7 +475,7 @@ const runSimulation = () => {
                                     clip-rule="evenodd"
                                 />
                             </svg>
-                            {{ $t("deliverability.formatting") }}
+                            {{ $t("deliverability.formatting_title") }}
                         </div>
                     </div>
                 </div>

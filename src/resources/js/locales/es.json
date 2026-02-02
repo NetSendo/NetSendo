@@ -209,6 +209,7 @@
         "previous": "Anterior",
         "next": "Siguiente",
         "select": "Seleccionar",
+        "deselect_all": "Deseleccionar todo",
         "select_option": "Seleccione una opción",
         "all": "Todos",
         "none": "Ninguno",
@@ -872,7 +873,7 @@
         "subject_analysis": "Análisis del asunto",
         "link_check": "Comprobación de enlaces",
         "html_structure": "Estructura HTML",
-        "formatting": "Formato",
+        "formatting_title": "Formato",
         "inbox_passport": {
             "subtitle": "Comprobar entregabilidad antes de enviar",
             "how_it_works": "¿Cómo funciona?",
@@ -889,6 +890,43 @@
         "localhost_warning": {
             "title": "Entorno local detectado",
             "description": "La verificación de dominio no está disponible en el entorno localhost. Despliegue en un servidor de producción para configurar Deliverability Shield."
+        },
+        "html": {
+            "ratio_low": "Baja proporción de texto a HTML - su correo contiene demasiado código HTML",
+            "hidden_text": "Texto oculto detectado (display:none) - esto es un indicador de spam",
+            "tiny_font": "Tamaño de fuente muy pequeño detectado - esto es un indicador de spam",
+            "image_heavy": "Correo con muchas imágenes y poco texto - añada más contenido de texto"
+        },
+        "subject": {
+            "too_long": "El asunto es demasiado largo (más de 60 caracteres)",
+            "too_short": "El asunto es demasiado corto (menos de 5 caracteres)",
+            "all_caps": "El asunto contiene demasiadas mayúsculas",
+            "exclamations": "El asunto contiene demasiados signos de exclamación",
+            "questions": "El asunto contiene demasiados signos de interrogación",
+            "fake_reply": "El asunto comienza con RE: o FW: lo que parece una respuesta falsa"
+        },
+        "links": {
+            "shortener": "Acortador de URL detectado - use URLs completas",
+            "suspicious_tld": "Extensión de dominio sospechosa detectada",
+            "ip_address": "Dirección IP en URL detectada - use nombres de dominio apropiados",
+            "too_many": "Demasiados enlaces en el correo (más de 20)"
+        },
+        "formatting": {
+            "caps": "El contenido contiene demasiadas mayúsculas",
+            "symbols": "El contenido contiene demasiados símbolos especiales"
+        },
+        "spam": {
+            "word_detected": "Palabra desencadenante de spam detectada"
+        },
+        "recommendations": {
+            "fix_domain": "Corrija los problemas de configuración DNS de su dominio",
+            "upgrade_dmarc": "Actualice su política DMARC de \"none\" a \"quarantine\" o \"reject\"",
+            "remove_spam_words": "Elimine o reemplace las palabras desencadenantes de spam en su contenido",
+            "improve_subject": "Mejore su línea de asunto - evite mayúsculas y puntuación excesiva",
+            "fix_html": "Corrija los problemas de estructura HTML - mejore la proporción texto/HTML",
+            "fix_links": "Corrija los problemas de enlaces - evite acortadores de URL y dominios sospechosos",
+            "looks_good": "¡Su correo se ve bien! No se detectaron problemas importantes",
+            "add_domain": "Añada y verifique un dominio en DMARC Wiz para un análisis completo de entregabilidad"
         }
     },
     "navigation": {
@@ -1660,6 +1698,25 @@
             "no_subject_preview": "(sin asunto)",
             "no_mailbox_preview": "Ningún buzón configurado"
         },
+        "deliverability": {
+            "check_button": "Verificar entregabilidad",
+            "title": "Verificación de entregabilidad",
+            "subtitle": "Análisis de InboxPassport AI de tu mensaje",
+            "loading": "Analizando mensaje...",
+            "missing_content": "Agrega asunto y contenido antes de verificar la entregabilidad",
+            "error": "Error al verificar la entregabilidad. Por favor, inténtalo de nuevo.",
+            "no_domain": "No se encontró un dominio verificado. Mostrando solo el análisis de contenido. Para obtener resultados completos, configura tu dominio en DMARC Wiz.",
+            "inbox_score": "Puntuación de bandeja",
+            "predicted_folder": "Carpeta prevista",
+            "by_provider": "Predicciones por proveedor",
+            "issues": "Problemas detectados",
+            "recommendations": "Recomendaciones",
+            "folders": {
+                "inbox": "Bandeja principal",
+                "promotions": "Promociones",
+                "spam": "Spam"
+            }
+        },
         "validation": {
             "subject_required": "El asunto del mensaje es obligatorio",
             "content_required": "El contenido del mensaje es obligatorio",
@@ -1742,7 +1799,20 @@
                 "adding": "Añadiendo...",
                 "success": "Suscriptor añadido a la lista con éxito",
                 "error": "Error al añadir suscriptor a la lista"
-            }
+            },
+            "actions": "Acciones",
+            "search_email_or_url": "Buscar email o URL...",
+            "add_to_list_btn": "Añadir a lista",
+            "select_list": "Seleccionar lista",
+            "search_lists": "Buscar listas...",
+            "no_lists": "Sin listas",
+            "added_to_list": "Añadido a la lista",
+            "bulk_selected": "seleccionados",
+            "bulk_add_to_list": "Añadir a lista",
+            "bulk_add_title": "Añadir a lista",
+            "bulk_add_description": "{count} suscriptores únicos serán añadidos a la lista seleccionada",
+            "bulk_add_button": "Añadir a lista",
+            "bulk_add_success": "Añadido a la lista \"{list}\""
         },
         "tracked_links": {
             "title": "Enlaces rastreados",

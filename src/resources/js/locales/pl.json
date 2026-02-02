@@ -616,7 +616,7 @@
         "subject_analysis": "Analiza tematu",
         "link_check": "Sprawdzanie linków",
         "html_structure": "Struktura HTML",
-        "formatting": "Formatowanie",
+        "formatting_title": "Formatowanie",
         "inbox_passport": {
             "subtitle": "Sprawdź dostarczalność przed wysyłką",
             "how_it_works": "Jak to działa?",
@@ -633,6 +633,43 @@
         "localhost_warning": {
             "title": "Środowisko lokalne wykryte",
             "description": "Weryfikacja domeny nie jest dostępna w środowisku localhost. Wdróż na serwer produkcyjny, aby skonfigurować Deliverability Shield."
+        },
+        "html": {
+            "ratio_low": "Niski stosunek tekstu do HTML - Twój e-mail zawiera zbyt dużo kodu HTML",
+            "hidden_text": "Wykryto ukryty tekst (display:none) - to wskaźnik spamu",
+            "tiny_font": "Wykryto bardzo małą czcionkę - to wskaźnik spamu",
+            "image_heavy": "E-mail z dużą ilością obrazów i małą ilością tekstu - dodaj więcej tekstu"
+        },
+        "subject": {
+            "too_long": "Temat jest zbyt długi (ponad 60 znaków)",
+            "too_short": "Temat jest zbyt krótki (poniżej 5 znaków)",
+            "all_caps": "Temat zawiera zbyt dużo wielkich liter",
+            "exclamations": "Temat zawiera zbyt dużo wykrzykników",
+            "questions": "Temat zawiera zbyt dużo znaków zapytania",
+            "fake_reply": "Temat zaczyna się od RE: lub FW: co wygląda jak fałszywa odpowiedź"
+        },
+        "links": {
+            "shortener": "Wykryto skracacz URL - używaj pełnych adresów URL",
+            "suspicious_tld": "Wykryto podejrzane rozszerzenie domeny",
+            "ip_address": "Wykryto adres IP w URL - używaj prawidłowych nazw domen",
+            "too_many": "Zbyt dużo linków w e-mailu (ponad 20)"
+        },
+        "formatting": {
+            "caps": "Treść zawiera zbyt dużo wielkich liter",
+            "symbols": "Treść zawiera nadmierną ilość symboli specjalnych"
+        },
+        "spam": {
+            "word_detected": "Wykryto słowo wyzwalające spam"
+        },
+        "recommendations": {
+            "fix_domain": "Napraw problemy z konfiguracją DNS domeny",
+            "upgrade_dmarc": "Ulepsz politykę DMARC z \"none\" na \"quarantine\" lub \"reject\"",
+            "remove_spam_words": "Usuń lub zamień słowa wyzwalające spam w treści",
+            "improve_subject": "Popraw temat - unikaj wielkich liter i nadmiernej interpunkcji",
+            "fix_html": "Napraw problemy struktury HTML - popraw stosunek tekstu do HTML",
+            "fix_links": "Napraw problemy z linkami - unikaj skracaczy URL i podejrzanych domen",
+            "looks_good": "Twój e-mail wygląda dobrze! Nie wykryto poważnych problemów",
+            "add_domain": "Dodaj i zweryfikuj domenę w DMARC Wiz, aby uzyskać pełną analizę dostarczalności"
         }
     },
     "navigation": {
@@ -1621,6 +1658,25 @@
             "no_subject_preview": "(brak tematu)",
             "no_mailbox_preview": "Brak skrzynki"
         },
+        "deliverability": {
+            "check_button": "Sprawdź dostarczalność",
+            "title": "Sprawdzenie dostarczalności",
+            "subtitle": "Analiza InboxPassport AI Twojej wiadomości",
+            "loading": "Analizowanie wiadomości...",
+            "missing_content": "Dodaj temat i treść przed sprawdzeniem dostarczalności",
+            "error": "Nie udało się sprawdzić dostarczalności. Spróbuj ponownie.",
+            "no_domain": "Nie znaleziono zweryfikowanej domeny. Pokazuję tylko analizę treści. Aby uzyskać pełne wyniki, skonfiguruj domenę w DMARC Wiz.",
+            "inbox_score": "Wynik Inbox",
+            "predicted_folder": "Przewidywany folder",
+            "by_provider": "Prognozy wg dostawcy",
+            "issues": "Wykryte problemy",
+            "recommendations": "Rekomendacje",
+            "folders": {
+                "inbox": "Główna skrzynka",
+                "promotions": "Promocje",
+                "spam": "Spam"
+            }
+        },
         "validation": {
             "subject_required": "Temat wiadomości jest wymagany",
             "content_required": "Treść wiadomości jest wymagana",
@@ -1715,7 +1771,13 @@
             "select_list": "Wybierz listę",
             "search_lists": "Szukaj listy...",
             "no_lists": "Brak list",
-            "added_to_list": "Dodano do listy"
+            "added_to_list": "Dodano do listy",
+            "bulk_selected": "zaznaczonych",
+            "bulk_add_to_list": "Dodaj do listy",
+            "bulk_add_title": "Dodaj do listy",
+            "bulk_add_description": "{count} unikalnych subskrybentów zostanie dodanych do wybranej listy",
+            "bulk_add_button": "Dodaj do listy",
+            "bulk_add_success": "Dodano do listy \"{list}\""
         },
         "tracked_links": {
             "title": "Śledzone linki",
@@ -6691,10 +6753,21 @@
                 "save_to_crm": "Zapisz do CRM",
                 "save_contact": "Zapisz kontakt",
                 "add_to_list": "Dodaj do listy",
+                "select_list": "Wybierz listę",
+                "select_list_desc": "Wybierz listę mailingową, do której chcesz dodać ten kontakt",
                 "send_email": "Wyślij email",
                 "send_sms": "Wyślij SMS",
                 "archive": "Archiwizuj",
                 "delete": "Usuń"
+            },
+            "personalization": {
+                "formality": "Forma zwracania się",
+                "formal": "Na Pan/Pani",
+                "informal": "Na Ty",
+                "gender": "Płeć",
+                "gender_auto": "Automatyczna",
+                "gender_male": "Mężczyzna",
+                "gender_female": "Kobieta"
             },
             "reasoning": {
                 "has_email": "Ma adres email",

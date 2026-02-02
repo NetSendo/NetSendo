@@ -251,6 +251,7 @@
         "previous": "Zurück",
         "next": "Weiter",
         "select": "Auswählen",
+        "deselect_all": "Alle abwählen",
         "select_option": "Option wählen",
         "none": "Keine",
         "filter": "Filtern",
@@ -842,7 +843,7 @@
         "subject_analysis": "Betreff-Analyse",
         "link_check": "Link-Prüfung",
         "html_structure": "HTML-Struktur",
-        "formatting": "Formatierung",
+        "formatting_title": "Formatierung",
         "inbox_passport": {
             "subtitle": "Zustellbarkeit vor dem Senden prüfen",
             "how_it_works": "Wie funktioniert es?",
@@ -857,8 +858,45 @@
         "delete_domain": "Domain löschen",
         "confirm_delete_message": "Sind Sie sicher, dass Sie die Domain \"{domain}\" löschen möchten? Alle zugehörigen Daten werden dauerhaft entfernt.",
         "localhost_warning": {
-            "title": "Lokale Umgebung erkannt",
-            "description": "Domainverifizierung ist in der localhost-Umgebung nicht verfügbar. Stellen Sie auf einem Produktionsserver bereit, um Deliverability Shield zu konfigurieren."
+            "title": "Entwicklungsumgebung erkannt",
+            "description": "Sie betreiben NetSendo auf localhost. DNS-Verifizierung erfordert eine öffentliche Domain. CNAME-Einträge, die auf localhost verweisen, können nicht verifiziert werden."
+        },
+        "html": {
+            "ratio_low": "Niedriges Text-zu-HTML-Verhältnis - Ihre E-Mail enthält zu viel HTML-Code",
+            "hidden_text": "Versteckter Text erkannt (display:none) - dies ist ein Spam-Indikator",
+            "tiny_font": "Sehr kleine Schriftgröße erkannt - dies ist ein Spam-Indikator",
+            "image_heavy": "Bildlastige E-Mail mit wenig Text - fügen Sie mehr Textinhalt hinzu"
+        },
+        "subject": {
+            "too_long": "Betreffzeile ist zu lang (über 60 Zeichen)",
+            "too_short": "Betreffzeile ist zu kurz (unter 5 Zeichen)",
+            "all_caps": "Betreff enthält zu viele Großbuchstaben",
+            "exclamations": "Betreff enthält übermäßig viele Ausrufezeichen",
+            "questions": "Betreff enthält zu viele Fragezeichen",
+            "fake_reply": "Betreff beginnt mit RE: oder FW: was wie eine gefälschte Antwort aussieht"
+        },
+        "links": {
+            "shortener": "URL-Verkürzung erkannt - verwenden Sie vollständige URLs",
+            "suspicious_tld": "Verdächtige Domain-Endung erkannt",
+            "ip_address": "IP-Adresse in URL erkannt - verwenden Sie richtige Domainnamen",
+            "too_many": "Zu viele Links in der E-Mail (über 20)"
+        },
+        "formatting": {
+            "caps": "Inhalt enthält zu viele Großbuchstaben",
+            "symbols": "Inhalt enthält übermäßig viele Sonderzeichen"
+        },
+        "spam": {
+            "word_detected": "Spam-Auslösewort erkannt"
+        },
+        "recommendations": {
+            "fix_domain": "Beheben Sie die DNS-Konfigurationsprobleme Ihrer Domain",
+            "upgrade_dmarc": "Aktualisieren Sie Ihre DMARC-Richtlinie von \"none\" auf \"quarantine\" oder \"reject\"",
+            "remove_spam_words": "Entfernen oder ersetzen Sie Spam-Auslösewörter in Ihrem Inhalt",
+            "improve_subject": "Verbessern Sie Ihre Betreffzeile - vermeiden Sie Großbuchstaben und übermäßige Interpunktion",
+            "fix_html": "Beheben Sie HTML-Strukturprobleme - verbessern Sie das Text-zu-HTML-Verhältnis",
+            "fix_links": "Beheben Sie Link-Probleme - vermeiden Sie URL-Verkürzungen und verdächtige Domains",
+            "looks_good": "Ihre E-Mail sieht gut aus! Keine größeren Probleme erkannt",
+            "add_domain": "Fügen Sie eine Domain im DMARC Wiz hinzu und verifizieren Sie sie für eine vollständige Zustellbarkeitsanalyse"
         }
     },
     "navigation": {
@@ -1646,6 +1684,25 @@
             "no_subject_preview": "(kein Betreff)",
             "no_mailbox_preview": "Kein Postfach konfiguriert"
         },
+        "deliverability": {
+            "check_button": "Zustellbarkeit prüfen",
+            "title": "Zustellbarkeitsprüfung",
+            "subtitle": "InboxPassport AI-Analyse Ihrer Nachricht",
+            "loading": "Nachricht wird analysiert...",
+            "missing_content": "Bitte fügen Sie Betreff und Inhalt hinzu, bevor Sie die Zustellbarkeit prüfen",
+            "error": "Zustellbarkeitsprüfung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            "no_domain": "Keine verifizierte Domain gefunden. Es wird nur eine Inhaltsanalyse angezeigt. Für vollständige Ergebnisse konfigurieren Sie Ihre Domain im DMARC Wiz.",
+            "inbox_score": "Inbox-Score",
+            "predicted_folder": "Vorhergesagter Ordner",
+            "by_provider": "Vorhersagen nach Anbieter",
+            "issues": "Gefundene Probleme",
+            "recommendations": "Empfehlungen",
+            "folders": {
+                "inbox": "Primärer Posteingang",
+                "promotions": "Werbung",
+                "spam": "Spam"
+            }
+        },
         "validation": {
             "subject_required": "Nachrichtenbetreff ist erforderlich",
             "content_required": "Nachrichteninhalt ist erforderlich",
@@ -1732,7 +1789,20 @@
                 "adding": "Hinzufügen...",
                 "success": "Abonnent erfolgreich zur Liste hinzugefügt",
                 "error": "Fehler beim Hinzufügen des Abonnenten zur Liste"
-            }
+            },
+            "actions": "Aktionen",
+            "search_email_or_url": "E-Mail oder URL suchen...",
+            "add_to_list_btn": "Zu Liste hinzufügen",
+            "select_list": "Liste auswählen",
+            "search_lists": "Listen suchen...",
+            "no_lists": "Keine Listen",
+            "added_to_list": "Zur Liste hinzugefügt",
+            "bulk_selected": "ausgewählt",
+            "bulk_add_to_list": "Zu Liste hinzufügen",
+            "bulk_add_title": "Zu Liste hinzufügen",
+            "bulk_add_description": "{count} eindeutige Abonnenten werden zur ausgewählten Liste hinzugefügt",
+            "bulk_add_button": "Zu Liste hinzufügen",
+            "bulk_add_success": "Zur Liste \"{list}\" hinzugefügt"
         },
         "tracked_links": {
             "title": "Verfolgte Links",
@@ -5825,10 +5895,21 @@
                 "save_to_crm": "Im CRM speichern",
                 "save_contact": "Kontakt speichern",
                 "add_to_list": "Zur Liste hinzufügen",
+                "select_list": "Liste auswählen",
+                "select_list_desc": "Wählen Sie die Mailingliste aus, zu der Sie diesen Kontakt hinzufügen möchten",
                 "send_email": "E-Mail senden",
                 "send_sms": "SMS senden",
                 "archive": "Archivieren",
                 "delete": "Löschen"
+            },
+            "personalization": {
+                "formality": "Anrede",
+                "formal": "Formal (Herr/Frau)",
+                "informal": "Informal (Du)",
+                "gender": "Geschlecht",
+                "gender_auto": "Automatisch",
+                "gender_male": "Männlich",
+                "gender_female": "Weiblich"
             },
             "reasoning": {
                 "has_email": "Hat E-Mail-Adresse",

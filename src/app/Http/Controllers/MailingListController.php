@@ -12,6 +12,14 @@ class MailingListController extends Controller
 {
     public function index(Request $request)
     {
+        // Handle JSON requests (e.g., from AddToListDropdown component)
+        if ($request->wantsJson()) {
+            $allLists = auth()->user()->accessibleLists()
+                ->email()
+                ->get(['id', 'name']);
+            return response()->json(['allLists' => $allLists]);
+        }
+
         // Use accessibleLists() to include shared lists for team members
         // Filter to only show email lists in mailing list view
         $query = auth()->user()->accessibleLists()
