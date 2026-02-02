@@ -1092,6 +1092,9 @@ class MessageController extends Controller
             });
         }
 
+        // Get total count BEFORE sorting/pagination (for display)
+        $opensTotal = (clone $opensQuery)->distinct('subscriber_id')->count('subscriber_id');
+
         if ($request->input('sort_opens_by') && $request->input('sort_opens_dir')) {
             $sortBy = $request->input('sort_opens_by'); // 'email' or 'time'
             $dir = $request->input('sort_opens_dir') === 'asc' ? 'asc' : 'desc';
@@ -1134,6 +1137,9 @@ class MessageController extends Controller
                 ->orWhere('url', 'like', "%{$search}%");
             });
         }
+
+        // Get total count BEFORE sorting/pagination (for display)
+        $clicksTotal = (clone $clicksQuery)->distinct('subscriber_id')->count('subscriber_id');
 
         if ($request->input('sort_clicks_by') && $request->input('sort_clicks_dir')) {
             $sortBy = $request->input('sort_clicks_by'); // 'email', 'url', 'time'
@@ -1263,10 +1269,84 @@ class MessageController extends Controller
                 ]),
             'recent_activity' => [
                 'opens' => $recentOpens,
+                'opens_total' => $opensTotal,
                 'clicks' => $recentClicks,
+                'clicks_total' => $clicksTotal,
             ]
         ]);
     }
+
+    /**
+     * Get all subscriber IDs from opens log (for Select All functionality)
+     * Returns unique subscriber IDs matching the current filter
+     */
+    public function allOpensSubscriberIds(Request $request, Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $query = EmailOpen::where('message_id', $message->id);
+
+        // Apply same search filter as in stats()
+        if ($request->filled('search_opens')) {
+            $search = $request->input('search_opens');
+            $query->whereHas('subscriber', function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Get unique subscriber IDs (not null)
+        $subscriberIds = $query->whereNotNull('subscriber_id')
+            ->distinct()
+            ->pluck('subscriber_id')
+            ->toArray();
+
+        return response()->json([
+            'subscriber_ids' => $subscriberIds,
+            'total' => count($subscriberIds),
+        ]);
+    }
+
+    /**
+     * Get all subscriber IDs from clicks log (for Select All functionality)
+     * Returns unique subscriber IDs matching the current filter
+     */
+    public function allClicksSubscriberIds(Request $request, Message $message)
+    {
+        if ($message->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $query = EmailClick::where('message_id', $message->id);
+
+        // Apply same search filter as in stats() - search by email, name, or URL
+        if ($request->filled('search_clicks')) {
+            $search = $request->input('search_clicks');
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('subscriber', function ($sub) use ($search) {
+                    $sub->where('email', 'like', "%{$search}%")
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })
+                ->orWhere('url', 'like', "%{$search}%");
+            });
+        }
+
+        // Get unique subscriber IDs (not null)
+        $subscriberIds = $query->whereNotNull('subscriber_id')
+            ->distinct()
+            ->pluck('subscriber_id')
+            ->toArray();
+
+        return response()->json([
+            'subscriber_ids' => $subscriberIds,
+            'total' => count($subscriberIds),
+        ]);
+    }
+
     public function show(Message $message)
     {
         if ($message->user_id !== auth()->id()) {

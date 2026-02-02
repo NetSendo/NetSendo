@@ -350,16 +350,40 @@ const toggleAllOpens = () => {
     }
 };
 
-// Select all opens (always adds, never removes)
-const selectAllOpens = () => {
-    const data = props.recent_activity?.opens?.data || [];
-    const subscriberIds = data
-        .filter((log) => log.subscriber_id)
-        .map((log) => log.subscriber_id);
-    const newIds = subscriberIds.filter(
-        (id) => !selectedOpens.value.includes(id),
-    );
-    selectedOpens.value = [...selectedOpens.value, ...newIds];
+// Select all opens (fetches ALL matching IDs from server, not just current page)
+const loadingSelectAllOpens = ref(false);
+const selectAllOpens = async () => {
+    loadingSelectAllOpens.value = true;
+    try {
+        const params = new URLSearchParams();
+        if (searchOpens.value) {
+            params.set("search_opens", searchOpens.value);
+        }
+        const url =
+            route("messages.all-opens-ids", { message: props.message.id }) +
+            (params.toString() ? `?${params.toString()}` : "");
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Merge with existing selection (add new IDs, keep existing ones)
+        const newIds = data.subscriber_ids.filter(
+            (id) => !selectedOpens.value.includes(id),
+        );
+        selectedOpens.value = [...selectedOpens.value, ...newIds];
+    } catch (error) {
+        console.error("Failed to fetch all opens IDs:", error);
+        // Fallback to current page selection
+        const pageData = props.recent_activity?.opens?.data || [];
+        const subscriberIds = pageData
+            .filter((log) => log.subscriber_id)
+            .map((log) => log.subscriber_id);
+        const newIds = subscriberIds.filter(
+            (id) => !selectedOpens.value.includes(id),
+        );
+        selectedOpens.value = [...selectedOpens.value, ...newIds];
+    } finally {
+        loadingSelectAllOpens.value = false;
+    }
 };
 
 // Select/deselect all clicks (toggle for checkbox)
@@ -380,16 +404,40 @@ const toggleAllClicks = () => {
     }
 };
 
-// Select all clicks (always adds, never removes)
-const selectAllClicks = () => {
-    const data = props.recent_activity?.clicks?.data || [];
-    const subscriberIds = data
-        .filter((log) => log.subscriber_id)
-        .map((log) => log.subscriber_id);
-    const newIds = subscriberIds.filter(
-        (id) => !selectedClicks.value.includes(id),
-    );
-    selectedClicks.value = [...selectedClicks.value, ...newIds];
+// Select all clicks (fetches ALL matching IDs from server, not just current page)
+const loadingSelectAllClicks = ref(false);
+const selectAllClicks = async () => {
+    loadingSelectAllClicks.value = true;
+    try {
+        const params = new URLSearchParams();
+        if (searchClicks.value) {
+            params.set("search_clicks", searchClicks.value);
+        }
+        const url =
+            route("messages.all-clicks-ids", { message: props.message.id }) +
+            (params.toString() ? `?${params.toString()}` : "");
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Merge with existing selection (add new IDs, keep existing ones)
+        const newIds = data.subscriber_ids.filter(
+            (id) => !selectedClicks.value.includes(id),
+        );
+        selectedClicks.value = [...selectedClicks.value, ...newIds];
+    } catch (error) {
+        console.error("Failed to fetch all clicks IDs:", error);
+        // Fallback to current page selection
+        const pageData = props.recent_activity?.clicks?.data || [];
+        const subscriberIds = pageData
+            .filter((log) => log.subscriber_id)
+            .map((log) => log.subscriber_id);
+        const newIds = subscriberIds.filter(
+            (id) => !selectedClicks.value.includes(id),
+        );
+        selectedClicks.value = [...selectedClicks.value, ...newIds];
+    } finally {
+        loadingSelectAllClicks.value = false;
+    }
 };
 
 // Clear selections
@@ -1139,6 +1187,15 @@ const handleBulkSuccess = ({ listId, count }) => {
                                 class="text-lg font-semibold text-gray-800 dark:text-gray-200"
                             >
                                 {{ $t("messages.stats.activity.recent_opens") }}
+                                <span
+                                    v-if="
+                                        recent_activity?.opens_total !==
+                                        undefined
+                                    "
+                                    class="text-sm font-normal text-gray-500 dark:text-gray-400"
+                                >
+                                    ({{ recent_activity.opens_total }})
+                                </span>
                             </h3>
                             <div class="relative">
                                 <input
@@ -1216,9 +1273,15 @@ const handleBulkSuccess = ({ listId, count }) => {
                             </button>
                             <button
                                 @click="selectAllOpens"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                :disabled="loadingSelectAllOpens"
+                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 disabled:opacity-50"
                             >
-                                {{ $t("common.select_all") }}
+                                <span v-if="loadingSelectAllOpens"
+                                    >{{ $t("common.loading") }}...</span
+                                >
+                                <span v-else>{{
+                                    $t("common.select_all")
+                                }}</span>
                             </button>
                             <button
                                 @click="clearOpensSelection"
@@ -1383,6 +1446,15 @@ const handleBulkSuccess = ({ listId, count }) => {
                                 {{
                                     $t("messages.stats.activity.recent_clicks")
                                 }}
+                                <span
+                                    v-if="
+                                        recent_activity?.clicks_total !==
+                                        undefined
+                                    "
+                                    class="text-sm font-normal text-gray-500 dark:text-gray-400"
+                                >
+                                    ({{ recent_activity.clicks_total }})
+                                </span>
                             </h3>
                             <div class="relative">
                                 <input
@@ -1460,9 +1532,15 @@ const handleBulkSuccess = ({ listId, count }) => {
                             </button>
                             <button
                                 @click="selectAllClicks"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                                :disabled="loadingSelectAllClicks"
+                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 disabled:opacity-50"
                             >
-                                {{ $t("common.select_all") }}
+                                <span v-if="loadingSelectAllClicks"
+                                    >{{ $t("common.loading") }}...</span
+                                >
+                                <span v-else>{{
+                                    $t("common.select_all")
+                                }}</span>
                             </button>
                             <button
                                 @click="clearClicksSelection"

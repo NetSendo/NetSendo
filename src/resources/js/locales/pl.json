@@ -684,6 +684,11 @@
             "fix_links": "Napraw problemy z linkami - unikaj skracaczy URL i podejrzanych domen",
             "looks_good": "Twój e-mail wygląda dobrze! Nie wykryto poważnych problemów",
             "add_domain": "Dodaj i zweryfikuj domenę w DMARC Wiz, aby uzyskać pełną analizę dostarczalności"
+        },
+        "messages": {
+            "gmail_managed_dns": "Gmail automatycznie zarządza SPF/DKIM dla Twojego konta. Nie wymaga dodatkowej konfiguracji DNS.",
+            "domain_not_configured": "Domena {domain} nie jest skonfigurowana w DMARC Wiz. Dodaj ją, aby uzyskać pełną analizę dostarczalności.",
+            "no_domain_warning": "Brak skonfigurowanej domeny. Analiza oparta tylko na treści wiadomości."
         }
     },
     "navigation": {

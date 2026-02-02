@@ -171,6 +171,9 @@ return [
         'domain_removed' => 'Dominio eliminado exitosamente.',
         'alerts_updated' => 'Configuración de alertas actualizada.',
         'simulation_complete' => '¡Simulación completada!',
+        'gmail_managed_dns' => 'Gmail gestiona automáticamente SPF/DKIM para su cuenta. No se requiere configuración DNS adicional.',
+        'domain_not_configured' => 'El dominio :domain no está configurado en DMARC Wiz. Añádalo para un análisis completo de entregabilidad.',
+        'no_domain_warning' => 'Ningún dominio configurado. Análisis basado solo en el contenido del mensaje.',
     ],
 
     // Validation

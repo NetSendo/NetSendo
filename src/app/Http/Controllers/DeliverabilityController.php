@@ -387,60 +387,91 @@ class DeliverabilityController extends Controller
             'mailbox_id' => 'nullable|exists:mailboxes,id',
         ]);
 
-        // Find a domain to use for simulation
-        // Priority: domain linked to mailbox > any verified domain
-        $domain = null;
-
+        // Get mailbox to check provider
+        $mailbox = null;
         if (!empty($validated['mailbox_id'])) {
             $mailbox = \App\Models\Mailbox::find($validated['mailbox_id']);
-            if ($mailbox) {
-                // Try to find domain configuration linked to this mailbox
-                $domain = DomainConfiguration::forUser($user->id)
-                    ->where('mailbox_id', $mailbox->id)
-                    ->verified()
-                    ->first();
-
-                // If no direct link, try to find by domain from mailbox email
-                if (!$domain && $mailbox->from_email) {
-                    $emailDomain = substr(strrchr($mailbox->from_email, '@'), 1);
-                    $domain = DomainConfiguration::forUser($user->id)
-                        ->where('domain', $emailDomain)
-                        ->verified()
-                        ->first();
-                }
-            }
         }
 
-        // Fallback: use any verified domain
-        if (!$domain) {
-            $domain = DomainConfiguration::forUser($user->id)
-                ->verified()
-                ->orderBy('overall_status', 'asc') // Prefer healthier domains
-                ->first();
+        // If no mailbox selected, use default
+        if (!$mailbox) {
+            $mailbox = \App\Models\Mailbox::getDefaultFor($user->id);
         }
 
-        // If still no domain, return a warning but still do content analysis
-        if (!$domain) {
-            // Create a minimal content-only analysis
+        // Handle provider-specific logic
+        $provider = $mailbox?->provider;
+
+        // Gmail: Google manages SPF/DKIM, no need to check user's domain
+        if ($provider === \App\Models\Mailbox::PROVIDER_GMAIL) {
             $contentAnalysis = $this->inboxPassportService->analyzeContentOnly(
                 $validated['subject'],
-                $validated['content']
+                $validated['content'],
+                'gmail' // Pass provider for context
             );
 
             return response()->json([
                 'success' => true,
+                'has_domain' => true, // Gmail domain is managed by Google
+                'provider' => 'gmail',
+                'provider_info' => __('deliverability.messages.gmail_managed_dns'),
+                'inbox_score' => $contentAnalysis['score'],
+                'predicted_folder' => $contentAnalysis['predicted_folder'],
+                'provider_predictions' => $contentAnalysis['provider_predictions'] ?? null,
+                'issues' => $contentAnalysis['issues'],
+                'recommendations' => $contentAnalysis['recommendations'],
+                'score_breakdown' => $contentAnalysis['score_breakdown'],
+            ]);
+        }
+
+        // SendGrid/SMTP: Find domain configuration from from_email
+        $domain = null;
+
+        if ($mailbox && $mailbox->from_email) {
+            $emailDomain = substr(strrchr($mailbox->from_email, '@'), 1);
+
+            // Try to find domain configuration for this email domain
+            $domain = DomainConfiguration::forUser($user->id)
+                ->where('domain', $emailDomain)
+                ->verified()
+                ->first();
+
+            // If not verified, try unverified
+            if (!$domain) {
+                $domain = DomainConfiguration::forUser($user->id)
+                    ->where('domain', $emailDomain)
+                    ->first();
+            }
+        }
+
+        // If no domain found for the mailbox's email, return content-only analysis with warning
+        if (!$domain) {
+            $contentAnalysis = $this->inboxPassportService->analyzeContentOnly(
+                $validated['subject'],
+                $validated['content'],
+                $provider // Pass provider for context
+            );
+
+            $message = $mailbox && $mailbox->from_email
+                ? __('deliverability.messages.domain_not_configured', [
+                    'domain' => substr(strrchr($mailbox->from_email, '@'), 1)
+                ])
+                : __('deliverability.messages.no_domain_warning');
+
+            return response()->json([
+                'success' => true,
                 'has_domain' => false,
+                'provider' => $provider,
                 'inbox_score' => $contentAnalysis['score'],
                 'predicted_folder' => $contentAnalysis['predicted_folder'],
                 'provider_predictions' => null,
                 'issues' => $contentAnalysis['issues'],
                 'recommendations' => $contentAnalysis['recommendations'],
                 'score_breakdown' => $contentAnalysis['score_breakdown'],
-                'message' => __('deliverability.messages.no_domain_warning'),
+                'message' => $message,
             ]);
         }
 
-        // Run full simulation
+        // Run full simulation with domain
         $simulation = $this->inboxPassportService->simulate(
             $user,
             $domain,
@@ -453,6 +484,7 @@ class DeliverabilityController extends Controller
             'success' => true,
             'has_domain' => true,
             'domain' => $domain->domain,
+            'provider' => $provider,
             'simulation_id' => $simulation->id,
             'inbox_score' => $simulation->inbox_score,
             'score_info' => $simulation->getScoreInfo(),

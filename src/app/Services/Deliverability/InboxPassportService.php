@@ -412,14 +412,32 @@ class InboxPassportService
 
     /**
      * Analyze content only (without domain) for quick simulations
+     *
+     * @param string $subject
+     * @param string $htmlContent
+     * @param string|null $provider Provider name (gmail, sendgrid, smtp) for context
      */
-    public function analyzeContentOnly(string $subject, string $htmlContent): array
+    public function analyzeContentOnly(string $subject, string $htmlContent, ?string $provider = null): array
     {
         // Analyze content
         $contentAnalysis = $this->spamAnalyzer->analyze($subject, $htmlContent);
 
-        // Calculate content score (content is 40% of full score, but we scale to 100)
-        $contentScore = (int) round(($contentAnalysis->contentScore / 40) * 70); // Max 70 without domain
+        // For Gmail, domain score is full (Google manages SPF/DKIM)
+        $isGmail = $provider === 'gmail';
+        $domainScore = $isGmail ? 30 : 0;
+        $domainNote = $isGmail ? 'gmail_managed' : 'no_domain_configured';
+
+        // Calculate content score
+        // Content is 40% of full score, reputation is 30%, domain is 30%
+        $contentNormalized = ($contentAnalysis->contentScore / 40) * 40;
+        $reputationScore = 30; // Default base reputation
+
+        // Calculate final score
+        $totalScore = (int) round(
+            ($domainScore / 30) * 30 + // Domain contribution (30%)
+            ($contentNormalized / 40) * 40 + // Content contribution (40%)
+            ($reputationScore / 30) * 30 // Reputation contribution (30%)
+        );
 
         // Collect content issues
         $issues = [];
@@ -459,14 +477,30 @@ class InboxPassportService
             ];
         }
 
-        // Predict folder based on content only
+        // Predict folder based on score
         $predictedFolder = InboxSimulation::FOLDER_INBOX;
         if (count($contentAnalysis->getCriticalIssues()) >= 3) {
             $predictedFolder = InboxSimulation::FOLDER_SPAM;
-        } elseif ($contentScore < 50) {
+        } elseif ($totalScore < 50) {
             $predictedFolder = InboxSimulation::FOLDER_SPAM;
-        } elseif ($contentScore < 65 || $this->hasPromotionalContent($contentAnalysis)) {
+        } elseif ($totalScore < 75 || $this->hasPromotionalContent($contentAnalysis)) {
             $predictedFolder = InboxSimulation::FOLDER_PROMOTIONS;
+        }
+
+        // Generate provider predictions for Gmail
+        $providerPredictions = null;
+        if ($isGmail) {
+            $providerPredictions = $this->generateProviderPredictions(
+                $totalScore,
+                [
+                    'score' => $domainScore,
+                    'max_score' => 30,
+                    'issues' => [],
+                    'overall_status' => 'safe',
+                    'dmarc_policy' => 'reject', // Gmail enforces strict DMARC
+                ],
+                $contentAnalysis
+            );
         }
 
         // Generate recommendations
@@ -488,29 +522,37 @@ class InboxPassportService
             ];
         }
 
-        // Add domain recommendation since no domain is configured
-        $recommendations[] = [
-            'priority' => 'high',
-            'category' => 'domain',
-            'message_key' => 'deliverability.recommendations.add_domain',
-        ];
+        // Add domain recommendation only if not Gmail and no domain configured
+        if (!$isGmail) {
+            $recommendations[] = [
+                'priority' => 'high',
+                'category' => 'domain',
+                'message_key' => 'deliverability.recommendations.add_domain',
+            ];
+        }
 
         return [
-            'score' => $contentScore,
+            'score' => $totalScore,
             'predicted_folder' => $predictedFolder,
+            'provider_predictions' => $providerPredictions,
             'issues' => $issues,
             'recommendations' => $recommendations,
             'score_breakdown' => [
                 'content' => [
                     'score' => $contentAnalysis->contentScore,
                     'max' => 40,
-                    'weight' => 0.7,
+                    'weight' => 0.4,
                 ],
                 'domain' => [
-                    'score' => 0,
+                    'score' => $domainScore,
                     'max' => 30,
                     'weight' => 0.3,
-                    'note' => 'no_domain_configured',
+                    'note' => $domainNote,
+                ],
+                'reputation' => [
+                    'score' => $reputationScore,
+                    'max' => 30,
+                    'weight' => 0.3,
                 ],
             ],
         ];

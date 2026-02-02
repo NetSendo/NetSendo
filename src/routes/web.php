@@ -135,6 +135,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('messages/statuses', [\App\Http\Controllers\MessageController::class, 'statuses'])->name('messages.statuses');
     Route::get('messages/recipient-counts', [\App\Http\Controllers\MessageController::class, 'recipientCounts'])->name('messages.recipient-counts');
     Route::get('messages/{message}/stats', [\App\Http\Controllers\MessageController::class, 'stats'])->name('messages.stats');
+    Route::get('messages/{message}/stats/all-opens-ids', [\App\Http\Controllers\MessageController::class, 'allOpensSubscriberIds'])->name('messages.all-opens-ids');
+    Route::get('messages/{message}/stats/all-clicks-ids', [\App\Http\Controllers\MessageController::class, 'allClicksSubscriberIds'])->name('messages.all-clicks-ids');
     Route::post('messages/test', [\App\Http\Controllers\MessageController::class, 'test'])->name('messages.test');
     Route::post('messages/preview', [\App\Http\Controllers\MessageController::class, 'preview'])->name('messages.preview');
     Route::post('messages/preview-subscribers', [\App\Http\Controllers\MessageController::class, 'previewSubscribers'])->name('messages.preview-subscribers');

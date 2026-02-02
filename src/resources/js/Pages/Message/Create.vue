@@ -4035,13 +4035,32 @@ if (form.contact_list_ids.length > 0) {
 
                 <!-- Results -->
                 <div v-else-if="deliverabilityResult" class="space-y-6">
-                    <!-- Domain Warning -->
+                    <!-- Provider Info (Gmail) - green info box -->
                     <div
-                        v-if="!deliverabilityResult.has_domain"
+                        v-if="
+                            deliverabilityResult.provider_info &&
+                            deliverabilityResult.has_domain
+                        "
+                        class="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20"
+                    >
+                        <p
+                            class="text-sm text-emerald-700 dark:text-emerald-300"
+                        >
+                            ✓ {{ deliverabilityResult.provider_info }}
+                        </p>
+                    </div>
+
+                    <!-- Domain Warning (no domain configured) -->
+                    <div
+                        v-else-if="!deliverabilityResult.has_domain"
                         class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20"
                     >
                         <p class="text-sm text-amber-700 dark:text-amber-300">
-                            ⚠️ {{ $t("messages.deliverability.no_domain") }}
+                            ⚠️
+                            {{
+                                deliverabilityResult.provider_info ||
+                                $t("messages.deliverability.no_domain")
+                            }}
                         </p>
                     </div>
 

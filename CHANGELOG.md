@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **Message Statistics:**
   - Fixed "Select All" functionality in "Recent Opens" and "Recent Clicks" sections to correctly add all visible items to selection instead of toggling them off when already selected.
+  - Improved "Select All" to fetch ALL subscriber IDs matching the current filter (across all pages), not just the current page.
+  - Added total counts display in section headers for "Recent Opens" and "Recent Clicks" (e.g., "Ostatnie Otwarcia (125)").
+  - Added loading state feedback to "Select All" buttons during AJAX requests.
 
 - **System Message Preview:**
   - Fixed link navigation in system message preview by allowing popups and top navigation in the iframe sandbox.

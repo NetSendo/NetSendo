@@ -683,6 +683,11 @@
             "fix_links": "Fix link issues - avoid URL shorteners and suspicious domains",
             "looks_good": "Your email looks good! No major issues detected",
             "add_domain": "Add and verify a domain in DMARC Wiz for full deliverability analysis"
+        },
+        "messages": {
+            "gmail_managed_dns": "Gmail automatically manages SPF/DKIM for your account. No additional DNS configuration required.",
+            "domain_not_configured": "Domain {domain} is not configured in DMARC Wiz. Add it for full deliverability analysis.",
+            "no_domain_warning": "No domain configured. Analysis based on message content only."
         }
     },
     "navigation": {
