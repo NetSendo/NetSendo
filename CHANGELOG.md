@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.8] – Short Description
+
+**Release date:** 2026-02-02
+
 ### Added
+
+- **Deliverability Shield Generators:**
+  - **DMARC One-Click Generator:** Implemented a new tool to automatically generate optimal DMARC records with configurable policies (None/Quarantine/Reject) and reporting addresses.
+  - **SPF Auto-Fix:** Implemented an intelligent SPF generator that detects email providers, validates lookup limits, and suggests optimized records with "One-Click Fix" capability.
+  - **Smart Upgrade Paths:** Added logic to guide users safely from "Quarantine" to "Reject" policies for DMARC.
+  - **Localization:** Added comprehensive translations for all generator features in PL, EN, DE, ES.
 
 - **System Messages Improvements:**
   - **Fixed Ordering:** Implemented a fixed, logical order for system emails (Signup → Activation → Welcome → Resubscribe → Management → Unsubscribe → Admin) to ensure consistency across all lists.
@@ -26,7 +36,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added detailed error messages identifying exactly which required includes or selectors are missing.
   - Added translations for provider-specific DNS issues in PL, EN, DE, ES.
 
+- **CardIntel Agent:**
+  - Added **Desktop Camera Support** for MacBooks and USB webcams using MediaDevices API.
+  - Added automatic camera detection to dynamically show/hide the "Take Photo" button based on hardware availability.
+  - Added support for **HEIC/HEIF** business card images from mobile devices.
+
 ### Fixed
+
+- **CardIntel Agent:**
+  - Fixed photo upload failure on mobile devices by switching from extension-based to proper MIME type validation.
+  - Fixed missing file extensions for mobile camera photos by implementing a MIME-based fallback.
+  - Added missing `image/heif` MIME type to the storage service allowed list.
+
+- **Translation System:**
+  - Fixed a critical issue where frontend translations (Vue i18n) for Deliverability features were missing from JSON locale files, causing raw keys to be displayed.
+  - Synchronized translation keys between backend (PHP) and frontend (JSON) files for PL, EN, DE, and ES.
 
 - **Subscriber Management:**
   - Fixed `Call to a member function contains() on null` error by adding safe null checks for `tags` relationship in `addTag`, `removeTag`, and `syncTagsWithEvents` methods.

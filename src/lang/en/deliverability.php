@@ -220,6 +220,11 @@ return [
         'symbols' => 'Content contains excessive special symbols',
     ],
 
+    // Content Issues
+    'content' => [
+        'spam_word' => 'Spam trigger word detected: ":word"',
+    ],
+
     // Spam Words
     'spam' => [
         'word_detected' => 'Spam trigger word detected',
@@ -247,4 +252,48 @@ return [
         'feature4' => 'Automated alerts & recommendations',
         'cta' => 'Upgrade to GOLD',
     ],
+
+    // DMARC Generator (One-Click Fix)
+    'dmarc_generator' => [
+        'title' => 'DMARC Generator',
+        'subtitle' => 'Generate the optimal DMARC record in one click',
+        'initial_explanation' => 'Start with "quarantine" policy to monitor without blocking emails. This is a safe start.',
+        'recommended_explanation' => 'Full protection with "reject" policy. Use after 7-14 days of monitoring without issues.',
+        'minimal_explanation' => 'Minimal DMARC configuration with "quarantine" policy and basic reporting.',
+        'upgrade_notice' => 'After 7-14 days without issues, you can safely upgrade to "reject" policy for maximum protection.',
+        'copy_record' => 'Copy Record',
+        'current_policy' => 'Current Policy',
+        'recommended_policy' => 'Recommended Policy',
+        'report_email' => 'Report Email',
+        'report_email_hint' => 'You will receive DMARC reports at this address',
+    ],
+
+    // SPF Generator (One-Click Fix)
+    'spf_generator' => [
+        'title' => 'SPF Generator',
+        'subtitle' => 'Generate an optimized SPF record',
+        'optimal_explanation' => 'Simplified SPF record with hard fail (-all). Contains only necessary includes for your provider.',
+        'softfail_explanation' => 'SPF record with soft fail (~all). Less restrictive but may affect deliverability.',
+        'lookup_warning' => 'Your current SPF record exceeds or approaches the 10 DNS lookup limit. We recommend simplifying.',
+        'lookup_count' => 'DNS Lookup Count',
+        'max_lookups' => 'Maximum Limit',
+        'copy_record' => 'Copy Record',
+        'current_record' => 'Current Record',
+        'optimal_record' => 'Optimized Record',
+        'provider_detected' => 'Detected Provider',
+    ],
+
+    // DNS Generator Common
+    'dns_generator' => [
+        'instructions_title' => 'How to Add DNS Record',
+        'step1' => '1. Log in to your domain DNS panel (e.g., GoDaddy, Cloudflare, Namecheap)',
+        'step2' => '2. Add a new TXT record with the above data',
+        'step3' => '3. Wait for DNS propagation (up to 48h) and click "Verify"',
+        'copy_success' => 'Copied to clipboard!',
+        'copy_failed' => 'Copy failed. Please copy manually.',
+        'show_generator' => 'Show Generator',
+        'hide_generator' => 'Hide Generator',
+        'one_click_fix' => 'One-Click Fix',
+    ],
 ];
+

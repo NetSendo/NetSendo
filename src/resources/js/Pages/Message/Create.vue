@@ -4257,7 +4257,7 @@ if (form.contact_list_ids.length > 0) {
                                 <span
                                     class="text-slate-600 dark:text-slate-400"
                                 >
-                                    {{ $t(issue.message_key) }}
+                                    {{ issue.message }}
                                 </span>
                             </li>
                         </ul>
@@ -4288,7 +4288,7 @@ if (form.contact_list_ids.length > 0) {
                                 :key="index"
                                 class="text-sm text-emerald-700 dark:text-emerald-300"
                             >
-                                • {{ $t(rec.message_key) }}
+                                • {{ rec.message }}
                             </li>
                         </ul>
                     </div>

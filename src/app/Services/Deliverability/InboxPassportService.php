@@ -447,8 +447,7 @@ class InboxPassportService
                 $issues[] = [
                     'code' => 'spam_word',
                     'severity' => 'warning',
-                    'message_key' => 'deliverability.content.spam_word',
-                    'context' => ['word' => $word],
+                    'message' => __('deliverability.content.spam_word', ['word' => $word]),
                 ];
             }
         }
@@ -457,7 +456,7 @@ class InboxPassportService
             $issues[] = [
                 'code' => $issue['code'],
                 'severity' => $issue['severity'] ?? 'warning',
-                'message_key' => $issue['message_key'],
+                'message' => __($issue['message_key']),
             ];
         }
 
@@ -465,7 +464,7 @@ class InboxPassportService
             $issues[] = [
                 'code' => $issue['code'],
                 'severity' => $issue['severity'] ?? 'warning',
-                'message_key' => $issue['message_key'],
+                'message' => __($issue['message_key']),
             ];
         }
 
@@ -473,7 +472,7 @@ class InboxPassportService
             $issues[] = [
                 'code' => $issue['code'],
                 'severity' => $issue['severity'] ?? 'warning',
-                'message_key' => $issue['message_key'],
+                'message' => __($issue['message_key']),
             ];
         }
 
@@ -510,7 +509,7 @@ class InboxPassportService
             $recommendations[] = [
                 'priority' => 'high',
                 'category' => 'content',
-                'message_key' => 'deliverability.recommendations.remove_spam_words',
+                'message' => __('deliverability.recommendations.remove_spam_words'),
             ];
         }
 
@@ -518,7 +517,7 @@ class InboxPassportService
             $recommendations[] = [
                 'priority' => 'medium',
                 'category' => 'subject',
-                'message_key' => 'deliverability.recommendations.improve_subject',
+                'message' => __('deliverability.recommendations.improve_subject'),
             ];
         }
 
@@ -527,7 +526,7 @@ class InboxPassportService
             $recommendations[] = [
                 'priority' => 'high',
                 'category' => 'domain',
-                'message_key' => 'deliverability.recommendations.add_domain',
+                'message' => __('deliverability.recommendations.add_domain'),
             ];
         }
 

@@ -917,6 +917,43 @@
             "gmail_managed_dns": "Gmail verwaltet SPF/DKIM automatisch für Ihr Konto. Keine zusätzliche DNS-Konfiguration erforderlich.",
             "domain_not_configured": "Domain {domain} ist nicht im DMARC Wiz konfiguriert. Fügen Sie sie für eine vollständige Zustellbarkeitsanalyse hinzu.",
             "no_domain_warning": "Keine Domain konfiguriert. Analyse basiert nur auf dem Nachrichteninhalt."
+        },
+        "dmarc_generator": {
+            "title": "DMARC-Generator",
+            "subtitle": "Generieren Sie einen optimalen DMARC-Eintrag mit einem Klick",
+            "initial_explanation": "Beginnen Sie mit der \"quarantine\"-Richtlinie zur Überwachung ohne Blockierung. Dies ist ein sicherer Start.",
+            "recommended_explanation": "Voller Schutz mit \"reject\"-Richtlinie. Verwenden Sie diese nach 7-14 Tagen Überwachung ohne Probleme.",
+            "minimal_explanation": "Minimale DMARC-Konfiguration mit \"quarantine\"-Richtlinie und grundlegendem Reporting.",
+            "upgrade_notice": "Nach 7-14 Tagen ohne Probleme können Sie sicher auf die \"reject\"-Richtlinie für maximalen Schutz upgraden.",
+            "copy_record": "Eintrag kopieren",
+            "current_policy": "Aktuelle Richtlinie",
+            "recommended_policy": "Empfohlene Richtlinie",
+            "report_email": "Bericht-E-Mail",
+            "report_email_hint": "Sie erhalten DMARC-Berichte an diese Adresse"
+        },
+        "spf_generator": {
+            "title": "SPF-Generator",
+            "subtitle": "Generieren Sie einen optimierten SPF-Eintrag",
+            "optimal_explanation": "Vereinfachter SPF-Eintrag mit hartem Fail (-all). Enthält nur notwendige Includes für Ihren Anbieter.",
+            "softfail_explanation": "SPF-Eintrag mit weichem Fail (~all). Weniger restriktiv, kann aber die Zustellbarkeit beeinträchtigen.",
+            "lookup_warning": "Ihr aktueller SPF-Eintrag überschreitet oder nähert sich dem Limit von 10 DNS-Lookups. Wir empfehlen eine Vereinfachung.",
+            "lookup_count": "DNS-Lookup-Anzahl",
+            "max_lookups": "Maximales Limit",
+            "copy_record": "Eintrag kopieren",
+            "current_record": "Aktueller Eintrag",
+            "optimal_record": "Optimaler Eintrag",
+            "provider_detected": "Anbieter erkannt"
+        },
+        "dns_generator": {
+            "instructions_title": "So fügen Sie einen DNS-Eintrag hinzu",
+            "step1": "1. Melden Sie sich bei Ihrem Domain-DNS-Panel an (z.B. IONOS, Strato, All-Inkl)",
+            "step2": "2. Fügen Sie einen neuen TXT-Eintrag mit den obigen Daten hinzu",
+            "step3": "3. Warten Sie auf die DNS-Propagation (bis zu 48h) und klicken Sie auf \"Verifizieren\"",
+            "copy_success": "In die Zwischenablage kopiert!",
+            "copy_failed": "Kopieren fehlgeschlagen. Bitte manuell kopieren.",
+            "show_generator": "Generator anzeigen",
+            "hide_generator": "Generator ausblenden",
+            "one_click_fix": "Ein-Klick-Fix"
         }
     },
     "navigation": {

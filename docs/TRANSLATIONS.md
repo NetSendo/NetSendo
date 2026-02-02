@@ -442,6 +442,16 @@ The following translation keys were added to support the Deliverability Shield f
 - `deliverability.upsell.featureX` - Feature bullets (1-4)
 - `deliverability.upsell.cta` - Upgrade button
 
+**Deliverability Messages (`deliverability.messages.*`):**
+
+- `deliverability.messages.gmail_managed_dns` - Gmail provider info message
+- `deliverability.messages.domain_not_configured` - Domain not configured warning
+- `deliverability.messages.no_domain_warning` - No domain warning (fallback)
+
+**Content Analysis (`deliverability.content.*` - Backend):**
+
+- `deliverability.content.spam_word` - Spam word detected issue message
+
 ### System Email Descriptions (February 2026)
 
 The following translation keys were added to provide descriptions for system emails in the UI:

@@ -82,10 +82,45 @@ const clearFiles = () => {
 // Camera input ref
 const cameraInput = ref(null);
 const galleryInput = ref(null);
+const hasCamera = ref(false);
+const isMobileDevice = ref(false);
+
+// Check for camera availability on mount
+const checkCameraAvailability = async () => {
+    // Check if running on mobile device
+    isMobileDevice.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // On mobile, assume camera is always available
+    if (isMobileDevice.value) {
+        hasCamera.value = true;
+        return;
+    }
+
+    // On desktop, check for available video input devices
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            hasCamera.value = devices.some(device => device.kind === 'videoinput');
+        }
+    } catch (error) {
+        console.warn('Could not detect camera:', error);
+        hasCamera.value = false;
+    }
+};
+
+// Initialize camera check
+checkCameraAvailability();
 
 // Open camera for taking photo
 const openCamera = () => {
     if (cameraInput.value) {
+        // For mobile devices, use the capture attribute
+        if (isMobileDevice.value) {
+            cameraInput.value.setAttribute('capture', 'environment');
+        } else {
+            // For desktop, remove capture to allow file picker with camera option
+            cameraInput.value.removeAttribute('capture');
+        }
         cameraInput.value.click();
     }
 };
@@ -1025,7 +1060,6 @@ const navigateTo = (tab) => {
                                 ref="cameraInput"
                                 type="file"
                                 accept="image/*"
-                                capture="environment"
                                 class="hidden"
                                 @change="handleCameraCapture"
                             />
@@ -1039,8 +1073,9 @@ const navigateTo = (tab) => {
                             />
 
                             <!-- Camera and Gallery Buttons -->
-                            <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div class="mt-4 grid gap-3" :class="hasCamera ? 'grid-cols-2' : 'grid-cols-1'">
                                 <button
+                                    v-if="hasCamera"
                                     type="button"
                                     @click="openCamera"
                                     :disabled="isUploading"

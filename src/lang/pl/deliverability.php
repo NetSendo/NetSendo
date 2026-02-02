@@ -220,6 +220,11 @@ return [
         'symbols' => 'Treść zawiera nadmierną ilość symboli specjalnych',
     ],
 
+    // Content Issues
+    'content' => [
+        'spam_word' => 'Wykryto słowo wyzwalające spam: ":word"',
+    ],
+
     // Spam Words
     'spam' => [
         'word_detected' => 'Wykryto słowo wyzwalające spam',
@@ -247,4 +252,48 @@ return [
         'feature4' => 'Automatyczne alerty i rekomendacje',
         'cta' => 'Uaktualnij do GOLD',
     ],
+
+    // DMARC Generator (One-Click Fix)
+    'dmarc_generator' => [
+        'title' => 'Generator DMARC',
+        'subtitle' => 'Wygeneruj optymalny rekord DMARC jednym kliknięciem',
+        'initial_explanation' => 'Zacznij od polityki "quarantine", aby monitorować bez blokowania wiadomości. To bezpieczny start.',
+        'recommended_explanation' => 'Pełna ochrona z polityką "reject". Użyj po 7-14 dniach monitorowania bez problemów.',
+        'minimal_explanation' => 'Minimalna konfiguracja DMARC z polityką "quarantine" i podstawowym raportowaniem.',
+        'upgrade_notice' => 'Po 7-14 dniach bez problemów możesz bezpiecznie przejść na politykę "reject" dla maksymalnej ochrony.',
+        'copy_record' => 'Kopiuj rekord',
+        'current_policy' => 'Obecna polityka',
+        'recommended_policy' => 'Zalecana polityka',
+        'report_email' => 'E-mail do raportów',
+        'report_email_hint' => 'Na ten adres będziesz otrzymywać raporty DMARC',
+    ],
+
+    // SPF Generator (One-Click Fix)
+    'spf_generator' => [
+        'title' => 'Generator SPF',
+        'subtitle' => 'Wygeneruj zoptymalizowany rekord SPF',
+        'optimal_explanation' => 'Uproszczony rekord SPF z twardym odrzuceniem (-all). Zawiera tylko niezbędne include dla Twojego dostawcy.',
+        'softfail_explanation' => 'Rekord SPF z miękkim odrzuceniem (~all). Mniej restrykcyjny, ale może wpływać na dostarczalność.',
+        'lookup_warning' => 'Twój obecny rekord SPF przekracza lub zbliża się do limitu 10 wyszukiwań DNS. Zalecamy uproszczenie.',
+        'lookup_count' => 'Liczba wyszukiwań DNS',
+        'max_lookups' => 'Maksymalny limit',
+        'copy_record' => 'Kopiuj rekord',
+        'current_record' => 'Obecny rekord',
+        'optimal_record' => 'Zoptymalizowany rekord',
+        'provider_detected' => 'Wykryty dostawca',
+    ],
+
+    // DNS Generator Common
+    'dns_generator' => [
+        'instructions_title' => 'Jak dodać rekord DNS',
+        'step1' => '1. Zaloguj się do panelu DNS Twojej domeny (np. OVH, Cloudflare, nazwa.pl)',
+        'step2' => '2. Dodaj nowy rekord TXT z powyższymi danymi',
+        'step3' => '3. Poczekaj na propagację DNS (do 48h) i kliknij "Weryfikuj"',
+        'copy_success' => 'Skopiowano do schowka!',
+        'copy_failed' => 'Błąd kopiowania. Skopiuj ręcznie.',
+        'show_generator' => 'Pokaż generator',
+        'hide_generator' => 'Ukryj generator',
+        'one_click_fix' => 'Napraw jednym kliknięciem',
+    ],
 ];
+

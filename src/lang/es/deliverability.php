@@ -220,6 +220,11 @@ return [
         'symbols' => 'El contenido contiene demasiados símbolos especiales',
     ],
 
+    // Content Issues
+    'content' => [
+        'spam_word' => 'Palabra desencadenante de spam detectada: ":word"',
+    ],
+
     // Spam Words
     'spam' => [
         'word_detected' => 'Palabra desencadenante de spam detectada',
@@ -247,4 +252,48 @@ return [
         'feature4' => 'Alertas y recomendaciones automatizadas',
         'cta' => 'Actualizar a GOLD',
     ],
+
+    // DMARC Generator (One-Click Fix)
+    'dmarc_generator' => [
+        'title' => 'Generador DMARC',
+        'subtitle' => 'Genere el registro DMARC óptimo con un clic',
+        'initial_explanation' => 'Comience con la política "quarantine" para monitorear sin bloquear. Este es un inicio seguro.',
+        'recommended_explanation' => 'Protección completa con política "reject". Use después de 7-14 días de monitoreo sin problemas.',
+        'minimal_explanation' => 'Configuración DMARC mínima con política "quarantine" y reportes básicos.',
+        'upgrade_notice' => 'Después de 7-14 días sin problemas, puede actualizar de forma segura a la política "reject" para máxima protección.',
+        'copy_record' => 'Copiar registro',
+        'current_policy' => 'Política actual',
+        'recommended_policy' => 'Política recomendada',
+        'report_email' => 'Correo de reportes',
+        'report_email_hint' => 'Recibirá reportes DMARC en esta dirección',
+    ],
+
+    // SPF Generator (One-Click Fix)
+    'spf_generator' => [
+        'title' => 'Generador SPF',
+        'subtitle' => 'Genere un registro SPF optimizado',
+        'optimal_explanation' => 'Registro SPF simplificado con fallo duro (-all). Incluye solo los includes necesarios para su proveedor.',
+        'softfail_explanation' => 'Registro SPF con fallo suave (~all). Menos restrictivo pero puede afectar la entregabilidad.',
+        'lookup_warning' => 'Su registro SPF actual supera o se acerca al límite de 10 consultas DNS. Recomendamos simplificarlo.',
+        'lookup_count' => 'Consultas DNS',
+        'max_lookups' => 'Límite máximo',
+        'copy_record' => 'Copiar registro',
+        'current_record' => 'Registro actual',
+        'optimal_record' => 'Registro optimizado',
+        'provider_detected' => 'Proveedor detectado',
+    ],
+
+    // DNS Generator Common
+    'dns_generator' => [
+        'instructions_title' => 'Cómo agregar un registro DNS',
+        'step1' => '1. Acceda al panel DNS de su dominio (ej. GoDaddy, Cloudflare, Arsys)',
+        'step2' => '2. Agregue un nuevo registro TXT con los datos anteriores',
+        'step3' => '3. Espere la propagación DNS (hasta 48h) y haga clic en "Verificar"',
+        'copy_success' => '¡Copiado al portapapeles!',
+        'copy_failed' => 'Error al copiar. Por favor, copie manualmente.',
+        'show_generator' => 'Mostrar generador',
+        'hide_generator' => 'Ocultar generador',
+        'one_click_fix' => 'Reparación con un clic',
+    ],
 ];
+

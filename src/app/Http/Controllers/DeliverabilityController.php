@@ -20,6 +20,33 @@ class DeliverabilityController extends Controller
     ) {}
 
     /**
+     * Transform issues array to include translated messages
+     */
+    private function transformIssues(array $issues): array
+    {
+        return array_map(function ($issue) {
+            if (isset($issue['message_key']) && !isset($issue['message'])) {
+                $context = $issue['context'] ?? [];
+                $issue['message'] = __($issue['message_key'], $context);
+            }
+            return $issue;
+        }, $issues);
+    }
+
+    /**
+     * Transform recommendations array to include translated messages
+     */
+    private function transformRecommendations(array $recommendations): array
+    {
+        return array_map(function ($rec) {
+            if (isset($rec['message_key']) && !isset($rec['message'])) {
+                $rec['message'] = __($rec['message_key']);
+            }
+            return $rec;
+        }, $recommendations);
+    }
+
+    /**
      * Display the Deliverability Shield dashboard
      */
     public function index(): Response
@@ -272,6 +299,86 @@ class DeliverabilityController extends Controller
     }
 
     /**
+     * Get optimal DMARC record generator data
+     */
+    public function getDmarcGenerator(DomainConfiguration $domain): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('view', $domain);
+
+        $generator = $this->domainService->generateOptimalDmarcRecord($domain);
+
+        return response()->json([
+            'success' => true,
+            'domain' => $domain->domain,
+            'generator' => $generator,
+            'translations' => [
+                'initial_explanation' => __('deliverability.dmarc_generator.initial_explanation'),
+                'recommended_explanation' => __('deliverability.dmarc_generator.recommended_explanation'),
+                'minimal_explanation' => __('deliverability.dmarc_generator.minimal_explanation'),
+                'upgrade_notice' => __('deliverability.dmarc_generator.upgrade_notice'),
+                'copy_success' => __('deliverability.messages.copied_to_clipboard'),
+            ],
+        ]);
+    }
+
+    /**
+     * Get optimal SPF record generator data
+     */
+    public function getSpfGenerator(DomainConfiguration $domain): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('view', $domain);
+
+        $generator = $this->domainService->generateOptimalSpfRecord($domain);
+
+        return response()->json([
+            'success' => true,
+            'domain' => $domain->domain,
+            'generator' => $generator,
+            'translations' => [
+                'optimal_explanation' => __('deliverability.spf_generator.optimal_explanation'),
+                'softfail_explanation' => __('deliverability.spf_generator.softfail_explanation'),
+                'lookup_warning' => __('deliverability.spf_generator.lookup_warning'),
+                'copy_success' => __('deliverability.messages.copied_to_clipboard'),
+            ],
+        ]);
+    }
+
+    /**
+     * Get both DMARC and SPF generators for domain status page
+     */
+    public function getDnsGenerators(DomainConfiguration $domain): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('view', $domain);
+
+        $dmarcGenerator = $this->domainService->generateOptimalDmarcRecord($domain);
+        $spfGenerator = $this->domainService->generateOptimalSpfRecord($domain);
+
+        return response()->json([
+            'success' => true,
+            'domain' => $domain->domain,
+            'dmarc' => $dmarcGenerator,
+            'spf' => $spfGenerator,
+            'translations' => [
+                // DMARC translations
+                'dmarc_initial_explanation' => __('deliverability.dmarc_generator.initial_explanation'),
+                'dmarc_recommended_explanation' => __('deliverability.dmarc_generator.recommended_explanation'),
+                'dmarc_minimal_explanation' => __('deliverability.dmarc_generator.minimal_explanation'),
+                'dmarc_upgrade_notice' => __('deliverability.dmarc_generator.upgrade_notice'),
+                // SPF translations
+                'spf_optimal_explanation' => __('deliverability.spf_generator.optimal_explanation'),
+                'spf_softfail_explanation' => __('deliverability.spf_generator.softfail_explanation'),
+                'spf_lookup_warning' => __('deliverability.spf_generator.lookup_warning'),
+                // Common
+                'copy_success' => __('deliverability.messages.copied_to_clipboard'),
+                'dns_instructions_title' => __('deliverability.dns_generator.instructions_title'),
+                'dns_step1' => __('deliverability.dns_generator.step1'),
+                'dns_step2' => __('deliverability.dns_generator.step2'),
+                'dns_step3' => __('deliverability.dns_generator.step3'),
+            ],
+        ]);
+    }
+
+    /**
      * Show InboxPassport simulation page
      */
     public function showSimulator(): Response
@@ -336,8 +443,8 @@ class DeliverabilityController extends Controller
                 'provider_predictions' => $simulation->provider_predictions,
                 'domain_analysis' => $simulation->domain_analysis,
                 'content_analysis' => $simulation->content_analysis,
-                'issues' => $simulation->issues,
-                'recommendations' => $simulation->recommendations,
+                'issues' => $this->transformIssues($simulation->issues ?? []),
+                'recommendations' => $this->transformRecommendations($simulation->recommendations ?? []),
                 'score_breakdown' => $simulation->score_breakdown,
                 'analyzed_at' => $simulation->analyzed_at->format('Y-m-d H:i'),
                 'domain' => $simulation->domainConfiguration?->domain,
@@ -491,8 +598,8 @@ class DeliverabilityController extends Controller
             'predicted_folder' => $simulation->predicted_folder,
             'folder_info' => $simulation->getFolderInfo(),
             'provider_predictions' => $simulation->provider_predictions,
-            'issues' => $simulation->issues,
-            'recommendations' => $simulation->recommendations,
+            'issues' => $this->transformIssues($simulation->issues ?? []),
+            'recommendations' => $this->transformRecommendations($simulation->recommendations ?? []),
             'score_breakdown' => $simulation->score_breakdown,
         ]);
     }

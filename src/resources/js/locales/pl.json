@@ -689,6 +689,43 @@
             "gmail_managed_dns": "Gmail automatycznie zarządza SPF/DKIM dla Twojego konta. Nie wymaga dodatkowej konfiguracji DNS.",
             "domain_not_configured": "Domena {domain} nie jest skonfigurowana w DMARC Wiz. Dodaj ją, aby uzyskać pełną analizę dostarczalności.",
             "no_domain_warning": "Brak skonfigurowanej domeny. Analiza oparta tylko na treści wiadomości."
+        },
+        "dmarc_generator": {
+            "title": "Generator DMARC",
+            "subtitle": "Wygeneruj optymalny rekord DMARC jednym kliknięciem",
+            "initial_explanation": "Zacznij od polityki \"quarantine\" do monitorowania bez blokowania. To bezpieczny start.",
+            "recommended_explanation": "Pełna ochrona z polityką \"reject\". Użyj po 7-14 dniach monitorowania bez problemów.",
+            "minimal_explanation": "Minimalna konfiguracja DMARC z polityką \"quarantine\" i podstawowym raportowaniem.",
+            "upgrade_notice": "Po 7-14 dniach bez problemów możesz bezpiecznie ulepszyć do polityki \"reject\" dla maksymalnej ochrony.",
+            "copy_record": "Kopiuj rekord",
+            "current_policy": "Aktualna polityka",
+            "recommended_policy": "Zalecana polityka",
+            "report_email": "Email raportów",
+            "report_email_hint": "Będziesz otrzymywać raporty DMARC na ten adres"
+        },
+        "spf_generator": {
+            "title": "Generator SPF",
+            "subtitle": "Wygeneruj zoptymalizowany rekord SPF",
+            "optimal_explanation": "Uproszczony rekord SPF z twardym fail (-all). Zawiera tylko niezbędne include dla Twojego dostawcy.",
+            "softfail_explanation": "Rekord SPF z miękkim fail (~all). Mniej restrykcyjny, ale może wpływać na dostarczalność.",
+            "lookup_warning": "Twój obecny rekord SPF przekracza lub zbliża się do limitu 10 zapytań DNS. Zalecamy uproszczenie.",
+            "lookup_count": "Liczba zapytań DNS",
+            "max_lookups": "Maksymalny limit",
+            "copy_record": "Kopiuj rekord",
+            "current_record": "Aktualny rekord",
+            "optimal_record": "Optymalny rekord",
+            "provider_detected": "Wykryty dostawca"
+        },
+        "dns_generator": {
+            "instructions_title": "Jak dodać rekord DNS",
+            "step1": "1. Zaloguj się do panelu DNS swojej domeny (np. nazwa.pl, OVH, home.pl)",
+            "step2": "2. Dodaj nowy rekord TXT z powyższymi danymi",
+            "step3": "3. Poczekaj na propagację DNS (do 48h) i kliknij \"Weryfikuj\"",
+            "copy_success": "Skopiowano do schowka!",
+            "copy_failed": "Kopiowanie nie powiodło się. Skopiuj ręcznie.",
+            "show_generator": "Pokaż generator",
+            "hide_generator": "Ukryj generator",
+            "one_click_fix": "Napraw jednym kliknięciem"
         }
     },
     "navigation": {

@@ -58,7 +58,7 @@ class CardIntelController extends Controller
     public function scan(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,webp,heic,pdf|max:10240',
+            'file' => 'required|file|mimetypes:image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf|max:10240',
             'mode' => 'nullable|in:manual,agent,auto',
         ]);
 

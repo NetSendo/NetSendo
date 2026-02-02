@@ -220,6 +220,11 @@ return [
         'symbols' => 'Inhalt enthält übermäßig viele Sonderzeichen',
     ],
 
+    // Content Issues
+    'content' => [
+        'spam_word' => 'Spam-Auslösewort erkannt: ":word"',
+    ],
+
     // Spam Words
     'spam' => [
         'word_detected' => 'Spam-Auslösewort erkannt',
@@ -247,4 +252,48 @@ return [
         'feature4' => 'Automatische Benachrichtigungen & Empfehlungen',
         'cta' => 'Auf GOLD upgraden',
     ],
+
+    // DMARC Generator (One-Click Fix)
+    'dmarc_generator' => [
+        'title' => 'DMARC-Generator',
+        'subtitle' => 'Generieren Sie den optimalen DMARC-Eintrag mit einem Klick',
+        'initial_explanation' => 'Beginnen Sie mit der "quarantine"-Richtlinie, um ohne Blockierung zu überwachen. Dies ist ein sicherer Start.',
+        'recommended_explanation' => 'Voller Schutz mit "reject"-Richtlinie. Verwenden Sie nach 7-14 Tagen Überwachung ohne Probleme.',
+        'minimal_explanation' => 'Minimale DMARC-Konfiguration mit "quarantine"-Richtlinie und grundlegender Berichterstattung.',
+        'upgrade_notice' => 'Nach 7-14 Tagen ohne Probleme können Sie sicher auf die "reject"-Richtlinie für maximalen Schutz upgraden.',
+        'copy_record' => 'Eintrag kopieren',
+        'current_policy' => 'Aktuelle Richtlinie',
+        'recommended_policy' => 'Empfohlene Richtlinie',
+        'report_email' => 'Bericht-E-Mail',
+        'report_email_hint' => 'Sie erhalten DMARC-Berichte an diese Adresse',
+    ],
+
+    // SPF Generator (One-Click Fix)
+    'spf_generator' => [
+        'title' => 'SPF-Generator',
+        'subtitle' => 'Generieren Sie einen optimierten SPF-Eintrag',
+        'optimal_explanation' => 'Vereinfachter SPF-Eintrag mit hartem Fail (-all). Enthält nur notwendige Includes für Ihren Anbieter.',
+        'softfail_explanation' => 'SPF-Eintrag mit weichem Fail (~all). Weniger restriktiv, kann aber die Zustellbarkeit beeinflussen.',
+        'lookup_warning' => 'Ihr aktueller SPF-Eintrag überschreitet oder nähert sich dem Limit von 10 DNS-Lookups. Wir empfehlen eine Vereinfachung.',
+        'lookup_count' => 'DNS-Lookup-Anzahl',
+        'max_lookups' => 'Maximales Limit',
+        'copy_record' => 'Eintrag kopieren',
+        'current_record' => 'Aktueller Eintrag',
+        'optimal_record' => 'Optimierter Eintrag',
+        'provider_detected' => 'Erkannter Anbieter',
+    ],
+
+    // DNS Generator Common
+    'dns_generator' => [
+        'instructions_title' => 'So fügen Sie einen DNS-Eintrag hinzu',
+        'step1' => '1. Melden Sie sich bei Ihrem Domain-DNS-Panel an (z.B. IONOS, Strato, Hetzner)',
+        'step2' => '2. Fügen Sie einen neuen TXT-Eintrag mit den obigen Daten hinzu',
+        'step3' => '3. Warten Sie auf die DNS-Propagierung (bis zu 48h) und klicken Sie auf "Verifizieren"',
+        'copy_success' => 'In Zwischenablage kopiert!',
+        'copy_failed' => 'Kopieren fehlgeschlagen. Bitte manuell kopieren.',
+        'show_generator' => 'Generator anzeigen',
+        'hide_generator' => 'Generator ausblenden',
+        'one_click_fix' => 'Ein-Klick-Reparatur',
+    ],
 ];
+

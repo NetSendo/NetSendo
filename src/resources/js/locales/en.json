@@ -688,6 +688,43 @@
             "gmail_managed_dns": "Gmail automatically manages SPF/DKIM for your account. No additional DNS configuration required.",
             "domain_not_configured": "Domain {domain} is not configured in DMARC Wiz. Add it for full deliverability analysis.",
             "no_domain_warning": "No domain configured. Analysis based on message content only."
+        },
+        "dmarc_generator": {
+            "title": "DMARC Generator",
+            "subtitle": "Generate an optimal DMARC record with one click",
+            "initial_explanation": "Start with \"quarantine\" policy to monitor without blocking. This is a safe start.",
+            "recommended_explanation": "Full protection with \"reject\" policy. Use after 7-14 days of monitoring without issues.",
+            "minimal_explanation": "Minimal DMARC configuration with \"quarantine\" policy and basic reporting.",
+            "upgrade_notice": "After 7-14 days without issues, you can safely upgrade to \"reject\" policy for maximum protection.",
+            "copy_record": "Copy Record",
+            "current_policy": "Current Policy",
+            "recommended_policy": "Recommended Policy",
+            "report_email": "Report Email",
+            "report_email_hint": "You will receive DMARC reports at this address"
+        },
+        "spf_generator": {
+            "title": "SPF Generator",
+            "subtitle": "Generate an optimized SPF record",
+            "optimal_explanation": "Simplified SPF record with hard fail (-all). Includes only necessary includes for your provider.",
+            "softfail_explanation": "SPF record with soft fail (~all). Less restrictive but may affect deliverability.",
+            "lookup_warning": "Your current SPF record exceeds or approaches the 10 DNS lookup limit. We recommend simplifying.",
+            "lookup_count": "DNS Lookup Count",
+            "max_lookups": "Maximum Limit",
+            "copy_record": "Copy Record",
+            "current_record": "Current Record",
+            "optimal_record": "Optimal Record",
+            "provider_detected": "Provider Detected"
+        },
+        "dns_generator": {
+            "instructions_title": "How to Add a DNS Record",
+            "step1": "1. Log in to your domain's DNS panel (e.g., GoDaddy, Cloudflare, Namecheap)",
+            "step2": "2. Add a new TXT record with the data above",
+            "step3": "3. Wait for DNS propagation (up to 48h) and click \"Verify\"",
+            "copy_success": "Copied to clipboard!",
+            "copy_failed": "Copy failed. Please copy manually.",
+            "show_generator": "Show Generator",
+            "hide_generator": "Hide Generator",
+            "one_click_fix": "One-Click Fix"
         }
     },
     "navigation": {

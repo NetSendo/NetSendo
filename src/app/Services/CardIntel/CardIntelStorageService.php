@@ -39,7 +39,11 @@ class CardIntelStorageService
         $this->validateFile($file);
 
         // Generate unique filename
-        $extension = $file->getClientOriginalExtension() ?: 'jpg';
+        // Use original extension, or derive from MIME type for mobile camera photos
+        $extension = $file->getClientOriginalExtension();
+        if (empty($extension)) {
+            $extension = $this->getExtensionFromMimeType($file->getMimeType());
+        }
         $filename = Str::uuid() . '.' . $extension;
 
         // Create user directory path
@@ -221,5 +225,22 @@ class CardIntelStorageService
         }
 
         return round($bytes, 2) . ' ' . $units[$index];
+    }
+
+    /**
+     * Get file extension from MIME type.
+     * Used when mobile camera photos don't have an extension.
+     */
+    protected function getExtensionFromMimeType(string $mimeType): string
+    {
+        return match ($mimeType) {
+            'image/jpeg', 'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/heic' => 'heic',
+            'image/heif' => 'heif',
+            'application/pdf' => 'pdf',
+            default => 'jpg', // Fallback to jpg
+        };
     }
 }

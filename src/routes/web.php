@@ -776,6 +776,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts');
         Route::delete('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'removeDomain'])->name('domains.destroy');
 
+        // DNS Record Generators (One-Click Fix)
+        Route::get('/domains/{domain}/dmarc-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getDmarcGenerator'])->name('domains.dmarc-generator');
+        Route::get('/domains/{domain}/spf-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getSpfGenerator'])->name('domains.spf-generator');
+        Route::get('/domains/{domain}/dns-generators', [\App\Http\Controllers\DeliverabilityController::class, 'getDnsGenerators'])->name('domains.dns-generators');
+
         // InboxPassport AI - Simulation
         Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator');
         Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate');

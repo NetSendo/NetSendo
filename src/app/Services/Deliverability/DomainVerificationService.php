@@ -435,6 +435,169 @@ class DomainVerificationService
             'label_key' => "{$baseKey}.{$status}",
         ];
     }
+
+    /**
+     * Generate optimal DMARC record for one-click setup
+     *
+     * @param DomainConfiguration $domain
+     * @return array Contains 'initial' and 'recommended' record configurations
+     */
+    public function generateOptimalDmarcRecord(DomainConfiguration $domain): array
+    {
+        $reportEmail = 'dmarc-reports@' . $domain->domain;
+
+        return [
+            'current' => [
+                'policy' => $domain->dmarc_policy ?? 'none',
+                'record' => $domain->dns_records['dmarc'] ?? null,
+            ],
+            'initial' => [
+                'host' => '_dmarc.' . $domain->domain,
+                'host_display' => '_dmarc',
+                'type' => 'TXT',
+                'value' => "v=DMARC1; p=quarantine; pct=100; rua=mailto:{$reportEmail}; ruf=mailto:{$reportEmail}; adkim=s; aspf=s",
+                'ttl' => 3600,
+                'policy' => 'quarantine',
+                'explanation_key' => 'deliverability.dmarc_generator.initial_explanation',
+                'is_recommended_first_step' => true,
+            ],
+            'recommended' => [
+                'host' => '_dmarc.' . $domain->domain,
+                'host_display' => '_dmarc',
+                'type' => 'TXT',
+                'value' => "v=DMARC1; p=reject; pct=100; rua=mailto:{$reportEmail}; adkim=s; aspf=s",
+                'ttl' => 3600,
+                'policy' => 'reject',
+                'explanation_key' => 'deliverability.dmarc_generator.recommended_explanation',
+                'upgrade_after_days' => 14,
+            ],
+            'minimal' => [
+                'host' => '_dmarc.' . $domain->domain,
+                'host_display' => '_dmarc',
+                'type' => 'TXT',
+                'value' => "v=DMARC1; p=quarantine; rua=mailto:{$reportEmail}",
+                'ttl' => 3600,
+                'policy' => 'quarantine',
+                'explanation_key' => 'deliverability.dmarc_generator.minimal_explanation',
+            ],
+            'report_email' => $reportEmail,
+            'can_upgrade' => $domain->dmarc_policy === 'quarantine',
+            'should_configure' => in_array($domain->dmarc_policy, [null, 'none', '']),
+        ];
+    }
+
+    /**
+     * Generate optimal SPF record for one-click setup
+     *
+     * @param DomainConfiguration $domain
+     * @return array Contains optimized SPF configuration
+     */
+    public function generateOptimalSpfRecord(DomainConfiguration $domain): array
+    {
+        $provider = $domain->mailbox?->provider ?? null;
+        $providerConfig = $this->getProviderConfig($provider);
+
+        // Build the optimal SPF includes
+        $includes = [];
+        $explanation = [];
+
+        // Add provider-specific includes
+        foreach ($providerConfig['spf_includes'] as $include) {
+            if (!empty($include)) {
+                $includes[] = "include:{$include}";
+                $explanation[] = $providerConfig['provider_name'] ?? $include;
+            }
+        }
+
+        // If no specific provider, add NetSendo default
+        if (empty($includes)) {
+            $includes[] = 'include:_spf.netsendo.com';
+            $explanation[] = 'NetSendo';
+        }
+
+        $includesStr = implode(' ', $includes);
+        $lookupCount = count($includes);
+
+        // Get current SPF to check if we need IP addresses
+        $currentSpf = $domain->dns_records['spf'] ?? null;
+        $parsedCurrent = $currentSpf ? $this->dnsLookup->parseSpfRecord($currentSpf) : null;
+
+        // Preserve existing IP addresses from current SPF
+        $ipAddresses = [];
+        if ($parsedCurrent && !empty($parsedCurrent['ips'])) {
+            foreach ($parsedCurrent['ips'] as $ip) {
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                    $ipAddresses[] = "ip4:{$ip}";
+                } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $ipAddresses[] = "ip6:{$ip}";
+                }
+            }
+        }
+
+        $ipStr = !empty($ipAddresses) ? ' ' . implode(' ', $ipAddresses) : '';
+
+        return [
+            'current' => [
+                'record' => $currentSpf,
+                'parsed' => $parsedCurrent,
+                'lookup_count' => $this->countSpfLookups($currentSpf),
+            ],
+            'optimal' => [
+                'host' => $domain->domain,
+                'host_display' => '@',
+                'type' => 'TXT',
+                'value' => "v=spf1{$ipStr} {$includesStr} -all",
+                'ttl' => 3600,
+                'lookup_count' => $lookupCount,
+                'providers' => $explanation,
+                'uses_hard_fail' => true,
+                'explanation_key' => 'deliverability.spf_generator.optimal_explanation',
+            ],
+            'soft_fail' => [
+                'host' => $domain->domain,
+                'host_display' => '@',
+                'type' => 'TXT',
+                'value' => "v=spf1{$ipStr} {$includesStr} ~all",
+                'ttl' => 3600,
+                'lookup_count' => $lookupCount,
+                'uses_hard_fail' => false,
+                'explanation_key' => 'deliverability.spf_generator.softfail_explanation',
+            ],
+            'provider' => $providerConfig['provider_name'],
+            'max_lookups' => 10,
+            'is_within_limit' => $lookupCount <= 10,
+            'needs_optimization' => $this->countSpfLookups($currentSpf) > 8,
+        ];
+    }
+
+    /**
+     * Count DNS lookups in SPF record (approximate)
+     */
+    private function countSpfLookups(?string $spf): int
+    {
+        if (!$spf) {
+            return 0;
+        }
+
+        $count = 0;
+
+        // Count includes
+        $count += preg_match_all('/include:/i', $spf);
+
+        // Count redirects
+        $count += preg_match_all('/redirect=/i', $spf);
+
+        // Count mx
+        $count += preg_match_all('/\bmx\b/i', $spf);
+
+        // Count a records
+        $count += preg_match_all('/\ba\b/i', $spf);
+
+        // Count ptr (deprecated but still counts)
+        $count += preg_match_all('/\bptr\b/i', $spf);
+
+        return $count;
+    }
 }
 
 /**

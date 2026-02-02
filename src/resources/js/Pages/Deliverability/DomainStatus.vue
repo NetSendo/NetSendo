@@ -1,8 +1,9 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
+import DnsRecordGenerator from "@/Components/Deliverability/DnsRecordGenerator.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -20,6 +21,14 @@ const verifying = ref(false);
 const showDeleteModal = ref(false);
 const deleteProcessing = ref(false);
 const copiedField = ref(null);
+const showDnsGenerator = ref(false);
+
+// Show DNS Generator if there are issues with DMARC or SPF
+const needsDnsHelp = computed(() => {
+    return props.domain.dmarc_status !== 'pass' ||
+           props.domain.spf_status !== 'pass' ||
+           props.domain.dmarc_policy === 'none';
+});
 
 // Copy to clipboard
 const copyToClipboard = async (text, fieldName) => {
@@ -668,6 +677,55 @@ const deleteDomain = () => {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            <!-- DNS Record Generator Section -->
+            <div
+                v-if="needsDnsHelp && domain.cname_verified"
+                class="rounded-xl border bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 p-6 shadow-sm dark:border-slate-700"
+            >
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/40">
+                            <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 dark:text-white">
+                                {{ $t('deliverability.dns_generator.one_click_fix') }}
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                {{ $t('deliverability.dmarc_generator.subtitle') }}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        @click="showDnsGenerator = !showDnsGenerator"
+                        class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                        :class="showDnsGenerator
+                            ? 'bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-gray-300'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'"
+                    >
+                        <svg v-if="!showDnsGenerator" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                        <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                        </svg>
+                        {{ showDnsGenerator ? $t('deliverability.dns_generator.hide_generator') : $t('deliverability.dns_generator.show_generator') }}
+                    </button>
+                </div>
+
+                <Transition name="expand">
+                    <DnsRecordGenerator
+                        v-if="showDnsGenerator"
+                        :domain-id="domain.id"
+                        :show-dmarc="domain.dmarc_status !== 'pass' || domain.dmarc_policy === 'none'"
+                        :show-spf="domain.spf_status !== 'pass'"
+                        class="mt-4"
+                    />
+                </Transition>
             </div>
 
             <!-- Alerts Toggle -->
