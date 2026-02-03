@@ -57,10 +57,25 @@ class CardIntelController extends Controller
      */
     public function scan(Request $request): JsonResponse
     {
+        // Extended MIME type validation for mobile devices
+        // iOS/Android can send: image/jpg (instead of image/jpeg), application/octet-stream for camera photos
         $request->validate([
-            'file' => 'required|file|mimetypes:image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf|max:10240',
+            'file' => 'required|file|mimetypes:image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf,application/octet-stream|max:10240',
             'mode' => 'nullable|in:manual,agent,auto',
         ]);
+
+        // Additional validation for octet-stream - check file extension
+        $file = $request->file('file');
+        if ($file && $file->getMimeType() === 'application/octet-stream') {
+            $extension = strtolower($file->getClientOriginalExtension());
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf'];
+            if (!in_array($extension, $allowedExtensions)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('validation.mimetypes', ['attribute' => 'file', 'values' => 'JPG, PNG, WebP, HEIC, PDF']),
+                ], 422);
+            }
+        }
 
         try {
             $scan = $this->cardIntelService->processUpload(

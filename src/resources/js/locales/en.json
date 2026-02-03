@@ -553,8 +553,8 @@
             "cta": "Upgrade to GOLD"
         },
         "domain": {
-            "spf_warning": "SPF record has a warning status - may affect deliverability",
-            "dmarc_policy_none": "DMARC policy is set to \"none\" - emails may land in spam"
+            "spf_warning": "The domain has an SPF record that ends in ~all (softfail). It is better to use -all (fail) to prevent email spoofing.",
+            "dmarc_policy_none": "No DMARC policy found. We recommend setting a DMARC policy to monitor and control email delivery."
         },
         "domains": {
             "title": "Your Domains",

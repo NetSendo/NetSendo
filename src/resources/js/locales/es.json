@@ -812,8 +812,8 @@
             "cta": "Actualizar a GOLD"
         },
         "domain": {
-            "spf_warning": "El registro SPF tiene estado de advertencia - puede afectar la entregabilidad",
-            "dmarc_policy_none": "La política DMARC está configurada como \"none\" - los correos pueden llegar al spam"
+            "spf_warning": "El dominio tiene un registro SPF que termina en ~all (softfail). Es mejor usar -all (fail) para evitar la suplantación de correo electrónico.",
+            "dmarc_policy_none": "No se encontró ninguna política DMARC. Recomendamos establecer una política DMARC para monitorear y controlar la entrega de correo electrónico."
         },
         "domains": {
             "title": "Sus dominios",

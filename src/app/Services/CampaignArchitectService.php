@@ -282,8 +282,16 @@ PROMPT;
         $predictedClickRate = min(round($baseClickRate * $messageFactor * $messageCountAdj, 2), 30);
         $predictedConversionRate = min(round($baseConversionRate * $messageFactor * $messageCountAdj, 2), 15);
 
-        // Calculate revenue projection
-        $audienceSize = $plan->audience_snapshot['active_subscribers'] ?? 1000;
+        // Calculate revenue projection - use actual audience size, not arbitrary fallback
+        $audienceSize = 0;
+        if ($plan->audience_snapshot && isset($plan->audience_snapshot['active_subscribers'])) {
+            $audienceSize = (int) $plan->audience_snapshot['active_subscribers'];
+        } elseif ($plan->audience_snapshot && isset($plan->audience_snapshot['total_subscribers'])) {
+            // Fallback to total if active is not set
+            $audienceSize = (int) $plan->audience_snapshot['total_subscribers'];
+        }
+
+        // Apply audience size adjustment from sliders
         $audienceSize = (int) ($audienceSize * $audienceSizeAdj);
 
         $aov = $plan->average_order_value ?? 100;

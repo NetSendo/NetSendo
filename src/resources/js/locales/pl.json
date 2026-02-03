@@ -554,8 +554,8 @@
             "cta": "Uaktualnij do GOLD"
         },
         "domain": {
-            "spf_warning": "Rekord SPF ma status ostrzegawczy - może wpływać na dostarczalność",
-            "dmarc_policy_none": "Polityka DMARC jest ustawiona na \"none\" - wiadomości mogą trafić do spamu"
+            "spf_warning": "Domena posiada rekord SPF kończący się na ~all (softfail). Lepiej jest użyć opcji -all (fail), aby zapobiec fałszowaniu wiadomości e-mail.",
+            "dmarc_policy_none": "Nie znaleziono zasady DMARC. Zalecamy ustawienie polityki DMARC w celu monitorowania i kontrolowania dostarczania wiadomości e-mail."
         },
         "domains": {
             "title": "Twoje domeny",

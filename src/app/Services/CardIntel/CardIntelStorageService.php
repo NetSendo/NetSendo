@@ -109,7 +109,17 @@ class CardIntelStorageService
 
         // Check MIME type
         $mimeType = $file->getMimeType();
-        if (!in_array($mimeType, self::ALLOWED_MIME_TYPES)) {
+
+        // For application/octet-stream (common on mobile), validate by extension
+        if ($mimeType === 'application/octet-stream') {
+            $extension = strtolower($file->getClientOriginalExtension());
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf'];
+            if (!in_array($extension, $allowedExtensions)) {
+                throw new \InvalidArgumentException(
+                    'Nieobsługiwany format pliku. Dozwolone: JPG, PNG, WebP, HEIC, PDF'
+                );
+            }
+        } elseif (!in_array($mimeType, self::ALLOWED_MIME_TYPES)) {
             throw new \InvalidArgumentException(
                 'Nieobsługiwany format pliku. Dozwolone: JPG, PNG, WebP, HEIC, PDF'
             );

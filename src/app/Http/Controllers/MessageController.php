@@ -862,6 +862,20 @@ class MessageController extends Controller
         // Copy excluded list associations
         $newMessage->excludedLists()->sync($message->excludedLists->pluck('id'));
 
+        // Copy tracked links configuration (preserve all settings)
+        foreach ($message->trackedLinks as $trackedLink) {
+            MessageTrackedLink::create([
+                'message_id' => $newMessage->id,
+                'url' => $trackedLink->url,
+                'url_hash' => $trackedLink->url_hash,
+                'tracking_enabled' => $trackedLink->tracking_enabled,
+                'share_data_enabled' => $trackedLink->share_data_enabled,
+                'shared_fields' => $trackedLink->shared_fields,
+                'subscribe_to_list_ids' => $trackedLink->subscribe_to_list_ids,
+                'unsubscribe_from_list_ids' => $trackedLink->unsubscribe_from_list_ids,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $newMessage,

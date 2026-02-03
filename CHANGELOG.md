@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Campaign Architect:**
+  - Fixed a critical bug where revenue projections were massively inflated due to a hardcoded fallback of 1000 subscribers instead of using the actual audience size. This caused forecasts like $350,000 when sending to only 11 people.
+- **Message Machine:**
+  - Fixed an issue where duplicatiing a message did not copy the tracked links configuration (`MessageTrackedLink` records), causing the copy to lose all link tracking settings.
+- **CardIntel Agent:**
+  - Fixed 422 upload error when uploading photos from mobile devices (camera or gallery). Extended MIME type validation to accept `image/jpg` and `application/octet-stream` with extension-based fallback verification for iOS/Android compatibility.
+
 ## [1.9.0] – Short Description
 
 **Release date:** 2026-02-03

@@ -782,8 +782,8 @@
             "cta": "Auf GOLD upgraden"
         },
         "domain": {
-            "spf_warning": "SPF-Eintrag hat einen Warnstatus - kann die Zustellbarkeit beeinflussen",
-            "dmarc_policy_none": "DMARC-Richtlinie ist auf \"none\" gesetzt - E-Mails können im Spam landen"
+            "spf_warning": "Die Domain verfügt über einen SPF-Eintrag, der auf ~all (softfail) endet. Es ist besser, -all (fail) zu verwenden, um E-Mail-Spoofing zu verhindern.",
+            "dmarc_policy_none": "Keine DMARC-Richtlinie gefunden. Wir empfehlen, eine DMARC-Richtlinie festzulegen, um die E-Mail-Zustellung zu überwachen und zu steuern."
         },
         "domains": {
             "title": "Ihre Domains",

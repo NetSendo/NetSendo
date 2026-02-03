@@ -374,17 +374,23 @@ class DomainVerificationService
      */
     public function getHumanReadableStatus(DomainConfiguration $config): array
     {
+        $overall = $this->translateStatus($config->overall_status);
+        $spf = $this->translateRecordStatus('spf', $config->spf_status);
+        $dkim = $this->translateRecordStatus('dkim', $config->dkim_status);
+        $dmarc = $this->translateRecordStatus('dmarc', $config->dmarc_status);
+
         return [
-            'overall' => $this->translateStatus($config->overall_status),
+            'summary' => __($overall['label_key']),
+            'overall' => $overall,
             'cname' => [
                 'verified' => $config->cname_verified,
                 'label_key' => $config->cname_verified
                     ? 'deliverability.cname.verified'
                     : 'deliverability.cname.pending',
             ],
-            'spf' => $this->translateRecordStatus('spf', $config->spf_status),
-            'dkim' => $this->translateRecordStatus('dkim', $config->dkim_status),
-            'dmarc' => $this->translateRecordStatus('dmarc', $config->dmarc_status),
+            'spf' => __($spf['label_key']),
+            'dkim' => __($dkim['label_key']),
+            'dmarc' => __($dmarc['label_key']),
             'dmarc_policy' => [
                 'policy' => $config->dmarc_policy,
                 'label_key' => 'deliverability.dmarc_policy.' . $config->dmarc_policy,
