@@ -3,6 +3,8 @@
 namespace App\Services\Deliverability;
 
 use App\Models\DomainConfiguration;
+use App\Models\Mailbox;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class DomainVerificationService
@@ -16,9 +18,12 @@ class DomainVerificationService
      */
     public function getProviderConfig(?string $provider): array
     {
+        // Get the installation domain for NMI provider SPF
+        $installDomain = $this->getVerifyDomain();
+
         if ($provider === null) {
             return [
-                'spf_includes' => ['netsendo', 'sendgrid', 'amazonses'], // Generic fallback
+                'spf_includes' => [], // No default includes - use aggregated config
                 'dkim_selectors' => ['netsendo', 'default'],
                 'provider_name' => null,
             ];
@@ -40,6 +45,11 @@ class DomainVerificationService
                 'dkim_selectors' => ['default', 'mail', 'dkim'],
                 'provider_name' => 'SMTP',
             ],
+            'nmi' => [
+                'spf_includes' => ['_spf.' . $installDomain],
+                'dkim_selectors' => ['netsendo', 'default'],
+                'provider_name' => 'NetSendo MTA',
+            ],
             default => [
                 'spf_includes' => [],
                 'dkim_selectors' => ['default'],
@@ -56,6 +66,57 @@ class DomainVerificationService
         $appUrl = config('app.url');
         $parsed = parse_url($appUrl);
         return $parsed['host'] ?? 'localhost';
+    }
+
+    /**
+     * Get all active mailboxes that use a specific domain
+     * (based on from_email domain matching)
+     */
+    public function getMailboxesForDomain(DomainConfiguration $domain): Collection
+    {
+        return Mailbox::where('user_id', $domain->user_id)
+            ->where('from_email', 'like', '%@' . $domain->domain)
+            ->active()
+            ->get();
+    }
+
+    /**
+     * Get aggregated provider configuration for a domain
+     * Collects SPF includes from ALL mailboxes using this domain
+     */
+    public function getAggregatedProviderConfig(DomainConfiguration $domain): array
+    {
+        $mailboxes = $this->getMailboxesForDomain($domain);
+        $allIncludes = [];
+        $allSelectors = [];
+        $providers = [];
+
+        foreach ($mailboxes as $mailbox) {
+            $config = $this->getProviderConfig($mailbox->provider);
+            $allIncludes = array_merge($allIncludes, $config['spf_includes']);
+            $allSelectors = array_merge($allSelectors, $config['dkim_selectors']);
+            if ($config['provider_name']) {
+                $providers[] = $config['provider_name'];
+            }
+        }
+
+        // If no mailboxes found, fall back to linked mailbox (legacy behavior)
+        if ($mailboxes->isEmpty() && $domain->mailbox) {
+            $config = $this->getProviderConfig($domain->mailbox->provider);
+            return [
+                'spf_includes' => $config['spf_includes'],
+                'dkim_selectors' => $config['dkim_selectors'],
+                'provider_name' => $config['provider_name'],
+                'providers' => $config['provider_name'] ? [$config['provider_name']] : [],
+            ];
+        }
+
+        return [
+            'spf_includes' => array_values(array_unique($allIncludes)),
+            'dkim_selectors' => array_values(array_unique($allSelectors)),
+            'provider_name' => null, // Multiple providers
+            'providers' => array_values(array_unique($providers)),
+        ];
     }
 
     /**
@@ -144,15 +205,14 @@ class DomainVerificationService
         // Clear cache for fresh lookup
         $this->dnsLookup->clearCache($config->domain);
 
-        // Get provider from linked mailbox (if any)
-        $provider = $config->mailbox?->provider;
-        $providerConfig = $this->getProviderConfig($provider);
+        // Get aggregated provider config from ALL mailboxes using this domain
+        $providerConfig = $this->getAggregatedProviderConfig($config);
 
-        // Check SPF with provider-specific includes
+        // Check SPF with aggregated includes from all providers
         $spfRecord = $this->dnsLookup->getSpfRecord($config->domain);
         $result->spf = $this->analyzeSpfRecord($spfRecord, $providerConfig);
 
-        // Check DKIM using provider-specific selectors
+        // Check DKIM using aggregated selectors from all providers
         $dkimRecord = null;
         $checkedSelectors = [];
         foreach ($providerConfig['dkim_selectors'] as $selector) {
@@ -168,12 +228,13 @@ class DomainVerificationService
         $dmarcRecord = $this->dnsLookup->getDmarcRecord($config->domain);
         $result->dmarc = $this->analyzeDmarcRecord($dmarcRecord);
 
-        // Store raw records
+        // Store raw records with all providers info
         $result->rawRecords = [
             'spf' => $spfRecord,
             'dkim' => $dkimRecord,
             'dmarc' => $dmarcRecord,
             'provider' => $providerConfig['provider_name'],
+            'providers' => $providerConfig['providers'] ?? [],
             'dkim_selectors_checked' => $checkedSelectors,
         ];
 
@@ -202,11 +263,12 @@ class DomainVerificationService
         $parsed = $this->dnsLookup->parseSpfRecord($record);
         $analysis->parsed = $parsed;
 
-        // Get required SPF includes for the provider
-        $requiredIncludes = $providerConfig['spf_includes'] ?? ['netsendo', 'sendgrid', 'amazonses'];
-        $providerName = $providerConfig['provider_name'] ?? null;
+        // Get required SPF includes for the provider (from aggregated config)
+        $requiredIncludes = $providerConfig['spf_includes'] ?? [];
+        $providers = $providerConfig['providers'] ?? [];
+        $providerName = !empty($providers) ? implode(', ', $providers) : ($providerConfig['provider_name'] ?? null);
 
-        // Skip include check if provider doesn't require specific includes (e.g., custom SMTP)
+        // Skip include check if no specific includes are required (e.g., no mailboxes, custom SMTP)
         if (!empty($requiredIncludes)) {
             $hasRequiredInclude = false;
             foreach ($parsed['includes'] as $include) {
@@ -500,25 +562,28 @@ class DomainVerificationService
      */
     public function generateOptimalSpfRecord(DomainConfiguration $domain): array
     {
-        $provider = $domain->mailbox?->provider ?? null;
-        $providerConfig = $this->getProviderConfig($provider);
+        // Get aggregated provider config from ALL mailboxes using this domain
+        $providerConfig = $this->getAggregatedProviderConfig($domain);
 
         // Build the optimal SPF includes
         $includes = [];
         $explanation = [];
 
-        // Add provider-specific includes
+        // Add aggregated includes from all providers
         foreach ($providerConfig['spf_includes'] as $include) {
             if (!empty($include)) {
                 $includes[] = "include:{$include}";
-                $explanation[] = $providerConfig['provider_name'] ?? $include;
             }
         }
 
-        // If no specific provider, add NetSendo default
+        // Use providers list for explanation
+        $explanation = $providerConfig['providers'] ?? [];
+
+        // If no includes found (no mailboxes with known providers), use installation domain
         if (empty($includes)) {
-            $includes[] = 'include:_spf.netsendo.com';
-            $explanation[] = 'NetSendo';
+            $installDomain = $this->getVerifyDomain();
+            $includes[] = 'include:_spf.' . $installDomain;
+            $explanation[] = 'NetSendo (' . $installDomain . ')';
         }
 
         $includesStr = implode(' ', $includes);
@@ -569,7 +634,7 @@ class DomainVerificationService
                 'uses_hard_fail' => false,
                 'explanation_key' => 'deliverability.spf_generator.softfail_explanation',
             ],
-            'provider' => $providerConfig['provider_name'],
+            'providers' => $providerConfig['providers'] ?? [],
             'max_lookups' => 10,
             'is_within_limit' => $lookupCount <= 10,
             'needs_optimization' => $this->countSpfLookups($currentSpf) > 8,

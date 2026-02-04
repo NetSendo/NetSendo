@@ -808,6 +808,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate');
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
         Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check');
+        Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
+
+        // Add IP to Pool
+        Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store');
+
+        // MTA Status
+        Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
+
+        // IP Providers
+        Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
+        Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store');
+        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions');
+        Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision');
     });
 });
 

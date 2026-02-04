@@ -593,13 +593,19 @@
         "verify_now": "Verify Now",
         "status_overview": "Status Overview",
         "spf": {
-            "pending": "Verification Pending"
+            "pending": "Verification Pending",
+            "warning": "Warning"
         },
         "dkim": {
             "pending": "Verification Pending"
         },
         "dmarc": {
-            "pending": "Verification Pending"
+            "pending": "Verification Pending",
+            "critical": "Critical",
+            "policy_none": "No DMARC policy found. We recommend setting a DMARC policy to monitor and control email delivery."
+        },
+        "status": {
+            "critical": "Critical"
         },
         "alerts": {
             "title": "DMARC Alerts",
@@ -6954,10 +6960,64 @@
         "pool_created": "IP pool created successfully!",
         "pool_deleted": "IP pool deleted.",
         "pool_not_empty": "Cannot delete a pool that contains IP addresses.",
+        "pool_max_ips_reached": "This pool has reached the maximum number of IP addresses.",
         "warming_started": "IP warming started!",
         "dkim_generated": "DKIM keys generated successfully!",
         "dkim_verified": "DKIM verified successfully!",
-        "dkim_not_verified": "DKIM record not found. Check your DNS configuration."
+        "dkim_not_verified": "DKIM record not found. Check your DNS configuration.",
+        "ip_added": "IP address added successfully!",
+        "ip_deleted": "IP address deleted.",
+        "ip_has_mailboxes": "Cannot delete IP address that has assigned mailboxes.",
+        "invalid_ip_address": "Invalid IP address format.",
+        "mta_status": {
+            "title": "MTA Status",
+            "online": "MTA Online",
+            "offline": "MTA Offline",
+            "checking": "Checking..."
+        },
+        "add_ip": {
+            "title": "Add IP Address",
+            "ip_address": "IP Address",
+            "ip_address_placeholder": "e.g. 192.168.1.100",
+            "hostname": "Hostname",
+            "hostname_placeholder": "e.g. mail.example.com",
+            "description": "Description (optional)",
+            "description_placeholder": "Optional notes about this IP",
+            "submit": "Add IP",
+            "cancel": "Cancel"
+        },
+        "delete_ip": {
+            "title": "Delete IP Address",
+            "confirm": "Are you sure you want to delete this IP address?",
+            "warning": "This action cannot be undone."
+        },
+        "provision": {
+            "title": "Provision IP from Cloud",
+            "provider": "Provider",
+            "region": "Region",
+            "select_provider": "Select provider",
+            "select_region": "Select region",
+            "submit": "Provision IP",
+            "cancel": "Cancel",
+            "no_providers": "No providers configured. Click Configure Providers to add your API keys.",
+            "provisioning": "Provisioning..."
+        },
+        "providers": {
+            "vultr": "Vultr",
+            "linode": "Linode",
+            "digitalocean": "DigitalOcean",
+            "configured": "Configured",
+            "not_configured": "Not configured",
+            "configure": "Configure Providers",
+            "settings_title": "IP Provider Settings",
+            "connected": "Connected",
+            "not_connected": "Not connected",
+            "api_key_placeholder": "Enter API key...",
+            "info": "API keys are securely encrypted. Providers are used to automatically provision IP addresses for your email infrastructure."
+        },
+        "provider_not_configured": "This provider is not configured. Please add your API key in provider settings.",
+        "provider_saved": "Provider settings saved successfully!",
+        "ip_provisioned": "IP address provisioned successfully!"
     },
     "high_confidence_data": "High Confidence Data"
 }

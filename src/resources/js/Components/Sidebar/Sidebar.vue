@@ -188,7 +188,8 @@ const updateOpenGroup = () => {
         isActive("settings.names.*") ||
         isActive("settings.calendar.*") ||
         isActive("settings.sms-providers.*") ||
-        isActive("deliverability.*")
+        isActive("deliverability.*") ||
+        isActive("settings.nmi.*")
     ) {
         openGroup.value = "settings";
         return;

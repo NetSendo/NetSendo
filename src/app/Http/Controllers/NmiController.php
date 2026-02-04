@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\DedicatedIpAddress;
 use App\Models\IpPool;
+use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
+use App\Services\Nmi\IpProvisioningService;
 use App\Services\Nmi\IpWarmingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +20,8 @@ class NmiController extends Controller
     public function __construct(
         private DkimKeyManager $dkimManager,
         private IpWarmingService $warmingService,
-        private BlacklistMonitorService $blacklistService
+        private BlacklistMonitorService $blacklistService,
+        private IpProvisioningService $provisioningService
     ) {}
 
     /**
@@ -334,5 +337,283 @@ class NmiController extends Controller
         if ($ip->pool?->user_id !== $request->user()->id) {
             abort(403, 'Unauthorized access to this IP');
         }
+    }
+
+    /**
+     * Check MTA container status
+     */
+    public function getMtaStatus(): JsonResponse
+    {
+        $host = config('nmi.mta_host', 'netsendo-mta');
+        $port = (int) config('nmi.mta_port', 25);
+        $timeout = 3; // seconds
+
+        $isOnline = false;
+        $message = '';
+
+        try {
+            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
+
+            if ($socket) {
+                // Read the SMTP greeting
+                $response = fgets($socket, 1024);
+                fclose($socket);
+
+                // Check for valid SMTP greeting (starts with 220)
+                if (str_starts_with(trim($response), '220')) {
+                    $isOnline = true;
+                    $message = 'MTA is online and accepting connections';
+                } else {
+                    $message = 'MTA responded but with unexpected greeting';
+                }
+            } else {
+                $message = "Cannot connect to MTA: {$errstr} (error {$errno})";
+            }
+        } catch (\Exception $e) {
+            $message = 'Connection error: ' . $e->getMessage();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'online' => $isOnline,
+                'host' => $host,
+                'port' => $port,
+                'message' => $message,
+                'checked_at' => now()->toIso8601String(),
+            ],
+        ]);
+    }
+
+    /**
+     * Add an IP address to a pool
+     */
+    public function addIpToPool(Request $request, IpPool $pool)
+    {
+        $this->authorizePool($request, $pool);
+
+        // Check if pool can accept more IPs
+        if (!$pool->canAddMoreIps()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('nmi.pool_max_ips_reached'),
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'ip_address' => [
+                'required',
+                'string',
+                'max:45',
+                function ($attribute, $value, $fail) {
+                    if (!filter_var($value, FILTER_VALIDATE_IP)) {
+                        $fail(__('nmi.invalid_ip_address'));
+                    }
+                },
+                Rule::unique('dedicated_ip_addresses', 'ip_address')->whereNull('deleted_at'),
+            ],
+            'hostname' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        // Determine IP version
+        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4;
+
+        $ip = DedicatedIpAddress::create([
+            'ip_pool_id' => $pool->id,
+            'ip_address' => $validated['ip_address'],
+            'hostname' => $validated['hostname'],
+            'ip_version' => $ipVersion,
+            'provider' => DedicatedIpAddress::PROVIDER_MANUAL,
+            'warming_status' => DedicatedIpAddress::WARMING_NEW,
+            'reputation_score' => 100,
+            'is_active' => true,
+            'status_message' => $validated['description'] ?? null,
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('nmi.ip_added'),
+                'data' => $this->formatIpForResponse($ip),
+            ], 201);
+        }
+
+        return redirect()->route('settings.nmi.pools.show', $pool->id)
+            ->with('success', __('nmi.ip_added'));
+    }
+
+    /**
+     * Delete an IP address from a pool
+     */
+    public function deleteIp(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        // Check if IP has any mailboxes assigned
+        if ($ip->mailboxes()->count() > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => __('nmi.ip_has_mailboxes'),
+            ], 400);
+        }
+
+        $poolId = $ip->ip_pool_id;
+        $ip->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('nmi.ip_deleted'),
+            ]);
+        }
+
+        return redirect()->route('settings.nmi.pools.show', $poolId)
+            ->with('success', __('nmi.ip_deleted'));
+    }
+
+    /**
+     * Get available IP providers
+     */
+    public function getProviders(): JsonResponse
+    {
+        $providers = $this->provisioningService->getAvailableProviders();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'providers' => $providers,
+            ],
+        ]);
+    }
+
+    /**
+     * Provision a new IP from a cloud provider
+     */
+    public function provisionIp(Request $request, IpPool $pool): JsonResponse
+    {
+        $this->authorizePool($request, $pool);
+
+        // Check if pool can accept more IPs
+        if (!$pool->canAddMoreIps()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('nmi.pool_max_ips_reached'),
+            ], 400);
+        }
+
+        $validated = $request->validate([
+            'provider' => ['required', 'string', Rule::in(['vultr', 'linode', 'digitalocean'])],
+            'region' => ['required', 'string', 'max:20'],
+        ]);
+
+        // Get user's API key for the provider
+        $apiKey = IpProviderSetting::getApiKey($request->user()->id, $validated['provider']);
+
+        if (!$apiKey) {
+            return response()->json([
+                'success' => false,
+                'message' => __('nmi.provider_not_configured'),
+            ], 400);
+        }
+
+        try {
+            $ip = $this->provisioningService->provisionIpWithUserKey(
+                $validated['provider'],
+                $pool,
+                $validated['region'],
+                $apiKey
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => __('nmi.ip_provisioned'),
+                'data' => $this->formatIpForResponse($ip),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Get regions for a provider
+     */
+    public function getProviderRegions(Request $request, string $provider): JsonResponse
+    {
+        $apiKey = IpProviderSetting::getApiKey($request->user()->id, $provider);
+
+        if (!$apiKey) {
+            return response()->json([
+                'success' => false,
+                'message' => __('nmi.provider_not_configured'),
+            ], 400);
+        }
+
+        $regions = $this->provisioningService->getRegions($provider, $apiKey);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'regions' => $regions,
+            ],
+        ]);
+    }
+
+    /**
+     * Get provider settings for current user
+     */
+    public function getProviderSettings(Request $request): JsonResponse
+    {
+        $settings = IpProviderSetting::getForUser($request->user()->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'providers' => $settings,
+            ],
+        ]);
+    }
+
+    /**
+     * Save provider settings for current user
+     */
+    public function saveProviderSettings(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'provider' => ['required', 'string', Rule::in(['vultr', 'linode', 'digitalocean'])],
+            'api_key' => ['nullable', 'string', 'max:255'],
+            'enabled' => ['boolean'],
+        ]);
+
+        $user = $request->user();
+
+        if (empty($validated['api_key'])) {
+            // Delete the setting if API key is empty
+            IpProviderSetting::where('user_id', $user->id)
+                ->where('provider', $validated['provider'])
+                ->delete();
+        } else {
+            IpProviderSetting::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'provider' => $validated['provider'],
+                ],
+                [
+                    'api_key' => $validated['api_key'],
+                    'enabled' => $validated['enabled'] ?? true,
+                ]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('nmi.provider_saved'),
+            'data' => [
+                'providers' => IpProviderSetting::getForUser($user->id),
+            ],
+        ]);
     }
 }

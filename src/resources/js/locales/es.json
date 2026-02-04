@@ -852,13 +852,19 @@
         "verify_now": "Verificar ahora",
         "status_overview": "Resumen del estado",
         "spf": {
-            "pending": "Verificación pendiente"
+            "pending": "Verificación pendiente",
+            "warning": "Advertencia"
         },
         "dkim": {
             "pending": "Verificación pendiente"
         },
         "dmarc": {
-            "pending": "Verificación pendiente"
+            "pending": "Verificación pendiente",
+            "critical": "Crítico",
+            "policy_none": "No se encontró ninguna política DMARC. Recomendamos establecer una política DMARC para monitorear y controlar la entrega de correo electrónico."
+        },
+        "status": {
+            "critical": "Crítico"
         },
         "alerts": {
             "title": "Alertas DMARC",

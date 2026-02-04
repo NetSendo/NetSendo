@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Deliverability - SPF Configuration:**
+  - Fixed incorrect hardcoded `include:netsendo` SPF mechanism by replacing it with dynamic installation domain (e.g., `include:_spf.yourdomain.com`).
+  - Fixed SPF record generation to correctly aggregate providers from all mailboxes sharing the same domain (e.g., merging SendGrid and NMI includes).
+  - Fixed NMI provider configuration to use correct dynamic SPF include path based on the application URL.
+
 ### Changed
 
 ## [1.9.1] – Short Description

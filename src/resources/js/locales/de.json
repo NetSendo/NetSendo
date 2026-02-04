@@ -822,13 +822,19 @@
         "verify_now": "Jetzt überprüfen",
         "status_overview": "Statusübersicht",
         "spf": {
-            "pending": "Überprüfung ausstehend"
+            "pending": "Überprüfung ausstehend",
+            "warning": "Warnung"
         },
         "dkim": {
             "pending": "Überprüfung ausstehend"
         },
         "dmarc": {
-            "pending": "Überprüfung ausstehend"
+            "pending": "Überprüfung ausstehend",
+            "critical": "Kritisch",
+            "policy_none": "Keine DMARC-Richtlinie gefunden. Wir empfehlen, eine DMARC-Richtlinie festzulegen, um die E-Mail-Zustellung zu überwachen und zu steuern."
+        },
+        "status": {
+            "critical": "Kritisch"
         },
         "alerts": {
             "title": "DMARC Warnungen",

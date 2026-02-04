@@ -594,13 +594,19 @@
         "verify_now": "Weryfikuj teraz",
         "status_overview": "Przegląd statusu",
         "spf": {
-            "pending": "Oczekuje na weryfikację"
+            "pending": "Oczekuje na weryfikację",
+            "warning": "Ostrzeżenie"
         },
         "dkim": {
             "pending": "Oczekuje na weryfikację"
         },
         "dmarc": {
-            "pending": "Oczekuje na weryfikację"
+            "pending": "Oczekuje na weryfikację",
+            "critical": "Krytyczny",
+            "policy_none": "Nie znaleziono zasady DMARC. Zalecamy ustawienie polityki DMARC w celu monitorowania i kontrolowania dostarczania wiadomości e-mail."
+        },
+        "status": {
+            "critical": "Krytyczny"
         },
         "alerts": {
             "title": "Alerty DMARC",
@@ -7031,10 +7037,64 @@
         "pool_created": "Pula IP została utworzona!",
         "pool_deleted": "Pula IP została usunięta.",
         "pool_not_empty": "Nie można usunąć puli zawierającej adresy IP.",
+        "pool_max_ips_reached": "Ta pula osiągnęła maksymalną liczbę adresów IP.",
         "warming_started": "Ogrzewanie IP zostało rozpoczęte!",
         "dkim_generated": "Klucze DKIM zostały wygenerowane!",
         "dkim_verified": "DKIM zweryfikowany pomyślnie!",
-        "dkim_not_verified": "Rekord DKIM nie został znaleziony. Sprawdź konfigurację DNS."
+        "dkim_not_verified": "Rekord DKIM nie został znaleziony. Sprawdź konfigurację DNS.",
+        "ip_added": "Adres IP został dodany pomyślnie!",
+        "ip_deleted": "Adres IP został usunięty.",
+        "ip_has_mailboxes": "Nie można usunąć adresu IP z przypisanymi skrzynkami.",
+        "invalid_ip_address": "Nieprawidłowy format adresu IP.",
+        "mta_status": {
+            "title": "Status MTA",
+            "online": "MTA Online",
+            "offline": "MTA Offline",
+            "checking": "Sprawdzanie..."
+        },
+        "add_ip": {
+            "title": "Dodaj adres IP",
+            "ip_address": "Adres IP",
+            "ip_address_placeholder": "np. 192.168.1.100",
+            "hostname": "Hostname",
+            "hostname_placeholder": "np. mail.example.com",
+            "description": "Opis (opcjonalnie)",
+            "description_placeholder": "Opcjonalne notatki o tym IP",
+            "submit": "Dodaj IP",
+            "cancel": "Anuluj"
+        },
+        "delete_ip": {
+            "title": "Usuń adres IP",
+            "confirm": "Czy na pewno chcesz usunąć ten adres IP?",
+            "warning": "Tej operacji nie można cofnąć."
+        },
+        "provision": {
+            "title": "Zamów IP z chmury",
+            "provider": "Dostawca",
+            "region": "Region",
+            "select_provider": "Wybierz dostawcę",
+            "select_region": "Wybierz region",
+            "submit": "Zamów IP",
+            "cancel": "Anuluj",
+            "no_providers": "Brak skonfigurowanych dostawców. Kliknij Konfiguruj dostawców aby dodać klucze API.",
+            "provisioning": "Zamawianie..."
+        },
+        "providers": {
+            "vultr": "Vultr",
+            "linode": "Linode",
+            "digitalocean": "DigitalOcean",
+            "configured": "Skonfigurowany",
+            "not_configured": "Nie skonfigurowany",
+            "configure": "Konfiguruj dostawców",
+            "settings_title": "Ustawienia dostawców IP",
+            "connected": "Połączony",
+            "not_connected": "Niepołączony",
+            "api_key_placeholder": "Wprowadź klucz API...",
+            "info": "Klucze API są bezpiecznie szyfrowane. Dostawcy służą do automatycznego zamawiania adresów IP dla infrastruktury email."
+        },
+        "provider_not_configured": "Ten dostawca nie jest skonfigurowany. Dodaj klucz API w ustawieniach dostawców.",
+        "provider_saved": "Ustawienia dostawcy zapisane pomyślnie!",
+        "ip_provisioned": "Adres IP zamówiony pomyślnie!"
     },
     "high_confidence_data": "Dane o wysokim zaufaniu"
 }

@@ -2,7 +2,6 @@ FROM node:20-alpine
 
 # Install Haraka and required plugins
 RUN npm install -g Haraka@3.0.3 \
-    && npm install -g haraka-plugin-auth-flat-file \
     && npm install -g haraka-plugin-limit
 
 # Create haraka user and directories
