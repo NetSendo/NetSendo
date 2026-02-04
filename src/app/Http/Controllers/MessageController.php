@@ -75,7 +75,9 @@ class MessageController extends Controller
         }
 
         // Sorting
-        $sortField = $request->input('sort', 'created_at');
+        // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
+        // For autoresponders (queues), always use created_at
+        $sortField = $request->input('sort', 'effective_date');
         $sortDirection = $request->input('direction', 'desc');
 
         // Allow sorting by valid fields
@@ -87,6 +89,19 @@ class MessageController extends Controller
             if ($sortField === 'type') {
                 $query->orderBy('day', $sortDirection);
             }
+        } elseif ($sortField === 'effective_date') {
+            // Smart date sorting:
+            // - For broadcasts (sent/scheduled): use scheduled_at or send_at
+            // - For drafts (no scheduled_at): use created_at
+            // - For autoresponders/queues: use created_at
+            $query->orderByRaw("
+                CASE
+                    WHEN type = 'autoresponder' THEN created_at
+                    WHEN scheduled_at IS NOT NULL THEN scheduled_at
+                    WHEN send_at IS NOT NULL THEN send_at
+                    ELSE created_at
+                END {$sortDirection}
+            ");
         } else {
              $query->latest();
         }

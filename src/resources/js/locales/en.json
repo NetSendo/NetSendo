@@ -6099,7 +6099,8 @@
                 "deal_won": "Deal Won",
                 "deal_lost": "Deal Lost",
                 "task_completed": "Task Completed",
-                "contact_created": "Contact Created"
+                "contact_created": "Contact Created",
+                "email": "Email"
             },
             "created_by": "By",
             "empty": "No activities",
@@ -6543,7 +6544,9 @@
                     "take_photo": "Take photo",
                     "take_photo_desc": "Open device camera",
                     "choose_from_gallery": "Choose from gallery",
-                    "choose_from_gallery_desc": "Select photo from phone"
+                    "choose_from_gallery_desc": "Select photo from phone",
+                    "webcam_title": "Webcam",
+                    "capture": "Capture photo"
                 },
                 "mode": {
                     "label": "Processing Mode",
@@ -6767,7 +6770,13 @@
                 "send_email": "Send Email",
                 "send_sms": "Send SMS",
                 "archive": "Archive",
-                "delete": "Delete"
+                "delete": "Delete",
+                "email_sent_success": "Email sent successfully!",
+                "generate_new_hint": "Generate new",
+                "add_to_list_success": "Added to list"
+            },
+            "record": {
+                "synced": "Synced"
             },
             "personalization": {
                 "formality": "Formality",
@@ -6949,5 +6958,6 @@
         "dkim_generated": "DKIM keys generated successfully!",
         "dkim_verified": "DKIM verified successfully!",
         "dkim_not_verified": "DKIM record not found. Check your DNS configuration."
-    }
+    },
+    "high_confidence_data": "High Confidence Data"
 }

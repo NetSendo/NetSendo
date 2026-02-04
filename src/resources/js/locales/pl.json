@@ -6176,7 +6176,8 @@
                 "deal_won": "Szansa wygrana",
                 "deal_lost": "Szansa przegrana",
                 "task_completed": "Zadanie ukończone",
-                "contact_created": "Kontakt utworzony"
+                "contact_created": "Kontakt utworzony",
+                "email": "Email"
             },
             "created_by": "Przez",
             "system": "System",
@@ -6621,7 +6622,9 @@
                     "take_photo": "Zrób zdjęcie",
                     "take_photo_desc": "Otwórz kamerę urządzenia",
                     "choose_from_gallery": "Wybierz z galerii",
-                    "choose_from_gallery_desc": "Wybierz zdjęcie z telefonu"
+                    "choose_from_gallery_desc": "Wybierz zdjęcie z telefonu",
+                    "webcam_title": "Kamera",
+                    "capture": "Zrób zdjęcie"
                 },
                 "mode": {
                     "label": "Tryb przetwarzania",
@@ -6839,7 +6842,13 @@
                 "send_email": "Wyślij email",
                 "send_sms": "Wyślij SMS",
                 "archive": "Archiwizuj",
-                "delete": "Usuń"
+                "delete": "Usuń",
+                "email_sent_success": "E-mail został wysłany!",
+                "generate_new_hint": "Wygeneruj nową",
+                "add_to_list_success": "Dodano do listy"
+            },
+            "record": {
+                "synced": "Zsynchronizowano"
             },
             "personalization": {
                 "formality": "Forma zwracania się",
@@ -7026,5 +7035,6 @@
         "dkim_generated": "Klucze DKIM zostały wygenerowane!",
         "dkim_verified": "DKIM zweryfikowany pomyślnie!",
         "dkim_not_verified": "Rekord DKIM nie został znaleziony. Sprawdź konfigurację DNS."
-    }
+    },
+    "high_confidence_data": "Dane o wysokim zaufaniu"
 }

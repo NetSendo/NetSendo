@@ -261,14 +261,83 @@ class CardIntelService
      */
     public function addToEmailList(CardIntelScan $scan, int $listId): bool
     {
-        // TODO: Implement list addition using existing List/Subscriber system
-        // This will integrate with the existing email list functionality
+        $extraction = $scan->extraction;
 
-        CardIntelAction::createForScan($scan, CardIntelAction::TYPE_ADD_EMAIL_LIST, [
-            'list_id' => $listId,
-        ])->markAsCompleted();
+        if (!$extraction || empty($extraction->fields['email'])) {
+            Log::warning('CardIntel addToEmailList: No email in extraction', [
+                'scan_id' => $scan->id,
+                'list_id' => $listId,
+            ]);
+            return false;
+        }
 
-        return true;
+        $fields = $extraction->fields;
+
+        try {
+            return DB::transaction(function () use ($scan, $fields, $listId) {
+                // Find or create subscriber
+                $subscriber = Subscriber::firstOrCreate(
+                    [
+                        'user_id' => $scan->user_id,
+                        'email' => $fields['email'],
+                    ],
+                    [
+                        'first_name' => $fields['first_name'] ?? null,
+                        'last_name' => $fields['last_name'] ?? null,
+                        'phone' => $fields['phone'] ?? null,
+                        'status' => 'subscribed',
+                        'source' => 'cardintel',
+                        'is_active_global' => true,
+                        'subscribed_at' => now(),
+                    ]
+                );
+
+                // Find the contact list
+                $contactList = \App\Models\ContactList::where('id', $listId)
+                    ->where('user_id', $scan->user_id)
+                    ->first();
+
+                if (!$contactList) {
+                    Log::warning('CardIntel addToEmailList: List not found', [
+                        'scan_id' => $scan->id,
+                        'list_id' => $listId,
+                    ]);
+                    return false;
+                }
+
+                // Check if already attached to this list
+                if (!$subscriber->contactLists()->where('contact_list_id', $listId)->exists()) {
+                    // Attach subscriber to list via pivot table
+                    $subscriber->contactLists()->attach($listId, [
+                        'status' => 'active',
+                        'source' => 'cardintel',
+                        'subscribed_at' => now(),
+                    ]);
+                }
+
+                // Log action
+                CardIntelAction::createForScan($scan, CardIntelAction::TYPE_ADD_EMAIL_LIST, [
+                    'list_id' => $listId,
+                    'list_name' => $contactList->name,
+                    'subscriber_id' => $subscriber->id,
+                ])->markAsCompleted();
+
+                return true;
+            });
+
+        } catch (\Exception $e) {
+            Log::error('CardIntel addToEmailList failed', [
+                'scan_id' => $scan->id,
+                'list_id' => $listId,
+                'error' => $e->getMessage(),
+            ]);
+
+            CardIntelAction::createForScan($scan, CardIntelAction::TYPE_ADD_EMAIL_LIST, [
+                'list_id' => $listId,
+            ])->markAsFailed($e->getMessage());
+
+            return false;
+        }
     }
 
     /**

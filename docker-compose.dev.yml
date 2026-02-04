@@ -23,6 +23,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./src:/var/www
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     ports:
       - "5173:5173"
     environment:
@@ -48,6 +49,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./src:/var/www
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     environment:
       - DB_HOST=db
       - REDIS_HOST=redis
@@ -71,6 +73,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./src:/var/www
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     environment:
       - DB_HOST=db
       - REDIS_HOST=redis

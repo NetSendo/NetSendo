@@ -505,3 +505,26 @@ The following translation keys were added to provide descriptions for system pag
   {{ $t(`system_pages.descriptions.${page.slug}`) }}
 </p>
 ```
+
+### CardIntel & CRM Missing Translations (February 2026)
+
+The following translation keys were added to support CardIntel, CRM activities, and high confidence data:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**CardIntel (`crm.cardintel.*`):**
+
+- `crm.cardintel.scan.upload.webcam_title` - Title for webcam integration
+- `crm.cardintel.scan.upload.capture` - Button to capture photo
+- `crm.cardintel.actions.email_sent_success` - Success toast for sent email
+- `crm.cardintel.actions.generate_new_hint` - Hint for generating new content
+- `crm.cardintel.actions.add_to_list_success` - Success toast for adding to list
+- `crm.cardintel.record.synced` - Sync status label
+
+**CRM Activities (`crm.activities.type.*`):**
+
+- `crm.activities.type.email` - Activity type label for emails
+
+**Global Keys:**
+
+- `high_confidence_data` - Label for high confidence data

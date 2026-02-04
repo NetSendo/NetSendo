@@ -22,39 +22,41 @@ const formatDate = (date) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-4">
-                <Link
-                    :href="route('crm.cardintel.index')"
-                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                    <svg
-                        class="w-5 h-5 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link
+                        :href="route('crm.cardintel.index')"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                </Link>
-                <div class="flex-1">
-                    <h2
-                        class="text-xl font-semibold text-gray-900 dark:text-white"
-                    >
-                        {{ $t("crm.cardintel.memory.header") }}
-                    </h2>
-                    <p class="text-sm text-gray-500">
-                        {{
-                            $t("crm.cardintel.memory.stats", {
-                                total: stats.total,
-                                synced: stats.synced_to_crm,
-                            })
-                        }}
-                    </p>
+                        <svg
+                            class="w-5 h-5 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                    </Link>
+                    <div class="flex-1 min-w-0">
+                        <h2
+                            class="text-xl font-semibold text-gray-900 dark:text-white truncate"
+                        >
+                            {{ $t("crm.cardintel.memory.header") }}
+                        </h2>
+                        <p class="text-sm text-gray-500 truncate">
+                            {{
+                                $t("crm.cardintel.memory.stats", {
+                                    total: stats.total,
+                                    synced: stats.synced_to_crm,
+                                })
+                            }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </template>

@@ -950,6 +950,17 @@ const getAttachmentTooltip = (message, trans) => {
                                 >
                                     📅 {{ message.scheduled_at }}
                                 </div>
+                                <!-- Show sent date for sent messages -->
+                                <div
+                                    v-if="
+                                        message.type !== 'autoresponder' &&
+                                        getStatus(message) === 'sent' &&
+                                        message.scheduled_at
+                                    "
+                                    class="text-xs text-slate-500 dark:text-slate-400 mt-1"
+                                >
+                                    ✉️ {{ message.scheduled_at }}
+                                </div>
                                 <!-- A/B Test indicator -->
                                 <div v-if="message.ab_test" class="mt-1">
                                     <Link

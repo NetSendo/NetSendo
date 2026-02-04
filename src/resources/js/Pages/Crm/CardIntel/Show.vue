@@ -20,6 +20,7 @@ const selectedContextLevel = ref(props.scan.context?.context_level || "LOW");
 const generatedMessage = ref(null);
 const isGenerating = ref(false);
 const actionLoading = ref(null);
+const emailSentSuccess = ref(false);
 
 // List modal state
 const showListModal = ref(false);
@@ -28,6 +29,8 @@ const selectedListId = ref(null);
 const listSearchQuery = ref("");
 const isLoadingLists = ref(false);
 const isAddingToList = ref(false);
+const listAddedSuccess = ref(false);
+const addedListName = ref("");
 
 // Message personalization options
 const formality = ref("formal"); // 'formal' (Pan/Pani) or 'informal' (Ty)
@@ -144,7 +147,36 @@ const handleSendEmail = async () => {
     }
 
     const message = generatedMessage.value[selectedContextLevel.value];
-    await executeAction("send_email", { message });
+    actionLoading.value = "send_email";
+    emailSentSuccess.value = false;
+
+    try {
+        const response = await axios.post(
+            route("crm.cardintel.action", props.scan.id),
+            {
+                action: "send_email",
+                message,
+            },
+        );
+
+        if (response.data.success) {
+            // Clear the generated message after successful send
+            generatedMessage.value = null;
+            // Show success feedback
+            emailSentSuccess.value = true;
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                emailSentSuccess.value = false;
+            }, 5000);
+            // Refresh the scan data to show the action in history
+            router.reload({ only: ["scan"] });
+        }
+    } catch (error) {
+        console.error("Action failed:", error);
+        alert(t("crm.cardintel.actions.send_email_error") || "Błąd wysyłania emaila");
+    } finally {
+        actionLoading.value = null;
+    }
 };
 
 // Fetch mailing lists
@@ -190,11 +222,32 @@ const addToList = async () => {
     if (!selectedListId.value || isAddingToList.value) return;
 
     isAddingToList.value = true;
+    listAddedSuccess.value = false;
+
+    // Get the selected list name for display
+    const selectedList = lists.value.find(l => l.id === selectedListId.value);
+
     try {
-        await executeAction("add_email_list", {
-            list_id: selectedListId.value,
-        });
-        closeListModal();
+        const response = await axios.post(
+            route("crm.cardintel.action", props.scan.id),
+            {
+                action: "add_email_list",
+                list_id: selectedListId.value,
+            },
+        );
+
+        if (response.data.success) {
+            closeListModal();
+            // Show success feedback
+            addedListName.value = selectedList?.name || "";
+            listAddedSuccess.value = true;
+            // Hide success message after 5 seconds
+            setTimeout(() => {
+                listAddedSuccess.value = false;
+            }, 5000);
+            // Refresh the scan data to show the action in history
+            router.reload({ only: ["scan"] });
+        }
     } catch (error) {
         console.error("Error adding to list:", error);
     } finally {
@@ -210,46 +263,50 @@ const addToList = async () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-4">
-                <Link
-                    :href="route('crm.cardintel.index')"
-                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                    <svg
-                        class="w-5 h-5 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4 min-w-0 w-full md:w-auto">
+                    <Link
+                        :href="route('crm.cardintel.index')"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                </Link>
-                <div class="flex-1">
-                    <h2
-                        class="text-xl font-semibold text-gray-900 dark:text-white"
-                    >
-                        {{ scan.extraction?.fields?.first_name }}
-                        {{ scan.extraction?.fields?.last_name }}
-                        <span
-                            v-if="!scan.extraction?.fields?.first_name"
-                            class="text-gray-400"
-                            >#{{ scan.id }}</span
+                        <svg
+                            class="w-5 h-5 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                         >
-                    </h2>
-                    <p class="text-sm text-gray-500">
-                        {{ scan.extraction?.fields?.company }}
-                    </p>
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                    </Link>
+                    <div class="flex-1 min-w-0">
+                        <h2
+                            class="text-xl font-semibold text-gray-900 dark:text-white truncate"
+                        >
+                            {{ scan.extraction?.fields?.first_name }}
+                            {{ scan.extraction?.fields?.last_name }}
+                            <span
+                                v-if="!scan.extraction?.fields?.first_name"
+                                class="text-gray-400"
+                                >#{{ scan.id }}</span
+                            >
+                        </h2>
+                        <p class="text-sm text-gray-500 truncate">
+                            {{ scan.extraction?.fields?.company }}
+                        </p>
+                    </div>
                 </div>
-                <ContextBadge
-                    v-if="scan.context"
-                    :level="scan.context.context_level"
-                    :score="scan.context.quality_score"
-                />
+                <div class="self-start md:self-auto pl-12 md:pl-0">
+                    <ContextBadge
+                        v-if="scan.context"
+                        :level="scan.context.context_level"
+                        :score="scan.context.quality_score"
+                    />
+                </div>
             </div>
         </template>
 
@@ -738,6 +795,25 @@ const addToList = async () => {
                                         ></div>
                                     </div>
                                 </div>
+                                <!-- Success message after email sent -->
+                                <div
+                                    v-else-if="emailSentSuccess"
+                                    class="text-center py-8"
+                                >
+                                    <div class="flex flex-col items-center gap-3">
+                                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <p class="text-green-600 dark:text-green-400 font-medium">
+                                            {{ $t("crm.cardintel.actions.email_sent_success") || "Email wysłany pomyślnie!" }}
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $t("crm.cardintel.actions.generate_new_hint") || "Możesz wygenerować nową wiadomość lub przejść do kolejnej wizytówki." }}
+                                        </p>
+                                    </div>
+                                </div>
                                 <div
                                     v-else
                                     class="text-center py-8 text-gray-500 dark:text-gray-400"
@@ -866,6 +942,28 @@ const addToList = async () => {
                                         }}</span>
                                     </button>
                                 </div>
+
+                                <!-- List Added Success Message -->
+                                <div
+                                    v-if="listAddedSuccess"
+                                    class="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-green-700 dark:text-green-300 font-medium">
+                                                {{ $t("crm.cardintel.actions.add_to_list_success") || "Kontakt dodany do listy!" }}
+                                            </p>
+                                            <p v-if="addedListName" class="text-sm text-green-600 dark:text-green-400">
+                                                {{ addedListName }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -906,14 +1004,23 @@ const addToList = async () => {
                                                     action.status === 'failed',
                                             }"
                                         ></span>
-                                        <span
-                                            class="text-sm text-gray-700 dark:text-gray-300"
-                                            >{{ action.type_label }}</span
-                                        >
+                                        <div class="flex flex-col">
+                                            <span
+                                                class="text-sm text-gray-700 dark:text-gray-300"
+                                                >{{ action.type_label }}</span
+                                            >
+                                            <span
+                                                v-if="action.metadata?.list_name"
+                                                class="text-xs text-gray-500 dark:text-gray-400"
+                                            >
+                                                {{ action.metadata.list_name }}
+                                            </span>
+                                        </div>
                                     </div>
                                     <span class="text-xs text-gray-400">{{
-                                        action.executed_at ||
-                                        $t("crm.cardintel.status.pending")
+                                        action.executed_at
+                                            ? new Date(action.executed_at).toLocaleString()
+                                            : $t("crm.cardintel.status.pending")
                                     }}</span>
                                 </div>
                             </div>

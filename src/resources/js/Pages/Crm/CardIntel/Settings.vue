@@ -300,7 +300,7 @@ const getCrmSyncDescription = (mode) => {
                             </p>
                         </div>
                         <div class="p-6">
-                            <div class="grid grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <label
                                     v-for="mode in ['manual', 'agent', 'auto']"
                                     :key="mode"
@@ -544,7 +544,7 @@ const getCrmSyncDescription = (mode) => {
                             </p>
                         </div>
                         <div class="p-6 space-y-4">
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label
                                     v-for="mode in [
                                         'always',

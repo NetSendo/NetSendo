@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+### Fixed
+
+### Changed
+
+## [1.9.1] – Short Description
+
+**Release date:** 2026-02-04
+
+### Changed
+
+- **CardIntel Mobile Optimization:**
+  - **Responsive Layouts:** Complete mobile optimization for Dashboard, Queue, Memory, Settings, and Show pages.
+  - **Queue Card View:** Replaced large data table with a touch-friendly Card List view on mobile devices for better readability.
+  - **Navigation:** Implemented scrollable tab navigation and stacked headers for improved mobile usability.
+  - **Adaptive Grids:** Dashboard statistics and settings forms now automatically adjust from multi-column to single-column layouts on smaller screens.
+
+- **Message List Sorting:**
+  - Changed default sorting logic for Email and SMS lists.
+  - Broadcasts (sent/scheduled) are now sorted by effective sending date (`scheduled_at` or `sent_at`) instead of creation date.
+  - Drafts and Autoresponders continue to be sorted by creation date.
+- **Message List UI:**
+  - Added display of sending date under "Sent" status for Email and SMS lists.
+  - Added display of scheduled date under "Scheduled" status for SMS lists.
+
 ### Fixed
 
 - **Campaign Architect:**

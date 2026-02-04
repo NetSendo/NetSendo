@@ -57,19 +57,60 @@ class CardIntelController extends Controller
      */
     public function scan(Request $request): JsonResponse
     {
-        // Extended MIME type validation for mobile devices
-        // iOS/Android can send: image/jpg (instead of image/jpeg), application/octet-stream for camera photos
+        $file = $request->file('file');
+
+        // Debug logging for file upload
+        Log::debug('CardIntel scan: File received', [
+            'original_name' => $file?->getClientOriginalName(),
+            'mime_type' => ($file && $file->isValid()) ? $file->getMimeType() : 'invalid',
+            'client_mime' => $file?->getClientMimeType(),
+            'extension' => $file?->getClientOriginalExtension(),
+            'size' => ($file && $file->isValid()) ? $file->getSize() : 0,
+            'is_valid' => $file?->isValid(),
+        ]);
+
+        // Allowed MIME types and extensions for business card images
+        $allowedMimeTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+            'image/heic', 'image/heif', 'application/pdf', 'application/octet-stream',
+        ];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf'];
+
+        // Basic validation - file required and max size
         $request->validate([
-            'file' => 'required|file|mimetypes:image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,application/pdf,application/octet-stream|max:10240',
+            'file' => 'required|file|max:10240',
             'mode' => 'nullable|in:manual,agent,auto',
         ]);
 
-        // Additional validation for octet-stream - check file extension
-        $file = $request->file('file');
-        if ($file && $file->getMimeType() === 'application/octet-stream') {
+        // Custom MIME type validation with extension fallback
+        // This handles mobile gallery uploads where MIME detection may fail
+        if ($file && $file->isValid()) {
+            $mimeType = $file->getMimeType();
             $extension = strtolower($file->getClientOriginalExtension());
-            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf'];
-            if (!in_array($extension, $allowedExtensions)) {
+            $clientMime = $file->getClientMimeType();
+
+            // Check if MIME type is allowed OR extension is allowed (fallback for mobile)
+            $mimeAllowed = in_array($mimeType, $allowedMimeTypes) || in_array($clientMime, $allowedMimeTypes);
+            $extensionAllowed = in_array($extension, $allowedExtensions);
+
+            // For application/octet-stream (common on mobile), MUST have valid extension
+            if ($mimeType === 'application/octet-stream' && !$extensionAllowed) {
+                Log::warning('CardIntel scan: Invalid extension for octet-stream', [
+                    'extension' => $extension,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => __('validation.mimetypes', ['attribute' => 'file', 'values' => 'JPG, PNG, WebP, HEIC, PDF']),
+                ], 422);
+            }
+
+            // If MIME not recognized, allow if extension is valid (mobile gallery fallback)
+            if (!$mimeAllowed && !$extensionAllowed) {
+                Log::warning('CardIntel scan: Invalid file type', [
+                    'mime_type' => $mimeType,
+                    'client_mime' => $clientMime,
+                    'extension' => $extension,
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => __('validation.mimetypes', ['attribute' => 'file', 'values' => 'JPG, PNG, WebP, HEIC, PDF']),
@@ -91,6 +132,13 @@ class CardIntelController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('CardIntel scan: Processing failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Błąd przetwarzania: ' . $e->getMessage(),
@@ -506,30 +554,32 @@ class CardIntelController extends Controller
 
         // Build full HTML email
         $htmlBody = $this->buildEmailHtml($greeting, $body, $preheader);
-        $textBody = strip_tags(str_replace(['</p>', '<br>', '<br/>'], "\n", $body));
 
         // 4. Send email
         try {
             $mailProviderService = app(MailProviderService::class);
             $provider = $mailProviderService->getProvider($mailbox);
 
+            // Get recipient name from extracted fields
+            $recipientName = trim(($fields['first_name'] ?? '') . ' ' . ($fields['last_name'] ?? ''));
+
+            // MailProviderInterface::send(to, toName, subject, htmlContent, headers, attachments): bool
             $result = $provider->send(
-                to: $recipientEmail,
-                subject: $subject,
-                html: $htmlBody,
-                text: $textBody
+                $recipientEmail,
+                $recipientName ?: $recipientEmail,
+                $subject,
+                $htmlBody
             );
 
-            if (!$result['success']) {
-                throw new \Exception($result['error'] ?? 'Błąd wysyłania emaila.');
+            if (!$result) {
+                throw new \Exception('Błąd wysyłania emaila.');
             }
 
             // Increment mailbox sent count
             $mailbox->incrementSentCount();
 
             // 5. Log activity to CRM contact
-            $recipientName = trim(($fields['first_name'] ?? '') . ' ' . ($fields['last_name'] ?? ''));
-            $crmContact->logActivity('email_sent', "Wysłano email: {$subject}", [
+            $crmContact->logActivity('email', "Wysłano email: {$subject}", [
                 'source' => 'cardintel',
                 'subject' => $subject,
                 'preheader' => $preheader,

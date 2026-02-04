@@ -85,6 +85,13 @@ const galleryInput = ref(null);
 const hasCamera = ref(false);
 const isMobileDevice = ref(false);
 
+// Webcam modal state (for desktop)
+const showWebcamModal = ref(false);
+const videoRef = ref(null);
+const canvasRef = ref(null);
+const mediaStream = ref(null);
+const webcamError = ref(null);
+
 // Check for camera availability on mount
 const checkCameraAvailability = async () => {
     // Check if running on mobile device
@@ -112,17 +119,76 @@ const checkCameraAvailability = async () => {
 checkCameraAvailability();
 
 // Open camera for taking photo
-const openCamera = () => {
-    if (cameraInput.value) {
-        // For mobile devices, use the capture attribute
-        if (isMobileDevice.value) {
+const openCamera = async () => {
+    // For mobile devices, use the file input with capture attribute
+    if (isMobileDevice.value) {
+        if (cameraInput.value) {
             cameraInput.value.setAttribute('capture', 'environment');
-        } else {
-            // For desktop, remove capture to allow file picker with camera option
-            cameraInput.value.removeAttribute('capture');
+            cameraInput.value.click();
         }
-        cameraInput.value.click();
+        return;
     }
+
+    // For desktop, open webcam modal
+    showWebcamModal.value = true;
+    webcamError.value = null;
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
+        });
+        mediaStream.value = stream;
+
+        // Wait for videoRef to be available
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (videoRef.value) {
+            videoRef.value.srcObject = stream;
+            videoRef.value.play();
+        }
+    } catch (error) {
+        console.error('Camera access error:', error);
+        webcamError.value = error.name === 'NotAllowedError'
+            ? t('crm.cardintel.scan.upload.camera_permission_denied')
+            : t('crm.cardintel.scan.upload.camera_error');
+    }
+};
+
+// Capture photo from webcam
+const captureFromWebcam = () => {
+    if (!videoRef.value || !canvasRef.value) return;
+
+    const video = videoRef.value;
+    const canvas = canvasRef.value;
+    const context = canvas.getContext('2d');
+
+    // Set canvas size to video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw video frame to canvas
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert to blob and create file
+    canvas.toBlob(async (blob) => {
+        if (blob) {
+            const file = new File([blob], `webcam-capture-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            selectedFiles.value = [file];
+            closeWebcamModal();
+            uploadFiles();
+        }
+    }, 'image/jpeg', 0.95);
+};
+
+// Close webcam modal and cleanup
+const closeWebcamModal = () => {
+    if (mediaStream.value) {
+        mediaStream.value.getTracks().forEach(track => track.stop());
+        mediaStream.value = null;
+    }
+    showWebcamModal.value = false;
+    webcamError.value = null;
 };
 
 // Open gallery for selecting photo
@@ -132,17 +198,19 @@ const openGallery = () => {
     }
 };
 
-// Handle camera capture
+// Handle camera capture (mobile)
 const handleCameraCapture = (event) => {
     const files = Array.from(event.target.files);
     if (files.length === 0) return;
 
     uploadError.value = null;
+    // Use the file directly
     selectedFiles.value = [files[0]];
-    uploadFiles();
 
-    // Reset input
+    // Reset input after selection
     event.target.value = "";
+
+    uploadFiles();
 };
 
 // Handle gallery selection
@@ -154,13 +222,14 @@ const handleGallerySelect = (event) => {
 
     if (uploadMode.value === "single") {
         selectedFiles.value = [files[0]];
+        // Reset input after selection
+        event.target.value = "";
         uploadFiles();
     } else {
         selectedFiles.value = [...selectedFiles.value, ...files];
+        // Reset input after selection
+        event.target.value = "";
     }
-
-    // Reset input
-    event.target.value = "";
 };
 
 // Upload files to backend
@@ -342,10 +411,10 @@ const navigateTo = (tab) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                        class="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
                     >
                         <svg
                             class="w-5 h-5 text-white"
@@ -373,7 +442,7 @@ const navigateTo = (tab) => {
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 self-start md:self-auto">
                     <span
                         class="px-3 py-1 text-xs font-medium rounded-full transition-colors"
                         :class="
@@ -400,14 +469,14 @@ const navigateTo = (tab) => {
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Tab Navigation -->
                 <div
-                    class="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6"
+                    class="flex space-x-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 mb-6 overflow-x-auto no-scrollbar"
                 >
                     <button
                         v-for="tab in tabs"
                         :key="tab.id"
                         @click="navigateTo(tab.id)"
                         :class="[
-                            'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+                            'flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all whitespace-nowrap flex-shrink-0',
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-gray-700 text-violet-600 dark:text-violet-400 shadow-sm'
                                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white',
@@ -1059,14 +1128,15 @@ const navigateTo = (tab) => {
                             <input
                                 ref="cameraInput"
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+                                :capture="isMobileDevice ? 'environment' : undefined"
                                 class="hidden"
                                 @change="handleCameraCapture"
                             />
                             <input
                                 ref="galleryInput"
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
                                 class="hidden"
                                 :multiple="uploadMode === 'batch'"
                                 @change="handleGallerySelect"
@@ -1454,5 +1524,82 @@ const navigateTo = (tab) => {
                 </div>
             </div>
         </div>
+
+        <!-- Webcam Modal (Desktop) -->
+        <Teleport to="body">
+            <div
+                v-if="showWebcamModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+                @click.self="closeWebcamModal"
+            >
+                <div class="relative w-full max-w-2xl mx-4 bg-gray-900 rounded-xl overflow-hidden">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-4 py-3 bg-gray-800 border-b border-gray-700">
+                        <h3 class="text-lg font-semibold text-white">
+                            {{ $t('crm.cardintel.scan.upload.webcam_title') }}
+                        </h3>
+                        <button
+                            @click="closeWebcamModal"
+                            class="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700"
+                        >
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Video Preview -->
+                    <div class="relative aspect-video bg-black">
+                        <video
+                            ref="videoRef"
+                            autoplay
+                            playsinline
+                            muted
+                            class="w-full h-full object-cover"
+                        ></video>
+
+                        <!-- Error Message -->
+                        <div
+                            v-if="webcamError"
+                            class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/90 text-center p-8"
+                        >
+                            <svg class="w-16 h-16 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p class="text-red-400 text-lg font-medium mb-2">
+                                {{ webcamError }}
+                            </p>
+                            <p class="text-gray-400 text-sm">
+                                {{ $t('crm.cardintel.scan.upload.camera_permission_hint') }}
+                            </p>
+                        </div>
+
+                        <!-- Hidden canvas for capture -->
+                        <canvas ref="canvasRef" class="hidden"></canvas>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="flex items-center justify-center gap-4 px-4 py-4 bg-gray-800 border-t border-gray-700">
+                        <button
+                            @click="closeWebcamModal"
+                            class="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        >
+                            {{ $t('common.cancel') }}
+                        </button>
+                        <button
+                            @click="captureFromWebcam"
+                            :disabled="!!webcamError"
+                            class="px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {{ $t('crm.cardintel.scan.upload.capture') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

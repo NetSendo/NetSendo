@@ -37,12 +37,27 @@ class SmsController extends Controller
             });
 
         // Sorting with whitelist validation
-        $sortField = $request->sort ?? 'created_at';
+        // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
+        // For autoresponders (queues), always use created_at
+        $sortField = $request->sort ?? 'effective_date';
         $sortDirection = $request->direction ?? 'desc';
         $allowedSortFields = ['id', 'subject', 'status', 'created_at', 'type', 'day'];
 
         if (in_array($sortField, $allowedSortFields)) {
             $messages = $messages->orderBy($sortField, $sortDirection);
+        } elseif ($sortField === 'effective_date') {
+            // Smart date sorting:
+            // - For broadcasts (sent/scheduled): use scheduled_at or send_at
+            // - For drafts (no scheduled_at): use created_at
+            // - For autoresponders/queues: use created_at
+            $messages = $messages->orderByRaw("
+                CASE
+                    WHEN type = 'autoresponder' THEN created_at
+                    WHEN scheduled_at IS NOT NULL THEN scheduled_at
+                    WHEN send_at IS NOT NULL THEN send_at
+                    ELSE created_at
+                END {$sortDirection}
+            ");
         } else {
             $messages = $messages->latest();
         }
@@ -58,6 +73,9 @@ class SmsController extends Controller
                 'day' => $message->day,
                 'is_active' => $message->is_active ?? true,
                 'status' => $message->status, // draft, scheduled, sent
+                'scheduled_at' => $message->scheduled_at
+                    ? DateHelper::formatForUser($message->scheduled_at)
+                    : null,
                 'created_at' => DateHelper::formatForUser($message->created_at),
                 'list_name' => $message->contactLists->first()->name ?? '-',
                 'recipients_count' => $message->contactLists->first()?->subscribers()->count() ?? 0,

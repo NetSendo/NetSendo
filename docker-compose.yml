@@ -36,6 +36,7 @@ services:
       # User configuration (mounted read-only)
       - ./.env:/var/www/.env:ro
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       # Persistent user data
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
@@ -75,6 +76,7 @@ services:
     volumes:
       - ./.env:/var/www/.env:ro
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
     environment:
@@ -107,6 +109,7 @@ services:
     volumes:
       - ./.env:/var/www/.env:ro
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+      - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
     environment:

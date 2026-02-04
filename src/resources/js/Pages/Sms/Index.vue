@@ -507,6 +507,28 @@ const toggleActive = async (message) => {
                                             : $t("sms.status_draft")
                                     }}
                                 </span>
+                                <!-- Show scheduled time for scheduled messages -->
+                                <div
+                                    v-if="
+                                        message.type !== 'autoresponder' &&
+                                        message.status === 'scheduled' &&
+                                        message.scheduled_at
+                                    "
+                                    class="text-xs text-slate-500 dark:text-slate-400 mt-1"
+                                >
+                                    📅 {{ message.scheduled_at }}
+                                </div>
+                                <!-- Show sent date for sent messages -->
+                                <div
+                                    v-if="
+                                        message.type !== 'autoresponder' &&
+                                        message.status === 'sent' &&
+                                        message.scheduled_at
+                                    "
+                                    class="text-xs text-slate-500 dark:text-slate-400 mt-1"
+                                >
+                                    ✉️ {{ message.scheduled_at }}
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 {{ message.created_at }}

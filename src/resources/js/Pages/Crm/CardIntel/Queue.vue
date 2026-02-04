@@ -50,38 +50,40 @@ const getModeLabel = (mode) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center gap-4">
-                <Link
-                    :href="route('crm.cardintel.index')"
-                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                    <svg
-                        class="w-5 h-5 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <Link
+                        :href="route('crm.cardintel.index')"
+                        class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M15 19l-7-7 7-7"
-                        />
-                    </svg>
-                </Link>
-                <div class="flex-1">
-                    <h2
-                        class="text-xl font-semibold text-gray-900 dark:text-white"
-                    >
-                        {{ $t("crm.cardintel.queue.title") }}
-                    </h2>
-                    <p class="text-sm text-gray-500">
-                        {{
-                            $t("crm.cardintel.queue.subtitle", {
-                                count: stats.pending_review,
-                            })
-                        }}
-                    </p>
+                        <svg
+                            class="w-5 h-5 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                    </Link>
+                    <div class="flex-1 min-w-0">
+                        <h2
+                            class="text-xl font-semibold text-gray-900 dark:text-white truncate"
+                        >
+                            {{ $t("crm.cardintel.queue.title") }}
+                        </h2>
+                        <p class="text-sm text-gray-500 truncate">
+                            {{
+                                $t("crm.cardintel.queue.subtitle", {
+                                    count: stats.pending_review,
+                                })
+                            }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </template>
@@ -89,7 +91,7 @@ const getModeLabel = (mode) => {
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Stats Bar -->
-                <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div
                         class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700"
                     >
@@ -138,8 +140,9 @@ const getModeLabel = (mode) => {
                 <div
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
                 >
+                    <!-- Desktop Table -->
                     <table
-                        class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                        class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 hidden md:table"
                     >
                         <thead class="bg-gray-50 dark:bg-gray-900/50">
                             <tr>
@@ -270,6 +273,92 @@ const getModeLabel = (mode) => {
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- Mobile List View -->
+                    <div class="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+                        <div
+                            v-for="scan in scans.data"
+                            :key="scan.id"
+                            class="p-4 flex flex-col gap-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        >
+                            <div class="flex items-start gap-3">
+                                <div
+                                    class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0"
+                                >
+                                    <img
+                                        v-if="scan.file_url"
+                                        :src="scan.file_url"
+                                        alt=""
+                                        class="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div
+                                                class="font-medium text-gray-900 dark:text-white"
+                                            >
+                                                {{
+                                                    scan.extraction?.fields
+                                                        ?.first_name
+                                                }}
+                                                {{
+                                                    scan.extraction?.fields
+                                                        ?.last_name
+                                                }}
+                                                <span
+                                                    v-if="
+                                                        !scan.extraction?.fields
+                                                            ?.first_name
+                                                    "
+                                                    class="text-gray-400"
+                                                    >#{{ scan.id }}</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="text-sm text-gray-500 dark:text-gray-400 truncate"
+                                            >
+                                                {{
+                                                    scan.extraction?.fields
+                                                        ?.company ||
+                                                    scan.extraction?.fields
+                                                        ?.email ||
+                                                    "—"
+                                                }}
+                                            </div>
+                                        </div>
+                                        <ContextBadge
+                                            v-if="scan.context"
+                                            :level="scan.context.context_level"
+                                            :score="scan.context.quality_score"
+                                            size="sm"
+                                        />
+                                    </div>
+                                    <div class="mt-2 flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span
+                                                class="px-2 py-1 text-xs font-medium rounded-full"
+                                                :class="getStatusColor(scan.status)"
+                                            >
+                                                {{ $t(getStatusLabel(scan.status)) }}
+                                            </span>
+                                            <span
+                                                class="text-xs text-gray-400"
+                                            >
+                                                {{ formatDate(scan.created_at) }}
+                                            </span>
+                                        </div>
+                                        <Link
+                                            :href="route('crm.cardintel.show', scan.id)"
+                                            class="text-violet-600 hover:text-violet-700 text-sm font-medium"
+                                        >
+                                            {{ $t("crm.cardintel.queue.table.view") }} →
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Empty State -->
                     <div
