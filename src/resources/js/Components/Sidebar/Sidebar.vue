@@ -145,10 +145,10 @@ const updateOpenGroup = () => {
         return;
     }
 
-    // Products
     if (
         isActive("settings.stripe-products.*") ||
-        isActive("settings.polar-products.*")
+        isActive("settings.polar-products.*") ||
+        isActive("settings.tpay-products.*")
     ) {
         openGroup.value = "products";
         return;
@@ -183,6 +183,7 @@ const updateOpenGroup = () => {
         isActive("settings.backup.*") ||
         isActive("settings.stripe.*") ||
         isActive("settings.polar.*") ||
+        isActive("settings.tpay.*") ||
         isActive("settings.pixel.*") ||
         isActive("settings.woocommerce.*") ||
         isActive("settings.names.*") ||
@@ -1484,6 +1485,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     {{ $t("polar.products_title") }}
                 </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.tpay-products.index')"
+                    :active="isActive('settings.tpay-products.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("tpay.products_title") }}
+                </SidebarItem>
             </SidebarGroup>
 
             <!-- Profit -->
@@ -1838,6 +1862,29 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("polar.settings_title") }}
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('settings.tpay.index')"
+                    :active="isActive('settings.tpay.*')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("tpay.settings_title") }}
                 </SidebarItem>
 
                 <SidebarItem

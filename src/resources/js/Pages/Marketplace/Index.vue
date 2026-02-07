@@ -95,6 +95,14 @@ const activeIntegrations = [
         route: "marketplace.polar",
     },
     {
+        id: "tpay",
+        name: "Tpay",
+        description: "Polish payment gateway",
+        icon: "🇵🇱",
+        color: "rose",
+        route: "marketplace.tpay",
+    },
+    {
         id: "woocommerce",
         name: "WooCommerce",
         description: "E-commerce integration",
@@ -277,6 +285,12 @@ const categories = [
                 logo: null,
                 status: "available",
                 route: "marketplace.polar",
+            },
+            {
+                name: "Tpay",
+                logo: null,
+                status: "available",
+                route: "marketplace.tpay",
             },
             { name: "PayPal", logo: null },
             { name: "Paddle", logo: null },

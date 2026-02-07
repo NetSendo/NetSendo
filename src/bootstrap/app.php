@@ -41,6 +41,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
             'api/cron/webhook',
             'webhooks/bounce/*',
+            'webhooks/stripe',
+            'webhooks/polar',
+            'webhooks/tpay',
+            'webhooks/woocommerce',
+            'webhooks/shopify',
+            'webhooks/google-calendar',
             'subscribe/*',
             't/pixel/*',
         ]);

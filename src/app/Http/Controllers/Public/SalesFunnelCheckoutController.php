@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\PolarProduct;
 use App\Models\SalesFunnel;
 use App\Models\StripeProduct;
+use App\Models\TpayProduct;
 use App\Models\Subscriber;
 use App\Services\PolarService;
 use App\Services\StripeService;
+use App\Services\TpayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +20,8 @@ class SalesFunnelCheckoutController extends Controller
 {
     public function __construct(
         private StripeService $stripeService,
-        private PolarService $polarService
+        private PolarService $polarService,
+        private TpayService $tpayService
     ) {}
 
     /**
@@ -30,6 +33,8 @@ class SalesFunnelCheckoutController extends Controller
             return $this->stripeCheckout($request, $product);
         } elseif ($type === 'polar') {
             return $this->polarCheckout($request, $product);
+        } elseif ($type === 'tpay') {
+            return $this->tpayCheckout($request, $product);
         }
 
         abort(404, 'Invalid product type');
@@ -102,6 +107,46 @@ class SalesFunnelCheckoutController extends Controller
             return redirect()->away($checkoutUrl);
         } catch (\Exception $e) {
             Log::error('Polar checkout failed', [
+                'product_id' => $productId,
+                'error' => $e->getMessage(),
+            ]);
+            abort(500, 'Checkout failed. Please try again.');
+        }
+    }
+
+    /**
+     * Handle Tpay checkout redirect.
+     */
+    private function tpayCheckout(Request $request, int $productId): RedirectResponse
+    {
+        $product = TpayProduct::with('salesFunnel')->findOrFail($productId);
+
+        if (!$product->is_active) {
+            abort(404, 'Product is not available');
+        }
+
+        $options = [];
+
+        // If product has sales funnel, use its success URL
+        if ($product->salesFunnel) {
+            $options['success_url'] = route('sales-funnel.success', [
+                'funnel' => $product->salesFunnel->id,
+            ]) . '?type=tpay';
+        }
+
+        // Pre-fill email if provided
+        if ($request->has('email')) {
+            $options['customer_email'] = $request->input('email');
+        }
+        if ($request->has('name')) {
+            $options['customer_name'] = $request->input('name');
+        }
+
+        try {
+            $checkoutUrl = $this->tpayService->getCheckoutUrl($product, $options);
+            return redirect()->away($checkoutUrl);
+        } catch (\Exception $e) {
+            Log::error('Tpay checkout failed', [
                 'product_id' => $productId,
                 'error' => $e->getMessage(),
             ]);

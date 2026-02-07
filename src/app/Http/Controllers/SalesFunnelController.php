@@ -20,7 +20,7 @@ class SalesFunnelController extends Controller
     {
         $funnels = SalesFunnel::forUser(Auth::id())
             ->with(['targetList:id,name', 'thankYouPage:id,name'])
-            ->withCount(['stripeProducts', 'polarProducts'])
+            ->withCount(['stripeProducts', 'polarProducts', 'tpayProducts'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -135,6 +135,7 @@ class SalesFunnelController extends Controller
         // Detach from products first
         $salesFunnel->stripeProducts()->update(['sales_funnel_id' => null]);
         $salesFunnel->polarProducts()->update(['sales_funnel_id' => null]);
+        $salesFunnel->tpayProducts()->update(['sales_funnel_id' => null]);
 
         $salesFunnel->delete();
 

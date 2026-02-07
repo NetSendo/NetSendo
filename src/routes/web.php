@@ -591,6 +591,27 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/all-transactions', [\App\Http\Controllers\PolarProductController::class, 'allTransactions'])->name('all-transactions');
     });
 
+    // Tpay Marketplace Page
+    Route::get('/marketplace/tpay', fn() => Inertia::render('Marketplace/Tpay'))->name('marketplace.tpay');
+
+    // Tpay Settings
+    Route::prefix('settings/tpay')->name('settings.tpay.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TpaySettingsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\TpaySettingsController::class, 'update'])->name('update');
+        Route::post('/test-connection', [\App\Http\Controllers\TpaySettingsController::class, 'testConnection'])->name('test-connection');
+    });
+
+    // Tpay Products (Settings)
+    Route::prefix('settings/tpay-products')->name('settings.tpay-products.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TpayProductController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\TpayProductController::class, 'store'])->name('store');
+        Route::put('/{product}', [\App\Http\Controllers\TpayProductController::class, 'update'])->name('update');
+        Route::delete('/{product}', [\App\Http\Controllers\TpayProductController::class, 'destroy'])->name('destroy');
+        Route::get('/{product}/transactions', [\App\Http\Controllers\TpayProductController::class, 'transactions'])->name('transactions');
+        Route::post('/{product}/checkout-url', [\App\Http\Controllers\TpayProductController::class, 'checkoutUrl'])->name('checkout-url');
+        Route::get('/all-transactions', [\App\Http\Controllers\TpayProductController::class, 'allTransactions'])->name('all-transactions');
+    });
+
     // Sales Funnels (for external page product embedding)
     Route::prefix('settings/sales-funnels')->name('settings.sales-funnels.')->group(function () {
         Route::get('/', [\App\Http\Controllers\SalesFunnelController::class, 'index'])->name('index');
@@ -927,6 +948,9 @@ Route::post('/webhooks/stripe', [\App\Http\Controllers\Webhooks\StripeController
 
 // Polar Webhook (public, Polar-signature authenticated)
 Route::post('/webhooks/polar', [\App\Http\Controllers\Webhooks\PolarController::class, 'handle'])->name('webhooks.polar');
+
+// Tpay Webhook (public, JWS-signature authenticated)
+Route::post('/webhooks/tpay', [\App\Http\Controllers\Webhooks\TpayController::class, 'handle'])->name('webhooks.tpay');
 
 // WooCommerce Webhook (public, API-key authenticated)
 Route::post('/webhooks/woocommerce', [\App\Http\Controllers\Webhooks\WooCommerceController::class, 'handle'])->name('webhooks.woocommerce');

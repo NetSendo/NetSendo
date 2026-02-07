@@ -79,6 +79,15 @@ class SalesFunnel extends Model
     }
 
     /**
+     * Get Tpay products using this funnel.
+     */
+    public function tpayProducts(): HasMany
+    {
+        return $this->hasMany(TpayProduct::class);
+    }
+
+
+    /**
      * Scope for active funnels.
      */
     public function scopeActive($query)

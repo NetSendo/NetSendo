@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+### Changed
+
+## [1.9.2] – Short Description
+
+**Release date:** 2026-02-07
+
+### Added
+
+- **Tpay Integration (Polish Payments):**
+  - **Full Gateway Integration:** Implemented complete support for Tpay payment processor including bank transfers, BLIK, and credit cards.
+  - **Marketplace Page:** Added dedicated Tpay integration page (`/marketplace/tpay`) with features overview and setup guide.
+  - **Product Management:** New "Tpay Products" section (`/settings/tpay-products`) for creating and managing payment links.
+  - **Sales Funnels:** Tpay products fully integrated into Sales Funnels system (post-purchase actions, tagging, list subscription).
+  - **Secure Checkout:** Redirect-based checkout flow with automatic return handling and status verification.
+  - **Webhook System:** Robust webhook handling with JWS signature verification for real-time transaction updates.
+  - **Configuration:** Settings page for API credentials (Client ID, Secret, Security Code) with Sandbox mode support.
+  - **Localization:** Complete translations for all Tpay interfaces in PL, EN, DE, ES.
+
+### Fixed
+
 - **Deliverability - SPF Configuration:**
   - Fixed incorrect hardcoded `include:netsendo` SPF mechanism by replacing it with dynamic installation domain (e.g., `include:_spf.yourdomain.com`).
   - Fixed SPF record generation to correctly aggregate providers from all mailboxes sharing the same domain (e.g., merging SendGrid and NMI includes).
