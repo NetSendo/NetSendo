@@ -524,6 +524,9 @@ The following translation keys were added to support CardIntel, CRM activities, 
 **CRM Activities (`crm.activities.type.*`):**
 
 - `crm.activities.type.email` - Activity type label for emails
+- `crm.activities.log.task_completed` - Activity log for completed task
+- `crm.activities.log.email_sent` - Activity log for sent email
+- `crm.activities.log.contact_created` - Activity log for contact creation
 
 **Global Keys:**
 

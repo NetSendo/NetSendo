@@ -579,7 +579,7 @@ class CardIntelController extends Controller
             $mailbox->incrementSentCount();
 
             // 5. Log activity to CRM contact
-            $crmContact->logActivity('email', "Wysłano email: {$subject}", [
+            $crmContact->logActivity('email', __('crm.activities.log.email_sent', ['subject' => $subject]), [
                 'source' => 'cardintel',
                 'subject' => $subject,
                 'preheader' => $preheader,

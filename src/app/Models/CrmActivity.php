@@ -82,21 +82,7 @@ class CrmActivity extends Model
      */
     public function getTypeLabelAttribute(): string
     {
-        return match($this->type) {
-            'note' => 'Notatka',
-            'call' => 'Rozmowa',
-            'email' => 'Email',
-            'meeting' => 'Spotkanie',
-            'task_completed' => 'Zadanie ukończone',
-            'stage_changed' => 'Zmiana etapu',
-            'deal_created' => 'Nowy deal',
-            'deal_won' => 'Deal wygrany',
-            'deal_lost' => 'Deal przegrany',
-            'contact_created' => 'Kontakt utworzony',
-            'status_changed' => 'Zmiana statusu',
-            'system' => 'System',
-            default => $this->type,
-        };
+        return __('crm.activities.type.' . $this->type);
     }
 
     /**

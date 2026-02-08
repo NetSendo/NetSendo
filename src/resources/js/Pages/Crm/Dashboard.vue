@@ -66,6 +66,36 @@ const getActivityIcon = (type) => {
     };
     return icons[type] || icons.note;
 };
+
+// Get activity content with translation support for legacy logs
+import { useI18n } from "vue-i18n";
+const { t } = useI18n();
+
+const getActivityContent = (activity) => {
+    if (!activity.content) {
+        return activity.type_label;
+    }
+
+    // Handle legacy Polish strings for completed tasks
+    if (activity.type === "task_completed") {
+        const polishPrefix = "Ukończono zadanie: ";
+        if (activity.content.startsWith(polishPrefix)) {
+            const title = activity.content.substring(polishPrefix.length);
+            return t("crm.activities.log.task_completed", { title });
+        }
+    }
+
+    // Handle legacy Polish strings for sent emails
+    if (activity.type === "email") {
+        const polishPrefix = "Wysłano email: ";
+        if (activity.content && activity.content.startsWith(polishPrefix)) {
+            const subject = activity.content.substring(polishPrefix.length);
+            return t("crm.activities.log.email_sent", { subject });
+        }
+    }
+
+    return activity.content;
+};
 </script>
 
 <template>
@@ -468,7 +498,7 @@ const getActivityIcon = (type) => {
                                 'flex items-center justify-between rounded-xl border p-4',
                                 task.source === 'google'
                                     ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900/50 dark:bg-blue-900/10'
-                                    : 'border-slate-200 dark:border-slate-700'
+                                    : 'border-slate-200 dark:border-slate-700',
                             ]"
                         >
                             <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -477,8 +507,14 @@ const getActivityIcon = (type) => {
                                     v-if="task.source === 'google'"
                                     class="flex-shrink-0 flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
                                 >
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V9h15v10.5zm0-12h-15v-3h15v3z"/>
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V9h15v10.5zm0-12h-15v-3h15v3z"
+                                        />
                                     </svg>
                                     Google
                                 </span>
@@ -524,8 +560,14 @@ const getActivityIcon = (type) => {
                                     class="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60 transition"
                                     @click.stop
                                 >
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+                                        />
                                     </svg>
                                     Meet
                                 </a>
@@ -537,8 +579,14 @@ const getActivityIcon = (type) => {
                                     class="flex items-center gap-1 rounded-lg bg-blue-100 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 transition"
                                     @click.stop
                                 >
-                                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"/>
+                                    <svg
+                                        class="h-3.5 w-3.5"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            d="M4 4h10a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm14 3l4-2v10l-4-2V7z"
+                                        />
                                     </svg>
                                     Zoom
                                 </a>
@@ -700,9 +748,7 @@ const getActivityIcon = (type) => {
                                 <p
                                     class="text-sm text-slate-900 dark:text-white"
                                 >
-                                    {{
-                                        activity.content || activity.type_label
-                                    }}
+                                    {{ getActivityContent(activity) }}
                                 </p>
                                 <p
                                     class="text-xs text-slate-500 dark:text-slate-400"

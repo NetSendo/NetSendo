@@ -498,9 +498,9 @@ class CrmContactController extends Controller
             // Increment mailbox sent count
             $mailbox->incrementSentCount();
 
-            // Log activity
             $recipientName = trim(($contact->subscriber?->first_name ?? '') . ' ' . ($contact->subscriber?->last_name ?? ''));
-            $contact->logActivity('email', "Wysłano email: {$validated['subject']}", [
+            // Log activity to CRM contact
+            $contact->logActivity('email', __('crm.activities.log.email_sent', ['subject' => $validated['subject']]), [
                 'subject' => $validated['subject'],
                 'mailbox_name' => $mailbox->name,
                 'mailbox_id' => $mailbox->id,

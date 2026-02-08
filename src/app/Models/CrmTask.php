@@ -260,7 +260,7 @@ class CrmTask extends Model
                 'user_id' => $this->user_id,
                 'created_by_id' => auth()->id(),
                 'type' => 'task_completed',
-                'content' => "Ukończono zadanie: {$this->title}",
+                'content' => __('crm.activities.log.task_completed', ['title' => $this->title]),
                 'metadata' => [
                     'task_id' => $this->id,
                     'task_type' => $this->type,

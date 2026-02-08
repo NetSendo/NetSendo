@@ -6325,11 +6325,90 @@
                 "greater_than": "Greater than",
                 "less_than": "Less than"
             },
+            "activities": {
+                "log": {
+                    "task_completed": "Task completed: :title",
+                    "email_sent": "Email sent: :subject",
+                    "contact_created": "Contact created"
+                },
+                "type": {
+                    "note": "Note",
+                    "call": "Call",
+                    "email": "Email",
+                    "meeting": "Meeting",
+                    "task_completed": "Task completed",
+                    "stage_changed": "Stage changed",
+                    "deal_created": "Deal created",
+                    "deal_won": "Deal won",
+                    "deal_lost": "Deal lost",
+                    "contact_created": "Contact created",
+                    "status_changed": "Status changed",
+                    "system": "System"
+                }
+            },
             "auto_convert": {
                 "title": "Auto-convert warm contacts",
                 "description": "Automatically create CRM contacts from mailing list subscribers when scoring rules assign them points.",
                 "toast_enabled": "Contact auto-conversion has been enabled",
                 "toast_disabled": "Contact auto-conversion has been disabled"
+            },
+            "defaults": {
+                "email_opened": {
+                    "name": "Email Opened",
+                    "description": "Points for opening an email"
+                },
+                "email_clicked": {
+                    "name": "Link Clicked",
+                    "description": "Points for clicking a link in an email"
+                },
+                "email_replied": {
+                    "name": "Email Replied",
+                    "description": "Bonus for replying to a message"
+                },
+                "contact_created": {
+                    "name": "CRM Contact Created",
+                    "description": "Starting points when a CRM contact is created"
+                },
+                "form_submitted": {
+                    "name": "Form Submitted",
+                    "description": "Points for submitting any form"
+                },
+                "page_visited": {
+                    "name": "Page Visited",
+                    "description": "Points for visiting a page"
+                },
+                "page_visited_pricing": {
+                    "name": "Pricing Page Visit",
+                    "description": "Bonus for visiting the pricing page"
+                },
+                "product_viewed": {
+                    "name": "Product Viewed",
+                    "description": "Points for viewing a product page"
+                },
+                "add_to_cart": {
+                    "name": "Added to Cart",
+                    "description": "Points for adding a product to the cart"
+                },
+                "checkout_started": {
+                    "name": "Checkout Started",
+                    "description": "Bonus for starting the checkout process"
+                },
+                "tag_added_hot": {
+                    "name": "Tag \"hot\"",
+                    "description": "Bonus for receiving the 'hot' tag"
+                },
+                "tag_added_vip": {
+                    "name": "Tag \"vip\"",
+                    "description": "Bonus for receiving the 'vip' tag"
+                },
+                "decay_7_days": {
+                    "name": "Inactivity 7 Days",
+                    "description": "Automatic points decay after 7 days of inactivity"
+                },
+                "decay_30_days": {
+                    "name": "Inactivity 30 Days",
+                    "description": "Large points decay after 30 days of inactivity"
+                }
             }
         },
         "global_search": {
