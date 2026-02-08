@@ -49,6 +49,6 @@
         "vuedraggable": "^4.1.0"
     },
     "optionalDependencies": {
-        "@rollup/rollup-darwin-arm64": "^4.56.0"
+        "@rollup/rollup-darwin-arm64": "^4.57.1"
     }
 }

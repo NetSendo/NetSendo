@@ -409,7 +409,23 @@ class AutomationActionExecutor
             ];
         }
 
-        // If no CRM contact, create one automatically
+        // Check if auto-convert is enabled for this user
+        $user = $subscriber->contactLists()->first()?->user;
+        $autoConvert = $user ? ($user->settings['crm']['auto_convert_contacts'] ?? true) : true;
+
+        if (!$autoConvert) {
+            Log::debug('Automation add_score skipped: auto-convert disabled, no CRM contact for subscriber', [
+                'subscriber_id' => $subscriber->id,
+            ]);
+
+            return [
+                'skipped' => true,
+                'reason' => 'auto_convert_disabled',
+                'subscriber_id' => $subscriber->id,
+            ];
+        }
+
+        // Auto-convert subscriber to CRM contact
         $contact = \App\Models\CrmContact::createFromSubscriber($subscriber, [
             'status' => 'lead',
             'source' => 'automation',
@@ -769,9 +785,14 @@ class AutomationActionExecutor
         if (!$contactId && $subscriber) {
             $contact = \App\Models\CrmContact::where('subscriber_id', $subscriber->id)->first();
             if (!$contact) {
-                $contact = \App\Models\CrmContact::createFromSubscriber($subscriber);
+                // Check if auto-convert is enabled for this user
+                $dealUser = \App\Models\User::find($userId);
+                $autoConvert = $dealUser ? ($dealUser->settings['crm']['auto_convert_contacts'] ?? true) : true;
+                if ($autoConvert) {
+                    $contact = \App\Models\CrmContact::createFromSubscriber($subscriber);
+                }
             }
-            $contactId = $contact->id;
+            $contactId = $contact?->id;
         }
 
         $deal = \App\Models\CrmDeal::create([

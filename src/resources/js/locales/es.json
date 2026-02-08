@@ -1505,6 +1505,18 @@
         "go_to_edit_duplicate": "Ir a editar duplicado",
         "stay_on_list": "Permanecer en la lista",
         "copy_prefix": "[COPIA]",
+        "toggle_activate": "Activar cola",
+        "toggle_deactivate": "Desactivar cola",
+        "status_active": "Activa",
+        "status_inactive": "Inactiva",
+        "recipients": "destinatarios",
+        "skipped": "omitidos",
+        "skipped_hint": "Suscriptores omitidos debido a que la hora de envío ya pasó. Haga clic en estadísticas para activar el envío manual.",
+        "queue_sent_count": "Enviados {count}",
+        "queue_planned_count": "Planificados {count}",
+        "queue_queued_count": "En cola {count}",
+        "queue_failed_count": "Errores {count}",
+        "queue_missed_count": "Omitidos {count}",
         "create_title": "Nuevo Mensaje",
         "edit_title": "Editar Mensaje",
         "create_subtitle": "Preparar una nueva campaña de correo electrónico",
@@ -5034,7 +5046,6 @@
         "palette": "Paleta"
     },
     "crm": {
-
         "title": "CRM",
         "subtitle": "Gestionar contactos y ventas",
         "task_types": {
@@ -5528,11 +5539,22 @@
                 "deal_won": "Trato ganado",
                 "deal_lost": "Trato perdido",
                 "task_completed": "Tarea completada",
-                "email": "Email"
+                "email": "Email",
+                "status_changed": "Estado cambiado",
+                "engaged_reader": "Lector comprometido",
+                "automation_rule": "Regla de automatización",
+                "phone_call": "Teléfono",
+                "crm_contact_created": "Contacto CRM creado",
+                "ae_address_list": "Lista de direcciones AE",
+                "email_opened": "Correo electrónico abierto",
+                "status_change_lead_to_prospect_scoring": "Estado cambiado de Lead a Prospecto (automáticamente por puntuación)",
+                "system": "Sistema"
             },
             "created_by": "Por",
             "system": "Sistema",
-            "empty": "Sin actividades"
+            "empty": "Sin actividades",
+            "history": "Historial de actividades",
+            "by_system": "por el Sistema"
         },
         "import": {
             "title_page": "CRM Import",
@@ -5625,16 +5647,16 @@
                 "confirm_reset_message": "¿Estás seguro de que deseas restablecer todas las reglas a los valores predeterminados? Todas las reglas actuales se eliminarán y se reemplazarán con las predeterminadas."
             },
             "history": {
-               "title": "Historial de puntuación",
-               "more_events": "+ {count} eventos más",
-               "empty": "Sin historial de puntuación",
-               "empty_desc": "La puntuación se actualizará automáticamente según la actividad",
-               "time": {
-                   "now": "ahora",
-                   "min_ago": "hace {n} min",
-                   "hours_ago": "hace {n}h",
-                   "days_ago": "hace {n}d"
-               }
+                "title": "Historial de puntuación",
+                "more_events": "+ {count} eventos más",
+                "empty": "Sin historial de puntuación",
+                "empty_desc": "La puntuación se actualizará automáticamente según la actividad",
+                "time": {
+                    "now": "ahora",
+                    "min_ago": "hace {n} min",
+                    "hours_ago": "hace {n}h",
+                    "days_ago": "hace {n}d"
+                }
             },
             "event_types": {
                 "email_opened": "Email abierto",
@@ -5661,6 +5683,12 @@
                 "regex": "Regex",
                 "greater_than": "Mayor que",
                 "less_than": "Menor que"
+            },
+            "auto_convert": {
+                "title": "Convertir contactos cálidos automáticamente",
+                "description": "Crear automáticamente contactos CRM de suscriptores de listas de correo cuando las reglas de puntuación les asignan puntos.",
+                "toast_enabled": "La conversión automática de contactos ha sido activada",
+                "toast_disabled": "La conversión automática de contactos ha sido desactivada"
             }
         },
         "sequences": {
@@ -6069,7 +6097,6 @@
                     "no_mailbox": "Usar predeterminado del sistema",
                     "mailbox_help": "Selecciona el buzón desde el cual se enviarán mensajes a los contactos de las tarjetas de visita"
                 },
-
                 "page_title": "Ajustes - CardIntel",
                 "saved": "Guardado",
                 "saving": "Guardando...",
@@ -6171,7 +6198,6 @@
                 "high_confidence": "Datos de alta confianza",
                 "low_confidence": "Datos de baja confianza"
             },
-
             "vision": {
                 "ready": "Reconocimiento de tarjetas listo",
                 "required": "Integración AI Vision requerida",

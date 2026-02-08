@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **CRM Auto-Convert Setting:**
+  - Added user-configurable toggle "Auto-convert warm contacts" in **CRM → Scoring Rules** settings.
+  - When enabled (default), subscribers from mailing lists are automatically converted to CRM contacts when automation scoring or deal creation rules are triggered.
+  - When disabled, scoring and deal actions will skip auto-creation — contacts must be added to CRM explicitly.
+  - Setting is stored in `User.settings` JSON column under `crm.auto_convert_contacts`.
+  - Backend: Modified `addScore()` and `createCrmDeal()` in `AutomationActionExecutor.php` to respect the setting.
+  - Frontend: Toggle card with icon and description in `ScoringRules.vue`.
+  - Route: `POST /crm/scoring/toggle-auto-convert` handled by `LeadScoringController::toggleAutoConvert()`.
+  - Localization: Full translations in PL, EN, DE, ES.
+
 ### Fixed
+
+- **Message Statistics:**
+  - **Queue Stats Display:** Fixed an issue where message statistics (sent, planned, failed) for autoresponder messages were showing as zero in the main list view.
+  - **Detailed Status:** Added detailed breakdown of queue status (Sent, Planned, Queued, Failed, Skipped) directly in the message list for autoresponders.
+  - **Localization:** Added missing translation keys for queue statistics in PL, EN, DE, ES.
 
 ### Changed
 

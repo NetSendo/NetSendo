@@ -6,7 +6,6 @@
         "global_settings_desc": "Zmiany tutaj będą stosowane jako domyślne dla nowych list oraz list, które nie mają własnych ustawień. Jeśli chcesz zmienić ustawienia tylko dla konkretnej listy, przejdź do edycji tej listy (zakładka \"Ustawienia\"):",
         "go_to_lists": "Lista e-mail →"
     },
-
     "affiliate": {
         "title": "Program Partnerski",
         "programs": "Programy",
@@ -1423,6 +1422,11 @@
         "recipients": "odbiorców",
         "skipped": "pominięto",
         "skipped_hint": "Subskrybenci pominięci z powodu upływu czasu wysyłki. Kliknij w statystyki, aby uruchomić ręczną wysyłkę.",
+        "queue_sent_count": "Wysłano {count}",
+        "queue_planned_count": "Zaplanowano {count}",
+        "queue_queued_count": "W kolejce {count}",
+        "queue_failed_count": "Błędy {count}",
+        "queue_missed_count": "Pominięto {count}",
         "ab_test_badge": "A/B Test",
         "ab_test_view_results": "Kliknij, aby zobaczyć wyniki i zarządzać testem A/B",
         "ab_test_tooltip": "Ta wiadomość ma test A/B ({status})",
@@ -5737,7 +5741,6 @@
         "palette": "Paleta"
     },
     "crm": {
-
         "title": "CRM",
         "subtitle": "Zarządzaj kontaktami i sprzedażą",
         "task_types": {
@@ -6249,14 +6252,25 @@
                 "deal_lost": "Szansa przegrana",
                 "task_completed": "Zadanie ukończone",
                 "contact_created": "Kontakt utworzony",
-                "email": "Email"
+                "email": "Email",
+                "status_changed": "Status zmieniony",
+                "engaged_reader": "Zaangażowany czytelnik",
+                "automation_rule": "Reguła automatyzacji",
+                "phone_call": "Telefon",
+                "crm_contact_created": "Utworzenie kontaktu CRM",
+                "ae_address_list": "Lista adresów AE",
+                "email_opened": "Otwarcie emaila",
+                "status_change_lead_to_prospect_scoring": "Status zmieniony z lead na prospect (automatycznie przez scoring)",
+                "system": "System"
             },
             "created_by": "Przez",
             "system": "System",
             "empty": "Brak aktywności",
             "actions": {
                 "add": "Dodaj"
-            }
+            },
+            "history": "Historia Aktywności",
+            "by_system": "przez System"
         },
         "import": {
             "title_page": "Import CRM",
@@ -6387,6 +6401,12 @@
                 "regex": "Regex",
                 "greater_than": "Większe niż",
                 "less_than": "Mniejsze niż"
+            },
+            "auto_convert": {
+                "title": "Autokonwertowanie ciepłych kontaktów",
+                "description": "Automatycznie twórz kontakty CRM z subskrybentów na listach mailingowych, gdy reguły scoringu przyznają im punkty.",
+                "toast_enabled": "Autokonwertowanie kontaktów zostało włączone",
+                "toast_disabled": "Autokonwertowanie kontaktów zostało wyłączone"
             }
         },
         "global_search": {
@@ -6426,7 +6446,6 @@
                 "active": "Aktywna",
                 "inactive": "Nieaktywna"
             },
-
             "banner": {
                 "title": "Automatyczne sekwencje kontaktu",
                 "description": "Twórz sekwencje zadań, które automatycznie przypomną Ci o kolejnych krokach kontaktu z klientem. Ustaw \"oddzwoń za 3 dni\", \"follow-up po mailu\" lub całe kampanie nurturingu."
@@ -6841,7 +6860,6 @@
                     "no_mailbox": "Użyj domyślnej systemowej",
                     "mailbox_help": "Wybierz skrzynkę, z której będą wysyłane wiadomości do kontaktów z wizytówek"
                 },
-
                 "page_title": "Ustawienia - CardIntel",
                 "saved": "Zapisano",
                 "saving": "Zapisywanie...",

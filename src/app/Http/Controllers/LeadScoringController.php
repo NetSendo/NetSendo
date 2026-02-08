@@ -41,6 +41,7 @@ class LeadScoringController extends Controller
             'rules' => $rules,
             'eventTypes' => $eventTypes,
             'operators' => $operators,
+            'autoConvertContacts' => Auth::user()->settings['crm']['auto_convert_contacts'] ?? true,
         ]);
     }
 
@@ -201,5 +202,26 @@ class LeadScoringController extends Controller
         $analytics = $this->scoringService->getAnalytics(Auth::id(), $days);
 
         return response()->json($analytics);
+    }
+
+    /**
+     * Toggle auto-convert warm contacts to CRM.
+     */
+    public function toggleAutoConvert(Request $request)
+    {
+        $user = Auth::user();
+        $settings = $user->settings ?? [];
+
+        // Toggle the setting (default is true, so first toggle turns it off)
+        $current = $settings['crm']['auto_convert_contacts'] ?? true;
+        $settings['crm']['auto_convert_contacts'] = !$current;
+
+        $user->settings = $settings;
+        $user->save();
+
+        return back()->with('success', !$current
+            ? 'Autokonwertowanie kontaktów zostało włączone.'
+            : 'Autokonwertowanie kontaktów zostało wyłączone.'
+        );
     }
 }

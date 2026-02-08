@@ -172,6 +172,11 @@ const getSkippedCount = (message) => {
     return message.skipped_count;
 };
 
+// Get queue stats for autoresponder messages
+const getQueueStats = (message) => {
+    return localRecipientCounts[message.id]?.queue_stats ?? null;
+};
+
 // Progressive loading of recipient counts
 // Messages that need stats: draft/scheduled (need accurate count) and autoresponders (need skipped_count)
 const messagesNeedingStats = ref([]);
@@ -190,6 +195,7 @@ const fetchRecipientCounts = async (messageIds) => {
                 localRecipientCounts[msg.id] = {
                     recipients_count: msg.recipients_count,
                     skipped_count: msg.skipped_count,
+                    queue_stats: msg.queue_stats ?? null,
                 };
             });
         }
@@ -201,13 +207,15 @@ const fetchRecipientCounts = async (messageIds) => {
 const startProgressiveLoading = () => {
     // Identify messages that need accurate stats
     messagesNeedingStats.value = props.messages.data
-        .filter(m =>
-            // Draft/scheduled broadcasts need accurate recipient count
-            (m.type === 'broadcast' && (m.status === 'draft' || m.status === 'scheduled')) ||
-            // Autoresponders need skipped_count
-            m.type === 'autoresponder'
+        .filter(
+            (m) =>
+                // Draft/scheduled broadcasts need accurate recipient count
+                (m.type === "broadcast" &&
+                    (m.status === "draft" || m.status === "scheduled")) ||
+                // Autoresponders need skipped_count
+                m.type === "autoresponder",
         )
-        .map(m => m.id);
+        .map((m) => m.id);
 
     if (messagesNeedingStats.value.length === 0) return;
 
@@ -221,7 +229,7 @@ const startProgressiveLoading = () => {
         progressiveLoadingInterval = setInterval(() => {
             const nextBatch = messagesNeedingStats.value.slice(
                 progressiveLoadingIndex,
-                progressiveLoadingIndex + 5
+                progressiveLoadingIndex + 5,
             );
 
             if (nextBatch.length === 0) {
@@ -269,7 +277,7 @@ onMounted(() => {
         // Scroll to highlighted message after a short delay
         nextTick(() => {
             const highlightedRow = document.querySelector(
-                `[data-message-id="${flashHighlightId}"]`
+                `[data-message-id="${flashHighlightId}"]`,
             );
             if (highlightedRow) {
                 highlightedRow.scrollIntoView({
@@ -877,12 +885,126 @@ const getAttachmentTooltip = (message, trans) => {
                                         class="font-medium text-slate-900 dark:text-white"
                                         >{{ message.list_name }}</span
                                     >
+                                    <!-- Autoresponder: show detailed queue stats -->
+                                    <template
+                                        v-if="
+                                            message.type === 'autoresponder' &&
+                                            getQueueStats(message)
+                                        "
+                                    >
+                                        <span
+                                            class="text-xs text-slate-500 dark:text-slate-400"
+                                        >
+                                            <span
+                                                class="text-emerald-600 dark:text-emerald-400 font-medium"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "messages.queue_sent_count",
+                                                        {
+                                                            count: getQueueStats(
+                                                                message,
+                                                            ).sent,
+                                                        },
+                                                    )
+                                                }}
+                                            </span>
+                                            /
+                                            {{
+                                                getRecipientsCount(
+                                                    message,
+                                                )?.toLocaleString() ?? "-"
+                                            }}
+                                            {{ $t("messages.recipients") }}
+                                        </span>
+                                        <span
+                                            class="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap gap-x-2"
+                                        >
+                                            <span
+                                                v-if="
+                                                    getQueueStats(message)
+                                                        .planned > 0
+                                                "
+                                                class="text-blue-500"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "messages.queue_planned_count",
+                                                        {
+                                                            count: getQueueStats(
+                                                                message,
+                                                            ).planned,
+                                                        },
+                                                    )
+                                                }}
+                                            </span>
+                                            <span
+                                                v-if="
+                                                    getQueueStats(message)
+                                                        .queued > 0
+                                                "
+                                                class="text-indigo-500"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "messages.queue_queued_count",
+                                                        {
+                                                            count: getQueueStats(
+                                                                message,
+                                                            ).queued,
+                                                        },
+                                                    )
+                                                }}
+                                            </span>
+                                            <span
+                                                v-if="
+                                                    getQueueStats(message)
+                                                        .failed > 0
+                                                "
+                                                class="text-red-500 font-medium"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "messages.queue_failed_count",
+                                                        {
+                                                            count: getQueueStats(
+                                                                message,
+                                                            ).failed,
+                                                        },
+                                                    )
+                                                }}
+                                            </span>
+                                            <span
+                                                v-if="
+                                                    getSkippedCount(message) > 0
+                                                "
+                                                class="text-orange-500 font-medium"
+                                                :title="
+                                                    $t('messages.skipped_hint')
+                                                "
+                                            >
+                                                {{
+                                                    $t(
+                                                        "messages.queue_missed_count",
+                                                        {
+                                                            count: getSkippedCount(
+                                                                message,
+                                                            ),
+                                                        },
+                                                    )
+                                                }}
+                                            </span>
+                                        </span>
+                                    </template>
+                                    <!-- Autoresponder without stats yet / Broadcast -->
                                     <span
+                                        v-else
                                         class="text-xs text-slate-500 dark:text-slate-400"
                                     >
                                         {{
-                                            getRecipientsCount(message)?.toLocaleString() ??
-                                            '-'
+                                            getRecipientsCount(
+                                                message,
+                                            )?.toLocaleString() ?? "-"
                                         }}
                                         {{ $t("messages.recipients") }}
                                         <span

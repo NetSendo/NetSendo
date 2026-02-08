@@ -221,6 +221,9 @@ class MessageController extends Controller
             'skipped_count' => $msg->type === 'autoresponder'
                 ? ($msg->getQueueScheduleStats()['missed'] ?? 0)
                 : 0,
+            'queue_stats' => $msg->type === 'autoresponder'
+                ? $msg->getQueueStats()
+                : null,
         ]));
     }
 

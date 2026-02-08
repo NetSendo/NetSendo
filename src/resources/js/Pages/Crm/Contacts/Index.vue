@@ -280,6 +280,11 @@ const getContactName = (contact) => {
                             <th
                                 class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
                             >
+                                {{ $t("crm.contacts.table_phone", "Telefon") }}
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                            >
                                 Status
                             </th>
                             <th
@@ -368,6 +373,17 @@ const getContactName = (contact) => {
                                     class="text-sm text-slate-900 dark:text-white"
                                 >
                                     {{ contact.company.name }}
+                                </span>
+                                <span v-else class="text-sm text-slate-400"
+                                    >—</span
+                                >
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <span
+                                    v-if="contact.subscriber?.phone"
+                                    class="text-sm text-slate-900 dark:text-white"
+                                >
+                                    {{ contact.subscriber.phone }}
                                 </span>
                                 <span v-else class="text-sm text-slate-400"
                                     >—</span

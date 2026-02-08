@@ -1420,6 +1420,11 @@
         "recipients": "recipients",
         "skipped": "skipped",
         "skipped_hint": "Subscribers skipped due to past send time. Click on statistics to trigger manual sending.",
+        "queue_sent_count": "Sent {count}",
+        "queue_planned_count": "Planned {count}",
+        "queue_queued_count": "Queued {count}",
+        "queue_failed_count": "Failed {count}",
+        "queue_missed_count": "Missed {count}",
         "ab_test_badge": "A/B Test",
         "ab_test_view_results": "Click to view results and manage A/B test",
         "ab_test_tooltip": "This message has an A/B test ({status})",
@@ -5656,7 +5661,6 @@
         "palette": "Palette"
     },
     "crm": {
-
         "title": "CRM",
         "subtitle": "Manage your contacts and sales",
         "task_types": {
@@ -6172,13 +6176,24 @@
                 "deal_lost": "Deal Lost",
                 "task_completed": "Task Completed",
                 "contact_created": "Contact Created",
-                "email": "Email"
+                "email": "Email",
+                "status_changed": "Status Changed",
+                "engaged_reader": "Engaged Reader",
+                "automation_rule": "Automation Rule",
+                "phone_call": "Phone Call",
+                "crm_contact_created": "CRM Contact Created",
+                "ae_address_list": "AE Address List",
+                "email_opened": "Email Opened",
+                "status_change_lead_to_prospect_scoring": "Status changed from Lead to Prospect (Scoring)",
+                "system": "System"
             },
             "created_by": "By",
             "empty": "No activities",
             "actions": {
                 "add": "Add"
-            }
+            },
+            "history": "Activity History",
+            "by_system": "by System"
         },
         "import": {
             "title_page": "CRM Import",
@@ -6273,16 +6288,16 @@
                 "confirm_reset_message": "Are you sure you want to reset all rules to defaults? All current rules will be deleted and replaced with defaults."
             },
             "history": {
-               "title": "Score History",
-               "more_events": "+ {count} more events",
-               "empty": "No score history",
-               "empty_desc": "Score will be updated automatically based on activity",
-               "time": {
-                   "now": "just now",
-                   "min_ago": "{n} min ago",
-                   "hours_ago": "{n}h ago",
-                   "days_ago": "{n}d ago"
-               }
+                "title": "Score History",
+                "more_events": "+ {count} more events",
+                "empty": "No score history",
+                "empty_desc": "Score will be updated automatically based on activity",
+                "time": {
+                    "now": "just now",
+                    "min_ago": "{n} min ago",
+                    "hours_ago": "{n}h ago",
+                    "days_ago": "{n}d ago"
+                }
             },
             "event_types": {
                 "email_opened": "Email opened",
@@ -6309,6 +6324,12 @@
                 "regex": "Regex",
                 "greater_than": "Greater than",
                 "less_than": "Less than"
+            },
+            "auto_convert": {
+                "title": "Auto-convert warm contacts",
+                "description": "Automatically create CRM contacts from mailing list subscribers when scoring rules assign them points.",
+                "toast_enabled": "Contact auto-conversion has been enabled",
+                "toast_disabled": "Contact auto-conversion has been disabled"
             }
         },
         "global_search": {
@@ -6348,7 +6369,6 @@
                 "active": "Active",
                 "inactive": "Inactive"
             },
-
             "banner": {
                 "title": "Automatic Follow-up Sequences",
                 "description": "Create task sequences that automatically remind you of next steps with a client. Set 'call back in 3 days', 'follow-up after email' or entire nurturing campaigns."
@@ -6769,7 +6789,6 @@
                     "no_mailbox": "Use system default",
                     "mailbox_help": "Select the mailbox from which messages will be sent to business card contacts"
                 },
-
                 "page_title": "Settings - CardIntel",
                 "saved": "Saved",
                 "saving": "Saving...",
@@ -6882,7 +6901,6 @@
                 "high_confidence": "High confidence data",
                 "low_confidence": "Low confidence data"
             },
-
             "vision": {
                 "ready": "Business card recognition ready",
                 "required": "AI Vision integration required",

@@ -8,6 +8,7 @@ const props = defineProps({
     rules: Array,
     eventTypes: Object,
     operators: Object,
+    autoConvertContacts: Boolean,
 });
 
 const { t } = useI18n();
@@ -87,7 +88,7 @@ const submitForm = () => {
             preserveScroll: true,
             onSuccess: () => {
                 closeModal();
-                showToast(t('crm.scoring.messages.toast_updated'));
+                showToast(t("crm.scoring.messages.toast_updated"));
             },
         });
     } else {
@@ -95,35 +96,47 @@ const submitForm = () => {
             preserveScroll: true,
             onSuccess: () => {
                 closeModal();
-                showToast(t('crm.scoring.messages.toast_added'));
+                showToast(t("crm.scoring.messages.toast_added"));
             },
         });
     }
 };
 
 const toggleRule = (rule) => {
-    router.post(`/crm/scoring/rules/${rule.id}/toggle`, {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            showToast(t(rule.is_active ? 'crm.scoring.messages.toast_toggled_off' : 'crm.scoring.messages.toast_toggled_on'));
+    router.post(
+        `/crm/scoring/rules/${rule.id}/toggle`,
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(
+                    t(
+                        rule.is_active
+                            ? "crm.scoring.messages.toast_toggled_off"
+                            : "crm.scoring.messages.toast_toggled_on",
+                    ),
+                );
+            },
         },
-    });
+    );
 };
 
 const openDeleteConfirm = (rule) => {
     ruleToDelete.value = rule;
-    confirmTitle.value = t('crm.scoring.messages.confirm_delete_title');
-    confirmMessage.value = t('crm.scoring.messages.confirm_delete_message', { name: rule.name });
-    confirmButtonText.value = t('common.delete');
+    confirmTitle.value = t("crm.scoring.messages.confirm_delete_title");
+    confirmMessage.value = t("crm.scoring.messages.confirm_delete_message", {
+        name: rule.name,
+    });
+    confirmButtonText.value = t("common.delete");
     confirmButtonClass.value = "bg-red-600 hover:bg-red-700";
     confirmAction.value = "delete";
     showConfirmModal.value = true;
 };
 
 const openResetConfirm = () => {
-    confirmTitle.value = t('crm.scoring.messages.confirm_reset_title');
-    confirmMessage.value = t('crm.scoring.messages.confirm_reset_message');
-    confirmButtonText.value = t('crm.scoring.actions.reset_defaults');
+    confirmTitle.value = t("crm.scoring.messages.confirm_reset_title");
+    confirmMessage.value = t("crm.scoring.messages.confirm_reset_message");
+    confirmButtonText.value = t("crm.scoring.actions.reset_defaults");
     confirmButtonClass.value = "bg-amber-600 hover:bg-amber-700";
     confirmAction.value = "reset";
     showConfirmModal.value = true;
@@ -140,18 +153,22 @@ const executeConfirmAction = () => {
         router.delete(`/crm/scoring/rules/${ruleToDelete.value.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-                showToast(t('crm.scoring.messages.toast_deleted'));
+                showToast(t("crm.scoring.messages.toast_deleted"));
                 closeConfirmModal();
             },
         });
     } else if (confirmAction.value === "reset") {
-        router.post("/crm/scoring/reset-defaults", {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                showToast(t('crm.scoring.messages.toast_reset'));
-                closeConfirmModal();
+        router.post(
+            "/crm/scoring/reset-defaults",
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    showToast(t("crm.scoring.messages.toast_reset"));
+                    closeConfirmModal();
+                },
             },
-        });
+        );
     }
 };
 
@@ -172,6 +189,23 @@ const getPointsClass = (points) => {
     if (points < 0) return "text-red-600 dark:text-red-400";
     return "text-slate-600 dark:text-slate-400";
 };
+
+const toggleAutoConvert = () => {
+    router.post(
+        "/crm/scoring/toggle-auto-convert",
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                showToast(
+                    props.autoConvertContacts
+                        ? t("crm.scoring.auto_convert.toast_disabled")
+                        : t("crm.scoring.auto_convert.toast_enabled"),
+                );
+            },
+        },
+    );
+};
 </script>
 
 <template>
@@ -185,16 +219,28 @@ const getPointsClass = (points) => {
                         href="/crm"
                         class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
                     >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        <svg
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 19l-7-7 7-7"
+                            />
                         </svg>
                     </Link>
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                            {{ $t('crm.scoring.rules_title') }}
+                        <h1
+                            class="text-2xl font-bold text-slate-900 dark:text-white"
+                        >
+                            {{ $t("crm.scoring.rules_title") }}
                         </h1>
                         <p class="text-slate-500 dark:text-slate-400">
-                            {{ $t('crm.scoring.description') }}
+                            {{ $t("crm.scoring.description") }}
                         </p>
                     </div>
                 </div>
@@ -203,37 +249,128 @@ const getPointsClass = (points) => {
                         @click="openResetConfirm"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                            />
                         </svg>
-                        {{ $t('crm.scoring.actions.reset_defaults') }}
+                        {{ $t("crm.scoring.actions.reset_defaults") }}
                     </button>
                     <button
                         @click="openCreateModal"
                         class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                     >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v16m8-8H4"
+                            />
                         </svg>
-                        {{ $t('crm.scoring.actions.add_rule') }}
+                        {{ $t("crm.scoring.actions.add_rule") }}
                     </button>
                 </div>
             </div>
         </template>
 
-        <!-- Rules List -->
+        <!-- Auto-Convert Setting -->
         <div class="space-y-6">
+            <div class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-xl"
+                            :class="
+                                autoConvertContacts
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                                    : 'bg-slate-100 dark:bg-slate-700'
+                            "
+                        >
+                            <svg
+                                class="h-6 w-6"
+                                :class="
+                                    autoConvertContacts
+                                        ? 'text-emerald-600 dark:text-emerald-400'
+                                        : 'text-slate-400'
+                                "
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3
+                                class="text-base font-semibold text-slate-900 dark:text-white"
+                            >
+                                {{ $t("crm.scoring.auto_convert.title") }}
+                            </h3>
+                            <p
+                                class="mt-0.5 text-sm text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("crm.scoring.auto_convert.description") }}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        @click="toggleAutoConvert"
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        :class="
+                            autoConvertContacts
+                                ? 'bg-emerald-500'
+                                : 'bg-slate-300 dark:bg-slate-600'
+                        "
+                        role="switch"
+                        :aria-checked="autoConvertContacts"
+                    >
+                        <span
+                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                            :class="
+                                autoConvertContacts
+                                    ? 'translate-x-5'
+                                    : 'translate-x-0'
+                            "
+                        />
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rules List -->
             <div
                 v-for="(rules, eventType) in groupedRules"
                 :key="eventType"
                 class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-800"
             >
-                <h2 class="mb-4 flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white">
-                    <span class="rounded-lg bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                        {{ $t('crm.scoring.event_types.' + eventType) }}
+                <h2
+                    class="mb-4 flex items-center gap-3 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    <span
+                        class="rounded-lg bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                    >
+                        {{ $t("crm.scoring.event_types." + eventType) }}
                     </span>
                     <span class="text-sm font-normal text-slate-500">
-                        {{ rules.length }} {{ $t('crm.scoring.rules_title') }}
+                        {{ rules.length }} {{ $t("crm.scoring.rules_title") }}
                     </span>
                 </h2>
 
@@ -246,34 +383,57 @@ const getPointsClass = (points) => {
                     >
                         <div class="flex-1">
                             <div class="flex items-center gap-3">
-                                <h3 class="font-medium text-slate-900 dark:text-white">
+                                <h3
+                                    class="font-medium text-slate-900 dark:text-white"
+                                >
                                     {{ rule.name }}
                                 </h3>
                                 <span
                                     class="rounded-full px-2 py-0.5 text-sm font-bold"
                                     :class="getPointsClass(rule.points)"
                                 >
-                                    {{ rule.points > 0 ? '+' : '' }}{{ rule.points }} {{ $t('crm.scoring.fields.points') }}
+                                    {{ rule.points > 0 ? "+" : ""
+                                    }}{{ rule.points }}
+                                    {{ $t("crm.scoring.fields.points") }}
                                 </span>
                                 <span
                                     v-if="rule.condition_value"
                                     class="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                                 >
-                                    {{ $t('crm.scoring.fields.condition') }}
+                                    {{ $t("crm.scoring.fields.condition") }}
                                 </span>
                             </div>
-                            <p v-if="rule.description" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            <p
+                                v-if="rule.description"
+                                class="mt-1 text-sm text-slate-500 dark:text-slate-400"
+                            >
                                 {{ rule.description }}
                             </p>
-                            <div class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                <span v-if="rule.cooldown_minutes > 0" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
-                                    {{ $t('crm.scoring.fields.cooldown') }}: {{ rule.cooldown_minutes }}
+                            <div
+                                class="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                <span
+                                    v-if="rule.cooldown_minutes > 0"
+                                    class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700"
+                                >
+                                    {{ $t("crm.scoring.fields.cooldown") }}:
+                                    {{ rule.cooldown_minutes }}
                                 </span>
-                                <span v-if="rule.max_daily_occurrences" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
-                                    {{ $t('crm.scoring.fields.max_daily') }}: {{ rule.max_daily_occurrences }}
+                                <span
+                                    v-if="rule.max_daily_occurrences"
+                                    class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700"
+                                >
+                                    {{ $t("crm.scoring.fields.max_daily") }}:
+                                    {{ rule.max_daily_occurrences }}
                                 </span>
-                                <span v-if="rule.condition_value" class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700">
-                                    {{ rule.condition_field }} {{ rule.condition_operator }} "{{ rule.condition_value }}"
+                                <span
+                                    v-if="rule.condition_value"
+                                    class="rounded bg-slate-100 px-2 py-1 dark:bg-slate-700"
+                                >
+                                    {{ rule.condition_field }}
+                                    {{ rule.condition_operator }} "{{
+                                        rule.condition_value
+                                    }}"
                                 </span>
                             </div>
                         </div>
@@ -281,31 +441,75 @@ const getPointsClass = (points) => {
                             <button
                                 @click="toggleRule(rule)"
                                 class="rounded-lg p-2 transition"
-                                :class="rule.is_active
-                                    ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20'
-                                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'"
+                                :class="
+                                    rule.is_active
+                                        ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20'
+                                        : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                "
                             >
-                                <svg v-if="rule.is_active" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                    v-if="rule.is_active"
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                 </svg>
-                                <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                    v-else
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
                                 </svg>
                             </button>
                             <button
                                 @click="openEditModal(rule)"
                                 class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
                             >
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
                                 </svg>
                             </button>
                             <button
                                 @click="openDeleteConfirm(rule)"
                                 class="rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                             >
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg
+                                    class="h-5 w-5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                 </svg>
                             </button>
                         </div>
@@ -318,27 +522,39 @@ const getPointsClass = (points) => {
                 v-if="!rules.length"
                 class="rounded-2xl bg-white p-12 text-center shadow-sm dark:bg-slate-800"
             >
-                <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg
+                    class="mx-auto h-12 w-12 text-slate-300"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
                 </svg>
-                <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-white">
-                    {{ $t('crm.scoring.messages.no_rules') }}
+                <h3
+                    class="mt-4 text-lg font-medium text-slate-900 dark:text-white"
+                >
+                    {{ $t("crm.scoring.messages.no_rules") }}
                 </h3>
                 <p class="mt-2 text-slate-500 dark:text-slate-400">
-                    {{ $t('crm.scoring.messages.no_rules_desc') }}
+                    {{ $t("crm.scoring.messages.no_rules_desc") }}
                 </p>
                 <div class="mt-6 flex justify-center gap-3">
                     <button
                         @click="openResetConfirm"
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
                     >
-                        {{ $t('crm.scoring.actions.load_defaults') }}
+                        {{ $t("crm.scoring.actions.load_defaults") }}
                     </button>
                     <button
                         @click="openCreateModal"
                         class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
                     >
-                        {{ $t('crm.scoring.actions.add_rule') }}
+                        {{ $t("crm.scoring.actions.add_rule") }}
                     </button>
                 </div>
             </div>
@@ -359,29 +575,52 @@ const getPointsClass = (points) => {
                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                     @click.self="closeModal"
                 >
-                    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                        <h2 class="mb-6 text-xl font-semibold text-slate-900 dark:text-white">
-                            {{ editingRule ? $t('crm.scoring.actions.edit_rule') : $t('crm.scoring.actions.add_rule') }}
+                    <div
+                        class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
+                    >
+                        <h2
+                            class="mb-6 text-xl font-semibold text-slate-900 dark:text-white"
+                        >
+                            {{
+                                editingRule
+                                    ? $t("crm.scoring.actions.edit_rule")
+                                    : $t("crm.scoring.actions.add_rule")
+                            }}
                         </h2>
 
                         <form @submit.prevent="submitForm" class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {{ $t('crm.scoring.fields.event_type') }}
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{
+                                            $t("crm.scoring.fields.event_type")
+                                        }}
                                     </label>
                                     <select
                                         v-model="form.event_type"
                                         class="mt-1 w-full rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     >
-                                        <option v-for="(label, key) in eventTypes" :key="key" :value="key">
-                                            {{ $t('crm.scoring.event_types.' + key) }}
+                                        <option
+                                            v-for="(label, key) in eventTypes"
+                                            :key="key"
+                                            :value="key"
+                                        >
+                                            {{
+                                                $t(
+                                                    "crm.scoring.event_types." +
+                                                        key,
+                                                )
+                                            }}
                                         </option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {{ $t('crm.scoring.fields.points') }}
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ $t("crm.scoring.fields.points") }}
                                     </label>
                                     <input
                                         v-model.number="form.points"
@@ -394,8 +633,10 @@ const getPointsClass = (points) => {
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {{ $t('crm.scoring.fields.name') }}
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.scoring.fields.name") }}
                                 </label>
                                 <input
                                     v-model="form.name"
@@ -407,8 +648,10 @@ const getPointsClass = (points) => {
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {{ $t('crm.scoring.fields.description') }}
+                                <label
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.scoring.fields.description") }}
                                 </label>
                                 <textarea
                                     v-model="form.description"
@@ -419,8 +662,10 @@ const getPointsClass = (points) => {
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {{ $t('crm.scoring.fields.cooldown') }}
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ $t("crm.scoring.fields.cooldown") }}
                                     </label>
                                     <input
                                         v-model.number="form.cooldown_minutes"
@@ -430,8 +675,10 @@ const getPointsClass = (points) => {
                                     />
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {{ $t('crm.scoring.fields.priority') }}
+                                    <label
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ $t("crm.scoring.fields.priority") }}
                                     </label>
                                     <input
                                         v-model.number="form.priority"
@@ -444,30 +691,57 @@ const getPointsClass = (points) => {
                             </div>
 
                             <!-- Warunek -->
-                            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                                <h3 class="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {{ $t('crm.scoring.fields.condition') }}
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <h3
+                                    class="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.scoring.fields.condition") }}
                                 </h3>
                                 <div class="grid grid-cols-3 gap-3">
                                     <input
                                         v-model="form.condition_field"
                                         type="text"
-                                        :placeholder="$t('crm.scoring.fields.condition_field')"
+                                        :placeholder="
+                                            $t(
+                                                'crm.scoring.fields.condition_field',
+                                            )
+                                        "
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     />
                                     <select
                                         v-model="form.condition_operator"
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     >
-                                        <option value="">{{ $t('crm.scoring.fields.condition_operator') }}</option>
-                                        <option v-for="(label, key) in operators" :key="key" :value="key">
-                                            {{ $t('crm.scoring.operators.' + key) }}
+                                        <option value="">
+                                            {{
+                                                $t(
+                                                    "crm.scoring.fields.condition_operator",
+                                                )
+                                            }}
+                                        </option>
+                                        <option
+                                            v-for="(label, key) in operators"
+                                            :key="key"
+                                            :value="key"
+                                        >
+                                            {{
+                                                $t(
+                                                    "crm.scoring.operators." +
+                                                        key,
+                                                )
+                                            }}
                                         </option>
                                     </select>
                                     <input
                                         v-model="form.condition_value"
                                         type="text"
-                                        :placeholder="$t('crm.scoring.fields.condition_value')"
+                                        :placeholder="
+                                            $t(
+                                                'crm.scoring.fields.condition_value',
+                                            )
+                                        "
                                         class="rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                                     />
                                 </div>
@@ -480,8 +754,11 @@ const getPointsClass = (points) => {
                                     id="is_active"
                                     class="h-4 w-4 rounded border-slate-300 text-indigo-600"
                                 />
-                                <label for="is_active" class="text-sm text-slate-700 dark:text-slate-300">
-                                    {{ $t('crm.scoring.fields.is_active') }}
+                                <label
+                                    for="is_active"
+                                    class="text-sm text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("crm.scoring.fields.is_active") }}
                                 </label>
                             </div>
 
@@ -491,14 +768,18 @@ const getPointsClass = (points) => {
                                     @click="closeModal"
                                     class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300"
                                 >
-                                    {{ $t('crm.scoring.actions.cancel') }}
+                                    {{ $t("crm.scoring.actions.cancel") }}
                                 </button>
                                 <button
                                     type="submit"
                                     :disabled="form.processing"
                                     class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
                                 >
-                                    {{ editingRule ? $t('crm.scoring.actions.save') : $t('crm.scoring.actions.add') }}
+                                    {{
+                                        editingRule
+                                            ? $t("crm.scoring.actions.save")
+                                            : $t("crm.scoring.actions.add")
+                                    }}
                                 </button>
                             </div>
                         </form>
@@ -521,17 +802,50 @@ const getPointsClass = (points) => {
                     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
                     @click.self="closeConfirmModal"
                 >
-                    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+                    <div
+                        class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
+                    >
                         <div class="mb-4 flex items-center gap-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-full" :class="confirmAction === 'delete' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'">
-                                <svg v-if="confirmAction === 'delete'" class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <div
+                                class="flex h-12 w-12 items-center justify-center rounded-full"
+                                :class="
+                                    confirmAction === 'delete'
+                                        ? 'bg-red-100 dark:bg-red-900/30'
+                                        : 'bg-amber-100 dark:bg-amber-900/30'
+                                "
+                            >
+                                <svg
+                                    v-if="confirmAction === 'delete'"
+                                    class="h-6 w-6 text-red-600 dark:text-red-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                 </svg>
-                                <svg v-else class="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                <svg
+                                    v-else
+                                    class="h-6 w-6 text-amber-600 dark:text-amber-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    />
                                 </svg>
                             </div>
-                            <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+                            <h2
+                                class="text-xl font-semibold text-slate-900 dark:text-white"
+                            >
                                 {{ confirmTitle }}
                             </h2>
                         </div>
@@ -575,10 +889,25 @@ const getPointsClass = (points) => {
                 <div
                     v-if="toast"
                     class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg"
-                    :class="toast.success ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'"
+                    :class="
+                        toast.success
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-red-500 text-white'
+                    "
                 >
-                    <svg v-if="toast.success" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    <svg
+                        v-if="toast.success"
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                        />
                     </svg>
                     {{ toast.message }}
                 </div>

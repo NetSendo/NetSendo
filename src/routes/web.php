@@ -1054,6 +1054,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
         Route::post('/rules/{rule}/toggle', [\App\Http\Controllers\LeadScoringController::class, 'toggle'])->name('rules.toggle');
         Route::post('/reset-defaults', [\App\Http\Controllers\LeadScoringController::class, 'resetDefaults'])->name('reset-defaults');
         Route::get('/analytics', [\App\Http\Controllers\LeadScoringController::class, 'analytics'])->name('analytics');
+        Route::post('/toggle-auto-convert', [\App\Http\Controllers\LeadScoringController::class, 'toggleAutoConvert'])->name('toggle-auto-convert');
     });
     Route::get('contacts/{contact}/score-history', [\App\Http\Controllers\LeadScoringController::class, 'contactHistory'])->name('contacts.score-history');
 
