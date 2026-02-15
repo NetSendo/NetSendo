@@ -1670,6 +1670,8 @@
             "timezone": "Strefa czasowa",
             "timezone_default": "Domyślna (wg ustawień listy/grupy/konta)",
             "timezone_help": "Priorytet: Wiadomość > Lista > Grupa > Konto użytkownika.",
+            "send_in_subscriber_timezone": "Wyślij wg strefy czasowej subskrybenta",
+            "send_in_subscriber_timezone_help": "Wiadomość zostanie wysłana o wybranej godzinie w strefie czasowej każdego subskrybenta. Jeśli subskrybent nie ma ustawionej strefy, użyta zostanie domyślna strefa wiadomości.",
             "content": "Treść wiadomości",
             "no_lists": "Brak dostępnych list mailingowych.",
             "preheader": "Preheader",
@@ -1846,6 +1848,15 @@
             "bulk_add_button": "Dodaj do listy",
             "bulk_add_success": "Dodano do listy \"{list}\""
         },
+        "translations": {
+            "title": "Wersje językowe",
+            "remove": "Usuń tłumaczenie",
+            "add_language": "Dodaj język",
+            "copy_from_default": "Kopiuj z wersji domyślnej",
+            "content_hint": "Możesz użyć kodu HTML. Jeśli pole jest puste, zostanie użyta treść domyślna.",
+            "empty_state": "Brak tłumaczeń",
+            "empty_state_hint": "Kliknij \"Dodaj język\", aby dodać wersję językową wiadomości."
+        },
         "tracked_links": {
             "title": "Śledzone linki",
             "subtitle": "Zarządzaj śledzeniem linków w treści wiadomości",
@@ -1909,7 +1920,8 @@
                 "phone": "Telefon",
                 "first_name": "Imię",
                 "last_name": "Nazwisko",
-                "custom_field": "Pole niestandardowe: {name}"
+                "custom_field": "Pole niestandardowe: {name}",
+                "language": "Język"
             },
             "importing": "Importowanie...",
             "import_button": "Importuj"
@@ -1930,6 +1942,11 @@
             "last_name": "Nazwisko",
             "phone": "Telefon",
             "gender": "Płeć",
+            "language": "Język",
+            "language_default": "Domyślny",
+            "timezone": "Strefa czasowa",
+            "timezone_default": "Domyślna (wg ustawień konta)",
+            "timezone_help": "Strefa czasowa subskrybenta, używana przy wysyłce wg stref czasowych.",
             "status": "Status"
         },
         "table": {
@@ -1939,6 +1956,7 @@
             "status": "Status",
             "list": "Lista",
             "added_at": "Data dodania",
+            "language": "Język",
             "subscribed_at": "Data dołączenia",
             "actions": "Akcje"
         },

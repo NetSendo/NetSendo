@@ -230,6 +230,25 @@
             <input type="hidden" name="signed_url" value="{{ $signedUrl }}">
 
             <div class="lists-container">
+                <!-- Language Preference -->
+                @if(!empty($availableLanguages))
+                <div style="margin-bottom: 24px;">
+                    <div class="lists-title">Preferred Language</div>
+                    <select name="language"
+                            style="width: 100%; padding: 12px 16px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 15px; color: #374151; background: #F9FAFB; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=\'%236B7280\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7 10l5 5 5-5z\'/></svg>'); background-repeat: no-repeat; background-position: right 12px center; background-size: 20px;">
+                        <option value="">— Default —</option>
+                        @foreach($availableLanguages as $code => $name)
+                            <option value="{{ $code }}" {{ $currentLanguage === $code ? 'selected' : '' }}>
+                                {{ $name }} ({{ strtoupper($code) }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <p style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">
+                        Choose your preferred language for receiving emails.
+                    </p>
+                </div>
+                @endif
+
                 <div class="lists-title">Available Lists</div>
 
                 @forelse($lists as $list)

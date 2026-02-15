@@ -74,6 +74,10 @@ const props = defineProps({
         type: Number,
         default: null,
     },
+    availableLanguages: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const isEditing = computed(() => !!props.message);
@@ -253,6 +257,8 @@ const form = useForm({
     send_at: props.message?.send_at || null,
     time_of_day: props.message?.time_of_day || null,
     timezone: props.message?.timezone || null,
+    send_in_subscriber_timezone:
+        props.message?.send_in_subscriber_timezone || false,
     // New fields
     template_id: props.message?.template_id || null,
     mailbox_id: props.message?.mailbox_id || null,
@@ -286,6 +292,8 @@ const form = useForm({
     // CRM Contacts
     crm_contact_ids: props.message?.crm_contact_ids || [],
     excluded_crm_contact_ids: props.message?.excluded_crm_contact_ids || [],
+    // Message Translations (multi-language)
+    translations: props.message?.translations || [],
 });
 
 // Existing attachments from database (for editing)
@@ -660,6 +668,63 @@ const formatFileSize = (bytes) => {
     return bytes + " B";
 };
 // ===== End PDF Attachments Logic =====
+
+// ===== Multi-Language Translations Logic =====
+const languageFlags = {
+    pl: "🇵🇱",
+    en: "🇬🇧",
+    de: "🇩🇪",
+    fr: "🇫🇷",
+    es: "🇪🇸",
+    it: "🇮🇹",
+    pt: "🇵🇹",
+    nl: "🇳🇱",
+    cs: "🇨🇿",
+    sk: "🇸🇰",
+    uk: "🇺🇦",
+    ru: "🇷🇺",
+    sv: "🇸🇪",
+    no: "🇳🇴",
+    da: "🇩🇰",
+    fi: "🇫🇮",
+    hu: "🇭🇺",
+    ro: "🇷🇴",
+};
+
+const activeTranslationTab = ref(0);
+const showAddLanguageDropdown = ref(false);
+
+const usedLanguages = computed(() => form.translations.map((t) => t.language));
+const availableLanguagesForAdd = computed(() => {
+    return Object.entries(props.availableLanguages || {}).filter(
+        ([code]) => !usedLanguages.value.includes(code),
+    );
+});
+
+const addTranslation = (langCode) => {
+    form.translations.push({
+        language: langCode,
+        subject: "",
+        preheader: "",
+        content: "",
+    });
+    activeTranslationTab.value = form.translations.length - 1;
+    showAddLanguageDropdown.value = false;
+};
+
+const removeTranslation = (index) => {
+    form.translations.splice(index, 1);
+    if (activeTranslationTab.value >= form.translations.length) {
+        activeTranslationTab.value = Math.max(0, form.translations.length - 1);
+    }
+};
+
+const copyDefaultToTranslation = (index) => {
+    form.translations[index].subject = form.subject;
+    form.translations[index].preheader = form.preheader;
+    form.translations[index].content = form.content;
+};
+// ===== End Multi-Language Translations Logic =====
 
 // ===== Validation Logic =====
 // Map form fields to their corresponding tabs
@@ -1805,6 +1870,331 @@ if (form.contact_list_ids.length > 0) {
                                     class="mt-1"
                                     :message="form.errors['attachments.0']"
                                 />
+                            </div>
+
+                            <!-- Multi-Language Translations Section -->
+                            <div
+                                v-if="
+                                    Object.keys(availableLanguages || {})
+                                        .length > 0
+                                "
+                                class="mt-6"
+                            >
+                                <InputLabel class="mb-2">
+                                    🌐 {{ $t("messages.translations.title") }}
+                                    <span
+                                        class="text-slate-400 font-normal ml-1"
+                                        >({{ $t("common.optional") }})</span
+                                    >
+                                </InputLabel>
+
+                                <div
+                                    class="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                                >
+                                    <!-- Language Tabs Header -->
+                                    <div
+                                        class="flex items-center gap-1 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-wrap"
+                                    >
+                                        <button
+                                            v-for="(
+                                                translation, idx
+                                            ) in form.translations"
+                                            :key="translation.language"
+                                            type="button"
+                                            @click="activeTranslationTab = idx"
+                                            :class="[
+                                                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                                                activeTranslationTab === idx
+                                                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-700/50',
+                                            ]"
+                                        >
+                                            <span>{{
+                                                languageFlags[
+                                                    translation.language
+                                                ] || "🏳️"
+                                            }}</span>
+                                            <span>{{
+                                                (
+                                                    availableLanguages[
+                                                        translation.language
+                                                    ] || translation.language
+                                                ).toUpperCase()
+                                            }}</span>
+                                            <button
+                                                type="button"
+                                                @click.stop="
+                                                    removeTranslation(idx)
+                                                "
+                                                class="ml-1 p-0.5 text-slate-400 hover:text-red-500 rounded transition-colors"
+                                                :title="
+                                                    $t(
+                                                        'messages.translations.remove',
+                                                    )
+                                                "
+                                            >
+                                                <svg
+                                                    class="h-3 w-3"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 18L18 6M6 6l12 12"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </button>
+
+                                        <!-- Add Language Button -->
+                                        <div
+                                            class="relative"
+                                            v-if="
+                                                availableLanguagesForAdd.length >
+                                                0
+                                            "
+                                        >
+                                            <button
+                                                type="button"
+                                                @click="
+                                                    showAddLanguageDropdown =
+                                                        !showAddLanguageDropdown
+                                                "
+                                                class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                                            >
+                                                <svg
+                                                    class="h-4 w-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 4v16m8-8H4"
+                                                    />
+                                                </svg>
+                                                {{
+                                                    $t(
+                                                        "messages.translations.add_language",
+                                                    )
+                                                }}
+                                            </button>
+                                            <div
+                                                v-if="showAddLanguageDropdown"
+                                                class="absolute top-full left-0 mt-1 z-50 w-56 max-h-64 overflow-y-auto bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1"
+                                            >
+                                                <button
+                                                    v-for="[
+                                                        code,
+                                                        name,
+                                                    ] in availableLanguagesForAdd"
+                                                    :key="code"
+                                                    type="button"
+                                                    @click="
+                                                        addTranslation(code)
+                                                    "
+                                                    class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center gap-2 transition-colors"
+                                                >
+                                                    <span>{{
+                                                        languageFlags[code] ||
+                                                        "🏳️"
+                                                    }}</span>
+                                                    <span>{{ name }}</span>
+                                                    <span
+                                                        class="text-slate-400 text-xs"
+                                                        >({{
+                                                            code.toUpperCase()
+                                                        }})</span
+                                                    >
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Translation Content -->
+                                    <div
+                                        v-if="form.translations.length > 0"
+                                        class="p-4 space-y-4"
+                                    >
+                                        <div
+                                            v-for="(
+                                                translation, idx
+                                            ) in form.translations"
+                                            :key="translation.language"
+                                            v-show="
+                                                activeTranslationTab === idx
+                                            "
+                                        >
+                                            <!-- Copy from default button -->
+                                            <div class="flex justify-end mb-3">
+                                                <button
+                                                    type="button"
+                                                    @click="
+                                                        copyDefaultToTranslation(
+                                                            idx,
+                                                        )
+                                                    "
+                                                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                                                >
+                                                    <svg
+                                                        class="h-3.5 w-3.5"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                                                        />
+                                                    </svg>
+                                                    {{
+                                                        $t(
+                                                            "messages.translations.copy_from_default",
+                                                        )
+                                                    }}
+                                                </button>
+                                            </div>
+
+                                            <!-- Subject -->
+                                            <div class="mb-3">
+                                                <InputLabel
+                                                    :for="
+                                                        'trans_subject_' + idx
+                                                    "
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "messages.fields.subject",
+                                                        )
+                                                    }}
+                                                </InputLabel>
+                                                <TextInput
+                                                    :id="'trans_subject_' + idx"
+                                                    type="text"
+                                                    class="mt-1 block w-full"
+                                                    v-model="
+                                                        form.translations[idx]
+                                                            .subject
+                                                    "
+                                                    :placeholder="
+                                                        form.subject ||
+                                                        $t(
+                                                            'messages.fields.subject_placeholder',
+                                                        )
+                                                    "
+                                                />
+                                                <InputError
+                                                    class="mt-1"
+                                                    :message="
+                                                        form.errors[
+                                                            'translations.' +
+                                                                idx +
+                                                                '.subject'
+                                                        ]
+                                                    "
+                                                />
+                                            </div>
+
+                                            <!-- Preheader -->
+                                            <div class="mb-3">
+                                                <InputLabel
+                                                    :for="
+                                                        'trans_preheader_' + idx
+                                                    "
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "messages.fields.preheader",
+                                                        )
+                                                    }}
+                                                </InputLabel>
+                                                <TextInput
+                                                    :id="
+                                                        'trans_preheader_' + idx
+                                                    "
+                                                    type="text"
+                                                    class="mt-1 block w-full"
+                                                    v-model="
+                                                        form.translations[idx]
+                                                            .preheader
+                                                    "
+                                                    :placeholder="
+                                                        form.preheader ||
+                                                        $t(
+                                                            'messages.fields.preheader_placeholder',
+                                                        )
+                                                    "
+                                                />
+                                            </div>
+
+                                            <!-- Content -->
+                                            <div>
+                                                <InputLabel
+                                                    :for="
+                                                        'trans_content_' + idx
+                                                    "
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "messages.fields.content",
+                                                        )
+                                                    }}
+                                                </InputLabel>
+                                                <textarea
+                                                    :id="'trans_content_' + idx"
+                                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                    rows="8"
+                                                    v-model="
+                                                        form.translations[idx]
+                                                            .content
+                                                    "
+                                                    :placeholder="
+                                                        $t(
+                                                            'messages.fields.content',
+                                                        )
+                                                    "
+                                                ></textarea>
+                                                <p
+                                                    class="mt-1 text-xs text-slate-400"
+                                                >
+                                                    {{
+                                                        $t(
+                                                            "messages.translations.content_hint",
+                                                        )
+                                                    }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Empty state -->
+                                    <div
+                                        v-else
+                                        class="p-6 text-center text-sm text-slate-400"
+                                    >
+                                        <p>
+                                            {{
+                                                $t(
+                                                    "messages.translations.empty_state",
+                                                )
+                                            }}
+                                        </p>
+                                        <p class="mt-1 text-xs">
+                                            {{
+                                                $t(
+                                                    "messages.translations.empty_state_hint",
+                                                )
+                                            }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -3196,6 +3586,35 @@ if (form.contact_list_ids.length > 0) {
                                 class="mt-2"
                                 :message="form.errors.timezone"
                             />
+                        </div>
+
+                        <!-- Send in subscriber timezone checkbox -->
+                        <div
+                            class="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                        >
+                            <input
+                                type="checkbox"
+                                id="send_in_subscriber_timezone"
+                                v-model="form.send_in_subscriber_timezone"
+                                class="mt-0.5 rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
+                            />
+                            <label
+                                for="send_in_subscriber_timezone"
+                                class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
+                            >
+                                {{
+                                    $t(
+                                        "messages.fields.send_in_subscriber_timezone",
+                                    )
+                                }}
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    {{
+                                        $t(
+                                            "messages.fields.send_in_subscriber_timezone_help",
+                                        )
+                                    }}
+                                </p>
+                            </label>
                         </div>
                     </div>
                 </div>

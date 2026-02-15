@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.9.3] – Short Description
+
+**Release date:** 2026-02-15
+
+### Added
+
+- **Multi-Language Campaign System:**
+  - **Database:** Added `language` column to `subscribers` table. Created `message_translations` table for storing per-language message content (subject, preheader, content).
+  - **Subscriber Language Preference:** Subscribers can now have a preferred language set via Create/Edit forms, public preferences page, and CSV import.
+  - **Message Translations UI:** Full translation management in Message Create with language tabs, add/remove translations, copy from default, and per-language subject/preheader/content editing.
+  - **Language-Aware Sending:** `SendEmailJob` resolves language-specific content before sending, with fallback to default language.
+  - **Subscriber List:** Added sortable "Language" column to the subscriber table (hidden by default) with globe badge display.
+  - **CSV Import:** Added `language` field to import column mapping with auto-detection for headers (`language`, `lang`, `język`, `locale`).
+  - **Public Preferences:** Added language selector to the public subscriber preferences page (`preferences.blade.php`).
+  - **API:** Updated `SubscriberResource` to include the `language` field.
+  - **i18n:** Replaced hardcoded Polish labels with `$t()` calls in Create, Edit, and Overview forms.
+  - **Localization:** Full translations for all language features in PL, EN, DE, ES.
+
 - **CRM Auto-Convert Setting:**
   - Added user-configurable toggle "Auto-convert warm contacts" in **CRM → Scoring Rules** settings.
   - When enabled (default), subscribers from mailing lists are automatically converted to CRM contacts when automation scoring or deal creation rules are triggered.
@@ -18,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Frontend: Toggle card with icon and description in `ScoringRules.vue`.
   - Route: `POST /crm/scoring/toggle-auto-convert` handled by `LeadScoringController::toggleAutoConvert()`.
   - Localization: Full translations in PL, EN, DE, ES.
+
+- **Timezone-Aware Email Sending:**
+  - **Database:** Added `timezone` column to `subscribers` table. Added `send_in_subscriber_timezone` boolean column to `messages` table.
+  - **Subscriber Timezone:** Subscribers can now have an individual timezone. Added `getEffectiveTimezone()` helper on `Subscriber` model with configurable fallback.
+  - **Per-Subscriber Scheduling:** When "Send in subscriber's timezone" is enabled, autoresponder `time_of_day` and broadcast `scheduled_at` are interpreted in each subscriber's local timezone, with per-subscriber UTC conversion in `CronScheduleService`.
+  - **Fallback Logic:** Subscribers without a timezone fall back to the message's effective timezone hierarchy (Message → List → Group → User Account).
+  - **Frontend:** Added checkbox in Message Create/Edit (Settings tab, below timezone selector), conditionally visible when `time_of_day` is set or scheduled send is selected.
+  - **Controller:** Updated `MessageController` store/update validation and edit data exposure for the new flag.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+  - **Tests:** Added `CronScheduleServiceTimezoneTest` with 6 test cases covering per-subscriber timezone gating, UTC fallback, and helper method behavior.
 
 ### Fixed
 

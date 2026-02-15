@@ -29,6 +29,7 @@ class Subscriber extends Model
         'first_name',
         'last_name',
         'gender',
+        'language',
         'status', // Global status or Keep for backward compatibility/global override
         'is_active_global',
         // 'contact_list_id', // Removing this
@@ -43,6 +44,7 @@ class Subscriber extends Model
         'opens_count',
         'clicks_count',
         'source',
+        'timezone',
         // 'tags',
     ];
 
@@ -149,6 +151,7 @@ class Subscriber extends Model
             'subscribed_at' => $this->subscribed_at?->format('Y-m-d H:i:s') ?? '',
             'confirmed_at' => $this->confirmed_at?->format('Y-m-d H:i:s') ?? '',
             'source' => $this->source ?? '',
+            'language' => $this->language ?? '',
         ];
 
         // Add custom field values
@@ -266,5 +269,14 @@ class Subscriber extends Model
                 $this->removeTag($tag);
             }
         }
+    }
+
+    /**
+     * Get the effective timezone for this subscriber.
+     * Returns the subscriber's timezone if set, otherwise the provided fallback.
+     */
+    public function getEffectiveTimezone(string $fallback = 'UTC'): string
+    {
+        return $this->timezone ?? $fallback;
     }
 }

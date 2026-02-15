@@ -50,6 +50,26 @@ class SendEmailJob implements ShouldQueue
             $content = $this->message->content;
             $subject = $this->message->subject;
 
+            // Language-specific content: check subscriber's language preference
+            $subscriberLanguage = $this->subscriber->language;
+            if ($subscriberLanguage) {
+                $translation = $this->message->getTranslationForLanguage($subscriberLanguage);
+                if ($translation) {
+                    $subject = $translation->subject;
+                    if ($translation->content) {
+                        $content = $translation->content;
+                    }
+                    if ($translation->preheader) {
+                        $this->message->preheader = $translation->preheader;
+                    }
+                    Log::debug('Language translation applied', [
+                        'subscriber_id' => $this->subscriber->id,
+                        'language' => $subscriberLanguage,
+                        'translation_id' => $translation->id,
+                    ]);
+                }
+            }
+
             // A/B Test: Apply variant content if variant is assigned to this queue entry
             if ($this->queueEntryId) {
                 $queueEntry = MessageQueueEntry::find($this->queueEntryId);

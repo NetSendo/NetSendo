@@ -37,6 +37,7 @@ class Message extends Model
         'send_at',
         'scheduled_at', // For CRON processing
         'time_of_day',
+        'send_in_subscriber_timezone',
         // A/B Testing
         'ab_enabled',
         'ab_variant_subject',
@@ -59,6 +60,7 @@ class Message extends Model
         'ab_split_percentage' => 'integer',
         'trigger_config' => 'array',
         'is_active' => 'boolean',
+        'send_in_subscriber_timezone' => 'boolean',
         'sent_count' => 'integer',
         'planned_recipients_count' => 'integer',
         'recipients_calculated_at' => 'datetime',
@@ -194,6 +196,27 @@ class Message extends Model
     public function abTest()
     {
         return $this->hasOne(AbTest::class);
+    }
+
+    /**
+     * Get all translations for this message.
+     */
+    public function translations()
+    {
+        return $this->hasMany(MessageTranslation::class);
+    }
+
+    /**
+     * Get translation for a specific language.
+     * Returns null if no translation exists for the given language.
+     */
+    public function getTranslationForLanguage(?string $language): ?MessageTranslation
+    {
+        if (!$language) {
+            return null;
+        }
+
+        return $this->translations()->where('language', $language)->first();
     }
 
     /**

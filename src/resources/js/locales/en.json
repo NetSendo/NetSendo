@@ -1667,6 +1667,8 @@
             "timezone": "Timezone",
             "timezone_default": "Default (according to list/group/account settings)",
             "timezone_help": "Priority: Message > List > Group > User Account.",
+            "send_in_subscriber_timezone": "Send in subscriber's timezone",
+            "send_in_subscriber_timezone_help": "The message will be sent at the selected time in each subscriber's timezone. If a subscriber has no timezone set, the message's default timezone will be used.",
             "content": "Message Content",
             "no_lists": "No mailing lists available.",
             "preheader": "Preheader",
@@ -1830,6 +1832,15 @@
             "bulk_add_button": "Add to list",
             "bulk_add_success": "Added to list \"{list}\""
         },
+        "translations": {
+            "title": "Language Versions",
+            "remove": "Remove translation",
+            "add_language": "Add language",
+            "copy_from_default": "Copy from default version",
+            "content_hint": "You can use HTML code. If the field is empty, the default content will be used.",
+            "empty_state": "No translations",
+            "empty_state_hint": "Click \"Add language\" to add a language version of the message."
+        },
         "tracked_links": {
             "title": "Tracked Links",
             "subtitle": "Manage link tracking in your message content",
@@ -1894,7 +1905,8 @@
                 "phone": "Phone",
                 "first_name": "First Name",
                 "last_name": "Last Name",
-                "custom_field": "Custom field: {name}"
+                "custom_field": "Custom field: {name}",
+                "language": "Language"
             },
             "importing": "Importing...",
             "import_button": "Import"
@@ -1915,6 +1927,11 @@
             "last_name": "Last Name",
             "phone": "Phone",
             "gender": "Gender",
+            "language": "Language",
+            "language_default": "Default",
+            "timezone": "Timezone",
+            "timezone_default": "Default (account settings)",
+            "timezone_help": "Subscriber's timezone, used for timezone-aware sending.",
             "status": "Status"
         },
         "table": {
@@ -1924,6 +1941,7 @@
             "status": "Status",
             "list": "List",
             "added_at": "Date Added",
+            "language": "Language",
             "subscribed_at": "Date Joined",
             "actions": "Actions"
         },

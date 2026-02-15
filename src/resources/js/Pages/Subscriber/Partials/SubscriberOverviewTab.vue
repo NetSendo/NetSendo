@@ -33,8 +33,6 @@ const subscriberName = computed(() => {
     return null;
 });
 
-
-
 // Gender display
 const genderLabel = computed(() => {
     const genders = {
@@ -131,7 +129,9 @@ const { t } = useI18n();
                 </div>
 
                 <!-- Profile Details -->
-                <div class="mt-6 space-y-3 border-t border-slate-100 pt-6 dark:border-slate-800">
+                <div
+                    class="mt-6 space-y-3 border-t border-slate-100 pt-6 dark:border-slate-800"
+                >
                     <div
                         v-if="genderLabel"
                         class="flex items-center justify-between text-sm"
@@ -139,15 +139,32 @@ const { t } = useI18n();
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ $t("subscribers.fields.gender") }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ genderLabel }}
+                        </span>
+                    </div>
+                    <div
+                        v-if="subscriber.language"
+                        class="flex items-center justify-between text-sm"
+                    >
+                        <span class="text-slate-500 dark:text-slate-400">
+                            🌐 {{ $t("subscribers.fields.language") }}
+                        </span>
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
+                            {{ subscriber.language?.toUpperCase() }}
                         </span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ $t("subscriber_card.profile.created") }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ formatDate(subscriber.created_at) }}
                         </span>
                     </div>
@@ -158,7 +175,9 @@ const { t } = useI18n();
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ $t("subscriber_card.profile.last_open") }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ formatDate(subscriber.last_opened_at) }}
                         </span>
                     </div>
@@ -169,7 +188,9 @@ const { t } = useI18n();
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ $t("subscriber_card.profile.last_click") }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ formatDate(subscriber.last_clicked_at) }}
                         </span>
                     </div>
@@ -180,7 +201,9 @@ const { t } = useI18n();
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ $t("subscriber_card.profile.source") }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ subscriber.source }}
                         </span>
                     </div>
@@ -243,7 +266,9 @@ const { t } = useI18n();
                         <span class="text-slate-500 dark:text-slate-400">
                             {{ field.label || field.name }}
                         </span>
-                        <span class="font-medium text-slate-900 dark:text-white">
+                        <span
+                            class="font-medium text-slate-900 dark:text-white"
+                        >
                             {{ field.value || "-" }}
                         </span>
                     </div>
@@ -262,8 +287,13 @@ const { t } = useI18n();
                 </h4>
                 <div class="flex items-center gap-8">
                     <!-- Engagement Score Circle -->
-                    <div class="relative flex h-32 w-32 items-center justify-center">
-                        <svg class="absolute h-32 w-32 -rotate-90" viewBox="0 0 100 100">
+                    <div
+                        class="relative flex h-32 w-32 items-center justify-center"
+                    >
+                        <svg
+                            class="absolute h-32 w-32 -rotate-90"
+                            viewBox="0 0 100 100"
+                        >
                             <circle
                                 cx="50"
                                 cy="50"
@@ -285,12 +315,7 @@ const { t } = useI18n();
                                 :class="engagementColor"
                             />
                         </svg>
-                        <span
-                            :class="[
-                                'text-3xl font-bold',
-                                engagementColor,
-                            ]"
-                        >
+                        <span :class="['text-3xl font-bold', engagementColor]">
                             {{ statistics.engagement_score }}
                         </span>
                     </div>
@@ -298,26 +323,42 @@ const { t } = useI18n();
                     <!-- Stats Grid -->
                     <div class="grid flex-1 grid-cols-2 gap-4">
                         <div>
-                            <div class="text-2xl font-bold text-slate-900 dark:text-white">
+                            <div
+                                class="text-2xl font-bold text-slate-900 dark:text-white"
+                            >
                                 {{ statistics.total_opens }}
                             </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ $t("subscriber_card.engagement.total_opens") }}
+                            <div
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{
+                                    $t("subscriber_card.engagement.total_opens")
+                                }}
                             </div>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold text-slate-900 dark:text-white">
+                            <div
+                                class="text-2xl font-bold text-slate-900 dark:text-white"
+                            >
                                 {{ statistics.total_clicks }}
                             </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ $t("subscriber_card.engagement.total_clicks") }}
+                            <div
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{
+                                    $t(
+                                        "subscriber_card.engagement.total_clicks",
+                                    )
+                                }}
                             </div>
                         </div>
                         <div>
                             <div class="text-2xl font-bold text-green-600">
                                 {{ statistics.open_rate }}%
                             </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
+                            <div
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
                                 {{ $t("subscriber_card.engagement.open_rate") }}
                             </div>
                         </div>
@@ -325,8 +366,12 @@ const { t } = useI18n();
                             <div class="text-2xl font-bold text-blue-600">
                                 {{ statistics.click_rate }}%
                             </div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">
-                                {{ $t("subscriber_card.engagement.click_rate") }}
+                            <div
+                                class="text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{
+                                    $t("subscriber_card.engagement.click_rate")
+                                }}
                             </div>
                         </div>
                     </div>
@@ -358,11 +403,17 @@ const { t } = useI18n();
                                 {{ list.list_type === "sms" ? "📱" : "📧" }}
                             </span>
                             <div>
-                                <div class="font-medium text-slate-900 dark:text-white">
+                                <div
+                                    class="font-medium text-slate-900 dark:text-white"
+                                >
                                     {{ list.list_name }}
                                 </div>
-                                <div class="text-xs text-slate-500 dark:text-slate-400">
-                                    {{ $t("subscriber_card.lists.subscribed") }}:
+                                <div
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{
+                                        $t("subscriber_card.lists.subscribed")
+                                    }}:
                                     {{ formatDate(list.subscribed_at) }}
                                 </div>
                             </div>

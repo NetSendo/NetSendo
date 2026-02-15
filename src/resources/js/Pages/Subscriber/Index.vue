@@ -87,6 +87,7 @@ const defaultColumns = {
     email: true,
     name: true,
     phone: false,
+    language: false,
     status: true,
     list: true,
     created_at: true,
@@ -130,6 +131,13 @@ const standardColumnDefinitions = [
         type: "phone",
     },
     {
+        key: "language",
+        labelKey: "subscribers.table.language",
+        sortKey: "language",
+        sortable: true,
+        type: "language",
+    },
+    {
         key: "status",
         labelKey: "subscribers.table.status",
         sortable: false,
@@ -154,7 +162,15 @@ const getCustomFieldKeys = () =>
     (props.customFields || []).map((field) => `cf_${field.id}`);
 
 const buildDefaultColumnOrder = (customKeys) => {
-    const base = ["email", "name", "phone", "status", "list", "created_at"];
+    const base = [
+        "email",
+        "name",
+        "phone",
+        "language",
+        "status",
+        "list",
+        "created_at",
+    ];
     const createdAtIndex = base.indexOf("created_at");
     return [
         ...base.slice(0, createdAtIndex),
@@ -984,6 +1000,22 @@ const getSortIcon = (column) => {
                                         v-else-if="column.type === 'created_at'"
                                     >
                                         {{ subscriber.created_at }}
+                                    </template>
+                                    <template
+                                        v-else-if="column.type === 'language'"
+                                    >
+                                        <span
+                                            v-if="subscriber.language"
+                                            class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                                        >
+                                            🌐
+                                            {{
+                                                subscriber.language?.toUpperCase()
+                                            }}
+                                        </span>
+                                        <span v-else class="text-slate-400"
+                                            >—</span
+                                        >
                                     </template>
                                 </td>
                             </template>

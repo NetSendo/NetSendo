@@ -65,7 +65,7 @@ class SubscriberController extends Controller
         $sortOrder = $request->sort_order ?? 'desc';
 
         // Validate sort column
-        $allowedSorts = ['created_at', 'email', 'first_name', 'last_name', 'phone'];
+        $allowedSorts = ['created_at', 'email', 'first_name', 'last_name', 'phone', 'language'];
         if (!in_array($sortBy, $allowedSorts)) {
             $sortBy = 'created_at';
         }
@@ -131,6 +131,7 @@ class SubscriberController extends Controller
                     'first_name' => $sub->first_name,
                     'last_name' => $sub->last_name,
                     'phone' => $sub->phone,
+                    'language' => $sub->language,
                     'status' => $sub->is_active_global ? 'active' : 'inactive',
                     'lists' => $sub->contactLists->pluck('name'),
                     'list_ids' => $sub->contactLists->pluck('id'),
@@ -157,6 +158,8 @@ class SubscriberController extends Controller
         return Inertia::render('Subscriber/Create', [
             'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
+            'availableLanguages' => config('netsendo.languages'),
+            'timezones' => \DateTimeZone::listIdentifiers(),
         ]);
     }
 
@@ -201,6 +204,8 @@ class SubscriberController extends Controller
             'last_name' => 'nullable|string|max:255',
             'phone' => $phoneRule,
             'gender' => 'nullable|in:male,female,other',
+            'language' => 'nullable|string|max:5',
+            'timezone' => 'nullable|string|max:64',
             'contact_list_ids' => 'required|array|min:1',
             'contact_list_ids.*' => 'exists:contact_lists,id',
             'status' => 'required|in:active,inactive',
@@ -245,6 +250,8 @@ class SubscriberController extends Controller
                 'last_name' => $validated['last_name'] ?? null,
                 'phone' => $validated['phone'] ?? null,
                 'gender' => $validated['gender'] ?? null,
+                'language' => $validated['language'] ?? null,
+                'timezone' => $validated['timezone'] ?? null,
                 'is_active_global' => $validated['status'] === 'active',
             ];
 
@@ -387,6 +394,7 @@ class SubscriberController extends Controller
                 'first_name' => $subscriber->first_name,
                 'last_name' => $subscriber->last_name,
                 'gender' => $subscriber->gender,
+                'language' => $subscriber->language,
                 'status' => $subscriber->is_active_global ? 'active' : 'inactive',
                 'source' => $subscriber->source,
                 'device' => $subscriber->device,
@@ -636,12 +644,16 @@ class SubscriberController extends Controller
                 'last_name' => $subscriber->last_name,
                 'phone' => $subscriber->phone,
                 'gender' => $subscriber->gender,
+                'language' => $subscriber->language,
+                'timezone' => $subscriber->timezone,
                 'status' => $subscriber->is_active_global ? 'active' : 'inactive',
                 'contact_list_ids' => $subscriber->contactLists->pluck('id'),
                 'custom_fields' => $subscriber->fieldValues->mapWithKeys(fn($val) => [$val->custom_field_id => $val->value]),
             ],
             'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
+            'availableLanguages' => config('netsendo.languages'),
+            'timezones' => \DateTimeZone::listIdentifiers(),
         ]);
     }
 
@@ -694,6 +706,8 @@ class SubscriberController extends Controller
             'last_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'gender' => 'nullable|in:male,female,other',
+            'language' => 'nullable|string|max:5',
+            'timezone' => 'nullable|string|max:64',
             'contact_list_ids' => 'required|array|min:1',
             'contact_list_ids.*' => 'exists:contact_lists,id',
             'status' => 'required|in:active,inactive',
@@ -716,6 +730,8 @@ class SubscriberController extends Controller
                 'last_name' => $validated['last_name'],
                 'phone' => $validated['phone'],
                 'gender' => $validated['gender'],
+                'language' => $validated['language'] ?? null,
+                'timezone' => $validated['timezone'] ?? null,
                 'is_active_global' => $validated['status'] === 'active',
             ]);
 
@@ -979,9 +995,10 @@ class SubscriberController extends Controller
             'phone' => ['phone', 'telefon', 'tel', 'mobile', 'phone_number', 'numer_telefonu', 'numer'],
             'first_name' => ['first_name', 'firstname', 'imie', 'imię', 'name'],
             'last_name' => ['last_name', 'lastname', 'nazwisko', 'surname'],
+            'language' => ['language', 'lang', 'język', 'jezyk', 'locale'],
         ];
 
-        $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1];
+        $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1, 'language' => -1];
         $startRow = 0;
         $customFieldColumns = [];
         $columnMapping = $request->input('column_mapping', []);
@@ -1029,14 +1046,14 @@ class SubscriberController extends Controller
         $startRow = $detectedStartRow;
 
         if (!empty($columnMapping) && is_array($columnMapping)) {
-            $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1];
+            $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1, 'language' => -1];
             foreach ($columnMapping as $index => $field) {
                 if (blank($field) || $field === 'ignore') {
                     continue;
                 }
 
                 $columnIndex = (int) $index;
-                if (in_array($field, ['email', 'phone', 'first_name', 'last_name'], true)) {
+                if (in_array($field, ['email', 'phone', 'first_name', 'last_name', 'language'], true)) {
                     $colIndices[$field] = $columnIndex;
                     continue;
                 }
@@ -1064,6 +1081,7 @@ class SubscriberController extends Controller
             $phone = $colIndices['phone'] !== -1 && isset($data[$colIndices['phone']]) ? trim($data[$colIndices['phone']]) : null;
             $firstName = $colIndices['first_name'] !== -1 && isset($data[$colIndices['first_name']]) ? trim($data[$colIndices['first_name']]) : null;
             $lastName = $colIndices['last_name'] !== -1 && isset($data[$colIndices['last_name']]) ? trim($data[$colIndices['last_name']]) : null;
+            $language = $colIndices['language'] !== -1 && isset($data[$colIndices['language']]) ? strtolower(trim($data[$colIndices['language']])) : null;
 
             // Validate based on list type
             if ($list->type === 'sms') {
@@ -1117,6 +1135,9 @@ class SubscriberController extends Controller
                 if ($lastName && !$subscriber->last_name) {
                     $updateData['last_name'] = $lastName;
                 }
+                if ($language && !$subscriber->language) {
+                    $updateData['language'] = $language;
+                }
                 if (!empty($updateData)) {
                     $subscriber->update($updateData);
                 }
@@ -1128,6 +1149,7 @@ class SubscriberController extends Controller
                     'phone' => $phone,
                     'first_name' => $firstName,
                     'last_name' => $lastName,
+                    'language' => $language,
                     'is_active_global' => true,
                 ]);
             }

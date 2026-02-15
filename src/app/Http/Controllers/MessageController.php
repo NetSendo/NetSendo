@@ -279,6 +279,8 @@ class MessageController extends Controller
                 ->select('id', 'name', 'slug')
                 ->orderBy('name')
                 ->get(),
+            // Available languages for multi-language message translations
+            'availableLanguages' => config('netsendo.languages'),
         ]);
     }
 
@@ -298,6 +300,7 @@ class MessageController extends Controller
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
+            'send_in_subscriber_timezone' => 'nullable|boolean',
             // New fields
             'template_id' => 'nullable|exists:templates,id',
             'mailbox_id' => 'nullable|exists:mailboxes,id',
@@ -343,6 +346,12 @@ class MessageController extends Controller
             'crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
             'excluded_crm_contact_ids' => 'nullable|array',
             'excluded_crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
+            // Message Translations (multi-language)
+            'translations' => 'nullable|array',
+            'translations.*.language' => 'required|string|max:5',
+            'translations.*.subject' => 'required|string|max:255',
+            'translations.*.preheader' => 'nullable|string|max:500',
+            'translations.*.content' => 'nullable|string',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -401,6 +410,7 @@ class MessageController extends Controller
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
+            'send_in_subscriber_timezone' => $validated['send_in_subscriber_timezone'] ?? false,
             'template_id' => $validated['template_id'] ?? null,
             'mailbox_id' => $validated['mailbox_id'] ?? null,
             'channel' => 'email',
@@ -484,6 +494,14 @@ class MessageController extends Controller
             $message->tags()->sync($validated['tag_ids'] ?? []);
         }
 
+        // Sync message translations (multi-language)
+        if (array_key_exists('translations', $validated)) {
+            $message->translations()->delete();
+            foreach ($validated['translations'] ?? [] as $translationData) {
+                $message->translations()->create($translationData);
+            }
+        }
+
         // Determine success message based on status
         $successMessage = match($message->status) {
             'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
@@ -502,7 +520,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags']);
+        $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags', 'translations']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -523,6 +541,7 @@ class MessageController extends Controller
                     : null,
                 'time_of_day' => $message->time_of_day ? substr($message->time_of_day, 0, 5) : null,
                 'timezone' => $message->timezone,
+                'send_in_subscriber_timezone' => $message->send_in_subscriber_timezone ?? false,
                 'template_id' => $message->template_id,
                 'mailbox_id' => $message->mailbox_id,
                 'ab_enabled' => $message->ab_enabled,
@@ -552,6 +571,14 @@ class MessageController extends Controller
                 'ab_test_config' => $this->formatAbTestConfig($message),
                 // Campaign Tags
                 'tag_ids' => $message->tags->pluck('id'),
+                // Message translations (multi-language)
+                'translations' => $message->translations->map(fn($t) => [
+                    'id' => $t->id,
+                    'language' => $t->language,
+                    'subject' => $t->subject,
+                    'preheader' => $t->preheader,
+                    'content' => $t->content,
+                ]),
                 // CRM Contacts
                 'crm_contact_ids' => $message->crmContacts->pluck('id'),
                 'excluded_crm_contact_ids' => $message->excludedCrmContacts->pluck('id'),
@@ -617,6 +644,8 @@ class MessageController extends Controller
                 ->select('id', 'name', 'slug')
                 ->orderBy('name')
                 ->get(),
+            // Available languages for multi-language message translations
+            'availableLanguages' => config('netsendo.languages'),
         ]);
     }
 
@@ -640,6 +669,7 @@ class MessageController extends Controller
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
+            'send_in_subscriber_timezone' => 'nullable|boolean',
             // New fields
             'template_id' => 'nullable|exists:templates,id',
             'mailbox_id' => 'nullable|exists:mailboxes,id',
@@ -687,6 +717,12 @@ class MessageController extends Controller
             'crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
             'excluded_crm_contact_ids' => 'nullable|array',
             'excluded_crm_contact_ids.*' => 'integer|exists:crm_contacts,id',
+            // Message Translations (multi-language)
+            'translations' => 'nullable|array',
+            'translations.*.language' => 'required|string|max:5',
+            'translations.*.subject' => 'required|string|max:255',
+            'translations.*.preheader' => 'nullable|string|max:500',
+            'translations.*.content' => 'nullable|string',
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -744,6 +780,7 @@ class MessageController extends Controller
             'scheduled_at' => $scheduledAt,
             'time_of_day' => $validated['time_of_day'] ?? null,
             'timezone' => $validated['timezone'] ?? null,
+            'send_in_subscriber_timezone' => $validated['send_in_subscriber_timezone'] ?? false,
             'template_id' => $validated['template_id'] ?? null,
             'mailbox_id' => $validated['mailbox_id'] ?? null,
             'ab_enabled' => $validated['ab_enabled'] ?? false,
@@ -840,6 +877,14 @@ class MessageController extends Controller
             $message->tags()->sync($validated['tag_ids'] ?? []);
         }
 
+        // Sync message translations (multi-language)
+        if (array_key_exists('translations', $validated)) {
+            $message->translations()->delete();
+            foreach ($validated['translations'] ?? [] as $translationData) {
+                $message->translations()->create($translationData);
+            }
+        }
+
         // Determine success message based on status
         $successMessage = match($message->status) {
             'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
@@ -891,6 +936,16 @@ class MessageController extends Controller
                 'shared_fields' => $trackedLink->shared_fields,
                 'subscribe_to_list_ids' => $trackedLink->subscribe_to_list_ids,
                 'unsubscribe_from_list_ids' => $trackedLink->unsubscribe_from_list_ids,
+            ]);
+        }
+
+        // Copy message translations (multi-language)
+        foreach ($message->translations as $translation) {
+            $newMessage->translations()->create([
+                'language' => $translation->language,
+                'subject' => $translation->subject,
+                'preheader' => $translation->preheader,
+                'content' => $translation->content,
             ]);
         }
 

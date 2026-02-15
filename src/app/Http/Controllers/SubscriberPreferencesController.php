@@ -61,6 +61,8 @@ class SubscriberPreferencesController extends Controller
             'lists' => $publicLists,
             'subscribedListIds' => $subscribedListIds,
             'signedUrl' => $request->fullUrl(),
+            'availableLanguages' => config('netsendo.languages'),
+            'currentLanguage' => $subscriber->language,
         ]);
     }
 
@@ -79,9 +81,15 @@ class SubscriberPreferencesController extends Controller
         $validated = $request->validate([
             'lists' => 'nullable|array',
             'lists.*' => 'integer|exists:contact_lists,id',
+            'language' => 'nullable|string|max:5',
         ]);
 
         $selectedListIds = $validated['lists'] ?? [];
+
+        // Update subscriber language preference immediately (no confirmation needed)
+        if (array_key_exists('language', $validated)) {
+            $subscriber->update(['language' => $validated['language']]);
+        }
 
         // Store the pending changes in session (or temporary storage)
         $pendingChanges = [

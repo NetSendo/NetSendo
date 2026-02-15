@@ -1717,6 +1717,8 @@
             "timezone": "Zeitzone",
             "timezone_default": "Standard (gemäß Listen-/Gruppen-/Kontoeinstellungen)",
             "timezone_help": "Priorität: Nachricht > Liste > Gruppe > Benutzerkonto.",
+            "send_in_subscriber_timezone": "In der Zeitzone des Abonnenten senden",
+            "send_in_subscriber_timezone_help": "Die Nachricht wird zur gewählten Uhrzeit in der Zeitzone jedes Abonnenten gesendet. Wenn keine Zeitzone festgelegt ist, wird die Standard-Zeitzone der Nachricht verwendet.",
             "content": "Nachrichteninhalt",
             "no_lists": "Keine Mailing-Listen",
             "preheader": "Preheader",
@@ -1880,6 +1882,15 @@
             "bulk_add_button": "Zu Liste hinzufügen",
             "bulk_add_success": "Zur Liste \"{list}\" hinzugefügt"
         },
+        "translations": {
+            "title": "Sprachversionen",
+            "remove": "Übersetzung entfernen",
+            "add_language": "Sprache hinzufügen",
+            "copy_from_default": "Von Standardversion kopieren",
+            "content_hint": "Sie können HTML-Code verwenden. Wenn das Feld leer ist, wird der Standardinhalt verwendet.",
+            "empty_state": "Keine Übersetzungen",
+            "empty_state_hint": "Klicken Sie auf \"Sprache hinzufügen\", um eine Sprachversion der Nachricht hinzuzufügen."
+        },
         "tracked_links": {
             "title": "Verfolgte Links",
             "subtitle": "Verwalten Sie die Link-Verfolgung im Nachrichteninhalt",
@@ -2000,7 +2011,8 @@
                 "phone": "Telefon",
                 "first_name": "Vorname",
                 "last_name": "Nachname",
-                "custom_field": "Benutzerdefiniertes Feld: {name}"
+                "custom_field": "Benutzerdefiniertes Feld: {name}",
+                "language": "Sprache"
             },
             "importing": "Importieren...",
             "import_button": "Importieren"
@@ -2104,6 +2116,11 @@
             "last_name": "Nachname",
             "phone": "Telefon",
             "gender": "Geschlecht",
+            "language": "Sprache",
+            "language_default": "Standard",
+            "timezone": "Zeitzone",
+            "timezone_default": "Standard (Kontoeinstellungen)",
+            "timezone_help": "Zeitzone des Abonnenten, verwendet für zeitzonenbasiertes Senden.",
             "status": "Status"
         },
         "table": {
@@ -2112,6 +2129,7 @@
             "status": "Status",
             "list": "Liste",
             "added_at": "Hinzugefügt am",
+            "language": "Sprache",
             "actions": "Aktionen"
         },
         "statuses": {

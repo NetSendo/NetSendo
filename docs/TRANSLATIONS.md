@@ -531,3 +531,104 @@ The following translation keys were added to support CardIntel, CRM activities, 
 **Global Keys:**
 
 - `high_confidence_data` - Label for high confidence data
+
+### Multi-Language Campaign System (February 2026)
+
+The following translation keys were added to support multi-language email campaigns, allowing subscribers to receive messages in their preferred language.
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Message Translations UI (`messages.translations.*`):**
+
+- `messages.translations.title` - Translations section title
+- `messages.translations.add` - Add translation button
+- `messages.translations.remove` - Remove translation button
+- `messages.translations.copy_from_default` - Copy from default language button
+- `messages.translations.default_language` - Default language label
+- `messages.translations.no_translations` - Empty state message
+- `messages.translations.language_select` - Language selector label
+- `messages.translations.subject` - Subject field label
+- `messages.translations.preheader` - Preheader field label
+- `messages.translations.content` - Content field label
+
+**Subscriber Language (`subscribers.*`):**
+
+- `subscribers.fields.language` - Language field label
+- `subscribers.fields.language_help` - Language field help text
+- `subscribers.table.language` - Language column header in subscriber list
+- `subscribers.import.language` - Language field label for CSV import mapping
+- `subscribers.preferences.language` - Language selector on public preferences page
+- `subscribers.preferences.language_help` - Language help text on public preferences page
+
+| Key                                | PL                   | EN                    | DE                     | ES                  |
+| ---------------------------------- | -------------------- | --------------------- | ---------------------- | ------------------- |
+| `subscribers.fields.language`      | Język                | Language              | Sprache                | Idioma              |
+| `subscribers.fields.language_help` | Preferowany język... | Preferred language... | Bevorzugte Sprache...  | Idioma preferido... |
+| `messages.translations.title`      | Tłumaczenia          | Translations          | Übersetzungen          | Traducciones        |
+| `messages.translations.add`        | Dodaj tłumaczenie    | Add translation       | Übersetzung hinzufügen | Añadir traducción   |
+
+**Usage Example:**
+
+```vue
+<template>
+  <!-- Subscriber form -->
+  <label>{{ $t("subscribers.fields.language") }}</label>
+  <select v-model="form.language">
+    <option v-for="lang in languages" :key="lang" :value="lang">
+      {{ lang }}
+    </option>
+  </select>
+  <p>{{ $t("subscribers.fields.language_help") }}</p>
+
+  <!-- Message translations tab -->
+  <h3>{{ $t("messages.translations.title") }}</h3>
+  <button @click="addTranslation">{{ $t("messages.translations.add") }}</button>
+</template>
+```
+
+### Timezone-Aware Email Sending (February 2026)
+
+The following translation keys were added to support per-subscriber timezone scheduling for email campaigns.
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Message Fields (`messages.fields.*`):**
+
+- `messages.fields.send_in_subscriber_timezone` - Checkbox label for enabling subscriber timezone sending
+- `messages.fields.send_in_subscriber_timezone_help` - Help text explaining the feature behavior and fallback logic
+
+| Key                                | PL                                                                                        | EN                                                                             | DE                                                                                    | ES                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `send_in_subscriber_timezone`      | Wyślij wg strefy czasowej subskrybenta                                                    | Send in subscriber's timezone                                                  | In der Zeitzone des Abonnenten senden                                                 | Enviar en la zona horaria del suscriptor                                              |
+| `send_in_subscriber_timezone_help` | Wiadomość zostanie wysłana o wybranej godzinie w strefie czasowej każdego subskrybenta... | The message will be sent at the selected time in each subscriber's timezone... | Die Nachricht wird zur gewählten Uhrzeit in der Zeitzone jedes Abonnenten gesendet... | El mensaje se enviará a la hora seleccionada en la zona horaria de cada suscriptor... |
+
+**Usage Example:**
+
+```vue
+<template>
+  <div v-if="form.time_of_day || scheduleMode === 'later'">
+    <input
+      type="checkbox"
+      id="send_in_subscriber_timezone"
+      v-model="form.send_in_subscriber_timezone"
+    />
+    <label for="send_in_subscriber_timezone">
+      {{ $t("messages.fields.send_in_subscriber_timezone") }}
+      <p>{{ $t("messages.fields.send_in_subscriber_timezone_help") }}</p>
+    </label>
+  </div>
+</template>
+```
+
+### CRM Auto-Convert Setting (February 2026)
+
+The following translation keys were added to support the auto-convert warm contacts toggle:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**CRM Scoring (`crm.scoring.*`):**
+
+- `crm.scoring.auto_convert_title` - Section title for auto-convert toggle
+- `crm.scoring.auto_convert_description` - Description of auto-convert behavior
+- `crm.scoring.auto_convert_enabled` - Label when toggle is enabled
+- `crm.scoring.auto_convert_disabled` - Label when toggle is disabled

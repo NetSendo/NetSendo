@@ -11,6 +11,14 @@ const props = defineProps({
     },
     lists: Array,
     customFields: Array,
+    availableLanguages: {
+        type: Object,
+        default: () => ({}),
+    },
+    timezones: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 // Filter for list type
@@ -49,6 +57,8 @@ const form = useForm({
     last_name: props.subscriber.last_name || "",
     phone: props.subscriber.phone || "",
     gender: props.subscriber.gender || "",
+    language: props.subscriber.language || "",
+    timezone: props.subscriber.timezone || "",
     contact_list_ids: props.subscriber.contact_list_ids || [],
     status: props.subscriber.status || "active",
     custom_fields: props.subscriber.custom_fields || {},
@@ -180,7 +190,7 @@ const submit = () => {
                         >
                             {{
                                 $t(
-                                    "subscribers.hold_ctrl_to_select_multiple"
+                                    "subscribers.hold_ctrl_to_select_multiple",
                                 ) || "Przytrzymaj Ctrl/Cmd aby wybrać wiele"
                             }}
                         </p>
@@ -330,6 +340,69 @@ const submit = () => {
                         </div>
                     </div>
 
+                    <!-- Language -->
+                    <div
+                        v-if="Object.keys(availableLanguages || {}).length > 0"
+                    >
+                        <label
+                            for="language"
+                            class="mb-2 block text-sm font-medium text-slate-900 dark:text-white"
+                        >
+                            🌐 {{ $t("subscribers.fields.language") }}
+                        </label>
+                        <select
+                            id="language"
+                            v-model="form.language"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                        >
+                            <option value="">
+                                —
+                                {{ $t("subscribers.fields.language_default") }}
+                                —
+                            </option>
+                            <option
+                                v-for="(name, code) in availableLanguages"
+                                :key="code"
+                                :value="code"
+                            >
+                                {{ name }} ({{ code.toUpperCase() }})
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div v-if="timezones.length > 0">
+                        <label
+                            for="timezone"
+                            class="mb-2 block text-sm font-medium text-slate-900 dark:text-white"
+                        >
+                            🕐 {{ $t("subscribers.fields.timezone") }}
+                        </label>
+                        <select
+                            id="timezone"
+                            v-model="form.timezone"
+                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
+                        >
+                            <option value="">
+                                —
+                                {{ $t("subscribers.fields.timezone_default") }}
+                                —
+                            </option>
+                            <option
+                                v-for="tz in timezones"
+                                :key="tz"
+                                :value="tz"
+                            >
+                                {{ tz }}
+                            </option>
+                        </select>
+                        <p
+                            class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{ $t("subscribers.fields.timezone_help") }}
+                        </p>
+                    </div>
+
                     <!-- Custom Fields -->
                     <div v-for="field in customFields" :key="field.id">
                         <label
@@ -345,7 +418,7 @@ const submit = () => {
                         <input
                             v-if="
                                 ['text', 'number', 'url', 'email'].includes(
-                                    field.type
+                                    field.type,
                                 )
                             "
                             :id="'field_' + field.id"

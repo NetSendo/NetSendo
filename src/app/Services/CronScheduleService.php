@@ -220,7 +220,9 @@ class CronScheduleService
                             })
                             ->where(function($q) {
                                 $q->whereNull('scheduled_at')
-                                    ->orWhere('scheduled_at', '<=', now());
+                                    ->orWhere('scheduled_at', '<=', now())
+                                    // Allow timezone-aware messages through — per-subscriber gating happens in the loop
+                                    ->orWhere('send_in_subscriber_timezone', true);
                             });
                     })
                     ->with(['message.contactLists.defaultMailbox', 'message.mailbox', 'subscriber'])
@@ -271,21 +273,67 @@ class CronScheduleService
                                 $timeParts = explode(':', $timeOfDay);
                                 $hour = (int) ($timeParts[0] ?? 0);
                                 $minute = (int) ($timeParts[1] ?? 0);
-                                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+
+                                // Determine target timezone for the time_of_day
+                                $targetTimezone = 'UTC';
+                                if ($message->send_in_subscriber_timezone) {
+                                    $targetTimezone = $subscriber->getEffectiveTimezone(
+                                        $message->effective_timezone
+                                    );
+                                }
+
+                                // Build the expected send time in the target timezone, then convert to UTC
+                                $expectedSendDateTime = $expectedSendDateTime->copy()
+                                    ->startOfDay()
+                                    ->shiftTimezone($targetTimezone)
+                                    ->setTime($hour, $minute, 0)
+                                    ->setTimezone('UTC');
                             }
                             // If no time_of_day, we keep the original time from subscribed_at
                             // This means for day=0: expectedSendDateTime = subscribedAt (immediate)
 
                             // If the expected send datetime is in the future, skip for now
-                            if ($expectedSendDateTime->gt(now())) {
+                            if ($expectedSendDateTime->gt(now('UTC'))) {
                                 Log::info('CronScheduleService: Skipping future autoresponder', [
                                     'entry_id' => $entry->id,
                                     'subscriber_id' => $subscriber->id,
                                     'expected_datetime' => $expectedSendDateTime->format('Y-m-d H:i'),
-                                    'now' => now()->format('Y-m-d H:i')
+                                    'now' => now('UTC')->format('Y-m-d H:i'),
+                                    'subscriber_timezone' => $message->send_in_subscriber_timezone
+                                        ? $subscriber->getEffectiveTimezone($message->effective_timezone)
+                                        : null,
                                 ]);
                                 continue; // Will be processed at the appropriate time
                             }
+                        }
+                    }
+
+                    // For broadcasts with send_in_subscriber_timezone:
+                    // gate each subscriber individually based on their timezone
+                    if ($message->type === 'broadcast'
+                        && $message->send_in_subscriber_timezone
+                        && $message->send_at
+                    ) {
+                        // Get the intended local time from the message's own timezone
+                        $intendedLocalTime = $message->send_at->copy()
+                            ->setTimezone($message->effective_timezone);
+
+                        // Determine subscriber's timezone (fallback to message's effective timezone)
+                        $subscriberTz = $subscriber->getEffectiveTimezone($message->effective_timezone);
+
+                        // Re-interpret the same local time in the subscriber's timezone and convert to UTC
+                        $subscriberSendAtUtc = $intendedLocalTime->copy()
+                            ->shiftTimezone($subscriberTz)
+                            ->setTimezone('UTC');
+
+                        if ($subscriberSendAtUtc->gt(now('UTC'))) {
+                            Log::debug('CronScheduleService: Skipping broadcast - not yet time in subscriber timezone', [
+                                'entry_id' => $entry->id,
+                                'subscriber_id' => $subscriber->id,
+                                'subscriber_tz' => $subscriberTz,
+                                'subscriber_send_at_utc' => $subscriberSendAtUtc->format('Y-m-d H:i'),
+                            ]);
+                            continue;
                         }
                     }
 

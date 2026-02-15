@@ -1731,6 +1731,8 @@
             "timezone": "Zona horaria",
             "timezone_default": "Predeterminado (según la configuración de lista/grupo/cuenta)",
             "timezone_help": "Prioridad: Mensaje > Lista > Grupo > Cuenta de usuario.",
+            "send_in_subscriber_timezone": "Enviar en la zona horaria del suscriptor",
+            "send_in_subscriber_timezone_help": "El mensaje se enviará a la hora seleccionada en la zona horaria de cada suscriptor. Si el suscriptor no tiene zona horaria configurada, se usará la zona horaria predeterminada del mensaje.",
             "content": "Contenido del mensaje",
             "no_lists": "No hay listas de correo disponibles.",
             "preheader": "Preheader",
@@ -1890,6 +1892,15 @@
             "bulk_add_button": "Añadir a lista",
             "bulk_add_success": "Añadido a la lista \"{list}\""
         },
+        "translations": {
+            "title": "Versiones de idioma",
+            "remove": "Eliminar traducción",
+            "add_language": "Añadir idioma",
+            "copy_from_default": "Copiar de la versión predeterminada",
+            "content_hint": "Puede usar código HTML. Si el campo está vacío, se utilizará el contenido predeterminado.",
+            "empty_state": "Sin traducciones",
+            "empty_state_hint": "Haga clic en \"Añadir idioma\" para añadir una versión de idioma del mensaje."
+        },
         "tracked_links": {
             "title": "Enlaces rastreados",
             "subtitle": "Administre el seguimiento de enlaces en el contenido del mensaje",
@@ -2011,7 +2022,8 @@
                 "phone": "Teléfono",
                 "first_name": "Nombre",
                 "last_name": "Apellido",
-                "custom_field": "Campo personalizado: {name}"
+                "custom_field": "Campo personalizado: {name}",
+                "language": "Idioma"
             },
             "importing": "Importando...",
             "import_button": "Importar"
@@ -2032,6 +2044,11 @@
             "last_name": "Apellido",
             "phone": "Teléfono",
             "gender": "Género",
+            "language": "Idioma",
+            "language_default": "Predeterminado",
+            "timezone": "Zona horaria",
+            "timezone_default": "Predeterminado (configuración de cuenta)",
+            "timezone_help": "Zona horaria del suscriptor, utilizada para el envío basado en zona horaria.",
             "status": "Estado"
         },
         "table": {
@@ -2040,6 +2057,7 @@
             "status": "Estado",
             "list": "Lista",
             "added_at": "Fecha de adición",
+            "language": "Idioma",
             "actions": "Acciones"
         },
         "statuses": {

@@ -36,6 +36,7 @@ class SubscriberResource extends JsonResource
             'device' => $this->device,
             'ip_address' => $this->ip_address,
             'source' => $this->source,
+            'language' => $this->language,
             'opens_count' => $this->opens_count,
             'clicks_count' => $this->clicks_count,
             'tags' => $this->whenLoaded('tags', fn () => TagResource::collection($this->tags)),

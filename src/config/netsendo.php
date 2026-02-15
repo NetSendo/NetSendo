@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '1.9.2',
+    'version' => '1.9.3',
 
     /*
     |--------------------------------------------------------------------------
@@ -134,6 +134,33 @@ return [
 
         // Timeout for fetching remote images (in seconds)
         'image_fetch_timeout' => env('EMAIL_IMAGE_FETCH_TIMEOUT', 10),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Supported Languages
+    |--------------------------------------------------------------------------
+    |
+    | Available languages for subscriber preferences and message translations.
+    |
+    */
+
+    'languages' => [
+        'pl' => 'Polski',
+        'en' => 'English',
+        'de' => 'Deutsch',
+        'fr' => 'Français',
+        'es' => 'Español',
+        'it' => 'Italiano',
+        'pt' => 'Português',
+        'nl' => 'Nederlands',
+        'cs' => 'Čeština',
+        'sk' => 'Slovenčina',
+        'uk' => 'Українська',
+        'ru' => 'Русский',
+        'sv' => 'Svenska',
+        'no' => 'Norsk',
+        'da' => 'Dansk',
     ],
 
 ];
