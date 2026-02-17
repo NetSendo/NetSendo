@@ -227,9 +227,25 @@ class CrmContactController extends Controller
             $validated['subscriber_id'] = $subscriber->id;
         }
 
-        // Check if CRM contact already exists for this subscriber
-        $existingContact = CrmContact::where('subscriber_id', $validated['subscriber_id'])->first();
+        // Check if CRM contact already exists for this subscriber (including soft-deleted)
+        $existingContact = CrmContact::withTrashed()->where('subscriber_id', $validated['subscriber_id'])->first();
         if ($existingContact) {
+            if ($existingContact->trashed()) {
+                // Restore the soft-deleted contact and update it
+                $existingContact->restore();
+                $existingContact->update([
+                    'crm_company_id' => $validated['crm_company_id'] ?? null,
+                    'owner_id' => $validated['owner_id'] ?? auth()->id(),
+                    'status' => $validated['status'],
+                    'source' => $validated['source'] ?? 'manual',
+                    'position' => $validated['position'] ?? null,
+                ]);
+                $existingContact->logActivity('contact_created', 'Kontakt został przywrócony i zaktualizowany');
+
+                return redirect()->route('crm.contacts.show', $existingContact)
+                    ->with('success', 'Kontakt został przywrócony.');
+            }
+
             return redirect()->route('crm.contacts.show', $existingContact)
                 ->with('warning', 'Kontakt CRM już istnieje dla tego subskrybenta.');
         }
