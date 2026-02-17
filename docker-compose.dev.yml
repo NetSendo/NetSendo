@@ -20,6 +20,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: netsendo-app
     restart: unless-stopped
+    init: true
     working_dir: /var/www
     volumes:
       - ./src:/var/www
@@ -45,6 +46,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: netsendo-scheduler
     restart: unless-stopped
+    init: true
     command: php artisan schedule:work
     working_dir: /var/www
     volumes:
@@ -69,6 +71,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: netsendo-queue
     restart: unless-stopped
+    init: true
     command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
     working_dir: /var/www
     volumes:
@@ -93,6 +96,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: netsendo-reverb
     restart: unless-stopped
+    init: true
     command: php artisan reverb:start --host=0.0.0.0 --port=8085
     working_dir: /var/www
     volumes:

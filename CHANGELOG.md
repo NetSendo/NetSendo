@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Docker Zombie Process Accumulation:**
+  - Added `init: true` to all PHP containers (`app`, `scheduler`, `queue`, `reverb`) in both `docker-compose.yml` and `docker-compose.dev.yml`.
+  - Fixes zombie processes accumulating in the `scheduler` container (~5760/day) caused by `runInBackground()` tasks forking child PHP processes every minute without an init process (PID 1) to reap them.
+  - Docker now injects Tini as PID 1, which properly calls `wait()` on terminated child processes.
+
 ### Changed
 
 ## [1.9.3] – Short Description
