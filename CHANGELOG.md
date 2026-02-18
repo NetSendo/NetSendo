@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Automatic Telegram webhook registration when saving bot token in Brain settings.
+- Manual "Set Webhook" button and status feedback in Brain settings UI.
+- New route `api.telegram.set-webhook` for frontend webhook management.
+
+### Fixed
+
+- Fixed Telegram bot using `HTML` parse mode for Markdown messages, causing delivery failures.
+- Fixed bot token resolution failure for unlinked users in self-hosted environments (added fallback to any configured token).
+
+### Added
+
 ### Fixed
 
 - **Brain Integration Fixes:**

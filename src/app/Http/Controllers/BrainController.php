@@ -10,8 +10,10 @@ use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\KnowledgeBaseService;
 use App\Services\Brain\ModeController;
 use App\Services\Brain\Telegram\TelegramAuthService;
+use App\Services\Brain\Telegram\TelegramBotService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class BrainController extends Controller
 {
@@ -20,6 +22,7 @@ class BrainController extends Controller
         protected KnowledgeBaseService $knowledgeBase,
         protected ModeController $modeController,
         protected TelegramAuthService $telegramAuth,
+        protected TelegramBotService $telegramBot,
     ) {}
 
     /**
@@ -291,6 +294,27 @@ class BrainController extends Controller
             'preferred_model', 'preferred_integration_id',
             'model_routing',
         ]));
+
+        // Auto-register webhook when bot token is saved
+        if ($request->has('telegram_bot_token') && !empty($request->input('telegram_bot_token'))) {
+            try {
+                $webhookUrl = rtrim(config('app.url'), '/') . '/api/telegram/webhook';
+                $result = $this->telegramBot->setWebhook($webhookUrl, $request->user());
+
+                Log::info('Telegram webhook auto-registration', [
+                    'url' => $webhookUrl,
+                    'result' => $result,
+                ]);
+
+                $settings->webhook_setup_result = $result['ok'] ?? false
+                    ? 'success'
+                    : ($result['description'] ?? 'failed');
+            } catch (\Exception $e) {
+                Log::warning('Telegram webhook auto-registration failed', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json($settings);
     }

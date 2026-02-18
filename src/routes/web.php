@@ -232,6 +232,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code');
         Route::post('/api/telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])->name('api.telegram.disconnect');
         Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test');
+        Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook');
 
         // Knowledge Base
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');

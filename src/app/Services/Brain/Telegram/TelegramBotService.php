@@ -34,6 +34,23 @@ class TelegramBotService
     }
 
     /**
+     * Resolve any available bot token from DB (for self-hosted with single instance).
+     * Used as fallback when chat_id is not yet linked to any user.
+     */
+    protected function resolveAnyBotToken(): string
+    {
+        $settings = AiBrainSettings::whereNotNull('telegram_bot_token')
+            ->where('telegram_bot_token', '!=', '')
+            ->first();
+
+        if ($settings) {
+            return $settings->getBotToken() ?: '';
+        }
+
+        return config('services.telegram.bot_token', '');
+    }
+
+    /**
      * Resolve the bot token from a Telegram chat_id (find linked user first).
      */
     protected function resolveBotTokenByChatId(string $chatId): string
@@ -309,6 +326,12 @@ class TelegramBotService
     {
         $botToken = $this->resolveBotTokenByChatId($chatId);
 
+        // Fallback: if no token found by chat_id (user not linked yet),
+        // try to find any configured token (self-hosted single-instance)
+        if (empty($botToken)) {
+            $botToken = $this->resolveAnyBotToken();
+        }
+
         if (empty($botToken)) {
             Log::warning('Telegram bot token not configured');
             return null;
@@ -317,7 +340,7 @@ class TelegramBotService
         $payload = [
             'chat_id' => $chatId,
             'text' => $text,
-            'parse_mode' => 'HTML',
+            'parse_mode' => 'Markdown',
             'disable_web_page_preview' => true,
         ];
 

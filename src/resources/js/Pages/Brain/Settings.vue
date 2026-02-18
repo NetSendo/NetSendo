@@ -169,6 +169,8 @@ const telegramTestResult = ref(null);
 const botToken = ref("");
 const isSavingToken = ref(false);
 const tokenSaved = ref(false);
+const webhookStatus = ref(null);
+const isSettingWebhook = ref(false);
 const existingTokenMask = ref(
     props.settings?.telegram_bot_token
         ? "••••••••" + props.settings.telegram_bot_token.slice(-4)
@@ -179,18 +181,82 @@ const saveBotToken = async () => {
     if (!botToken.value.trim()) return;
     isSavingToken.value = true;
     tokenSaved.value = false;
+    webhookStatus.value = null;
     try {
-        await axios.put("/brain/api/settings", {
+        const response = await axios.put("/brain/api/settings", {
             telegram_bot_token: botToken.value,
         });
         existingTokenMask.value = "••••••••" + botToken.value.slice(-4);
         botToken.value = "";
         tokenSaved.value = true;
-        setTimeout(() => (tokenSaved.value = false), 2000);
+
+        // Show webhook registration result
+        if (response.data?.webhook_setup_result) {
+            webhookStatus.value =
+                response.data.webhook_setup_result === "success"
+                    ? {
+                          success: true,
+                          message: t(
+                              "brain.telegram.webhook_success",
+                              "Webhook zarejestrowany pomyślnie",
+                          ),
+                      }
+                    : {
+                          success: false,
+                          message:
+                              t("brain.telegram.webhook_failed", "Webhook: ") +
+                              response.data.webhook_setup_result,
+                      };
+        }
+
+        setTimeout(() => (tokenSaved.value = false), 3000);
     } catch (error) {
         // Error
     } finally {
         isSavingToken.value = false;
+    }
+};
+
+const setupWebhook = async () => {
+    isSettingWebhook.value = true;
+    webhookStatus.value = null;
+    try {
+        const webhookUrl = window.location.origin + "/api/telegram/webhook";
+        const response = await axios.post("/brain/api/telegram/set-webhook", {
+            url: webhookUrl,
+        });
+        if (response.data?.ok) {
+            webhookStatus.value = {
+                success: true,
+                message: t(
+                    "brain.telegram.webhook_success",
+                    "Webhook zarejestrowany pomyślnie",
+                ),
+            };
+        } else {
+            webhookStatus.value = {
+                success: false,
+                message:
+                    response.data?.description ||
+                    t(
+                        "brain.telegram.webhook_failed_generic",
+                        "Nie udało się ustawić webhooka",
+                    ),
+            };
+        }
+    } catch (error) {
+        webhookStatus.value = {
+            success: false,
+            message:
+                error.response?.data?.error ||
+                error.response?.data?.description ||
+                t(
+                    "brain.telegram.webhook_error",
+                    "Błąd podczas ustawiania webhooka",
+                ),
+        };
+    } finally {
+        isSettingWebhook.value = false;
     }
 };
 
@@ -784,6 +850,42 @@ const getCategoryColor = (key) => {
                             )
                         }}
                     </p>
+
+                    <!-- Webhook Status -->
+                    <div
+                        v-if="webhookStatus"
+                        class="mt-2 rounded-lg px-3 py-2 text-xs"
+                        :class="{
+                            'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400':
+                                webhookStatus.success,
+                            'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400':
+                                !webhookStatus.success,
+                        }"
+                    >
+                        {{ webhookStatus.success ? "✅" : "⚠️" }}
+                        {{ webhookStatus.message }}
+                    </div>
+
+                    <!-- Manual Webhook Setup -->
+                    <div v-if="existingTokenMask" class="mt-2">
+                        <button
+                            @click="setupWebhook"
+                            :disabled="isSettingWebhook"
+                            class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 disabled:opacity-50"
+                        >
+                            {{
+                                isSettingWebhook
+                                    ? t(
+                                          "brain.telegram.webhook_setting",
+                                          "Ustawianie webhooka...",
+                                      )
+                                    : t(
+                                          "brain.telegram.webhook_setup",
+                                          "🔗 Ustaw Webhook",
+                                      )
+                            }}
+                        </button>
+                    </div>
                 </div>
 
                 <div v-if="isTelegramConnected" class="space-y-4">
