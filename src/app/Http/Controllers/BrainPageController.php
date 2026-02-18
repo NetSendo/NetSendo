@@ -98,4 +98,25 @@ class BrainPageController extends Controller
             'modelRoutingTasks' => collect(AiBrainSettings::MODEL_ROUTING_TASKS)->map(fn($v, $k) => 'brain.task.' . $k),
         ]);
     }
+
+    /**
+     * Brain Orchestration Monitor page.
+     * GET /brain/monitor
+     */
+    public function monitor(Request $request): Response
+    {
+        $user = $request->user();
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        return Inertia::render('Brain/Monitor', [
+            'settings' => [
+                'work_mode' => $settings->work_mode ?? 'semi_auto',
+                'cron_enabled' => (bool) $settings->cron_enabled,
+                'cron_interval_minutes' => (int) ($settings->cron_interval_minutes ?? 60),
+                'is_active' => (bool) $settings->is_active,
+                'daily_token_limit' => (int) $settings->daily_token_limit,
+                'tokens_used_today' => (int) $settings->tokens_used_today,
+            ],
+        ]);
+    }
 }

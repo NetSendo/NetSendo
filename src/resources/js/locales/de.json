@@ -1054,6 +1054,22 @@
             "unavailable": "Brain KI nicht verfügbar",
             "configure": "Konfigurieren"
         },
+        "brain_activity": {
+            "bar_title": "Brain arbeitet...",
+            "bar_view_monitor": "Monitor",
+            "steps": "Schritte",
+            "tokens": "Token",
+            "orchestration_title": "Brain-Orchestrierung",
+            "orchestration_live": "LIVE",
+            "orchestration_open_monitor": "Monitor öffnen →",
+            "active_plans": "Aktive Pläne",
+            "completed_today": "Heute",
+            "tokens_used": "Token",
+            "active_agents": "Agenten",
+            "no_recent_activity": "Keine aktuelle Aktivität",
+            "just_now": "gerade eben",
+            "ago": "her"
+        },
         "stats": {
             "subscribers": "Abonnenten",
             "sent_emails": "Gesendete E-Mails",
@@ -6488,6 +6504,37 @@
             "col_category": "Kategorie",
             "col_active": "Aktiv",
             "col_actions": "Aktionen"
+        },
+        "monitor_label": "Monitor",
+        "monitor": {
+            "page_title": "Brain — Orchestrierungs-Monitor",
+            "subtitle": "Echtzeit-Überwachung von Agenten, Aufgaben und Brain-Aktivität",
+            "brain_status": "Brain-Status",
+            "active": "Aktiv",
+            "idle": "Inaktiv",
+            "mode": "Modus",
+            "agents": "Sub-Agenten",
+            "task_list": "Aufgabenliste",
+            "execution_logs": "Ausführungsprotokolle",
+            "cron_settings": "CRON-Einstellungen",
+            "cron_desc": "Automatische Brain-Planung konfigurieren",
+            "cron_enabled": "Automatischer Start",
+            "cron_interval": "Intervall",
+            "last_run": "Letzter Lauf",
+            "next_run": "Nächster Lauf",
+            "plans_today": "Pläne heute",
+            "tokens_today": "Tokens heute",
+            "last_activity": "Letzte Aktivität",
+            "never": "Nie",
+            "tasks_today": "Heute",
+            "success_rate": "Erfolgsrate",
+            "last_action": "Letzte Aktion",
+            "no_tasks": "Keine Aufgaben",
+            "no_logs": "Keine Protokolle",
+            "all_agents": "Alle Agenten",
+            "all_statuses": "Alle Status",
+            "live": "LIVE",
+            "auto_refresh": "Auto-Aktualisierung"
         }
     }
 }

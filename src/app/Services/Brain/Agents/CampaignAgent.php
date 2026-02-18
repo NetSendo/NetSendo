@@ -150,24 +150,34 @@ PROMPT;
     public function execute(AiActionPlan $plan, User $user): array
     {
         $steps = $plan->steps()->orderBy('step_order')->get();
-        $results = [];
+        $stepReports = [];
+        $hasErrors = false;
 
         foreach ($steps as $step) {
             try {
                 $result = $this->executeStep($step, $user);
-                $results[] = $result;
+                $detail = $result['message'] ?? '';
+                $stepReports[] = "  {$step->step_order}. ✅ **{$step->title}**" . ($detail ? "\n     ↳ {$detail}" : '');
             } catch (\Exception $e) {
-                return [
-                    'type' => 'error',
-                    'message' => __('brain.campaign.step_error', ['step' => $step->step_order, 'title' => $step->title, 'error' => $e->getMessage()]),
-                ];
+                $hasErrors = true;
+                $stepReports[] = "  {$step->step_order}. ❌ **{$step->title}**\n     ↳ {$e->getMessage()}";
             }
         }
 
-        $completedCount = count(array_filter($results));
+        $completedCount = count(array_filter($stepReports, fn($r) => str_contains($r, '✅')));
+        $icon = $hasErrors ? '⚠️' : '✅';
+        $report = "{$icon} **{$plan->title}**\n";
+
+        if ($plan->description) {
+            $report .= "{$plan->description}\n";
+        }
+
+        $report .= "\n📋 **Wykonane kroki** ({$completedCount}/{$plan->total_steps}):\n"
+            . implode("\n", $stepReports);
+
         return [
             'type' => 'execution_result',
-            'message' => __('brain.campaign.plan_completed', ['completed' => $completedCount, 'total' => $plan->total_steps]),
+            'message' => $report,
         ];
     }
 

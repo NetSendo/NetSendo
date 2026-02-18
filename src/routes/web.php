@@ -221,12 +221,18 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::prefix('brain')->name('brain.')->group(function () {
         Route::get('/', [\App\Http\Controllers\BrainPageController::class, 'index'])->name('index');
         Route::get('/settings', [\App\Http\Controllers\BrainPageController::class, 'settings'])->name('settings');
+        Route::get('/monitor', [\App\Http\Controllers\BrainPageController::class, 'monitor'])->name('monitor');
 
         // Brain Status AJAX (dashboard widget)
         Route::get('/api/status', [\App\Http\Controllers\BrainController::class, 'dashboardStatus'])->name('api.status');
 
         // Brain Settings AJAX API (session-authenticated, used by Settings.vue)
         Route::put('/api/settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])->name('api.settings.update');
+
+        // Orchestration Monitor API
+        Route::get('/api/monitor', [\App\Http\Controllers\BrainController::class, 'orchestrationMonitor'])->name('api.monitor');
+        Route::get('/api/monitor/logs', [\App\Http\Controllers\BrainController::class, 'orchestrationLogs'])->name('api.monitor.logs');
+        Route::put('/api/monitor/cron', [\App\Http\Controllers\BrainController::class, 'updateCronSettings'])->name('api.monitor.cron');
 
         // Telegram Integration
         Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code');
@@ -241,6 +247,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         // Chat API (session-authenticated, used by Index.vue)
         Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');
+        Route::post('/api/chat/stream', [\App\Http\Controllers\BrainController::class, 'chatStream'])->name('api.chat.stream');
         Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
         Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
         Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');

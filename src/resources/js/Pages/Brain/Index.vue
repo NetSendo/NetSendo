@@ -98,50 +98,174 @@ const sendMessage = async () => {
     newMessage.value = "";
     isLoading.value = true;
 
+    // Create empty assistant message for streaming
+    const assistantMsgId = Date.now() + 1;
+    const assistantMsg = {
+        id: assistantMsgId,
+        role: "assistant",
+        content: "",
+        model_used: null,
+        plan: null,
+        created_at: new Date().toISOString(),
+        isStreaming: true,
+    };
+
     try {
-        const response = await axios.post("/brain/api/chat", {
-            message: text,
-            conversation_id: activeConversationId.value,
-            force_new: isNewConversation.value,
+        // Get CSRF token from meta tag or cookie
+        const csrfToken =
+            document.querySelector('meta[name="csrf-token"]')?.content || "";
+
+        const response = await fetch("/brain/api/chat/stream", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "text/event-stream",
+                "X-CSRF-TOKEN": csrfToken,
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            body: JSON.stringify({
+                message: text,
+                conversation_id: activeConversationId.value,
+                force_new: isNewConversation.value,
+            }),
         });
 
-        const data = response.data;
-
-        // Update conversation ID if new
-        if (data.conversation_id && !activeConversationId.value) {
-            activeConversationId.value = data.conversation_id;
-            isNewConversation.value = false;
-            await refreshConversations();
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
         }
 
-        // Update title in sidebar if auto-generated
-        if (data.title) {
-            const conv = conversationList.value.find(
-                (c) =>
-                    c.id ===
-                    (data.conversation_id || activeConversationId.value),
-            );
-            if (conv) conv.title = data.title;
+        // Push the empty assistant message — typing dots disappear, streaming text appears
+        messages.value.push(assistantMsg);
+        isLoading.value = false; // Hide typing dots, streaming message is now visible
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            // Keep the last (potentially incomplete) line in buffer
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith("data: ")) continue;
+
+                const payload = trimmed.slice(6);
+                try {
+                    const json = JSON.parse(payload);
+
+                    if (json.done) {
+                        // Stream complete — update metadata
+                        if (
+                            json.conversation_id &&
+                            !activeConversationId.value
+                        ) {
+                            activeConversationId.value = json.conversation_id;
+                            isNewConversation.value = false;
+                            await refreshConversations();
+                        }
+
+                        if (json.title) {
+                            const conv = conversationList.value.find(
+                                (c) =>
+                                    c.id ===
+                                    (json.conversation_id ||
+                                        activeConversationId.value),
+                            );
+                            if (conv) conv.title = json.title;
+                        }
+
+                        // Update assistant message metadata
+                        const msg = messages.value.find(
+                            (m) => m.id === assistantMsgId,
+                        );
+                        if (msg) {
+                            msg.model_used = json.model || null;
+                            msg.plan = json.plan || null;
+                            msg.isStreaming = false;
+                        }
+                    } else if (json.delta) {
+                        // Append text chunk to streaming message
+                        const msg = messages.value.find(
+                            (m) => m.id === assistantMsgId,
+                        );
+                        if (msg) {
+                            msg.content += json.delta;
+                        }
+                        scrollToBottom();
+                    }
+                } catch (e) {
+                    // Skip malformed JSON lines
+                }
+            }
         }
 
-        // Add assistant response
-        messages.value.push({
-            id: Date.now() + 1,
-            role: "assistant",
-            content: data.response || data.message || "",
-            model_used: data.model || null,
-            plan: data.plan || null,
-            created_at: new Date().toISOString(),
-        });
+        // Ensure streaming flag is off
+        const finalMsg = messages.value.find((m) => m.id === assistantMsgId);
+        if (finalMsg) finalMsg.isStreaming = false;
     } catch (error) {
-        messages.value.push({
-            id: Date.now() + 1,
-            role: "system",
-            content:
-                error.response?.data?.error ||
-                t("brain.error_generic", "Wystąpił błąd. Spróbuj ponownie."),
-            created_at: new Date().toISOString(),
-        });
+        // Streaming failed — fall back to synchronous
+        try {
+            const fallbackResponse = await axios.post("/brain/api/chat", {
+                message: text,
+                conversation_id: activeConversationId.value,
+                force_new: isNewConversation.value,
+            });
+
+            const data = fallbackResponse.data;
+
+            if (data.conversation_id && !activeConversationId.value) {
+                activeConversationId.value = data.conversation_id;
+                isNewConversation.value = false;
+                await refreshConversations();
+            }
+
+            if (data.title) {
+                const conv = conversationList.value.find(
+                    (c) =>
+                        c.id ===
+                        (data.conversation_id || activeConversationId.value),
+                );
+                if (conv) conv.title = data.title;
+            }
+
+            // If the streaming message was already pushed, update it
+            const existingMsg = messages.value.find(
+                (m) => m.id === assistantMsgId,
+            );
+            if (existingMsg) {
+                existingMsg.content = data.response || data.message || "";
+                existingMsg.model_used = data.model || null;
+                existingMsg.plan = data.plan || null;
+                existingMsg.isStreaming = false;
+            } else {
+                messages.value.push({
+                    id: assistantMsgId,
+                    role: "assistant",
+                    content: data.response || data.message || "",
+                    model_used: data.model || null,
+                    plan: data.plan || null,
+                    created_at: new Date().toISOString(),
+                });
+            }
+        } catch (fallbackError) {
+            messages.value.push({
+                id: Date.now() + 2,
+                role: "system",
+                content:
+                    fallbackError.response?.data?.error ||
+                    t(
+                        "brain.error_generic",
+                        "Wystąpił błąd. Spróbuj ponownie.",
+                    ),
+                created_at: new Date().toISOString(),
+            });
+        }
     } finally {
         isLoading.value = false;
     }
@@ -621,10 +745,22 @@ const getLastMessage = (conversation) => {
                                                 />
                                             </svg>
                                         </div>
-                                        <div
-                                            class="flex-1 brain-markdown"
-                                            v-html="renderMarkdown(msg.content)"
-                                        ></div>
+                                        <div class="flex-1">
+                                            <div
+                                                class="brain-markdown"
+                                                :class="{
+                                                    inline: msg.isStreaming,
+                                                }"
+                                                v-html="
+                                                    renderMarkdown(msg.content)
+                                                "
+                                            ></div>
+                                            <span
+                                                v-if="msg.isStreaming"
+                                                class="streaming-cursor"
+                                                >▊</span
+                                            >
+                                        </div>
                                     </div>
                                     <div
                                         class="mt-1 flex items-center justify-between"
@@ -903,5 +1039,24 @@ const getLastMessage = (conversation) => {
 }
 .dark :deep(.brain-markdown blockquote) {
     color: rgba(148, 163, 184, 1);
+}
+
+/* Streaming cursor */
+.streaming-cursor {
+    display: inline;
+    animation: blink-cursor 0.8s step-end infinite;
+    color: #06b6d4;
+    font-size: 0.85em;
+    line-height: 1;
+    vertical-align: text-bottom;
+}
+@keyframes blink-cursor {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
 }
 </style>

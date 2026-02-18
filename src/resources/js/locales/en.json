@@ -888,6 +888,22 @@
         "clock": {
             "title": "Current Time",
             "timezone_label": "Timezone"
+        },
+        "brain_activity": {
+            "bar_title": "Brain is working...",
+            "bar_view_monitor": "Monitor",
+            "steps": "steps",
+            "tokens": "tokens",
+            "orchestration_title": "Brain Orchestration",
+            "orchestration_live": "LIVE",
+            "orchestration_open_monitor": "Open Monitor →",
+            "active_plans": "Active Plans",
+            "completed_today": "Today",
+            "tokens_used": "Tokens",
+            "active_agents": "Agents",
+            "no_recent_activity": "No recent activity",
+            "just_now": "just now",
+            "ago": "ago"
         }
     },
     "mailing_lists": {
@@ -7322,6 +7338,37 @@
             "col_category": "Category",
             "col_active": "Active",
             "col_actions": "Actions"
+        },
+        "monitor_label": "Monitor",
+        "monitor": {
+            "page_title": "Brain — Orchestration Monitor",
+            "subtitle": "Real-time supervision of agents, tasks and Brain activity",
+            "brain_status": "Brain Status",
+            "active": "Active",
+            "idle": "Idle",
+            "mode": "Mode",
+            "agents": "Sub-agents",
+            "task_list": "Task List",
+            "execution_logs": "Execution Logs",
+            "cron_settings": "CRON Settings",
+            "cron_desc": "Configure automatic Brain scheduling",
+            "cron_enabled": "Auto-run",
+            "cron_interval": "Interval",
+            "last_run": "Last run",
+            "next_run": "Next run",
+            "plans_today": "Plans today",
+            "tokens_today": "Tokens today",
+            "last_activity": "Last activity",
+            "never": "Never",
+            "tasks_today": "Today",
+            "success_rate": "Success rate",
+            "last_action": "Last action",
+            "no_tasks": "No tasks",
+            "no_logs": "No logs",
+            "all_agents": "All agents",
+            "all_statuses": "All statuses",
+            "live": "LIVE",
+            "auto_refresh": "Auto-refresh"
         }
     }
 }

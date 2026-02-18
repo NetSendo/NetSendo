@@ -10,6 +10,7 @@ import NotificationDropdown from "@/Components/NotificationDropdown.vue";
 import OnboardingModal from "@/Components/Dashboard/OnboardingModal.vue";
 import GlobalSearchPanel from "@/Components/GlobalSearchPanel.vue";
 import McpStatusIndicator from "@/Components/McpStatusIndicator.vue";
+import BrainActivityBar from "@/Components/BrainActivityBar.vue";
 import MeetingReminderNotification from "@/Components/MeetingReminderNotification.vue";
 import { useTheme } from "@/Composables/useTheme";
 import { useMeetingReminders } from "@/Composables/useMeetingReminders";
@@ -18,7 +19,8 @@ const page = usePage();
 const { isDark } = useTheme();
 
 // Meeting reminders
-const { activeReminder, reminderMode, dismissReminder, joinMeeting } = useMeetingReminders();
+const { activeReminder, reminderMode, dismissReminder, joinMeeting } =
+    useMeetingReminders();
 
 // Sidebar state
 const sidebarCollapsed = ref(false);
@@ -35,7 +37,7 @@ const showSearchPanel = ref(false);
 // Global search keyboard shortcut handler
 const handleGlobalKeydown = (event) => {
     // Open search with Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+    if ((event.metaKey || event.ctrlKey) && event.key === "k") {
         event.preventDefault();
         showSearchPanel.value = true;
     }
@@ -188,6 +190,9 @@ const toggleMobileMenu = () => {
                 </div>
             </div>
 
+            <!-- Brain Activity Bar -->
+            <BrainActivityBar />
+
             <!-- Top header -->
             <header
                 class="sticky top-0 z-20 border-b border-slate-200/50 bg-white/80 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900/80"
@@ -229,7 +234,9 @@ const toggleMobileMenu = () => {
                         <button
                             @click="showSearchPanel = true"
                             class="hidden items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 transition-colors hover:bg-slate-200 sm:flex dark:bg-slate-800 dark:hover:bg-slate-700"
-                            :title="$t('global_search.open_search', 'Szukaj (⌘K)')"
+                            :title="
+                                $t('global_search.open_search', 'Szukaj (⌘K)')
+                            "
                         >
                             <svg
                                 class="h-5 w-5 text-slate-400"
@@ -244,8 +251,12 @@ const toggleMobileMenu = () => {
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                                 />
                             </svg>
-                            <span class="hidden text-sm text-slate-500 lg:inline dark:text-slate-400">
-                                {{ $t('global_search.placeholder', 'Szukaj...') }}
+                            <span
+                                class="hidden text-sm text-slate-500 lg:inline dark:text-slate-400"
+                            >
+                                {{
+                                    $t("global_search.placeholder", "Szukaj...")
+                                }}
                             </span>
                             <kbd
                                 class="hidden rounded bg-slate-200 px-1.5 py-0.5 text-xs text-slate-500 md:inline-block dark:bg-slate-700 dark:text-slate-400"

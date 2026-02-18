@@ -139,4 +139,21 @@ return [
         'message_not_found' => '⚠️ Nachricht ID :id nicht gefunden',
         'message_improved' => '✨ Nachricht verbessert: :changes',
     ],
+
+    // === Monitor — Token & Cost ===
+    'monitor' => [
+        'tokens_input' => 'Input',
+        'tokens_output' => 'Output',
+        'estimated_cost' => 'Geschätzte Kosten',
+        'cost_by_model' => 'Kosten nach Modell',
+        'suggested_tasks' => 'Vorgeschlagene Aufgaben',
+        'suggested_tasks_desc' => 'Aufgaben basierend auf der Analyse Ihres CRM, Ihrer Kontaktlisten und Kampagnenhistorie',
+        'ai_generated' => 'KI-generiert',
+        'no_suggestions' => 'Keine Vorschläge — fügen Sie Kontakte und Listen hinzu, um Empfehlungen zu erhalten',
+        'execute' => 'Ausführen',
+        'executed_plans' => 'Ausgeführte Pläne',
+        'priority_high' => 'Hoch',
+        'priority_medium' => 'Mittel',
+        'priority_low' => 'Niedrig',
+    ],
 ];

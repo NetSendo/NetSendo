@@ -2,6 +2,7 @@
 
 namespace App\Services\Brain;
 
+use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
 use App\Models\AiConversationMessage;
 use App\Models\User;
@@ -84,7 +85,28 @@ class ConversationManager
      */
     public function buildSystemPrompt(User $user, string $knowledgeContext = ''): string
     {
+        // Resolve user's timezone and locale
+        $userTimezone = $user->timezone ?? config('app.timezone', 'UTC');
+        $now = now()->timezone($userTimezone);
+        $dateTimeContext = sprintf(
+            "AKTUALNA DATA I CZAS: %s (%s) | Strefa czasowa: %s",
+            $now->translatedFormat('l, j F Y, H:i'),
+            $now->format('Y-m-d H:i:s'),
+            $userTimezone
+        );
+
+        $locale = $user->locale ?? 'pl';
+        $languageMap = [
+            'pl' => 'polski',
+            'en' => 'angielski (English)',
+            'de' => 'niemiecki (Deutsch)',
+            'es' => 'hiszpański (Español)',
+        ];
+        $language = $languageMap[$locale] ?? $locale;
+
         $prompt = <<<PROMPT
+{$dateTimeContext}
+
 Jesteś NetSendo Brain — profesjonalnym asystentem AI specjalizującym się w email marketingu, SMS marketingu, CRM i automatyzacji marketingu.
 
 TWOJA ROLA:
@@ -102,7 +124,7 @@ TWOJE KOMPETENCJE:
 • Zarządzanie kontaktami CRM, firmami, dealami i zadaniami
 
 ZASADY PRACY:
-1. Odpowiadaj w języku, w którym pisze użytkownik
+1. Domyślnie odpowiadaj po {$language}. Jeśli użytkownik pisze w innym języku, przełącz się na ten język.
 2. Bądź konkretny, proaktywny i zorientowany na rezultaty — proponuj rozwiązania, nie tylko opisuj problemy
 3. Gdy użytkownik prosi o akcję, stwórz plan z konkretnymi, wykonalnymi krokami
 4. Zawsze wyjaśniaj, co zamierzasz zrobić, zanim to zrobisz — buduj zaufanie
@@ -114,11 +136,90 @@ ZASADY PRACY:
 10. Dbaj o zgodność z RODO/GDPR w rekomendacjach dotyczących danych osobowych
 PROMPT;
 
+        // Inject operational context (cron, telegram, work mode, agents)
+        $prompt .= $this->buildOperationalContext($user);
+
         if ($knowledgeContext) {
             $prompt .= "\n\nBAZA WIEDZY UŻYTKOWNIKA:\n{$knowledgeContext}";
         }
 
         return $prompt;
+    }
+
+    /**
+     * Build operational context block — cron, telegram, work mode, agents.
+     */
+    private function buildOperationalContext(User $user): string
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+        $userTimezone = $user->timezone ?? config('app.timezone', 'UTC');
+        $sections = [];
+
+        // --- Work mode ---
+        $modeLabels = [
+            'autonomous' => 'Autonomiczny — wykonujesz zadania samodzielnie bez pytania',
+            'semi_auto' => 'Półautomatyczny — proponujesz plany, czekasz na akceptację użytkownika',
+            'manual' => 'Manualny — tylko doradzasz, nie wykonujesz żadnych akcji',
+        ];
+        $modeLabel = $modeLabels[$settings->work_mode] ?? $modeLabels['semi_auto'];
+        $sections[] = "TWÓJ TRYB PRACY: {$settings->work_mode} — {$modeLabel}";
+
+        // --- CRON awareness ---
+        if ($settings->cron_enabled && $settings->cron_interval_minutes) {
+            $interval = (int) $settings->cron_interval_minutes;
+
+            $lastRun = $settings->last_cron_run_at
+                ? $settings->last_cron_run_at->timezone($userTimezone)->format('Y-m-d H:i')
+                : 'jeszcze nigdy';
+
+            $nextRun = $settings->last_cron_run_at
+                ? $settings->last_cron_run_at->addMinutes($interval)->timezone($userTimezone)->format('H:i')
+                : 'wkrótce';
+
+            $cronBlock = <<<CRON
+
+AUTONOMICZNA PRACA (CRON AKTYWNY):
+Masz włączone automatyczne planowanie! Pracujesz autonomicznie co {$interval} minut.
+• Ostatnie uruchomienie: {$lastRun}
+• Następne uruchomienie: ~{$nextRun}
+• W każdym cyklu automatycznie sprawdzasz sugerowane zadania i wykonujesz te o wysokim priorytecie.
+
+CO TO OZNACZA DLA CIEBIE:
+- MOŻESZ planować zadania na przyszłe cykle — zostaną wykonane automatycznie
+- MOŻESZ rozkładać prace w czasie (np. "teraz przygotuj treść, w następnym cyklu wyślij kampanię")
+- MOŻESZ przydzielać zadania sub-agentom, którzy raportują Ci wykonanie
+- NIE MÓWI prawdy "nie mogę pracować w tle" — pracujesz autonomicznie co {$interval} minut!
+- Gdy użytkownik pyta o planowanie: informuj że masz aktywny harmonogram i zaproponuj konkretny plan z przypisaniem do cykli
+CRON;
+            $sections[] = $cronBlock;
+        }
+
+        // --- Sub-agents ---
+        $sections[] = <<<AGENTS
+
+TWOI SUB-AGENCI (możesz do nich delegować zadania):
+• campaign — planowanie i tworzenie kampanii email/SMS, harmonogramowanie, A/B testy
+• list — zarządzanie listami kontaktów, import/eksport, segmenty
+• message — tworzenie treści wiadomości, szablony HTML, copywriting
+• crm — zarządzanie kontaktami, firmami, dealami, zadaniami CRM
+• analytics — analiza wyników kampanii, raporty, KPI, trendy
+• segmentation — segmentacja odbiorców, scoring, grupy docelowe
+
+Każdy sub-agent raportuje Ci wyniki swojej pracy. Możesz tworzyć plany wieloetapowe z podziałem na agentów.
+AGENTS;
+
+        // --- Telegram ---
+        if ($settings->isTelegramConnected()) {
+            $sections[] = <<<TELEGRAM_BLOCK
+
+TELEGRAM (PODŁĄCZONY ✅):
+Użytkownik ma podłączonego Telegrama. Po wykonaniu zadań automatycznych (CRON) wyniki są raportowane na Telegram.
+• Gdy planujesz zadania — informuj że wyniki trafią na Telegram
+• Gdy użytkownik pyta o powiadomienia — potwierdź że raporty idą na Telegram automatycznie
+TELEGRAM_BLOCK;
+        }
+
+        return "\n\n" . implode("\n", $sections);
     }
 
     /**

@@ -146,4 +146,42 @@ class OpenrouterProvider extends BaseProvider
 
         return $modelId;
     }
+
+    /**
+     * Stream text generation via OpenRouter (OpenAI-compatible SSE).
+     *
+     * @return \Generator<string>
+     */
+    public function generateTextStream(string $prompt, ?string $model = null, array $options = []): \Generator
+    {
+        $url = rtrim($this->getBaseUrl(), '/') . '/chat/completions';
+
+        $data = [
+            'model' => $this->getModel($model),
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'max_tokens' => $options['max_tokens'] ?? 65536,
+            'temperature' => $options['temperature'] ?? 0.7,
+            'stream' => true,
+        ];
+
+        foreach ($this->makeStreamingRequest($url, $data) as $line) {
+            if (!str_starts_with($line, 'data: ')) {
+                continue;
+            }
+
+            $payload = substr($line, 6);
+            if ($payload === '[DONE]') {
+                break;
+            }
+
+            $json = json_decode($payload, true);
+            $delta = $json['choices'][0]['delta']['content'] ?? '';
+
+            if ($delta !== '') {
+                yield $delta;
+            }
+        }
+    }
 }

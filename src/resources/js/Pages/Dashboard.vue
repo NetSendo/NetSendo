@@ -9,6 +9,7 @@ import QuickActions from "@/Components/Dashboard/QuickActions.vue";
 import SetupTrackerBar from "@/Components/Dashboard/SetupTrackerBar.vue";
 import HealthScoreWidget from "@/Components/Dashboard/HealthScoreWidget.vue";
 import BrainWidget from "@/Components/Dashboard/BrainWidget.vue";
+import BrainOrchestrationWidget from "@/Components/Dashboard/BrainOrchestrationWidget.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const page = usePage();
@@ -411,6 +412,9 @@ onMounted(() => {
                 </template>
             </StatsCard>
         </div>
+
+        <!-- Brain Orchestration Activity -->
+        <BrainOrchestrationWidget />
 
         <!-- Main content grid -->
         <div class="grid gap-6 lg:grid-cols-3">

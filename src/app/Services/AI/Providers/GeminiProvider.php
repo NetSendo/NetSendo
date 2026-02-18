@@ -205,4 +205,56 @@ class GeminiProvider extends BaseProvider
             throw new \Exception('Gemini Vision Error: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Stream text generation via Gemini SSE.
+     * Uses streamGenerateContent endpoint with alt=sse.
+     *
+     * @return \Generator<string>
+     */
+    public function generateTextStream(string $prompt, ?string $model = null, array $options = []): \Generator
+    {
+        $modelId = $this->getModel($model);
+        $url = $this->getBaseUrl() . "/models/{$modelId}:streamGenerateContent?alt=sse&key=" . $this->getApiKey();
+
+        $data = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $prompt],
+                    ],
+                ],
+            ],
+            'generationConfig' => [
+                'maxOutputTokens' => $options['max_tokens'] ?? 65536,
+                'temperature' => $options['temperature'] ?? 0.7,
+            ],
+        ];
+
+        // Gemini uses API key in URL, no Bearer auth needed
+        $headers = [
+            'Content-Type' => 'application/json',
+        ];
+
+        foreach ($this->makeStreamingRequest($url, $data, $headers) as $line) {
+            if (!str_starts_with($line, 'data: ')) {
+                continue;
+            }
+
+            $payload = substr($line, 6);
+            $json = json_decode($payload, true);
+
+            if (!$json) {
+                continue;
+            }
+
+            $parts = $json['candidates'][0]['content']['parts'] ?? [];
+            foreach ($parts as $part) {
+                $text = $part['text'] ?? '';
+                if ($text !== '') {
+                    yield $text;
+                }
+            }
+        }
+    }
 }

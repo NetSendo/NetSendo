@@ -193,3 +193,19 @@ Schedule::command('nmi:rotate-dkim')
     ->at('04:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-dkim.log'));
+
+/*
+|--------------------------------------------------------------------------
+| Brain AI Orchestration
+|--------------------------------------------------------------------------
+| Automatyczne uruchamianie Mózgu AI wg ustawień CRON per-user.
+| Komenda sprawdza interwał każdego użytkownika i uruchamia orkiestrację.
+*/
+
+// Brain AI — Automatyczna orkiestracja (sprawdza per-user interwał)
+Schedule::command('brain:run-cron')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/brain-cron.log'));
+

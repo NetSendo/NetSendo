@@ -98,7 +98,7 @@ abstract class BaseAgent
         }
 
         return $this->aiService->generateContent(
-            AiService::prependDateContext($prompt),
+            AiService::prependDateContext($prompt, $user?->timezone),
             $integration,
             $options
         );

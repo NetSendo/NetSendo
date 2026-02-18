@@ -139,4 +139,21 @@ return [
         'message_not_found' => '⚠️ Message ID :id not found',
         'message_improved' => '✨ Message improved: :changes',
     ],
+
+    // === Monitor — Token & Cost ===
+    'monitor' => [
+        'tokens_input' => 'Input',
+        'tokens_output' => 'Output',
+        'estimated_cost' => 'Estimated cost',
+        'cost_by_model' => 'Cost by model',
+        'suggested_tasks' => 'Suggested tasks',
+        'suggested_tasks_desc' => 'Tasks suggested based on analysis of your CRM, contact lists and campaign history',
+        'ai_generated' => 'AI generated',
+        'no_suggestions' => 'No suggestions — add contacts and lists to receive recommendations',
+        'execute' => 'Execute',
+        'executed_plans' => 'Executed plans',
+        'priority_high' => 'High',
+        'priority_medium' => 'Medium',
+        'priority_low' => 'Low',
+    ],
 ];

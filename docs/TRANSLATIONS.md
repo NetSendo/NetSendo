@@ -790,3 +790,90 @@ The following translation keys were added to support the Brain Settings page, in
 ```
 
 ```
+
+### Brain Orchestration Monitor (February 2026)
+
+The following translation keys were added to support the Brain Orchestration Monitor feature:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Brain Monitor (`brain.monitor.*`):**
+
+- `brain.monitor_label` - Monitor link label in sidebar
+- `brain.monitor.page_title` - Page title
+- `brain.monitor.subtitle` - Page subtitle
+- `brain.monitor.brain_status` - Brain status card title
+- `brain.monitor.active` - Active status label
+- `brain.monitor.idle` - Idle status label
+- `brain.monitor.mode` - Mode label
+- `brain.monitor.agents` - Agents section title
+- `brain.monitor.task_list` - Task list section title
+- `brain.monitor.execution_logs` - Execution logs section title
+- `brain.monitor.cron_settings` - Cron settings card title
+- `brain.monitor.cron_desc` - Cron settings description
+- `brain.monitor.cron_enabled` - Cron enabled toggle label
+- `brain.monitor.cron_interval` - Cron interval selector label
+- `brain.monitor.last_run` - Last run label
+- `brain.monitor.next_run` - Next run label
+- `brain.monitor.plans_today` - Plans today stat card
+- `brain.monitor.tokens_today` - Tokens today stat card
+- `brain.monitor.last_activity` - Last activity stat card
+- `brain.monitor.never` - Never label (for time-ago)
+- `brain.monitor.tasks_today` - Tasks today count (agent card)
+- `brain.monitor.success_rate` - Success rate (agent card)
+- `brain.monitor.last_action` - Last action (agent card)
+- `brain.monitor.no_tasks` - No tasks empty state
+- `brain.monitor.no_logs` - No logs empty state
+- `brain.monitor.all_agents` - All agents filter option
+- `brain.monitor.all_statuses` - All statuses filter option
+- `brain.monitor.live` - Live indicator label
+- `brain.monitor.auto_refresh` - Auto-refresh toggle label
+
+| Key                        | PL                           | EN                            | DE                              | ES                              |
+| -------------------------- | ---------------------------- | ----------------------------- | ------------------------------- | ------------------------------- |
+| `brain.monitor.page_title` | Brain — Monitor Orkiestracji | Brain — Orchestration Monitor | Brain — Orchestrierungs-Monitor | Brain — Monitor de Orquestación |
+| `brain.monitor.live`       | NA ŻYWO                      | LIVE                          | LIVE                            | EN VIVO                         |
+
+**Usage Example:**
+
+```vue
+<h1>{{ $t("brain.monitor.page_title") }}</h1>
+<span
+  :class="{ 'text-green-500': active }"
+>{{ $t("brain.monitor.active") }}</span>
+```
+
+### Brain Activity Notifications (February 2026)
+
+The following translation keys were added to support the global Brain Activity Bar and Dashboard Orchestration Widget:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Brain Activity (`dashboard.brain_activity.*`):**
+
+- `dashboard.brain_activity.bar_title` - Top bar title when Brain is working
+- `dashboard.brain_activity.bar_view_monitor` - Link to open Monitor page
+- `dashboard.brain_activity.steps` - Steps counter label
+- `dashboard.brain_activity.tokens` - Tokens counter label
+- `dashboard.brain_activity.orchestration_title` - Dashboard widget title
+- `dashboard.brain_activity.orchestration_live` - LIVE badge label
+- `dashboard.brain_activity.orchestration_open_monitor` - Open Monitor link
+- `dashboard.brain_activity.active_plans` - Active plans stat label
+- `dashboard.brain_activity.completed_today` - Completed today stat label
+- `dashboard.brain_activity.tokens_used` - Tokens used stat label
+- `dashboard.brain_activity.active_agents` - Active agents stat label
+- `dashboard.brain_activity.no_recent_activity` - Empty state message
+- `dashboard.brain_activity.just_now` - Time ago "just now" label
+- `dashboard.brain_activity.ago` - Time ago suffix
+
+| Key                                           | PL               | EN                  | DE                | ES                       |
+| --------------------------------------------- | ---------------- | ------------------- | ----------------- | ------------------------ |
+| `dashboard.brain_activity.bar_title`          | Brain pracuje... | Brain is working... | Brain arbeitet... | Brain está trabajando... |
+| `dashboard.brain_activity.orchestration_live` | NA ŻYWO          | LIVE                | LIVE              | EN VIVO                  |
+
+**Usage Example:**
+
+```vue
+<span>{{ $t("dashboard.brain_activity.bar_title") }}</span>
+<span>{{ $t("dashboard.brain_activity.orchestration_title") }}</span>
+```

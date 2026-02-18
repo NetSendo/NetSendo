@@ -39,4 +39,14 @@ interface AiProviderInterface
      * Check if the provider supports fetching models from API.
      */
     public function supportsFetchModels(): bool;
+
+    /**
+     * Stream text generation, yielding chunks as they arrive.
+     *
+     * @param string $prompt The input prompt
+     * @param string|null $model The model to use (or default)
+     * @param array $options Additional options
+     * @return \Generator<string> Yields text chunks
+     */
+    public function generateTextStream(string $prompt, ?string $model = null, array $options = []): \Generator;
 }

@@ -165,4 +165,49 @@ class AnthropicProvider extends BaseProvider
 
         return $text;
     }
+
+    /**
+     * Stream text generation via Anthropic SSE.
+     * Anthropic uses event: content_block_delta with delta.text.
+     *
+     * @return \Generator<string>
+     */
+    public function generateTextStream(string $prompt, ?string $model = null, array $options = []): \Generator
+    {
+        $url = rtrim($this->getBaseUrl(), '/') . '/v1/messages';
+
+        $data = [
+            'model' => $this->getModel($model),
+            'max_tokens' => $options['max_tokens'] ?? 128000,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'stream' => true,
+        ];
+
+        foreach ($this->makeStreamingRequest($url, $data) as $line) {
+            // Anthropic SSE format: "event: content_block_delta" followed by "data: {...}"
+            if (!str_starts_with($line, 'data: ')) {
+                continue;
+            }
+
+            $payload = substr($line, 6);
+            $json = json_decode($payload, true);
+
+            if (!$json) {
+                continue;
+            }
+
+            $type = $json['type'] ?? '';
+
+            if ($type === 'content_block_delta') {
+                $delta = $json['delta']['text'] ?? '';
+                if ($delta !== '') {
+                    yield $delta;
+                }
+            } elseif ($type === 'message_stop') {
+                break;
+            }
+        }
+    }
 }

@@ -9,9 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **NetSendo Brain — Chat Streaming:**
+  - **Real-Time Responses:** Implemented Server-Sent Events (SSE) streaming for Brain chat, providing immediate token-by-token feedback instead of waiting for full generation.
+  - **Provider Support:** Updated all 6 AI providers (OpenAI, Anthropic, Gemini, Grok, Openrouter, Ollama) to support streaming via `generateTextStream()`.
+  - **Reliability:** Implemented smart persistence that saves partial responses if the connection is interrupted (e.g., tab switch), ensuring no data loss.
+  - **Frontend UX:** Rewrote `sendMessage()` in `Index.vue` using `fetch` and `ReadableStream` for progressive rendering with a blinking cursor indicator.
+  - **Backend Architecture:** Added `streamConversation()` to `AgentOrchestrator` and `chatStream()` endpoint in `BrainController` with cURL-based non-buffered streaming.
+
+### Fixed
+
+- **Brain Heredoc Syntax:**
+  - Fixed a PHP 7.3+ compatibility issue in `ConversationManager.php` where a heredoc content line starting with the heredoc label (`TELEGRAM`) caused a parse error. Renamed the label to `TELEGRAM_BLOCK`.
+
+## [2.0.1] – Short Description
+
+**Release date:** 2026-02-18
+
+### Added
+
 - Automatic Telegram webhook registration when saving bot token in Brain settings.
 - Manual "Set Webhook" button and status feedback in Brain settings UI.
 - New route `api.telegram.set-webhook` for frontend webhook management.
+- Brain agent prompts now include current date/time in user's timezone (from `User.timezone`).
+- Brain system prompt now defaults to the user's locale language (from `User.locale`) with auto-switch when user writes in a different language.
+- Brain campaign execution now returns detailed step-by-step reports instead of just a completion count.
+- **NetSendo Brain — Orchestration Monitor:**
+  - **Monitor Dashboard:** New real-time dashboard (`/brain/monitor`) providing deep visibility into the AI's internal state, task execution, and agent activities.
+  - **Live Status:** Real-time indicators for Brain status (Active/Idle) and individual sub-agent activity (Campaign, List, Message, CRM, Analytics, Segmentation).
+  - **Execution Logs:** Comprehensive log viewer for tracking every step of the AI's decision-making process with filtering by agent and status.
+  - **Cron Management:** UI controls for configuring the background orchestration schedule directly from the monitor interface.
+  - **Task Visualization:** Live feed of pending and active tasks with success rates and token usage metrics.
+  - **Localization:** Full translations for all monitor features in PL, EN, DE, ES.
+- **NetSendo Brain — Activity Notifications:**
+  - **Global Activity Bar:** Animated top bar notification in `AuthenticatedLayout` that appears across all pages when Brain agents are actively executing a plan, showing task description, progress bar, step counter, and token usage.
+  - **Dashboard Orchestration Widget:** Full-width orchestration section on the Dashboard (above Activity Chart) with stats (active plans, completed today, tokens, active agents) and a live agent execution feed showing the last 5 actions with status badges and time-ago.
+  - **Auto-Refresh:** Both components poll `/brain/api/monitor` every 10 seconds for real-time updates.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+- **NetSendo Brain — Real Token Usage & Cost Tracking:**
+  - **Real Token Values:** Monitor now displays actual input/output/total token counts from execution logs instead of an artificial 100,000 limit with progress bar.
+  - **Cost Estimation:** Per-model cost estimation in USD based on token pricing (supports GPT-4o, GPT-4o-mini, GPT-4, Claude 3.5 Sonnet/Haiku/Opus, Gemini 2.0/1.5, and more).
+  - **Per-Model Breakdown:** Collapsible detail showing tokens and cost for each AI model used today.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+- **NetSendo Brain — Marketing & Sales Skill:**
+  - **MarketingSalesSkill:** New orchestrator skill providing world-class email & SMS marketing, sales, and CRM expertise via comprehensive system prompts in 4 languages (PL, EN, DE, ES).
+  - **Marketing Expertise:** Covers lead nurturing, drip campaigns, A/B testing, segmentation, CRM pipeline optimization, conversion copywriting, SMS compliance, and deliverability best practices.
+  - **Dynamic Task Suggestions:** Monitor "Lista Zadań" tab now shows AI-generated task suggestions based on CRM data analysis (subscribers, hot leads, open deals, campaign history).
+  - **12 Task Categories:** Lead Nurturing, Drip Campaign, Promotional Blast, SMS Marketing, A/B Testing, Segmentation, CRM Pipeline, Win-back, Analytics Report, Content Creation, List Hygiene, Follow-up Sequences.
+  - **Orchestrator Integration:** Marketing skill prompt prepended to intent classification for deeper marketing understanding across all agent interactions.
 
 ### Fixed
 

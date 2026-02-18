@@ -1084,6 +1084,22 @@
             "unavailable": "Brain IA no disponible",
             "configure": "Configurar"
         },
+        "brain_activity": {
+            "bar_title": "Brain está trabajando...",
+            "bar_view_monitor": "Monitor",
+            "steps": "pasos",
+            "tokens": "tokens",
+            "orchestration_title": "Orquestación Brain",
+            "orchestration_live": "EN VIVO",
+            "orchestration_open_monitor": "Abrir Monitor →",
+            "active_plans": "Planes activos",
+            "completed_today": "Hoy",
+            "tokens_used": "Tokens",
+            "active_agents": "Agentes",
+            "no_recent_activity": "Sin actividad reciente",
+            "just_now": "ahora mismo",
+            "ago": "hace"
+        },
         "stats": {
             "subscribers": "Suscriptores",
             "sent_emails": "Correos enviados",
@@ -6562,6 +6578,37 @@
             "col_category": "Categoría",
             "col_active": "Activo",
             "col_actions": "Acciones"
+        },
+        "monitor_label": "Monitor",
+        "monitor": {
+            "page_title": "Brain — Monitor de Orquestación",
+            "subtitle": "Supervisión en tiempo real de agentes, tareas y actividad del Brain",
+            "brain_status": "Estado del Brain",
+            "active": "Activo",
+            "idle": "Inactivo",
+            "mode": "Modo",
+            "agents": "Sub-agentes",
+            "task_list": "Lista de Tareas",
+            "execution_logs": "Registros de Ejecución",
+            "cron_settings": "Configuración CRON",
+            "cron_desc": "Configurar la programación automática del Brain",
+            "cron_enabled": "Inicio automático",
+            "cron_interval": "Intervalo",
+            "last_run": "Última ejecución",
+            "next_run": "Próxima ejecución",
+            "plans_today": "Planes hoy",
+            "tokens_today": "Tokens hoy",
+            "last_activity": "Última actividad",
+            "never": "Nunca",
+            "tasks_today": "Hoy",
+            "success_rate": "Tasa de éxito",
+            "last_action": "Última acción",
+            "no_tasks": "Sin tareas",
+            "no_logs": "Sin registros",
+            "all_agents": "Todos los agentes",
+            "all_statuses": "Todos los estados",
+            "live": "EN VIVO",
+            "auto_refresh": "Auto-actualizar"
         }
     }
 }

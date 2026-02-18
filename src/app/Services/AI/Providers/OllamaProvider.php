@@ -110,4 +110,44 @@ class OllamaProvider extends BaseProvider
 
         return $names[$name] ?? ucfirst(str_replace(['-', '_'], ' ', $name));
     }
+
+    /**
+     * Stream text generation via Ollama.
+     * Ollama uses newline-delimited JSON (not SSE): each line is {"response": "chunk"}.
+     *
+     * @return \Generator<string>
+     */
+    public function generateTextStream(string $prompt, ?string $model = null, array $options = []): \Generator
+    {
+        $url = rtrim($this->getBaseUrl(), '/') . '/api/generate';
+
+        $data = [
+            'model' => $this->getModel($model),
+            'prompt' => $prompt,
+            'stream' => true,
+            'options' => [
+                'num_predict' => $options['max_tokens'] ?? 65536,
+                'temperature' => $options['temperature'] ?? 0.7,
+            ],
+        ];
+
+        foreach ($this->makeStreamingRequest($url, $data) as $line) {
+            // Ollama sends newline-delimited JSON (no "data: " prefix)
+            $json = json_decode($line, true);
+
+            if (!$json) {
+                continue;
+            }
+
+            $chunk = $json['response'] ?? '';
+            if ($chunk !== '') {
+                yield $chunk;
+            }
+
+            // Stop if done
+            if ($json['done'] ?? false) {
+                break;
+            }
+        }
+    }
 }

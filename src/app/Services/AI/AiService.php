@@ -115,25 +115,30 @@ class AiService
     /**
      * Get current date context for AI prompts.
      * This ensures AI models know the current date when generating content.
+     *
+     * @param string|null $timezone User's timezone (e.g. 'Europe/Warsaw'). Defaults to app timezone.
      */
-    public static function getDateContext(): string
+    public static function getDateContext(?string $timezone = null): string
     {
-        $now = now();
+        $now = $timezone ? now()->timezone($timezone) : now();
         return sprintf(
-            "CURRENT DATE: %s (%s, %s) | AKTUALNA DATA: %s. Use this date when creating time-sensitive content.",
-            $now->format('Y-m-d'),
+            "CURRENT DATE & TIME: %s %s (%s, %s) | Timezone: %s. Use this when creating time-sensitive content.",
+            $now->format('Y-m-d H:i:s'),
+            $timezone ?? config('app.timezone', 'UTC'),
             $now->format('l'),
-            $now->format('F j, Y'),
-            $now->translatedFormat('l, j F Y')
+            $now->translatedFormat('l, j F Y, H:i'),
+            $timezone ?? config('app.timezone', 'UTC')
         );
     }
 
     /**
      * Prepend date context to a prompt.
+     *
+     * @param string|null $timezone User's timezone.
      */
-    public static function prependDateContext(string $prompt): string
+    public static function prependDateContext(string $prompt, ?string $timezone = null): string
     {
-        return self::getDateContext() . "\n\n" . $prompt;
+        return self::getDateContext($timezone) . "\n\n" . $prompt;
     }
 
     /**

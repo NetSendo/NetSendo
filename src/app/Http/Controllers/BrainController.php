@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiActionPlan;
+use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
+use App\Models\AiExecutionLog;
 use App\Models\KnowledgeEntry;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\KnowledgeBaseService;
 use App\Services\Brain\ModeController;
 use App\Services\Brain\Telegram\TelegramAuthService;
 use App\Services\Brain\Telegram\TelegramBotService;
+use App\Services\Brain\Skills\MarketingSalesSkill;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -47,6 +50,89 @@ class BrainController extends Controller
         );
 
         return response()->json($result);
+    }
+
+    /**
+     * Stream a chat response via Server-Sent Events.
+     * POST /api/brain/chat/stream
+     */
+    public function chatStream(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string|max:5000',
+            'conversation_id' => 'nullable|integer',
+            'force_new' => 'nullable|boolean',
+        ]);
+
+        $user = $request->user();
+        $message = $request->input('message');
+        $conversationId = $request->input('conversation_id');
+        $forceNew = $request->boolean('force_new', false);
+
+        return response()->stream(function () use ($user, $message, $conversationId, $forceNew) {
+            // Disable output buffering for real-time streaming
+            if (ob_get_level()) ob_end_clean();
+
+            $metadata = [];
+
+            $stream = $this->orchestrator->streamConversation(
+                $message,
+                $user,
+                'web',
+                $conversationId,
+                $forceNew,
+                function (array $meta) use (&$metadata) {
+                    $metadata = $meta;
+                }
+            );
+
+            if ($stream === null) {
+                // Not streamable (agent request) — fall back to synchronous
+                $result = $this->orchestrator->processMessage(
+                    $message,
+                    $user,
+                    'web',
+                    $conversationId,
+                    $forceNew,
+                );
+
+                echo "data: " . json_encode([
+                    'delta' => $result['message'] ?? $result['response'] ?? '',
+                ]) . "\n\n";
+                flush();
+
+                echo "data: " . json_encode([
+                    'done' => true,
+                    'conversation_id' => $result['conversation_id'] ?? null,
+                    'model' => $result['model'] ?? null,
+                    'title' => $result['title'] ?? null,
+                    'type' => $result['type'] ?? 'message',
+                    'plan' => $result['plan'] ?? null,
+                ]) . "\n\n";
+                flush();
+
+                return;
+            }
+
+            // Stream token by token
+            foreach ($stream as $chunk) {
+                echo "data: " . json_encode(['delta' => $chunk]) . "\n\n";
+                flush();
+            }
+
+            // Send completion event with metadata
+            echo "data: " . json_encode(array_merge(
+                ['done' => true],
+                $metadata
+            )) . "\n\n";
+            flush();
+
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'Connection' => 'keep-alive',
+            'X-Accel-Buffering' => 'no', // Disable Nginx buffering
+        ]);
     }
 
     /**
@@ -410,6 +496,265 @@ class BrainController extends Controller
             'knowledge_count' => $knowledgeCount,
             'telegram_connected' => $settings->isTelegramConnected(),
         ]);
+    }
+
+    /**
+     * Get Orchestration Monitor data — live status of Brain and agents.
+     * GET /brain/api/monitor
+     */
+    public function orchestrationMonitor(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        // Agent registry info
+        $agents = collect($this->orchestrator->getAgents())->map(function ($agent, $name) use ($user) {
+            $lastLog = AiExecutionLog::forUser($user->id)
+                ->forAgent($name)
+                ->orderByDesc('created_at')
+                ->first();
+
+            $todayLogs = AiExecutionLog::forUser($user->id)
+                ->forAgent($name)
+                ->whereDate('created_at', today())
+                ->get();
+
+            $totalToday = $todayLogs->count();
+            $successToday = $todayLogs->where('status', 'success')->count();
+
+            return [
+                'name' => $name,
+                'label' => $agent->getLabel(),
+                'capabilities' => $agent->getCapabilities(),
+                'last_activity_at' => $lastLog?->created_at,
+                'last_action' => $lastLog?->action,
+                'last_status' => $lastLog?->status,
+                'tasks_today' => $totalToday,
+                'success_rate' => $totalToday > 0 ? round(($successToday / $totalToday) * 100, 1) : null,
+            ];
+        })->values();
+
+        // Plan stats
+        $planStats = [
+            'total' => AiActionPlan::forUser($user->id)->count(),
+            'today' => AiActionPlan::forUser($user->id)->whereDate('created_at', today())->count(),
+            'active' => AiActionPlan::forUser($user->id)->active()->count(),
+            'completed' => AiActionPlan::forUser($user->id)->withStatus('completed')->count(),
+            'failed' => AiActionPlan::forUser($user->id)->withStatus('failed')->count(),
+            'pending' => AiActionPlan::forUser($user->id)->pending()->count(),
+        ];
+
+        // Today's token usage — real values with cost estimation
+        $tokensToday = AiExecutionLog::forUser($user->id)
+            ->whereDate('created_at', today())
+            ->selectRaw('COALESCE(SUM(tokens_input), 0) as input, COALESCE(SUM(tokens_output), 0) as output')
+            ->first();
+
+        // Per-model token breakdown with cost estimation
+        $tokensByModel = AiExecutionLog::forUser($user->id)
+            ->whereDate('created_at', today())
+            ->whereNotNull('model_used')
+            ->selectRaw('model_used, COALESCE(SUM(tokens_input), 0) as input, COALESCE(SUM(tokens_output), 0) as output')
+            ->groupBy('model_used')
+            ->get()
+            ->map(function ($row) {
+                $input = (int) $row->input;
+                $output = (int) $row->output;
+                $costUsd = self::estimateTokenCost($row->model_used, $input, $output);
+                return [
+                    'model' => $row->model_used,
+                    'input' => $input,
+                    'output' => $output,
+                    'total' => $input + $output,
+                    'cost_usd' => $costUsd,
+                ];
+            });
+
+        $totalInput = (int) ($tokensToday->input ?? 0);
+        $totalOutput = (int) ($tokensToday->output ?? 0);
+        $totalCostUsd = $tokensByModel->sum('cost_usd');
+
+        // Recent activity logs (last 20)
+        $recentActivity = AiBrainActivityLog::forUser($user->id)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        // Last Brain activity
+        $lastActivity = AiExecutionLog::forUser($user->id)
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Determine if Brain is "active" (had activity in the last 5 minutes)
+        $isActive = $lastActivity && $lastActivity->created_at->diffInMinutes(now()) < 5;
+
+        // Currently executing plan?
+        $executingPlan = AiActionPlan::forUser($user->id)
+            ->withStatus('executing')
+            ->with('steps')
+            ->first();
+
+        $isRunning = $executingPlan !== null;
+        $currentTask = null;
+        if ($executingPlan) {
+            $completedSteps = $executingPlan->steps->where('status', 'completed')->count();
+            $totalSteps = $executingPlan->steps->count();
+            $currentTask = [
+                'plan_id'     => $executingPlan->id,
+                'description' => $executingPlan->description ?? $executingPlan->intent,
+                'agent'       => $executingPlan->agent_type,
+                'started_at'  => $executingPlan->updated_at,
+                'progress'    => $totalSteps > 0 ? round(($completedSteps / $totalSteps) * 100) : 0,
+                'steps_done'  => $completedSteps,
+                'steps_total' => $totalSteps,
+            ];
+        }
+
+        // Recent execution logs for dashboard feed (last 5)
+        $recentLogs = AiExecutionLog::forUser($user->id)
+            ->with('plan')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get()
+            ->map(fn($log) => [
+                'id'         => $log->id,
+                'agent'      => $log->agent_type,
+                'action'     => $log->action,
+                'status'     => $log->status,
+                'created_at' => $log->created_at,
+                'plan_desc'  => $log->plan?->description ?? $log->plan?->intent,
+            ]);
+
+        return response()->json([
+            'brain' => [
+                'is_active' => $isActive,
+                'is_running' => $isRunning,
+                'work_mode' => $settings->work_mode ?? 'semi_auto',
+                'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+                'last_activity_at' => $settings->last_activity_at ?? $lastActivity?->created_at,
+                'is_active_flag' => $settings->is_active,
+            ],
+            'current_task' => $currentTask,
+            'agents' => $agents,
+            'plan_stats' => $planStats,
+            'tokens_today' => [
+                'input' => $totalInput,
+                'output' => $totalOutput,
+                'total' => $totalInput + $totalOutput,
+                'cost_usd' => round($totalCostUsd, 4),
+                'by_model' => $tokensByModel->values(),
+            ],
+            'cron' => [
+                'enabled' => (bool) $settings->cron_enabled,
+                'interval_minutes' => (int) ($settings->cron_interval_minutes ?? 60),
+                'last_run_at' => $settings->last_cron_run_at,
+            ],
+            'recent_activity' => $recentActivity,
+            'recent_logs' => $recentLogs,
+            'suggested_tasks' => MarketingSalesSkill::getSuggestedTasks($user),
+            'task_categories' => MarketingSalesSkill::getTaskCategories(),
+            'timestamp' => now()->toISOString(),
+        ]);
+    }
+
+    /**
+     * Get paginated execution logs for the Orchestration Monitor.
+     * GET /brain/api/monitor/logs
+     */
+    public function orchestrationLogs(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $query = AiExecutionLog::forUser($user->id)
+            ->with(['plan:id,title,agent_type,status', 'step:id,title,action_type,status'])
+            ->orderByDesc('created_at');
+
+        // Filters
+        if ($agent = $request->query('agent')) {
+            $query->forAgent($agent);
+        }
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+        if ($from = $request->query('from')) {
+            $query->where('created_at', '>=', $from);
+        }
+        if ($to = $request->query('to')) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        return response()->json($query->paginate(30));
+    }
+
+    /**
+     * Update CRON settings for the Brain.
+     * PUT /brain/api/monitor/cron
+     */
+    public function updateCronSettings(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cron_enabled' => 'required|boolean',
+            'cron_interval_minutes' => 'required|integer|in:5,15,30,60,120,240,360,720,1440',
+        ]);
+
+        $settings = AiBrainSettings::getForUser($request->user()->id);
+        $settings->update([
+            'cron_enabled' => $request->boolean('cron_enabled'),
+            'cron_interval_minutes' => $request->input('cron_interval_minutes'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'cron_enabled' => (bool) $settings->cron_enabled,
+            'cron_interval_minutes' => (int) $settings->cron_interval_minutes,
+        ]);
+    }
+
+    /**
+     * Estimate token cost in USD based on model name.
+     * Pricing per 1M tokens (input / output) — approximate, as of 2025.
+     */
+    private static function estimateTokenCost(string $model, int $inputTokens, int $outputTokens): float
+    {
+        // Pricing per 1M tokens: [input_price, output_price]
+        $pricing = [
+            'gpt-4o'            => [2.50, 10.00],
+            'gpt-4o-mini'       => [0.15, 0.60],
+            'gpt-4-turbo'       => [10.00, 30.00],
+            'gpt-4'             => [30.00, 60.00],
+            'gpt-3.5-turbo'     => [0.50, 1.50],
+            'o1'                => [15.00, 60.00],
+            'o1-mini'           => [3.00, 12.00],
+            'o3-mini'           => [1.10, 4.40],
+            'claude-3-5-sonnet' => [3.00, 15.00],
+            'claude-3-5-haiku'  => [0.80, 4.00],
+            'claude-3-opus'     => [15.00, 75.00],
+            'claude-3-sonnet'   => [3.00, 15.00],
+            'claude-3-haiku'    => [0.25, 1.25],
+            'gemini-2.0-flash'  => [0.10, 0.40],
+            'gemini-1.5-pro'    => [1.25, 5.00],
+            'gemini-1.5-flash'  => [0.075, 0.30],
+        ];
+
+        // Find matching pricing (partial match for versioned model names)
+        $rates = null;
+        $modelLower = strtolower($model);
+        foreach ($pricing as $key => $price) {
+            if (str_contains($modelLower, $key)) {
+                $rates = $price;
+                break;
+            }
+        }
+
+        // Fallback: conservative estimate (GPT-4o-mini level)
+        if (!$rates) {
+            $rates = [0.15, 0.60];
+        }
+
+        return round(
+            ($inputTokens / 1_000_000) * $rates[0] + ($outputTokens / 1_000_000) * $rates[1],
+            6
+        );
     }
 }
 

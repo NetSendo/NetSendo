@@ -140,6 +140,23 @@ return [
         'message_improved' => '✨ Wiadomość poprawiona: :changes',
     ],
 
+    // === Monitor — Token & Cost ===
+    'monitor' => [
+        'tokens_input' => 'Input',
+        'tokens_output' => 'Output',
+        'estimated_cost' => 'Szacunkowy koszt',
+        'cost_by_model' => 'Koszty wg modelu',
+        'suggested_tasks' => 'Sugerowane zadania',
+        'suggested_tasks_desc' => 'Zadania zaproponowane na podstawie analizy Twojego CRM, list kontaktów i historii kampanii',
+        'ai_generated' => 'Wygenerowane przez AI',
+        'no_suggestions' => 'Brak sugestii — dodaj kontakty i listy aby otrzymać rekomendacje',
+        'execute' => 'Wykonaj',
+        'executed_plans' => 'Wykonane plany',
+        'priority_high' => 'Wysoki',
+        'priority_medium' => 'Średni',
+        'priority_low' => 'Niski',
+    ],
+
     // === AI Prompt system instructions (used inside prompts — NOT user-facing) ===
     // These remain in Polish as they instruct the AI model behavior.
     // If multilingual AI prompts are needed later, they can be added here.

@@ -888,6 +888,22 @@
         "clock": {
             "title": "Aktualny czas",
             "timezone_label": "Strefa czasowa"
+        },
+        "brain_activity": {
+            "bar_title": "Brain pracuje...",
+            "bar_view_monitor": "Monitor",
+            "steps": "kroków",
+            "tokens": "tokenów",
+            "orchestration_title": "Orkiestracja Brain",
+            "orchestration_live": "NA ŻYWO",
+            "orchestration_open_monitor": "Otwórz Monitor →",
+            "active_plans": "Aktywne plany",
+            "completed_today": "Dzisiaj",
+            "tokens_used": "Tokeny",
+            "active_agents": "Agenci",
+            "no_recent_activity": "Brak ostatniej aktywności",
+            "just_now": "przed chwilą",
+            "ago": "temu"
         }
     },
     "mailing_lists": {
@@ -7397,6 +7413,37 @@
             "col_category": "Kategoria",
             "col_active": "Aktywny",
             "col_actions": "Akcje"
+        },
+        "monitor_label": "Monitor",
+        "monitor": {
+            "page_title": "Brain — Monitor Orkiestracji",
+            "subtitle": "Nadzór agentów, zadań i aktywności Mózgu w czasie rzeczywistym",
+            "brain_status": "Status Mózgu",
+            "active": "Aktywny",
+            "idle": "Bezczynny",
+            "mode": "Tryb",
+            "agents": "Podagenci",
+            "task_list": "Lista Zadań",
+            "execution_logs": "Logi Wykonania",
+            "cron_settings": "Ustawienia CRON",
+            "cron_desc": "Skonfiguruj automatyczne uruchamianie Mózgu wg harmonogramu",
+            "cron_enabled": "Auto-uruchamianie",
+            "cron_interval": "Interwał",
+            "last_run": "Ostatnie uruchomienie",
+            "next_run": "Następne uruchomienie",
+            "plans_today": "Plany dzisiaj",
+            "tokens_today": "Tokeny dzisiaj",
+            "last_activity": "Ostatnia aktywność",
+            "never": "Nigdy",
+            "tasks_today": "Dzisiaj",
+            "success_rate": "Skuteczność",
+            "last_action": "Ostatnia akcja",
+            "no_tasks": "Brak zadań",
+            "no_logs": "Brak logów",
+            "all_agents": "Wszyscy agenci",
+            "all_statuses": "Wszystkie",
+            "live": "NA ŻYWO",
+            "auto_refresh": "Auto-odświeżanie"
         }
     }
 }

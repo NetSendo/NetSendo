@@ -25,6 +25,10 @@ class AiBrainSettings extends Model
         'tokens_used_today',
         'token_reset_date',
         'is_active',
+        'cron_enabled',
+        'cron_interval_minutes',
+        'last_cron_run_at',
+        'last_activity_at',
     ];
 
     protected $casts = [
@@ -37,6 +41,10 @@ class AiBrainSettings extends Model
         'is_active' => 'boolean',
         'daily_token_limit' => 'integer',
         'tokens_used_today' => 'integer',
+        'cron_enabled' => 'boolean',
+        'cron_interval_minutes' => 'integer',
+        'last_cron_run_at' => 'datetime',
+        'last_activity_at' => 'datetime',
     ];
 
     /**

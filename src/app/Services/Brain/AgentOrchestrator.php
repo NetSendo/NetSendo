@@ -16,6 +16,7 @@ use App\Services\Brain\Agents\CrmAgent;
 use App\Services\Brain\Agents\ListAgent;
 use App\Services\Brain\Agents\MessageAgent;
 use App\Services\Brain\Agents\SegmentationAgent;
+use App\Services\Brain\Skills\MarketingSalesSkill;
 use Illuminate\Support\Facades\Log;
 
 class AgentOrchestrator
@@ -250,7 +251,15 @@ class AgentOrchestrator
             return "- {$agent['name']}: {$caps}";
         })->join("\n");
 
+        // Get marketing/sales skill context for richer intent classification
+        $settings = AiBrainSettings::getForUser($user->id);
+        $skillContext = MarketingSalesSkill::getSystemPrompt($settings->preferred_language ?? 'pl');
+
         $prompt = <<<PROMPT
+{$skillContext}
+
+---
+
 Sklasyfikuj intencję użytkownika. Odpowiedz TYLKO prawidłowym JSON.
 
 DOSTĘPNI AGENCI:
@@ -462,6 +471,160 @@ PROMPT;
             'message' => $response,
             'model' => $actualModel,
         ];
+    }
+
+    /**
+     * Stream a conversation response, yielding text chunks.
+     *
+     * Handles the same pre-flight logic as processMessage() but streams the AI response.
+     * Non-streamable requests (agent actions) return null — caller should fallback to processMessage().
+     *
+     * @param callable $onComplete Called with (fullText, metadata) when streaming finishes
+     * @return \Generator<string>|null Yields text chunks, or null if not streamable
+     */
+    public function streamConversation(
+        string $message,
+        User $user,
+        string $channel = 'web',
+        ?int $conversationId = null,
+        bool $forceNew = false,
+        ?callable $onComplete = null,
+    ): ?\Generator {
+        $startTime = microtime(true);
+        $settings = AiBrainSettings::getForUser($user->id);
+        $integration = $this->aiService->getDefaultIntegration();
+
+        if (!$integration) {
+            return null; // Fallback to synchronous
+        }
+
+        if ($settings->isTokenLimitReached()) {
+            return null;
+        }
+
+        // Use user-preferred integration if set
+        if ($settings->preferred_integration_id) {
+            $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
+            if ($preferredIntegration && $preferredIntegration->is_active) {
+                $integration = $preferredIntegration;
+            }
+        }
+
+        // Resolve conversation
+        if ($conversationId) {
+            $conversation = $this->conversationManager->getConversationById($conversationId, $user->id);
+            if (!$conversation) {
+                $conversation = $this->conversationManager->createNewConversation($user, $channel);
+            }
+        } elseif ($forceNew) {
+            $conversation = $this->conversationManager->createNewConversation($user, $channel);
+        } else {
+            $conversation = $this->conversationManager->getConversation($user, $channel);
+        }
+
+        // Save user message
+        $this->conversationManager->addUserMessage($conversation, $message);
+
+        // Check for pending agent or classify intent
+        $context = $conversation->context ?? [];
+        $pendingAgent = $context['pending_agent'] ?? null;
+
+        if ($pendingAgent && isset($this->agents[$pendingAgent])) {
+            return null; // Agent flow — not streamable
+        }
+
+        $intent = $this->classifyIntent($message, $conversation, $user);
+
+        if ($intent['requires_agent']) {
+            return null; // Agent flow — not streamable
+        }
+
+        // Conversation mode — stream it!
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+        $messages = $this->conversationManager->buildAiPayload($conversation, $user, $knowledgeContext);
+        $provider = $this->aiService->getProvider($integration);
+        $modelToUse = $settings->preferred_model ?: null;
+        $actualModel = $modelToUse ?: ($integration->default_model ?: 'unknown');
+
+        // Return a generator that yields chunks and persists on completion
+        return (function () use (
+            $provider, $messages, $modelToUse, $actualModel,
+            $conversation, $user, $message, $settings, $integration,
+            $intent, $startTime, $onComplete
+        ) {
+            $fullText = '';
+            $streamCompleted = false;
+
+            try {
+                foreach ($provider->generateTextStream(
+                    json_encode($messages),
+                    $modelToUse,
+                    ['max_tokens' => 2000, 'temperature' => 0.7]
+                ) as $chunk) {
+                    $fullText .= $chunk;
+                    yield $chunk;
+                }
+                $streamCompleted = true;
+            } catch (\Exception $e) {
+                Log::warning('Streaming interrupted or errored', [
+                    'error' => $e->getMessage(),
+                    'text_length' => strlen($fullText),
+                ]);
+                if (empty($fullText)) {
+                    $fullText = __('brain.processing_error');
+                }
+            } finally {
+                // Always persist — even on disconnect, save what we have
+                if (!empty($fullText)) {
+                    $this->conversationManager->addAssistantMessage(
+                        $conversation,
+                        $fullText,
+                        [
+                            'intent' => $intent['intent'] ?? 'conversation',
+                            'agent' => null,
+                            'work_mode' => $settings->work_mode,
+                            'streamed' => true,
+                            'completed' => $streamCompleted,
+                        ],
+                        0, 0, $actualModel
+                    );
+
+                    // Track tokens (estimate)
+                    $estimatedTokens = (int) (strlen($fullText) / 4);
+                    $settings->addTokensUsed($estimatedTokens);
+
+                    // Auto-generate title (only on full completion)
+                    if ($streamCompleted && !$conversation->title && $conversation->message_count <= 3) {
+                        $this->generateConversationTitle($conversation, $message, $fullText, $integration);
+                    }
+
+                    // Auto-enrich knowledge
+                    if ($streamCompleted && $conversation->message_count % 5 === 0) {
+                        $this->tryAutoEnrich($user, $conversation);
+                    }
+                }
+
+                // Log execution
+                $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+                AiExecutionLog::logSuccess(
+                    $user->id,
+                    'orchestrator',
+                    $streamCompleted ? 'stream_message' : 'stream_message_partial',
+                    ['message' => mb_substr($message, 0, 200)],
+                    ['response_length' => strlen($fullText), 'completed' => $streamCompleted],
+                    0, 0, $actualModel, $durationMs
+                );
+
+                // Notify caller with metadata (only if stream completed normally)
+                if ($streamCompleted && $onComplete) {
+                    $onComplete([
+                        'conversation_id' => $conversation->id,
+                        'model' => $actualModel,
+                        'title' => $conversation->fresh()->title,
+                    ]);
+                }
+            }
+        })();
     }
 
     /**
