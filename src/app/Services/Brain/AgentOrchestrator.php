@@ -119,6 +119,7 @@ class AgentOrchestrator
                 $knowledgeContext = $this->knowledgeBase->getContext($user, $pendingIntent['task_type'] ?? 'general');
                 $intent = $pendingIntent;
                 $intent['requires_agent'] = true;
+                $intent['has_user_details'] = true;
                 $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
             } else {
                 // Step 1: Classify intent
@@ -331,7 +332,8 @@ PROMPT;
         }
 
         // Info-gathering phase: ask for details before creating a plan
-        if ($agent->needsMoreInfo($intent, $user, $knowledgeContext)) {
+        // Skip if user already provided details via a prior info request
+        if (empty($intent['has_user_details']) && $agent->needsMoreInfo($intent, $user, $knowledgeContext)) {
             // Save pending state in conversation context
             $context = $conversation->context ?? [];
             $context['pending_agent'] = $agentName;

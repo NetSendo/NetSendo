@@ -52,6 +52,10 @@ class CampaignAgent extends BaseAgent
     public function needsMoreInfo(array $intent, User $user, string $knowledgeContext = ''): bool
     {
         $params = $intent['parameters'] ?? [];
+        // If user already provided details via the info-gathering step, no more info needed
+        if (!empty($params['user_details'])) {
+            return false;
+        }
         // Need at least topic/goal/product info to create a meaningful campaign
         return empty($params['topic']) && empty($params['goal']) && empty($params['product']);
     }

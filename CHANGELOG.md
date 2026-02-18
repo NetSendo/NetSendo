@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Fixed Telegram bot using `HTML` parse mode for Markdown messages, causing delivery failures.
 - Fixed bot token resolution failure for unlinked users in self-hosted environments (added fallback to any configured token).
+- Fixed Brain chat infinite loop when replying to agent info requests — user details were ignored by `needsMoreInfo()`, causing the same questions to repeat endlessly instead of proceeding to plan creation.
 
 ### Added
 
