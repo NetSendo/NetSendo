@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Brain Integration Fixes:**
+  - Fixed `SyntaxError: Invalid linked format` in frontend by escaping `@BotFather` references (`{'@'}BotFather`) in all locale files (PL, EN, DE, ES). This prevents Vue I18n from interpreting `@` as a linked message token.
+  - Fixed `SQLSTATE[42S01]: Table 'ai_brain_settings' already exists` error during migration by adding `Schema::hasTable()` check to `2026_02_18_120000_create_ai_brain_settings_table.php`.
+
 ### Changed
 
 ## [2.0.0] – Short Description
