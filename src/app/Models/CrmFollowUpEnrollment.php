@@ -144,6 +144,14 @@ class CrmFollowUpEnrollment extends Model
      */
     public function markCompleted(): void
     {
+        // Remove any older completed enrollments for the same contact+sequence
+        // to prevent potential unique constraint violations
+        self::where('sequence_id', $this->sequence_id)
+            ->where('crm_contact_id', $this->crm_contact_id)
+            ->where('status', 'completed')
+            ->where('id', '!=', $this->id)
+            ->delete();
+
         $this->update([
             'status' => 'completed',
             'completed_at' => now(),

@@ -1033,7 +1033,8 @@
             "products": "Produkte",
             "profit": "Profit",
             "statistics": "Statistiken",
-            "settings": "Einstellungen"
+            "settings": "Einstellungen",
+            "brain": "NetSendo Brain"
         }
     },
     "dashboard": {
@@ -1042,6 +1043,17 @@
         "license_activate_description": "Aktivieren Sie Ihre Lizenz, um alle Systemfunktionen freizuschalten.",
         "activate_now": "Jetzt aktivieren",
         "license_active": "Lizenz aktiv",
+        "brain": {
+            "mode": "Arbeitsmodus",
+            "knowledge": "Wissensdatenbank",
+            "connected": "Verbunden",
+            "disconnected": "Getrennt",
+            "quick_chat_placeholder": "Frag Brain...",
+            "open_chat": "KI-Chat öffnen",
+            "settings": "Einstellungen",
+            "unavailable": "Brain KI nicht verfügbar",
+            "configure": "Konfigurieren"
+        },
         "stats": {
             "subscribers": "Abonnenten",
             "sent_emails": "Gesendete E-Mails",
@@ -2020,6 +2032,7 @@
         "add_subscriber": "Abonnent hinzufügen",
         "search_placeholder": "Suche nach E-Mail oder Nachnamen...",
         "all_lists": "Alle Listen",
+        "search_list_placeholder": "Liste nach Name oder ID suchen...",
         "all_list_types": "Alle Listentypen",
         "list_type_email": "E-Mail-Listen",
         "list_type_sms": "SMS-Listen",
@@ -2239,6 +2252,8 @@
         },
         "models": {
             "latest": "Neueste",
+            "january_2026": "Januar 2026",
+            "february_2026": "Februar 2026",
             "december_2025": "Dezember 2025",
             "november_2025": "November 2025",
             "october_2025": "Oktober 2025",
@@ -6369,5 +6384,110 @@
         "dkim_verified": "DKIM erfolgreich verifiziert!",
         "dkim_not_verified": "DKIM-Eintrag nicht gefunden. Überprüfen Sie Ihre DNS-Konfiguration."
     },
-    "high_confidence_data": "Hohe Datenqualität"
+    "high_confidence_data": "Hohe Datenqualität",
+    "brain": {
+        "title": "NetSendo Brain",
+        "subtitle": "Ihr KI-Marketing-Assistent",
+        "chat": "KI-Chat",
+        "settings_label": "Einstellungen",
+        "settings_page_title": "Brain — Einstellungen",
+        "settings_subtitle": "Konfiguration von Arbeitsmodus, Integrationen und Wissensbasis",
+        "back_to_chat": "Zurück zum Chat",
+        "new_conversation": "Neue Konversation",
+        "send": "Senden",
+        "placeholder": "Schreiben Sie eine Nachricht an Brain...",
+        "input_hint": "Enter zum Senden, Shift+Enter für neue Zeile",
+        "welcome_title": "Willkommen bei NetSendo Brain!",
+        "welcome_text": "Fragen Sie nach Kampagnen, Abonnenten, Statistiken oder geben Sie einen Befehl — ich helfe Ihnen beim Marketing.",
+        "suggestion_1": "Kampagnenstatistiken anzeigen",
+        "suggestion_2": "Wie viele Abonnenten habe ich?",
+        "suggestion_3": "Neue Kampagne erstellen",
+        "no_conversations": "Keine Konversationen. Starten Sie eine neue!",
+        "no_messages": "Keine Nachrichten",
+        "untitled": "Ohne Titel",
+        "today": "Heute",
+        "yesterday": "Gestern",
+        "error_generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        "saved": "Gespeichert",
+        "mode": {
+            "title": "Arbeitsmodus",
+            "autonomous": "Autonom",
+            "autonomous_label": "🤖 Vollautonom",
+            "autonomous_desc": "KI plant und führt Aktionen automatisch aus. Berichtet nach Ausführung.",
+            "semi_auto": "Halbautomatisch",
+            "semi_auto_label": "Halbautomatisch (Plan + Genehmigung)",
+            "semi_auto_desc": "KI schlägt Aktionsplan vor. Wartet auf Ihre Genehmigung vor Ausführung.",
+            "manual": "Beratend",
+            "manual_label": "👤 Manuell (Beratung)",
+            "manual_desc": "KI analysiert und berät. Sie führen alle Aktionen selbst aus."
+        },
+        "task": {
+            "orchestration": "🧠 Orchestrierung (Absichtserkennung)",
+            "content_generation": "✉️ Inhaltserstellung E-Mail/SMS",
+            "analytics": "📊 Analyse und Berichte",
+            "campaign": "📧 Kampagnenplanung",
+            "crm": "👥 CRM",
+            "segmentation": "🎯 Segmentierung",
+            "conversation": "💬 Allgemeine Konversation"
+        },
+        "model": {
+            "title": "KI-Modell",
+            "description": "Wählen Sie den KI-Anbieter und das Modell, das Brain für Konversationen verwenden soll.",
+            "provider": "KI-Anbieter",
+            "model": "Modell",
+            "default_provider": "— Standardanbieter —",
+            "default_model": "— Standardmodell —",
+            "save_model": "Modell speichern"
+        },
+        "routing": {
+            "title": "Erweiterte Modelleinstellungen",
+            "description": "Weisen Sie verschiedenen Brain-Aufgaben unterschiedliche KI-Modelle zu. Leere Felder verwenden das Standardmodell.",
+            "hide": "Verbergen",
+            "show": "Anzeigen",
+            "save": "Routing speichern"
+        },
+        "plan": {
+            "title": "Aktionsplan",
+            "approve": "Genehmigen",
+            "reject": "Ablehnen"
+        },
+        "telegram": {
+            "title": "Telegram-Integration",
+            "connected": "Verbunden",
+            "disconnected": "Getrennt",
+            "connect_description": "Verbinden Sie Ihr Telegram-Konto, um direkt über Telegram mit Brain zu chatten.",
+            "generate_code": "Verbindungscode generieren",
+            "generating": "Generiere...",
+            "send_code": "An Telegram-Bot senden:",
+            "test": "Verbindung testen",
+            "testing": "Teste...",
+            "disconnect": "Trennen",
+            "bot_token_label": "Telegram Bot Token",
+            "bot_token_placeholder": "Token von @BotFather einfügen...",
+            "bot_token_help": "Holen Sie sich den Token von @BotFather auf Telegram. Erforderlich für die Brain-Integration.",
+            "bot_token_save": "Speichern",
+            "bot_token_saving": "Speichern...",
+            "bot_token_saved": "Gespeichert",
+            "bot_token_current": "Aktueller Token:"
+        },
+        "knowledge": {
+            "title": "Wissensbasis",
+            "add": "\u2795 Eintrag hinzufügen",
+            "cancel": "Abbrechen",
+            "category": "Kategorie",
+            "entry_title": "Titel",
+            "title_placeholder": "z.B. Unsere Mission",
+            "content": "Inhalt",
+            "content_placeholder": "Beschreiben Sie Informationen, die Brain kennen sollte...",
+            "content_help": "Informationen, die Brain in Gesprächen und bei der Aufgabenausführung verwendet.",
+            "save": "Speichern",
+            "saving": "Speichern...",
+            "delete": "Löschen",
+            "empty": "Keine Einträge in der Wissensbasis. Fügen Sie Informationen hinzu, die Brain kennen sollte.",
+            "col_title": "Titel",
+            "col_category": "Kategorie",
+            "col_active": "Aktiv",
+            "col_actions": "Aktionen"
+        }
+    }
 }

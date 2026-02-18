@@ -39,11 +39,15 @@ class SubscriberController extends Controller
             });
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('email', 'like', '%' . $request->search . '%')
-                  ->orWhere('first_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('last_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('email', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('first_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('last_name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('phone', 'like', '%' . $searchTerm . '%');
+                if (is_numeric($searchTerm)) {
+                    $q->orWhere('id', (int) $searchTerm);
+                }
             });
         }
 

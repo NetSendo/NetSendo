@@ -8,6 +8,7 @@ import RecentCampaigns from "@/Components/Dashboard/RecentCampaigns.vue";
 import QuickActions from "@/Components/Dashboard/QuickActions.vue";
 import SetupTrackerBar from "@/Components/Dashboard/SetupTrackerBar.vue";
 import HealthScoreWidget from "@/Components/Dashboard/HealthScoreWidget.vue";
+import BrainWidget from "@/Components/Dashboard/BrainWidget.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const page = usePage();
@@ -421,8 +422,9 @@ onMounted(() => {
                 />
             </div>
 
-            <!-- Health Score Widget -->
-            <div>
+            <!-- Right Sidebar: Brain + Health Score -->
+            <div class="space-y-6">
+                <BrainWidget />
                 <HealthScoreWidget />
             </div>
         </div>

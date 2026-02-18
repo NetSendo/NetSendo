@@ -217,6 +217,39 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('api/automations/stats', [\App\Http\Controllers\AutomationController::class, 'stats'])->name('api.automations.stats');
     Route::post('automations/restore-defaults', [\App\Http\Controllers\AutomationController::class, 'restoreDefaults'])->name('automations.restore-defaults');
 
+    // NetSendo Brain — AI Chat & Settings
+    Route::prefix('brain')->name('brain.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BrainPageController::class, 'index'])->name('index');
+        Route::get('/settings', [\App\Http\Controllers\BrainPageController::class, 'settings'])->name('settings');
+
+        // Brain Status AJAX (dashboard widget)
+        Route::get('/api/status', [\App\Http\Controllers\BrainController::class, 'dashboardStatus'])->name('api.status');
+
+        // Brain Settings AJAX API (session-authenticated, used by Settings.vue)
+        Route::put('/api/settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])->name('api.settings.update');
+
+        // Telegram Integration
+        Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code');
+        Route::post('/api/telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])->name('api.telegram.disconnect');
+        Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test');
+
+        // Knowledge Base
+        Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
+        Route::put('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])->name('api.knowledge.update');
+        Route::delete('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'deleteKnowledge'])->name('api.knowledge.destroy');
+
+        // Chat API (session-authenticated, used by Index.vue)
+        Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');
+        Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
+        Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
+        Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');
+
+        // Action Plans
+        Route::get('/api/plans', [\App\Http\Controllers\BrainController::class, 'plans'])->name('api.plans.index');
+        Route::get('/api/plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])->name('api.plans.show');
+        Route::post('/api/plans/{id}/approve', [\App\Http\Controllers\BrainController::class, 'approvePlan'])->name('api.plans.approve');
+    });
+
     // AutoTag Pro - Segmentation Dashboard
     Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index');
 
@@ -517,6 +550,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     // Calendly Marketplace
     Route::get('/marketplace/calendly', fn() => Inertia::render('Marketplace/Calendly'))->name('marketplace.calendly');
+    Route::get('/marketplace/telegram', fn() => Inertia::render('Marketplace/Telegram'))->name('marketplace.telegram');
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {

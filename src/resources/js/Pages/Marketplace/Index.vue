@@ -206,6 +206,14 @@ const activeIntegrations = [
         color: "cyan",
         route: "marketplace.calendly",
     },
+    {
+        id: "telegram",
+        name: "Telegram",
+        description: "AI chat via messenger",
+        icon: "✈️",
+        color: "blue",
+        route: "marketplace.telegram",
+    },
 ];
 
 // Future integration categories with planned platforms
@@ -322,6 +330,22 @@ const categories = [
             { name: "Claude", logo: null },
             { name: "Cursor IDE", logo: null },
             { name: "VS Code Copilot", logo: null },
+        ],
+    },
+    {
+        id: "messaging",
+        icon: "💬",
+        color: "blue",
+        platforms: [
+            {
+                name: "Telegram",
+                logo: null,
+                status: "available",
+                route: "marketplace.telegram",
+            },
+            { name: "WhatsApp", logo: null },
+            { name: "Messenger", logo: null },
+            { name: "Slack", logo: null },
         ],
     },
 ];

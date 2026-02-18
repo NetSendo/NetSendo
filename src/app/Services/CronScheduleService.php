@@ -347,6 +347,12 @@ class CronScheduleService
                             // Dzięki temu wpis zostanie przetworzony, gdy harmonogram na to zezwoli.
                             // W tej pętli po prostu go pomijamy i idziemy do następnego.
                             $stats['skipped']++;
+                            Log::debug('CronScheduleService: Skipped - list schedule not allowed', [
+                                'entry_id' => $entry->id,
+                                'list_id' => $listId,
+                                'message_id' => $message->id,
+                                'subscriber_id' => $subscriber->id,
+                            ]);
                             continue;
                         }
 
@@ -357,6 +363,13 @@ class CronScheduleService
 
                         if ($listVolumes[$listId] >= $listVolume) {
                             $stats['skipped']++;
+                            Log::debug('CronScheduleService: Skipped - list volume limit reached', [
+                                'entry_id' => $entry->id,
+                                'list_id' => $listId,
+                                'message_id' => $message->id,
+                                'current_volume' => $listVolumes[$listId],
+                                'limit' => $listVolume,
+                            ]);
                             continue;
                         }
 

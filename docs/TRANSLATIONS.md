@@ -632,3 +632,161 @@ The following translation keys were added to support the auto-convert warm conta
 - `crm.scoring.auto_convert_description` - Description of auto-convert behavior
 - `crm.scoring.auto_convert_enabled` - Label when toggle is enabled
 - `crm.scoring.auto_convert_disabled` - Label when toggle is disabled
+
+### Subscriber Search Enhancements (February 2026)
+
+The following translation key was added to support the searchable list filter dropdown on the subscriber list page:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Subscribers (`subscribers.*`):**
+
+- `subscribers.search_list_placeholder` - Placeholder text for the searchable list dropdown filter
+
+| Key                                   | PL                               | EN                           | DE                                | ES                              |
+| ------------------------------------- | -------------------------------- | ---------------------------- | --------------------------------- | ------------------------------- |
+| `subscribers.search_list_placeholder` | Szukaj listy po nazwie lub ID... | Search list by name or ID... | Liste nach Name oder ID suchen... | Buscar lista por nombre o ID... |
+
+**Usage Example:**
+
+```vue
+<input
+  v-model="listSearch"
+  type="text"
+  :placeholder="$t('subscribers.search_list_placeholder')"
+/>
+```
+
+### NetSendo Brain — Agent Labels & Responses (February 2026)
+
+The following hardcoded strings are used by the Brain specialist agents for user-facing responses. They are currently in Polish only and are returned via API/Telegram — not through the Vue i18n system.
+
+> **Note:** These are backend strings embedded in the agent PHP classes. They are not yet localized via Laravel's `__()` helper and are listed here for future i18n extraction.
+
+#### Agent Labels (used in `AgentOrchestrator` intent classification)
+
+| Agent Key      | Label                 | File                    |
+| -------------- | --------------------- | ----------------------- |
+| `campaign`     | 📧 Campaign Agent     | `CampaignAgent.php`     |
+| `list`         | 📋 List Agent         | `ListAgent.php`         |
+| `message`      | ✉️ Message Agent      | `MessageAgent.php`      |
+| `crm`          | 👥 CRM Agent          | `CrmAgent.php`          |
+| `analytics`    | 📊 Analytics Agent    | `AnalyticsAgent.php`    |
+| `segmentation` | 🎯 Segmentation Agent | `SegmentationAgent.php` |
+
+#### CRM Agent Response Strings (`CrmAgent.php`)
+
+| Context          | PL (current)                       | EN                                 | DE                                  | ES                               |
+| ---------------- | ---------------------------------- | ---------------------------------- | ----------------------------------- | -------------------------------- |
+| Contact created  | Kontakt CRM "{name}" utworzony     | CRM contact "{name}" created       | CRM-Kontakt "{name}" erstellt       | Contacto CRM "{name}" creado     |
+| Status changed   | Status zmieniony z {old} na {new}  | Status changed from {old} to {new} | Status geändert von {old} auf {new} | Estado cambiado de {old} a {new} |
+| Deal created     | Deal "{name}" utworzony w pipeline | Deal "{name}" created in pipeline  | Deal "{name}" in Pipeline erstellt  | Deal "{name}" creado en pipeline |
+| Task created     | Zadanie "{title}" utworzone        | Task "{title}" created             | Aufgabe "{title}" erstellt          | Tarea "{title}" creada           |
+| Pipeline summary | Pipeline: {name}                   | Pipeline: {name}                   | Pipeline: {name}                    | Pipeline: {name}                 |
+| Score analysis   | Analiza Scoring CRM                | CRM Score Analysis                 | CRM-Score-Analyse                   | Análisis de Scoring CRM          |
+
+#### Analytics Agent Response Strings (`AnalyticsAgent.php`)
+
+| Context                 | PL (current)                | EN                      | DE                              | ES                         |
+| ----------------------- | --------------------------- | ----------------------- | ------------------------------- | -------------------------- |
+| Campaign stats header   | Kampanie ({days}d)          | Campaigns ({days}d)     | Kampagnen ({days}d)             | Campañas ({days}d)         |
+| Subscriber stats header | Subskrybenci ({days}d)      | Subscribers ({days}d)   | Abonnenten ({days}d)            | Suscriptores ({days}d)     |
+| AI usage header         | AI Brain ({days}d)          | AI Brain ({days}d)      | AI Brain ({days}d)              | AI Brain ({days}d)         |
+| No campaigns            | Brak kampanii do porównania | No campaigns to compare | Keine Kampagnen zum Vergleichen | Sin campañas para comparar |
+| Trends header           | Trendy ({days}d)            | Trends ({days}d)        | Trends ({days}d)                | Tendencias ({days}d)       |
+
+#### Segmentation Agent Response Strings (`SegmentationAgent.php`)
+
+| Context           | PL (current)                        | EN                             | DE                            | ES                              |
+| ----------------- | ----------------------------------- | ------------------------------ | ----------------------------- | ------------------------------- |
+| Tag distribution  | Rozkład tagów                       | Tag distribution               | Tag-Verteilung                | Distribución de etiquetas       |
+| Score segments    | Segmenty scoring                    | Score segments                 | Score-Segmente                | Segmentos de scoring            |
+| Cold segment      | Zimny                               | Cold                           | Kalt                          | Frío                            |
+| Warm segment      | Ciepły                              | Warm                           | Warm                          | Cálido                          |
+| Hot segment       | Gorący                              | Hot                            | Heiß                          | Caliente                        |
+| Super Hot segment | Super Hot                           | Super Hot                      | Super Hot                     | Super Hot                       |
+| Tag created       | Tag "{name}" utworzony              | Tag "{name}" created           | Tag "{name}" erstellt         | Tag "{name}" creado             |
+| Tag applied       | Tag przypisany do {n} subskrybentów | Tag applied to {n} subscribers | Tag {n} Abonnenten zugewiesen | Tag asignado a {n} suscriptores |
+| Automation stats  | Automatyzacje ({days}d)             | Automations ({days}d)          | Automatisierungen ({days}d)   | Automatizaciones ({days}d)      |
+
+### NetSendo Brain — Dashboard Widget (February 2026)
+
+The following translation keys were added to support the Brain AI widget on the main dashboard:
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Dashboard Brain Widget (`dashboard.brain.*`):**
+
+- `dashboard.brain.mode` - Label for the work mode badge
+- `dashboard.brain.knowledge` - Label for knowledge base count
+- `dashboard.brain.connected` - Telegram connected status
+- `dashboard.brain.disconnected` - Telegram disconnected status
+- `dashboard.brain.quick_chat_placeholder` - Placeholder for the quick chat input
+- `dashboard.brain.open_chat` - Button to open full Brain chat
+- `dashboard.brain.settings` - Link to Brain settings
+- `dashboard.brain.unavailable` - Message when Brain API is unreachable
+- `dashboard.brain.configure` - Link to configure Brain when unavailable
+
+| Key                           | PL                | EN               | DE                | ES                   |
+| ----------------------------- | ----------------- | ---------------- | ----------------- | -------------------- |
+| `dashboard.brain.mode`        | Tryb pracy        | Work Mode        | Arbeitsmodus      | Modo de trabajo      |
+| `dashboard.brain.knowledge`   | Baza wiedzy       | Knowledge Base   | Wissensdatenbank  | Base de conocimiento |
+| `dashboard.brain.open_chat`   | Otwórz Chat AI    | Open AI Chat     | KI-Chat öffnen    | Abrir Chat IA        |
+| `dashboard.brain.unavailable` | Brain AI niedost. | Brain AI unavail | Brain KI nicht... | Brain IA no dispo... |
+
+**Usage Example:**
+
+```vue
+<div class="flex items-center justify-between">
+    <span>{{ $t("dashboard.brain.mode") }}</span>
+    <span class="badge">{{ currentMode }}</span>
+</div>
+
+<input :placeholder="$t('dashboard.brain.quick_chat_placeholder')" />
+```
+
+### Brain Settings & Modes (February 2026)
+
+The following translation keys were added to support the Brain Settings page, including Work Modes, AI Model selection, and Task Routing.
+
+#### Frontend Translations (`src/resources/js/locales/*.json`)
+
+**Work Modes (`brain.mode.*`):**
+
+- `brain.mode.title` - Section title
+- `brain.mode.autonomous_label` - Label for Autonomous mode
+- `brain.mode.autonomous_desc` - Description for Autonomous mode
+- `brain.mode.semi_auto_label` - Label for Semi-Auto mode
+- `brain.mode.semi_auto_desc` - Description for Semi-Auto mode
+- `brain.mode.manual_label` - Label for Manual mode
+- `brain.mode.manual_desc` - Description for Manual mode
+
+**AI Model Settings (`brain.model.*`):**
+
+- `brain.model.title` - Section title
+- `brain.model.description` - Section description
+- `brain.model.provider` - Provider select label
+- `brain.model.model` - Model select label
+- `brain.model.save_model` - Save button label
+
+**Task Routing (`brain.routing.*` & `brain.task.*`):**
+
+- `brain.routing.title` - Section title
+- `brain.routing.description` - Section description
+- `brain.routing.hide` / `show` - Toggle button labels
+- `brain.task.orchestration` - Label for Orchestration task
+- `brain.task.content_generation` - Label for Content Generation task
+- `brain.task.analytics` - Label for Analytics task
+- `brain.task.campaign` - Label for Campaign task
+- `brain.task.crm` - Label for CRM task
+- `brain.task.segmentation` - Label for Segmentation task
+- `brain.task.conversation` - Label for General Conversation task
+
+| Key                           | PL                      | EN                  | DE                | ES                     |
+| ----------------------------- | ----------------------- | ------------------- | ----------------- | ---------------------- |
+| `brain.mode.autonomous_label` | 🤖 Pełna autonomiczność | 🤖 Fully Autonomous | 🤖 Vollautonom    | 🤖 Totalmente autónomo |
+| `brain.task.orchestration`    | 🧠 Orkiestracja         | 🧠 Orchestration    | 🧠 Orchestrierung | 🧠 Orquestación        |
+
+```
+
+```

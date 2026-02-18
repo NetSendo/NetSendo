@@ -804,7 +804,8 @@
             "products": "Produkty",
             "profit": "Profit",
             "statistics": "Statystyki",
-            "settings": "Ustawienia"
+            "settings": "Ustawienia",
+            "brain": "NetSendo Brain"
         }
     },
     "dashboard": {
@@ -872,6 +873,17 @@
                 "errors": "Błędów",
                 "last_run": "Ostatnie uruchomienie"
             }
+        },
+        "brain": {
+            "mode": "Tryb pracy",
+            "knowledge": "Baza wiedzy",
+            "connected": "Połączony",
+            "disconnected": "Niepołączony",
+            "quick_chat_placeholder": "Zapytaj Brain...",
+            "open_chat": "Otwórz Chat AI",
+            "settings": "Ustawienia",
+            "unavailable": "Brain AI niedostępny",
+            "configure": "Skonfiguruj"
         },
         "clock": {
             "title": "Aktualny czas",
@@ -1929,6 +1941,7 @@
         "add_subscriber": "Dodaj subskrybenta",
         "search_placeholder": "Szukaj po emailu lub nazwisku...",
         "all_lists": "Wszystkie listy",
+        "search_list_placeholder": "Szukaj listy po nazwie lub ID...",
         "all_list_types": "Wszystkie typy list",
         "list_type_email": "Listy Email",
         "list_type_sms": "Listy SMS",
@@ -2417,6 +2430,10 @@
             "ai": {
                 "title": "Sztuczna Inteligencja",
                 "desc": "Integracje z asystentami AI"
+            },
+            "messaging": {
+                "title": "Komunikatory",
+                "desc": "Czatuj z AI przez messengery"
             }
         },
         "request_title": "Potrzebujesz konkretnej integracji?",
@@ -2867,6 +2884,7 @@
             "latest": "Najnowszy",
             "new": "Nowość",
             "january_2026": "Styczeń 2026",
+            "february_2026": "Luty 2026",
             "december_2025": "Grudzień 2025",
             "november_2025": "Listopad 2025",
             "october_2025": "Październik 2025",
@@ -7275,5 +7293,110 @@
         "provider_saved": "Ustawienia dostawcy zapisane pomyślnie!",
         "ip_provisioned": "Adres IP zamówiony pomyślnie!"
     },
-    "high_confidence_data": "Dane o wysokim zaufaniu"
+    "high_confidence_data": "Dane o wysokim zaufaniu",
+    "brain": {
+        "title": "NetSendo Brain",
+        "subtitle": "Twój asystent AI do marketingu",
+        "chat": "Chat AI",
+        "settings_label": "Ustawienia",
+        "settings_page_title": "Brain — Ustawienia",
+        "settings_subtitle": "Konfiguracja trybu pracy, integracji i bazy wiedzy",
+        "back_to_chat": "Wróć do chatu",
+        "new_conversation": "Nowa konwersacja",
+        "send": "Wyślij",
+        "placeholder": "Napisz wiadomość do Brain...",
+        "input_hint": "Enter aby wysłać, Shift+Enter nowa linia",
+        "welcome_title": "Witaj w NetSendo Brain!",
+        "welcome_text": "Zapytaj o kampanie, subskrybentów, statystyki lub wydaj polecenie — pomogę Ci z marketingiem.",
+        "suggestion_1": "Pokaż statystyki kampanii",
+        "suggestion_2": "Ile mam subskrybentów?",
+        "suggestion_3": "Utwórz nową kampanię",
+        "no_conversations": "Brak konwersacji. Rozpocznij nową!",
+        "no_messages": "Brak wiadomości",
+        "untitled": "Bez tytułu",
+        "today": "Dziś",
+        "yesterday": "Wczoraj",
+        "error_generic": "Wystąpił błąd. Spróbuj ponownie.",
+        "saved": "Zapisano",
+        "mode": {
+            "title": "Tryb pracy",
+            "autonomous": "Autonomiczny",
+            "autonomous_label": "🤖 Pełna autonomiczność",
+            "autonomous_desc": "AI planuje i wykonuje akcje automatycznie. Raportuje po wykonaniu.",
+            "semi_auto": "Półautomatyczny",
+            "semi_auto_label": "Półautomat (plan + zatwierdzenie)",
+            "semi_auto_desc": "AI proponuje plan działania. Czeka na Twoje zatwierdzenie przed wykonaniem.",
+            "manual": "Doradczy",
+            "manual_label": "👤 Manualny (doradzanie)",
+            "manual_desc": "AI analizuje i doradza. Ty wykonujesz wszystkie akcje samodzielnie."
+        },
+        "task": {
+            "orchestration": "🧠 Orkiestracja (klasyfikacja intencji)",
+            "content_generation": "✉️ Generowanie treści email/SMS",
+            "analytics": "📊 Analiza i raporty",
+            "campaign": "📧 Planowanie kampanii",
+            "crm": "👥 CRM",
+            "segmentation": "🎯 Segmentacja",
+            "conversation": "💬 Konwersacja ogólna"
+        },
+        "model": {
+            "title": "Model AI",
+            "description": "Wybierz dostawcę i model AI, który będzie używany przez Brain do prowadzenia konwersacji.",
+            "provider": "Dostawca AI",
+            "model": "Model",
+            "default_provider": "— Domyślny dostawca —",
+            "default_model": "— Domyślny model dostawcy —",
+            "save_model": "Zapisz model"
+        },
+        "routing": {
+            "title": "Zaawansowane ustawienia modeli",
+            "description": "Przypisz różne modele AI do różnych zadań Brain. Puste pola używają domyślnego modelu.",
+            "hide": "Ukryj",
+            "show": "Pokaż",
+            "save": "Zapisz routing modeli"
+        },
+        "plan": {
+            "title": "Plan działania",
+            "approve": "Zatwierdź",
+            "reject": "Odrzuć"
+        },
+        "telegram": {
+            "title": "Integracja z Telegramem",
+            "connected": "Połączony",
+            "disconnected": "Niepołączony",
+            "connect_description": "Połącz konto Telegram, aby rozmawiać z Brain bezpośrednio przez Telegram.",
+            "generate_code": "Wygeneruj kod połączenia",
+            "generating": "Generowanie...",
+            "send_code": "Wyślij do bota Telegram:",
+            "test": "Testuj połączenie",
+            "testing": "Testowanie...",
+            "disconnect": "Rozłącz",
+            "bot_token_label": "Token bota Telegram",
+            "bot_token_placeholder": "Wklej token z @BotFather...",
+            "bot_token_help": "Uzyskaj token od @BotFather na Telegramie. Wymagany do integracji z Brain.",
+            "bot_token_save": "Zapisz",
+            "bot_token_saving": "Zapisywanie...",
+            "bot_token_saved": "Zapisano",
+            "bot_token_current": "Aktualny token:"
+        },
+        "knowledge": {
+            "title": "Baza wiedzy",
+            "add": "➕ Dodaj wpis",
+            "cancel": "Anuluj",
+            "category": "Kategoria",
+            "entry_title": "Tytuł",
+            "title_placeholder": "np. Nasza misja",
+            "content": "Treść",
+            "content_placeholder": "Opisz informację, którą Brain powinien znać...",
+            "content_help": "Informacje, które Brain wykorzysta w rozmowach i przy wykonywaniu zadań.",
+            "save": "Zapisz",
+            "saving": "Zapisywanie...",
+            "delete": "Usuń",
+            "empty": "Brak wpisów w bazie wiedzy. Dodaj informacje, które Brain powinien znać.",
+            "col_title": "Tytuł",
+            "col_category": "Kategoria",
+            "col_active": "Aktywny",
+            "col_actions": "Akcje"
+        }
+    }
 }

@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import axios from "axios";
 import debounce from "lodash/debounce";
 import { useI18n } from "vue-i18n";
@@ -26,6 +26,11 @@ const props = defineProps({
 const search = ref(props.filters.search || "");
 const listId = ref(props.filters.list_id || "");
 const listType = ref(props.filters.list_type || "");
+
+// Searchable list dropdown state
+const listSearch = ref("");
+const listDropdownOpen = ref(false);
+const listDropdownRef = ref(null);
 
 // Pagination state
 const loadPerPageSetting = () => {
@@ -295,12 +300,60 @@ const isSomeSelected = computed(() => {
     );
 });
 
-// Computed: filter lists by selected type
+// Computed: filter lists by selected type and search term
 const filteredLists = computed(() => {
-    if (!listType.value) {
-        return props.lists;
+    let lists = props.lists;
+    if (listType.value) {
+        lists = lists.filter((list) => list.type === listType.value);
     }
-    return props.lists.filter((list) => list.type === listType.value);
+    if (listSearch.value) {
+        const term = listSearch.value.toLowerCase();
+        lists = lists.filter(
+            (list) =>
+                list.name.toLowerCase().includes(term) ||
+                String(list.id).includes(term),
+        );
+    }
+    return lists;
+});
+
+// Get selected list name for dropdown button label
+const selectedListName = computed(() => {
+    if (!listId.value) return null;
+    const list = props.lists.find((l) => l.id == listId.value);
+    return list ? list.name : null;
+});
+
+// Select a list from the dropdown
+const selectList = (list) => {
+    listId.value = list.id;
+    listSearch.value = "";
+    listDropdownOpen.value = false;
+};
+
+// Clear list filter
+const clearListFilter = () => {
+    listId.value = "";
+    listSearch.value = "";
+    listDropdownOpen.value = false;
+};
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+    if (
+        listDropdownRef.value &&
+        !listDropdownRef.value.contains(event.target)
+    ) {
+        listDropdownOpen.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+    document.removeEventListener("click", handleClickOutside);
 });
 
 // Toggle column visibility
@@ -763,20 +816,86 @@ const getSortIcon = (column) => {
                     </option>
                 </select>
             </div>
-            <div>
-                <select
-                    v-model="listId"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            <div ref="listDropdownRef" class="relative">
+                <button
+                    @click="listDropdownOpen = !listDropdownOpen"
+                    type="button"
+                    class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-left text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
-                    <option value="">{{ $t("subscribers.all_lists") }}</option>
-                    <option
-                        v-for="list in filteredLists"
-                        :key="list.id"
-                        :value="list.id"
+                    <span class="truncate">
+                        <template v-if="selectedListName">
+                            {{ selectedListName }}
+                            <span class="ml-1 text-xs text-slate-400"
+                                >#{{ listId }}</span
+                            >
+                        </template>
+                        <template v-else>
+                            {{ $t("subscribers.all_lists") }}
+                        </template>
+                    </span>
+                    <svg
+                        class="ml-2 h-4 w-4 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                     >
-                        {{ list.name }}
-                    </option>
-                </select>
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 9l-7 7-7-7"
+                        />
+                    </svg>
+                </button>
+                <div
+                    v-show="listDropdownOpen"
+                    class="absolute left-0 z-50 mt-1 w-72 rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+                >
+                    <div class="p-2">
+                        <input
+                            v-model="listSearch"
+                            type="text"
+                            class="w-full rounded-lg border-slate-200 bg-slate-50 px-3 py-1.5 text-sm placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
+                            :placeholder="
+                                $t('subscribers.search_list_placeholder')
+                            "
+                            @click.stop
+                        />
+                    </div>
+                    <div class="max-h-60 overflow-y-auto">
+                        <button
+                            @click="clearListFilter"
+                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            :class="{
+                                'bg-indigo-50 dark:bg-indigo-900/30': !listId,
+                            }"
+                        >
+                            {{ $t("subscribers.all_lists") }}
+                        </button>
+                        <button
+                            v-for="list in filteredLists"
+                            :key="list.id"
+                            @click="selectList(list)"
+                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            :class="{
+                                'bg-indigo-50 dark:bg-indigo-900/30':
+                                    listId == list.id,
+                            }"
+                        >
+                            <span class="font-medium">{{ list.name }}</span>
+                            <span
+                                class="ml-2 text-xs text-slate-400 dark:text-slate-500"
+                                >#{{ list.id }}</span
+                            >
+                        </button>
+                        <div
+                            v-if="filteredLists.length === 0 && listSearch"
+                            class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                        >
+                            {{ $t("common.no_results") }}
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                 <!-- Per-page selector -->

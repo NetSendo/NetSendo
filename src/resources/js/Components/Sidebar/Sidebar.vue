@@ -123,6 +123,16 @@ const updateOpenGroup = () => {
         return;
     }
 
+    // NetSendo Brain (AI Chat & Settings)
+    if (
+        isActive("brain.*") ||
+        isActive("brain.index") ||
+        isActive("brain.settings")
+    ) {
+        openGroup.value = "brain";
+        return;
+    }
+
     // Listy Kontaktów (old CRM - now renamed to contact lists)
     if (
         isActive("mailing-lists.*") ||
@@ -875,6 +885,88 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                         </svg>
                     </template>
                     {{ $t("crm.guide.title", "Instrukcja") }}
+                </SidebarItem>
+            </SidebarGroup>
+
+            <!-- NetSendo Brain — AI Chat & Settings -->
+            <SidebarGroup
+                :label="$t('navigation.groups.brain', 'NetSendo Brain')"
+                :collapsed="collapsed"
+                :is-open="openGroup === 'brain'"
+                @toggle="toggleGroup('brain')"
+            >
+                <template #icon>
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47 2.47a2.25 2.25 0 01-1.59.659H9.06a2.25 2.25 0 01-1.591-.659L5 14.5m14 0V17a2 2 0 01-2 2H7a2 2 0 01-2-2v-2.5"
+                        />
+                    </svg>
+                </template>
+
+                <SidebarItem
+                    :href="route('brain.index')"
+                    :active="isActive('brain.index')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                            />
+                        </svg>
+                    </template>
+                    <span class="flex items-center gap-2">
+                        {{ $t("brain.chat", "Chat AI") }}
+                        <span
+                            class="rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
+                            >AI</span
+                        >
+                    </span>
+                </SidebarItem>
+
+                <SidebarItem
+                    :href="route('brain.settings')"
+                    :active="isActive('brain.settings')"
+                    :collapsed="collapsed"
+                >
+                    <template #icon>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                            />
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                        </svg>
+                    </template>
+                    {{ $t("brain.settings_label", "Ustawienia") }}
                 </SidebarItem>
             </SidebarGroup>
 

@@ -41,6 +41,7 @@
         "html2canvas": "^1.4.1",
         "laravel-echo": "^2.2.7",
         "lodash": "^4.17.21",
+        "marked": "^17.0.3",
         "mjml-browser": "^4.18.0",
         "pusher-js": "^8.4.0",
         "tiptap-extension-font-size": "^1.2.0",

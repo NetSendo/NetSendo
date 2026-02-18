@@ -11,12 +11,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+### Changed
+
+## [2.0.0] – Short Description
+
+**Release date:** 2026-02-18
+
+### Added
+
+- **NetSendo Brain — Dashboard Status Widget:**
+  - **Status Widget:** Added a new widget to the main Dashboard right sidebar displaying Brain's status, work mode, and knowledge base stats.
+  - **Quick Chat:** Integrated quick chat input directly in the dashboard widget for asking questions to Brain without navigating away.
+  - **Real-time Status:** Widget fetches live data via new `/brain/api/status` endpoint (work mode, knowledge count, telegram connection).
+  - **Localization:** Full translations for the widget in PL, EN, DE, ES.
+
+- **Telegram Marketplace Integration:**
+  - **Marketplace Entry:** Added Telegram to the Marketplace active integrations list with a dedicated detail page.
+  - **Integration Flow:** Users can now discover and connect Telegram from the Marketplace, redirecting to Brain settings for the handshake.
+  - **Status Indicators:** Active/Inactive badges and connection details now visible in Marketplace.
+
+### Fixed
+
+- **Brain Settings - 401 Unauthorized:**
+  - Fixed 401 errors when saving settings or generating Telegram codes in `Settings.vue`.
+  - **Root Cause:** Frontend was using session cookies while API routes (`/api/v1/brain/*`) required Bearer token (`api.key` middleware).
+  - **Fix:** Implemented duplicate session-authenticated web routes (`/brain/api/*`) for internal frontend usage, mirroring the API capabilities but using `web` middleware group.
+
+### Added
+
+- **NetSendo Brain — AI Marketing Assistant (Phase 1):**
+  - **Multi-Agent Architecture:** Introduced a central AI orchestrator ("NetSendo Brain") with three specialist agents (Campaign, List, Message) that can plan, execute, and advise on marketing tasks autonomously.
+  - **Three Work Modes:**
+    - **Autonomous:** AI plans and executes actions automatically, reports after completion.
+    - **Semi-Auto:** AI proposes an action plan with steps, waits for user approval before executing.
+    - **Manual:** AI analyzes and advises; user performs all actions manually.
+  - **Brain Core Services:**
+    - `AgentOrchestrator` — Central brain that classifies user intent via AI (with keyword fallback), routes to specialist agents, manages execution flow, tracks token usage.
+    - `ConversationManager` — Multi-channel conversation management (web, Telegram, API) with system prompt building and AI payload construction.
+    - `ModeController` — Work mode management with critical action detection (e.g., `delete_all_subscribers` always requires approval) and cross-channel approval flow with 24h expiration.
+    - `KnowledgeBaseService` — Bidirectional knowledge engine: users add entries manually, AI auto-enriches from conversations. Category-based context injection for AI prompts with full-text search.
+  - **Specialist Agents:**
+    - `CampaignAgent` — Plans campaign strategies, selects audiences, generates content, creates messages, integrates with existing `CampaignArchitectService`.
+    - `ListAgent` — Creates lists, cleans bounced subscribers, tags contacts, shows statistics with context-aware AI planning.
+    - `MessageAgent` — Generates email/SMS content, subject line variants, A/B test variants, improves existing content using knowledge base context.
+  - **Telegram Bot Integration:**
+    - Full Telegram bot with webhook processing and bot commands (`/start`, `/connect`, `/disconnect`, `/mode`, `/status`, `/help`, `/knowledge`).
+    - Account linking via 8-character codes generated in the web panel.
+    - Inline keyboard approval buttons for semi-auto mode action plans.
+    - Bot token stored per-user in database (self-hosted pattern) with connection test endpoint.
+  - **Brain API (15 endpoints):**
+    - `POST /api/v1/brain/chat` — Send a message to the Brain.
+    - `GET /api/v1/brain/conversations` — List conversation history.
+    - `GET /api/v1/brain/conversations/{id}` — Get conversation with messages.
+    - `GET/POST/PUT/DELETE /api/v1/brain/knowledge` — Full CRUD for knowledge base entries.
+    - `GET /api/v1/brain/plans` — List action plans with status filtering.
+    - `POST /api/v1/brain/plans/{id}/approve` — Approve or reject an action plan.
+    - `GET/PUT /api/v1/brain/settings` — Get and update Brain settings.
+    - `POST /api/v1/brain/telegram/link-code` — Generate Telegram link code.
+    - `POST /api/v1/brain/telegram/test` — Test Telegram bot connection.
+  - **Database:** 8 new tables (`ai_brain_settings`, `ai_conversations`, `ai_conversation_messages`, `knowledge_entries`, `ai_action_plans`, `ai_action_plan_steps`, `ai_pending_approvals`, `ai_execution_logs`) with full migration support.
+  - **Models:** 8 new Eloquent models with relationships, scopes, and helper methods.
+  - **Configuration:** Added `telegram` service config to `services.php`.
+- **NetSendo Brain — Phase 2: Extended Agents:**
+  - **CRM Agent (`CrmAgent`):** Full CRM management via AI — search/create contacts, update lead status, create deals in pipeline, move deal stages, create tasks with scheduling, lead score analysis, pipeline summary with deal values, company creation.
+  - **Analytics Agent (`AnalyticsAgent`):** Read-only analytics engine — campaign stats (open rate, CTOR), subscriber growth/churn, trend analysis (week-over-week), campaign comparison, AI usage reports, AI-generated insight reports.
+  - **Segmentation Agent (`SegmentationAgent`):** Tag distribution analysis, score-based segmentation (cold/warm/hot/super hot), AI-powered segmentation recommendations, tag creation and bulk assignment, automation performance stats.
+  - **Agent Orchestrator Update:** 6 registered agents (campaign, list, message, crm, analytics, segmentation). Updated intent classification with CRM/analytics/segmentation keywords.
+
+- **NetSendo Brain — Phase 3.1: Frontend Chat UI:**
+  - **Brain Chat Page (`Brain/Index.vue`):** Full-featured AI chat interface with conversation list sidebar, message bubbles (user/AI), typing indicator, action plan preview panel, welcome screen with suggestions, and real-time message sending via Brain API.
+  - **Brain Settings Page (`Brain/Settings.vue`):** Configuration UI with work mode selector (autonomous/semi-auto/manual), Telegram integration panel (connect/test/disconnect), and knowledge base management (add/edit/delete/toggle entries).
+  - **Sidebar Integration:** Added "NetSendo Brain" group to the main navigation sidebar with "AI" badge, positioned after the CRM group. Updated `updateOpenGroup()` to recognize `brain.*` routes.
+  - **Backend Routing:** New `BrainPageController` with Inertia rendering for `/brain` (chat) and `/brain/settings` pages. Routes registered as `brain.index` and `brain.settings`.
+  - **Translations:** Added `brain.*` translation keys (~65 keys) to all 4 locale files (PL, EN, DE, ES) covering chat UI, settings, work modes, Telegram integration, and knowledge base management. Added `navigation.groups.brain` key.
+
+- **Subscriber Search Enhancements:**
+  - **Search by Subscriber ID:** Backend search in `SubscriberController` now also matches subscriber ID when the search term is numeric. Typing `123` will find subscriber #123 in addition to matching email/name/phone.
+  - **Searchable List Filter:** Replaced the simple `<select>` dropdown in the subscriber list page with a searchable dropdown. Users can now filter lists by typing a name or ID, with `#id` badges displayed next to each list name.
+  - **Localization:** Added `subscribers.search_list_placeholder` translation key in PL, EN, DE, ES.
+
+### Fixed
+
+- **Brain Agent Heredoc Syntax Error:**
+  - Fixed `{json_encode()}` calls inside PHP heredoc strings across all 6 specialist agents (`CampaignAgent`, `ListAgent`, `MessageAgent`, `CrmAgent`, `AnalyticsAgent`, `SegmentationAgent`). PHP does not support function calls inside heredocs — extracted to local variables (`$intentDesc`, `$paramsJson`) before the heredoc block.
+
 - **Docker Zombie Process Accumulation:**
   - Added `init: true` to all PHP containers (`app`, `scheduler`, `queue`, `reverb`) in both `docker-compose.yml` and `docker-compose.dev.yml`.
   - Fixes zombie processes accumulating in the `scheduler` container (~5760/day) caused by `runInBackground()` tasks forking child PHP processes every minute without an init process (PID 1) to reap them.
   - Docker now injects Tini as PID 1, which properly calls `wait()` on terminated child processes.
 
 ### Changed
+
+- **Queue Diagnostic Logging:**
+  - Added `Log::debug()` calls to `CronScheduleService::processQueue()` for two previously silent skip conditions: list schedule disallowed and list volume limit reached. Logs include entry ID, list ID, message ID, and relevant context to help diagnose why entries remain in `planned` status.
 
 ## [1.9.3] – Short Description
 

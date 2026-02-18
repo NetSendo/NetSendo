@@ -10,7 +10,7 @@ class AnthropicProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'claude-sonnet-4-5-20250929';
+        return 'claude-opus-4-6';
     }
 
     public function supportsFetchModels(): bool
@@ -145,7 +145,7 @@ class AnthropicProvider extends BaseProvider
     {
         $response = $this->makeRequest('post', 'v1/messages', [
             'model' => $this->getModel($model),
-            'max_tokens' => $options['max_tokens'] ?? 65536,
+            'max_tokens' => $options['max_tokens'] ?? 128000,
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],

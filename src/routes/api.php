@@ -234,3 +234,59 @@ Route::post('webhooks/purchase', \App\Http\Controllers\Api\PurchaseWebhookContro
     ->middleware(['api.key', 'throttle:api'])
     ->name('api.webhooks.purchase');
 
+// ============================================================================
+// Telegram Bot Webhook (Public, No Auth - verified by Telegram)
+// ============================================================================
+Route::post('telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook'])
+    ->name('api.telegram.webhook');
+
+// ============================================================================
+// NetSendo Brain API (Authenticated)
+// ============================================================================
+Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(function () {
+
+    // Chat
+    Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
+        ->name('api.v1.brain.chat');
+
+    // Conversations
+    Route::get('conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])
+        ->name('api.v1.brain.conversations');
+    Route::get('conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])
+        ->name('api.v1.brain.conversations.show');
+
+    // Knowledge Base
+    Route::get('knowledge', [\App\Http\Controllers\BrainController::class, 'knowledge'])
+        ->name('api.v1.brain.knowledge.index');
+    Route::post('knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])
+        ->name('api.v1.brain.knowledge.store');
+    Route::put('knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])
+        ->name('api.v1.brain.knowledge.update');
+    Route::delete('knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'deleteKnowledge'])
+        ->name('api.v1.brain.knowledge.destroy');
+
+    // Action Plans
+    Route::get('plans', [\App\Http\Controllers\BrainController::class, 'plans'])
+        ->name('api.v1.brain.plans.index');
+    Route::get('plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])
+        ->name('api.v1.brain.plans.show');
+    Route::post('plans/{id}/approve', [\App\Http\Controllers\BrainController::class, 'approvePlan'])
+        ->name('api.v1.brain.plans.approve');
+
+    // Settings
+    Route::get('settings', [\App\Http\Controllers\BrainController::class, 'settings'])
+        ->name('api.v1.brain.settings');
+    Route::put('settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])
+        ->name('api.v1.brain.settings.update');
+
+    // Telegram Integration
+    Route::post('telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])
+        ->name('api.v1.brain.telegram.link-code');
+    Route::post('telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])
+        ->name('api.v1.brain.telegram.disconnect');
+    Route::post('telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])
+        ->name('api.v1.brain.telegram.test');
+    Route::post('telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])
+        ->name('api.v1.brain.telegram.set-webhook');
+});
+

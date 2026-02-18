@@ -42,5 +42,9 @@ return [
         'client_id' => env('STRIPE_CLIENT_ID'),
     ],
 
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+    ],
+
 ];
 

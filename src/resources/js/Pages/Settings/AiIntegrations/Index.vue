@@ -315,11 +315,16 @@ const toggleActive = (integration) => {
     );
 };
 
-// Updated default models for December 2025
+// Updated default models for February 2026
 // Helper to localize model descriptions
 const localizeModelName = (name) => {
     if (!name) return name;
     return name
+        .replace(
+            "(Najnowszy - Luty 2026)",
+            `(${t("ai.models.latest")} - ${t("ai.models.february_2026")})`,
+        )
+        .replace("(Luty 2026)", `(${t("ai.models.february_2026")})`)
         .replace(
             "(Najnowszy - Styczeń 2026)",
             `(${t("ai.models.latest")} - ${t("ai.models.january_2026")})`,
@@ -354,10 +359,19 @@ const defaultModels = {
         { model_id: "gpt-4.5", display_name: "GPT-4.5 (Legacy)" },
     ],
     anthropic: [
-        // Claude 4.5 - Latest (January 2026)
+        // Claude 4.6 - Latest (February 2026)
+        {
+            model_id: "claude-opus-4-6",
+            display_name: "Claude Opus 4.6 (Najnowszy - Luty 2026)",
+        },
+        {
+            model_id: "claude-sonnet-4-6",
+            display_name: "Claude Sonnet 4.6 (Luty 2026)",
+        },
+        // Claude 4.5
         {
             model_id: "claude-sonnet-4-5-20250929",
-            display_name: "Claude Sonnet 4.5 (Najnowszy - Styczeń 2026)",
+            display_name: "Claude Sonnet 4.5",
         },
         {
             model_id: "claude-haiku-4-5-20251001",
@@ -365,9 +379,9 @@ const defaultModels = {
         },
         {
             model_id: "claude-opus-4-5-20251101",
-            display_name: "Claude Opus 4.5 (Premium)",
+            display_name: "Claude Opus 4.5",
         },
-        // Aliases (convenient for testing)
+        // Aliases
         {
             model_id: "claude-sonnet-4-5",
             display_name: "Claude Sonnet 4.5 (Alias)",
@@ -380,15 +394,14 @@ const defaultModels = {
             model_id: "claude-opus-4-5",
             display_name: "Claude Opus 4.5 (Alias)",
         },
-        // Other active snapshots
+        // Legacy
         {
             model_id: "claude-sonnet-4-20250514",
-            display_name: "Claude Sonnet 4",
+            display_name: "Claude Sonnet 4 (Legacy)",
         },
-        { model_id: "claude-opus-4-20250514", display_name: "Claude Opus 4" },
         {
-            model_id: "claude-opus-4-1-20250805",
-            display_name: "Claude Opus 4.1",
+            model_id: "claude-opus-4-20250514",
+            display_name: "Claude Opus 4 (Legacy)",
         },
         {
             model_id: "claude-3-haiku-20240307",
@@ -407,8 +420,8 @@ const defaultModels = {
         { model_id: "openai/gpt-5.2", display_name: "OpenAI GPT-5.2" },
         { model_id: "openai/o3", display_name: "OpenAI o3" },
         {
-            model_id: "anthropic/claude-4.5-opus",
-            display_name: "Claude 4.5 Opus",
+            model_id: "anthropic/claude-opus-4-6",
+            display_name: "Claude Opus 4.6",
         },
         { model_id: "google/gemini-2.5-pro", display_name: "Gemini 2.5 Pro" },
         { model_id: "meta-llama/llama-4-405b", display_name: "Llama 4 (Full)" },

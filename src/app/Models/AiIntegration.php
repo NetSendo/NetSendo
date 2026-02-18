@@ -68,7 +68,7 @@ class AiIntegration extends Model
             ],
             'anthropic' => [
                 'name' => 'Anthropic',
-                'description' => 'Claude 3.5, Claude 3 Opus, Haiku',
+                'description' => 'Claude Opus 4.6, Sonnet 4.6 i starsze modele',
                 'requires_api_key' => true,
                 'supports_base_url' => false,
                 'default_base_url' => 'https://api.anthropic.com',
@@ -117,7 +117,7 @@ class AiIntegration extends Model
     }
 
     /**
-     * Get default models for a provider (January 2026).
+     * Get default models for a provider (February 2026).
      */
     public static function getDefaultModels(string $provider): array
     {
@@ -132,12 +132,13 @@ class AiIntegration extends Model
                 ['model_id' => 'gpt-4.5', 'display_name' => 'GPT-4.5 (Legacy)'],
             ],
             'anthropic' => [
-                ['model_id' => 'claude-4-5-opus', 'display_name' => 'Claude 4.5 Opus (Najnowszy - Styczeń 2026)'],
+                ['model_id' => 'claude-opus-4-6', 'display_name' => 'Claude Opus 4.6 (Najnowszy - Luty 2026)'],
+                ['model_id' => 'claude-sonnet-4-6', 'display_name' => 'Claude Sonnet 4.6 (Luty 2026)'],
+                ['model_id' => 'claude-4-5-opus', 'display_name' => 'Claude 4.5 Opus'],
                 ['model_id' => 'claude-4-5-sonnet', 'display_name' => 'Claude 4.5 Sonnet'],
-                ['model_id' => 'claude-4-opus', 'display_name' => 'Claude 4 Opus'],
-                ['model_id' => 'claude-4-sonnet', 'display_name' => 'Claude 4 Sonnet'],
-                ['model_id' => 'claude-4-haiku', 'display_name' => 'Claude 4 Haiku'],
-                ['model_id' => 'claude-3-7-sonnet', 'display_name' => 'Claude 3.7 Sonnet (Legacy)'],
+                ['model_id' => 'claude-4-opus', 'display_name' => 'Claude 4 Opus (Legacy)'],
+                ['model_id' => 'claude-4-sonnet', 'display_name' => 'Claude 4 Sonnet (Legacy)'],
+                ['model_id' => 'claude-4-haiku', 'display_name' => 'Claude 4 Haiku (Legacy)'],
             ],
             'grok' => [
                 ['model_id' => 'grok-3-ultra', 'display_name' => 'Grok 3 Ultra (Styczeń 2026)'],
@@ -147,7 +148,7 @@ class AiIntegration extends Model
             'openrouter' => [
                 ['model_id' => 'openai/gpt-5.2', 'display_name' => 'OpenAI GPT-5.2'],
                 ['model_id' => 'openai/o3', 'display_name' => 'OpenAI o3'],
-                ['model_id' => 'anthropic/claude-4.5-opus', 'display_name' => 'Claude 4.5 Opus'],
+                ['model_id' => 'anthropic/claude-opus-4-6', 'display_name' => 'Claude Opus 4.6'],
                 ['model_id' => 'google/gemini-2.5-pro', 'display_name' => 'Gemini 2.5 Pro'],
                 ['model_id' => 'meta-llama/llama-4-405b', 'display_name' => 'Llama 4 (Full)'],
                 ['model_id' => 'x-ai/grok-3-ultra', 'display_name' => 'Grok 3 Ultra'],
