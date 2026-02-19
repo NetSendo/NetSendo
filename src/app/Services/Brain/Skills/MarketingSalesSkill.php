@@ -24,7 +24,7 @@ class MarketingSalesSkill
      * Core system prompt — marketing & sales expertise.
      * Appended to the orchestrator's intent classification and conversation prompts.
      */
-    public static function getSystemPrompt(string $language = 'pl'): string
+    public static function getSystemPrompt(string $language = 'en'): string
     {
         $prompts = [
             'pl' => self::getPolishPrompt(),
@@ -33,7 +33,7 @@ class MarketingSalesSkill
             'es' => self::getSpanishPrompt(),
         ];
 
-        return $prompts[$language] ?? $prompts['pl'];
+        return $prompts[$language] ?? $prompts['en'];
     }
 
     /**
@@ -46,7 +46,7 @@ class MarketingSalesSkill
                 'id' => 'lead_nurturing',
                 'icon' => '🌱',
                 'label' => 'Lead Nurturing',
-                'description' => 'Automatyczne sekwencje pielęgnowania leadów — welcome series, edukacja, budowanie zaufania',
+                'description' => 'Automatic lead nurturing sequences — welcome series, education, trust building',
                 'priority' => 'high',
                 'agent' => 'campaign',
             ],
@@ -54,15 +54,15 @@ class MarketingSalesSkill
                 'id' => 'drip_campaign',
                 'icon' => '💧',
                 'label' => 'Drip Campaign',
-                'description' => 'Wieloetapowe kampanie drip — sekwencje czasowe, follow-upy, reaktywacja',
+                'description' => 'Multi-step drip campaigns — timed sequences, follow-ups, reactivation',
                 'priority' => 'high',
                 'agent' => 'campaign',
             ],
             [
                 'id' => 'promotional_blast',
                 'icon' => '🎯',
-                'label' => 'Kampania Promocyjna',
-                'description' => 'Jednorazowe kampanie promocyjne — oferty specjalne, wyprzedaże, wydarzenia',
+                'label' => 'Promotional Campaign',
+                'description' => 'One-time promotional campaigns — special offers, sales, events',
                 'priority' => 'medium',
                 'agent' => 'campaign',
             ],
@@ -70,7 +70,7 @@ class MarketingSalesSkill
                 'id' => 'sms_campaign',
                 'icon' => '📱',
                 'label' => 'SMS Marketing',
-                'description' => 'Kampanie SMS — krótkie, bezpośrednie wiadomości, przypomnienia, potwierdzenia',
+                'description' => 'SMS campaigns — short, direct messages, reminders, confirmations',
                 'priority' => 'medium',
                 'agent' => 'message',
             ],
@@ -78,15 +78,15 @@ class MarketingSalesSkill
                 'id' => 'ab_testing',
                 'icon' => '🔬',
                 'label' => 'A/B Testing',
-                'description' => 'Testy A/B — tematy emaili, treści, CTA, czas wysyłki, segmenty',
+                'description' => 'A/B tests — email subjects, content, CTAs, send time, segments',
                 'priority' => 'medium',
                 'agent' => 'campaign',
             ],
             [
                 'id' => 'segmentation',
                 'icon' => '🎯',
-                'label' => 'Segmentacja Odbiorców',
-                'description' => 'Inteligentna segmentacja — RFM, zachowania, scoring, zainteresowania',
+                'label' => 'Audience Segmentation',
+                'description' => 'Smart segmentation — RFM, behaviors, scoring, interests',
                 'priority' => 'high',
                 'agent' => 'segmentation',
             ],
@@ -94,47 +94,47 @@ class MarketingSalesSkill
                 'id' => 'crm_pipeline',
                 'icon' => '📊',
                 'label' => 'CRM Pipeline',
-                'description' => 'Zarządzanie pipeline — follow-upy, scoring leadów, przesuwanie etapów',
+                'description' => 'Pipeline management — follow-ups, lead scoring, stage progression',
                 'priority' => 'high',
                 'agent' => 'crm',
             ],
             [
                 'id' => 'win_back',
                 'icon' => '🔄',
-                'label' => 'Reaktywacja',
-                'description' => 'Kampanie win-back — odzyskiwanie nieaktywnych kontaktów, re-engagement',
+                'label' => 'Reactivation',
+                'description' => 'Win-back campaigns — recovering inactive contacts, re-engagement',
                 'priority' => 'medium',
                 'agent' => 'campaign',
             ],
             [
                 'id' => 'analytics_report',
                 'icon' => '📈',
-                'label' => 'Raport & Analiza',
-                'description' => 'Analiza wyników — KPI kampanii, trendy, rekomendacje optymalizacyjne',
+                'label' => 'Report & Analysis',
+                'description' => 'Results analysis — campaign KPIs, trends, optimization recommendations',
                 'priority' => 'low',
                 'agent' => 'analytics',
             ],
             [
                 'id' => 'content_creation',
                 'icon' => '✍️',
-                'label' => 'Tworzenie Treści',
-                'description' => 'Copywriting — emaile sprzedażowe, newslettery, SMS, landing pages',
+                'label' => 'Content Creation',
+                'description' => 'Copywriting — sales emails, newsletters, SMS, landing pages',
                 'priority' => 'medium',
                 'agent' => 'message',
             ],
             [
                 'id' => 'list_hygiene',
                 'icon' => '🧹',
-                'label' => 'Higiena Listy',
-                'description' => 'Oczyszczanie list — usuwanie bounced, nieaktywnych, duplikatów',
+                'label' => 'List Hygiene',
+                'description' => 'List cleaning — removing bounced, inactive, duplicates',
                 'priority' => 'low',
                 'agent' => 'list',
             ],
             [
                 'id' => 'follow_up_sequence',
                 'icon' => '📨',
-                'label' => 'Sekwencje Follow-up',
-                'description' => 'Automatyczne follow-upy po zakupie, po demo, po pobraniu materiałów',
+                'label' => 'Follow-up Sequences',
+                'description' => 'Automatic follow-ups after purchase, demo, material download',
                 'priority' => 'high',
                 'agent' => 'campaign',
             ],
@@ -168,10 +168,10 @@ class MarketingSalesSkill
                     'id' => 'suggest_campaign_' . $now->timestamp,
                     'category' => 'promotional_blast',
                     'icon' => '🎯',
-                    'title' => "Zaplanuj kampanię dla {$totalSubscribers} subskrybentów",
-                    'description' => "Masz {$listCount} list z {$totalSubscribers} subskrybentami — brak kampanii w ostatnich 7 dniach. Zaplanuj nową kampanię email.",
+                    'title' => "Plan a campaign for {$totalSubscribers} subscribers",
+                    'description' => "You have {$listCount} lists with {$totalSubscribers} subscribers — no campaigns in the last 7 days. Plan a new email campaign.",
                     'priority' => 'high',
-                    'action' => 'Stwórz kampanię email dla moich subskrybentów',
+                    'action' => 'Create an email campaign for my subscribers',
                     'agent' => 'campaign',
                 ];
             }
@@ -187,10 +187,10 @@ class MarketingSalesSkill
                     'id' => 'suggest_drip_' . $now->timestamp,
                     'category' => 'drip_campaign',
                     'icon' => '💧',
-                    'title' => 'Stwórz sekwencję drip campaign',
-                    'description' => 'Nie masz jeszcze automatycznej sekwencji drip. Zbuduj welcome series lub nurturing sequence, aby angażować nowych subskrybentów.',
+                    'title' => 'Create a drip campaign sequence',
+                    'description' => 'You don\'t have an automatic drip sequence yet. Build a welcome series or nurturing sequence to engage new subscribers.',
                     'priority' => 'high',
-                    'action' => 'Stwórz drip campaign welcome series',
+                    'action' => 'Create a drip campaign welcome series',
                     'agent' => 'campaign',
                 ];
             }
@@ -211,10 +211,10 @@ class MarketingSalesSkill
                     'id' => 'suggest_hot_leads_' . $now->timestamp,
                     'category' => 'crm_pipeline',
                     'icon' => '🔥',
-                    'title' => "Follow-up {$hotLeads} gorących leadów",
-                    'description' => "Masz {$hotLeads} kontaktów ze score 50+. Zaplanuj personalizowane follow-upy aby zwiększyć konwersję.",
+                    'title' => "Follow up {$hotLeads} hot leads",
+                    'description' => "You have {$hotLeads} contacts with score 50+. Plan personalized follow-ups to increase conversion.",
                     'priority' => 'high',
-                    'action' => "Przygotuj follow-up dla gorących leadów w CRM",
+                    'action' => "Prepare follow-up for hot leads in CRM",
                     'agent' => 'crm',
                 ];
             }
@@ -224,10 +224,10 @@ class MarketingSalesSkill
                     'id' => 'suggest_pipeline_review_' . $now->timestamp,
                     'category' => 'analytics_report',
                     'icon' => '📊',
-                    'title' => "Przegląd pipeline: {$openDeals} otwartych deals",
-                    'description' => "Masz {$openDeals} otwartych deals. Przeanalizuj pipeline, zidentyfikuj blokery i zaplanuj follow-upy.",
+                    'title' => "Pipeline review: {$openDeals} open deals",
+                    'description' => "You have {$openDeals} open deals. Analyze the pipeline, identify blockers and plan follow-ups.",
                     'priority' => 'medium',
-                    'action' => "Przeanalizuj pipeline CRM i zasugeruj kolejne kroki",
+                    'action' => "Analyze CRM pipeline and suggest next steps",
                     'agent' => 'analytics',
                 ];
             }
@@ -245,10 +245,10 @@ class MarketingSalesSkill
                 'id' => 'suggest_analytics_' . $now->timestamp,
                 'category' => 'analytics_report',
                 'icon' => '📈',
-                'title' => 'Wygeneruj raport tygodniowy',
-                'description' => 'Brak raportu w ostatnich 7 dniach. Wygeneruj analizę kampanii, subskrypcji i trendów.',
+                'title' => 'Generate weekly report',
+                'description' => 'No report in the last 7 days. Generate analysis of campaigns, subscriptions and trends.',
                 'priority' => 'low',
-                'action' => 'Wygeneruj pełny raport analityczny',
+                'action' => 'Generate full analytics report',
                 'agent' => 'analytics',
             ];
         }
@@ -259,10 +259,10 @@ class MarketingSalesSkill
                 'id' => 'suggest_hygiene_' . $now->timestamp,
                 'category' => 'list_hygiene',
                 'icon' => '🧹',
-                'title' => 'Oczyszczanie list kontaktów',
-                'description' => "Sprawdź {$totalSubscribers} subskrybentów pod kątem bounced, nieaktywnych i duplikatów. Utrzymuj zdrowe listy.",
+                'title' => 'Clean contact lists',
+                'description' => "Check {$totalSubscribers} subscribers for bounced, inactive and duplicates. Maintain healthy lists.",
                 'priority' => 'low',
-                'action' => 'Oczyść listę z nieaktywnych i bounced subskrybentów',
+                'action' => 'Clean list from inactive and bounced subscribers',
                 'agent' => 'list',
             ];
         }
@@ -273,10 +273,10 @@ class MarketingSalesSkill
                 'id' => 'suggest_segmentation_' . $now->timestamp,
                 'category' => 'segmentation',
                 'icon' => '🎯',
-                'title' => 'Segmentacja bazy kontaktów',
-                'description' => 'Podziel bazę na segmenty wg aktywności, zainteresowań i scoring. Zwiększ trafność kampanii.',
+                'title' => 'Contact base segmentation',
+                'description' => 'Divide your base into segments by activity, interests and scoring. Increase campaign targeting accuracy.',
                 'priority' => 'medium',
-                'action' => 'Przeprowadź segmentację bazy kontaktów',
+                'action' => 'Run contact base segmentation',
                 'agent' => 'segmentation',
             ];
         }

@@ -39,6 +39,10 @@ return [
             'title' => 'Analityka',
             'desc' => 'Śledź wyniki',
         ],
+        'ai' => [
+            'title' => 'AI & Badania',
+            'desc' => 'Narzędzia inteligencji',
+        ],
     ],
     'request_title' => "Nie widzisz tego, czego potrzebujesz?",
     'request_desc' => "Daj nam znać, jaką integrację chciałbyś zobaczyć w następnej kolejności. Priorytetyzujemy naszą mapę drogową na podstawie opinii użytkowników.",
@@ -397,6 +401,149 @@ return [
         ],
         'help_title' => 'Potrzebujesz pomocy?',
         'help_desc' => 'Sprawdź dokumentację, aby uzyskać szczegółowe instrukcje konfiguracji.',
+        'documentation_button' => 'Dokumentacja',
+    ],
+
+    'perplexity' => [
+        'title' => 'Perplexity AI',
+        'hero_title' => 'Perplexity AI',
+        'hero_subtitle' => 'Zaawansowane badania AI z cytowaniami w czasie rzeczywistym dla Twojej inteligencji marketingowej.',
+        'hero_description' => 'Zintegruj Perplexity AI z NetSendo Brain, aby odblokować zaawansowane możliwości badawcze. Uzyskaj kompleksowe odpowiedzi z cytowaniami, analizuj konkurencję, odkrywaj trendy rynkowe i generuj pomysły na treści — wszystko napędzane zaawansowaną AI przeszukującą internet w czasie rzeczywistym.',
+        'features_title' => 'Funkcje',
+        'features' => [
+            'deep_research' => [
+                'title' => 'Głębokie badania z cytowaniami',
+                'description' => 'Uzyskaj kompleksowe, napędzane AI odpowiedzi z cytowaniami źródeł z całego internetu.',
+            ],
+            'company_intelligence' => [
+                'title' => 'Wywiad firmowy',
+                'description' => 'Badaj firmy dogłębnie — produkty, pozycję rynkową, stos technologiczny i kluczowe kontakty.',
+            ],
+            'trend_analysis' => [
+                'title' => 'Analiza trendów rynkowych',
+                'description' => 'Odkrywaj trendy branżowe, pojawiające się szanse i dynamikę rynku dzięki analizie AI.',
+            ],
+            'content_research' => [
+                'title' => 'Pomysły na treści',
+                'description' => 'Generuj oparte na danych pomysły na treści e-mail i SMS na podstawie inteligencji internetowej.',
+            ],
+        ],
+        'setup_title' => 'Konfiguracja',
+        'setup_steps' => [
+            'get_key' => [
+                'title' => 'Pobierz klucz API',
+                'description' => 'Zarejestruj się na perplexity.ai i wygeneruj klucz API z panelu konta.',
+            ],
+            'configure' => [
+                'title' => 'Skonfiguruj w ustawieniach Brain',
+                'description' => 'Przejdź do ustawień Brain i wklej klucz API Perplexity w sekcji Badania.',
+            ],
+            'research' => [
+                'title' => 'Zacznij badać',
+                'description' => 'Poproś Brain o zbadanie dowolnego tematu — użyje Perplexity do głębokich, cytowanych odpowiedzi.',
+            ],
+        ],
+        'api_info' => 'Perplexity AI używa modelu Sonar do szybkich, dokładnych badań z cytowaniami internetowymi.',
+        'use_cases_title' => 'Przypadki użycia',
+        'use_cases' => [
+            'competitor' => [
+                'title' => 'Analiza konkurencji',
+                'description' => 'Badaj strategie, produkty i pozycjonowanie rynkowe konkurentów.',
+            ],
+            'enrichment' => [
+                'title' => 'Wzbogacanie danych CRM',
+                'description' => 'Automatycznie zbieraj ustrukturyzowane dane firmowe dla kontaktów CRM.',
+            ],
+            'campaigns' => [
+                'title' => 'Badania kampanii',
+                'description' => 'Uzyskaj oparte na danych spostrzeżenia, aby poprawić kampanie e-mail i SMS.',
+            ],
+        ],
+        'go_to_settings' => 'Skonfiguruj klucz API',
+        'requirements_title' => 'Wymagania',
+        'requirements' => [
+            'account' => 'Konto Perplexity AI',
+            'api_key' => 'Klucz API Perplexity',
+            'brain' => 'NetSendo Brain włączony',
+        ],
+        'resources_title' => 'Zasoby',
+        'docs_link' => 'Dokumentacja API Perplexity',
+        'help_title' => 'Potrzebujesz pomocy?',
+        'help_desc' => 'Sprawdź naszą dokumentację po szczegółowe instrukcje konfiguracji.',
+        'documentation_button' => 'Dokumentacja',
+    ],
+
+    'serpapi' => [
+        'title' => 'SerpAPI',
+        'hero_title' => 'SerpAPI',
+        'hero_subtitle' => 'Wyniki wyszukiwania Google i grafy wiedzy zintegrowane z Twoim procesem marketingowym.',
+        'hero_description' => 'Połącz SerpAPI z NetSendo Brain, aby uzyskać szybkie, ustrukturyzowane wyniki wyszukiwania Google. Przeszukuj internet, odkrywaj wiadomości, korzystaj z grafów wiedzy i znajdź dane firm — wszystko z poziomu rozmów Brain.',
+        'features_title' => 'Funkcje',
+        'features' => [
+            'google_search' => [
+                'title' => 'Wyniki wyszukiwania Google',
+                'description' => 'Uzyskaj ustrukturyzowane wyniki wyszukiwania Google z tytułami, fragmentami i linkami.',
+            ],
+            'news_search' => [
+                'title' => 'Wyszukiwanie wiadomości',
+                'description' => 'Znajdź najnowsze artykuły na dowolny temat dla aktualnych treści marketingowych.',
+            ],
+            'knowledge_graph' => [
+                'title' => 'Graf wiedzy',
+                'description' => 'Uzyskaj bogate dane podmiotów z Grafu Wiedzy Google dla głębszych spostrzeżeń.',
+            ],
+            'company_lookup' => [
+                'title' => 'Wyszukiwanie danych firm',
+                'description' => 'Szybko znajdź informacje o firmie, strony internetowe i kluczowe dane biznesowe.',
+            ],
+        ],
+        'setup_title' => 'Konfiguracja',
+        'setup_steps' => [
+            'get_key' => [
+                'title' => 'Pobierz klucz API',
+                'description' => 'Zarejestruj się na serpapi.com i pobierz klucz API z panelu.',
+            ],
+            'configure' => [
+                'title' => 'Skonfiguruj w ustawieniach Brain',
+                'description' => 'Przejdź do ustawień Brain i wklej klucz SerpAPI w sekcji Badania.',
+            ],
+            'search' => [
+                'title' => 'Zacznij wyszukiwać',
+                'description' => 'Poproś Brain o wyszukanie w internecie — użyje SerpAPI do szybkich wyników Google.',
+            ],
+        ],
+        'search_types_title' => 'Obsługiwane typy wyszukiwania',
+        'search_types' => [
+            'general' => 'Ogólne wyszukiwanie',
+            'news' => 'Wyszukiwanie wiadomości',
+            'images' => 'Wyszukiwanie obrazów',
+        ],
+        'use_cases_title' => 'Przypadki użycia',
+        'use_cases' => [
+            'competitors' => [
+                'title' => 'Monitoring konkurencji',
+                'description' => 'Śledź aktywność i obecność online konkurentów w czasie rzeczywistym.',
+            ],
+            'trends' => [
+                'title' => 'Odkrywanie trendów',
+                'description' => 'Znajdź popularne tematy i wiadomości dla aktualnych kampanii marketingowych.',
+            ],
+            'crm' => [
+                'title' => 'Badanie leadów',
+                'description' => 'Szybko zbadaj leady i firmy przed podjęciem kontaktu.',
+            ],
+        ],
+        'go_to_settings' => 'Skonfiguruj klucz API',
+        'requirements_title' => 'Wymagania',
+        'requirements' => [
+            'account' => 'Konto SerpAPI',
+            'api_key' => 'Klucz API SerpAPI',
+            'brain' => 'NetSendo Brain włączony',
+        ],
+        'resources_title' => 'Zasoby',
+        'docs_link' => 'Dokumentacja SerpAPI',
+        'help_title' => 'Potrzebujesz pomocy?',
+        'help_desc' => 'Sprawdź naszą dokumentację po szczegółowe instrukcje konfiguracji.',
         'documentation_button' => 'Dokumentacja',
     ],
 ];

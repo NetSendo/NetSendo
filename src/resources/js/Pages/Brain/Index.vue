@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
@@ -38,6 +38,15 @@ const showMobileConversations = ref(false);
 // --- Editable titles ---
 const editingTitleId = ref(null);
 const editingTitleValue = ref("");
+
+// --- Voice Recording ---
+const isRecording = ref(false);
+const isTranscribing = ref(false);
+const recordingDuration = ref(0);
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingTimer = null;
+let audioStream = null;
 
 const startEditTitle = (conv) => {
     editingTitleId.value = conv.id;
@@ -81,6 +90,182 @@ const scrollToBottom = async () => {
 };
 
 watch(messages, scrollToBottom, { deep: true });
+
+// --- Voice Recording Methods ---
+const startRecording = async () => {
+    try {
+        audioStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+        });
+
+        // Determine supported mime type
+        const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+            ? "audio/webm"
+            : MediaRecorder.isTypeSupported("audio/ogg")
+              ? "audio/ogg"
+              : "";
+
+        mediaRecorder = new MediaRecorder(
+            audioStream,
+            mimeType ? { mimeType } : {},
+        );
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, {
+                type: mediaRecorder.mimeType || "audio/webm",
+            });
+            sendVoiceMessage(blob);
+
+            // Stop all audio tracks
+            if (audioStream) {
+                audioStream.getTracks().forEach((track) => track.stop());
+                audioStream = null;
+            }
+        };
+
+        mediaRecorder.start();
+        isRecording.value = true;
+        recordingDuration.value = 0;
+
+        recordingTimer = setInterval(() => {
+            recordingDuration.value++;
+        }, 1000);
+    } catch (error) {
+        console.error("Microphone access denied:", error);
+        // Show error in chat
+        messages.value.push({
+            id: Date.now(),
+            role: "system",
+            content: t(
+                "brain.voice.mic_permission_denied",
+                "Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki.",
+            ),
+            created_at: new Date().toISOString(),
+        });
+    }
+};
+
+const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+    }
+    isRecording.value = false;
+    clearInterval(recordingTimer);
+    recordingTimer = null;
+};
+
+const formatRecordingTime = (seconds) => {
+    const m = Math.floor(seconds / 60)
+        .toString()
+        .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+};
+
+const sendVoiceMessage = async (blob) => {
+    if (!blob || blob.size === 0) return;
+
+    isTranscribing.value = true;
+    isLoading.value = true;
+
+    // Add a placeholder user message
+    const userMsgId = Date.now();
+    messages.value.push({
+        id: userMsgId,
+        role: "user",
+        content: t("brain.voice.transcribing", "Transkrypcja..."),
+        created_at: new Date().toISOString(),
+        isVoice: true,
+    });
+
+    try {
+        const csrfToken =
+            document.querySelector('meta[name="csrf-token"]')?.content || "";
+
+        // Determine extension from mime type
+        const ext = blob.type.includes("ogg") ? "ogg" : "webm";
+
+        const formData = new FormData();
+        formData.append("audio", blob, `voice.${ext}`);
+        if (activeConversationId.value) {
+            formData.append("conversation_id", activeConversationId.value);
+        }
+        if (isNewConversation.value) {
+            formData.append("force_new", "1");
+        }
+
+        const response = await axios.post("/brain/api/chat/voice", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+                "X-CSRF-TOKEN": csrfToken,
+            },
+        });
+
+        const data = response.data;
+
+        // Update placeholder with actual transcribed text
+        const userMsg = messages.value.find((m) => m.id === userMsgId);
+        if (userMsg) {
+            userMsg.content = "🎤 " + (data.transcribed_text || "...");
+        }
+
+        // Track conversation
+        if (data.conversation_id) {
+            activeConversationId.value = data.conversation_id;
+            isNewConversation.value = false;
+            await refreshConversations();
+        }
+
+        // Add assistant response
+        messages.value.push({
+            id: Date.now() + 1,
+            role: "assistant",
+            content: data.message || data.response || "",
+            model_used: data.model || null,
+            plan: data.plan || null,
+            created_at: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Voice message error:", error);
+
+        // Update placeholder with error
+        const userMsg = messages.value.find((m) => m.id === userMsgId);
+        if (userMsg) {
+            userMsg.content =
+                "🎤 " +
+                t(
+                    "brain.voice.transcription_failed",
+                    "Nie udało się transkrybować wiadomości głosowej.",
+                );
+        }
+
+        const errorMsg = error.response?.data?.error || error.message;
+        messages.value.push({
+            id: Date.now() + 1,
+            role: "system",
+            content: errorMsg,
+            created_at: new Date().toISOString(),
+        });
+    } finally {
+        isLoading.value = false;
+        isTranscribing.value = false;
+    }
+};
+
+// Cleanup on unmount
+onUnmounted(() => {
+    if (recordingTimer) clearInterval(recordingTimer);
+    if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+    }
+});
 
 // --- API Methods ---
 const sendMessage = async () => {
@@ -885,7 +1070,58 @@ const getLastMessage = (conversation) => {
                 <div
                     class="border-t border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
                 >
-                    <div class="flex items-end gap-3">
+                    <!-- Recording indicator -->
+                    <div v-if="isRecording" class="flex items-center gap-3">
+                        <div
+                            class="flex flex-1 items-center gap-3 rounded-xl border border-rose-300 bg-rose-50 px-4 py-3 dark:border-rose-600 dark:bg-rose-900/30"
+                        >
+                            <span class="relative flex h-3 w-3">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"
+                                ></span>
+                                <span
+                                    class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"
+                                ></span>
+                            </span>
+                            <span
+                                class="text-sm font-medium text-rose-600 dark:text-rose-400"
+                            >
+                                {{
+                                    t("brain.voice.recording", "Nagrywanie...")
+                                }}
+                            </span>
+                            <span class="text-sm font-mono text-rose-500">
+                                {{ formatRecordingTime(recordingDuration) }}
+                            </span>
+                        </div>
+                        <button
+                            @click="stopRecording"
+                            class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/25 transition-all hover:shadow-xl hover:shadow-rose-500/30"
+                            :title="
+                                t(
+                                    'brain.voice.stop_recording',
+                                    'Zatrzymaj nagrywanie',
+                                )
+                            "
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <rect
+                                    x="6"
+                                    y="6"
+                                    width="12"
+                                    height="12"
+                                    rx="2"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Normal input + buttons -->
+                    <div v-else class="flex items-end gap-3">
                         <textarea
                             v-model="newMessage"
                             @keydown="handleKeyDown"
@@ -897,8 +1133,35 @@ const getLastMessage = (conversation) => {
                             "
                             rows="1"
                             class="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-colors focus:border-cyan-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-500 dark:focus:border-cyan-500 dark:focus:bg-slate-600"
-                            :disabled="isLoading"
+                            :disabled="isLoading || isTranscribing"
                         ></textarea>
+                        <!-- Microphone button -->
+                        <button
+                            @click="startRecording"
+                            :disabled="isLoading || isTranscribing"
+                            class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white shadow-lg shadow-rose-500/25 transition-all hover:shadow-xl hover:shadow-rose-500/30 disabled:opacity-50 disabled:shadow-none"
+                            :title="
+                                t(
+                                    'brain.voice.record_voice',
+                                    'Nagraj wiadomość głosową',
+                                )
+                            "
+                        >
+                            <svg
+                                class="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 11a7 7 0 01-14 0m14 0a7 7 0 00-14 0m14 0v1a7 7 0 01-14 0v-1m7 8v4m-4 0h8M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z"
+                                />
+                            </svg>
+                        </button>
+                        <!-- Send button -->
                         <button
                             @click="sendMessage"
                             :disabled="!newMessage.trim() || isLoading"

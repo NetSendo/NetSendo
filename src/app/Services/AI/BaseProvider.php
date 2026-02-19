@@ -198,6 +198,23 @@ abstract class BaseProvider implements AiProviderInterface
     }
 
     /**
+     * Default implementation: calls generateText() and returns zero usage.
+     * Providers should override this with real usage data extraction.
+     *
+     * @return array{text: string, tokens_input: int, tokens_output: int}
+     */
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
+    {
+        $text = $this->generateText($prompt, $model, $options);
+
+        return [
+            'text' => $text,
+            'tokens_input' => 0,
+            'tokens_output' => 0,
+        ];
+    }
+
+    /**
      * Default streaming implementation: falls back to non-streaming generateText().
      * Providers should override this with real streaming support.
      *

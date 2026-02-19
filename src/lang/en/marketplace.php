@@ -39,6 +39,10 @@ return [
             'title' => 'Analytics',
             'desc' => 'Track performance',
         ],
+        'ai' => [
+            'title' => 'AI & Research',
+            'desc' => 'Intelligence tools',
+        ],
     ],
     'request_title' => "Don't see what you need?",
     'request_desc' => "Let us know which integration you'd like to see next. We prioritize our roadmap based on user feedback.",
@@ -395,6 +399,149 @@ return [
             'calendar_api' => 'Calendar API Enabled',
             'netsendo_account' => 'NetSendo Account',
         ],
+        'help_title' => 'Need help?',
+        'help_desc' => 'Check our documentation for detailed setup instructions.',
+        'documentation_button' => 'Documentation',
+    ],
+
+    'perplexity' => [
+        'title' => 'Perplexity AI',
+        'hero_title' => 'Perplexity AI',
+        'hero_subtitle' => 'AI-powered deep research with real-time citations for your marketing intelligence.',
+        'hero_description' => 'Integrate Perplexity AI with NetSendo Brain to unlock deep research capabilities. Get comprehensive answers with citations, analyze competitors, discover market trends, and generate content ideas — all powered by advanced AI that searches the internet in real-time.',
+        'features_title' => 'Features',
+        'features' => [
+            'deep_research' => [
+                'title' => 'Deep Research with Citations',
+                'description' => 'Get comprehensive, AI-powered answers with source citations from across the web.',
+            ],
+            'company_intelligence' => [
+                'title' => 'Company Intelligence',
+                'description' => 'Research companies in-depth — products, market position, technology stack, and key contacts.',
+            ],
+            'trend_analysis' => [
+                'title' => 'Market Trend Analysis',
+                'description' => 'Discover industry trends, emerging opportunities, and market dynamics with AI analysis.',
+            ],
+            'content_research' => [
+                'title' => 'Content Research Ideas',
+                'description' => 'Generate data-driven email and SMS content ideas based on real-time web intelligence.',
+            ],
+        ],
+        'setup_title' => 'Setup',
+        'setup_steps' => [
+            'get_key' => [
+                'title' => 'Get API Key',
+                'description' => 'Sign up at perplexity.ai and generate an API key from your account dashboard.',
+            ],
+            'configure' => [
+                'title' => 'Configure in Brain Settings',
+                'description' => 'Go to Brain Settings and paste your Perplexity API key in the Research section.',
+            ],
+            'research' => [
+                'title' => 'Start Researching',
+                'description' => 'Ask Brain to research any topic — it will use Perplexity for deep, cited answers.',
+            ],
+        ],
+        'api_info' => 'Perplexity AI uses the Sonar model for fast, accurate research with web citations.',
+        'use_cases_title' => 'Use Cases',
+        'use_cases' => [
+            'competitor' => [
+                'title' => 'Competitor Analysis',
+                'description' => 'Research competitors\' strategies, products, and market positioning.',
+            ],
+            'enrichment' => [
+                'title' => 'CRM Data Enrichment',
+                'description' => 'Automatically gather structured company data for your CRM contacts.',
+            ],
+            'campaigns' => [
+                'title' => 'Campaign Research',
+                'description' => 'Get data-driven insights to improve your email and SMS campaigns.',
+            ],
+        ],
+        'go_to_settings' => 'Configure API Key',
+        'requirements_title' => 'Requirements',
+        'requirements' => [
+            'account' => 'Perplexity AI account',
+            'api_key' => 'Perplexity API Key',
+            'brain' => 'NetSendo Brain enabled',
+        ],
+        'resources_title' => 'Resources',
+        'docs_link' => 'Perplexity API Documentation',
+        'help_title' => 'Need help?',
+        'help_desc' => 'Check our documentation for detailed setup instructions.',
+        'documentation_button' => 'Documentation',
+    ],
+
+    'serpapi' => [
+        'title' => 'SerpAPI',
+        'hero_title' => 'SerpAPI',
+        'hero_subtitle' => 'Google Search results and knowledge graphs integrated into your marketing workflow.',
+        'hero_description' => 'Connect SerpAPI to NetSendo Brain for fast, structured Google Search results. Search the web, discover news, access knowledge graphs, and find company data — all from within your Brain chat conversations.',
+        'features_title' => 'Features',
+        'features' => [
+            'google_search' => [
+                'title' => 'Google Search Results',
+                'description' => 'Access structured Google Search results with titles, snippets, and links.',
+            ],
+            'news_search' => [
+                'title' => 'News Search',
+                'description' => 'Find the latest news articles on any topic for timely marketing content.',
+            ],
+            'knowledge_graph' => [
+                'title' => 'Knowledge Graph',
+                'description' => 'Get rich entity data from Google\'s Knowledge Graph for deeper insights.',
+            ],
+            'company_lookup' => [
+                'title' => 'Company Data Lookup',
+                'description' => 'Quickly find company information, websites, and key business details.',
+            ],
+        ],
+        'setup_title' => 'Setup',
+        'setup_steps' => [
+            'get_key' => [
+                'title' => 'Get API Key',
+                'description' => 'Sign up at serpapi.com and get your API key from the dashboard.',
+            ],
+            'configure' => [
+                'title' => 'Configure in Brain Settings',
+                'description' => 'Go to Brain Settings and paste your SerpAPI key in the Research section.',
+            ],
+            'search' => [
+                'title' => 'Start Searching',
+                'description' => 'Ask Brain to search the web — it will use SerpAPI for fast Google results.',
+            ],
+        ],
+        'search_types_title' => 'Supported Search Types',
+        'search_types' => [
+            'general' => 'General Web Search',
+            'news' => 'News Search',
+            'images' => 'Image Search',
+        ],
+        'use_cases_title' => 'Use Cases',
+        'use_cases' => [
+            'competitors' => [
+                'title' => 'Competitor Monitoring',
+                'description' => 'Track competitor activity and online presence in real-time.',
+            ],
+            'trends' => [
+                'title' => 'Trend Discovery',
+                'description' => 'Find trending topics and news for timely marketing campaigns.',
+            ],
+            'crm' => [
+                'title' => 'Lead Research',
+                'description' => 'Quickly research leads and companies before outreach.',
+            ],
+        ],
+        'go_to_settings' => 'Configure API Key',
+        'requirements_title' => 'Requirements',
+        'requirements' => [
+            'account' => 'SerpAPI account',
+            'api_key' => 'SerpAPI API Key',
+            'brain' => 'NetSendo Brain enabled',
+        ],
+        'resources_title' => 'Resources',
+        'docs_link' => 'SerpAPI Documentation',
         'help_title' => 'Need help?',
         'help_desc' => 'Check our documentation for detailed setup instructions.',
         'documentation_button' => 'Documentation',

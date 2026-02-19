@@ -31,22 +31,26 @@ class SegmentationAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem segmentacji i automatyzacji marketingu. Użytkownik chce:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are a marketing segmentation and automation expert. The user wants:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 {$knowledgeContext}
 
-Stwórz plan w JSON:
+{$langInstruction}
+
+Create a plan in JSON:
 {"title":"","description":"","steps":[{"action_type":"","title":"","description":"","config":{}}]}
 
-Dostępne action_types:
-- analyze_tag_distribution: pokaż rozkład tagów (config: {limit: 15})
-- analyze_score_distribution: pokaż segmenty scoring (config: {})
-- create_tag: stwórz tag (config: {name: "", color: "#hex"})
-- apply_tag: przypisz tag subskrybentom (config: {tag_name: "", criteria: {status: "", min_score: N}})
-- suggest_segments: rekomendacje segmentacji AI (config: {})
-- automation_stats: statystyki automatyzacji (config: {days: 7})
+Available action_types:
+- analyze_tag_distribution: show tag distribution (config: {limit: 15})
+- analyze_score_distribution: show scoring segments (config: {})
+- create_tag: create tag (config: {name: "", color: "#hex"})
+- apply_tag: apply tag to subscribers (config: {tag_name: "", criteria: {status: "", min_score: N}})
+- suggest_segments: AI segmentation recommendations (config: {})
+- automation_stats: automation statistics (config: {days: 7})
 PROMPT;
 
         try {
@@ -101,14 +105,18 @@ PROMPT;
         $contactCount = CrmContact::forUser($user->id)->count();
         $rulesCount = AutomationRule::forUser($user->id)->count();
 
-        $prompt = <<<PROMPT
-Jesteś ekspertem segmentacji. Stan:
-- Tagów: {$tagCount}, Kontaktów CRM: {$contactCount}, Automatyzacji: {$rulesCount}
+        $langInstruction = $this->getLanguageInstruction($user);
 
-Pytanie: {$intent['intent']}
+        $prompt = <<<PROMPT
+You are a segmentation expert. Current state:
+- Tags: {$tagCount}, CRM Contacts: {$contactCount}, Automations: {$rulesCount}
+
+Question: {$intent['intent']}
 {$knowledgeContext}
 
-Podaj porady dotyczące segmentacji z konkretnymi krokami. Użyj emoji.
+{$langInstruction}
+
+Provide segmentation advice with specific steps. Use emoji.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5]);
@@ -224,15 +232,19 @@ PROMPT;
 
         $tagSummary = $tagCount->take(10)->map(fn($t) => "{$t->name}: {$t->subscribers_count}")->join(', ');
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem segmentacji marketingowej. Na podstawie danych użytkownika zaproponuj segmenty:
+You are a marketing segmentation expert. Based on the user's data, suggest segments:
 
-Subskrybenci: {$totalSubs} (aktywni: {$activeSubs})
-Kontakty CRM: {$crmCount} (hot leads: {$hotLeads})
-Istniejące tagi: {$tagSummary}
+Subscribers: {$totalSubs} (active: {$activeSubs})
+CRM Contacts: {$crmCount} (hot leads: {$hotLeads})
+Existing tags: {$tagSummary}
 
-Zaproponuj 3-5 nowych segmentów z kryteriami i rekomendowanymi akcjami.
-Użyj emoji. Bądź konkretny.
+{$langInstruction}
+
+Suggest 3-5 new segments with criteria and recommended actions.
+Use emoji. Be specific.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.6]);

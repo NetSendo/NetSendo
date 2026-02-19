@@ -32,24 +32,28 @@ class AnalyticsAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem analityki marketingowej. Użytkownik chce:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are a marketing analytics expert. The user wants:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 {$knowledgeContext}
 
-Stwórz plan analizy w JSON:
+{$langInstruction}
+
+Create an analysis plan in JSON:
 {"title":"","description":"","steps":[{"action_type":"","title":"","description":"","config":{}}]}
 
-Dostępne action_types:
-- fetch_campaign_stats: statystyki kampanii (config: {days: 30})
-- fetch_subscriber_stats: statystyki subskrybentów (config: {days: 30})
-- generate_report: raport AI (config: {type: "monthly|weekly|custom"})
-- compare_performance: porównaj kampanie (config: {})
-- analyze_trends: analiza trendów (config: {days: 30})
-- ai_usage_report: użycie AI Brain (config: {days: 30})
+Available action_types:
+- fetch_campaign_stats: campaign statistics (config: {days: 30})
+- fetch_subscriber_stats: subscriber statistics (config: {days: 30})
+- generate_report: AI report (config: {type: "monthly|weekly|custom"})
+- compare_performance: compare campaigns (config: {})
+- analyze_trends: trend analysis (config: {days: 30})
+- ai_usage_report: AI Brain usage (config: {days: 30})
 
-Analytics agent jest read-only — nigdy nie modyfikuje danych.
+Analytics agent is read-only — never modifies data.
 PROMPT;
 
         try {
@@ -101,7 +105,8 @@ PROMPT;
     public function advise(array $intent, User $user, string $knowledgeContext = ''): array
     {
         $stats = $this->gatherQuickStats($user);
-        $prompt = "Jesteś ekspertem analityki. Statystyki:\n{$stats}\nPytanie: {$intent['intent']}\n{$knowledgeContext}\nPodaj analizę z liczbami i rekomendacjami. Użyj emoji.";
+        $langInstruction = $this->getLanguageInstruction($user);
+        $prompt = "You are an analytics expert. Statistics:\n{$stats}\nQuestion: {$intent['intent']}\n{$knowledgeContext}\n\n{$langInstruction}\n\nProvide analysis with numbers and recommendations. Use emoji.";
         $response = $this->callAi($prompt, ['max_tokens' => 2500, 'temperature' => 0.5]);
         return ['type' => 'advice', 'message' => $response];
     }
@@ -155,7 +160,9 @@ PROMPT;
         $ctx = $completed->map(fn($s) => "**{$s->title}**:\n" . json_encode($s->result['data'] ?? $s->result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))->join("\n\n");
         if (empty($ctx)) $ctx = $this->gatherQuickStats($user);
 
-        $prompt = "Wygeneruj profesjonalny raport na podstawie:\n{$ctx}\n\nFormat: 1) Podsumowanie 2) Analiza 3) Trendy 4) Rekomendacje. Użyj emoji, po polsku.";
+        $langInstruction = $this->getLanguageInstruction(User::find($step->plan->user_id));
+
+        $prompt = "Generate a professional report based on:\n{$ctx}\n\n{$langInstruction}\n\nFormat: 1) Summary 2) Analysis 3) Trends 4) Recommendations. Use emoji.";
         $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.4]);
 
         return ['status' => 'completed', 'message' => $response];

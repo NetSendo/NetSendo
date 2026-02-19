@@ -240,6 +240,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test');
         Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook');
 
+        // Research API
+        Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test');
+
         // Knowledge Base
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
         Route::put('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])->name('api.knowledge.update');
@@ -248,6 +251,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // Chat API (session-authenticated, used by Index.vue)
         Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');
         Route::post('/api/chat/stream', [\App\Http\Controllers\BrainController::class, 'chatStream'])->name('api.chat.stream');
+        Route::post('/api/chat/voice', [\App\Http\Controllers\BrainController::class, 'chatVoice'])->name('api.chat.voice');
         Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
         Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
         Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');
@@ -559,6 +563,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Calendly Marketplace
     Route::get('/marketplace/calendly', fn() => Inertia::render('Marketplace/Calendly'))->name('marketplace.calendly');
     Route::get('/marketplace/telegram', fn() => Inertia::render('Marketplace/Telegram'))->name('marketplace.telegram');
+
+    // Brain Research Integrations
+    Route::get('/marketplace/perplexity', fn() => Inertia::render('Marketplace/Perplexity'))->name('marketplace.perplexity');
+    Route::get('/marketplace/serpapi', fn() => Inertia::render('Marketplace/SerpAPI'))->name('marketplace.serpapi');
 
     // Stripe Settings
     Route::prefix('settings/stripe')->name('settings.stripe.')->group(function () {

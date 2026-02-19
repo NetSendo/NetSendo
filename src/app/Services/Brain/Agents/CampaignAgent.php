@@ -67,20 +67,22 @@ class CampaignAgent extends BaseAgent
     {
         // Fetch available lists for context
         $lists = ContactList::where('user_id', $user->id)->withCount('subscribers')->get();
-        $listsInfo = $lists->map(fn($l) => "• {$l->name} ({$l->subscribers_count} subskrybentów)")->join("\n");
+        $listsInfo = $lists->map(fn($l) => "• {$l->name} ({$l->subscribers_count} subscribers)")->join("\n");
 
-        $response = "📧 **Tworzenie kampanii — potrzebuję szczegółów:**\n\n"
-            . "1. **Cel kampanii** — co chcesz osiągnąć? (np. promocja produktu, newsletter, welcome email)\n"
-            . "2. **Temat/produkt** — o czym ma być wiadomość?\n"
-            . "3. **Ton komunikacji** — formalny, przyjazny, promujący?\n"
-            . "4. **Grupa docelowa** — do kogo wysłać?\n";
+        $langInstruction = $this->getLanguageInstruction($user);
+
+        $response = "📧 **Creating a campaign — I need some details:**\n\n"
+            . "1. **Campaign goal** — what do you want to achieve? (e.g. product promotion, newsletter, welcome email)\n"
+            . "2. **Topic/product** — what should the message be about?\n"
+            . "3. **Tone of voice** — formal, friendly, promotional?\n"
+            . "4. **Target audience** — who should receive it?\n";
 
         if ($listsInfo) {
-            $response .= "\n📋 **Twoje listy:**\n{$listsInfo}\n";
+            $response .= "\n📋 **Your lists:**\n{$listsInfo}\n";
         }
 
-        $response .= "\n5. **Kiedy wysłać?** — natychmiast, zaplanować na konkretny termin?\n\n"
-            . "Podaj tyle szczegółów ile możesz, a ja przygotuję profesjonalny plan kampanii.";
+        $response .= "\n5. **When to send?** — immediately, or schedule for a specific date?\n\n"
+            . "Provide as many details as you can and I will prepare a professional campaign plan.\n\n{$langInstruction}";
 
         return $response;
     }
@@ -93,34 +95,38 @@ class CampaignAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem email marketingu. Użytkownik chce wykonać następującą akcję:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are an email marketing expert. The user wants to perform the following action:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Stwórz szczegółowy plan kampanii. Odpowiedz w JSON:
+{$langInstruction}
+
+Create a detailed campaign plan. Respond in JSON:
 {
-  "title": "krótki tytuł planu",
-  "description": "opis co plan osiągnie",
+  "title": "short plan title",
+  "description": "description of what the plan will achieve",
   "steps": [
     {
-      "action_type": "typ_akcji",
-      "title": "tytuł kroku",
-      "description": "opis kroku",
+      "action_type": "action_type",
+      "title": "step title",
+      "description": "step description",
       "config": {}
     }
   ]
 }
 
-Dostępne action_types:
-- select_audience: wybierz grupę docelową (config: {list_ids: [], segment_criteria: {}})
-- generate_content: wygeneruj treść wiadomości (config: {type: "email"|"sms", tone: "", topic: ""})
-- create_message: stwórz wiadomość w systemie (config: {subject: "", content_ref: "step_N"})
-- schedule_send: zaplanuj wysyłkę (config: {send_at: "datetime|immediate", list_id: N})
-- create_automation: stwórz automatyzację (config: {trigger: "", actions: []})
-- analyze_results: analizuj wyniki po wysyłce (config: {campaign_id: N, wait_hours: 24})
+Available action_types:
+- select_audience: select target audience (config: {list_ids: [], segment_criteria: {}})
+- generate_content: generate message content (config: {type: "email"|"sms", tone: "", topic: ""})
+- create_message: create message in the system (config: {subject: "", content_ref: "step_N"})
+- schedule_send: schedule sending (config: {send_at: "datetime|immediate", list_id: N})
+- create_automation: create automation (config: {trigger: "", actions: []})
+- analyze_results: analyze results after sending (config: {campaign_id: N, wait_hours: 24})
 PROMPT;
 
         try {
@@ -172,7 +178,7 @@ PROMPT;
             $report .= "{$plan->description}\n";
         }
 
-        $report .= "\n📋 **Wykonane kroki** ({$completedCount}/{$plan->total_steps}):\n"
+        $report .= "\n📋 **Completed steps** ({$completedCount}/{$plan->total_steps}):\n"
             . implode("\n", $stepReports);
 
         return [
@@ -203,16 +209,20 @@ PROMPT;
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem email marketingu. Użytkownik pracuje w trybie manualnym i potrzebuje porady.
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are an email marketing expert. The user is in manual mode and needs advice.
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Podaj szczegółowe instrukcje krok po kroku, jak użytkownik powinien to zrobić ręcznie w panelu NetSendo.
-Uwzględnij best practices i wskazówki optymalizacyjne.
-Odpowiedz w czytelnym formacie z emoji.
+{$langInstruction}
+
+Provide detailed step-by-step instructions on how the user can do this manually in the NetSendo panel.
+Include best practices and optimization tips.
+Respond in a readable format with emoji.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'campaign');
@@ -266,23 +276,27 @@ PROMPT;
         $tone = $config['tone'] ?? 'profesjonalny';
         $topic = $config['topic'] ?? '';
 
-        $prompt = <<<PROMPT
-Wygeneruj treść {$type} wiadomości marketingowej.
+        $langInstruction = $this->getLanguageInstruction($user);
 
-Temat/cel: {$topic}
-Ton komunikacji: {$tone}
+        $prompt = <<<PROMPT
+Generate {$type} marketing message content.
+
+Topic/goal: {$topic}
+Tone: {$tone}
 
 {$knowledgeContext}
 
-Odpowiedz w JSON:
+{$langInstruction}
+
+Respond in JSON:
 {
-  "subject": "temat wiadomości (jeśli email)",
-  "preview_text": "tekst podglądu (jeśli email)",
-  "content": "treść wiadomości (HTML dla email, tekst dla SMS)",
-  "cta_text": "tekst przycisku CTA",
+  "subject": "message subject (for email)",
+  "preview_text": "preview text (for email)",
+  "content": "message content (HTML for email, text for SMS)",
+  "cta_text": "CTA button text",
   "variants": [
-    {"subject": "alternatywny temat 1"},
-    {"subject": "alternatywny temat 2"}
+    {"subject": "alternative subject 1"},
+    {"subject": "alternative subject 2"}
   ]
 }
 PROMPT;
@@ -309,7 +323,7 @@ PROMPT;
 
         $content = $contentStep?->result['generated_content'] ?? null;
         $subject = $config['subject'] ?? $content['subject'] ?? __('brain.campaign.default_message');
-        $body = $content['content'] ?? '<p>Treść wiadomości</p>';
+        $body = $content['content'] ?? '<p>Message content</p>';
 
         $message = Message::create([
             'user_id' => $user->id,

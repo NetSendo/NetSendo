@@ -46,37 +46,41 @@ class CrmAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem CRM i zarządzania kontaktami. Użytkownik chce wykonać następującą akcję:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are a CRM and contact management expert. The user wants to perform the following action:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Stwórz szczegółowy plan CRM. Odpowiedz w JSON:
+{$langInstruction}
+
+Create a detailed CRM plan. Respond in JSON:
 {
-  "title": "krótki tytuł planu",
-  "description": "opis co plan osiągnie",
+  "title": "short plan title",
+  "description": "description of what the plan will achieve",
   "steps": [
     {
-      "action_type": "typ_akcji",
-      "title": "tytuł kroku",
-      "description": "opis kroku",
+      "action_type": "action_type",
+      "title": "step title",
+      "description": "step description",
       "config": {}
     }
   ]
 }
 
-Dostępne action_types:
-- search_contacts: szukaj kontaktów (config: {query: "", status: "lead|prospect|client", min_score: N})
-- create_contact: stwórz kontakt CRM z subskrybenta (config: {email: "", source: "", status: "lead"})
-- update_contact_status: zmień status kontaktu (config: {contact_id: N, new_status: "prospect|client"})
-- create_deal: stwórz deal w pipeline (config: {name: "", value: N, contact_id: N, pipeline_id: N})
-- move_deal_stage: przenieś deal na etap (config: {deal_id: N, stage_name: ""})
-- create_task: stwórz zadanie CRM (config: {title: "", type: "call|email|meeting|follow_up", priority: "low|medium|high", contact_id: N, due_days: N})
-- score_analysis: analizuj scoring leadów (config: {min_score: N, status: ""})
-- pipeline_summary: pokaż podsumowanie pipeline (config: {pipeline_id: N|null})
-- create_company: stwórz firmę (config: {name: "", website: "", industry: ""})
+Available action_types:
+- search_contacts: search contacts (config: {query: "", status: "lead|prospect|client", min_score: N})
+- create_contact: create CRM contact from subscriber (config: {email: "", source: "", status: "lead"})
+- update_contact_status: change contact status (config: {contact_id: N, new_status: "prospect|client"})
+- create_deal: create deal in pipeline (config: {name: "", value: N, contact_id: N, pipeline_id: N})
+- move_deal_stage: move deal to stage (config: {deal_id: N, stage_name: ""})
+- create_task: create CRM task (config: {title: "", type: "call|email|meeting|follow_up", priority: "low|medium|high", contact_id: N, due_days: N})
+- score_analysis: analyze lead scoring (config: {min_score: N, status: ""})
+- pipeline_summary: show pipeline summary (config: {pipeline_id: N|null})
+- create_company: create company (config: {name: "", website: "", industry: ""})
 PROMPT;
 
         try {
@@ -154,16 +158,20 @@ PROMPT;
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem CRM. Użytkownik pracuje w trybie manualnym i potrzebuje porady.
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are a CRM expert. The user is in manual mode and needs advice.
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Podaj szczegółowe instrukcje krok po kroku, jak użytkownik powinien to zrobić ręcznie w panelu NetSendo CRM.
-Uwzględnij best practices zarządzania kontaktami i pipeline sprzedażowym.
-Odpowiedz w czytelnym formacie z emoji.
+{$langInstruction}
+
+Provide detailed step-by-step instructions on how the user can do this manually in the NetSendo CRM panel.
+Include best practices for contact management and sales pipeline.
+Respond in a readable format with emoji.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5]);

@@ -39,6 +39,62 @@ const saveMode = async (mode) => {
     }
 };
 
+// --- Language ---
+const languageOptions = [
+    { value: "auto", label: "brain.language.auto" },
+    { value: "en", label: "English" },
+    { value: "pl", label: "Polski" },
+    { value: "de", label: "Deutsch" },
+    { value: "es", label: "Español" },
+    { value: "custom", label: "brain.language.custom" },
+];
+const selectedLanguage = ref(props.settings?.preferred_language || "auto");
+const customLanguage = ref("");
+const isSavingLanguage = ref(false);
+const languageSaved = ref(false);
+
+// If the stored value is not one of the standard options, treat it as custom
+const isCustomLanguage = computed(() => {
+    const standardCodes = ["auto", "en", "pl", "de", "es"];
+    return !standardCodes.includes(selectedLanguage.value);
+});
+
+// Initialize custom field if needed
+if (isCustomLanguage.value) {
+    customLanguage.value = selectedLanguage.value;
+    selectedLanguage.value = "custom";
+}
+
+const onLanguageChange = () => {
+    if (selectedLanguage.value !== "custom") {
+        customLanguage.value = "";
+    }
+};
+
+const saveLanguage = async () => {
+    isSavingLanguage.value = true;
+    languageSaved.value = false;
+    const langValue =
+        selectedLanguage.value === "custom"
+            ? customLanguage.value.trim()
+            : selectedLanguage.value;
+    if (!langValue) {
+        isSavingLanguage.value = false;
+        return;
+    }
+    try {
+        await axios.put("/brain/api/settings", {
+            preferred_language: langValue,
+        });
+        languageSaved.value = true;
+        setTimeout(() => (languageSaved.value = false), 2000);
+    } catch (error) {
+        // Error
+    } finally {
+        isSavingLanguage.value = false;
+    }
+};
+
 // --- AI Model Selector ---
 const selectedIntegrationId = ref(
     props.settings?.preferred_integration_id || null,
@@ -198,7 +254,7 @@ const saveBotToken = async () => {
                           success: true,
                           message: t(
                               "brain.telegram.webhook_success",
-                              "Webhook zarejestrowany pomyślnie",
+                              "Webhook registered successfully",
                           ),
                       }
                     : {
@@ -230,7 +286,7 @@ const setupWebhook = async () => {
                 success: true,
                 message: t(
                     "brain.telegram.webhook_success",
-                    "Webhook zarejestrowany pomyślnie",
+                    "Webhook registered successfully",
                 ),
             };
         } else {
@@ -240,7 +296,7 @@ const setupWebhook = async () => {
                     response.data?.description ||
                     t(
                         "brain.telegram.webhook_failed_generic",
-                        "Nie udało się ustawić webhooka",
+                        "Failed to set up webhook",
                     ),
             };
         }
@@ -250,10 +306,7 @@ const setupWebhook = async () => {
             message:
                 error.response?.data?.error ||
                 error.response?.data?.description ||
-                t(
-                    "brain.telegram.webhook_error",
-                    "Błąd podczas ustawiania webhooka",
-                ),
+                t("brain.telegram.webhook_error", "Error setting up webhook"),
         };
     } finally {
         isSettingWebhook.value = false;
@@ -294,6 +347,111 @@ const disconnectTelegram = async () => {
         isTelegramConnected.value = false;
     } catch (error) {
         // Error
+    }
+};
+
+// --- Internet Research APIs ---
+const perplexityApiKey = ref("");
+const serpApiKey = ref("");
+const isSavingPerplexity = ref(false);
+const isSavingSerpApi = ref(false);
+const perplexitySaved = ref(false);
+const serpApiSaved = ref(false);
+const perplexityTestResult = ref(null);
+const serpApiTestResult = ref(null);
+const isTestingPerplexity = ref(false);
+const isTestingSerpApi = ref(false);
+
+const existingPerplexityMask = ref(
+    props.settings?.perplexity_api_key
+        ? "••••••••" + props.settings.perplexity_api_key.slice(-4)
+        : "",
+);
+
+const existingSerpApiMask = ref(
+    props.settings?.serpapi_api_key
+        ? "••••••••" + props.settings.serpapi_api_key.slice(-4)
+        : "",
+);
+
+const savePerplexityKey = async () => {
+    if (!perplexityApiKey.value.trim()) return;
+    isSavingPerplexity.value = true;
+    perplexitySaved.value = false;
+    try {
+        await axios.put("/brain/api/settings", {
+            perplexity_api_key: perplexityApiKey.value,
+        });
+        existingPerplexityMask.value =
+            "••••••••" + perplexityApiKey.value.slice(-4);
+        perplexityApiKey.value = "";
+        perplexitySaved.value = true;
+        setTimeout(() => (perplexitySaved.value = false), 3000);
+    } catch (error) {
+        // Error
+    } finally {
+        isSavingPerplexity.value = false;
+    }
+};
+
+const saveSerpApiKey = async () => {
+    if (!serpApiKey.value.trim()) return;
+    isSavingSerpApi.value = true;
+    serpApiSaved.value = false;
+    try {
+        await axios.put("/brain/api/settings", {
+            serpapi_api_key: serpApiKey.value,
+        });
+        existingSerpApiMask.value = "••••••••" + serpApiKey.value.slice(-4);
+        serpApiKey.value = "";
+        serpApiSaved.value = true;
+        setTimeout(() => (serpApiSaved.value = false), 3000);
+    } catch (error) {
+        // Error
+    } finally {
+        isSavingSerpApi.value = false;
+    }
+};
+
+const testPerplexityApi = async () => {
+    const key = perplexityApiKey.value || props.settings?.perplexity_api_key;
+    if (!key) return;
+    isTestingPerplexity.value = true;
+    perplexityTestResult.value = null;
+    try {
+        const response = await axios.post("/brain/api/research/test", {
+            provider: "perplexity",
+            api_key: key,
+        });
+        perplexityTestResult.value = response.data;
+    } catch (error) {
+        perplexityTestResult.value = {
+            success: false,
+            message: error.response?.data?.message || "Connection test failed",
+        };
+    } finally {
+        isTestingPerplexity.value = false;
+    }
+};
+
+const testSerpApi = async () => {
+    const key = serpApiKey.value || props.settings?.serpapi_api_key;
+    if (!key) return;
+    isTestingSerpApi.value = true;
+    serpApiTestResult.value = null;
+    try {
+        const response = await axios.post("/brain/api/research/test", {
+            provider: "serpapi",
+            api_key: key,
+        });
+        serpApiTestResult.value = response.data;
+    } catch (error) {
+        serpApiTestResult.value = {
+            success: false,
+            message: error.response?.data?.message || "Connection test failed",
+        };
+    } finally {
+        isTestingSerpApi.value = false;
     }
 };
 
@@ -513,6 +671,80 @@ const getCategoryColor = (key) => {
                 </div>
             </div>
 
+            <!-- Response Language Card -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    🌐 {{ t("brain.language.title", "Język odpowiedzi") }}
+                    <span
+                        v-if="languageSaved"
+                        class="text-xs font-normal text-green-500"
+                        >✓ {{ t("brain.saved", "Zapisano") }}</span
+                    >
+                </h3>
+                <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    {{
+                        t(
+                            "brain.language.description",
+                            "Wybierz język, w którym Brain będzie odpowiadać. Auto używa języka interfejsu.",
+                        )
+                    }}
+                </p>
+                <div class="space-y-4">
+                    <div>
+                        <select
+                            v-model="selectedLanguage"
+                            @change="onLanguageChange"
+                            class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        >
+                            <option
+                                v-for="lang in languageOptions"
+                                :key="lang.value"
+                                :value="lang.value"
+                            >
+                                {{
+                                    lang.value === "auto" ||
+                                    lang.value === "custom"
+                                        ? t(lang.label, lang.label)
+                                        : lang.label
+                                }}
+                            </option>
+                        </select>
+                    </div>
+                    <div v-if="selectedLanguage === 'custom'">
+                        <input
+                            v-model="customLanguage"
+                            type="text"
+                            :placeholder="
+                                t(
+                                    'brain.language.custom_placeholder',
+                                    'np. Chinese, Japanese, Arabic...',
+                                )
+                            "
+                            class="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-500"
+                        />
+                    </div>
+                    <button
+                        @click="saveLanguage"
+                        :disabled="
+                            isSavingLanguage ||
+                            (selectedLanguage === 'custom' &&
+                                !customLanguage.trim())
+                        "
+                        class="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {{
+                            isSavingLanguage
+                                ? t("brain.saving", "Zapisywanie...")
+                                : t("brain.language.save", "Zapisz język")
+                        }}
+                    </button>
+                </div>
+            </div>
+
             <!-- AI Model Selector Card -->
             <div
                 class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
@@ -682,7 +914,7 @@ const getCategoryColor = (key) => {
                                     {{
                                         t(
                                             "brain.routing.default_provider",
-                                            "— Domyślny —",
+                                            "— Default —",
                                         )
                                     }}
                                 </option>
@@ -709,7 +941,7 @@ const getCategoryColor = (key) => {
                                     {{
                                         t(
                                             "brain.routing.default_model",
-                                            "— Domyślny model —",
+                                            "— Default model —",
                                         )
                                     }}
                                 </option>
@@ -877,11 +1109,11 @@ const getCategoryColor = (key) => {
                                 isSettingWebhook
                                     ? t(
                                           "brain.telegram.webhook_setting",
-                                          "Ustawianie webhooka...",
+                                          "Setting webhook...",
                                       )
                                     : t(
                                           "brain.telegram.webhook_setup",
-                                          "🔗 Ustaw Webhook",
+                                          "🔗 Setup Webhook",
                                       )
                             }}
                         </button>
@@ -981,6 +1213,254 @@ const getCategoryColor = (key) => {
                             /connect {{ telegramLinkCode }}
                         </code>
                     </div>
+                </div>
+            </div>
+
+            <!-- Internet Research Card -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-4 text-lg font-semibold text-slate-800 dark:text-white"
+                >
+                    🌐 {{ t("brain.research.title", "Internet Research") }}
+                </h3>
+                <p class="mb-6 text-sm text-slate-500 dark:text-slate-400">
+                    {{
+                        t(
+                            "brain.research.description",
+                            "Give Brain access to real-time internet data. Research competitors, market trends, and enrich CRM with live company information.",
+                        )
+                    }}
+                </p>
+
+                <!-- Perplexity API -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <label
+                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            Perplexity AI API Key
+                        </label>
+                        <span
+                            v-if="existingPerplexityMask"
+                            class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        >
+                            ✅ {{ t("brain.research.connected", "Connected") }}
+                        </span>
+                        <span
+                            v-else
+                            class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                        >
+                            {{
+                                t(
+                                    "brain.research.not_configured",
+                                    "Not configured",
+                                )
+                            }}
+                        </span>
+                    </div>
+
+                    <p
+                        v-if="existingPerplexityMask"
+                        class="mb-2 text-xs text-slate-400 dark:text-slate-500"
+                    >
+                        {{ t("brain.research.current_key", "Current key:") }}
+                        {{ existingPerplexityMask }}
+                    </p>
+
+                    <div class="flex gap-2">
+                        <input
+                            v-model="perplexityApiKey"
+                            type="password"
+                            :placeholder="
+                                t(
+                                    'brain.research.perplexity_placeholder',
+                                    'pplx-...',
+                                )
+                            "
+                            class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                        <button
+                            @click="savePerplexityKey"
+                            :disabled="
+                                isSavingPerplexity || !perplexityApiKey.trim()
+                            "
+                            class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-700 disabled:opacity-50"
+                        >
+                            {{
+                                isSavingPerplexity
+                                    ? "..."
+                                    : t("brain.research.save", "Save")
+                            }}
+                        </button>
+                        <button
+                            @click="testPerplexityApi"
+                            :disabled="
+                                isTestingPerplexity ||
+                                (!existingPerplexityMask &&
+                                    !perplexityApiKey.trim())
+                            "
+                            class="rounded-lg border border-violet-300 px-4 py-2 text-sm font-medium text-violet-600 transition hover:bg-violet-50 disabled:opacity-50 dark:border-violet-600 dark:text-violet-400 dark:hover:bg-violet-900/20"
+                        >
+                            {{
+                                isTestingPerplexity
+                                    ? "..."
+                                    : t("brain.research.test", "Test")
+                            }}
+                        </button>
+                    </div>
+
+                    <p
+                        v-if="perplexitySaved"
+                        class="mt-2 text-xs text-emerald-500"
+                    >
+                        ✅ {{ t("brain.research.key_saved", "API Key saved") }}
+                    </p>
+
+                    <div
+                        v-if="perplexityTestResult"
+                        class="mt-2 rounded-lg px-3 py-2 text-xs"
+                        :class="
+                            perplexityTestResult.success
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                        "
+                    >
+                        {{ perplexityTestResult.success ? "✅" : "❌" }}
+                        {{ perplexityTestResult.message }}
+                    </div>
+
+                    <p class="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                        {{
+                            t(
+                                "brain.research.perplexity_help",
+                                "Deep research with AI-powered analysis and cited sources.",
+                            )
+                        }}
+                        <a
+                            href="https://www.perplexity.ai/settings/api"
+                            target="_blank"
+                            class="text-violet-500 hover:underline"
+                            >{{
+                                t("brain.research.get_key", "Get API key")
+                            }}
+                            →</a
+                        >
+                    </p>
+                </div>
+
+                <!-- SerpAPI -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label
+                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            SerpAPI Key
+                        </label>
+                        <span
+                            v-if="existingSerpApiMask"
+                            class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        >
+                            ✅ {{ t("brain.research.connected", "Connected") }}
+                        </span>
+                        <span
+                            v-else
+                            class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                        >
+                            {{
+                                t(
+                                    "brain.research.not_configured",
+                                    "Not configured",
+                                )
+                            }}
+                        </span>
+                    </div>
+
+                    <p
+                        v-if="existingSerpApiMask"
+                        class="mb-2 text-xs text-slate-400 dark:text-slate-500"
+                    >
+                        {{ t("brain.research.current_key", "Current key:") }}
+                        {{ existingSerpApiMask }}
+                    </p>
+
+                    <div class="flex gap-2">
+                        <input
+                            v-model="serpApiKey"
+                            type="password"
+                            :placeholder="
+                                t(
+                                    'brain.research.serpapi_placeholder',
+                                    'Enter SerpAPI key...',
+                                )
+                            "
+                            class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                        <button
+                            @click="saveSerpApiKey"
+                            :disabled="isSavingSerpApi || !serpApiKey.trim()"
+                            class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-700 disabled:opacity-50"
+                        >
+                            {{
+                                isSavingSerpApi
+                                    ? "..."
+                                    : t("brain.research.save", "Save")
+                            }}
+                        </button>
+                        <button
+                            @click="testSerpApi"
+                            :disabled="
+                                isTestingSerpApi ||
+                                (!existingSerpApiMask && !serpApiKey.trim())
+                            "
+                            class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-600 transition hover:bg-amber-50 disabled:opacity-50 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                        >
+                            {{
+                                isTestingSerpApi
+                                    ? "..."
+                                    : t("brain.research.test", "Test")
+                            }}
+                        </button>
+                    </div>
+
+                    <p
+                        v-if="serpApiSaved"
+                        class="mt-2 text-xs text-emerald-500"
+                    >
+                        ✅ {{ t("brain.research.key_saved", "API Key saved") }}
+                    </p>
+
+                    <div
+                        v-if="serpApiTestResult"
+                        class="mt-2 rounded-lg px-3 py-2 text-xs"
+                        :class="
+                            serpApiTestResult.success
+                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                        "
+                    >
+                        {{ serpApiTestResult.success ? "✅" : "❌" }}
+                        {{ serpApiTestResult.message }}
+                    </div>
+
+                    <p class="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                        {{
+                            t(
+                                "brain.research.serpapi_help",
+                                "Google Search results for company lookup, news, and trends.",
+                            )
+                        }}
+                        <a
+                            href="https://serpapi.com/manage-api-key"
+                            target="_blank"
+                            class="text-amber-500 hover:underline"
+                            >{{
+                                t("brain.research.get_key", "Get API key")
+                            }}
+                            →</a
+                        >
+                    </p>
                 </div>
             </div>
 

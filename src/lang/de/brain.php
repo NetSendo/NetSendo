@@ -156,4 +156,23 @@ return [
         'priority_medium' => 'Mittel',
         'priority_low' => 'Niedrig',
     ],
+
+    // === Research Agent ===
+    'research' => [
+        'agent_label' => '🔍 Research Agent',
+        'plan_title' => 'Rechercheplan',
+        'done' => '✅ Recherche abgeschlossen.',
+        'query_missing' => '⚠️ Keine Suchanfrage angegeben.',
+        'company_missing' => '⚠️ Kein Firmenname angegeben.',
+        'topic_missing' => '⚠️ Kein Thema angegeben.',
+        'no_results' => '🔍 Keine Ergebnisse für ":query" gefunden.',
+        'no_data' => 'Keine Recherchedaten verfügbar.',
+        'default_kb_title' => 'Rechercheergebnisse',
+        'nothing_to_save' => 'Keine Recherchedaten zum Speichern.',
+        'saved_to_kb' => 'Recherche ":title" in Wissensdatenbank gespeichert (ID: :id)',
+        'save_failed' => '❌ Recherche konnte nicht gespeichert werden: :error',
+        'task_enrich_companies' => ':count Firmen ohne Website-/Branchendaten recherchieren',
+        'task_research_leads' => 'Tiefenrecherche zu :count Hot Leads',
+        'task_trends' => 'Aktuelle Markttrends in Ihrer Branche analysieren',
+    ],
 ];

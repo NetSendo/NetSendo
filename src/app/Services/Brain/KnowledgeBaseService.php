@@ -112,7 +112,7 @@ class KnowledgeBaseService
         $entries->each(fn($entry) => $entry->recordUsage());
 
         // Format for AI context
-        $context = "--- BAZA WIEDZY ---\n";
+        $context = "--- KNOWLEDGE BASE ---\n";
         foreach ($entries as $entry) {
             $verified = $entry->is_verified ? '✓' : '~';
             $context .= "[{$verified}] [{$entry->category}] {$entry->title}: {$entry->content}\n";
@@ -133,29 +133,29 @@ class KnowledgeBaseService
         }
 
         $prompt = <<<PROMPT
-Analizujesz konwersację między użytkownikiem a asystentem AI w kontekście email marketingu.
-Wyodrębnij z tej konwersacji NOWE informacje, które warto zapamiętać w bazie wiedzy.
+You are analyzing a conversation between a user and an AI assistant in the context of email marketing.
+Extract NEW information from this conversation that is worth remembering in the knowledge base.
 
-KATEGORIE:
-- company: informacje o firmie użytkownika
-- products: produkty, usługi, oferta
-- brand_voice: ton komunikacji, styl pisania, preferowane zwroty
-- audience: informacje o grupie docelowej
-- best_practices: wnioski, co działa, co nie
-- insights: dane / spostrzeżenia z kampanii
-- goals: cele biznesowe, KPI
+CATEGORIES:
+- company: information about the user's company
+- products: products, services, offerings
+- brand_voice: tone of communication, writing style, preferred phrases
+- audience: information about the target audience
+- best_practices: conclusions, what works, what doesn't
+- insights: data / observations from campaigns
+- goals: business goals, KPIs
 
-KONWERSACJA:
+CONVERSATION:
 {$conversationContent}
 
-Odpowiedz w JSON jako tablica obiektów:
+Respond in JSON as an array of objects:
 [
-  {"category": "...", "title": "krótki tytuł", "content": "treść informacji", "tags": ["tag1"]},
+  {"category": "...", "title": "short title", "content": "information content", "tags": ["tag1"]},
   ...
 ]
 
-Jeśli nie ma wartościowych informacji do wyodrębnienia, odpowiedz: []
-WAŻNE: Wyodrębniaj TYLKO konkretne, użyteczne informacje. Nie powtarzaj ogólnych rzeczy.
+If there is no valuable information to extract, respond: []
+IMPORTANT: Extract ONLY specific, useful information. Do not repeat general knowledge.
 PROMPT;
 
         try {

@@ -128,6 +128,54 @@ class GeminiProvider extends BaseProvider
         }
     }
 
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
+    {
+        $modelId = $this->getModel($model);
+        $url = $this->getBaseUrl() . "/models/{$modelId}:generateContent?key=" . $this->getApiKey();
+
+        try {
+            $response = Http::timeout(60)
+                ->post($url, [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'maxOutputTokens' => $options['max_tokens'] ?? 65536,
+                        'temperature' => $options['temperature'] ?? 0.7,
+                    ],
+                ]);
+
+            if (!$response->successful()) {
+                $error = $response->json('error.message') ?? $response->body();
+                throw new \Exception('Gemini Error: ' . $error);
+            }
+
+            $data = $response->json();
+            $candidates = $data['candidates'] ?? [];
+            $text = '';
+            if (!empty($candidates)) {
+                $content = $candidates[0]['content']['parts'] ?? [];
+                foreach ($content as $part) {
+                    $text .= $part['text'] ?? '';
+                }
+            }
+
+            $usage = $data['usageMetadata'] ?? [];
+
+            return [
+                'text' => $text,
+                'tokens_input' => (int) ($usage['promptTokenCount'] ?? 0),
+                'tokens_output' => (int) ($usage['candidatesTokenCount'] ?? 0),
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Gemini Error: ' . $e->getMessage());
+        }
+    }
+
     private function formatModelName(string $modelId): string
     {
         $names = [

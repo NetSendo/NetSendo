@@ -6,6 +6,7 @@ use App\Models\AiBrainSettings;
 use App\Models\AiPendingApproval;
 use App\Models\User;
 use App\Services\Brain\AgentOrchestrator;
+use App\Services\Brain\VoiceTranscriptionService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -80,6 +81,12 @@ class TelegramBotService
         $text = $message['text'] ?? '';
         $username = $message['from']['username'] ?? null;
 
+        // Handle voice messages
+        if (isset($message['voice']) || isset($message['audio'])) {
+            $this->handleVoiceMessage($message);
+            return;
+        }
+
         if (empty($text)) {
             return;
         }
@@ -94,7 +101,7 @@ class TelegramBotService
         $user = $this->authService->findUserByChatId($chatId);
 
         if (!$user) {
-            $this->sendMessage($chatId, "⚠️ Twoje konto Telegram nie jest połączone z NetSendo.\n\nUżyj `/connect TWÓJ_KOD` aby połączyć konto.\nKod znajdziesz w panelu NetSendo → Ustawienia → AI Brain → Telegram.");
+            $this->sendMessage($chatId, "⚠️ Your Telegram account is not linked to NetSendo.\n\nUse `/connect YOUR_CODE` to link your account.\nYou can find the code in the NetSendo panel → Settings → AI Brain → Telegram.");
             return;
         }
 
@@ -106,14 +113,106 @@ class TelegramBotService
             if ($result['type'] === 'approval_request') {
                 $this->sendApprovalRequest($chatId, $result);
             } else {
-                $this->sendMessage($chatId, $result['message'] ?? 'Przetworzono.');
+                $this->sendMessage($chatId, $result['message'] ?? 'Processed.');
             }
         } catch (\Exception $e) {
             Log::error('Telegram message processing failed', [
                 'chat_id' => $chatId,
                 'error' => $e->getMessage(),
             ]);
-            $this->sendMessage($chatId, '❌ Wystąpił błąd. Spróbuj ponownie.');
+            $this->sendMessage($chatId, '❌ An error occurred. Please try again.');
+        }
+    }
+
+    /**
+     * Handle an incoming voice message (voice note or audio file).
+     */
+    protected function handleVoiceMessage(array $message): void
+    {
+        $chatId = (string) $message['chat']['id'];
+
+        // Find linked user
+        $user = $this->authService->findUserByChatId($chatId);
+
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ Your Telegram account is not linked to NetSendo.\n\nUse `/connect YOUR_CODE` to link your account.");
+            return;
+        }
+
+        // Get voice or audio file info
+        $voice = $message['voice'] ?? $message['audio'] ?? null;
+        if (!$voice || empty($voice['file_id'])) {
+            $this->sendMessage($chatId, '❌ Could not process the voice message.');
+            return;
+        }
+
+        $this->sendMessage($chatId, '🎤 Transcribing your voice message...');
+
+        try {
+            // Get file URL from Telegram
+            $fileUrl = $this->getFileUrl($voice['file_id'], $chatId);
+
+            if (!$fileUrl) {
+                $this->sendMessage($chatId, '❌ Failed to download the voice file from Telegram.');
+                return;
+            }
+
+            // Transcribe using VoiceTranscriptionService
+            $transcription = app(VoiceTranscriptionService::class);
+            $settings = AiBrainSettings::getForUser($user->id);
+            $language = $settings->preferred_language ?? null;
+
+            $text = $transcription->transcribeFromUrl($fileUrl, 'ogg', $language);
+
+            // Show what was transcribed
+            $this->sendMessage($chatId, "🎤 _" . $text . "_");
+
+            // Process through the Brain
+            $orchestrator = app(AgentOrchestrator::class);
+            $result = $orchestrator->processMessage($text, $user, 'telegram');
+
+            if ($result['type'] === 'approval_request') {
+                $this->sendApprovalRequest($chatId, $result);
+            } else {
+                $this->sendMessage($chatId, $result['message'] ?? 'Processed.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Telegram voice message processing failed', [
+                'chat_id' => $chatId,
+                'error' => $e->getMessage(),
+            ]);
+            $this->sendMessage($chatId, '❌ Could not transcribe the voice message. Make sure OpenAI integration is configured.');
+        }
+    }
+
+    /**
+     * Get the download URL for a Telegram file.
+     */
+    protected function getFileUrl(string $fileId, string $chatId): ?string
+    {
+        $botToken = $this->resolveBotTokenByChatId($chatId);
+        if (empty($botToken)) {
+            $botToken = $this->resolveAnyBotToken();
+        }
+
+        if (empty($botToken)) {
+            return null;
+        }
+
+        try {
+            $response = Http::get("{$this->apiBase}{$botToken}/getFile", [
+                'file_id' => $fileId,
+            ]);
+
+            if ($response->successful() && $response->json('ok')) {
+                $filePath = $response->json('result.file_path');
+                return "https://api.telegram.org/file/bot{$botToken}/{$filePath}";
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error('Telegram getFile failed', ['error' => $e->getMessage()]);
+            return null;
         }
     }
 
@@ -133,7 +232,7 @@ class TelegramBotService
             '/status' => $this->handleStatus($chatId),
             '/help' => $this->sendMessage($chatId, $this->getHelpMessage()),
             '/knowledge' => $this->handleKnowledge($chatId, array_slice($parts, 1)),
-            default => $this->sendMessage($chatId, "Nieznana komenda. Użyj /help aby zobaczyć dostępne komendy."),
+            default => $this->sendMessage($chatId, "Unknown command. Use /help to see available commands."),
         };
     }
 
@@ -143,16 +242,16 @@ class TelegramBotService
     protected function handleConnect(string $chatId, ?string $code, ?string $username): void
     {
         if (!$code) {
-            $this->sendMessage($chatId, "Użyj: `/connect TWÓJ_KOD`\n\nKod znajdziesz w panelu NetSendo → Ustawienia → AI Brain.");
+            $this->sendMessage($chatId, "Use: `/connect YOUR_CODE`\n\nYou can find the code in the NetSendo panel → Settings → AI Brain.");
             return;
         }
 
         $user = $this->authService->linkAccount($code, $chatId, $username);
 
         if ($user) {
-            $this->sendMessage($chatId, "✅ **Połączono z NetSendo!**\n\nWitaj, {$user->name}! 🎉\n\nTeraz możesz zarządzać swoim email marketingiem bezpośrednio z Telegrama.\n\nWpisz /help aby zobaczyć możliwości.");
+            $this->sendMessage($chatId, "✅ **Connected to NetSendo!**\n\nWelcome, {$user->name}! 🎉\n\nYou can now manage your email marketing directly from Telegram.\n\nType /help to see the available commands.");
         } else {
-            $this->sendMessage($chatId, "❌ Nieprawidłowy kod. Sprawdź kod w panelu NetSendo i spróbuj ponownie.");
+            $this->sendMessage($chatId, "❌ Invalid code. Check the code in the NetSendo panel and try again.");
         }
     }
 
@@ -165,9 +264,9 @@ class TelegramBotService
 
         if ($user) {
             $this->authService->unlinkAccount($user);
-            $this->sendMessage($chatId, "✅ Odłączono od NetSendo. Użyj /connect aby połączyć ponownie.");
+            $this->sendMessage($chatId, "✅ Disconnected from NetSendo. Use /connect to reconnect.");
         } else {
-            $this->sendMessage($chatId, "Nie jesteś połączony z żadnym kontem NetSendo.");
+            $this->sendMessage($chatId, "You are not connected to any NetSendo account.");
         }
     }
 
@@ -178,7 +277,7 @@ class TelegramBotService
     {
         $user = $this->authService->findUserByChatId($chatId);
         if (!$user) {
-            $this->sendMessage($chatId, "⚠️ Najpierw połącz konto: /connect TWÓJ_KOD");
+            $this->sendMessage($chatId, "⚠️ First connect your account: /connect YOUR_CODE");
             return;
         }
 
@@ -189,16 +288,16 @@ class TelegramBotService
             $label = $modeController->getModeLabel($currentMode);
             $desc = $modeController->getModeDescription($currentMode);
 
-            $this->sendMessage($chatId, "**Aktualny tryb:** {$label}\n{$desc}\n\nZmień tryb:\n`/mode autonomous` - pełna autonomiczność\n`/mode semi_auto` - półautomat\n`/mode manual` - manualny");
+            $this->sendMessage($chatId, "**Current mode:** {$label}\n{$desc}\n\nChange mode:\n`/mode autonomous` - full autonomy\n`/mode semi_auto` - semi-automatic\n`/mode manual` - manual");
             return;
         }
 
         try {
             $modeController->setMode($user, $newMode);
             $label = $modeController->getModeLabel($newMode);
-            $this->sendMessage($chatId, "✅ Tryb zmieniony na: {$label}");
+            $this->sendMessage($chatId, "✅ Mode changed to: {$label}");
         } catch (\InvalidArgumentException $e) {
-            $this->sendMessage($chatId, "❌ Nieznany tryb. Dostępne: `autonomous`, `semi_auto`, `manual`");
+            $this->sendMessage($chatId, "❌ Unknown mode. Available: `autonomous`, `semi_auto`, `manual`");
         }
     }
 
@@ -209,22 +308,22 @@ class TelegramBotService
     {
         $user = $this->authService->findUserByChatId($chatId);
         if (!$user) {
-            $this->sendMessage($chatId, "⚠️ Nie połączono.");
+            $this->sendMessage($chatId, "⚠️ Not connected.");
             return;
         }
 
         $settings = \App\Models\AiBrainSettings::getForUser($user->id);
         $modeController = app(\App\Services\Brain\ModeController::class);
 
-        $status = "📊 **Status NetSendo Brain**\n\n";
-        $status .= "👤 Konto: {$user->name}\n";
-        $status .= "🔧 Tryb: {$modeController->getModeLabel($settings->work_mode)}\n";
-        $status .= "🔢 Tokeny dziś: {$settings->tokens_used_today}/{$settings->daily_token_limit}\n";
+        $status = "📊 **NetSendo Brain Status**\n\n";
+        $status .= "👤 Account: {$user->name}\n";
+        $status .= "🔧 Mode: {$modeController->getModeLabel($settings->work_mode)}\n";
+        $status .= "🔢 Tokens today: {$settings->tokens_used_today}/{$settings->daily_token_limit}\n";
 
         // Pending approvals
         $pendingCount = AiPendingApproval::forUser($user->id)->pending()->count();
         if ($pendingCount > 0) {
-            $status .= "\n⏳ Plany czekające na zatwierdzenie: {$pendingCount}";
+            $status .= "\n⏳ Plans awaiting approval: {$pendingCount}";
         }
 
         $this->sendMessage($chatId, $status);
@@ -237,20 +336,20 @@ class TelegramBotService
     {
         $user = $this->authService->findUserByChatId($chatId);
         if (!$user) {
-            $this->sendMessage($chatId, "⚠️ Nie połączono.");
+            $this->sendMessage($chatId, "⚠️ Not connected.");
             return;
         }
 
         $text = implode(' ', $args);
         if (empty($text)) {
-            $this->sendMessage($chatId, "Użyj: `/knowledge Treść informacji do zapamiętania`\n\nPrzykład: `/knowledge Nasz główny produkt to kurs online za 297 zł`");
+            $this->sendMessage($chatId, "Use: `/knowledge Information to remember`\n\nExample: `/knowledge Our main product is an online course for 297 EUR`");
             return;
         }
 
         $kb = app(\App\Services\Brain\KnowledgeBaseService::class);
         $entry = $kb->addEntry($user, 'company', mb_substr($text, 0, 100), $text, 'telegram');
 
-        $this->sendMessage($chatId, "✅ Zapisano w bazie wiedzy (kategoria: {$entry->category}).");
+        $this->sendMessage($chatId, "✅ Saved to knowledge base (category: {$entry->category}).");
     }
 
     /**
@@ -284,19 +383,19 @@ class TelegramBotService
 
             if ($action === 'approve') {
                 $approval = $modeController->processApproval($approvalId, true);
-                $this->sendMessage($chatId, "✅ Plan zaakceptowany! Rozpoczynam wykonanie...");
+                $this->sendMessage($chatId, "✅ Plan approved! Starting execution...");
 
                 // Execute the plan
                 $orchestrator = app(AgentOrchestrator::class);
                 $result = $orchestrator->executePlan($approval->plan, $user);
-                $this->sendMessage($chatId, $result['message'] ?? 'Plan wykonany.');
+                $this->sendMessage($chatId, $result['message'] ?? 'Plan executed.');
 
             } elseif ($action === 'reject') {
-                $modeController->processApproval($approvalId, false, 'Odrzucono przez Telegram');
-                $this->sendMessage($chatId, "❌ Plan odrzucony.");
+                $modeController->processApproval($approvalId, false, 'Rejected via Telegram');
+                $this->sendMessage($chatId, "❌ Plan rejected.");
             }
         } catch (\Exception $e) {
-            $this->sendMessage($chatId, "❌ Błąd: {$e->getMessage()}");
+            $this->sendMessage($chatId, "❌ Error: {$e->getMessage()}");
         }
     }
 
@@ -310,13 +409,13 @@ class TelegramBotService
         $keyboard = [
             'inline_keyboard' => [
                 [
-                    ['text' => '✅ Zaakceptuj', 'callback_data' => "approve:{$approvalId}"],
-                    ['text' => '❌ Odrzuć', 'callback_data' => "reject:{$approvalId}"],
+                    ['text' => '✅ Approve', 'callback_data' => "approve:{$approvalId}"],
+                    ['text' => '❌ Reject', 'callback_data' => "reject:{$approvalId}"],
                 ],
             ],
         ];
 
-        $this->sendMessage($chatId, $result['message'] ?? 'Plan do zatwierdzenia:', $keyboard);
+        $this->sendMessage($chatId, $result['message'] ?? 'Plan awaiting approval:', $keyboard);
     }
 
     /**
@@ -403,45 +502,45 @@ class TelegramBotService
     protected function getWelcomeMessage(): string
     {
         return <<<MSG
-🧠 **Witaj w NetSendo Brain!**
+🧠 **Welcome to NetSendo Brain!**
 
-Jestem Twoim asystentem AI do email marketingu.
+I am your AI assistant for email marketing.
 
-Mogę pomóc Ci:
-📧 Tworzyć i zarządzać kampaniami email/SMS
-📋 Zarządzać listami kontaktów
-✉️ Generować treści wiadomości
-📊 Analizować wyniki
+I can help you:
+📧 Create and manage email/SMS campaigns
+📋 Manage contact lists
+✉️ Generate message content
+📊 Analyze results
 
-**Aby rozpocząć**, połącz swoje konto NetSendo:
-`/connect TWÓJ_KOD`
+**To get started**, link your NetSendo account:
+`/connect YOUR_CODE`
 
-Kod znajdziesz w panelu NetSendo → Ustawienia → AI Brain → Telegram.
+You can find the code in the NetSendo panel → Settings → AI Brain → Telegram.
 MSG;
     }
 
     protected function getHelpMessage(): string
     {
         return <<<MSG
-📖 **Komendy NetSendo Brain:**
+📖 **NetSendo Brain Commands:**
 
-🔗 `/connect KOD` — Połącz konto NetSendo
-🔌 `/disconnect` — Odłącz konto
-🔧 `/mode [tryb]` — Zmień tryb pracy
-📊 `/status` — Status konta i tokeny
-📝 `/knowledge [tekst]` — Dodaj do bazy wiedzy
-❓ `/help` — Ta pomoc
+🔗 `/connect CODE` — Link NetSendo account
+🔌 `/disconnect` — Unlink account
+🔧 `/mode [mode]` — Change work mode
+📊 `/status` — Account status and tokens
+📝 `/knowledge [text]` — Add to knowledge base
+❓ `/help` — This help
 
-**Tryby pracy:**
-🤖 `autonomous` — AI robi wszystko sam
-🤝 `semi_auto` — AI proponuje, Ty zatwierdzasz
-👤 `manual` — AI doradza, Ty robisz
+**Work modes:**
+🤖 `autonomous` — AI does everything automatically
+🤝 `semi_auto` — AI proposes, you approve
+👤 `manual` — AI advises, you execute
 
-**Przykłady poleceń:**
-• "Stwórz kampanię powitalną"
-• "Pokaż moje listy"
-• "Napisz newsletter o nowym produkcie"
-• "Wyczyść bounced z listy głównej"
+**Example commands:**
+• "Create a welcome campaign"
+• "Show my lists"
+• "Write a newsletter about a new product"
+• "Clean bounced from the main list"
 MSG;
     }
 }

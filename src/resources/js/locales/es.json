@@ -776,8 +776,8 @@
                 "desc": "Servicios de entrega de correo"
             },
             "ai": {
-                "title": "IA",
-                "desc": "Generación de contenido y chatbots"
+                "title": "IA e Investigación",
+                "desc": "Herramientas de inteligencia"
             }
         },
         "request_title": "¿Necesita una integración específica?",
@@ -796,7 +796,148 @@
         "request_submit": "Enviar solicitud",
         "request_success_title": "¡Gracias!",
         "request_success_desc": "Su solicitud de integración ha sido enviada. Nos pondremos en contacto pronto.",
-        "request_error": "No se pudo enviar la solicitud. Inténtelo de nuevo."
+        "request_error": "No se pudo enviar la solicitud. Inténtelo de nuevo.",
+        "perplexity": {
+            "title": "Perplexity AI",
+            "hero_title": "Perplexity AI",
+            "hero_subtitle": "Investigación profunda con IA y citas en tiempo real para tu inteligencia de marketing.",
+            "hero_description": "Integra Perplexity AI con NetSendo Brain para desbloquear capacidades de investigación avanzada. Obtén respuestas completas con citas, analiza competidores, descubre tendencias de mercado y genera ideas de contenido — todo impulsado por IA avanzada que busca en internet en tiempo real.",
+            "features_title": "Características",
+            "features": {
+                "deep_research": {
+                    "title": "Investigación profunda con citas",
+                    "description": "Obtén respuestas completas impulsadas por IA con citas de fuentes de toda la web."
+                },
+                "company_intelligence": {
+                    "title": "Inteligencia empresarial",
+                    "description": "Investiga empresas en profundidad — productos, posición en el mercado, stack tecnológico y contactos clave."
+                },
+                "trend_analysis": {
+                    "title": "Análisis de tendencias",
+                    "description": "Descubre tendencias de la industria, oportunidades emergentes y dinámica del mercado con análisis de IA."
+                },
+                "content_research": {
+                    "title": "Ideas de investigación de contenido",
+                    "description": "Genera ideas de contenido para email y SMS basadas en datos e inteligencia web en tiempo real."
+                }
+            },
+            "setup_title": "Configuración",
+            "setup_steps": {
+                "get_key": {
+                    "title": "Obtener clave API",
+                    "description": "Regístrate en perplexity.ai y genera una clave API desde el panel de tu cuenta."
+                },
+                "configure": {
+                    "title": "Configurar en Brain Settings",
+                    "description": "Ve a Brain Settings y pega tu clave API de Perplexity en la sección de Investigación."
+                },
+                "research": {
+                    "title": "Empezar a investigar",
+                    "description": "Pide a Brain que investigue cualquier tema — usará Perplexity para respuestas profundas y citadas."
+                }
+            },
+            "api_info": "Perplexity AI usa el modelo Sonar para investigación rápida y precisa con citas web.",
+            "use_cases_title": "Casos de uso",
+            "use_cases": {
+                "competitor": {
+                    "title": "Análisis de competidores",
+                    "description": "Investiga estrategias, productos y posicionamiento de mercado de los competidores."
+                },
+                "enrichment": {
+                    "title": "Enriquecimiento de datos CRM",
+                    "description": "Recopila automáticamente datos estructurados de empresas para tus contactos CRM."
+                },
+                "campaigns": {
+                    "title": "Investigación de campañas",
+                    "description": "Obtén insights basados en datos para mejorar tus campañas de email y SMS."
+                }
+            },
+            "go_to_settings": "Configurar clave API",
+            "requirements_title": "Requisitos",
+            "requirements": {
+                "account": "Cuenta Perplexity AI",
+                "api_key": "Clave API de Perplexity",
+                "brain": "NetSendo Brain habilitado"
+            },
+            "resources_title": "Recursos",
+            "docs_link": "Documentación API Perplexity",
+            "help_title": "¿Necesitas ayuda?",
+            "help_desc": "Revisa nuestra documentación para instrucciones detalladas de configuración.",
+            "documentation_button": "Documentación"
+        },
+        "serpapi": {
+            "title": "SerpAPI",
+            "hero_title": "SerpAPI",
+            "hero_subtitle": "Resultados de búsqueda de Google y grafos de conocimiento integrados en tu flujo de marketing.",
+            "hero_description": "Conecta SerpAPI con NetSendo Brain para obtener resultados de búsqueda de Google rápidos y estructurados. Busca en la web, descubre noticias, accede a grafos de conocimiento y encuentra datos de empresas — todo desde tus conversaciones de Brain.",
+            "features_title": "Características",
+            "features": {
+                "google_search": {
+                    "title": "Resultados de búsqueda de Google",
+                    "description": "Accede a resultados de búsqueda de Google estructurados con títulos, fragmentos y enlaces."
+                },
+                "news_search": {
+                    "title": "Búsqueda de noticias",
+                    "description": "Encuentra los últimos artículos de noticias sobre cualquier tema para contenido de marketing actual."
+                },
+                "knowledge_graph": {
+                    "title": "Grafo de conocimiento",
+                    "description": "Obtén datos ricos de entidades del Grafo de Conocimiento de Google para insights más profundos."
+                },
+                "company_lookup": {
+                    "title": "Búsqueda de datos empresariales",
+                    "description": "Encuentra rápidamente información de empresas, sitios web y datos comerciales clave."
+                }
+            },
+            "setup_title": "Configuración",
+            "setup_steps": {
+                "get_key": {
+                    "title": "Obtener clave API",
+                    "description": "Regístrate en serpapi.com y obtén tu clave API desde el panel."
+                },
+                "configure": {
+                    "title": "Configurar en Brain Settings",
+                    "description": "Ve a Brain Settings y pega tu clave de SerpAPI en la sección de Investigación."
+                },
+                "search": {
+                    "title": "Empezar a buscar",
+                    "description": "Pide a Brain que busque en la web — usará SerpAPI para resultados rápidos de Google."
+                }
+            },
+            "search_types_title": "Tipos de búsqueda soportados",
+            "search_types": {
+                "general": "Búsqueda web general",
+                "news": "Búsqueda de noticias",
+                "images": "Búsqueda de imágenes"
+            },
+            "use_cases_title": "Casos de uso",
+            "use_cases": {
+                "competitors": {
+                    "title": "Monitoreo de competidores",
+                    "description": "Rastrea la actividad y presencia online de los competidores en tiempo real."
+                },
+                "trends": {
+                    "title": "Descubrimiento de tendencias",
+                    "description": "Encuentra temas tendencia y noticias para campañas de marketing oportunas."
+                },
+                "crm": {
+                    "title": "Investigación de leads",
+                    "description": "Investiga rápidamente leads y empresas antes del contacto."
+                }
+            },
+            "go_to_settings": "Configurar clave API",
+            "requirements_title": "Requisitos",
+            "requirements": {
+                "account": "Cuenta SerpAPI",
+                "api_key": "Clave API de SerpAPI",
+                "brain": "NetSendo Brain habilitado"
+            },
+            "resources_title": "Recursos",
+            "docs_link": "Documentación SerpAPI",
+            "help_title": "¿Necesitas ayuda?",
+            "help_desc": "Revisa nuestra documentación para instrucciones detalladas de configuración.",
+            "documentation_button": "Documentación"
+        }
     },
     "deliverability": {
         "title": "Deliverability Shield",
@@ -1052,6 +1193,8 @@
         "expand": "Expandir",
         "webinars": "Webinarios",
         "api_keys": "Claves API",
+        "crm_import": "Importar",
+        "deliverability_shield": "Escudo de entregabilidad",
         "new": "NUEVO",
         "groups": {
             "address_list": "Lista de direcciones",
@@ -6534,7 +6677,9 @@
             "description": "Asigna diferentes modelos de IA a distintas tareas de Brain. Los campos vacíos usan el modelo predeterminado.",
             "hide": "Ocultar",
             "show": "Mostrar",
-            "save": "Guardar enrutamiento"
+            "save": "Guardar enrutamiento",
+            "default_provider": "— Predeterminado —",
+            "default_model": "— Modelo predeterminado —"
         },
         "plan": {
             "title": "Plan de acción",
@@ -6558,11 +6703,40 @@
             "bot_token_save": "Guardar",
             "bot_token_saving": "Guardando...",
             "bot_token_saved": "Guardado",
-            "bot_token_current": "Token actual:"
+            "bot_token_current": "Token actual:",
+            "webhook_setup": "🔗 Configurar Webhook",
+            "webhook_setting": "Configurando webhook...",
+            "webhook_success": "Webhook registrado correctamente",
+            "webhook_failed": "Webhook: ",
+            "webhook_failed_generic": "No se pudo configurar el webhook",
+            "webhook_error": "Error al configurar el webhook"
+        },
+        "language": {
+            "title": "Idioma de respuesta",
+            "description": "Elige el idioma en el que Brain responderá. Auto usa el idioma de la interfaz.",
+            "auto": "Auto (idioma de la interfaz)",
+            "custom": "Otro...",
+            "custom_placeholder": "ej. chino, japonés, árabe...",
+            "save": "Guardar idioma"
+        },
+        "research": {
+            "title": "Investigación en internet",
+            "description": "Da a Brain acceso a datos de internet en tiempo real. Investiga competidores, tendencias de mercado y enriquece el CRM con información empresarial en vivo.",
+            "connected": "Conectado",
+            "not_configured": "No configurado",
+            "current_key": "Clave actual:",
+            "save": "Guardar",
+            "test": "Probar",
+            "key_saved": "Clave API guardada",
+            "get_key": "Obtener clave API",
+            "perplexity_placeholder": "pplx-...",
+            "perplexity_help": "Investigación profunda con análisis impulsado por IA y fuentes citadas.",
+            "serpapi_placeholder": "Introduce la clave SerpAPI...",
+            "serpapi_help": "Resultados de Google para búsqueda de empresas, noticias y tendencias."
         },
         "knowledge": {
             "title": "Base de conocimientos",
-            "add": "\u2795 Añadir entrada",
+            "add": "➕ Añadir entrada",
             "cancel": "Cancelar",
             "category": "Categoría",
             "entry_title": "Título",
@@ -6609,6 +6783,15 @@
             "all_statuses": "Todos los estados",
             "live": "EN VIVO",
             "auto_refresh": "Auto-actualizar"
+        },
+        "voice": {
+            "recording": "Grabando...",
+            "transcribing": "Transcribiendo...",
+            "mic_permission_denied": "Acceso al micrófono denegado. Verifica la configuración de tu navegador.",
+            "transcription_failed": "No se pudo transcribir el mensaje de voz.",
+            "record_voice": "Grabar mensaje de voz",
+            "stop_recording": "Detener grabación",
+            "no_openai": "La transcripción requiere integración con OpenAI."
         }
     }
 }

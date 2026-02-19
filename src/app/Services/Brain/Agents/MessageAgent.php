@@ -42,33 +42,37 @@ class MessageAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Jesteś ekspertem copywritingu email/SMS. Użytkownik chce:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are an email/SMS copywriting expert. The user wants:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Stwórz plan tworzenia treści. Odpowiedz w JSON:
+{$langInstruction}
+
+Create a content creation plan. Respond in JSON:
 {
-  "title": "tytuł planu",
-  "description": "opis",
+  "title": "plan title",
+  "description": "description",
   "steps": [
     {
-      "action_type": "typ",
-      "title": "tytuł kroku",
-      "description": "opis",
+      "action_type": "type",
+      "title": "step title",
+      "description": "description",
       "config": {}
     }
   ]
 }
 
-Dostępne action_types:
-- generate_subject: wygeneruj warianty tematu (config: {topic: "", count: 5, tone: ""})
-- generate_body: wygeneruj treść (config: {type: "email"|"sms", topic: "", tone: "", length: ""})
-- create_message: zapisz wiadomość jako szkic (config: {subject: "", type: "email"|"sms"})
-- generate_ab_variants: wygeneruj warianty A/B (config: {original_subject: "", count: 3})
-- improve_content: popraw istniejącą treść (config: {message_id: N, improvements: []})
+Available action_types:
+- generate_subject: generate subject line variants (config: {topic: "", count: 5, tone: ""})
+- generate_body: generate content (config: {type: "email"|"sms", topic: "", tone: "", length: ""})
+- create_message: save message as draft (config: {subject: "", type: "email"|"sms"})
+- generate_ab_variants: generate A/B variants (config: {original_subject: "", count: 3})
+- improve_content: improve existing content (config: {message_id: N, improvements: []})
 PROMPT;
 
         try {
@@ -138,20 +142,24 @@ PROMPT;
      */
     public function advise(array $intent, User $user, string $knowledgeContext = ''): array
     {
-        $prompt = <<<PROMPT
-Poradź użytkownikowi w tworzeniu treści email/SMS. Tryb manualny.
+        $langInstruction = $this->getLanguageInstruction($user);
 
-Intencja: {$intent['intent']}
+        $prompt = <<<PROMPT
+Advise the user on creating email/SMS content. Manual mode.
+
+Intent: {$intent['intent']}
 {$knowledgeContext}
 
-Podaj:
-1. Wskazówki copywritingowe
-2. Przykładowe tematy wiadomości
-3. Strukturę treści
-4. Best practices dla email/SMS marketingu
-5. Wskazówki personalizacyjne
+{$langInstruction}
 
-Odpowiedz z emoji i formatowaniem.
+Provide:
+1. Copywriting tips
+2. Example message subjects
+3. Content structure
+4. Best practices for email/SMS marketing
+5. Personalization tips
+
+Respond with emoji and formatting.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.6]);
@@ -173,15 +181,19 @@ PROMPT;
         $count = $config['count'] ?? 5;
         $tone = $config['tone'] ?? 'profesjonalny';
 
-        $prompt = <<<PROMPT
-Wygeneruj {$count} wariantów tematu emaila.
+        $langInstruction = $this->getLanguageInstruction($user);
 
-Temat/cel: {$topic}
-Ton: {$tone}
+        $prompt = <<<PROMPT
+Generate {$count} email subject line variants.
+
+Topic/goal: {$topic}
+Tone: {$tone}
 
 {$knowledgeContext}
 
-Odpowiedz w JSON:
+{$langInstruction}
+
+Respond in JSON:
 {
   "subjects": [
     {"subject": "...", "emoji": true/false, "type": "benefit|curiosity|urgency|question|personalization"},
@@ -189,11 +201,11 @@ Odpowiedz w JSON:
   ]
 }
 
-Zasady:
-- Maksymalnie 50 znaków w temacie
-- Jeden temat z emoji, reszta bez
-- Różne techniki copywritingowe
-- Unikaj spamowych słów
+Rules:
+- Maximum 50 characters per subject
+- One subject with emoji, rest without
+- Use different copywriting techniques
+- Avoid spammy words
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
@@ -220,40 +232,48 @@ PROMPT;
         $length = $config['length'] ?? 'medium';
 
         if ($type === 'sms') {
-            $prompt = <<<PROMPT
-Wygeneruj treść SMS marketingowego (max 160 znaków).
+            $langInstruction = $this->getLanguageInstruction($user);
 
-Temat: {$topic}
-Ton: {$tone}
+            $prompt = <<<PROMPT
+Generate SMS marketing content (max 160 characters).
+
+Topic: {$topic}
+Tone: {$tone}
 
 {$knowledgeContext}
 
-Odpowiedz w JSON: {"content": "treść SMS", "characters": N}
+{$langInstruction}
+
+Respond in JSON: {"content": "SMS content", "characters": N}
 PROMPT;
         } else {
-            $prompt = <<<PROMPT
-Wygeneruj treść emaila marketingowego w HTML.
+            $langInstruction = $this->getLanguageInstruction($user);
 
-Temat: {$topic}
-Ton: {$tone}
-Długość: {$length}
+            $prompt = <<<PROMPT
+Generate marketing email content in HTML.
+
+Topic: {$topic}
+Tone: {$tone}
+Length: {$length}
 
 {$knowledgeContext}
 
-Odpowiedz w JSON:
+{$langInstruction}
+
+Respond in JSON:
 {
-  "subject": "temat",
-  "preview_text": "tekst podglądu (max 90 znaków)",
-  "html_content": "<html z treścią maila>",
-  "plain_text": "wersja tekstowa",
-  "cta_text": "tekst przycisku"
+  "subject": "subject",
+  "preview_text": "preview text (max 90 characters)",
+  "html_content": "<html email content>",
+  "plain_text": "plain text version",
+  "cta_text": "button text"
 }
 
-Zasady:
-- Responsywny HTML
-- Wyraźne CTA
-- Krótkie akapity
-- Personalizacja: użyj {{first_name}} jako placeholder
+Rules:
+- Responsive HTML
+- Clear CTA
+- Short paragraphs
+- Personalization: use {{first_name}} as placeholder
 PROMPT;
         }
 
@@ -305,20 +325,24 @@ PROMPT;
         $original = $config['original_subject'] ?? '';
         $count = $config['count'] ?? 3;
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Wygeneruj {$count} wariantów A/B dla tematu emaila.
+Generate {$count} A/B variants for the email subject line.
 
-Oryginalny temat: {$original}
+Original subject: {$original}
 
-Odpowiedz w JSON:
+{$langInstruction}
+
+Respond in JSON:
 {
   "variants": [
-    {"subject": "...", "hypothesis": "dlaczego ten wariant może być lepszy"},
+    {"subject": "...", "hypothesis": "why this variant might perform better"},
     ...
   ]
 }
 
-Każdy wariant powinien testować inną zmienną (CTA, personalizacja, urgency, etc.)
+Each variant should test a different variable (CTA, personalization, urgency, etc.)
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
@@ -350,19 +374,23 @@ PROMPT;
 
         $improvements = implode(', ', $config['improvements'] ?? ['better CTA', 'more engaging']);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Popraw treść emaila marketingowego.
+Improve marketing email content.
 
-AKTUALNY TEMAT: {$message->subject}
-AKTUALNA TREŚĆ: {$message->content}
+CURRENT SUBJECT: {$message->subject}
+CURRENT CONTENT: {$message->content}
 
-Wymagane ulepszenia: {$improvements}
+Required improvements: {$improvements}
 
-Odpowiedz w JSON:
+{$langInstruction}
+
+Respond in JSON:
 {
   "improved_subject": "...",
   "improved_content": "...",
-  "changes_made": ["zmiana 1", "zmiana 2"]
+  "changes_made": ["change 1", "change 2"]
 }
 PROMPT;
 

@@ -15,8 +15,10 @@ use App\Services\Brain\Agents\CampaignAgent;
 use App\Services\Brain\Agents\CrmAgent;
 use App\Services\Brain\Agents\ListAgent;
 use App\Services\Brain\Agents\MessageAgent;
+use App\Services\Brain\Agents\ResearchAgent;
 use App\Services\Brain\Agents\SegmentationAgent;
 use App\Services\Brain\Skills\MarketingSalesSkill;
+use App\Services\Brain\Skills\ResearchSkill;
 use Illuminate\Support\Facades\Log;
 
 class AgentOrchestrator
@@ -44,6 +46,7 @@ class AgentOrchestrator
             'crm' => app(CrmAgent::class),
             'analytics' => app(AnalyticsAgent::class),
             'segmentation' => app(SegmentationAgent::class),
+            'research' => app(ResearchAgent::class),
         ];
     }
 
@@ -253,36 +256,44 @@ class AgentOrchestrator
 
         // Get marketing/sales skill context for richer intent classification
         $settings = AiBrainSettings::getForUser($user->id);
-        $skillContext = MarketingSalesSkill::getSystemPrompt($settings->preferred_language ?? 'pl');
+        $langCode = $settings->resolveLanguage($user);
+        $skillContext = MarketingSalesSkill::getSystemPrompt($langCode);
+
+        // Add research skill context if research APIs are configured
+        $researchContext = '';
+        if ($settings->isResearchEnabled()) {
+            $researchContext = "\n\n" . ResearchSkill::getSystemPrompt($langCode);
+        }
 
         $prompt = <<<PROMPT
 {$skillContext}
+{$researchContext}
 
 ---
 
-Sklasyfikuj intencję użytkownika. Odpowiedz TYLKO prawidłowym JSON.
+Classify the user's intent. Respond with VALID JSON ONLY.
 
-DOSTĘPNI AGENCI:
+AVAILABLE AGENTS:
 {$agentDescriptions}
 
-OSTATNI KONTEKST ROZMOWY:
+RECENT CONVERSATION CONTEXT:
 {$recentContext}
 
-NOWA WIADOMOŚĆ UŻYTKOWNIKA:
+NEW USER MESSAGE:
 {$message}
 
-Odpowiedz w JSON:
+Respond in JSON:
 {
   "requires_agent": true/false,
-  "agent": "campaign|list|message|crm|analytics|segmentation|null",
-  "intent": "krótki opis intencji",
-  "task_type": "campaign|message|list|crm|analytics|segmentation|general",
+  "agent": "campaign|list|message|crm|analytics|segmentation|research|null",
+  "intent": "short description of intent",
+  "task_type": "campaign|message|list|crm|analytics|segmentation|research|general",
   "confidence": 0.0-1.0,
   "parameters": {}
 }
 
-Ustaw requires_agent=false dla pytań ogólnych, rozmów, pozdrowień.
-Ustaw requires_agent=true gdy użytkownik chce WYKONAĆ konkretną akcję (np. stworzyć kampanię, dodać do listy, etc.)
+Set requires_agent=false for general questions, conversations, greetings.
+Set requires_agent=true when the user wants to PERFORM a specific action (e.g. create a campaign, research a topic, analyze competitors, etc.)
 PROMPT;
 
         try {
@@ -458,7 +469,7 @@ PROMPT;
 
         $provider = $this->aiService->getProvider($integration);
         $modelToUse = $preferredModel ?: null;
-        $response = $provider->generateText(
+        $result = $provider->generateTextWithUsage(
             json_encode($messages),
             $modelToUse,
             ['max_tokens' => 2000, 'temperature' => 0.7]
@@ -468,8 +479,10 @@ PROMPT;
 
         return [
             'type' => 'message',
-            'message' => $response,
+            'message' => $result['text'],
             'model' => $actualModel,
+            'tokens_input' => $result['tokens_input'] ?? 0,
+            'tokens_output' => $result['tokens_output'] ?? 0,
         ];
     }
 
@@ -574,6 +587,10 @@ PROMPT;
                     $fullText = __('brain.processing_error');
                 }
             } finally {
+                // Estimate tokens for streaming (APIs don't return usage during stream)
+                $estimatedInputTokens = (int) (strlen(json_encode($messages)) / 4);
+                $estimatedOutputTokens = (int) (strlen($fullText) / 4);
+
                 // Always persist — even on disconnect, save what we have
                 if (!empty($fullText)) {
                     $this->conversationManager->addAssistantMessage(
@@ -586,11 +603,11 @@ PROMPT;
                             'streamed' => true,
                             'completed' => $streamCompleted,
                         ],
-                        0, 0, $actualModel
+                        $estimatedInputTokens, $estimatedOutputTokens, $actualModel
                     );
 
-                    // Track tokens (estimate)
-                    $estimatedTokens = (int) (strlen($fullText) / 4);
+                    // Track tokens
+                    $estimatedTokens = $estimatedInputTokens + $estimatedOutputTokens;
                     $settings->addTokensUsed($estimatedTokens);
 
                     // Auto-generate title (only on full completion)
@@ -612,7 +629,7 @@ PROMPT;
                     $streamCompleted ? 'stream_message' : 'stream_message_partial',
                     ['message' => mb_substr($message, 0, 200)],
                     ['response_length' => strlen($fullText), 'completed' => $streamCompleted],
-                    0, 0, $actualModel, $durationMs
+                    $estimatedInputTokens, $estimatedOutputTokens, $actualModel, $durationMs
                 );
 
                 // Notify caller with metadata (only if stream completed normally)
@@ -637,13 +654,20 @@ PROMPT;
         AiIntegration $integration,
     ): void {
         try {
+            // Resolve language for the title
+            $userId = $conversation->user_id;
+            $settings = AiBrainSettings::getForUser($userId);
+            $user = User::find($userId);
+            $langCode = $settings->resolveLanguage($user);
+            $languageName = AiBrainSettings::getLanguageName($langCode);
+
             $prompt = <<<PROMPT
-Wygeneruj KRÓTKI tytuł (max 5 słów) podsumowujący temat tej rozmowy. Odpowiedz TYLKO tytułem, bez cudzysłowów, bez znaków interpunkcyjnych na końcu.
+Generate a SHORT title (max 5 words) summarizing this conversation topic. Write the title in {$languageName}. Respond with ONLY the title, no quotes, no punctuation at the end.
 
-Wiadomość użytkownika: {$userMessage}
-Odpowiedź: {$aiResponse}
+User message: {$userMessage}
+Response: {$aiResponse}
 
-Tytuł:
+Title:
 PROMPT;
 
             $title = $this->aiService->generateContent($prompt, $integration, [
@@ -721,6 +745,7 @@ PROMPT;
             'crm' => ['crm', 'deal', 'lead', 'pipeline', 'scoring', 'zadani', 'firma', 'prospekt', 'klient'],
             'analytics' => ['statystyk', 'analiz', 'raport', 'wynik', 'open rate', 'click', 'trend'],
             'segmentation' => ['segment', 'tag', 'automat', 'reguł', 'scoring', 'filtr'],
+            'research' => ['research', 'szukaj', 'wyszukaj', 'find out', 'look up', 'investigate', 'competitor', 'konkuren', 'zbadaj', 'sprawdź w internecie', 'google', 'search online'],
         ];
 
         foreach ($patterns as $agent => $keywords) {

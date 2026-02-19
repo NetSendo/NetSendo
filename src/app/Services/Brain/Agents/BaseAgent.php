@@ -9,6 +9,7 @@ use App\Models\AiExecutionLog;
 use App\Models\User;
 use App\Services\AI\AiService;
 use App\Services\Brain\KnowledgeBaseService;
+use App\Services\Brain\WebResearchService;
 use Illuminate\Support\Facades\Log;
 
 abstract class BaseAgent
@@ -65,7 +66,67 @@ abstract class BaseAgent
      */
     public function getInfoQuestions(array $intent, User $user, string $knowledgeContext = ''): string
     {
-        return "Potrzebuję więcej szczegółów, aby wykonać to zadanie. Podaj dodatkowe informacje.";
+        $langInstruction = $this->getLanguageInstruction($user);
+        return "I need more details to complete this task. Please provide additional information.\n\n{$langInstruction}";
+    }
+
+    /**
+     * Get a language instruction string for AI prompts, based on user's preferred language.
+     * Returns e.g. "IMPORTANT: Respond in English."
+     */
+    protected function getLanguageInstruction(?User $user): string
+    {
+        if (!$user) {
+            return 'IMPORTANT: Respond in English.';
+        }
+
+        $settings = AiBrainSettings::getForUser($user->id);
+        $langCode = $settings->resolveLanguage($user);
+        $languageName = AiBrainSettings::getLanguageName($langCode);
+
+        return "IMPORTANT: Respond in {$languageName}. All user-facing text, titles, descriptions, and step names MUST be in {$languageName}.";
+    }
+
+    /**
+     * Get research context from the web for enriching agent prompts.
+     * Only works if user has research APIs configured.
+     *
+     * @param User $user The user to check research availability for
+     * @param string $query The research query
+     * @return string Research context to include in prompts, or empty string
+     */
+    protected function getResearchContext(User $user, string $query): string
+    {
+        try {
+            $webResearch = app(WebResearchService::class);
+            $availability = $webResearch->isAvailable($user);
+
+            if (!$availability['any']) {
+                return '';
+            }
+
+            // Use Perplexity for deep research if available, otherwise SerpAPI
+            if ($availability['perplexity']) {
+                $result = $webResearch->deepResearch($query, $user);
+                if (!empty($result['answer'])) {
+                    $context = "--- WEB RESEARCH CONTEXT ---\n{$result['answer']}\n";
+                    if (!empty($result['citations'])) {
+                        $context .= "Sources: " . implode(', ', array_slice($result['citations'], 0, 3)) . "\n";
+                    }
+                    $context .= "---\n";
+                    return $context;
+                }
+            } elseif ($availability['serpapi']) {
+                $results = $webResearch->searchWeb($query, $user, 'general', 3);
+                if (!empty($results['results'])) {
+                    return $webResearch->formatAsContext(['web_results' => $results['results']]);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Research context fetch failed', ['query' => $query, 'error' => $e->getMessage()]);
+        }
+
+        return '';
     }
 
     /**

@@ -166,6 +166,37 @@ class AnthropicProvider extends BaseProvider
         return $text;
     }
 
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
+    {
+        $response = $this->makeRequest('post', 'v1/messages', [
+            'model' => $this->getModel($model),
+            'max_tokens' => $options['max_tokens'] ?? 128000,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ]);
+
+        if (!$response['success']) {
+            throw new \Exception('Anthropic Error: ' . ($response['error'] ?? 'Unknown error'));
+        }
+
+        $content = $response['data']['content'] ?? [];
+        $text = '';
+        foreach ($content as $block) {
+            if (($block['type'] ?? '') === 'text') {
+                $text .= $block['text'];
+            }
+        }
+
+        $usage = $response['data']['usage'] ?? [];
+
+        return [
+            'text' => $text,
+            'tokens_input' => (int) ($usage['input_tokens'] ?? 0),
+            'tokens_output' => (int) ($usage['output_tokens'] ?? 0),
+        ];
+    }
+
     /**
      * Stream text generation via Anthropic SSE.
      * Anthropic uses event: content_block_delta with delta.text.

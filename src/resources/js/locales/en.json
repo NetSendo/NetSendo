@@ -793,6 +793,8 @@
         "expand": "Expand",
         "webinars": "Webinars",
         "api_keys": "API Keys",
+        "crm_import": "Import",
+        "deliverability_shield": "Deliverability Shield",
         "new": "NEW",
         "groups": {
             "address_list": "Address List",
@@ -3020,8 +3022,8 @@
                 "desc": "Measure performance"
             },
             "ai": {
-                "title": "Artificial Intelligence",
-                "desc": "AI assistant integrations"
+                "title": "AI & Research",
+                "desc": "Intelligence tools"
             },
             "messaging": {
                 "title": "Messaging",
@@ -3108,6 +3110,147 @@
             "lists_link": "Manage Lists",
             "help_title": "Need help?",
             "help_desc": "Check documentation or contact us.",
+            "documentation_button": "Documentation"
+        },
+        "perplexity": {
+            "title": "Perplexity AI",
+            "hero_title": "Perplexity AI",
+            "hero_subtitle": "AI-powered deep research with real-time citations for your marketing intelligence.",
+            "hero_description": "Integrate Perplexity AI with NetSendo Brain to unlock deep research capabilities. Get comprehensive answers with citations, analyze competitors, discover market trends, and generate content ideas — all powered by advanced AI that searches the internet in real-time.",
+            "features_title": "Features",
+            "features": {
+                "deep_research": {
+                    "title": "Deep Research with Citations",
+                    "description": "Get comprehensive, AI-powered answers with source citations from across the web."
+                },
+                "company_intelligence": {
+                    "title": "Company Intelligence",
+                    "description": "Research companies in-depth — products, market position, technology stack, and key contacts."
+                },
+                "trend_analysis": {
+                    "title": "Market Trend Analysis",
+                    "description": "Discover industry trends, emerging opportunities, and market dynamics with AI analysis."
+                },
+                "content_research": {
+                    "title": "Content Research Ideas",
+                    "description": "Generate data-driven email and SMS content ideas based on real-time web intelligence."
+                }
+            },
+            "setup_title": "Setup",
+            "setup_steps": {
+                "get_key": {
+                    "title": "Get API Key",
+                    "description": "Sign up at perplexity.ai and generate an API key from your account dashboard."
+                },
+                "configure": {
+                    "title": "Configure in Brain Settings",
+                    "description": "Go to Brain Settings and paste your Perplexity API key in the Research section."
+                },
+                "research": {
+                    "title": "Start Researching",
+                    "description": "Ask Brain to research any topic — it will use Perplexity for deep, cited answers."
+                }
+            },
+            "api_info": "Perplexity AI uses the Sonar model for fast, accurate research with web citations.",
+            "use_cases_title": "Use Cases",
+            "use_cases": {
+                "competitor": {
+                    "title": "Competitor Analysis",
+                    "description": "Research competitors' strategies, products, and market positioning."
+                },
+                "enrichment": {
+                    "title": "CRM Data Enrichment",
+                    "description": "Automatically gather structured company data for your CRM contacts."
+                },
+                "campaigns": {
+                    "title": "Campaign Research",
+                    "description": "Get data-driven insights to improve your email and SMS campaigns."
+                }
+            },
+            "go_to_settings": "Configure API Key",
+            "requirements_title": "Requirements",
+            "requirements": {
+                "account": "Perplexity AI account",
+                "api_key": "Perplexity API Key",
+                "brain": "NetSendo Brain enabled"
+            },
+            "resources_title": "Resources",
+            "docs_link": "Perplexity API Documentation",
+            "help_title": "Need help?",
+            "help_desc": "Check our documentation for detailed setup instructions.",
+            "documentation_button": "Documentation"
+        },
+        "serpapi": {
+            "title": "SerpAPI",
+            "hero_title": "SerpAPI",
+            "hero_subtitle": "Google Search results and knowledge graphs integrated into your marketing workflow.",
+            "hero_description": "Connect SerpAPI to NetSendo Brain for fast, structured Google Search results. Search the web, discover news, access knowledge graphs, and find company data — all from within your Brain chat conversations.",
+            "features_title": "Features",
+            "features": {
+                "google_search": {
+                    "title": "Google Search Results",
+                    "description": "Access structured Google Search results with titles, snippets, and links."
+                },
+                "news_search": {
+                    "title": "News Search",
+                    "description": "Find the latest news articles on any topic for timely marketing content."
+                },
+                "knowledge_graph": {
+                    "title": "Knowledge Graph",
+                    "description": "Get rich entity data from Google's Knowledge Graph for deeper insights."
+                },
+                "company_lookup": {
+                    "title": "Company Data Lookup",
+                    "description": "Quickly find company information, websites, and key business details."
+                }
+            },
+            "setup_title": "Setup",
+            "setup_steps": {
+                "get_key": {
+                    "title": "Get API Key",
+                    "description": "Sign up at serpapi.com and get your API key from the dashboard."
+                },
+                "configure": {
+                    "title": "Configure in Brain Settings",
+                    "description": "Go to Brain Settings and paste your SerpAPI key in the Research section."
+                },
+                "search": {
+                    "title": "Start Searching",
+                    "description": "Ask Brain to search the web — it will use SerpAPI for fast Google results."
+                }
+            },
+            "search_types_title": "Supported Search Types",
+            "search_types": {
+                "general": "General Web Search",
+                "news": "News Search",
+                "images": "Image Search"
+            },
+            "use_cases_title": "Use Cases",
+            "use_cases": {
+                "competitors": {
+                    "title": "Competitor Monitoring",
+                    "description": "Track competitor activity and online presence in real-time."
+                },
+                "trends": {
+                    "title": "Trend Discovery",
+                    "description": "Find trending topics and news for timely marketing campaigns."
+                },
+                "crm": {
+                    "title": "Lead Research",
+                    "description": "Quickly research leads and companies before outreach."
+                }
+            },
+            "go_to_settings": "Configure API Key",
+            "requirements_title": "Requirements",
+            "requirements": {
+                "account": "SerpAPI account",
+                "api_key": "SerpAPI API Key",
+                "brain": "NetSendo Brain enabled"
+            },
+            "resources_title": "Resources",
+            "docs_link": "SerpAPI Documentation",
+            "help_title": "Need help?",
+            "help_desc": "Check our documentation for detailed setup instructions.",
             "documentation_button": "Documentation"
         }
     },
@@ -7294,7 +7437,9 @@
             "description": "Assign different AI models to different Brain tasks. Empty fields use the default model.",
             "hide": "Hide",
             "show": "Show",
-            "save": "Save Routing"
+            "save": "Save Routing",
+            "default_provider": "— Default —",
+            "default_model": "— Default model —"
         },
         "plan": {
             "title": "Action plan",
@@ -7318,11 +7463,40 @@
             "bot_token_save": "Save",
             "bot_token_saving": "Saving...",
             "bot_token_saved": "Saved",
-            "bot_token_current": "Current token:"
+            "bot_token_current": "Current token:",
+            "webhook_setup": "🔗 Setup Webhook",
+            "webhook_setting": "Setting webhook...",
+            "webhook_success": "Webhook registered successfully",
+            "webhook_failed": "Webhook: ",
+            "webhook_failed_generic": "Failed to set up webhook",
+            "webhook_error": "Error setting up webhook"
+        },
+        "language": {
+            "title": "Response Language",
+            "description": "Choose the language Brain will use for responses. Auto uses the interface language.",
+            "auto": "Auto (interface language)",
+            "custom": "Custom...",
+            "custom_placeholder": "e.g. Chinese, Japanese, Arabic...",
+            "save": "Save language"
+        },
+        "research": {
+            "title": "Internet Research",
+            "description": "Give Brain access to real-time internet data. Research competitors, market trends, and enrich CRM with live company information.",
+            "connected": "Connected",
+            "not_configured": "Not configured",
+            "current_key": "Current key:",
+            "save": "Save",
+            "test": "Test",
+            "key_saved": "API Key saved",
+            "get_key": "Get API key",
+            "perplexity_placeholder": "pplx-...",
+            "perplexity_help": "Deep research with AI-powered analysis and cited sources.",
+            "serpapi_placeholder": "Enter SerpAPI key...",
+            "serpapi_help": "Google Search results for company lookup, news, and trends."
         },
         "knowledge": {
             "title": "Knowledge base",
-            "add": "\u2795 Add entry",
+            "add": "➕ Add entry",
             "cancel": "Cancel",
             "category": "Category",
             "entry_title": "Title",
@@ -7369,6 +7543,15 @@
             "all_statuses": "All statuses",
             "live": "LIVE",
             "auto_refresh": "Auto-refresh"
+        },
+        "voice": {
+            "recording": "Recording...",
+            "transcribing": "Transcribing...",
+            "mic_permission_denied": "Microphone access denied. Check your browser settings.",
+            "transcription_failed": "Failed to transcribe the voice message.",
+            "record_voice": "Record voice message",
+            "stop_recording": "Stop recording",
+            "no_openai": "Transcription requires OpenAI integration."
         }
     }
 }

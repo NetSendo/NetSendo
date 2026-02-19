@@ -11,9 +11,12 @@ use App\Models\KnowledgeEntry;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\KnowledgeBaseService;
 use App\Services\Brain\ModeController;
+use App\Services\Brain\VoiceTranscriptionService;
+use App\Services\Brain\WebResearchService;
 use App\Services\Brain\Telegram\TelegramAuthService;
 use App\Services\Brain\Telegram\TelegramBotService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
+use App\Services\Brain\Skills\ResearchSkill;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +29,7 @@ class BrainController extends Controller
         protected ModeController $modeController,
         protected TelegramAuthService $telegramAuth,
         protected TelegramBotService $telegramBot,
+        protected VoiceTranscriptionService $voiceTranscription,
     ) {}
 
     /**
@@ -50,6 +54,56 @@ class BrainController extends Controller
         );
 
         return response()->json($result);
+    }
+
+    /**
+     * Send a voice message to the Brain (audio file → transcription → AI response).
+     * POST /brain/api/chat/voice
+     */
+    public function chatVoice(Request $request): JsonResponse
+    {
+        $request->validate([
+            'audio' => 'required|file|max:25600|mimes:webm,ogg,mp3,mp4,m4a,wav,mpeg',
+            'conversation_id' => 'nullable|integer',
+            'force_new' => 'nullable|boolean',
+        ]);
+
+        $user = $request->user();
+
+        try {
+            // Determine language hint from user's Brain preferences
+            $settings = AiBrainSettings::getForUser($user->id);
+            $language = $settings->preferred_language ?? null;
+
+            // Transcribe the audio file
+            $audioPath = $request->file('audio')->getRealPath();
+            $transcribedText = $this->voiceTranscription->transcribe($audioPath, $language);
+
+            // Process through the Brain (same as text chat)
+            $result = $this->orchestrator->processMessage(
+                $transcribedText,
+                $user,
+                'web',
+                $request->input('conversation_id'),
+                $request->boolean('force_new', false),
+            );
+
+            // Append transcribed text for frontend display
+            $result['transcribed_text'] = $transcribedText;
+            $result['input_type'] = 'voice';
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            Log::error('Voice chat failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => $e->getMessage(),
+                'type' => 'voice_error',
+            ], 422);
+        }
     }
 
     /**
@@ -368,6 +422,8 @@ class BrainController extends Controller
             'daily_token_limit' => 'nullable|integer|min:1000',
             'preferences' => 'nullable|array',
             'telegram_bot_token' => 'nullable|string|max:255',
+            'perplexity_api_key' => 'nullable|string|max:255',
+            'serpapi_api_key' => 'nullable|string|max:255',
             'preferred_model' => 'nullable|string|max:100',
             'preferred_integration_id' => 'nullable|integer|exists:ai_integrations,id',
             'model_routing' => 'nullable|array',
@@ -377,6 +433,7 @@ class BrainController extends Controller
         $settings->update($request->only([
             'work_mode', 'preferred_language', 'daily_token_limit',
             'preferences', 'telegram_bot_token',
+            'perplexity_api_key', 'serpapi_api_key',
             'preferred_model', 'preferred_integration_id',
             'model_routing',
         ]));
@@ -475,6 +532,29 @@ class BrainController extends Controller
                 'error' => 'Connection to Telegram API failed: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Test research API connection (Perplexity or SerpAPI).
+     * POST /brain/api/research/test
+     */
+    public function testResearchApi(Request $request): JsonResponse
+    {
+        $request->validate([
+            'provider' => 'required|string|in:perplexity,serpapi',
+            'api_key' => 'required|string|max:255',
+        ]);
+
+        $provider = $request->input('provider');
+        $apiKey = $request->input('api_key');
+        $webResearch = app(WebResearchService::class);
+
+        $result = match ($provider) {
+            'perplexity' => $webResearch->testPerplexity($apiKey),
+            'serpapi' => $webResearch->testSerpApi($apiKey),
+        };
+
+        return response()->json($result);
     }
 
     /**
@@ -651,7 +731,10 @@ class BrainController extends Controller
             ],
             'recent_activity' => $recentActivity,
             'recent_logs' => $recentLogs,
-            'suggested_tasks' => MarketingSalesSkill::getSuggestedTasks($user),
+            'suggested_tasks' => array_merge(
+                MarketingSalesSkill::getSuggestedTasks($user),
+                ResearchSkill::getSuggestedTasks($user),
+            ),
             'task_categories' => MarketingSalesSkill::getTaskCategories(),
             'timestamp' => now()->toISOString(),
         ]);

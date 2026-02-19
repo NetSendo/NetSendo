@@ -157,7 +157,37 @@ return [
         'priority_low' => 'Niski',
     ],
 
+    // === Research Agent ===
+    'research' => [
+        'agent_label' => '🔍 Research Agent',
+        'plan_title' => 'Plan badań',
+        'done' => '✅ Badanie zakończone.',
+        'query_missing' => '⚠️ Nie podano zapytania wyszukiwania.',
+        'company_missing' => '⚠️ Nie podano nazwy firmy.',
+        'topic_missing' => '⚠️ Nie podano tematu.',
+        'no_results' => '🔍 Brak wyników dla ":query".',
+        'no_data' => 'Brak danych z badań.',
+        'default_kb_title' => 'Wyniki badań',
+        'nothing_to_save' => 'Brak danych do zapisania.',
+        'saved_to_kb' => 'Badanie ":title" zapisane w bazie wiedzy (ID: :id)',
+        'save_failed' => '❌ Nie udało się zapisać badania: :error',
+        'task_enrich_companies' => 'Zbadaj :count firm bez danych o stronie/branży',
+        'task_research_leads' => 'Pogłębione badanie :count gorących leadów',
+        'task_trends' => 'Analiza aktualnych trendów rynkowych w Twojej branży',
+    ],
+
     // === AI Prompt system instructions (used inside prompts — NOT user-facing) ===
     // These remain in Polish as they instruct the AI model behavior.
     // If multilingual AI prompts are needed later, they can be added here.
+
+    // === Voice Messages ===
+    'voice' => [
+        'recording' => 'Nagrywanie...',
+        'transcribing' => 'Transkrypcja...',
+        'mic_permission_denied' => 'Brak dostępu do mikrofonu. Sprawdź ustawienia przeglądarki.',
+        'transcription_failed' => 'Nie udało się transkrybować wiadomości głosowej.',
+        'record_voice' => 'Nagraj wiadomość głosową',
+        'stop_recording' => 'Zatrzymaj nagrywanie',
+        'no_openai' => 'Transkrypcja wymaga integracji OpenAI.',
+    ],
 ];

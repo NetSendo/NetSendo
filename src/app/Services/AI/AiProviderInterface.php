@@ -41,6 +41,16 @@ interface AiProviderInterface
     public function supportsFetchModels(): bool;
 
     /**
+     * Generate text and return usage metadata alongside the response.
+     *
+     * @param string $prompt The input prompt
+     * @param string|null $model The model to use (or default)
+     * @param array $options Additional options
+     * @return array{text: string, tokens_input: int, tokens_output: int}
+     */
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array;
+
+    /**
      * Stream text generation, yielding chunks as they arrive.
      *
      * @param string $prompt The input prompt

@@ -7,7 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.2] – Short Description
+
+**Release date:** 2026-02-20
+
 ### Added
+
+- **Marketplace — Perplexity AI Integration Page:**
+  - New dedicated marketplace page (`/marketplace/perplexity`) with hero section, features overview (deep research, company intelligence, trend analysis, content ideas), setup guide, use cases, and sidebar with resources.
+  - Added Perplexity AI to marketplace active integrations grid and AI & Research category.
+  - Full translations in PL, EN, DE, ES.
+
+- **Marketplace — SerpAPI Integration Page:**
+  - New dedicated marketplace page (`/marketplace/serpapi`) with hero section, features overview (Google Search, news search, knowledge graph, company lookup), setup guide, supported search types, use cases, and sidebar with resources.
+  - Added SerpAPI to marketplace active integrations grid and AI & Research category.
+  - Full translations in PL, EN, DE, ES.
+
+- **NetSendo Brain — Voice Messages:**
+  - **VoiceTranscriptionService:** New service for audio-to-text transcription using OpenAI Whisper API. Supports transcription from local files and remote URLs with language hints from user preferences.
+  - **Brain Chat Voice Endpoint:** New `POST /brain/api/chat/voice` endpoint accepting audio file uploads (webm, ogg, mp3, mp4, m4a, wav), transcribing via Whisper, and processing through the AI orchestrator.
+  - **Frontend Recording UI:** Added microphone button to Brain chat input area with MediaRecorder API integration. Features pulsing red recording indicator with elapsed time, stop button, and automatic upload on stop. Supports both `audio/webm` and `audio/ogg` formats.
+  - **Telegram Voice Messages:** Extended `TelegramBotService` to detect and process incoming voice notes and audio files. Downloads via Telegram `getFile` API, transcribes through `VoiceTranscriptionService`, and forwards to the Brain orchestrator. Shows transcription preview before AI response.
+  - **Localization:** Full translations for voice recording UI in PL, EN, DE, ES.
+- **NetSendo Brain — Internet Research (Perplexity & SerpAPI):**
+  - **WebResearchService:** New service integrating Perplexity AI for deep research with citations and SerpAPI for Google Search results. Supports company research, trend analysis, and content idea generation.
+  - **ResearchAgent:** New specialist agent handling web search, deep research, competitor analysis, market trends, and content research tasks. Can save findings to the knowledge base.
+  - **ResearchSkill:** New orchestrator skill that provides research-aware prompts and suggested tasks in 4 languages (EN, PL, DE, ES).
+  - **Cross-Agent Research:** All agents can now leverage internet research via `BaseAgent::getResearchContext()` to enrich their planning with real-time data.
+  - **Settings UI:** New "Internet Research" card in Brain Settings with Perplexity and SerpAPI key management, connection testing, and status indicators.
+  - **API Key Security:** Research API keys stored encrypted in the database with masked display in the UI.
+  - **Database Migration:** Added `perplexity_api_key` and `serpapi_api_key` columns to `ai_brain_settings`.
+  - **Localization:** Full translations for research UI in PL, EN, DE, ES.
 
 - **NetSendo Brain — Chat Streaming:**
   - **Real-Time Responses:** Implemented Server-Sent Events (SSE) streaming for Brain chat, providing immediate token-by-token feedback instead of waiting for full generation.
@@ -16,10 +46,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Frontend UX:** Rewrote `sendMessage()` in `Index.vue` using `fetch` and `ReadableStream` for progressive rendering with a blinking cursor indicator.
   - **Backend Architecture:** Added `streamConversation()` to `AgentOrchestrator` and `chatStream()` endpoint in `BrainController` with cURL-based non-buffered streaming.
 
+- **NetSendo Brain — Language Support:**
+  - **Language Selector UI:** Added a new "Response Language" settings card in Brain Settings with dropdown selection for Auto (UI language), English, Polski, Deutsch, Español, and a custom text input for any other language.
+  - **Backend Language Resolution:** Added `resolveLanguage()` and `getLanguageName()` helpers to `AiBrainSettings` model. Default `preferred_language` changed from `'pl'` to `'auto'` (uses UI locale). Added `getLanguageInstruction()` helper in `BaseAgent` that provides dynamic language instructions to all agents.
+  - **English-First Prompts:** Translated ALL hardcoded Polish prompts to English across the entire Brain service layer: `ConversationManager`, `AgentOrchestrator`, `MarketingSalesSkill`, all 6 specialist agents (`CampaignAgent`, `ListAgent`, `MessageAgent`, `CrmAgent`, `AnalyticsAgent`, `SegmentationAgent`), `KnowledgeBaseService`, and `TelegramBotService`. All AI prompts now include dynamic language instructions based on user preference.
+  - **Telegram Bot:** Translated all Telegram bot messages, commands, welcome/help text, and approval buttons from Polish to English.
+  - **Localization:** Full translations for language selector UI in PL, EN, DE, ES.
+
 ### Fixed
 
 - **Brain Heredoc Syntax:**
   - Fixed a PHP 7.3+ compatibility issue in `ConversationManager.php` where a heredoc content line starting with the heredoc label (`TELEGRAM`) caused a parse error. Renamed the label to `TELEGRAM_BLOCK`.
+
+- **Brain Monitor — Token Usage Always Zero:**
+  - Fixed Brain Monitor showing `0` tokens and `$0.00` cost for all activity. Root cause: all AI providers (`generateText()`) returned only a text string, discarding the `usage` data from API responses.
+  - Added `generateTextWithUsage()` method to all 6 providers (OpenAI, Anthropic, Gemini, Grok, OpenRouter, Ollama) that extracts real `tokens_input` and `tokens_output` from each provider's API response format.
+  - Updated `AgentOrchestrator::handleConversation()` to use real token counts from `generateTextWithUsage()`.
+  - Updated `AgentOrchestrator::streamConversation()` to estimate input and output tokens instead of hardcoding `0, 0`.
+
+### Changed
+
+- **Translation Management:**
+  - Cleaned up `docs/TRANSLATIONS.md` by removing the outdated change log and adding a strict warning that translations should only be edited in `.json` and `.php` files, not in the documentation itself.
+  - Updated `src/fix_translations.php` script to include `marketplace` translations (Perplexity AI, SerpAPI, and AI categories).
 
 ## [2.0.1] – Short Description
 

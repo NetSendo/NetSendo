@@ -746,8 +746,8 @@
                 "desc": "E-Mail-Zustellungsdienste"
             },
             "ai": {
-                "title": "KI",
-                "desc": "Inhaltsgenerierung & Chatbots"
+                "title": "KI & Forschung",
+                "desc": "Intelligenz-Tools"
             }
         },
         "request_title": "Benötigen Sie eine bestimmte Integration?",
@@ -766,7 +766,148 @@
         "request_submit": "Anfrage senden",
         "request_success_title": "Danke!",
         "request_success_desc": "Ihre Integrationsanfrage wurde gesendet. Wir werden uns bald bei Ihnen melden.",
-        "request_error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+        "request_error": "Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+        "perplexity": {
+            "title": "Perplexity AI",
+            "hero_title": "Perplexity AI",
+            "hero_subtitle": "KI-gestützte Tiefenforschung mit Echtzeit-Zitaten für Ihre Marketing-Intelligenz.",
+            "hero_description": "Integrieren Sie Perplexity AI mit NetSendo Brain für erweiterte Forschungsmöglichkeiten. Erhalten Sie umfassende Antworten mit Quellenangaben, analysieren Sie Wettbewerber, entdecken Sie Markttrends und generieren Sie Content-Ideen — alles angetrieben durch fortschrittliche KI mit Echtzeit-Internetsuche.",
+            "features_title": "Funktionen",
+            "features": {
+                "deep_research": {
+                    "title": "Tiefenforschung mit Zitaten",
+                    "description": "Erhalten Sie umfassende, KI-gestützte Antworten mit Quellenangaben aus dem gesamten Web."
+                },
+                "company_intelligence": {
+                    "title": "Unternehmensintelligenz",
+                    "description": "Recherchieren Sie Unternehmen eingehend — Produkte, Marktposition, Technologie-Stack und Schlüsselkontakte."
+                },
+                "trend_analysis": {
+                    "title": "Markttrendanalyse",
+                    "description": "Entdecken Sie Branchentrends, aufkommende Chancen und Marktdynamiken mit KI-Analyse."
+                },
+                "content_research": {
+                    "title": "Content-Forschungsideen",
+                    "description": "Generieren Sie datengetriebene E-Mail- und SMS-Content-Ideen basierend auf Echtzeit-Web-Intelligenz."
+                }
+            },
+            "setup_title": "Einrichtung",
+            "setup_steps": {
+                "get_key": {
+                    "title": "API-Schlüssel erhalten",
+                    "description": "Registrieren Sie sich auf perplexity.ai und generieren Sie einen API-Schlüssel über Ihr Konto-Dashboard."
+                },
+                "configure": {
+                    "title": "In Brain-Einstellungen konfigurieren",
+                    "description": "Gehen Sie zu Brain-Einstellungen und fügen Sie Ihren Perplexity-API-Schlüssel im Forschungsbereich ein."
+                },
+                "research": {
+                    "title": "Forschung starten",
+                    "description": "Bitten Sie Brain, ein beliebiges Thema zu recherchieren — es nutzt Perplexity für tiefgehende, zitierte Antworten."
+                }
+            },
+            "api_info": "Perplexity AI verwendet das Sonar-Modell für schnelle, präzise Forschung mit Web-Zitaten.",
+            "use_cases_title": "Anwendungsfälle",
+            "use_cases": {
+                "competitor": {
+                    "title": "Wettbewerbsanalyse",
+                    "description": "Recherchieren Sie Strategien, Produkte und Marktpositionierung der Wettbewerber."
+                },
+                "enrichment": {
+                    "title": "CRM-Datenanreicherung",
+                    "description": "Sammeln Sie automatisch strukturierte Unternehmensdaten für Ihre CRM-Kontakte."
+                },
+                "campaigns": {
+                    "title": "Kampagnenforschung",
+                    "description": "Erhalten Sie datengetriebene Erkenntnisse zur Verbesserung Ihrer E-Mail- und SMS-Kampagnen."
+                }
+            },
+            "go_to_settings": "API-Schlüssel konfigurieren",
+            "requirements_title": "Anforderungen",
+            "requirements": {
+                "account": "Perplexity AI Konto",
+                "api_key": "Perplexity API-Schlüssel",
+                "brain": "NetSendo Brain aktiviert"
+            },
+            "resources_title": "Ressourcen",
+            "docs_link": "Perplexity API Dokumentation",
+            "help_title": "Brauchen Sie Hilfe?",
+            "help_desc": "Überprüfen Sie unsere Dokumentation für detaillierte Einrichtungsanweisungen.",
+            "documentation_button": "Dokumentation"
+        },
+        "serpapi": {
+            "title": "SerpAPI",
+            "hero_title": "SerpAPI",
+            "hero_subtitle": "Google-Suchergebnisse und Wissensgraphen integriert in Ihren Marketing-Workflow.",
+            "hero_description": "Verbinden Sie SerpAPI mit NetSendo Brain für schnelle, strukturierte Google-Suchergebnisse. Durchsuchen Sie das Web, entdecken Sie Nachrichten, greifen Sie auf Wissensgraphen zu und finden Sie Unternehmensdaten — alles aus Ihren Brain-Chat-Gesprächen.",
+            "features_title": "Funktionen",
+            "features": {
+                "google_search": {
+                    "title": "Google-Suchergebnisse",
+                    "description": "Greifen Sie auf strukturierte Google-Suchergebnisse mit Titeln, Snippets und Links zu."
+                },
+                "news_search": {
+                    "title": "Nachrichtensuche",
+                    "description": "Finden Sie aktuelle Nachrichtenartikel zu jedem Thema für zeitgemäße Marketinginhalte."
+                },
+                "knowledge_graph": {
+                    "title": "Wissensgraph",
+                    "description": "Erhalten Sie umfangreiche Entitätsdaten aus Googles Wissensgraph für tiefere Einblicke."
+                },
+                "company_lookup": {
+                    "title": "Unternehmenssuche",
+                    "description": "Finden Sie schnell Unternehmensinformationen, Websites und wichtige Geschäftsdaten."
+                }
+            },
+            "setup_title": "Einrichtung",
+            "setup_steps": {
+                "get_key": {
+                    "title": "API-Schlüssel erhalten",
+                    "description": "Registrieren Sie sich auf serpapi.com und erhalten Sie Ihren API-Schlüssel vom Dashboard."
+                },
+                "configure": {
+                    "title": "In Brain-Einstellungen konfigurieren",
+                    "description": "Gehen Sie zu Brain-Einstellungen und fügen Sie Ihren SerpAPI-Schlüssel im Forschungsbereich ein."
+                },
+                "search": {
+                    "title": "Suche starten",
+                    "description": "Bitten Sie Brain, im Web zu suchen — es nutzt SerpAPI für schnelle Google-Ergebnisse."
+                }
+            },
+            "search_types_title": "Unterstützte Suchtypen",
+            "search_types": {
+                "general": "Allgemeine Websuche",
+                "news": "Nachrichtensuche",
+                "images": "Bildersuche"
+            },
+            "use_cases_title": "Anwendungsfälle",
+            "use_cases": {
+                "competitors": {
+                    "title": "Wettbewerbsbeobachtung",
+                    "description": "Verfolgen Sie Wettbewerberaktivitäten und Online-Präsenz in Echtzeit."
+                },
+                "trends": {
+                    "title": "Trenderkennung",
+                    "description": "Finden Sie Trendthemen und Nachrichten für zeitgemäße Marketingkampagnen."
+                },
+                "crm": {
+                    "title": "Lead-Recherche",
+                    "description": "Recherchieren Sie Leads und Unternehmen schnell vor der Kontaktaufnahme."
+                }
+            },
+            "go_to_settings": "API-Schlüssel konfigurieren",
+            "requirements_title": "Anforderungen",
+            "requirements": {
+                "account": "SerpAPI Konto",
+                "api_key": "SerpAPI API-Schlüssel",
+                "brain": "NetSendo Brain aktiviert"
+            },
+            "resources_title": "Ressourcen",
+            "docs_link": "SerpAPI Dokumentation",
+            "help_title": "Brauchen Sie Hilfe?",
+            "help_desc": "Überprüfen Sie unsere Dokumentation für detaillierte Einrichtungsanweisungen.",
+            "documentation_button": "Dokumentation"
+        }
     },
     "deliverability": {
         "title": "Deliverability Shield",
@@ -1022,6 +1163,8 @@
         "expand": "Ausklappen",
         "webinars": "Webinare",
         "api_keys": "API-Schlüssel",
+        "crm_import": "Import",
+        "deliverability_shield": "Zustellbarkeitsschutz",
         "new": "NEU",
         "groups": {
             "address_list": "Adressliste",
@@ -6460,7 +6603,9 @@
             "description": "Weisen Sie verschiedenen Brain-Aufgaben unterschiedliche KI-Modelle zu. Leere Felder verwenden das Standardmodell.",
             "hide": "Verbergen",
             "show": "Anzeigen",
-            "save": "Routing speichern"
+            "save": "Routing speichern",
+            "default_provider": "— Standard —",
+            "default_model": "— Standardmodell —"
         },
         "plan": {
             "title": "Aktionsplan",
@@ -6484,11 +6629,40 @@
             "bot_token_save": "Speichern",
             "bot_token_saving": "Speichern...",
             "bot_token_saved": "Gespeichert",
-            "bot_token_current": "Aktueller Token:"
+            "bot_token_current": "Aktueller Token:",
+            "webhook_setup": "🔗 Webhook einrichten",
+            "webhook_setting": "Webhook wird eingerichtet...",
+            "webhook_success": "Webhook erfolgreich registriert",
+            "webhook_failed": "Webhook: ",
+            "webhook_failed_generic": "Webhook konnte nicht eingerichtet werden",
+            "webhook_error": "Fehler beim Einrichten des Webhooks"
+        },
+        "language": {
+            "title": "Antwortsprache",
+            "description": "Wählen Sie die Sprache, in der Brain antworten soll. Auto verwendet die Oberflächensprache.",
+            "auto": "Auto (Oberflächensprache)",
+            "custom": "Andere...",
+            "custom_placeholder": "z.B. Chinesisch, Japanisch, Arabisch...",
+            "save": "Sprache speichern"
+        },
+        "research": {
+            "title": "Internetrecherche",
+            "description": "Geben Sie Brain Zugang zu Echtzeit-Internetdaten. Recherchieren Sie Wettbewerber, Markttrends und bereichern Sie das CRM mit Live-Unternehmensdaten.",
+            "connected": "Verbunden",
+            "not_configured": "Nicht konfiguriert",
+            "current_key": "Aktueller Schlüssel:",
+            "save": "Speichern",
+            "test": "Testen",
+            "key_saved": "API-Schlüssel gespeichert",
+            "get_key": "API-Schlüssel erhalten",
+            "perplexity_placeholder": "pplx-...",
+            "perplexity_help": "Tiefgehende Recherche mit KI-gestützter Analyse und zitierten Quellen.",
+            "serpapi_placeholder": "SerpAPI-Schlüssel eingeben...",
+            "serpapi_help": "Google-Suchergebnisse für Firmensuche, Nachrichten und Trends."
         },
         "knowledge": {
             "title": "Wissensbasis",
-            "add": "\u2795 Eintrag hinzufügen",
+            "add": "➕ Eintrag hinzufügen",
             "cancel": "Abbrechen",
             "category": "Kategorie",
             "entry_title": "Titel",
@@ -6535,6 +6709,15 @@
             "all_statuses": "Alle Status",
             "live": "LIVE",
             "auto_refresh": "Auto-Aktualisierung"
+        },
+        "voice": {
+            "recording": "Aufnahme...",
+            "transcribing": "Transkribieren...",
+            "mic_permission_denied": "Mikrofonzugriff verweigert. Überprüfen Sie Ihre Browsereinstellungen.",
+            "transcription_failed": "Die Sprachnachricht konnte nicht transkribiert werden.",
+            "record_voice": "Sprachnachricht aufnehmen",
+            "stop_recording": "Aufnahme stoppen",
+            "no_openai": "Transkription erfordert eine OpenAI-Integration."
         }
     }
 }

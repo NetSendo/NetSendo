@@ -40,41 +40,45 @@ class ListAgent extends BaseAgent
      */
     public function plan(array $intent, User $user, string $knowledgeContext = ''): ?AiActionPlan
     {
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
         $prompt = <<<PROMPT
-Jesteś ekspertem zarządzania listami email. Użytkownik chce:
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+You are an email list management expert. The user wants:
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
 {$knowledgeContext}
 
-Aktualne listy użytkownika:
+Current user lists:
 {$this->getUserListsSummary($user)}
 
-Stwórz plan działania. Odpowiedz w JSON:
+{$langInstruction}
+
+Create an action plan. Respond in JSON:
 {
-  "title": "tytuł planu",
-  "description": "opis",
+  "title": "plan title",
+  "description": "description",
   "steps": [
     {
-      "action_type": "typ",
-      "title": "tytuł kroku",
-      "description": "opis",
+      "action_type": "type",
+      "title": "step title",
+      "description": "description",
       "config": {}
     }
   ]
 }
 
-Dostępne action_types:
-- create_list: utwórz nową listę (config: {name: "", description: ""})
-- add_subscribers: dodaj subskrybentów (config: {list_id: N, emails: [], source: ""})
-- remove_subscribers: usuń subskrybentów (config: {list_id: N, criteria: {}})
-- tag_subscribers: otaguj subskrybentów (config: {tag_name: "", list_id: N, criteria: {}})
-- clean_bounced: wyczyść bounced/unsubscribed (config: {list_id: N})
-- segment: stwórz segment (config: {name: "", criteria: {}})
-- show_stats: pokaż statystyki (config: {list_id: N})
+Available action_types:
+- create_list: create a new list (config: {name: "", description: ""})
+- add_subscribers: add subscribers (config: {list_id: N, emails: [], source: ""})
+- remove_subscribers: remove subscribers (config: {list_id: N, criteria: {}})
+- tag_subscribers: tag subscribers (config: {tag_name: "", list_id: N, criteria: {}})
+- clean_bounced: clean bounced/unsubscribed (config: {list_id: N})
+- segment: create segment (config: {name: "", criteria: {}})
+- show_stats: show statistics (config: {list_id: N})
 PROMPT;
 
         try {
@@ -145,18 +149,22 @@ PROMPT;
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
 
+        $langInstruction = $this->getLanguageInstruction($user);
+
         $prompt = <<<PROMPT
-Poradź użytkownikowi w zarządzaniu listami email. Tryb manualny — podaj instrukcje.
+Advise the user on email list management. Manual mode — provide instructions.
 
-Intencja: {$intentDesc}
-Parametry: {$paramsJson}
+Intent: {$intentDesc}
+Parameters: {$paramsJson}
 
-Aktualne listy:
+Current lists:
 {$listsSummary}
 
 {$knowledgeContext}
 
-Podaj konkretne instrukcje krok po kroku do wykonania w panelu NetSendo.
+{$langInstruction}
+
+Provide specific step-by-step instructions to follow in the NetSendo panel.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5]);
@@ -289,7 +297,7 @@ PROMPT;
         }
 
         return $lists->map(function ($list) {
-            return "- [{$list->id}] {$list->name}: {$list->subscribers_count} subskrybentów";
+            return "- [{$list->id}] {$list->name}: {$list->subscribers_count} subscribers";
         })->join("\n");
     }
 }

@@ -861,7 +861,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("crm.import", "Import") }}
+                    {{ $t("navigation.crm_import", "Import") }}
                 </SidebarItem>
 
                 <SidebarItem
@@ -2250,7 +2250,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                             />
                         </svg>
                     </template>
-                    {{ $t("navigation.api_keys", "Klucze API") }}
+                    {{ $t("navigation.api_keys", "API Keys") }}
                 </SidebarItem>
 
                 <SidebarItem

@@ -156,4 +156,23 @@ return [
         'priority_medium' => 'Media',
         'priority_low' => 'Baja',
     ],
+
+    // === Research Agent ===
+    'research' => [
+        'agent_label' => '🔍 Research Agent',
+        'plan_title' => 'Plan de investigación',
+        'done' => '✅ Investigación completada.',
+        'query_missing' => '⚠️ No se especificó consulta de búsqueda.',
+        'company_missing' => '⚠️ No se especificó nombre de empresa.',
+        'topic_missing' => '⚠️ No se especificó tema.',
+        'no_results' => '🔍 No se encontraron resultados para ":query".',
+        'no_data' => 'No hay datos de investigación disponibles.',
+        'default_kb_title' => 'Hallazgos de investigación',
+        'nothing_to_save' => 'No hay datos de investigación para guardar.',
+        'saved_to_kb' => 'Investigación ":title" guardada en base de conocimiento (ID: :id)',
+        'save_failed' => '❌ Error al guardar la investigación: :error',
+        'task_enrich_companies' => 'Investigar :count empresas sin datos de web/sector',
+        'task_research_leads' => 'Investigación profunda de :count leads calientes',
+        'task_trends' => 'Analizar tendencias actuales del mercado en su industria',
+    ],
 ];

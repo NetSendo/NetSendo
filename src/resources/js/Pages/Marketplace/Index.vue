@@ -214,6 +214,22 @@ const activeIntegrations = [
         color: "blue",
         route: "marketplace.telegram",
     },
+    {
+        id: "perplexity",
+        name: "Perplexity AI",
+        description: "AI-powered deep research",
+        icon: "🔬",
+        color: "teal",
+        route: "marketplace.perplexity",
+    },
+    {
+        id: "serpapi",
+        name: "SerpAPI",
+        description: "Google Search integration",
+        icon: "🔍",
+        color: "orange",
+        route: "marketplace.serpapi",
+    },
 ];
 
 // Future integration categories with planned platforms
@@ -326,6 +342,18 @@ const categories = [
                 logo: null,
                 status: "available",
                 route: "marketplace.mcp",
+            },
+            {
+                name: "Perplexity AI",
+                logo: null,
+                status: "available",
+                route: "marketplace.perplexity",
+            },
+            {
+                name: "SerpAPI",
+                logo: null,
+                status: "available",
+                route: "marketplace.serpapi",
             },
             { name: "Claude", logo: null },
             { name: "Cursor IDE", logo: null },

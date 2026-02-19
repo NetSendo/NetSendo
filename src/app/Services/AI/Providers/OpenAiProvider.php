@@ -82,6 +82,30 @@ class OpenAiProvider extends BaseProvider
         return $response['data']['choices'][0]['message']['content'] ?? '';
     }
 
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
+    {
+        $response = $this->makeRequest('post', 'chat/completions', [
+            'model' => $this->getModel($model),
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'max_tokens' => $options['max_tokens'] ?? 65536,
+            'temperature' => $options['temperature'] ?? 0.7,
+        ]);
+
+        if (!$response['success']) {
+            throw new \Exception('OpenAI Error: ' . ($response['error'] ?? 'Unknown error'));
+        }
+
+        $usage = $response['data']['usage'] ?? [];
+
+        return [
+            'text' => $response['data']['choices'][0]['message']['content'] ?? '',
+            'tokens_input' => (int) ($usage['prompt_tokens'] ?? 0),
+            'tokens_output' => (int) ($usage['completion_tokens'] ?? 0),
+        ];
+    }
+
     private function formatModelName(string $modelId): string
     {
         $names = [

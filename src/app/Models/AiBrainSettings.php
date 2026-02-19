@@ -15,6 +15,8 @@ class AiBrainSettings extends Model
         'telegram_link_code',
         'telegram_linked_at',
         'telegram_bot_token',
+        'perplexity_api_key',
+        'serpapi_api_key',
         'preferred_language',
         'preferred_model',
         'preferred_integration_id',
@@ -37,6 +39,8 @@ class AiBrainSettings extends Model
         'model_routing' => 'array',
         'telegram_linked_at' => 'datetime',
         'telegram_bot_token' => 'encrypted',
+        'perplexity_api_key' => 'encrypted',
+        'serpapi_api_key' => 'encrypted',
         'token_reset_date' => 'date',
         'is_active' => 'boolean',
         'daily_token_limit' => 'integer',
@@ -57,6 +61,7 @@ class AiBrainSettings extends Model
         'campaign' => '📧 Planowanie kampanii',
         'crm' => '👥 CRM',
         'segmentation' => '🎯 Segmentacja',
+        'research' => '🔍 Internet Research',
         'conversation' => '💬 Konwersacja ogólna',
     ];
 
@@ -110,6 +115,30 @@ class AiBrainSettings extends Model
     }
 
     /**
+     * Check if Perplexity API is configured.
+     */
+    public function isPerplexityConfigured(): bool
+    {
+        return !empty($this->perplexity_api_key);
+    }
+
+    /**
+     * Check if SerpAPI is configured.
+     */
+    public function isSerpApiConfigured(): bool
+    {
+        return !empty($this->serpapi_api_key);
+    }
+
+    /**
+     * Check if any research API is configured.
+     */
+    public function isResearchEnabled(): bool
+    {
+        return $this->isPerplexityConfigured() || $this->isSerpApiConfigured();
+    }
+
+    /**
      * Check if the daily token limit is reached.
      */
     public function isTokenLimitReached(): bool
@@ -154,9 +183,56 @@ class AiBrainSettings extends Model
             ['user_id' => $userId],
             [
                 'work_mode' => 'semi_auto',
-                'preferred_language' => 'pl',
+                'preferred_language' => 'auto',
                 'daily_token_limit' => 100000,
             ]
         );
+    }
+
+    /**
+     * Resolve the effective language code for Brain responses.
+     * 'auto' uses the user's UI locale; any other value is used directly.
+     */
+    public function resolveLanguage(?User $user = null): string
+    {
+        $lang = $this->preferred_language ?? 'auto';
+
+        if ($lang === 'auto') {
+            if ($user) {
+                return $user->locale ?? app()->getLocale();
+            }
+            return app()->getLocale();
+        }
+
+        return $lang;
+    }
+
+    /**
+     * Get human-readable language name from a code.
+     * Supports standard ISO codes and custom values (returned as-is).
+     */
+    public static function getLanguageName(string $code): string
+    {
+        $names = [
+            'pl' => 'Polish (Polski)',
+            'en' => 'English',
+            'de' => 'German (Deutsch)',
+            'es' => 'Spanish (Español)',
+            'fr' => 'French (Français)',
+            'it' => 'Italian (Italiano)',
+            'pt' => 'Portuguese (Português)',
+            'nl' => 'Dutch (Nederlands)',
+            'zh' => 'Chinese (中文)',
+            'ja' => 'Japanese (日本語)',
+            'ko' => 'Korean (한국어)',
+            'ru' => 'Russian (Русский)',
+            'ar' => 'Arabic (العربية)',
+            'uk' => 'Ukrainian (Українська)',
+            'cs' => 'Czech (Čeština)',
+            'sv' => 'Swedish (Svenska)',
+            'tr' => 'Turkish (Türkçe)',
+        ];
+
+        return $names[$code] ?? $code;
     }
 }

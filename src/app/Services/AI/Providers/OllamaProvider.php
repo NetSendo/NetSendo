@@ -92,6 +92,29 @@ class OllamaProvider extends BaseProvider
         return $response['data']['response'] ?? '';
     }
 
+    public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
+    {
+        $response = $this->makeRequest('post', 'api/generate', [
+            'model' => $this->getModel($model),
+            'prompt' => $prompt,
+            'stream' => false,
+            'options' => [
+                'num_predict' => $options['max_tokens'] ?? 65536,
+                'temperature' => $options['temperature'] ?? 0.7,
+            ],
+        ]);
+
+        if (!$response['success']) {
+            throw new \Exception('Ollama Error: ' . ($response['error'] ?? 'Unknown error'));
+        }
+
+        return [
+            'text' => $response['data']['response'] ?? '',
+            'tokens_input' => (int) ($response['data']['prompt_eval_count'] ?? 0),
+            'tokens_output' => (int) ($response['data']['eval_count'] ?? 0),
+        ];
+    }
+
     private function formatModelName(string $modelId): string
     {
         // Remove version tags like :latest
