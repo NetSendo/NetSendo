@@ -169,6 +169,19 @@ return [
         'priority_high' => 'Hoch',
         'priority_medium' => 'Mittel',
         'priority_low' => 'Niedrig',
+        // Situation Analysis
+        'situation_analysis' => 'Situationsanalyse',
+        'situation_summary' => 'Aktuelle Situation',
+        'ai_priorities' => 'KI-Prioritäten',
+        'no_analysis' => 'Noch keine Analyse verfügbar — aktiviere den Brain CRON-Scheduler.',
+        'analysis_reasoning' => 'Begründung',
+        'estimated_impact' => 'Geschätzter Einfluss',
+        'last_analysis' => 'Letzte Analyse',
+        // CRON Telegram report
+        'cron_no_tasks' => '✅ Zyklus abgeschlossen — keine Aufgaben mit hoher Priorität.',
+        'cron_tasks_found' => '📝 Gefundene Aufgaben: :count',
+        'cron_executed' => 'Ausgeführt: :success/:total',
+        'cron_next_run' => 'Nächster Lauf: ~:time',
     ],
 
     // === Research Agent ===
@@ -219,4 +232,12 @@ return [
         'cancel' => 'Abbrechen',
         'priority' => 'Priorität',
     ],
+
+    // === Situation Analysis (chat) ===
+    'situation_analysis_title' => 'Situationsanalyse',
+    'situation_analysis_priorities' => 'Identifizierte Prioritäten',
+    'situation_analysis_tasks_created' => ':count Aufgaben erstellt',
+    'situation_analysis_auto_executed' => ':count Aufgaben mit hoher Priorität automatisch ausgeführt',
+    'situation_analysis_error' => '❌ Situationsanalyse fehlgeschlagen. Bitte versuche es erneut.',
+    'situation_analysis_no_data' => '⚠️ Es konnten nicht genügend Daten für die Analyse gesammelt werden. Stelle sicher, dass Kampagnen, Listen oder CRM-Daten vorhanden sind.',
 ];

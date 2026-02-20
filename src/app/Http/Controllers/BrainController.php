@@ -836,6 +836,13 @@ class BrainController extends Controller
                 'plan_desc'  => $log->plan?->description ?? $log->plan?->intent,
             ]);
 
+        // Last situation analysis
+        $lastAnalysis = AiBrainActivityLog::forUser($user->id)
+            ->where('event_type', 'situation_analysis')
+            ->where('status', 'completed')
+            ->orderByDesc('created_at')
+            ->first();
+
         return response()->json([
             'brain' => [
                 'is_active' => $isActive,
@@ -859,6 +866,10 @@ class BrainController extends Controller
                 'enabled' => (bool) $settings->cron_enabled,
                 'interval_minutes' => (int) ($settings->cron_interval_minutes ?? 60),
                 'last_run_at' => $settings->last_cron_run_at,
+            ],
+            'situation_analysis' => [
+                'last_report' => $lastAnalysis?->metadata ?? null,
+                'last_run_at' => $lastAnalysis?->created_at,
             ],
             'recent_activity' => $recentActivity,
             'recent_logs' => $recentLogs,

@@ -370,6 +370,44 @@ PROMPT;
     }
 
     /**
+     * Get a compact goals summary for situation analysis.
+     * Returns structured data about all goals and their progress.
+     */
+    public function getGoalsSummary(User $user): array
+    {
+        try {
+            $goals = AiGoal::forUser($user->id)->get();
+        } catch (\Exception $e) {
+            return ['total' => 0, 'goals' => []];
+        }
+
+        if ($goals->isEmpty()) {
+            return ['total' => 0, 'goals' => []];
+        }
+
+        $summary = [
+            'total' => $goals->count(),
+            'active' => $goals->where('status', 'active')->count(),
+            'paused' => $goals->where('status', 'paused')->count(),
+            'completed' => $goals->where('status', 'completed')->count(),
+            'goals' => [],
+        ];
+
+        foreach ($goals->whereIn('status', ['active', 'paused'])->take(5) as $goal) {
+            $summary['goals'][] = [
+                'title' => $goal->title,
+                'status' => $goal->status,
+                'priority' => $goal->priority,
+                'progress_percent' => $goal->progress_percent,
+                'completed_plans' => $goal->completed_plans,
+                'total_plans' => $goal->total_plans,
+            ];
+        }
+
+        return $summary;
+    }
+
+    /**
      * Suggest proactive goals based on user's data (CRM, campaigns, lists).
      */
     public function suggestGoals(User $user): array

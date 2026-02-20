@@ -6,6 +6,7 @@ use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
 use App\Models\User;
 use App\Services\Brain\AgentOrchestrator;
+use App\Services\Brain\SituationAnalyzer;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Telegram\TelegramBotService;
 use Illuminate\Console\Command;
@@ -86,11 +87,50 @@ class RunBrainCronCommand extends Command
      */
     private function processUserCron(AgentOrchestrator $orchestrator, User $user, AiBrainSettings $settings): void
     {
-        // Get suggested tasks from MarketingSalesSkill
+        // Step 0: AI-powered situation analysis
+        $analysisReport = null;
+        try {
+            $analyzer = app(SituationAnalyzer::class);
+            $analysisReport = $analyzer->analyze($user);
+
+            if ($analysisReport) {
+                $this->info("[Brain CRON] User #{$user->id}: Situation analysis complete.");
+                $this->line("[Brain CRON]   Summary: " . mb_substr($analysisReport['summary'] ?? '', 0, 200));
+            } else {
+                $this->line("[Brain CRON] User #{$user->id}: Situation analysis returned no results.");
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Situation analysis failed: {$e->getMessage()}");
+            Log::warning('Brain CRON situation analysis failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Step 1: Convert AI priorities to executable tasks
+        $aiTasks = [];
+        if ($analysisReport && !empty($analysisReport['priorities'])) {
+            $aiTasks = collect($analysisReport['priorities'])
+                ->map(fn($p) => [
+                    'id' => 'ai_analysis_' . md5($p['action'] ?? ''),
+                    'category' => 'ai_analysis',
+                    'icon' => '🧠',
+                    'title' => $p['title'] ?? $p['action'] ?? 'AI Task',
+                    'description' => $p['reasoning'] ?? '',
+                    'priority' => $p['priority'] ?? 'medium',
+                    'action' => $p['action'] ?? '',
+                    'agent' => $p['agent'] ?? null,
+                ])->toArray();
+        }
+
+        // Step 2: Get rule-based suggested tasks from MarketingSalesSkill
         $suggestedTasks = MarketingSalesSkill::getSuggestedTasks($user);
 
+        // Step 3: Merge — AI analysis priorities first, then rule-based tasks
+        $allTasks = array_merge($aiTasks, $suggestedTasks);
+
         // Filter to high-priority tasks only for automatic execution
-        $highPriorityTasks = collect($suggestedTasks)
+        $highPriorityTasks = collect($allTasks)
             ->where('priority', 'high')
             ->values();
 
@@ -109,13 +149,14 @@ class RunBrainCronCommand extends Command
                 null,
                 [
                     'message' => 'No high-priority tasks found.',
-                    'suggested_tasks_count' => count($suggestedTasks),
+                    'suggested_tasks_count' => count($allTasks),
                     'high_priority_count' => 0,
+                    'analysis_summary' => $analysisReport['summary'] ?? null,
                 ],
             );
 
             // Telegram report: no tasks
-            $this->sendTelegramReport($settings, $user, collect(), []);
+            $this->sendTelegramReport($settings, $user, collect(), [], $analysisReport);
 
             return;
         }
@@ -175,7 +216,7 @@ class RunBrainCronCommand extends Command
         ]);
 
         // Telegram report: completed tasks
-        $this->sendTelegramReport($settings, $user, $highPriorityTasks, $taskResults);
+        $this->sendTelegramReport($settings, $user, $highPriorityTasks, $taskResults, $analysisReport);
 
         $this->info("[Brain CRON] User #{$user->id}: Executed {$executedCount}/{$highPriorityTasks->count()} tasks.");
     }
@@ -188,6 +229,7 @@ class RunBrainCronCommand extends Command
         User $user,
         $tasks,
         array $taskResults,
+        ?array $analysisReport = null,
     ): void {
         if (!$settings->isTelegramConnected() || empty($settings->telegram_chat_id)) {
             return;
@@ -198,13 +240,17 @@ class RunBrainCronCommand extends Command
             $interval = (int) $settings->cron_interval_minutes;
             $nextRun = now()->addMinutes($interval)->format('H:i');
 
+            $lines = ["🧠 *Brain CRON Report*\n"];
+
+            // Include AI situation analysis summary
+            if ($analysisReport && !empty($analysisReport['summary'])) {
+                $lines[] = "📋 " . $analysisReport['summary'] . "\n";
+            }
+
             if ($tasks->isEmpty()) {
-                $message = "🧠 *Brain CRON Report*\n\n"
-                    . "✅ Cykl zakończony — brak zadań o wysokim priorytecie.\n"
-                    . "\n⏰ Następne uruchomienie: ~{$nextRun}";
+                $lines[] = __('brain.monitor.cron_no_tasks');
             } else {
-                $lines = ["🧠 *Brain CRON Report*\n"];
-                $lines[] = "📝 Znalezionych zadań: {$tasks->count()}\n";
+                $lines[] = __('brain.monitor.cron_tasks_found', ['count' => $tasks->count()]) . "\n";
 
                 foreach ($tasks as $i => $task) {
                     $status = $taskResults[$i] ?? 'skipped';
@@ -213,12 +259,15 @@ class RunBrainCronCommand extends Command
                 }
 
                 $successCount = collect($taskResults)->filter(fn($r) => $r === 'success')->count();
-                $lines[] = "\n📊 Wykonano: {$successCount}/{$tasks->count()}";
-                $lines[] = "⏰ Następne uruchomienie: ~{$nextRun}";
-
-                $message = implode("\n", $lines);
+                $lines[] = "\n📊 " . __('brain.monitor.cron_executed', [
+                    'success' => $successCount,
+                    'total' => $tasks->count(),
+                ]);
             }
 
+            $lines[] = "⏰ " . __('brain.monitor.cron_next_run', ['time' => $nextRun]);
+
+            $message = implode("\n", $lines);
             $telegram->sendMessage($settings->telegram_chat_id, $message);
         } catch (\Exception $e) {
             Log::warning('Brain CRON Telegram report failed', [

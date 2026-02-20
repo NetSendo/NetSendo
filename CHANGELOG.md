@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Brain — AI Situation Analysis:**
+  - **SituationAnalyzer Service:** New AI-powered strategic analysis that runs during each CRON cycle before rule-based task detection. Gathers full user context (goals, CRM, campaigns, execution history, plans) and asks AI to identify highest-impact priorities with reasoning.
+  - **CRON Integration:** AI-analyzed priorities are merged with existing rule-based tasks, with AI priorities taking precedence. Analysis summary included in activity logs and Telegram reports.
+  - **Monitor API:** Last situation analysis report now available via the `/brain/api/monitor` endpoint for frontend display.
+  - **GoalPlanner:** Added `getGoalsSummary()` method for compact goal state snapshots.
+  - **Telegram Reports:** Fixed hardcoded Polish strings; all report text now uses `__()` translation helpers.
+  - **Localization:** Full translations in PL, EN, DE, ES.
+
 - **Brain Knowledge Base — View & Edit Entries:**
   - Added **View modal** (👁) to preview the full content of a knowledge entry with metadata (source, confidence, usage count, active status).
   - Added **Edit modal** (✏️) to modify title, category, and content of existing entries with character counter and validation.

@@ -22,6 +22,7 @@ use App\Services\Brain\Agents\SegmentationAgent;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Skills\ResearchSkill;
 use Illuminate\Support\Facades\Log;
+use App\Services\Brain\SituationAnalyzer;
 
 class AgentOrchestrator
 {
@@ -33,6 +34,7 @@ class AgentOrchestrator
         protected ModeController $modeController,
         protected KnowledgeBaseService $knowledgeBase,
         protected GoalPlanner $goalPlanner,
+        protected SituationAnalyzer $situationAnalyzer,
     ) {
         $this->registerAgents();
     }
@@ -157,20 +159,25 @@ class AgentOrchestrator
                     // Step 2: Classify intent
                     $intent = $this->classifyIntent($message, $conversation, $user);
 
-                    // Step 3: Get knowledge context for this intent
-                    $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
-
-                    // Inject active goal context
-                    $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
-                    if ($goalsContext) {
-                        $knowledgeContext .= $goalsContext;
-                    }
-
-                    // Step 4: Route to appropriate agent or handle as conversation
-                    if ($intent['requires_agent']) {
-                        $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                    // Step 2.5: Handle situation_analysis intent via SituationAnalyzer
+                    if (($intent['task_type'] ?? '') === 'situation_analysis') {
+                        $result = $this->handleSituationAnalysis($user, $conversation, $settings);
                     } else {
-                        $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                        // Step 3: Get knowledge context for this intent
+                        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+
+                        // Inject active goal context
+                        $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
+                        if ($goalsContext) {
+                            $knowledgeContext .= $goalsContext;
+                        }
+
+                        // Step 4: Route to appropriate agent or handle as conversation
+                        if ($intent['requires_agent']) {
+                            $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                        } else {
+                            $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                        }
                     }
                 }
             }
@@ -327,13 +334,14 @@ Respond in JSON:
   "requires_agent": true/false,
   "agent": "campaign|list|message|crm|analytics|segmentation|research|null",
   "intent": "short description of intent",
-  "task_type": "campaign|message|list|crm|analytics|segmentation|research|general",
+  "task_type": "campaign|message|list|crm|analytics|segmentation|research|situation_analysis|general",
   "confidence": 0.0-1.0,
   "parameters": {}
 }
 
 Set requires_agent=false for general questions, conversations, greetings.
 Set requires_agent=true when the user wants to PERFORM a specific action (e.g. create a campaign, research a topic, analyze competitors, etc.)
+Set task_type="situation_analysis" (and requires_agent=false) when user asks for a holistic situation review, current state analysis, or overall assessment of their marketing/CRM situation (e.g. "przeanalizuj obecną sytuację", "analyze current situation", "co jest nie tak", "what should I do", "podsumuj stan", "give me an overview").
 PROMPT;
 
         try {
@@ -657,7 +665,7 @@ PROMPT;
         $result = $provider->generateTextWithUsage(
             json_encode($messages),
             $modelToUse,
-            ['max_tokens' => 2000, 'temperature' => 0.7]
+            ['max_tokens' => 4000, 'temperature' => 0.7]
         );
 
         $actualModel = $modelToUse ?: ($integration->default_model ?: 'unknown');
@@ -923,6 +931,24 @@ PROMPT;
     {
         $lower = mb_strtolower($message);
 
+        // Situation analysis keywords — check first (higher priority)
+        $situationKeywords = [
+            'przeanalizuj sytuacj', 'obecn', 'stan', 'podsumuj', 'co jest nie tak',
+            'analyze situation', 'current state', 'overview', 'audit', 'przeanalizuj obecn',
+        ];
+        foreach ($situationKeywords as $keyword) {
+            if (mb_strpos($lower, $keyword) !== false) {
+                return [
+                    'requires_agent' => false,
+                    'agent' => null,
+                    'intent' => 'situation_analysis',
+                    'task_type' => 'situation_analysis',
+                    'confidence' => 0.7,
+                    'parameters' => [],
+                ];
+            }
+        }
+
         $patterns = [
             'campaign' => ['kampani', 'newsletter', 'wyślij mail', 'wysyłk', 'email blast', 'mailing'],
             'list' => ['list', 'subskryb', 'kontakt', 'grupa'],
@@ -954,6 +980,112 @@ PROMPT;
             'task_type' => 'general',
             'confidence' => 0.5,
             'parameters' => [],
+        ];
+    }
+
+    /**
+     * Handle a situation analysis request from chat.
+     * Uses SituationAnalyzer to gather real data + AI analysis,
+     * then creates action plans from identified priorities.
+     */
+    protected function handleSituationAnalysis(
+        User $user,
+        AiConversation $conversation,
+        AiBrainSettings $settings,
+    ): array {
+        AiBrainActivityLog::logEvent($user->id, 'situation_analysis', 'started');
+
+        try {
+            $result = $this->situationAnalyzer->analyzeAndCreateTasks($user);
+        } catch (\Exception $e) {
+            Log::error('Situation analysis failed', ['error' => $e->getMessage()]);
+            return [
+                'type' => 'message',
+                'message' => __('brain.situation_analysis_error'),
+            ];
+        }
+
+        if (!$result) {
+            return [
+                'type' => 'message',
+                'message' => __('brain.situation_analysis_no_data'),
+            ];
+        }
+
+        // Build compact report
+        $langCode = $settings->resolveLanguage($user);
+        $langName = AiBrainSettings::getLanguageName($langCode);
+
+        $message = "🧠 **" . __('brain.situation_analysis_title') . "**\n\n";
+        $message .= $result['summary'] . "\n";
+
+        // Show priorities with created tasks
+        if (!empty($result['priorities'])) {
+            $message .= "\n📋 **" . __('brain.situation_analysis_priorities') . "**\n";
+            foreach ($result['priorities'] as $i => $priority) {
+                $num = $i + 1;
+                $priorityEmoji = match ($priority['priority'] ?? 'medium') {
+                    'high' => '🔴',
+                    'medium' => '🟡',
+                    'low' => '🟢',
+                    default => '⚪',
+                };
+                $agentEmoji = match ($priority['agent'] ?? '') {
+                    'campaign' => '📧',
+                    'list' => '📋',
+                    'message' => '✉️',
+                    'crm' => '👥',
+                    'analytics' => '📊',
+                    'segmentation' => '🎯',
+                    'research' => '🔍',
+                    default => '📌',
+                };
+                $message .= "{$priorityEmoji} {$num}. {$agentEmoji} **{$priority['title']}**\n";
+                if (!empty($priority['reasoning'])) {
+                    $message .= "   ↳ {$priority['reasoning']}\n";
+                }
+            }
+        }
+
+        // Show created tasks
+        $createdTasks = $result['created_tasks'] ?? [];
+        if (!empty($createdTasks)) {
+            $message .= "\n⚡ **" . __('brain.situation_analysis_tasks_created', ['count' => count($createdTasks)]) . "**\n";
+            foreach ($createdTasks as $task) {
+                $statusIcon = ($task['status'] ?? '') === 'completed' ? '✅' : '📝';
+                $message .= "  {$statusIcon} {$task['title']}\n";
+            }
+        }
+
+        // In autonomous mode, execute high-priority tasks immediately
+        if ($settings->work_mode === ModeController::MODE_AUTONOMOUS && !empty($createdTasks)) {
+            $executed = 0;
+            foreach ($createdTasks as $task) {
+                if (($task['priority'] ?? 'medium') === 'high' && !empty($task['action'])) {
+                    try {
+                        $taskResult = $this->processMessage(
+                            $task['action'],
+                            $user,
+                            'web',
+                            $conversation->id,
+                        );
+                        $executed++;
+                    } catch (\Exception $e) {
+                        Log::warning('Auto-executing situation task failed', [
+                            'task' => $task['title'] ?? '',
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
+            if ($executed > 0) {
+                $message .= "\n🚀 " . __('brain.situation_analysis_auto_executed', ['count' => $executed]);
+            }
+        }
+
+        return [
+            'type' => 'situation_analysis',
+            'message' => $message,
         ];
     }
 
