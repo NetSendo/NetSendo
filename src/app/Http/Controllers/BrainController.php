@@ -7,6 +7,7 @@ use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
 use App\Models\AiExecutionLog;
+use App\Models\AiGoal;
 use App\Models\KnowledgeEntry;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\KnowledgeBaseService;
@@ -381,6 +382,130 @@ class BrainController extends Controller
     }
 
     /**
+     * Get user's goals.
+     * GET /brain/api/goals
+     */
+    public function goals(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $status = $request->query('status');
+
+        try {
+            $query = AiGoal::forUser($user->id)
+                ->withCount('plans')
+                ->orderByDesc('created_at');
+
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            $goals = $query->paginate(20);
+
+            // Append computed attributes
+            $goals->getCollection()->transform(function ($goal) {
+                $goal->append('progress_percent');
+                return $goal;
+            });
+
+            return response()->json($goals);
+        } catch (\Exception $e) {
+            // ai_goals table may not exist if migration hasn't been run
+            return response()->json([
+                'data' => [],
+                'total' => 0,
+            ]);
+        }
+    }
+
+    /**
+     * Create a new goal manually.
+     * POST /brain/api/goals
+     */
+    public function createGoal(Request $request): JsonResponse
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:2000',
+            'priority' => 'nullable|string|in:low,medium,high,urgent',
+            'success_criteria' => 'nullable|array',
+        ]);
+
+        try {
+            $goal = AiGoal::create([
+                'user_id' => $request->user()->id,
+                'title' => $request->input('title'),
+                'description' => $request->input('description'),
+                'priority' => $request->input('priority', 'medium'),
+                'success_criteria' => $request->input('success_criteria'),
+                'status' => 'active',
+            ]);
+
+            return response()->json($goal, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Goals feature requires database migration. Please run: php artisan migrate'], 500);
+        }
+    }
+
+    /**
+     * Update a goal (status, priority, etc.).
+     * PATCH /brain/api/goals/{id}
+     */
+    public function updateGoal(Request $request, int $id): JsonResponse
+    {
+        try {
+            $goal = AiGoal::forUser($request->user()->id)->findOrFail($id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Goals feature requires database migration. Please run: php artisan migrate'], 500);
+        }
+
+        $request->validate([
+            'status' => 'nullable|string|in:active,paused,completed,failed,cancelled',
+            'priority' => 'nullable|string|in:low,medium,high,urgent',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:2000',
+        ]);
+
+        // Handle status transitions
+        $newStatus = $request->input('status');
+        if ($newStatus && $newStatus !== $goal->status) {
+            match ($newStatus) {
+                'paused' => $goal->pause(),
+                'active' => $goal->resume(),
+                'completed' => $goal->complete(),
+                'failed' => $goal->fail('Manual failure'),
+                'cancelled' => $goal->cancel(),
+            };
+        }
+
+        $goal->update($request->only(['priority', 'title', 'description']));
+
+        return response()->json($goal->fresh());
+    }
+
+    /**
+     * Get plans linked to a specific goal.
+     * GET /brain/api/goals/{id}/plans
+     */
+    public function goalPlans(Request $request, int $id): JsonResponse
+    {
+        try {
+            $goal = AiGoal::forUser($request->user()->id)->findOrFail($id);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Goals feature requires database migration. Please run: php artisan migrate'], 500);
+        }
+
+        $plans = $goal->plans()
+            ->with('steps')
+            ->orderBy('created_at')
+            ->get();
+
+        return response()->json([
+            'goal' => $goal,
+            'plans' => $plans,
+        ]);
+    }
+
+    /**
      * Get Brain settings.
      * GET /api/brain/settings
      */
@@ -670,13 +795,17 @@ class BrainController extends Controller
         // Determine if Brain is "active" (had activity in the last 5 minutes)
         $isActive = $lastActivity && $lastActivity->created_at->diffInMinutes(now()) < 5;
 
+        // Determine if Brain had very recent activity (within last 30 seconds)
+        // This ensures the activity bar remains visible even after synchronous plan execution
+        $isRecentlyActive = $lastActivity && $lastActivity->created_at->diffInSeconds(now()) < 30;
+
         // Currently executing plan?
         $executingPlan = AiActionPlan::forUser($user->id)
             ->withStatus('executing')
             ->with('steps')
             ->first();
 
-        $isRunning = $executingPlan !== null;
+        $isRunning = $executingPlan !== null || $isRecentlyActive;
         $currentTask = null;
         if ($executingPlan) {
             $completedSteps = $executingPlan->steps->where('status', 'completed')->count();

@@ -125,7 +125,7 @@ PROMPT;
         $uniqueClicks = EmailClick::whereHas('message', fn($q) => $q->where('user_id', $user->id))
             ->where('created_at', '>=', $since)->distinct('subscriber_id')->count('subscriber_id');
 
-        $subCount = Subscriber::where('user_id', $user->id)->subscribed()->count();
+        $subCount = Subscriber::where('user_id', $user->id)->active()->count();
         $openRate = $subCount > 0 ? round(($uniqueOpens / $subCount) * 100, 2) : 0;
         $clickRate = $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 2) : 0;
 
@@ -140,7 +140,7 @@ PROMPT;
         $since = Carbon::now()->subDays($days);
 
         $total = Subscriber::where('user_id', $user->id)->count();
-        $active = Subscriber::where('user_id', $user->id)->subscribed()->count();
+        $active = Subscriber::where('user_id', $user->id)->active()->count();
         $newSubs = Subscriber::where('user_id', $user->id)->where('created_at', '>=', $since)->count();
         $unsubs = Subscriber::where('user_id', $user->id)->where('status', 'unsubscribed')
             ->where('updated_at', '>=', $since)->count();
@@ -238,7 +238,7 @@ PROMPT;
     protected function gatherQuickStats(User $user): string
     {
         $subs = Subscriber::where('user_id', $user->id)->count();
-        $active = Subscriber::where('user_id', $user->id)->subscribed()->count();
+        $active = Subscriber::where('user_id', $user->id)->active()->count();
         $lists = ContactList::where('user_id', $user->id)->count();
         $sent = Message::where('user_id', $user->id)->where('status', 'sent')->count();
         return __('brain.analytics.quick_stats', ['subs' => $subs, 'active' => $active, 'lists' => $lists, 'sent' => $sent]);

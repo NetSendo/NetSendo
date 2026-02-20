@@ -19,6 +19,9 @@ return [
     'approve_reject' => '✅ Aprobar | ❌ Rechazar',
     'approval_expiry' => 'El plan expira en 24h.',
     'telegram_link_instructions' => 'Envía a tu bot de Telegram: /connect :code',
+    'telegram_new_conversation_btn' => 'Nueva conversación',
+    'telegram_new_conversation_confirm' => 'El próximo mensaje iniciará una nueva conversación.',
+    'telegram_new_conversation_started' => '¡Nueva conversación iniciada!',
 
     // === CRM Agent ===
     'crm' => [
@@ -190,5 +193,30 @@ return [
         'info_focus' => '2. **Enfoque específico** — ¿algún aspecto en particular que te interese?',
         'info_purpose' => '3. **Propósito** — ¿cómo usarás esta investigación? (campaña, estrategia, enriquecimiento CRM?)',
         'info_footer' => 'Proporciona todos los detalles que puedas y realizaré una investigación exhaustiva en internet.',
+    ],
+
+    // === Goals ===
+    'plan_failed_detail' => '🤔 :agent no pudo crear un plan para: ":intent". Intenta dividirlo en pasos más pequeños o proporciona más detalles.',
+    'goals' => [
+        'title' => 'Objetivos',
+        'created' => 'Objetivo creado: :title',
+        'plan_overview' => 'Plan de ejecución',
+        'starting_first_plan' => '⚡ Iniciando primer paso: :plan',
+        'awaiting_approval' => '⏳ Objetivo descompuesto en planes. Aprueba cada paso para continuar.',
+        'progress_bar' => '📊 Progreso: :percent% (:completed/:total planes completados)',
+        'linked_plans' => '📋 Planes vinculados:',
+        'too_many_failures' => '⚠️ Objetivo ":title" pausado por fallos repetidos. Revisa y ajusta tu estrategia.',
+        'plan_failed_retrying' => '🔄 Plan ":plan" falló, reintentando con enfoque ajustado para objetivo ":goal".',
+        'no_goals' => '¡Sin objetivos activos. Comienza describiendo lo que quieres lograr!',
+        'status_active' => 'Activo',
+        'status_paused' => 'Pausado',
+        'status_completed' => 'Completado',
+        'status_failed' => 'Fallido',
+        'status_cancelled' => 'Cancelado',
+        'create' => 'Crear objetivo',
+        'pause' => 'Pausar',
+        'resume' => 'Reanudar',
+        'cancel' => 'Cancelar',
+        'priority' => 'Prioridad',
     ],
 ];

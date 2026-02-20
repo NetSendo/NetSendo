@@ -893,6 +893,7 @@
         },
         "brain_activity": {
             "bar_title": "Brain pracuje...",
+            "bar_recently_active": "Brain był niedawno aktywny",
             "bar_view_monitor": "Monitor",
             "steps": "kroków",
             "tokens": "tokenów",

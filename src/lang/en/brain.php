@@ -19,6 +19,9 @@ return [
     'approve_reject' => '✅ Approve | ❌ Reject',
     'approval_expiry' => 'Plan expires in 24h.',
     'telegram_link_instructions' => 'Send to your Telegram bot: /connect :code',
+    'telegram_new_conversation_btn' => 'New conversation',
+    'telegram_new_conversation_confirm' => 'Next message will start a new conversation.',
+    'telegram_new_conversation_started' => 'New conversation started!',
 
     // === CRM Agent ===
     'crm' => [
@@ -190,5 +193,30 @@ return [
         'info_focus' => '2. **Specific focus** — any particular aspect you\'re interested in?',
         'info_purpose' => '3. **Purpose** — how will you use this research? (campaign, strategy, CRM enrichment?)',
         'info_footer' => 'Provide as much detail as you can and I will conduct thorough internet research.',
+    ],
+
+    // === Goals ===
+    'plan_failed_detail' => '🤔 :agent couldn\'t create a plan for: ":intent". Try breaking it down into smaller steps or providing more specific details.',
+    'goals' => [
+        'title' => 'Goals',
+        'created' => 'Goal created: :title',
+        'plan_overview' => 'Execution plan',
+        'starting_first_plan' => '⚡ Starting first step: :plan',
+        'awaiting_approval' => '⏳ Goals decomposed into plans. Approve each step to proceed.',
+        'progress_bar' => '📊 Progress: :percent% (:completed/:total plans completed)',
+        'linked_plans' => '📋 Linked plans:',
+        'too_many_failures' => '⚠️ Goal ":title" paused due to repeated failures. Review and adjust your strategy.',
+        'plan_failed_retrying' => '🔄 Plan ":plan" failed, retrying with adjusted approach for goal ":goal".',
+        'no_goals' => 'No active goals. Start by describing what you want to achieve!',
+        'status_active' => 'Active',
+        'status_paused' => 'Paused',
+        'status_completed' => 'Completed',
+        'status_failed' => 'Failed',
+        'status_cancelled' => 'Cancelled',
+        'create' => 'Create goal',
+        'pause' => 'Pause',
+        'resume' => 'Resume',
+        'cancel' => 'Cancel',
+        'priority' => 'Priority',
     ],
 ];

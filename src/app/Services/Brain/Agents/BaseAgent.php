@@ -207,47 +207,90 @@ abstract class BaseAgent
     }
 
     /**
-     * Execute a single step.
+     * Execute a single step with retry logic.
      */
     protected function executeStep(AiActionPlanStep $step, User $user): array
     {
         $step->markExecuting();
         $startTime = microtime(true);
+        $maxRetries = 2;
+        $lastException = null;
 
-        try {
-            $result = $this->executeStepAction($step, $user);
+        for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+            try {
+                if ($attempt > 0) {
+                    Log::info("Retrying step (attempt {$attempt})", [
+                        'step_id' => $step->id,
+                        'action_type' => $step->action_type,
+                    ]);
+                    usleep(500000); // 500ms delay between retries
+                }
 
-            $step->markCompleted($result);
+                $result = $this->executeStepAction($step, $user);
 
-            $durationMs = (int) ((microtime(true) - $startTime) * 1000);
-            AiExecutionLog::logSuccess(
-                $user->id,
-                $this->getName(),
-                "execute_step:{$step->action_type}",
-                $step->config,
-                $result,
-                0, 0, null, $durationMs,
-                $step->ai_action_plan_id,
-                $step->id
-            );
+                $step->markCompleted($result);
 
-            return $result;
+                $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+                AiExecutionLog::logSuccess(
+                    $user->id,
+                    $this->getName(),
+                    "execute_step:{$step->action_type}",
+                    $step->config,
+                    array_merge($result, ['attempts' => $attempt + 1]),
+                    0, 0, null, $durationMs,
+                    $step->ai_action_plan_id,
+                    $step->id
+                );
 
-        } catch (\Exception $e) {
-            $step->markFailed($e->getMessage());
+                return $result;
 
-            AiExecutionLog::logError(
-                $user->id,
-                $this->getName(),
-                "execute_step:{$step->action_type}",
-                $e->getMessage(),
-                $step->config,
-                $step->ai_action_plan_id,
-                $step->id
-            );
+            } catch (\Exception $e) {
+                $lastException = $e;
 
-            throw $e;
+                // Only retry on transient/recoverable errors
+                if ($attempt < $maxRetries && $this->isRetryableError($e)) {
+                    Log::warning("Step execution failed, will retry", [
+                        'step_id' => $step->id,
+                        'attempt' => $attempt + 1,
+                        'error' => $e->getMessage(),
+                    ]);
+                    continue;
+                }
+
+                break;
+            }
         }
+
+        // All retries exhausted — mark as failed
+        $step->markFailed($lastException->getMessage());
+
+        AiExecutionLog::logError(
+            $user->id,
+            $this->getName(),
+            "execute_step:{$step->action_type}",
+            $lastException->getMessage(),
+            $step->config,
+            $step->ai_action_plan_id,
+            $step->id
+        );
+
+        throw $lastException;
+    }
+
+    /**
+     * Check if an error is retryable (transient/recoverable).
+     */
+    protected function isRetryableError(\Exception $e): bool
+    {
+        $message = strtolower($e->getMessage());
+
+        // Retry on timeout, rate limit, or temporary network errors
+        return str_contains($message, 'timeout')
+            || str_contains($message, 'rate limit')
+            || str_contains($message, '429')
+            || str_contains($message, '503')
+            || str_contains($message, 'temporarily')
+            || str_contains($message, 'connection');
     }
 
     /**

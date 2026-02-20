@@ -6,6 +6,7 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 const isRunning = ref(false);
+const isActive = ref(false);
 const currentTask = ref(null);
 const activeAgents = ref(0);
 const tokensUsed = ref(0);
@@ -18,6 +19,7 @@ const fetchStatus = async () => {
         if (response.ok) {
             const data = await response.json();
             isRunning.value = data.brain?.is_running || false;
+            isActive.value = data.brain?.is_active || false;
             currentTask.value = data.current_task;
             activeAgents.value = (data.agents || []).filter(
                 (a) => a.tasks_today > 0,
@@ -47,11 +49,17 @@ onUnmounted(() => {
 
 <template>
     <div
-        v-if="isRunning && !dismissed"
-        class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 px-4 py-2.5 text-white shadow-lg"
+        v-if="(isRunning || isActive) && !dismissed"
+        class="relative overflow-hidden px-4 py-2.5 text-white shadow-lg"
+        :class="
+            isRunning
+                ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500'
+                : 'bg-gradient-to-r from-slate-600 via-slate-700 to-slate-600'
+        "
     >
-        <!-- Animated background shimmer -->
+        <!-- Animated background shimmer (only when actively running) -->
         <div
+            v-if="isRunning"
             class="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"
         ></div>
 
@@ -77,10 +85,15 @@ onUnmounted(() => {
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-sm font-semibold whitespace-nowrap">
                             {{
-                                t(
-                                    "dashboard.brain_activity.bar_title",
-                                    "Brain is working...",
-                                )
+                                isRunning
+                                    ? t(
+                                          "dashboard.brain_activity.bar_title",
+                                          "Brain is working...",
+                                      )
+                                    : t(
+                                          "dashboard.brain_activity.bar_recently_active",
+                                          "Brain was recently active",
+                                      )
                             }}
                         </span>
                         <span

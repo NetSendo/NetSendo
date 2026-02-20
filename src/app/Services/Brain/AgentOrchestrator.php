@@ -3,9 +3,11 @@
 namespace App\Services\Brain;
 
 use App\Models\AiActionPlan;
+use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
 use App\Models\AiExecutionLog;
+use App\Models\AiGoal;
 use App\Models\AiIntegration;
 use App\Models\User;
 use App\Services\AI\AiService;
@@ -30,6 +32,7 @@ class AgentOrchestrator
         protected ConversationManager $conversationManager,
         protected ModeController $modeController,
         protected KnowledgeBaseService $knowledgeBase,
+        protected GoalPlanner $goalPlanner,
     ) {
         $this->registerAgents();
     }
@@ -63,6 +66,11 @@ class AgentOrchestrator
     ): array {
         $startTime = microtime(true);
         $settings = AiBrainSettings::getForUser($user->id);
+
+        // Log brain activity start event for the activity bar
+        AiBrainActivityLog::logEvent($user->id, 'brain_start', 'started', null, [
+            'channel' => $channel,
+        ]);
 
         $integration = $this->aiService->getDefaultIntegration();
 
@@ -126,17 +134,44 @@ class AgentOrchestrator
                 $intent['has_user_details'] = true;
                 $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
             } else {
-                // Step 1: Classify intent
-                $intent = $this->classifyIntent($message, $conversation, $user);
+                // Step 1: Check if this is a high-level goal
+                // Wrapped in try-catch: ai_goals table may not exist if migration hasn't been run
+                $goalData = null;
+                try {
+                    $goalData = $this->goalPlanner->isGoalRequest($message, $user);
+                } catch (\Exception $e) {
+                    Log::debug('Goal detection skipped (table may not exist)', ['error' => $e->getMessage()]);
+                }
 
-                // Step 2: Get knowledge context for this intent
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+                if ($goalData) {
+                    try {
+                        // Create persistent goal and decompose
+                        $result = $this->handleGoalRequest($goalData, $user, $conversation);
+                    } catch (\Exception $e) {
+                        Log::warning('Goal handling failed, falling back to intent classification', ['error' => $e->getMessage()]);
+                        $goalData = null; // Fall through to normal flow
+                    }
+                }
 
-                // Step 3: Route to appropriate agent or handle as conversation
-                if ($intent['requires_agent']) {
-                    $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
-                } else {
-                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                if (!$goalData) {
+                    // Step 2: Classify intent
+                    $intent = $this->classifyIntent($message, $conversation, $user);
+
+                    // Step 3: Get knowledge context for this intent
+                    $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+
+                    // Inject active goal context
+                    $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
+                    if ($goalsContext) {
+                        $knowledgeContext .= $goalsContext;
+                    }
+
+                    // Step 4: Route to appropriate agent or handle as conversation
+                    if ($intent['requires_agent']) {
+                        $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                    } else {
+                        $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                    }
                 }
             }
 
@@ -190,6 +225,11 @@ class AgentOrchestrator
                 $modelUsed,
                 $durationMs
             );
+
+            // Log brain activity stop event
+            AiBrainActivityLog::logEvent($user->id, 'brain_stop', 'completed', $intent['agent'] ?? null, [
+                'duration_ms' => $durationMs,
+            ], $durationMs);
 
             // Add conversation metadata to result
             $result['conversation_id'] = $conversation->id;
@@ -367,14 +407,45 @@ PROMPT;
             ];
         }
 
-        // Create an action plan
+        // Create an action plan (with retry on failure)
         $plan = $agent->plan($intent, $user, $knowledgeContext);
 
         if (!$plan) {
+            // Retry once with a simplified prompt approach
+            Log::info('First plan attempt failed, retrying with simplified prompt', [
+                'agent' => $agentName,
+                'intent' => $intent['intent'] ?? 'unknown',
+            ]);
+
+            // Add more context from the intent description
+            $enrichedIntent = $intent;
+            $enrichedIntent['parameters']['retry'] = true;
+            $enrichedIntent['parameters']['original_message'] = $intent['intent'] ?? '';
+
+            $plan = $agent->plan($enrichedIntent, $user, $knowledgeContext);
+        }
+
+        if (!$plan) {
+            // Provide a more helpful error message instead of generic failure
+            $intentDesc = $intent['intent'] ?? __('brain.user_wants', ['intent' => 'unknown']);
             return [
                 'type' => 'message',
-                'message' => __('brain.plan_failed'),
+                'message' => __('brain.plan_failed_detail', [
+                    'agent' => $agent->getLabel(),
+                    'intent' => mb_substr($intentDesc, 0, 100),
+                ]),
             ];
+        }
+
+        // Link plan to active goal if one exists
+        try {
+            $activeGoal = AiGoal::forUser($user->id)->active()->latest()->first();
+            if ($activeGoal && !$plan->ai_goal_id) {
+                $plan->update(['ai_goal_id' => $activeGoal->id]);
+                $activeGoal->updateProgress();
+            }
+        } catch (\Exception $e) {
+            // ai_goals table may not exist yet if migration hasn't been run
         }
 
         // Check if approval is needed
@@ -411,6 +482,11 @@ PROMPT;
 
         $plan->markStarted();
 
+        // Log agent dispatch event
+        AiBrainActivityLog::logEvent($user->id, 'agent_dispatch', 'started', $agentName, [
+            'plan_id' => $plan->id,
+        ]);
+
         try {
             $result = $agent->execute($plan, $user);
 
@@ -418,6 +494,11 @@ PROMPT;
                 'result' => $result['message'] ?? 'Completed',
                 'completed_steps' => $plan->completed_steps,
                 'failed_steps' => $plan->failed_steps,
+            ]);
+
+            // Log agent completion event
+            AiBrainActivityLog::logEvent($user->id, 'agent_complete', 'completed', $agentName, [
+                'plan_id' => $plan->id,
             ]);
 
             return [
@@ -437,6 +518,110 @@ PROMPT;
                 'plan_id' => $plan->id,
             ];
         }
+    }
+
+    /**
+     * Handle a high-level goal request.
+     * Creates persistent goal, decomposes it, and starts first plan.
+     */
+    protected function handleGoalRequest(
+        array $goalData,
+        User $user,
+        AiConversation $conversation,
+    ): array {
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        // Create persistent goal
+        $goal = $this->goalPlanner->createGoal(
+            $user,
+            $goalData['title'] ?? 'New Goal',
+            $goalData['description'] ?? null,
+            $goalData['priority'] ?? 'medium',
+            $goalData['success_criteria'] ?? null,
+            $conversation->id,
+        );
+
+        // Log goal creation
+        AiBrainActivityLog::logEvent($user->id, 'goal_created', 'started', null, [
+            'goal_id' => $goal->id,
+            'title' => $goal->title,
+        ]);
+
+        // Decompose into sub-plans
+        $subPlans = $this->goalPlanner->decomposeGoal($goal, $user);
+
+        if (empty($subPlans)) {
+            // Fallback: create a single plan via the appropriate agent
+            $intent = [
+                'requires_agent' => true,
+                'agent' => $goalData['agent'] ?? 'campaign',
+                'intent' => $goalData['description'] ?? $goalData['title'],
+                'task_type' => $goalData['agent'] ?? 'campaign',
+                'confidence' => 0.8,
+                'parameters' => [],
+            ];
+
+            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
+            return $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
+        }
+
+        // Format the goal overview for the user
+        $message = "🎯 **" . __('brain.goals.created', ['title' => $goal->title]) . "**\n\n";
+
+        if ($goal->description) {
+            $message .= "{$goal->description}\n\n";
+        }
+
+        $message .= "📋 **" . __('brain.goals.plan_overview') . "** ({$goal->priority})\n";
+        foreach ($subPlans as $plan) {
+            $order = $plan['order'] ?? '•';
+            $agentEmoji = match ($plan['agent'] ?? '') {
+                'campaign' => '📧',
+                'list' => '📋',
+                'message' => '✉️',
+                'crm' => '👥',
+                'analytics' => '📊',
+                'segmentation' => '🎯',
+                'research' => '🔍',
+                default => '📌',
+            };
+            $message .= "  {$order}. {$agentEmoji} {$plan['title']}\n";
+            if (!empty($plan['description'])) {
+                $message .= "     ↳ {$plan['description']}\n";
+            }
+        }
+
+        // In autonomous mode, start executing the first plan immediately
+        if ($settings->work_mode === ModeController::MODE_AUTONOMOUS) {
+            $firstPlan = $subPlans[0] ?? null;
+            if ($firstPlan) {
+                $message .= "\n⚡ " . __('brain.goals.starting_first_plan', [
+                    'plan' => $firstPlan['title'] ?? '',
+                ]) . "\n";
+
+                // Execute first plan by routing to agent
+                $intent = [
+                    'requires_agent' => true,
+                    'agent' => $firstPlan['agent'] ?? 'campaign',
+                    'intent' => $firstPlan['intent'] ?? $firstPlan['description'] ?? $firstPlan['title'],
+                    'task_type' => $firstPlan['agent'] ?? 'campaign',
+                    'confidence' => 0.9,
+                    'parameters' => [],
+                ];
+
+                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
+                $planResult = $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
+                $message .= "\n" . ($planResult['message'] ?? '');
+            }
+        } else {
+            $message .= "\n" . __('brain.goals.awaiting_approval');
+        }
+
+        return [
+            'type' => 'goal_created',
+            'message' => $message,
+            'goal_id' => $goal->id,
+        ];
     }
 
     /**

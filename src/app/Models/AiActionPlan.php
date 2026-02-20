@@ -12,6 +12,7 @@ class AiActionPlan extends Model
     protected $fillable = [
         'user_id',
         'ai_conversation_id',
+        'ai_goal_id',
         'agent_type',
         'intent',
         'title',
@@ -47,6 +48,11 @@ class AiActionPlan extends Model
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(AiConversation::class, 'ai_conversation_id');
+    }
+
+    public function goal(): BelongsTo
+    {
+        return $this->belongsTo(AiGoal::class, 'ai_goal_id');
     }
 
     public function steps(): HasMany
@@ -127,6 +133,9 @@ class AiActionPlan extends Model
             'completed_at' => now(),
             'execution_summary' => $summary,
         ]);
+
+        // Propagate to parent goal
+        $this->goal?->updateProgress();
     }
 
     /**
@@ -139,6 +148,9 @@ class AiActionPlan extends Model
             'completed_at' => now(),
             'execution_summary' => $summary,
         ]);
+
+        // Propagate to parent goal
+        $this->goal?->updateProgress();
     }
 
     // Scopes

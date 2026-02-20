@@ -19,6 +19,9 @@ return [
     'approve_reject' => '✅ Genehmigen | ❌ Ablehnen',
     'approval_expiry' => 'Plan läuft in 24h ab.',
     'telegram_link_instructions' => 'Sende an deinen Telegram-Bot: /connect :code',
+    'telegram_new_conversation_btn' => 'Neue Unterhaltung',
+    'telegram_new_conversation_confirm' => 'Die nächste Nachricht startet eine neue Unterhaltung.',
+    'telegram_new_conversation_started' => 'Neue Unterhaltung gestartet!',
 
     // === CRM Agent ===
     'crm' => [
@@ -190,5 +193,30 @@ return [
         'info_focus' => '2. **Konkreter Fokus** — gibt es einen bestimmten Aspekt, der Sie interessiert?',
         'info_purpose' => '3. **Zweck** — wie werden Sie die Recherche nutzen? (Kampagne, Strategie, CRM-Anreicherung?)',
         'info_footer' => 'Geben Sie so viele Details wie möglich an und ich führe eine gründliche Internetrecherche durch.',
+    ],
+
+    // === Goals ===
+    'plan_failed_detail' => '🤔 :agent konnte keinen Plan erstellen für: ":intent". Versuche es in kleinere Schritte aufzuteilen oder genauere Details anzugeben.',
+    'goals' => [
+        'title' => 'Ziele',
+        'created' => 'Ziel erstellt: :title',
+        'plan_overview' => 'Ausführungsplan',
+        'starting_first_plan' => '⚡ Starte ersten Schritt: :plan',
+        'awaiting_approval' => '⏳ Ziel in Pläne aufgeteilt. Genehmige jeden Schritt, um fortzufahren.',
+        'progress_bar' => '📊 Fortschritt: :percent% (:completed/:total Pläne abgeschlossen)',
+        'linked_plans' => '📋 Verknüpfte Pläne:',
+        'too_many_failures' => '⚠️ Ziel ":title" wegen wiederholter Fehler pausiert. Überprüfe und passe deine Strategie an.',
+        'plan_failed_retrying' => '🔄 Plan ":plan" fehlgeschlagen, erneuter Versuch mit angepasstem Ansatz für Ziel ":goal".',
+        'no_goals' => 'Keine aktiven Ziele. Beschreibe zunächst, was du erreichen möchtest!',
+        'status_active' => 'Aktiv',
+        'status_paused' => 'Pausiert',
+        'status_completed' => 'Abgeschlossen',
+        'status_failed' => 'Fehlgeschlagen',
+        'status_cancelled' => 'Abgebrochen',
+        'create' => 'Ziel erstellen',
+        'pause' => 'Pausieren',
+        'resume' => 'Fortsetzen',
+        'cancel' => 'Abbrechen',
+        'priority' => 'Priorität',
     ],
 ];

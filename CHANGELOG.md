@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added **Edit modal** (✏️) to modify title, category, and content of existing entries with character counter and validation.
   - Table actions column now shows View, Edit, and Delete buttons per entry.
 
+- **Telegram — Conversation Management:**
+  - Added **"🆕 New conversation"** inline button under every Brain response in Telegram, allowing users to start a fresh conversation thread.
+  - Added `/new` command as an alternative way to start a new conversation.
+  - Default behavior unchanged: messages continue the existing conversation.
+  - Localization: Full translations in PL, EN, DE, ES.
+
 ### Fixed
 
 - **Voice Message Transcription — 422 Error:**

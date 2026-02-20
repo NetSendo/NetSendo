@@ -19,6 +19,9 @@ return [
     'approve_reject' => '✅ Zaakceptuj | ❌ Odrzuć',
     'approval_expiry' => 'Plan wygasa za 24h.',
     'telegram_link_instructions' => 'Wyślij do bota Telegram: /connect :code',
+    'telegram_new_conversation_btn' => 'Nowa konwersacja',
+    'telegram_new_conversation_confirm' => 'Następna wiadomość rozpocznie nową konwersację.',
+    'telegram_new_conversation_started' => 'Rozpoczęto nową konwersację!',
 
     // === CRM Agent ===
     'crm' => [
@@ -205,5 +208,30 @@ return [
         'record_voice' => 'Nagraj wiadomość głosową',
         'stop_recording' => 'Zatrzymaj nagrywanie',
         'no_openai' => 'Transkrypcja wymaga integracji OpenAI.',
+    ],
+
+    // === Goals ===
+    'plan_failed_detail' => '🤔 :agent nie mógł stworzyć planu dla: ":intent". Spróbuj podzielić to na mniejsze kroki lub podaj więcej szczegółów.',
+    'goals' => [
+        'title' => 'Cele',
+        'created' => 'Cel utworzony: :title',
+        'plan_overview' => 'Plan wykonania',
+        'starting_first_plan' => '⚡ Rozpoczynam pierwszy krok: :plan',
+        'awaiting_approval' => '⏳ Cel rozłożony na plany. Zaakceptuj każdy krok aby kontynuować.',
+        'progress_bar' => '📊 Postęp: :percent% (:completed/:total planów ukończonych)',
+        'linked_plans' => '📋 Powiązane plany:',
+        'too_many_failures' => '⚠️ Cel ":title" wstrzymany z powodu powtarzających się błędów. Przejrzyj i dostosuj strategię.',
+        'plan_failed_retrying' => '🔄 Plan ":plan" nie powiódł się, ponawiam z innym podejściem dla celu ":goal".',
+        'no_goals' => 'Brak aktywnych celów. Zacznij od opisania tego, co chcesz osiągnąć!',
+        'status_active' => 'Aktywny',
+        'status_paused' => 'Wstrzymany',
+        'status_completed' => 'Ukończony',
+        'status_failed' => 'Nieudany',
+        'status_cancelled' => 'Anulowany',
+        'create' => 'Utwórz cel',
+        'pause' => 'Wstrzymaj',
+        'resume' => 'Wznów',
+        'cancel' => 'Anuluj',
+        'priority' => 'Priorytet',
     ],
 ];

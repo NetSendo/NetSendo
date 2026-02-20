@@ -36,7 +36,11 @@ const logFilters = reactive({
 const currentPage = ref(1);
 
 // Active tab
-const activeTab = ref("overview"); // 'overview', 'tasks', 'logs'
+const activeTab = ref("overview"); // 'overview', 'tasks', 'logs', 'goals'
+
+// Goals
+const goalsData = ref(null);
+const goalsLoading = ref(false);
 
 // --- Intervals ---
 const CRON_INTERVALS = [
@@ -95,6 +99,27 @@ async function saveCronSettings() {
         console.error("Cron save failed:", e);
     } finally {
         isSavingCron.value = false;
+    }
+}
+
+async function fetchGoals() {
+    goalsLoading.value = true;
+    try {
+        const { data } = await axios.get("/brain/api/goals");
+        goalsData.value = data;
+    } catch (e) {
+        console.error("Goals fetch failed:", e);
+    } finally {
+        goalsLoading.value = false;
+    }
+}
+
+async function updateGoalStatus(goalId, newStatus) {
+    try {
+        await axios.patch(`/brain/api/goals/${goalId}`, { status: newStatus });
+        fetchGoals();
+    } catch (e) {
+        console.error("Goal update failed:", e);
     }
 }
 
@@ -213,6 +238,7 @@ onUnmounted(() => {
 function onTabChange(tab) {
     activeTab.value = tab;
     if (tab === "logs") fetchLogs();
+    if (tab === "goals") fetchGoals();
 }
 
 function onFilterChange() {
@@ -577,6 +603,10 @@ function goToPage(page) {
                                     'brain.monitor.execution_logs',
                                     'Logi Wykonania',
                                 ),
+                            },
+                            {
+                                key: 'goals',
+                                label: '🎯 ' + t('brain.goals.title', 'Cele'),
                             },
                         ]"
                         :key="tab.key"
@@ -1358,6 +1388,229 @@ function goToPage(page) {
                                 >
                                     {{ page }}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ GOALS TAB ============ -->
+                <div v-if="activeTab === 'goals'" class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3
+                            class="text-lg font-semibold text-gray-800 dark:text-gray-100"
+                        >
+                            🎯 {{ t("brain.goals.title", "Cele") }}
+                        </h3>
+                    </div>
+
+                    <div v-if="goalsLoading" class="flex justify-center py-10">
+                        <svg
+                            class="h-8 w-8 animate-spin text-violet-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    </div>
+
+                    <div
+                        v-else-if="!goalsData?.data?.length"
+                        class="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-gray-600 dark:bg-gray-800"
+                    >
+                        <div
+                            class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30"
+                        >
+                            <span class="text-3xl">🎯</span>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400">
+                            {{ t("brain.goals.no_goals", "No active goals") }}
+                        </p>
+                    </div>
+
+                    <div v-else class="space-y-4">
+                        <div
+                            v-for="goal in goalsData.data"
+                            :key="goal.id"
+                            class="overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
+                        >
+                            <div class="p-5">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div
+                                            class="flex flex-wrap items-center gap-2"
+                                        >
+                                            <span class="text-lg">{{
+                                                goal.status === "active"
+                                                    ? "🎯"
+                                                    : goal.status === "paused"
+                                                      ? "⏸️"
+                                                      : goal.status ===
+                                                          "completed"
+                                                        ? "✅"
+                                                        : goal.status ===
+                                                            "failed"
+                                                          ? "❌"
+                                                          : "🚫"
+                                            }}</span>
+                                            <h4
+                                                class="text-sm font-semibold text-gray-900 dark:text-white"
+                                            >
+                                                {{ goal.title }}
+                                            </h4>
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                                :class="
+                                                    statusBadgeClass(
+                                                        goal.status,
+                                                    )
+                                                "
+                                                >{{
+                                                    t(
+                                                        `brain.goals.status_${goal.status}`,
+                                                        goal.status,
+                                                    )
+                                                }}</span
+                                            >
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                                :class="{
+                                                    'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400':
+                                                        goal.priority ===
+                                                        'urgent',
+                                                    'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400':
+                                                        goal.priority ===
+                                                        'high',
+                                                    'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400':
+                                                        goal.priority ===
+                                                        'medium',
+                                                    'bg-gray-50 text-gray-500 dark:bg-gray-700 dark:text-gray-400':
+                                                        goal.priority === 'low',
+                                                }"
+                                                >{{ goal.priority }}</span
+                                            >
+                                        </div>
+                                        <p
+                                            v-if="goal.description"
+                                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                        >
+                                            {{ goal.description }}
+                                        </p>
+                                    </div>
+                                    <div class="ml-4 flex gap-1">
+                                        <button
+                                            v-if="goal.status === 'active'"
+                                            @click="
+                                                updateGoalStatus(
+                                                    goal.id,
+                                                    'paused',
+                                                )
+                                            "
+                                            class="rounded-lg px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20"
+                                        >
+                                            {{
+                                                t("brain.goals.pause", "Pause")
+                                            }}
+                                        </button>
+                                        <button
+                                            v-if="goal.status === 'paused'"
+                                            @click="
+                                                updateGoalStatus(
+                                                    goal.id,
+                                                    'active',
+                                                )
+                                            "
+                                            class="rounded-lg px-2 py-1 text-xs font-medium text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.resume",
+                                                    "Resume",
+                                                )
+                                            }}
+                                        </button>
+                                        <button
+                                            v-if="
+                                                goal.status === 'active' ||
+                                                goal.status === 'paused'
+                                            "
+                                            @click="
+                                                updateGoalStatus(
+                                                    goal.id,
+                                                    'cancelled',
+                                                )
+                                            "
+                                            class="rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.cancel",
+                                                    "Cancel",
+                                                )
+                                            }}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div
+                                        class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        <span
+                                            >{{
+                                                goal.progress_percent || 0
+                                            }}%</span
+                                        >
+                                        <span
+                                            >{{ goal.plans_count || 0 }}
+                                            {{
+                                                t(
+                                                    "brain.monitor.executed_plans",
+                                                    "plans",
+                                                )
+                                            }}</span
+                                        >
+                                    </div>
+                                    <div
+                                        class="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+                                    >
+                                        <div
+                                            class="h-full rounded-full transition-all duration-500"
+                                            :class="{
+                                                'bg-gradient-to-r from-violet-500 to-indigo-500':
+                                                    goal.status === 'active',
+                                                'bg-amber-400':
+                                                    goal.status === 'paused',
+                                                'bg-green-500':
+                                                    goal.status === 'completed',
+                                                'bg-red-500':
+                                                    goal.status === 'failed',
+                                                'bg-slate-400':
+                                                    goal.status === 'cancelled',
+                                            }"
+                                            :style="{
+                                                width:
+                                                    (goal.progress_percent ||
+                                                        0) + '%',
+                                            }"
+                                        ></div>
+                                    </div>
+                                </div>
+                                <p
+                                    class="mt-2 text-xs text-gray-400 dark:text-gray-500"
+                                >
+                                    {{ formatDate(goal.created_at) }}
+                                </p>
                             </div>
                         </div>
                     </div>

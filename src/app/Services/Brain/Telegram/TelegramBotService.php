@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\VoiceTranscriptionService;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -109,15 +110,22 @@ class TelegramBotService
         // Set locale so __() translations resolve the user's language
         $this->setUserLocale($user);
 
+        // Check if user requested a new conversation
+        $forceNew = $this->consumeForceNewFlag($chatId);
+
         // Process through the Brain
         try {
             $orchestrator = app(AgentOrchestrator::class);
-            $result = $orchestrator->processMessage($text, $user, 'telegram');
+            $result = $orchestrator->processMessage($text, $user, 'telegram', forceNew: $forceNew);
+
+            if ($forceNew) {
+                $this->sendMessage($chatId, '🆕 ' . __('brain.telegram_new_conversation_started'));
+            }
 
             if ($result['type'] === 'approval_request') {
                 $this->sendApprovalRequest($chatId, $result);
             } else {
-                $this->sendMessage($chatId, $result['message'] ?? 'Processed.');
+                $this->sendMessage($chatId, $result['message'] ?? 'Processed.', $this->getNewConversationKeyboard());
             }
         } catch (\Exception $e) {
             Log::error('Telegram message processing failed', [
@@ -174,14 +182,21 @@ class TelegramBotService
             // Show what was transcribed
             $this->sendMessage($chatId, "🎤 _" . $text . "_");
 
+            // Check if user requested a new conversation
+            $forceNew = $this->consumeForceNewFlag($chatId);
+
             // Process through the Brain
             $orchestrator = app(AgentOrchestrator::class);
-            $result = $orchestrator->processMessage($text, $user, 'telegram');
+            $result = $orchestrator->processMessage($text, $user, 'telegram', forceNew: $forceNew);
+
+            if ($forceNew) {
+                $this->sendMessage($chatId, '🆕 ' . __('brain.telegram_new_conversation_started'));
+            }
 
             if ($result['type'] === 'approval_request') {
                 $this->sendApprovalRequest($chatId, $result);
             } else {
-                $this->sendMessage($chatId, $result['message'] ?? 'Processed.');
+                $this->sendMessage($chatId, $result['message'] ?? 'Processed.', $this->getNewConversationKeyboard());
             }
         } catch (\Exception $e) {
             Log::error('Telegram voice message processing failed', [
@@ -237,6 +252,7 @@ class TelegramBotService
             '/disconnect' => $this->handleDisconnect($chatId),
             '/mode' => $this->handleMode($chatId, $parts[1] ?? null),
             '/status' => $this->handleStatus($chatId),
+            '/new' => $this->handleNewConversation($chatId),
             '/help' => $this->sendMessage($chatId, $this->getHelpMessage()),
             '/knowledge' => $this->handleKnowledge($chatId, array_slice($parts, 1)),
             default => $this->sendMessage($chatId, "Unknown command. Use /help to see available commands."),
@@ -371,6 +387,12 @@ class TelegramBotService
         // Answer the callback query first
         $this->answerCallbackQuery($callbackId, $chatId);
 
+        // Handle "new conversation" button
+        if ($data === 'new_conversation') {
+            $this->handleNewConversation($chatId);
+            return;
+        }
+
         // Parse callback data: e.g., "approve:123" or "reject:123"
         $parts = explode(':', $data);
         $action = $parts[0] ?? '';
@@ -504,6 +526,50 @@ class TelegramBotService
         return $response->json();
     }
 
+    // === Conversation Management ===
+
+    /**
+     * Handle /new command or "New conversation" button.
+     */
+    protected function handleNewConversation(string $chatId): void
+    {
+        $user = $this->authService->findUserByChatId($chatId);
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ First connect your account: /connect YOUR_CODE");
+            return;
+        }
+
+        $this->setUserLocale($user);
+        Cache::put("telegram_force_new:{$chatId}", true, now()->addHour());
+        $this->sendMessage($chatId, '✅ ' . __('brain.telegram_new_conversation_confirm'));
+    }
+
+    /**
+     * Check and consume the force-new-conversation flag.
+     */
+    protected function consumeForceNewFlag(string $chatId): bool
+    {
+        $key = "telegram_force_new:{$chatId}";
+        if (Cache::pull($key)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Build the inline keyboard with "New conversation" button.
+     */
+    protected function getNewConversationKeyboard(): array
+    {
+        return [
+            'inline_keyboard' => [
+                [
+                    ['text' => '🆕 ' . __('brain.telegram_new_conversation_btn'), 'callback_data' => 'new_conversation'],
+                ],
+            ],
+        ];
+    }
+
     // === Locale Helper ===
 
     /**
@@ -550,6 +616,7 @@ MSG;
 🔌 `/disconnect` — Unlink account
 🔧 `/mode [mode]` — Change work mode
 📊 `/status` — Account status and tokens
+🆕 `/new` — Start a new conversation
 📝 `/knowledge [text]` — Add to knowledge base
 ❓ `/help` — This help
 

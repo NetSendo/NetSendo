@@ -137,7 +137,7 @@ PROMPT;
             return ['status' => 'completed', 'message' => __('brain.segmentation.no_tags')];
         }
 
-        $totalSubs = Subscriber::where('user_id', $user->id)->subscribed()->count();
+        $totalSubs = Subscriber::where('user_id', $user->id)->active()->count();
         $msg = __('brain.segmentation.tag_distribution', ['limit' => $limit]) . "\n\n";
 
         foreach ($tags as $tag) {
@@ -200,7 +200,7 @@ PROMPT;
         $tag = Tag::where('name', $tagName)->where('user_id', $user->id)->first();
         if (!$tag) $tag = Tag::create(['name' => $tagName, 'user_id' => $user->id, 'color' => '#6366f1']);
 
-        $query = Subscriber::where('user_id', $user->id)->subscribed();
+        $query = Subscriber::where('user_id', $user->id)->active();
         $criteria = $step->config['criteria'] ?? [];
 
         if (!empty($criteria['min_score'])) {
@@ -225,7 +225,7 @@ PROMPT;
     protected function suggestSegments(AiActionPlanStep $step, User $user): array
     {
         $totalSubs = Subscriber::where('user_id', $user->id)->count();
-        $activeSubs = Subscriber::where('user_id', $user->id)->subscribed()->count();
+        $activeSubs = Subscriber::where('user_id', $user->id)->active()->count();
         $tagCount = Tag::withCount(['subscribers' => fn($q) => $q->where('subscribers.user_id', $user->id)])->get();
         $crmCount = CrmContact::forUser($user->id)->count();
         $hotLeads = CrmContact::forUser($user->id)->hotLeads()->count();
