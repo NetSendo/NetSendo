@@ -468,6 +468,61 @@ const TITLE_MAX_LENGTH = 255;
 const isSavingEntry = ref(false);
 const editingEntryId = ref(null);
 
+// --- View / Edit Knowledge Entry ---
+const viewingEntry = ref(null);
+const editingEntry = reactive({
+    id: null,
+    category: "",
+    title: "",
+    content: "",
+});
+const isSavingEdit = ref(false);
+
+const viewEntry = (entry) => {
+    viewingEntry.value = entry;
+};
+
+const closeView = () => {
+    viewingEntry.value = null;
+};
+
+const startEdit = (entry) => {
+    editingEntry.id = entry.id;
+    editingEntry.category = entry.category;
+    editingEntry.title = entry.title;
+    editingEntry.content = entry.content;
+    viewingEntry.value = null; // close view modal if open
+};
+
+const cancelEdit = () => {
+    editingEntry.id = null;
+    editingEntry.category = "";
+    editingEntry.title = "";
+    editingEntry.content = "";
+};
+
+const saveEdit = async () => {
+    if (!editingEntry.title.trim() || !editingEntry.content.trim()) return;
+    isSavingEdit.value = true;
+    try {
+        const response = await axios.put(
+            `/brain/api/knowledge/${editingEntry.id}`,
+            {
+                category: editingEntry.category,
+                title: editingEntry.title,
+                content: editingEntry.content,
+            },
+        );
+        const idx = entries.value.findIndex((e) => e.id === editingEntry.id);
+        if (idx !== -1) entries.value[idx] = response.data;
+        cancelEdit();
+    } catch (error) {
+        // Error
+    } finally {
+        isSavingEdit.value = false;
+    }
+};
+
 const addEntry = async () => {
     if (!newEntry.title.trim() || !newEntry.content.trim()) return;
     isSavingEntry.value = true;
@@ -1715,14 +1770,45 @@ const getCategoryColor = (key) => {
                                     </button>
                                 </td>
                                 <td class="py-3 text-right">
-                                    <button
-                                        @click="deleteEntry(entry.id)"
-                                        class="rounded-lg px-2 py-1 text-xs text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    <div
+                                        class="flex items-center justify-end gap-1"
                                     >
-                                        {{
-                                            t("brain.knowledge.delete", "Usuń")
-                                        }}
-                                    </button>
+                                        <button
+                                            @click="viewEntry(entry)"
+                                            class="rounded-lg px-2 py-1 text-xs text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+                                            :title="
+                                                t(
+                                                    'brain.knowledge.view',
+                                                    'Podgląd',
+                                                )
+                                            "
+                                        >
+                                            👁
+                                        </button>
+                                        <button
+                                            @click="startEdit(entry)"
+                                            class="rounded-lg px-2 py-1 text-xs text-cyan-500 transition-colors hover:bg-cyan-50 dark:hover:bg-cyan-900/20"
+                                            :title="
+                                                t(
+                                                    'brain.knowledge.edit',
+                                                    'Edytuj',
+                                                )
+                                            "
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            @click="deleteEntry(entry.id)"
+                                            class="rounded-lg px-2 py-1 text-xs text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.knowledge.delete",
+                                                    "Usuń",
+                                                )
+                                            }}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -1736,6 +1822,330 @@ const getCategoryColor = (key) => {
                         }}
                     </p>
                 </div>
+
+                <!-- View Entry Modal -->
+                <Teleport to="body">
+                    <div
+                        v-if="viewingEntry"
+                        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        <div
+                            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            @click="closeView"
+                        ></div>
+                        <div
+                            class="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+                        >
+                            <!-- Header -->
+                            <div class="mb-4 flex items-start justify-between">
+                                <div class="flex-1 pr-4">
+                                    <h3
+                                        class="text-lg font-bold text-slate-900 dark:text-white"
+                                    >
+                                        {{ viewingEntry.title }}
+                                    </h3>
+                                    <span
+                                        class="mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium"
+                                        :class="
+                                            getCategoryColor(
+                                                viewingEntry.category,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            getCategoryLabel(
+                                                viewingEntry.category,
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <button
+                                    @click="closeView"
+                                    class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <!-- Content -->
+                            <div
+                                class="mb-4 rounded-lg border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-700/30"
+                            >
+                                <p
+                                    class="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ viewingEntry.content }}
+                                </p>
+                            </div>
+
+                            <!-- Metadata -->
+                            <div
+                                class="grid grid-cols-2 gap-3 rounded-lg border border-slate-100 bg-slate-50/30 p-3 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-700/20 dark:text-slate-400 sm:grid-cols-4"
+                            >
+                                <div>
+                                    <span
+                                        class="block font-medium text-slate-400 dark:text-slate-500"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.knowledge.meta_source",
+                                                "Źródło",
+                                            )
+                                        }}
+                                    </span>
+                                    {{ viewingEntry.source || "—" }}
+                                </div>
+                                <div>
+                                    <span
+                                        class="block font-medium text-slate-400 dark:text-slate-500"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.knowledge.meta_confidence",
+                                                "Pewność",
+                                            )
+                                        }}
+                                    </span>
+                                    {{
+                                        viewingEntry.confidence != null
+                                            ? Math.round(
+                                                  viewingEntry.confidence * 100,
+                                              ) + "%"
+                                            : "—"
+                                    }}
+                                </div>
+                                <div>
+                                    <span
+                                        class="block font-medium text-slate-400 dark:text-slate-500"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.knowledge.meta_usage",
+                                                "Użycia",
+                                            )
+                                        }}
+                                    </span>
+                                    {{ viewingEntry.usage_count || 0 }}
+                                </div>
+                                <div>
+                                    <span
+                                        class="block font-medium text-slate-400 dark:text-slate-500"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.knowledge.meta_status",
+                                                "Status",
+                                            )
+                                        }}
+                                    </span>
+                                    <span
+                                        :class="
+                                            viewingEntry.is_active
+                                                ? 'text-green-500'
+                                                : 'text-slate-400'
+                                        "
+                                    >
+                                        {{
+                                            viewingEntry.is_active
+                                                ? t(
+                                                      "brain.knowledge.active",
+                                                      "Aktywny",
+                                                  )
+                                                : t(
+                                                      "brain.knowledge.inactive",
+                                                      "Nieaktywny",
+                                                  )
+                                        }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="mt-4 flex justify-end gap-2">
+                                <button
+                                    @click="startEdit(viewingEntry)"
+                                    class="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30"
+                                >
+                                    ✏️ {{ t("brain.knowledge.edit", "Edytuj") }}
+                                </button>
+                                <button
+                                    @click="closeView"
+                                    class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+                                >
+                                    {{ t("brain.knowledge.close", "Zamknij") }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Teleport>
+
+                <!-- Edit Entry Modal -->
+                <Teleport to="body">
+                    <div
+                        v-if="editingEntry.id"
+                        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        <div
+                            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            @click="cancelEdit"
+                        ></div>
+                        <div
+                            class="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+                        >
+                            <!-- Header -->
+                            <div class="mb-4 flex items-center justify-between">
+                                <h3
+                                    class="text-lg font-bold text-slate-900 dark:text-white"
+                                >
+                                    ✏️
+                                    {{
+                                        t(
+                                            "brain.knowledge.edit_title",
+                                            "Edytuj wpis",
+                                        )
+                                    }}
+                                </h3>
+                                <button
+                                    @click="cancelEdit"
+                                    class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <!-- Edit Form -->
+                            <div class="space-y-4">
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label
+                                            class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.knowledge.category",
+                                                    "Kategoria",
+                                                )
+                                            }}
+                                        </label>
+                                        <select
+                                            v-model="editingEntry.category"
+                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        >
+                                            <option
+                                                v-for="(
+                                                    label, key
+                                                ) in knowledgeCategories"
+                                                :key="key"
+                                                :value="key"
+                                            >
+                                                {{ label }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.knowledge.entry_title",
+                                                    "Tytuł",
+                                                )
+                                            }}
+                                        </label>
+                                        <input
+                                            v-model="editingEntry.title"
+                                            type="text"
+                                            :maxlength="TITLE_MAX_LENGTH"
+                                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label
+                                        class="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.knowledge.content",
+                                                "Treść",
+                                            )
+                                        }}
+                                    </label>
+                                    <textarea
+                                        v-model="editingEntry.content"
+                                        rows="8"
+                                        :maxlength="CONTENT_MAX_LENGTH"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    ></textarea>
+                                    <div class="mt-1 flex justify-end">
+                                        <span
+                                            class="text-xs font-medium tabular-nums transition-colors"
+                                            :class="{
+                                                'text-slate-400 dark:text-slate-500':
+                                                    editingEntry.content
+                                                        .length <
+                                                    CONTENT_MAX_LENGTH * 0.8,
+                                                'text-amber-500 dark:text-amber-400':
+                                                    editingEntry.content
+                                                        .length >=
+                                                        CONTENT_MAX_LENGTH *
+                                                            0.8 &&
+                                                    editingEntry.content
+                                                        .length <
+                                                        CONTENT_MAX_LENGTH *
+                                                            0.95,
+                                                'text-red-500 dark:text-red-400':
+                                                    editingEntry.content
+                                                        .length >=
+                                                    CONTENT_MAX_LENGTH * 0.95,
+                                            }"
+                                        >
+                                            {{
+                                                editingEntry.content.length.toLocaleString()
+                                            }}
+                                            /
+                                            {{
+                                                CONTENT_MAX_LENGTH.toLocaleString()
+                                            }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="mt-4 flex justify-end gap-2">
+                                <button
+                                    @click="cancelEdit"
+                                    class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+                                >
+                                    {{ t("brain.knowledge.cancel", "Anuluj") }}
+                                </button>
+                                <button
+                                    @click="saveEdit"
+                                    :disabled="
+                                        isSavingEdit ||
+                                        !editingEntry.title.trim() ||
+                                        !editingEntry.content.trim()
+                                    "
+                                    class="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl hover:shadow-cyan-500/30 disabled:opacity-50"
+                                >
+                                    {{
+                                        isSavingEdit
+                                            ? t(
+                                                  "brain.knowledge.saving",
+                                                  "Zapisywanie...",
+                                              )
+                                            : t(
+                                                  "brain.knowledge.save_changes",
+                                                  "Zapisz zmiany",
+                                              )
+                                    }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Teleport>
             </div>
         </div>
     </AuthenticatedLayout>

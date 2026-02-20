@@ -474,7 +474,7 @@ class BrainController extends Controller
 
         return response()->json([
             'code' => $code,
-            'instructions' => "Wyślij do bota Telegram: /connect {$code}",
+            'instructions' => __('brain.telegram_link_instructions', ['code' => $code]),
         ]);
     }
 

@@ -57,7 +57,7 @@ Analytics agent is read-only — never modifies data.
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3]);
+            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3], $user, 'analytics');
             $data = $this->parseJson($response);
             if (!$data || empty($data['steps'])) return null;
 
@@ -107,7 +107,7 @@ PROMPT;
         $stats = $this->gatherQuickStats($user);
         $langInstruction = $this->getLanguageInstruction($user);
         $prompt = "You are an analytics expert. Statistics:\n{$stats}\nQuestion: {$intent['intent']}\n{$knowledgeContext}\n\n{$langInstruction}\n\nProvide analysis with numbers and recommendations. Use emoji.";
-        $response = $this->callAi($prompt, ['max_tokens' => 2500, 'temperature' => 0.5]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2500, 'temperature' => 0.5], $user, 'analytics');
         return ['type' => 'advice', 'message' => $response];
     }
 

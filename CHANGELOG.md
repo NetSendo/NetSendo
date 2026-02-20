@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Brain Knowledge Base — View & Edit Entries:**
+  - Added **View modal** (👁) to preview the full content of a knowledge entry with metadata (source, confidence, usage count, active status).
+  - Added **Edit modal** (✏️) to modify title, category, and content of existing entries with character counter and validation.
+  - Table actions column now shows View, Edit, and Delete buttons per entry.
+
 ### Fixed
 
 - **Voice Message Transcription — 422 Error:**

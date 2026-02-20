@@ -54,7 +54,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3]);
+            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3], $user, 'segmentation');
             $data = $this->parseJson($response);
             if (!$data || empty($data['steps'])) return null;
 
@@ -119,7 +119,7 @@ Question: {$intent['intent']}
 Provide segmentation advice with specific steps. Use emoji.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'segmentation');
         return ['type' => 'advice', 'message' => $response];
     }
 
@@ -181,7 +181,7 @@ PROMPT;
         $name = $step->config['name'] ?? null;
         if (!$name) return ['status' => 'failed', 'message' => __('brain.segmentation.tag_name_missing')];
 
-        $existing = Tag::where('name', $name)->first();
+        $existing = Tag::where('name', $name)->where('user_id', $user->id)->first();
         if ($existing) return ['status' => 'completed', 'tag_id' => $existing->id, 'message' => __('brain.segmentation.tag_exists', ['name' => $name, 'id' => $existing->id])];
 
         $tag = Tag::create([
@@ -197,8 +197,8 @@ PROMPT;
         $tagName = $step->config['tag_name'] ?? null;
         if (!$tagName) return ['status' => 'failed', 'message' => __('brain.segmentation.tag_name_missing')];
 
-        $tag = Tag::where('name', $tagName)->first();
-        if (!$tag) $tag = Tag::create(['name' => $tagName, 'color' => '#6366f1']);
+        $tag = Tag::where('name', $tagName)->where('user_id', $user->id)->first();
+        if (!$tag) $tag = Tag::create(['name' => $tagName, 'user_id' => $user->id, 'color' => '#6366f1']);
 
         $query = Subscriber::where('user_id', $user->id)->subscribed();
         $criteria = $step->config['criteria'] ?? [];

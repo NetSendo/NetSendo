@@ -17,6 +17,8 @@ return [
     'steps_to_execute' => '**Auszuführende Schritte:**',
     'mode_label' => '🔄 Modus: :mode',
     'approve_reject' => '✅ Genehmigen | ❌ Ablehnen',
+    'approval_expiry' => 'Plan läuft in 24h ab.',
+    'telegram_link_instructions' => 'Sende an deinen Telegram-Bot: /connect :code',
 
     // === CRM Agent ===
     'crm' => [

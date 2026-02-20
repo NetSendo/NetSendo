@@ -143,12 +143,12 @@ class ModeController
             $summary .= "{$plan->description}\n\n";
         }
 
-        $summary .= "**Kroki:**\n";
+        $summary .= "**" . __('brain.steps_to_execute') . "**\n";
         foreach ($steps as $step) {
             $summary .= "  {$step->step_order}. {$step->title}\n";
         }
 
-        $summary .= "\n🕐 Plan wygasa za 24h.";
+        $summary .= "\n🕐 " . __('brain.approval_expiry');
 
         return $summary;
     }

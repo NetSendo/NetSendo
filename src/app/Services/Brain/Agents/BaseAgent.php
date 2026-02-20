@@ -52,12 +52,14 @@ abstract class BaseAgent
     /**
      * Check if this agent needs more information before creating a plan.
      * Override in subclasses for agent-specific logic.
+     *
+     * Default is false — the user's message (captured in the intent description)
+     * provides enough context for most agents. Override in subclasses that
+     * truly need specific inputs (e.g. CampaignAgent, ResearchAgent).
      */
     public function needsMoreInfo(array $intent, User $user, string $knowledgeContext = ''): bool
     {
-        // Default: agents that modify things should ask for info when no parameters are provided
-        $params = $intent['parameters'] ?? [];
-        return empty($params);
+        return false;
     }
 
     /**
