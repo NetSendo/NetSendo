@@ -10,6 +10,7 @@ return [
     'plan_execution_error' => '❌ Fehler bei der Planausführung: :error',
     'no_ai_integration' => '⚠️ Keine AI-Integration konfiguriert. Gehe zu Einstellungen → AI, um einen AI-Anbieter zu konfigurieren.',
     'user_wants' => 'Benutzer möchte: :intent',
+    'info_request' => 'Ich benötige mehr Details, um diese Aufgabe abzuschließen. Bitte geben Sie zusätzliche Informationen an.',
 
     // Plan approval
     'plan_header' => '📋 **Plan: :title**',
@@ -109,6 +110,14 @@ return [
         'message_created' => 'Nachricht ":subject" als Entwurf erstellt (ID: :id)',
         'default_message' => 'Neue Nachricht',
         'schedule_ready' => '📋 Kampagne bereit zum Senden. Gehe zum Panel, um den Versand zu planen.',
+        'info_header' => '📧 **Kampagne erstellen — ich brauche einige Details:**',
+        'info_goal' => '1. **Kampagnenziel** — was möchten Sie erreichen? (z.B. Produktwerbung, Newsletter, Willkommens-E-Mail)',
+        'info_topic' => '2. **Thema/Produkt** — worum soll die Nachricht gehen?',
+        'info_tone' => '3. **Tonalität** — formell, freundlich, werblich?',
+        'info_audience' => '4. **Zielgruppe** — wer soll sie erhalten?',
+        'info_lists' => '📋 **Ihre Listen:**',
+        'info_when' => '5. **Wann senden?** — sofort oder für ein bestimmtes Datum planen?',
+        'info_footer' => 'Geben Sie so viele Details wie möglich an und ich erstelle einen professionellen Kampagnenplan.',
     ],
 
     // === List Agent ===
@@ -174,5 +183,10 @@ return [
         'task_enrich_companies' => ':count Firmen ohne Website-/Branchendaten recherchieren',
         'task_research_leads' => 'Tiefenrecherche zu :count Hot Leads',
         'task_trends' => 'Aktuelle Markttrends in Ihrer Branche analysieren',
+        'info_header' => '🔍 **Recherche — ich brauche einige Details:**',
+        'info_topic' => '1. **Was möchten Sie recherchieren?** — Thema, Firma, Wettbewerber, Trend?',
+        'info_focus' => '2. **Konkreter Fokus** — gibt es einen bestimmten Aspekt, der Sie interessiert?',
+        'info_purpose' => '3. **Zweck** — wie werden Sie die Recherche nutzen? (Kampagne, Strategie, CRM-Anreicherung?)',
+        'info_footer' => 'Geben Sie so viele Details wie möglich an und ich führe eine gründliche Internetrecherche durch.',
     ],
 ];

@@ -66,8 +66,7 @@ abstract class BaseAgent
      */
     public function getInfoQuestions(array $intent, User $user, string $knowledgeContext = ''): string
     {
-        $langInstruction = $this->getLanguageInstruction($user);
-        return "I need more details to complete this task. Please provide additional information.\n\n{$langInstruction}";
+        return __('brain.info_request');
     }
 
     /**

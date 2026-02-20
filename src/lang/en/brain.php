@@ -10,6 +10,7 @@ return [
     'plan_execution_error' => '❌ Plan execution error: :error',
     'no_ai_integration' => '⚠️ No AI integration configured. Go to Settings → AI to configure an AI provider.',
     'user_wants' => 'User wants: :intent',
+    'info_request' => 'I need more details to complete this task. Please provide additional information.',
 
     // Plan approval
     'plan_header' => '📋 **Plan: :title**',
@@ -109,6 +110,14 @@ return [
         'message_created' => 'Message ":subject" created as draft (ID: :id)',
         'default_message' => 'New message',
         'schedule_ready' => '📋 Campaign ready to send. Go to the panel to schedule sending.',
+        'info_header' => '📧 **Creating a campaign — I need some details:**',
+        'info_goal' => '1. **Campaign goal** — what do you want to achieve? (e.g. product promotion, newsletter, welcome email)',
+        'info_topic' => '2. **Topic/product** — what should the message be about?',
+        'info_tone' => '3. **Tone of voice** — formal, friendly, promotional?',
+        'info_audience' => '4. **Target audience** — who should receive it?',
+        'info_lists' => '📋 **Your lists:**',
+        'info_when' => '5. **When to send?** — immediately, or schedule for a specific date?',
+        'info_footer' => 'Provide as many details as you can and I will prepare a professional campaign plan.',
     ],
 
     // === List Agent ===
@@ -174,5 +183,10 @@ return [
         'task_enrich_companies' => 'Research :count companies missing website/industry data',
         'task_research_leads' => 'Deep research on :count hot leads',
         'task_trends' => 'Analyze current market trends in your industry',
+        'info_header' => '🔍 **Research — I need some details:**',
+        'info_topic' => '1. **What do you want to research?** — topic, company, competitor, trend?',
+        'info_focus' => '2. **Specific focus** — any particular aspect you\'re interested in?',
+        'info_purpose' => '3. **Purpose** — how will you use this research? (campaign, strategy, CRM enrichment?)',
+        'info_footer' => 'Provide as much detail as you can and I will conduct thorough internet research.',
     ],
 ];

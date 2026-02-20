@@ -10,6 +10,7 @@ return [
     'plan_execution_error' => '❌ Błąd wykonania planu: :error',
     'no_ai_integration' => '⚠️ Brak skonfigurowanej integracji AI. Przejdź do Ustawienia → AI aby skonfigurować dostawcę AI.',
     'user_wants' => 'Użytkownik chce: :intent',
+    'info_request' => 'Potrzebuję więcej szczegółów, aby wykonać to zadanie. Podaj dodatkowe informacje.',
 
     // Plan approval
     'plan_header' => '📋 **Plan: :title**',
@@ -109,6 +110,14 @@ return [
         'message_created' => 'Wiadomość ":subject" utworzona jako szkic (ID: :id)',
         'default_message' => 'Nowa wiadomość',
         'schedule_ready' => '📋 Kampania gotowa do wysyłki. Przejdź do panelu aby zaplanować wysyłkę.',
+        'info_header' => '📧 **Tworzenie kampanii — potrzebuję kilku szczegółów:**',
+        'info_goal' => '1. **Cel kampanii** — co chcesz osiągnąć? (np. promocja produktu, newsletter, email powitalny)',
+        'info_topic' => '2. **Temat/produkt** — o czym ma być wiadomość?',
+        'info_tone' => '3. **Ton komunikacji** — formalny, przyjazny, promocyjny?',
+        'info_audience' => '4. **Grupa docelowa** — kto powinien otrzymać wiadomość?',
+        'info_lists' => '📋 **Twoje listy:**',
+        'info_when' => '5. **Kiedy wysłać?** — natychmiast, czy zaplanować na konkretną datę?',
+        'info_footer' => 'Podaj jak najwięcej szczegółów, a przygotuję profesjonalny plan kampanii.',
     ],
 
     // === List Agent ===
@@ -174,6 +183,11 @@ return [
         'task_enrich_companies' => 'Zbadaj :count firm bez danych o stronie/branży',
         'task_research_leads' => 'Pogłębione badanie :count gorących leadów',
         'task_trends' => 'Analiza aktualnych trendów rynkowych w Twojej branży',
+        'info_header' => '🔍 **Badanie — potrzebuję kilku szczegółów:**',
+        'info_topic' => '1. **Co chcesz zbadać?** — temat, firma, konkurencja, trend?',
+        'info_focus' => '2. **Konkretny aspekt** — czy jest coś szczególnego, co Cię interesuje?',
+        'info_purpose' => '3. **Cel** — jak wykorzystasz wyniki badania? (kampania, strategia, wzbogacenie CRM?)',
+        'info_footer' => 'Podaj jak najwięcej szczegółów, a przeprowadzę dokładne badanie w internecie.',
     ],
 
     // === AI Prompt system instructions (used inside prompts — NOT user-facing) ===

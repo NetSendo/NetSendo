@@ -7,6 +7,7 @@ use App\Models\AiPendingApproval;
 use App\Models\User;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\VoiceTranscriptionService;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -105,6 +106,9 @@ class TelegramBotService
             return;
         }
 
+        // Set locale so __() translations resolve the user's language
+        $this->setUserLocale($user);
+
         // Process through the Brain
         try {
             $orchestrator = app(AgentOrchestrator::class);
@@ -138,6 +142,9 @@ class TelegramBotService
             $this->sendMessage($chatId, "⚠️ Your Telegram account is not linked to NetSendo.\n\nUse `/connect YOUR_CODE` to link your account.");
             return;
         }
+
+        // Set locale so __() translations resolve the user's language
+        $this->setUserLocale($user);
 
         // Get voice or audio file info
         $voice = $message['voice'] ?? $message['audio'] ?? null;
@@ -495,6 +502,21 @@ class TelegramBotService
         ]);
 
         return $response->json();
+    }
+
+    // === Locale Helper ===
+
+    /**
+     * Set the application locale based on the user's Brain language preference.
+     * Telegram webhooks don't go through SetLocale middleware, so we need to set it manually.
+     */
+    protected function setUserLocale(User $user): void
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+        $langCode = $settings->resolveLanguage($user);
+        if ($langCode) {
+            App::setLocale($langCode);
+        }
     }
 
     // === Message Templates ===

@@ -17,7 +17,7 @@ class VoiceTranscriptionService
      *
      * @throws \Exception If no OpenAI integration is configured or transcription fails.
      */
-    public function transcribe(string $audioFilePath, ?string $language = null): string
+    public function transcribe(string $audioFilePath, ?string $language = null, ?string $originalFilename = null): string
     {
         $integration = $this->resolveOpenAiIntegration();
 
@@ -28,6 +28,14 @@ class VoiceTranscriptionService
         $apiKey = $integration->api_key;
         $baseUrl = rtrim($integration->getEffectiveBaseUrl(), '/');
 
+        // Determine the filename to send to Whisper API.
+        // PHP temp uploads (e.g. /tmp/phpXXXXXX) have no extension,
+        // so Whisper can't detect the format → 422 "Unrecognized file format".
+        $filename = $originalFilename ?: basename($audioFilePath);
+        if (!pathinfo($filename, PATHINFO_EXTENSION)) {
+            $filename .= '.webm'; // Safe default — Whisper supports webm
+        }
+
         $request = Http::withHeaders([
             'Authorization' => 'Bearer ' . $apiKey,
         ])
@@ -35,7 +43,7 @@ class VoiceTranscriptionService
             ->attach(
                 'file',
                 file_get_contents($audioFilePath),
-                basename($audioFilePath)
+                $filename
             )
             ->post("{$baseUrl}/audio/transcriptions", [
                 'model' => 'whisper-1',

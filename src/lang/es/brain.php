@@ -10,6 +10,7 @@ return [
     'plan_execution_error' => '❌ Error de ejecución del plan: :error',
     'no_ai_integration' => '⚠️ No hay integración AI configurada. Ve a Configuración → AI para configurar un proveedor de AI.',
     'user_wants' => 'El usuario quiere: :intent',
+    'info_request' => 'Necesito más detalles para completar esta tarea. Por favor proporcione información adicional.',
 
     // Plan approval
     'plan_header' => '📋 **Plan: :title**',
@@ -109,6 +110,14 @@ return [
         'message_created' => 'Mensaje ":subject" creado como borrador (ID: :id)',
         'default_message' => 'Nuevo mensaje',
         'schedule_ready' => '📋 Campaña lista para enviar. Ve al panel para programar el envío.',
+        'info_header' => '📧 **Creando una campaña — necesito algunos detalles:**',
+        'info_goal' => '1. **Objetivo de la campaña** — ¿qué quieres lograr? (ej. promoción de producto, newsletter, email de bienvenida)',
+        'info_topic' => '2. **Tema/producto** — ¿de qué debería tratar el mensaje?',
+        'info_tone' => '3. **Tono de voz** — ¿formal, amigable, promocional?',
+        'info_audience' => '4. **Público objetivo** — ¿quién debería recibirlo?',
+        'info_lists' => '📋 **Tus listas:**',
+        'info_when' => '5. **¿Cuándo enviar?** — ¿inmediatamente o programar para una fecha específica?',
+        'info_footer' => 'Proporciona todos los detalles que puedas y prepararé un plan de campaña profesional.',
     ],
 
     // === List Agent ===
@@ -174,5 +183,10 @@ return [
         'task_enrich_companies' => 'Investigar :count empresas sin datos de web/sector',
         'task_research_leads' => 'Investigación profunda de :count leads calientes',
         'task_trends' => 'Analizar tendencias actuales del mercado en su industria',
+        'info_header' => '🔍 **Investigación — necesito algunos detalles:**',
+        'info_topic' => '1. **¿Qué quieres investigar?** — tema, empresa, competidor, tendencia?',
+        'info_focus' => '2. **Enfoque específico** — ¿algún aspecto en particular que te interese?',
+        'info_purpose' => '3. **Propósito** — ¿cómo usarás esta investigación? (campaña, estrategia, enriquecimiento CRM?)',
+        'info_footer' => 'Proporciona todos los detalles que puedas y realizaré una investigación exhaustiva en internet.',
     ],
 ];

@@ -69,20 +69,18 @@ class CampaignAgent extends BaseAgent
         $lists = ContactList::where('user_id', $user->id)->withCount('subscribers')->get();
         $listsInfo = $lists->map(fn($l) => "• {$l->name} ({$l->subscribers_count} subscribers)")->join("\n");
 
-        $langInstruction = $this->getLanguageInstruction($user);
-
-        $response = "📧 **Creating a campaign — I need some details:**\n\n"
-            . "1. **Campaign goal** — what do you want to achieve? (e.g. product promotion, newsletter, welcome email)\n"
-            . "2. **Topic/product** — what should the message be about?\n"
-            . "3. **Tone of voice** — formal, friendly, promotional?\n"
-            . "4. **Target audience** — who should receive it?\n";
+        $response = __('brain.campaign.info_header') . "\n\n"
+            . __('brain.campaign.info_goal') . "\n"
+            . __('brain.campaign.info_topic') . "\n"
+            . __('brain.campaign.info_tone') . "\n"
+            . __('brain.campaign.info_audience') . "\n";
 
         if ($listsInfo) {
-            $response .= "\n📋 **Your lists:**\n{$listsInfo}\n";
+            $response .= "\n" . __('brain.campaign.info_lists') . "\n{$listsInfo}\n";
         }
 
-        $response .= "\n5. **When to send?** — immediately, or schedule for a specific date?\n\n"
-            . "Provide as many details as you can and I will prepare a professional campaign plan.\n\n{$langInstruction}";
+        $response .= "\n" . __('brain.campaign.info_when') . "\n\n"
+            . __('brain.campaign.info_footer');
 
         return $response;
     }

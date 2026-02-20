@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Voice Message Transcription — 422 Error:**
+  - Fixed `422 Unrecognized file format` error when sending voice messages in Brain chat. Root cause: PHP temp uploads (e.g., `/tmp/phpXXXXXX`) have no file extension, causing OpenAI Whisper API to reject them. Now passes the original uploaded filename (e.g., `voice.webm`) to the Whisper API request.
+
+- **Voice Message Language — English Instead of User Language:**
+  - Fixed agent `getInfoQuestions()` methods returning hardcoded English text regardless of user language preference. Replaced with `__()` translation calls using new `brain.campaign.info_*` and `brain.research.info_*` translation keys in all 4 locales (PL, EN, DE, ES).
+  - Fixed Telegram webhook context not setting Laravel locale, causing `__()` to always return English. Added `setUserLocale()` helper to `TelegramBotService` that sets `App::setLocale()` based on user's Brain language settings before processing messages.
+
 ## [2.0.2] – Short Description
 
 **Release date:** 2026-02-20

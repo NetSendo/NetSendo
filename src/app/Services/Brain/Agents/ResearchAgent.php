@@ -59,13 +59,11 @@ class ResearchAgent extends BaseAgent
      */
     public function getInfoQuestions(array $intent, User $user, string $knowledgeContext = ''): string
     {
-        $langInstruction = $this->getLanguageInstruction($user);
-
-        return "🔍 **Research — I need some details:**\n\n"
-            . "1. **What do you want to research?** — topic, company, competitor, trend?\n"
-            . "2. **Specific focus** — any particular aspect you're interested in?\n"
-            . "3. **Purpose** — how will you use this research? (campaign, strategy, CRM enrichment?)\n\n"
-            . "Provide as much detail as you can and I will conduct thorough internet research.\n\n{$langInstruction}";
+        return __('brain.research.info_header') . "\n\n"
+            . __('brain.research.info_topic') . "\n"
+            . __('brain.research.info_focus') . "\n"
+            . __('brain.research.info_purpose') . "\n\n"
+            . __('brain.research.info_footer');
     }
 
     /**

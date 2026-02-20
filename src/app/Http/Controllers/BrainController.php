@@ -76,8 +76,10 @@ class BrainController extends Controller
             $language = $settings->preferred_language ?? null;
 
             // Transcribe the audio file
-            $audioPath = $request->file('audio')->getRealPath();
-            $transcribedText = $this->voiceTranscription->transcribe($audioPath, $language);
+            $audioFile = $request->file('audio');
+            $audioPath = $audioFile->getRealPath();
+            $originalFilename = $audioFile->getClientOriginalName();
+            $transcribedText = $this->voiceTranscription->transcribe($audioPath, $language, $originalFilename);
 
             // Process through the Brain (same as text chat)
             $result = $this->orchestrator->processMessage(
