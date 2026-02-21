@@ -62,6 +62,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return Limit::perMinute(3000)->by($identifier);
         });
+
+        // Configure Pixel rate limiting (protect against event flooding)
+        RateLimiter::for('pixel', function (Request $request) {
+            return Limit::perMinute(200)->by($request->ip());
+        });
     })
     ->create();
 

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pixel — Double Page View Counting (WordPress Plugin):**
+  - Removed `netsendo_wp_track_page_view()` function and its `wp_footer` hook from the WordPress plugin. The NetSendo Pixel JavaScript already tracks page views automatically on initialization — the redundant PHP hook was causing every visit to be counted twice.
+
+- **Pixel — Engagement Events Misreported as Page Views:**
+  - Fixed `trackTimeOnPage()` sending `page_view` event type instead of a dedicated `engagement` event. This was further inflating page view counts with time-on-page/scroll-depth data. Renamed to `trackEngagement()` and changed event type to `engagement`.
+
+### Added
+
+- **Pixel v2.0 — Session Tracking:**
+  - Added `session_id` (UUID) generation in the Pixel JavaScript using `sessionStorage` with a 30-minute idle timeout. Sessions are sent with every event for accurate session-based analytics (bounce rate, user journeys).
+  - Database migration adds indexed `session_id` column to `pixel_events` table.
+  - Backend validation and `PixelEvent` model updated to accept and store `session_id`.
+
+- **Pixel v2.0 — SPA Navigation Tracking:**
+  - Pixel now monkey-patches `history.pushState()` and `history.replaceState()`, and listens for `popstate` events to automatically track page views in Single Page Applications without any additional configuration.
+
+- **Pixel v2.0 — UTM Parameter Extraction:**
+  - Pixel automatically parses `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, and `utm_term` from the page URL and attaches them to `page_view` events via `custom_data` for marketing attribution.
+
+- **Pixel v2.0 — Auto-Identification from Email Clicks:**
+  - `TrackingController` now sets an `ns_sid` cookie (5-minute expiry, JS-readable) when a subscriber clicks a tracked link in an email. The Pixel JavaScript reads this cookie on page load and automatically calls `/identify`, bridging email tracking with website visitor tracking.
+
+- **Pixel v2.0 — Retry Queue:**
+  - Failed event requests are now saved to `localStorage` and retried on the next page load (max 3 attempts, 100-item cap), preventing data loss from transient network errors.
+
+- **Pixel v2.0 — Rate Limiting:**
+  - Added `pixel` rate limiter (200 requests/minute per IP) in `bootstrap/app.php`. Applied `throttle:pixel` middleware to all POST pixel routes (`/t/pixel/event`, `/t/pixel/identify`, `/t/pixel/batch`).
+
+- **Pixel v2.0 — Security Improvements:**
+  - Added `Secure` flag to the `ns_visitor` cookie on HTTPS connections.
+  - Added page view deduplication guard to prevent multiple `page_view` events for the same URL in a single page session.
+
+- **Pixel — Engagement Event Type (Backend):**
+  - Added `TYPE_ENGAGEMENT` constant to `PixelEvent` model with explicit `engagement` category in `determineCategory()`. Engagement events do not trigger automation dispatches (intentional — they are metric-only).
+  - Added `scroll_depth` and `custom_data` validation to `batchEvents()` endpoint.
+
 ## [2.0.3] – Short Description
 
 **Release date:** 2026-02-21

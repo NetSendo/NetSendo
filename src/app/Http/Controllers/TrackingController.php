@@ -120,6 +120,25 @@ class TrackingController extends Controller
         // Process tracked link actions (subscribe/unsubscribe to lists, data sharing)
         $finalUrl = $this->processTrackedLinkActions($messageId, $subscriberId, $url);
 
+        // Set ns_sid cookie for pixel auto-identification on the destination site
+        // The pixel JS will read this cookie and auto-identify the visitor
+        $subscriber = Subscriber::find($subscriberId);
+        if ($subscriber && $subscriber->email) {
+            $cookie = cookie(
+                'ns_sid',
+                $subscriber->email,
+                5, // 5 minutes expiry
+                '/',
+                null, // domain
+                request()->isSecure(), // secure
+                false, // httpOnly = false so JS pixel can read it
+                false, // raw
+                'Lax' // sameSite
+            );
+
+            return redirect()->away($finalUrl)->withCookie($cookie);
+        }
+
         return redirect()->away($finalUrl);
     }
 

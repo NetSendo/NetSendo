@@ -29,6 +29,7 @@ class PixelEvent extends Model
         'time_on_page_seconds',
         'scroll_depth_percent',
         'custom_data',
+        'session_id',
         'ip_address',
         'occurred_at',
     ];
@@ -49,6 +50,7 @@ class PixelEvent extends Model
     public const TYPE_REMOVE_FROM_CART = 'remove_from_cart';
     public const TYPE_CHECKOUT_STARTED = 'checkout_started';
     public const TYPE_PURCHASE = 'purchase';
+    public const TYPE_ENGAGEMENT = 'engagement';
     public const TYPE_CUSTOM = 'custom';
 
     /**
@@ -165,6 +167,7 @@ class PixelEvent extends Model
             'time_on_page_seconds' => $data['time_on_page'] ?? null,
             'scroll_depth_percent' => $data['scroll_depth'] ?? null,
             'custom_data' => $data['custom_data'] ?? null,
+            'session_id' => $data['session_id'] ?? null,
             'ip_address' => $data['ip_address'] ?? null,
             'occurred_at' => now(),
         ]);
@@ -181,6 +184,10 @@ class PixelEvent extends Model
 
         if ($eventType === self::TYPE_PAGE_VIEW) {
             return self::CATEGORY_NAVIGATION;
+        }
+
+        if ($eventType === self::TYPE_ENGAGEMENT) {
+            return self::CATEGORY_ENGAGEMENT;
         }
 
         return self::CATEGORY_ENGAGEMENT;

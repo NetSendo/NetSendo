@@ -66,6 +66,7 @@ class PixelController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'visitor_token' => 'required|string|max:64',
+            'session_id' => 'nullable|string|max:64',
             'event_type' => 'required|string|max:50',
             'page_url' => 'required|string|max:2048',
             'page_title' => 'nullable|string|max:255',
@@ -124,6 +125,7 @@ class PixelController extends Controller
                 'time_on_page' => $validated['time_on_page'] ?? null,
                 'scroll_depth' => $validated['scroll_depth'] ?? null,
                 'custom_data' => $validated['custom_data'] ?? null,
+                'session_id' => $validated['session_id'] ?? null,
                 'ip_address' => $clientIp,
             ]);
 
@@ -176,6 +178,7 @@ class PixelController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|integer|exists:users,id',
             'visitor_token' => 'required|string|max:64',
+            'session_id' => 'nullable|string|max:64',
             'events' => 'required|array|max:50',
             'events.*.event_type' => 'required|string|max:50',
             'events.*.page_url' => 'required|string|max:2048',
@@ -183,6 +186,8 @@ class PixelController extends Controller
             'events.*.product_id' => 'nullable|string|max:100',
             'events.*.product_name' => 'nullable|string|max:255',
             'events.*.time_on_page' => 'nullable|integer|min:0',
+            'events.*.scroll_depth' => 'nullable|integer|min:0|max:100',
+            'events.*.custom_data' => 'nullable|array',
             // Device info (sent once)
             'screen_resolution' => 'nullable|string|max:20',
             'language' => 'nullable|string|max:10',
@@ -220,6 +225,9 @@ class PixelController extends Controller
                     'product_id' => $eventData['product_id'] ?? null,
                     'product_name' => $eventData['product_name'] ?? null,
                     'time_on_page' => $eventData['time_on_page'] ?? null,
+                    'scroll_depth' => $eventData['scroll_depth'] ?? null,
+                    'custom_data' => $eventData['custom_data'] ?? null,
+                    'session_id' => $validated['session_id'] ?? null,
                     'ip_address' => $clientIp,
                 ]);
 
@@ -360,7 +368,7 @@ class PixelController extends Controller
     {
         return <<<JS
 /**
- * NetSendo Pixel v1.0
+ * NetSendo Pixel v2.0
  * Professional tracking for marketing automation
  */
 (function(window, document) {
@@ -376,18 +384,25 @@ class PixelController extends Controller
         apiUrl: '{$baseUrl}/t/pixel',
         batchSize: 10,
         batchTimeout: 5000,
+        sessionTimeout: 1800000, // 30 minutes in ms
+        maxRetries: 3,
         debug: false
     };
 
     var state = {
         visitorToken: null,
+        sessionId: null,
         eventQueue: [],
         batchTimer: null,
         startTime: Date.now(),
-        maxScrollDepth: 0
+        maxScrollDepth: 0,
+        currentUrl: window.location.href,
+        pageViewSent: false,
+        engagementSent: false
     };
 
-    // Utility functions
+    // ---------- Utility functions ----------
+
     function log() {
         if (config.debug && console && console.log) {
             console.log.apply(console, ['[NetSendo]'].concat(Array.prototype.slice.call(arguments)));
@@ -401,21 +416,20 @@ class PixelController extends Controller
         });
     }
 
+    // ---------- Visitor Token ----------
+
     function getVisitorToken() {
         if (state.visitorToken) return state.visitorToken;
 
-        // Try localStorage first
         try {
             state.visitorToken = localStorage.getItem('ns_visitor');
         } catch (e) {}
 
-        // Fall back to cookie
         if (!state.visitorToken) {
             var match = document.cookie.match(/ns_visitor=([^;]+)/);
             if (match) state.visitorToken = match[1];
         }
 
-        // Generate new token if none exists
         if (!state.visitorToken) {
             state.visitorToken = generateUUID();
             saveVisitorToken(state.visitorToken);
@@ -429,11 +443,64 @@ class PixelController extends Controller
             localStorage.setItem('ns_visitor', token);
         } catch (e) {}
 
-        // Also save as cookie (1 year expiry)
         var expires = new Date();
         expires.setFullYear(expires.getFullYear() + 1);
-        document.cookie = 'ns_visitor=' + token + '; expires=' + expires.toUTCString() + '; path=/; SameSite=Lax';
+        var cookieStr = 'ns_visitor=' + token + '; expires=' + expires.toUTCString() + '; path=/; SameSite=Lax';
+        if (window.location.protocol === 'https:') {
+            cookieStr += '; Secure';
+        }
+        document.cookie = cookieStr;
     }
+
+    // ---------- Session Tracking ----------
+
+    function getSessionId() {
+        if (state.sessionId) return state.sessionId;
+
+        try {
+            var stored = sessionStorage.getItem('ns_session');
+            var ts = sessionStorage.getItem('ns_session_ts');
+            if (stored && ts && (Date.now() - parseInt(ts, 10)) < config.sessionTimeout) {
+                state.sessionId = stored;
+                touchSession();
+                return state.sessionId;
+            }
+        } catch (e) {}
+
+        // Create new session
+        state.sessionId = generateUUID();
+        touchSession();
+        try {
+            sessionStorage.setItem('ns_session', state.sessionId);
+        } catch (e) {}
+
+        return state.sessionId;
+    }
+
+    function touchSession() {
+        try {
+            sessionStorage.setItem('ns_session_ts', String(Date.now()));
+        } catch (e) {}
+    }
+
+    // ---------- UTM Parameters ----------
+
+    function getUtmParams() {
+        var params = {};
+        try {
+            var search = window.location.search;
+            if (!search) return params;
+            var utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+            var urlParams = new URLSearchParams(search);
+            utmKeys.forEach(function(key) {
+                var val = urlParams.get(key);
+                if (val) params[key] = val;
+            });
+        } catch (e) {}
+        return params;
+    }
+
+    // ---------- Device Info ----------
 
     function getDeviceInfo() {
         return {
@@ -443,39 +510,90 @@ class PixelController extends Controller
         };
     }
 
+    // ---------- Retry Queue (localStorage fallback) ----------
+
+    function saveToRetryQueue(endpoint, data) {
+        try {
+            var queue = JSON.parse(localStorage.getItem('ns_retry_queue') || '[]');
+            queue.push({ endpoint: endpoint, data: data, attempts: 0, ts: Date.now() });
+            // Keep max 100 items to avoid bloating storage
+            if (queue.length > 100) queue = queue.slice(-100);
+            localStorage.setItem('ns_retry_queue', JSON.stringify(queue));
+        } catch (e) {}
+    }
+
+    function processRetryQueue() {
+        try {
+            var queue = JSON.parse(localStorage.getItem('ns_retry_queue') || '[]');
+            if (queue.length === 0) return;
+
+            var remaining = [];
+            var toSend = queue.splice(0, 5); // Process up to 5 at a time
+
+            toSend.forEach(function(item) {
+                if (item.attempts >= config.maxRetries) return; // Drop after max retries
+                item.attempts++;
+                sendRequest(item.endpoint, item.data, function(success) {
+                    if (!success) {
+                        remaining.push(item);
+                    }
+                });
+            });
+
+            localStorage.setItem('ns_retry_queue', JSON.stringify(queue.concat(remaining)));
+        } catch (e) {}
+    }
+
+    // ---------- Network ----------
+
     function sendRequest(endpoint, data, callback, useBeacon) {
         var fullData = Object.assign({
             user_id: config.userId,
-            visitor_token: getVisitorToken()
+            visitor_token: getVisitorToken(),
+            session_id: getSessionId()
         }, data, getDeviceInfo());
 
-        // Use sendBeacon only for beforeunload events (when useBeacon is true)
+        // Attach UTM params if this is a page_view
+        if (data && data.event_type === 'page_view') {
+            var utm = getUtmParams();
+            if (Object.keys(utm).length > 0) {
+                fullData.custom_data = Object.assign(fullData.custom_data || {}, utm);
+            }
+        }
+
         if (useBeacon && navigator.sendBeacon) {
             var blob = new Blob([JSON.stringify(fullData)], { type: 'application/json' });
             var sent = navigator.sendBeacon(config.apiUrl + endpoint, blob);
             log('sendBeacon result:', sent);
+            if (!sent) {
+                saveToRetryQueue(endpoint, fullData);
+            }
             if (callback) callback(sent);
             return;
         }
 
-        // Primary method: XHR (more reliable)
         var xhr = new XMLHttpRequest();
         xhr.open('POST', config.apiUrl + endpoint, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 log('XHR response:', xhr.status, xhr.responseText);
-                if (callback) {
-                    callback(xhr.status >= 200 && xhr.status < 300);
+                var success = xhr.status >= 200 && xhr.status < 300;
+                if (!success) {
+                    saveToRetryQueue(endpoint, fullData);
                 }
+                if (callback) callback(success);
             }
         };
         xhr.onerror = function() {
             log('XHR error');
+            saveToRetryQueue(endpoint, fullData);
             if (callback) callback(false);
         };
         xhr.send(JSON.stringify(fullData));
     }
+
+    // ---------- Event Queue ----------
 
     function queueEvent(eventType, eventData) {
         var event = Object.assign({
@@ -487,11 +605,9 @@ class PixelController extends Controller
         state.eventQueue.push(event);
         log('Event queued:', eventType, event);
 
-        // Send immediately if queue is full
         if (state.eventQueue.length >= config.batchSize) {
             flushEvents();
         } else if (!state.batchTimer) {
-            // Set timer for batch send
             state.batchTimer = setTimeout(flushEvents, config.batchTimeout);
         }
     }
@@ -513,16 +629,35 @@ class PixelController extends Controller
         }
     }
 
+    // ---------- Tracking Functions ----------
+
     function trackPageView() {
+        // Guard: prevent duplicate page_view for the same URL
+        if (state.pageViewSent && state.currentUrl === window.location.href) {
+            log('Page view already sent for this URL, skipping');
+            return;
+        }
+
+        state.currentUrl = window.location.href;
+        state.pageViewSent = true;
+        state.engagementSent = false;
+        state.startTime = Date.now();
+        state.maxScrollDepth = 0;
+
         queueEvent('page_view', {
             referrer: document.referrer
         });
     }
 
-    function trackTimeOnPage() {
+    function trackEngagement() {
+        // Send engagement data (time on page + scroll depth) as separate event type
+        // Guard: only send once per page
+        if (state.engagementSent) return;
+        state.engagementSent = true;
+
         var timeOnPage = Math.round((Date.now() - state.startTime) / 1000);
-        if (timeOnPage > 0) {
-            queueEvent('page_view', {
+        if (timeOnPage > 1) {
+            queueEvent('engagement', {
                 time_on_page: timeOnPage,
                 scroll_depth: state.maxScrollDepth
             });
@@ -544,7 +679,65 @@ class PixelController extends Controller
         }
     }
 
-    // Public API
+    // ---------- SPA Navigation Tracking ----------
+
+    function setupSPATracking() {
+        // Listen for browser back/forward
+        window.addEventListener('popstate', function() {
+            onNavigationChange();
+        });
+
+        // Monkey-patch pushState and replaceState
+        var originalPushState = history.pushState;
+        var originalReplaceState = history.replaceState;
+
+        history.pushState = function() {
+            originalPushState.apply(this, arguments);
+            onNavigationChange();
+        };
+
+        history.replaceState = function() {
+            originalReplaceState.apply(this, arguments);
+            onNavigationChange();
+        };
+    }
+
+    function onNavigationChange() {
+        // Only track if URL actually changed
+        if (state.currentUrl === window.location.href) return;
+
+        log('SPA navigation detected:', window.location.href);
+
+        // Send engagement for previous page before tracking new one
+        state.engagementSent = false;
+        trackEngagement();
+
+        // Reset state for new page
+        state.pageViewSent = false;
+        trackPageView();
+    }
+
+    // ---------- Auto-Identify from Email Clicks ----------
+
+    function checkAutoIdentify() {
+        // Check for ns_sid cookie set by email tracking redirect
+        try {
+            var match = document.cookie.match(/ns_sid=([^;]+)/);
+            if (match) {
+                var email = decodeURIComponent(match[1]);
+                if (email && email.indexOf('@') > -1) {
+                    sendRequest('/identify', { email: email }, function(success) {
+                        log('Auto-identify from email click:', success);
+                    });
+                    // Clear the cookie after identifying
+                    document.cookie = 'ns_sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                }
+            }
+        } catch (e) {}
+    }
+
+    // ---------- Public API ----------
+
     NS.push = function(args) {
         if (!Array.isArray(args)) return;
 
@@ -574,6 +767,7 @@ class PixelController extends Controller
                 break;
 
             case 'page_view':
+                state.pageViewSent = false; // Allow explicit page_view calls
                 trackPageView();
                 break;
 
@@ -582,6 +776,8 @@ class PixelController extends Controller
                 break;
         }
     };
+
+    // ---------- Initialization ----------
 
     // Process any commands queued before script loaded
     var queue = NS.slice ? NS.slice(0) : [];
@@ -596,16 +792,25 @@ class PixelController extends Controller
     // Track scroll depth
     window.addEventListener('scroll', trackScrollDepth, { passive: true });
 
-    // Track time on page when leaving
-    window.addEventListener('beforeunload', trackTimeOnPage);
+    // Track engagement (time on page + scroll) when leaving
+    window.addEventListener('beforeunload', trackEngagement);
     document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {
-            trackTimeOnPage();
+            trackEngagement();
         }
     });
 
+    // Set up SPA navigation tracking
+    setupSPATracking();
+
+    // Auto-identify from email click cookies
+    checkAutoIdentify();
+
+    // Process any failed events from previous sessions
+    processRetryQueue();
+
     NS._initialized = true;
-    log('Pixel loaded for user:', config.userId);
+    log('Pixel v2.0 loaded for user:', config.userId);
 
 })(window, document);
 JS;

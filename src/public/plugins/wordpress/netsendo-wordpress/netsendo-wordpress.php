@@ -412,47 +412,7 @@ function netsendo_wp_inject_pixel_script() {
 }
 add_action('wp_head', 'netsendo_wp_inject_pixel_script', 1);
 
-/**
- * Track page views on all pages
- */
-function netsendo_wp_track_page_view() {
-    $settings = NetSendo_WP_Admin_Settings::get_settings();
-
-    // Only track if Pixel is enabled and configured
-    if (empty($settings['enable_pixel']) || empty($settings['user_id'])) {
-        return;
-    }
-
-    // Get page info
-    $page_title = wp_title('|', false, 'right');
-    if (empty($page_title)) {
-        $page_title = get_bloginfo('name');
-    }
-
-    $page_type = 'page';
-    if (is_front_page()) {
-        $page_type = 'home';
-    } elseif (is_single()) {
-        $page_type = 'post';
-    } elseif (is_page()) {
-        $page_type = 'page';
-    } elseif (is_archive()) {
-        $page_type = 'archive';
-    } elseif (is_search()) {
-        $page_type = 'search';
-    }
-
-    ?>
-    <script>
-    if (typeof NetSendo !== 'undefined') {
-        NetSendo.push(['track', 'page_view', {
-            page_title: '<?php echo esc_js(trim($page_title)); ?>',
-            page_type: '<?php echo esc_js($page_type); ?>',
-            page_url: window.location.href
-        }]);
-    }
-    </script>
-    <?php
-}
-add_action('wp_footer', 'netsendo_wp_track_page_view');
+// NOTE: Page view tracking is handled automatically by the NetSendo Pixel JS
+// (trackPageView() is called on script initialization). No additional tracking
+// from wp_footer is needed — it was causing double-counting of page views.
 
