@@ -144,70 +144,98 @@ class AgentOrchestrator
                 $intent['has_user_details'] = true;
                 $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
             } else {
-                // Step 0.5: Pre-check for situation_analysis keywords (deterministic, bypasses AI classification)
-                // This ensures well-known analysis requests always go to SituationAnalyzer
-                // instead of being misclassified by AI as general conversation.
-                $lowerMessage = mb_strtolower($message);
-                $situationKeywords = [
-                    'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-                    'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-                    'analyze situation', 'current state', 'analyze current',
-                    'situation analysis', 'give me an overview', 'marketing audit',
-                    'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-                    'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-                ];
-                $isSituationAnalysis = false;
-                foreach ($situationKeywords as $keyword) {
-                    if (mb_strpos($lowerMessage, $keyword) !== false) {
-                        $isSituationAnalysis = true;
-                        break;
-                    }
-                }
+                // Step 0.4: Deterministic follow-up detection
+                // Short messages that look like replies to bot questions/proposals
+                // should ALWAYS go to handleConversation with full history.
+                // This prevents the AI classifier from misrouting them as new requests.
+                $isFollowUp = $this->isFollowUpMessage($message, $conversation);
 
-                if ($isSituationAnalysis) {
-                    $result = $this->handleSituationAnalysis($user, $conversation, $settings);
+                if ($isFollowUp) {
+                    Log::debug('Deterministic follow-up detected, routing to conversation handler', [
+                        'message' => mb_substr($message, 0, 50),
+                        'conversation_id' => $conversation->id,
+                    ]);
+
+                    // Clear awaiting_continuation flag
+                    $ctx = $conversation->context ?? [];
+                    if (!empty($ctx['awaiting_continuation'])) {
+                        unset($ctx['awaiting_continuation']);
+                        $conversation->update(['context' => $ctx]);
+                    }
+
+                    $knowledgeContext = $this->knowledgeBase->getContext($user, 'general');
+                    $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
+                    if ($goalsContext) {
+                        $knowledgeContext .= $goalsContext;
+                    }
+
+                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
                 } else {
-                    // Step 1: Check if this is a high-level goal
-                    // Wrapped in try-catch: ai_goals table may not exist if migration hasn't been run
-                    $goalData = null;
-                    try {
-                        $goalData = $this->goalPlanner->isGoalRequest($message, $user);
-                    } catch (\Exception $e) {
-                        Log::debug('Goal detection skipped (table may not exist)', ['error' => $e->getMessage()]);
-                    }
-
-                    if ($goalData) {
-                        try {
-                            // Create persistent goal and decompose
-                            $result = $this->handleGoalRequest($goalData, $user, $conversation);
-                        } catch (\Exception $e) {
-                            Log::warning('Goal handling failed, falling back to intent classification', ['error' => $e->getMessage()]);
-                            $goalData = null; // Fall through to normal flow
+                    // Step 0.5: Pre-check for situation_analysis keywords (deterministic, bypasses AI classification)
+                    // This ensures well-known analysis requests always go to SituationAnalyzer
+                    // instead of being misclassified by AI as general conversation.
+                    $lowerMessage = mb_strtolower($message);
+                    $situationKeywords = [
+                        'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
+                        'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
+                        'analyze situation', 'current state', 'analyze current',
+                        'situation analysis', 'give me an overview', 'marketing audit',
+                        'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
+                        'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
+                    ];
+                    $isSituationAnalysis = false;
+                    foreach ($situationKeywords as $keyword) {
+                        if (mb_strpos($lowerMessage, $keyword) !== false) {
+                            $isSituationAnalysis = true;
+                            break;
                         }
                     }
 
-                    if (!$goalData) {
-                        // Step 2: Classify intent
-                        $intent = $this->classifyIntent($message, $conversation, $user);
+                    if ($isSituationAnalysis) {
+                        $result = $this->handleSituationAnalysis($user, $conversation, $settings);
+                    } else {
+                        // Step 1: Check if this is a high-level goal
+                        // Wrapped in try-catch: ai_goals table may not exist if migration hasn't been run
+                        $goalData = null;
+                        try {
+                            $goalData = $this->goalPlanner->isGoalRequest($message, $user);
+                        } catch (\Exception $e) {
+                            Log::debug('Goal detection skipped (table may not exist)', ['error' => $e->getMessage()]);
+                        }
 
-                        // Step 2.5: Handle situation_analysis intent via SituationAnalyzer
-                        if (($intent['task_type'] ?? '') === 'situation_analysis') {
-                            $result = $this->handleSituationAnalysis($user, $conversation, $settings);
-                        } else {
-                            // Step 3: Get knowledge context for this intent
-                            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
-
-                            // Inject active goal context
-                            $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
-                            if ($goalsContext) {
-                                $knowledgeContext .= $goalsContext;
+                        if ($goalData) {
+                            try {
+                                // Create persistent goal and decompose
+                                $result = $this->handleGoalRequest($goalData, $user, $conversation);
+                            } catch (\Exception $e) {
+                                Log::warning('Goal handling failed, falling back to intent classification', ['error' => $e->getMessage()]);
+                                $goalData = null; // Fall through to normal flow
                             }
+                        }
 
-                            // Step 4: Route to appropriate agent or handle as conversation
-                            if ($intent['requires_agent']) {
-                                $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                        if (!$goalData) {
+                            // Step 2: Classify intent
+                            $intent = $this->classifyIntent($message, $conversation, $user);
+
+                            // Step 2.5: Handle situation_analysis intent via SituationAnalyzer
+                            if (($intent['task_type'] ?? '') === 'situation_analysis') {
+                                $result = $this->handleSituationAnalysis($user, $conversation, $settings);
                             } else {
-                                $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                                // Step 3: Get knowledge context for this intent
+                                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+
+                                // Inject active goal context
+                                $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
+                                if ($goalsContext) {
+                                    $knowledgeContext .= $goalsContext;
+                                }
+
+                                // Step 4: Route to appropriate agent or handle as conversation
+                                if ($intent['requires_agent']) {
+                                    $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                                } else {
+                                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                                }
                             }
                         }
                     }
@@ -236,6 +264,10 @@ class AgentOrchestrator
                 $result['tokens_output'] ?? 0,
                 $modelUsed,
             );
+
+            // Step 4.5: Auto-set continuation flag when bot proposes actions
+            // This ensures follow-up replies route to handleConversation with full history
+            $this->maybeSetContinuationFlag($conversation, $result['message']);
 
             // Step 5: Track token usage
             $totalTokens = ($result['tokens_input'] ?? 0) + ($result['tokens_output'] ?? 0);
@@ -904,27 +936,53 @@ PROMPT;
             return null; // Agent flow — not streamable, processMessage will handle
         }
 
-        // Classify intent using message text (it's already passed as $message param, no need for DB)
-        $intent = $this->classifyIntent($message, $conversation, $user);
+        // Check for deterministic follow-up BEFORE calling AI classifier
+        // (same logic as processMessage Step 0.4)
+        $isFollowUp = $this->isFollowUpMessage($message, $conversation);
 
-        // Check for situation_analysis keywords (same pre-check as processMessage)
-        $lowerMessage = mb_strtolower($message);
-        $situationKeywords = [
-            'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-            'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-            'analyze situation', 'current state', 'analyze current',
-            'situation analysis', 'give me an overview', 'marketing audit',
-            'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-            'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-        ];
-        foreach ($situationKeywords as $keyword) {
-            if (mb_strpos($lowerMessage, $keyword) !== false) {
-                return null; // Situation analysis — not streamable, processMessage will handle
+        if ($isFollowUp) {
+            Log::debug('Stream: follow-up detected, streaming with full history', [
+                'message' => mb_substr($message, 0, 50),
+            ]);
+
+            // Clear awaiting_continuation flag
+            $ctx = $conversation->context ?? [];
+            if (!empty($ctx['awaiting_continuation'])) {
+                unset($ctx['awaiting_continuation']);
+                $conversation->update(['context' => $ctx]);
             }
-        }
 
-        if ($intent['requires_agent']) {
-            return null; // Agent flow — not streamable, processMessage will handle
+            // Set intent as follow-up conversation (skip AI classification)
+            $intent = [
+                'requires_agent' => false,
+                'intent' => 'follow_up_answer',
+                'task_type' => 'general',
+                'confidence' => 1.0,
+                'parameters' => [],
+            ];
+        } else {
+            // Classify intent using message text
+            $intent = $this->classifyIntent($message, $conversation, $user);
+
+            // Check for situation_analysis keywords (same pre-check as processMessage)
+            $lowerMessage = mb_strtolower($message);
+            $situationKeywords = [
+                'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
+                'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
+                'analyze situation', 'current state', 'analyze current',
+                'situation analysis', 'give me an overview', 'marketing audit',
+                'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
+                'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
+            ];
+            foreach ($situationKeywords as $keyword) {
+                if (mb_strpos($lowerMessage, $keyword) !== false) {
+                    return null; // Situation analysis — not streamable, processMessage will handle
+                }
+            }
+
+            if ($intent['requires_agent']) {
+                return null; // Agent flow — not streamable, processMessage will handle
+            }
         }
 
         // Conversation mode — stream it!
@@ -996,6 +1054,11 @@ PROMPT;
                     // Auto-enrich knowledge
                     if ($streamCompleted && $conversation->message_count % 5 === 0) {
                         $this->tryAutoEnrich($user, $conversation);
+                    }
+
+                    // Set continuation flag for follow-up detection
+                    if ($streamCompleted) {
+                        $this->maybeSetContinuationFlag($conversation, $fullText);
                     }
                 }
 
@@ -1509,5 +1572,129 @@ PROMPT;
 
         $data = json_decode($response, true);
         return is_array($data) ? $data : null;
+    }
+
+    /**
+     * Detect if a message is a short follow-up reply to a bot question/proposal.
+     *
+     * Uses two signals:
+     * 1. The conversation has an 'awaiting_continuation' flag (set after bot proposed action)
+     * 2. The message is short and matches common reply patterns
+     *
+     * This prevents the AI classifier from misrouting "Tak. Zrób" as a new campaign/agent request.
+     */
+    protected function isFollowUpMessage(string $message, AiConversation $conversation): bool
+    {
+        $trimmed = trim($message);
+        $lower = mb_strtolower($trimmed);
+        $length = mb_strlen($trimmed);
+
+        // Only consider short messages (< 60 chars) — longer messages are likely new requests
+        if ($length > 60) {
+            return false;
+        }
+
+        // Signal 1: Conversation flagged as awaiting continuation
+        $context = $conversation->context ?? [];
+        $awaitingContinuation = !empty($context['awaiting_continuation']);
+
+        // Signal 2: Message matches common follow-up patterns
+        $followUpPatterns = [
+            // Polish affirmations
+            'tak', 'ok', 'okej', 'dobrze', 'jasne', 'pewnie', 'zgoda', 'super', 'git',
+            'zrób', 'zrob', 'rób', 'rob', 'dalej', 'lecimy', 'jazda', 'dawaj', 'wio',
+            'tak, zrób', 'tak zrób', 'tak. zrób', 'tak zrob', 'tak. zrob',
+            'zrób to', 'zrob to', 'rób to', 'rob to',
+            'no to lecimy', 'no to jazda', 'no to dawaj',
+            'wyślij', 'wyslij', 'zaplanuj', 'wykonaj', 'uruchom', 'startuj',
+            'dobra', 'spoko', 'luzik', 'w porządku', 'w porzadku',
+            // English affirmations
+            'yes', 'yep', 'yeah', 'sure', 'do it', 'go ahead', 'proceed',
+            'go for it', 'let\'s go', 'start', 'execute', 'send it', 'send',
+            'fine', 'perfect', 'great', 'awesome', 'sounds good', 'lgtm',
+            // Negations (also follow-ups)
+            'nie', 'no', 'nope', 'nie, dziękuję', 'anuluj', 'cancel', 'stop',
+            'nie chcę', 'nie chce', 'rezygnuję', 'rezygnuje',
+        ];
+
+        $isPatternMatch = in_array($lower, $followUpPatterns, true);
+
+        // Also match numbered responses: "1", "2", "A", "B", "opcja 1", "option 2", etc.
+        if (!$isPatternMatch) {
+            $isPatternMatch = (bool) preg_match('/^(opcja\s+)?\d{1,2}\.?$/iu', $lower)
+                || (bool) preg_match('/^[a-d]\.?$/i', $lower)
+                || (bool) preg_match('/^(tak|yes|ok)[\.\!\,]?\s*(zrób|zrob|dalej|wyślij|wyslij|proceed|send|go)?[\.\!]?$/iu', $lower);
+        }
+
+        // If the conversation is flagged AND pattern matches → definite follow-up
+        if ($awaitingContinuation && $isPatternMatch) {
+            return true;
+        }
+
+        // If pattern matches, check if the previous bot message contained questions or proposals
+        if ($isPatternMatch) {
+            $lastAssistantMsg = $conversation->messages()
+                ->where('role', 'assistant')
+                ->orderByDesc('created_at')
+                ->first();
+
+            if ($lastAssistantMsg) {
+                $content = $lastAssistantMsg->content;
+                // Check for question marks, numbered options, or action proposals
+                $hasQuestion = str_contains($content, '?');
+                $hasOptions = (bool) preg_match('/\d+[\.\)]\s/', $content);
+                $hasActionProposal = str_contains($content, 'Chcesz')
+                    || str_contains($content, 'chcesz')
+                    || str_contains($content, 'Want')
+                    || str_contains($content, 'want')
+                    || str_contains($content, 'Shall')
+                    || str_contains($content, 'shall')
+                    || str_contains($content, 'wykorzystał')
+                    || str_contains($content, 'Wykorzystał');
+
+                if ($hasQuestion || $hasOptions || $hasActionProposal) {
+                    return true;
+                }
+            }
+        }
+
+        // If conversation has awaiting flag, even slightly longer messages could be follow-ups
+        // but only if they're still relatively short (< 40 chars)
+        if ($awaitingContinuation && $length < 40) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * After bot sends a response, check if it contains action proposals or questions.
+     * If so, flag the conversation so the next message gets full-context treatment.
+     */
+    protected function maybeSetContinuationFlag(AiConversation $conversation, string $botResponse): void
+    {
+        // Detect if bot response expects a follow-up
+        $expectsFollowUp = str_contains($botResponse, '?')
+            || (bool) preg_match('/\d+[\.\)]\s/', $botResponse)
+            || str_contains($botResponse, 'Chcesz')
+            || str_contains($botResponse, 'chcesz')
+            || str_contains($botResponse, 'Want')
+            || str_contains($botResponse, 'Shall')
+            || str_contains($botResponse, 'wybierz')
+            || str_contains($botResponse, 'Wybierz')
+            || str_contains($botResponse, 'wykorzystał')
+            || str_contains($botResponse, '🚀')  // action proposal emoji
+            || str_contains($botResponse, 'gotowe do')
+            || str_contains($botResponse, 'ready to');
+
+        $context = $conversation->context ?? [];
+
+        if ($expectsFollowUp) {
+            $context['awaiting_continuation'] = true;
+        } else {
+            unset($context['awaiting_continuation']);
+        }
+
+        $conversation->update(['context' => $context]);
     }
 }
