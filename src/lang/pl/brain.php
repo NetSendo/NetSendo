@@ -18,6 +18,14 @@ return [
     'mode_label' => '🔄 Tryb: :mode',
     'approve_reject' => '✅ Zaakceptuj | ❌ Odrzuć',
     'approval_expiry' => 'Plan wygasa za 24h.',
+    'approve' => 'Zatwierdź',
+    'reject' => 'Odrzuć',
+    // Goal proposals
+    'goal_proposal_title' => 'Propozycja celu',
+    'goal_approved' => 'Cel ":title" (ID: :id) utworzony!',
+    'goal_rejected' => 'Propozycja celu ":title" odrzucona.',
+    'goal_expired' => 'Ta propozycja celu wygasła lub została już obsłużona.',
+    'goal_invalid' => 'Nieprawidłowa propozycja celu.',
     'telegram_link_instructions' => 'Wyślij do bota Telegram: /connect :code',
     'telegram_new_conversation_btn' => 'Nowa konwersacja',
     'telegram_new_conversation_confirm' => 'Następna wiadomość rozpocznie nową konwersację.',
@@ -103,6 +111,23 @@ return [
         'automation_rules' => '📋 Reguły: :active aktywnych / :total łącznie',
         'automation_execs' => '🔄 Wykonania: :count',
         'automation_success' => '✅ Success rate: :rate%',
+        // Automation management
+        'automation_created' => '⚙️ Automatyzacja ":name" (ID: :id) utworzona\n  🎯 Trigger: :trigger → :actions akcji\n  :status',
+        'automation_updated' => '✏️ Automatyzacja ":name" (ID: :id) zaktualizowana — zmieniono: :fields',
+        'automation_toggled' => '🔄 Automatyzacja ":name" (ID: :id): :state',
+        'automation_deleted' => '🗑️ Automatyzacja ":name" (ID: :id) usunięta',
+        'automation_active' => 'Aktywna',
+        'automation_inactive' => 'Nieaktywna',
+        'automation_list_header' => '⚙️ **Automatyzacje** (:count)',
+        'automation_actions_label' => 'akcji',
+        'automation_none' => 'Brak automatyzacji. Stwórz pierwszą automatyzację!',
+        'automation_missing_fields' => '⚠️ Brak nazwy lub triggera automatyzacji',
+        'automation_invalid_trigger' => '⚠️ Nieznany trigger: :trigger',
+        'automation_no_actions' => '⚠️ Automatyzacja musi mieć co najmniej jedną akcję',
+        'automation_missing_id' => '⚠️ Brak ID automatyzacji',
+        'automation_not_found' => '⚠️ Automatyzacja ID :id nie znaleziona',
+        'automation_no_changes' => 'Brak zmian do zastosowania',
+        'automation_system_protected' => '⚠️ Automatyzacja ":name" jest systemowa i nie może być usunięta',
     ],
 
     // === Campaign Agent ===
@@ -123,6 +148,24 @@ return [
         'info_lists' => '📋 **Twoje listy:**',
         'info_when' => '5. **Kiedy wysłać?** — natychmiast, czy zaplanować na konkretną datę?',
         'info_footer' => 'Podaj jak najwięcej szczegółów, a przygotuję profesjonalny plan kampanii.',
+        // A/B Tests
+        'ab_test_created' => '🧪 Test A/B ":name" (ID: :id) utworzony\n  Typ: :type | :variants wariantów | Próbka: :sample% | Czas: :duration h',
+        'ab_test_name' => 'A/B Test: :subject',
+        'ab_results_header' => '📊 **Wyniki A/B: :name** (:status)',
+        'ab_list_header' => '🧪 **Testy A/B** (:count)',
+        'ab_no_message' => '⚠️ Brak wiadomości do testu A/B — najpierw utwórz wiadomość',
+        'ab_message_not_found' => '⚠️ Wiadomość ID :id nie znaleziona',
+        'ab_no_tests' => 'Brak testów A/B',
+        'ab_sent' => 'Wysłano',
+        'ab_winner' => 'Zwycięzca: wariant :letter (wg :metric)',
+        'ab_still_running' => 'Test w toku (:elapsed)',
+        'ab_variants_label' => 'wariantów',
+        'ab_metric' => 'Metryka',
+        // CRM targeting
+        'crm_contacts_selected' => '👥 Wybrano :count kontaktów CRM',
+        'crm_segment_selected' => '👥 Segment CRM [:segment]: :count kontaktów',
+        // Scheduling
+        'schedule_created' => '📅 Zaplanowano: ":subject"\n  ⏰ :schedule\n  📋 Lista: :list',
     ],
 
     // === List Agent ===
@@ -182,6 +225,12 @@ return [
         'cron_tasks_found' => '📝 Znalezionych zadań: :count',
         'cron_executed' => 'Wykonano: :success/:total',
         'cron_next_run' => 'Następne uruchomienie: ~:time',
+        'cron_pending_approval' => '📩 Zadań oczekujących na zatwierdzenie: :count',
+        'cron_manual_mode' => 'Tryb manualny — powyższe zadania możesz wykonać w panelu.',
+        'cron_approval_title' => 'Zadanie do zatwierdzenia (CRON)',
+        'priority' => 'Priorytet',
+        'goals_auto_created' => 'Auto-utworzono :count celów',
+        'kb_enriched' => 'Analiza zapisana do bazy wiedzy.',
     ],
 
     // === Research Agent ===

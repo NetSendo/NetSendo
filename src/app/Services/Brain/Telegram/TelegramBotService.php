@@ -393,7 +393,7 @@ class TelegramBotService
             return;
         }
 
-        // Parse callback data: e.g., "approve:123" or "reject:123"
+        // Parse callback data: e.g., "approve:123", "reject:123", "approve_goal:123", "reject_goal:123"
         $parts = explode(':', $data);
         $action = $parts[0] ?? '';
         $approvalId = (int) ($parts[1] ?? 0);
@@ -404,6 +404,14 @@ class TelegramBotService
 
         $user = $this->authService->findUserByChatId($chatId);
         if (!$user) {
+            return;
+        }
+
+        $this->setUserLocale($user);
+
+        // Handle goal proposals
+        if ($action === 'approve_goal' || $action === 'reject_goal') {
+            $this->handleGoalApproval($chatId, $user, $approvalId, $action === 'approve_goal');
             return;
         }
 
@@ -424,6 +432,57 @@ class TelegramBotService
                 $this->sendMessage($chatId, "❌ Plan rejected.");
             }
         } catch (\Exception $e) {
+            $this->sendMessage($chatId, "❌ Error: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Handle goal proposal approval/rejection from Telegram.
+     */
+    protected function handleGoalApproval(string $chatId, User $user, int $approvalId, bool $approved): void
+    {
+        try {
+            $approval = AiPendingApproval::where('user_id', $user->id)
+                ->where('id', $approvalId)
+                ->where('status', 'pending')
+                ->first();
+
+            if (!$approval) {
+                $this->sendMessage($chatId, "⚠️ " . __('brain.goal_expired'));
+                return;
+            }
+
+            $goalData = json_decode($approval->summary, true);
+
+            if (!$goalData || ($goalData['type'] ?? '') !== 'goal_proposal') {
+                $this->sendMessage($chatId, "⚠️ " . __('brain.goal_invalid'));
+                return;
+            }
+
+            if ($approved) {
+                // Create the goal
+                $goalPlanner = app(\App\Services\Brain\GoalPlanner::class);
+                $goal = $goalPlanner->createGoal(
+                    $user,
+                    $goalData['title'],
+                    $goalData['description'] ?? null,
+                    $goalData['priority'] ?? 'medium',
+                );
+
+                $approval->update(['status' => 'approved']);
+
+                $this->sendMessage($chatId, "✅ " . __('brain.goal_approved', [
+                    'title' => $goal->title,
+                    'id' => $goal->id,
+                ]));
+            } else {
+                $approval->update(['status' => 'rejected']);
+                $this->sendMessage($chatId, "❌ " . __('brain.goal_rejected', [
+                    'title' => $goalData['title'],
+                ]));
+            }
+        } catch (\Exception $e) {
+            Log::error('Goal approval failed', ['error' => $e->getMessage()]);
             $this->sendMessage($chatId, "❌ Error: {$e->getMessage()}");
         }
     }

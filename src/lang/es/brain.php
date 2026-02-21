@@ -17,7 +17,15 @@ return [
     'steps_to_execute' => '**Pasos a ejecutar:**',
     'mode_label' => '🔄 Modo: :mode',
     'approve_reject' => '✅ Aprobar | ❌ Rechazar',
-    'approval_expiry' => 'El plan expira en 24h.',
+    'approval_expiry' => 'El plan caduca en 24h.',
+    'approve' => 'Aprobar',
+    'reject' => 'Rechazar',
+    // Goal proposals
+    'goal_proposal_title' => 'Propuesta de objetivo',
+    'goal_approved' => '¡Objetivo ":title" (ID: :id) creado!',
+    'goal_rejected' => 'Propuesta de objetivo ":title" rechazada.',
+    'goal_expired' => 'Esta propuesta de objetivo ha expirado o ya fue procesada.',
+    'goal_invalid' => 'Propuesta de objetivo inválida.',
     'telegram_link_instructions' => 'Envía a tu bot de Telegram: /connect :code',
     'telegram_new_conversation_btn' => 'Nueva conversación',
     'telegram_new_conversation_confirm' => 'El próximo mensaje iniciará una nueva conversación.',
@@ -103,6 +111,23 @@ return [
         'automation_rules' => '📋 Reglas: :active activas / :total total',
         'automation_execs' => '🔄 Ejecuciones: :count',
         'automation_success' => '✅ Tasa de éxito: :rate%',
+        // Automation management
+        'automation_created' => '⚙️ Automatización ":name" (ID: :id) creada\n  🎯 Trigger: :trigger → :actions acciones\n  :status',
+        'automation_updated' => '✏️ Automatización ":name" (ID: :id) actualizada — cambiado: :fields',
+        'automation_toggled' => '🔄 Automatización ":name" (ID: :id): :state',
+        'automation_deleted' => '🗑️ Automatización ":name" (ID: :id) eliminada',
+        'automation_active' => 'Activa',
+        'automation_inactive' => 'Inactiva',
+        'automation_list_header' => '⚙️ **Automatizaciones** (:count)',
+        'automation_actions_label' => 'acciones',
+        'automation_none' => 'No hay automatizaciones aún. ¡Crea tu primera automatización!',
+        'automation_missing_fields' => '⚠️ Falta nombre o trigger de automatización',
+        'automation_invalid_trigger' => '⚠️ Trigger desconocido: :trigger',
+        'automation_no_actions' => '⚠️ La automatización debe tener al menos una acción',
+        'automation_missing_id' => '⚠️ Falta ID de automatización',
+        'automation_not_found' => '⚠️ Automatización ID :id no encontrada',
+        'automation_no_changes' => 'Sin cambios para aplicar',
+        'automation_system_protected' => '⚠️ La automatización ":name" es una regla del sistema y no puede ser eliminada',
     ],
 
     // === Campaign Agent ===
@@ -123,6 +148,24 @@ return [
         'info_lists' => '📋 **Tus listas:**',
         'info_when' => '5. **¿Cuándo enviar?** — ¿inmediatamente o programar para una fecha específica?',
         'info_footer' => 'Proporciona todos los detalles que puedas y prepararé un plan de campaña profesional.',
+        // A/B Tests
+        'ab_test_created' => '🧪 Test A/B ":name" (ID: :id) creado\n  Tipo: :type | :variants variantes | Muestra: :sample% | Duración: :duration h',
+        'ab_test_name' => 'Test A/B: :subject',
+        'ab_results_header' => '📊 **Resultados A/B: :name** (:status)',
+        'ab_list_header' => '🧪 **Tests A/B** (:count)',
+        'ab_no_message' => '⚠️ No hay mensaje para test A/B — crea un mensaje primero',
+        'ab_message_not_found' => '⚠️ Mensaje ID :id no encontrado',
+        'ab_no_tests' => 'Sin tests A/B',
+        'ab_sent' => 'Enviado',
+        'ab_winner' => 'Ganador: variante :letter (por :metric)',
+        'ab_still_running' => 'Test en progreso (:elapsed)',
+        'ab_variants_label' => 'variantes',
+        'ab_metric' => 'Métrica',
+        // CRM targeting
+        'crm_contacts_selected' => '👥 Seleccionados :count contactos CRM',
+        'crm_segment_selected' => '👥 Segmento CRM [:segment]: :count contactos',
+        // Scheduling
+        'schedule_created' => '📅 Programado: ":subject"\n  ⏰ :schedule\n  📋 Lista: :list',
     ],
 
     // === List Agent ===
@@ -182,6 +225,12 @@ return [
         'cron_tasks_found' => '📝 Tareas encontradas: :count',
         'cron_executed' => 'Ejecutadas: :success/:total',
         'cron_next_run' => 'Próxima ejecución: ~:time',
+        'cron_pending_approval' => '📩 Tareas pendientes de aprobación: :count',
+        'cron_manual_mode' => 'Modo manual — puedes ejecutar las tareas anteriores desde el panel.',
+        'cron_approval_title' => 'Tarea para aprobación (CRON)',
+        'priority' => 'Prioridad',
+        'goals_auto_created' => ':count objetivos creados automáticamente',
+        'kb_enriched' => 'Análisis guardado en la base de conocimiento.',
     ],
 
     // === Research Agent ===

@@ -2,9 +2,12 @@
 
 namespace App\Services\Brain\Agents;
 
+use App\Models\AbTest;
+use App\Models\AbTestVariant;
 use App\Models\AiActionPlan;
 use App\Models\AiActionPlanStep;
 use App\Models\ContactList;
+use App\Models\CrmContact;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\AI\AiService;
@@ -43,6 +46,9 @@ class CampaignAgent extends BaseAgent
             'optimize_send_time',
             'suggest_audience',
             'schedule_campaign',
+            'create_ab_test',
+            'check_ab_results',
+            'list_ab_tests',
         ];
     }
 
@@ -99,17 +105,15 @@ class CampaignAgent extends BaseAgent
         $intentDesc = $intent['intent'];
         $params = $intent['parameters'] ?? [];
 
+        // Always provide available lists and CRM data for AI context
+        $listsBlock = $this->buildAvailableListsContext($user);
+        $crmBlock = $this->buildCrmSegmentsContext($user);
+
         // For cron tasks, enrich intent with auto-context so AI has everything it needs
         $autoContextBlock = '';
         if (!empty($params['cron_task']) && !empty($params['auto_context'])) {
             $auto = $params['auto_context'];
             $autoContextBlock = "\n\nAUTOMATIC EXECUTION CONTEXT (cron mode — no user interaction available):\n";
-            if (!empty($auto['lists'])) {
-                $autoContextBlock .= "Available contact lists:\n";
-                foreach ($auto['lists'] as $list) {
-                    $autoContextBlock .= "  - \"{$list['name']}\" (ID: {$list['id']}, {$list['subscribers_count']} subscribers)\n";
-                }
-            }
             if (!empty($auto['recent_topics'])) {
                 $autoContextBlock .= "Recently used topics (avoid repeating): " . implode(', ', $auto['recent_topics']) . "\n";
             }
@@ -127,6 +131,10 @@ You are an email marketing expert. The user wants to perform the following actio
 Intent: {$intentDesc}
 Parameters: {$paramsJson}
 {$autoContextBlock}
+
+{$listsBlock}
+
+{$crmBlock}
 
 {$knowledgeContext}
 
@@ -147,12 +155,16 @@ Create a detailed campaign plan. Respond in JSON:
 }
 
 Available action_types:
-- select_audience: select target audience (config: {list_ids: [], segment_criteria: {}})
+- select_audience: select target audience (config: {list_ids: [N, ...], crm_contact_ids: [N, ...], crm_segment: "all"|"hot_leads"|"warm"|"cold"})
 - generate_content: generate message content (config: {type: "email"|"sms", tone: "", topic: ""})
 - create_message: create message in the system (config: {subject: "", content_ref: "step_N"})
-- schedule_send: schedule sending (config: {send_at: "datetime|immediate", list_id: N})
-- create_automation: create automation (config: {trigger: "", actions: []})
+- schedule_send: schedule sending (config: {send_at: "YYYY-MM-DD HH:MM"|"immediate", list_id: N, message_id: N})
 - analyze_results: analyze results after sending (config: {campaign_id: N, wait_hours: 24})
+- create_ab_test: create A/B test for a message (config: {message_id: N, test_type: "subject"|"content"|"sender"|"send_time"|"full", winning_metric: "open_rate"|"click_rate", sample_percentage: 20, test_duration_hours: 24, auto_select_winner: true, variants: [{subject: "", preheader: ""}, {subject: "", preheader: ""}]})
+- check_ab_results: check results of an A/B test (config: {ab_test_id: N})
+- list_ab_tests: list all A/B tests with status (config: {})
+
+NOTE: When selecting audience, you can use list_ids for mailing lists AND/OR crm_contact_ids/crm_segment for CRM contacts.
 PROMPT;
 
         try {
@@ -213,6 +225,60 @@ PROMPT;
         ];
     }
 
+    // === Context Builders ===
+
+    /**
+     * Build available mailing lists context for AI prompt.
+     */
+    protected function buildAvailableListsContext(User $user): string
+    {
+        try {
+            $lists = ContactList::where('user_id', $user->id)
+                ->withCount('subscribers')
+                ->orderByDesc('subscribers_count')
+                ->limit(20)
+                ->get();
+
+            if ($lists->isEmpty()) {
+                return "AVAILABLE MAILING LISTS: none";
+            }
+
+            $block = "AVAILABLE MAILING LISTS:\n";
+            foreach ($lists as $list) {
+                $block .= "  - ID: {$list->id} | \"{$list->name}\" | {$list->subscribers_count} subscribers\n";
+            }
+            return $block;
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
+    /**
+     * Build CRM contact segments context for AI prompt.
+     */
+    protected function buildCrmSegmentsContext(User $user): string
+    {
+        try {
+            $totalContacts = CrmContact::forUser($user->id)->count();
+            if ($totalContacts === 0) {
+                return "CRM CONTACTS: none";
+            }
+
+            $hotLeads = CrmContact::forUser($user->id)->hotLeads(50)->count();
+            $qualified = CrmContact::forUser($user->id)->withStatus('qualified')->count();
+            $leads = CrmContact::forUser($user->id)->withStatus('lead')->count();
+
+            $block = "CRM CONTACT SEGMENTS (can be targeted via crm_segment in select_audience):\n";
+            $block .= "  - all: {$totalContacts} total CRM contacts\n";
+            $block .= "  - hot_leads: {$hotLeads} contacts (score ≥ 50, recently active)\n";
+            $block .= "  - warm: {$qualified} contacts (qualified status)\n";
+            $block .= "  - cold: {$leads} contacts (lead status)\n";
+            return $block;
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
     /**
      * Execute a specific campaign step action.
      */
@@ -223,6 +289,9 @@ PROMPT;
             'generate_content' => $this->executeGenerateContent($step, $user),
             'create_message' => $this->executeCreateMessage($step, $user),
             'schedule_send' => $this->executeScheduleSend($step, $user),
+            'create_ab_test' => $this->executeCreateAbTest($step, $user),
+            'check_ab_results' => $this->executeCheckAbResults($step, $user),
+            'list_ab_tests' => $this->executeListAbTests($step, $user),
             default => ['status' => 'completed', 'message' => "Action '{$step->action_type}' noted"],
         };
     }
@@ -265,31 +334,89 @@ PROMPT;
     {
         $config = $step->config;
         $listIds = $config['list_ids'] ?? [];
+        $crmContactIds = $config['crm_contact_ids'] ?? [];
+        $crmSegment = $config['crm_segment'] ?? null;
 
-        if (empty($listIds)) {
-            // Auto-select best lists based on criteria
-            $lists = ContactList::where('user_id', $user->id)
+        $selectedLists = collect();
+        $crmContacts = collect();
+        $messages = [];
+
+        // Select mailing lists
+        if (!empty($listIds)) {
+            $selectedLists = ContactList::whereIn('id', $listIds)
+                ->where('user_id', $user->id)
+                ->withCount('subscribers')
+                ->get();
+        } elseif (empty($crmContactIds) && empty($crmSegment)) {
+            // Auto-select best lists if nothing specified
+            $selectedLists = ContactList::where('user_id', $user->id)
                 ->withCount('subscribers')
                 ->orderByDesc('subscribers_count')
                 ->limit(3)
                 ->get();
-
-            return [
-                'status' => 'completed',
-                'selected_lists' => $lists->pluck('id')->toArray(),
-                'total_subscribers' => $lists->sum('subscribers_count'),
-                'message' => __('brain.campaign.audience_selected', ['count' => $lists->count(), 'subscribers' => $lists->sum('subscribers_count')]),
-            ];
         }
 
-        $lists = ContactList::whereIn('id', $listIds)
-            ->where('user_id', $user->id)
-            ->get();
+        if ($selectedLists->isNotEmpty()) {
+            $listsNames = $selectedLists->pluck('name')->join(', ');
+            $messages[] = __('brain.campaign.audience_selected', [
+                'count' => $selectedLists->count(),
+                'subscribers' => $selectedLists->sum('subscribers_count'),
+            ]) . " ({$listsNames})";
+        }
+
+        // Select CRM contacts by IDs
+        if (!empty($crmContactIds)) {
+            $crmContacts = CrmContact::forUser($user->id)
+                ->whereIn('id', $crmContactIds)
+                ->get();
+            $messages[] = __('brain.campaign.crm_contacts_selected', ['count' => $crmContacts->count()]);
+        }
+
+        // Select CRM contacts by segment
+        if ($crmSegment && empty($crmContactIds)) {
+            $query = CrmContact::forUser($user->id);
+            $segmentLabel = $crmSegment;
+
+            switch ($crmSegment) {
+                case 'hot_leads':
+                    $query->hotLeads(50);
+                    $segmentLabel = 'Hot Leads (score ≥ 50)';
+                    break;
+                case 'warm':
+                    $query->withStatus('qualified');
+                    $segmentLabel = 'Qualified';
+                    break;
+                case 'cold':
+                    $query->withStatus('lead');
+                    $segmentLabel = 'Cold leads';
+                    break;
+                default:
+                    // 'all' — no filter
+                    break;
+            }
+
+            $crmContacts = $query->limit(500)->get();
+            $messages[] = __('brain.campaign.crm_segment_selected', [
+                'segment' => $segmentLabel,
+                'count' => $crmContacts->count(),
+            ]);
+        }
+
+        // Extract subscriber IDs from CRM contacts
+        $crmSubscriberIds = $crmContacts
+            ->pluck('subscriber_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
 
         return [
             'status' => 'completed',
-            'selected_lists' => $lists->pluck('id')->toArray(),
-            'total_subscribers' => $lists->sum('subscribers_count'),
+            'selected_lists' => $selectedLists->pluck('id')->toArray(),
+            'total_subscribers' => $selectedLists->sum('subscribers_count') + count($crmSubscriberIds),
+            'crm_contact_ids' => $crmContacts->pluck('id')->toArray(),
+            'crm_subscriber_ids' => $crmSubscriberIds,
+            'message' => implode("\n", $messages),
         ];
     }
 
@@ -370,11 +497,269 @@ PROMPT;
 
     protected function executeScheduleSend(AiActionPlanStep $step, User $user): array
     {
-        // For safety, we create as draft — actual sending requires manual confirmation
+        $config = $step->config;
+        $sendAt = $config['send_at'] ?? null;
+        $listId = $config['list_id'] ?? null;
+        $messageId = $config['message_id'] ?? null;
+
+        // Try to get message_id from a previous create_message step
+        if (!$messageId) {
+            $plan = $step->plan;
+            $messageStep = $plan->steps()
+                ->where('action_type', 'create_message')
+                ->where('status', 'completed')
+                ->first();
+            $messageId = $messageStep?->result['message_id'] ?? null;
+        }
+
+        if (!$messageId) {
+            return [
+                'status' => 'completed',
+                'message' => __('brain.campaign.schedule_ready'),
+                'note' => 'No message ID found — go to panel to schedule manually.',
+            ];
+        }
+
+        $message = Message::where('user_id', $user->id)->find($messageId);
+        if (!$message) {
+            return [
+                'status' => 'failed',
+                'message' => __('brain.campaign.ab_message_not_found', ['id' => $messageId]),
+            ];
+        }
+
+        // Get list_id from previous select_audience step if not provided
+        if (!$listId) {
+            $plan = $step->plan;
+            $audienceStep = $plan->steps()
+                ->where('action_type', 'select_audience')
+                ->where('status', 'completed')
+                ->first();
+            $selectedLists = $audienceStep?->result['selected_lists'] ?? [];
+            $listId = $selectedLists[0] ?? null;
+        }
+
+        // Set scheduling metadata on the message
+        $updates = ['status' => 'draft'];
+
+        if ($sendAt && $sendAt !== 'immediate') {
+            try {
+                $scheduledAt = \Carbon\Carbon::parse($sendAt);
+                $updates['scheduled_at'] = $scheduledAt;
+                $updates['status'] = 'scheduled';
+            } catch (\Exception $e) {
+                // Invalid date — keep as draft
+            }
+        }
+
+        if ($listId) {
+            $updates['contact_list_id'] = $listId;
+        }
+
+        $message->update($updates);
+
+        $scheduledInfo = isset($updates['scheduled_at'])
+            ? $updates['scheduled_at']->format('d.m.Y H:i')
+            : 'draft';
+
         return [
             'status' => 'completed',
-            'message' => __('brain.campaign.schedule_ready'),
-            'note' => 'Auto-send disabled for safety — manual scheduling required',
+            'message_id' => $message->id,
+            'message' => __('brain.campaign.schedule_created', [
+                'subject' => $message->subject ?? $message->name,
+                'schedule' => $scheduledInfo,
+                'list' => $listId ? (ContactList::find($listId)?->name ?? "ID:{$listId}") : '-',
+            ]),
         ];
+    }
+
+    // === A/B Test Executors ===
+
+    protected function executeCreateAbTest(AiActionPlanStep $step, User $user): array
+    {
+        $config = $step->config;
+
+        // Find message — either from config or from a previous create_message step
+        $messageId = $config['message_id'] ?? null;
+
+        if (!$messageId) {
+            $plan = $step->plan;
+            $messageStep = $plan->steps()
+                ->where('action_type', 'create_message')
+                ->where('status', 'completed')
+                ->first();
+            $messageId = $messageStep?->result['message_id'] ?? null;
+        }
+
+        if (!$messageId) {
+            return ['status' => 'failed', 'message' => __('brain.campaign.ab_no_message')];
+        }
+
+        $message = Message::where('user_id', $user->id)->find($messageId);
+        if (!$message) {
+            return ['status' => 'failed', 'message' => __('brain.campaign.ab_message_not_found', ['id' => $messageId])];
+        }
+
+        $testType = $config['test_type'] ?? AbTest::TYPE_SUBJECT;
+        $winningMetric = $config['winning_metric'] ?? AbTest::METRIC_OPEN_RATE;
+        $samplePct = $config['sample_percentage'] ?? 20;
+        $durationHours = $config['test_duration_hours'] ?? 24;
+        $autoWinner = $config['auto_select_winner'] ?? true;
+
+        // Create the A/B test
+        $abTest = AbTest::create([
+            'message_id' => $messageId,
+            'user_id' => $user->id,
+            'name' => $config['name'] ?? __('brain.campaign.ab_test_name', ['subject' => mb_substr($message->subject ?? $message->name, 0, 30)]),
+            'status' => AbTest::STATUS_DRAFT,
+            'test_type' => $testType,
+            'winning_metric' => $winningMetric,
+            'sample_percentage' => min(50, max(5, $samplePct)),
+            'test_duration_hours' => min(168, max(1, $durationHours)),
+            'auto_select_winner' => $autoWinner,
+            'confidence_threshold' => $config['confidence_threshold'] ?? 95,
+        ]);
+
+        // Create variants
+        $variants = $config['variants'] ?? [];
+        if (empty($variants)) {
+            // Auto-generate 2 variants if none provided
+            $variants = [
+                ['subject' => $message->subject, 'is_control' => true],
+                ['subject' => $message->subject . ' — sprawdź!', 'is_control' => false],
+            ];
+        }
+
+        $createdVariants = [];
+        foreach ($variants as $i => $variantData) {
+            $letter = AbTestVariant::VARIANT_LETTERS[$i] ?? chr(65 + $i);
+
+            $variant = AbTestVariant::create([
+                'ab_test_id' => $abTest->id,
+                'variant_letter' => $letter,
+                'subject' => $variantData['subject'] ?? $message->subject,
+                'preheader' => $variantData['preheader'] ?? $message->preheader,
+                'content' => $variantData['content'] ?? null,
+                'from_name' => $variantData['from_name'] ?? null,
+                'from_email' => $variantData['from_email'] ?? null,
+                'weight' => 50,
+                'is_control' => $variantData['is_control'] ?? ($i === 0),
+                'is_ai_generated' => $i > 0,
+            ]);
+
+            $createdVariants[] = "{$letter}: \"{$variant->subject}\"";
+        }
+
+        $variantsList = implode("\n  ", $createdVariants);
+        $testTypeLabel = match ($testType) {
+            'subject' => 'Temat',
+            'content' => 'Treść',
+            'sender' => 'Nadawca',
+            'send_time' => 'Czas wysyłki',
+            'full' => 'Pełny test',
+            default => $testType,
+        };
+
+        return [
+            'status' => 'completed',
+            'ab_test_id' => $abTest->id,
+            'message' => __('brain.campaign.ab_test_created', [
+                'name' => $abTest->name,
+                'id' => $abTest->id,
+                'type' => $testTypeLabel,
+                'variants' => count($createdVariants),
+                'sample' => $samplePct,
+                'duration' => $durationHours,
+            ]) . "\n  {$variantsList}",
+        ];
+    }
+
+    protected function executeCheckAbResults(AiActionPlanStep $step, User $user): array
+    {
+        $abTestId = $step->config['ab_test_id'] ?? null;
+
+        if (!$abTestId) {
+            // Try to find the most recent test
+            $abTest = AbTest::forUser($user->id)->latest()->first();
+        } else {
+            $abTest = AbTest::forUser($user->id)->find($abTestId);
+        }
+
+        if (!$abTest) {
+            return ['status' => 'failed', 'message' => __('brain.campaign.ab_no_tests')];
+        }
+
+        $results = $abTest->calculateResults();
+        $winner = $abTest->determineWinner();
+
+        $msg = __('brain.campaign.ab_results_header', [
+            'name' => $abTest->name,
+            'status' => strtoupper($abTest->status),
+        ]) . "\n\n";
+
+        foreach ($results as $letter => $data) {
+            $isWinner = $winner && $winner->variant_letter === $letter;
+            $winnerIcon = $isWinner ? ' 🏆' : '';
+
+            $msg .= "**{$letter}**{$winnerIcon}:\n";
+            $msg .= "  📤 " . __('brain.campaign.ab_sent') . ": {$data['sent']}\n";
+            $msg .= "  👁️ OR: {$data['open_rate']}%\n";
+            $msg .= "  🖱️ CR: {$data['click_rate']}%\n";
+            $msg .= "  📊 CTOR: {$data['click_to_open_rate']}%\n\n";
+        }
+
+        if ($winner) {
+            $msg .= "🏆 " . __('brain.campaign.ab_winner', [
+                'letter' => $winner->variant_letter,
+                'metric' => $abTest->winning_metric,
+            ]);
+        } elseif ($abTest->isRunning()) {
+            $elapsed = $abTest->test_started_at ? $abTest->test_started_at->diffForHumans(null, true) : '?';
+            $msg .= "⏳ " . __('brain.campaign.ab_still_running', ['elapsed' => $elapsed]);
+        }
+
+        return ['status' => 'completed', 'message' => $msg];
+    }
+
+    protected function executeListAbTests(AiActionPlanStep $step, User $user): array
+    {
+        $tests = AbTest::forUser($user->id)
+            ->with('variants')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        if ($tests->isEmpty()) {
+            return ['status' => 'completed', 'message' => __('brain.campaign.ab_no_tests')];
+        }
+
+        $msg = __('brain.campaign.ab_list_header', ['count' => $tests->count()]) . "\n\n";
+
+        foreach ($tests as $test) {
+            $statusIcon = match ($test->status) {
+                AbTest::STATUS_RUNNING => '🟢',
+                AbTest::STATUS_COMPLETED => '✅',
+                AbTest::STATUS_PAUSED => '⏸️',
+                AbTest::STATUS_CANCELLED => '❌',
+                default => '📝',
+            };
+
+            $variantCount = $test->variants->count();
+            $winner = $test->winner_variant_id
+                ? $test->variants->firstWhere('id', $test->winner_variant_id)?->variant_letter ?? '-'
+                : '-';
+
+            $msg .= "{$statusIcon} **#{$test->id} {$test->name}**\n";
+            $msg .= "  🧪 {$test->test_type} | {$variantCount} " . __('brain.campaign.ab_variants_label') . "\n";
+            $msg .= "  📊 " . __('brain.campaign.ab_metric') . ": {$test->winning_metric}";
+
+            if ($winner !== '-') {
+                $msg .= " | 🏆 {$winner}";
+            }
+
+            $msg .= "\n  📅 " . $test->created_at->format('d.m.Y H:i') . "\n\n";
+        }
+
+        return ['status' => 'completed', 'message' => $msg];
     }
 }

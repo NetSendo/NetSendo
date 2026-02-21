@@ -56,6 +56,14 @@ class AgentOrchestrator
     }
 
     /**
+     * Get all registered agents.
+     */
+    public function getAgents(): array
+    {
+        return $this->agents;
+    }
+
+    /**
      * Process an incoming message from any channel.
      * This is the main entry point for the Brain.
      */
@@ -1203,7 +1211,7 @@ PROMPT;
      * Gather auto-context from CRM/lists for autonomous task execution.
      * Provides agents with the data they'd normally ask the user for.
      */
-    protected function gatherAutoContext(User $user, string $agentName): array
+    public function gatherAutoContext(User $user, string $agentName): array
     {
         $context = [];
 
@@ -1263,6 +1271,49 @@ PROMPT;
             }
         } catch (\Exception $e) {
             // ignore
+        }
+
+        // Automation rules context
+        if (in_array($agentName, ['segmentation', 'campaign', 'analytics'])) {
+            try {
+                $totalRules = \App\Models\AutomationRule::forUser($user->id)->count();
+                $activeRules = \App\Models\AutomationRule::forUser($user->id)->active()->count();
+                $context['automations'] = [
+                    'total' => $totalRules,
+                    'active' => $activeRules,
+                ];
+
+                // Top 5 automations for context
+                $topRules = \App\Models\AutomationRule::forUser($user->id)
+                    ->select('id', 'name', 'trigger_event', 'is_active')
+                    ->orderByDesc('is_active')
+                    ->orderByDesc('last_executed_at')
+                    ->limit(5)
+                    ->get();
+
+                $context['automations']['rules'] = $topRules->map(fn($r) => [
+                    'id' => $r->id,
+                    'name' => $r->name,
+                    'trigger' => $r->trigger_event,
+                    'active' => $r->is_active,
+                ])->toArray();
+            } catch (\Exception $e) {
+                // AutomationRule table may not exist
+            }
+        }
+
+        // A/B test context
+        if (in_array($agentName, ['campaign', 'message', 'analytics'])) {
+            try {
+                $runningTests = \App\Models\AbTest::forUser($user->id)->running()->count();
+                $completedTests = \App\Models\AbTest::forUser($user->id)->completed()->count();
+                $context['ab_tests'] = [
+                    'running' => $runningTests,
+                    'completed' => $completedTests,
+                ];
+            } catch (\Exception $e) {
+                // AbTest table may not exist
+            }
         }
 
         return $context;

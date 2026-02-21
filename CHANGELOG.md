@@ -7,7 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.3] – Short Description
+
+**Release date:** 2026-02-21
+
 ### Added
+
+- **Brain — Full Automation Management (SegmentationAgent):**
+  - **5 New Executors:** `create_automation` (creates `AutomationRule` with trigger, actions, conditions, rate limiting), `update_automation` (modifies any fields), `toggle_automation` (enable/disable), `delete_automation` (with system rule protection), `list_automations` (full list with stats and execution counts).
+  - **Enriched AI Context:** Plan prompt now includes all 30+ available trigger events, 18 action types, 15+ condition types, and the user's existing automations — enabling AI to make informed automation decisions.
+  - **Validation:** Trigger event validation, empty actions check, system rule deletion protection.
+
+- **Brain — A/B Test Management (CampaignAgent):**
+  - **3 New Executors:** `create_ab_test` (creates `AbTest` + `AbTestVariant` records with type, sample %, auto-winner, up to 5 variants), `check_ab_results` (displays per-variant open rate, click rate, CTOR with winner determination), `list_ab_tests` (lists all tests with status, type, metric, and winner).
+  - **Smart Message Linking:** `create_ab_test` automatically finds the message from a previous `create_message` step if no explicit `message_id` is provided.
+  - Removed `create_automation` from CampaignAgent prompt (now handled by SegmentationAgent).
+
+- **Brain — Auto-Context Enrichment (AgentOrchestrator):**
+  - `gatherAutoContext()` now provides automation data (total/active count + top 5 rules with names/triggers) for segmentation/campaign/analytics agents.
+  - `gatherAutoContext()` now provides A/B test data (running/completed counts) for campaign/message/analytics agents.
+
+- **Localization:**
+  - Added 30+ new translation keys for automation management (`automation_created`, `automation_updated`, `automation_toggled`, `automation_deleted`, `automation_list_header`, `automation_active`, `automation_inactive`, error messages) and A/B tests (`ab_test_created`, `ab_results_header`, `ab_list_header`, `ab_winner`, `ab_still_running`, etc.) in PL, EN, DE, ES.
+
+- **Brain — Goal Proposals via Telegram (Semi-Auto Mode):**
+  - In semi-auto mode, CRON-generated goals are now **proposed** to the user via Telegram with ✅ Approve / ❌ Reject buttons instead of being silently created.
+  - Each proposal stored as `AiPendingApproval` with 48h expiry. On approval, goal is created via `GoalPlanner`.
+  - Autonomous mode unchanged (creates goals immediately).
+
+- **Brain — CRM Contact Targeting in Campaigns (CampaignAgent):**
+  - `select_audience` now supports `crm_contact_ids` (direct CRM contact IDs) and `crm_segment` (`hot_leads`, `warm`, `cold`, `all`) for targeting CRM contacts alongside mailing lists.
+  - AI prompt now always includes **available mailing lists with IDs and subscriber counts** and **CRM contact segment counts** (hot leads, qualified, cold) so AI can make precise audience selections.
+  - `buildAvailableListsContext()` and `buildCrmSegmentsContext()` helper methods for prompt enrichment.
+
+- **Brain — Real Campaign Scheduling (CampaignAgent):**
+  - `schedule_send` now actually schedules messages: sets `scheduled_at` from AI plan, assigns `contact_list_id`, and updates message status to `scheduled`. Falls back to draft if date is invalid.
+  - Automatically picks message ID and list ID from previous plan steps (`create_message`, `select_audience`) if not specified.
+
+- **Localization:**
+  - Added goal proposal translations (`goal_proposal_title`, `goal_approved`, `goal_rejected`, `goal_expired`, `goal_invalid`) in PL, EN, DE, ES.
+  - Added CRM targeting (`crm_contacts_selected`, `crm_segment_selected`) and scheduling (`schedule_created`) translations in PL, EN, DE, ES.
 
 - **Brain Monitor — Manual Goal Management:**
   - Added **Add Goal** button ("+") in Goals tab header and empty state, opening a modal with title (required), description, and priority selector (Low/Medium/High/Urgent).

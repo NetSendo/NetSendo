@@ -2,6 +2,7 @@
 
 namespace App\Services\Brain\Agents;
 
+use App\Models\AbTest;
 use App\Models\AiActionPlan;
 use App\Models\AiActionPlanStep;
 use App\Models\AutomationRule;
@@ -23,6 +24,8 @@ class SegmentationAgent extends BaseAgent
         return [
             'create_segment', 'analyze_segments', 'suggest_segmentation',
             'manage_tags', 'automation_stats', 'create_automation',
+            'update_automation', 'toggle_automation', 'delete_automation',
+            'list_automations',
         ];
     }
 
@@ -33,6 +36,27 @@ class SegmentationAgent extends BaseAgent
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        // Gather available trigger events and action types for AI context
+        $triggerEvents = collect(AutomationRule::TRIGGER_EVENTS)
+            ->map(fn($label, $key) => "  {$key}: {$label}")
+            ->join("\n");
+
+        $actionTypes = collect(AutomationRule::ACTION_TYPES)
+            ->map(fn($label, $key) => "  {$key}: {$label}")
+            ->join("\n");
+
+        $conditionTypes = collect(AutomationRule::CONDITION_TYPES)
+            ->map(fn($label, $key) => "  {$key}: {$label}")
+            ->join("\n");
+
+        // Current automations for context
+        $existingAutomations = AutomationRule::forUser($user->id)
+            ->select('id', 'name', 'trigger_event', 'is_active')
+            ->limit(10)
+            ->get()
+            ->map(fn($r) => "  #{$r->id}: {$r->name} (trigger: {$r->trigger_event}, active: " . ($r->is_active ? 'yes' : 'no') . ")")
+            ->join("\n");
+
         $prompt = <<<PROMPT
 You are a marketing segmentation and automation expert. The user wants:
 Intent: {$intentDesc}
@@ -41,20 +65,37 @@ Parameters: {$paramsJson}
 
 {$langInstruction}
 
+EXISTING AUTOMATIONS:
+{$existingAutomations}
+
+AVAILABLE TRIGGER EVENTS:
+{$triggerEvents}
+
+AVAILABLE ACTION TYPES:
+{$actionTypes}
+
+AVAILABLE CONDITION TYPES:
+{$conditionTypes}
+
 Create a plan in JSON:
 {"title":"","description":"","steps":[{"action_type":"","title":"","description":"","config":{}}]}
 
-Available action_types:
+Available step action_types:
 - analyze_tag_distribution: show tag distribution (config: {limit: 15})
 - analyze_score_distribution: show scoring segments (config: {})
 - create_tag: create tag (config: {name: "", color: "#hex"})
 - apply_tag: apply tag to subscribers (config: {tag_name: "", criteria: {status: "", min_score: N}})
 - suggest_segments: AI segmentation recommendations (config: {})
 - automation_stats: automation statistics (config: {days: 7})
+- create_automation: create automation rule (config: {name: "", trigger_event: "", trigger_config: {}, conditions: [{type: "", config: {}}], condition_logic: "and"|"or", actions: [{type: "", config: {}}], is_active: true|false, limit_per_subscriber: true|false, limit_count: N, limit_period: "hour"|"day"|"week"|"month"|"ever"})
+- update_automation: update existing automation (config: {automation_id: N, name: "", is_active: true|false, trigger_event: "", actions: [...]})
+- toggle_automation: enable/disable automation (config: {automation_id: N})
+- delete_automation: delete automation (config: {automation_id: N})
+- list_automations: list all automations with stats (config: {})
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3], $user, 'segmentation');
+            $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.3], $user, 'segmentation');
             $data = $this->parseJson($response);
             if (!$data || empty($data['steps'])) return null;
 
@@ -95,6 +136,11 @@ PROMPT;
             'apply_tag' => $this->applyTag($step, $user),
             'suggest_segments' => $this->suggestSegments($step, $user),
             'automation_stats' => $this->automationStats($step, $user),
+            'create_automation' => $this->createAutomation($step, $user),
+            'update_automation' => $this->updateAutomation($step, $user),
+            'toggle_automation' => $this->toggleAutomation($step, $user),
+            'delete_automation' => $this->deleteAutomation($step, $user),
+            'list_automations' => $this->listAutomations($step, $user),
             default => ['status' => 'completed', 'message' => "Action noted"],
         };
     }
@@ -123,7 +169,7 @@ PROMPT;
         return ['type' => 'advice', 'message' => $response];
     }
 
-    // === Step Executors ===
+    // === Tag & Segment Executors ===
 
     protected function analyzeTagDistribution(AiActionPlanStep $step, User $user): array
     {
@@ -251,6 +297,8 @@ PROMPT;
         return ['status' => 'completed', 'message' => $response];
     }
 
+    // === Automation Executors ===
+
     protected function automationStats(AiActionPlanStep $step, User $user): array
     {
         $days = $step->config['days'] ?? 7;
@@ -270,6 +318,192 @@ PROMPT;
         $msg .= __('brain.segmentation.automation_rules', ['active' => $activeRules, 'total' => $totalRules]) . "\n";
         $msg .= __('brain.segmentation.automation_execs', ['count' => $execs]) . "\n";
         $msg .= __('brain.segmentation.automation_success', ['rate' => $successRate]);
+
+        return ['status' => 'completed', 'message' => $msg];
+    }
+
+    protected function createAutomation(AiActionPlanStep $step, User $user): array
+    {
+        $config = $step->config;
+        $name = $config['name'] ?? null;
+        $triggerEvent = $config['trigger_event'] ?? null;
+
+        if (!$name || !$triggerEvent) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_missing_fields')];
+        }
+
+        // Validate trigger event
+        if (!array_key_exists($triggerEvent, AutomationRule::TRIGGER_EVENTS)) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_invalid_trigger', ['trigger' => $triggerEvent])];
+        }
+
+        // Validate actions
+        $actions = $config['actions'] ?? [];
+        if (empty($actions)) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_no_actions')];
+        }
+
+        $rule = AutomationRule::create([
+            'user_id' => $user->id,
+            'name' => $name,
+            'description' => $config['description'] ?? null,
+            'trigger_event' => $triggerEvent,
+            'trigger_config' => $config['trigger_config'] ?? [],
+            'conditions' => $config['conditions'] ?? [],
+            'condition_logic' => $config['condition_logic'] ?? 'and',
+            'actions' => $actions,
+            'is_active' => $config['is_active'] ?? false, // Default inactive for safety
+            'limit_per_subscriber' => $config['limit_per_subscriber'] ?? true,
+            'limit_count' => $config['limit_count'] ?? 1,
+            'limit_period' => $config['limit_period'] ?? 'ever',
+        ]);
+
+        $statusLabel = $rule->is_active
+            ? '✅ ' . __('brain.segmentation.automation_active')
+            : '⏸️ ' . __('brain.segmentation.automation_inactive');
+
+        $triggerLabel = AutomationRule::TRIGGER_EVENTS[$triggerEvent] ?? $triggerEvent;
+        $actionsCount = count($actions);
+
+        return [
+            'status' => 'completed',
+            'automation_id' => $rule->id,
+            'message' => __('brain.segmentation.automation_created', [
+                'name' => $name,
+                'id' => $rule->id,
+                'trigger' => $triggerLabel,
+                'actions' => $actionsCount,
+                'status' => $statusLabel,
+            ]),
+        ];
+    }
+
+    protected function updateAutomation(AiActionPlanStep $step, User $user): array
+    {
+        $config = $step->config;
+        $automationId = $config['automation_id'] ?? null;
+
+        if (!$automationId) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_missing_id')];
+        }
+
+        $rule = AutomationRule::forUser($user->id)->find($automationId);
+        if (!$rule) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_not_found', ['id' => $automationId])];
+        }
+
+        $updates = [];
+        if (isset($config['name'])) $updates['name'] = $config['name'];
+        if (isset($config['description'])) $updates['description'] = $config['description'];
+        if (isset($config['trigger_event'])) $updates['trigger_event'] = $config['trigger_event'];
+        if (isset($config['trigger_config'])) $updates['trigger_config'] = $config['trigger_config'];
+        if (isset($config['conditions'])) $updates['conditions'] = $config['conditions'];
+        if (isset($config['condition_logic'])) $updates['condition_logic'] = $config['condition_logic'];
+        if (isset($config['actions'])) $updates['actions'] = $config['actions'];
+        if (isset($config['is_active'])) $updates['is_active'] = $config['is_active'];
+        if (isset($config['limit_per_subscriber'])) $updates['limit_per_subscriber'] = $config['limit_per_subscriber'];
+        if (isset($config['limit_count'])) $updates['limit_count'] = $config['limit_count'];
+        if (isset($config['limit_period'])) $updates['limit_period'] = $config['limit_period'];
+
+        if (empty($updates)) {
+            return ['status' => 'completed', 'message' => __('brain.segmentation.automation_no_changes')];
+        }
+
+        $rule->update($updates);
+
+        return [
+            'status' => 'completed',
+            'automation_id' => $rule->id,
+            'message' => __('brain.segmentation.automation_updated', [
+                'name' => $rule->name,
+                'id' => $rule->id,
+                'fields' => implode(', ', array_keys($updates)),
+            ]),
+        ];
+    }
+
+    protected function toggleAutomation(AiActionPlanStep $step, User $user): array
+    {
+        $automationId = $step->config['automation_id'] ?? null;
+
+        if (!$automationId) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_missing_id')];
+        }
+
+        $rule = AutomationRule::forUser($user->id)->find($automationId);
+        if (!$rule) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_not_found', ['id' => $automationId])];
+        }
+
+        $newState = !$rule->is_active;
+        $rule->update(['is_active' => $newState]);
+
+        $stateLabel = $newState
+            ? '✅ ' . __('brain.segmentation.automation_active')
+            : '⏸️ ' . __('brain.segmentation.automation_inactive');
+
+        return [
+            'status' => 'completed',
+            'automation_id' => $rule->id,
+            'message' => __('brain.segmentation.automation_toggled', [
+                'name' => $rule->name,
+                'id' => $rule->id,
+                'state' => $stateLabel,
+            ]),
+        ];
+    }
+
+    protected function deleteAutomation(AiActionPlanStep $step, User $user): array
+    {
+        $automationId = $step->config['automation_id'] ?? null;
+
+        if (!$automationId) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_missing_id')];
+        }
+
+        $rule = AutomationRule::forUser($user->id)->find($automationId);
+        if (!$rule) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_not_found', ['id' => $automationId])];
+        }
+
+        // Don't delete system automations
+        if ($rule->is_system) {
+            return ['status' => 'failed', 'message' => __('brain.segmentation.automation_system_protected', ['name' => $rule->name])];
+        }
+
+        $name = $rule->name;
+        $rule->delete();
+
+        return [
+            'status' => 'completed',
+            'message' => __('brain.segmentation.automation_deleted', ['name' => $name, 'id' => $automationId]),
+        ];
+    }
+
+    protected function listAutomations(AiActionPlanStep $step, User $user): array
+    {
+        $rules = AutomationRule::forUser($user->id)
+            ->orderByDesc('is_active')
+            ->orderByDesc('last_executed_at')
+            ->get();
+
+        if ($rules->isEmpty()) {
+            return ['status' => 'completed', 'message' => __('brain.segmentation.automation_none')];
+        }
+
+        $msg = __('brain.segmentation.automation_list_header', ['count' => $rules->count()]) . "\n\n";
+
+        foreach ($rules as $rule) {
+            $statusIcon = $rule->is_active ? '✅' : '⏸️';
+            $triggerLabel = AutomationRule::TRIGGER_EVENTS[$rule->trigger_event] ?? $rule->trigger_event;
+            $actionsCount = is_array($rule->actions) ? count($rule->actions) : 0;
+            $execCount = $rule->execution_count ?? 0;
+            $lastExec = $rule->last_executed_at ? $rule->last_executed_at->format('d.m.Y H:i') : '-';
+
+            $msg .= "{$statusIcon} **#{$rule->id} {$rule->name}**\n";
+            $msg .= "  🎯 {$triggerLabel} → {$actionsCount} " . __('brain.segmentation.automation_actions_label') . "\n";
+            $msg .= "  🔄 {$execCount}x | ⏰ {$lastExec}\n\n";
+        }
 
         return ['status' => 'completed', 'message' => $msg];
     }

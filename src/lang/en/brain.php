@@ -18,6 +18,14 @@ return [
     'mode_label' => '🔄 Mode: :mode',
     'approve_reject' => '✅ Approve | ❌ Reject',
     'approval_expiry' => 'Plan expires in 24h.',
+    'approve' => 'Approve',
+    'reject' => 'Reject',
+    // Goal proposals
+    'goal_proposal_title' => 'Goal Proposal',
+    'goal_approved' => 'Goal ":title" (ID: :id) created!',
+    'goal_rejected' => 'Goal proposal ":title" rejected.',
+    'goal_expired' => 'This goal proposal has expired or was already handled.',
+    'goal_invalid' => 'Invalid goal proposal.',
     'telegram_link_instructions' => 'Send to your Telegram bot: /connect :code',
     'telegram_new_conversation_btn' => 'New conversation',
     'telegram_new_conversation_confirm' => 'Next message will start a new conversation.',
@@ -103,6 +111,23 @@ return [
         'automation_rules' => '📋 Rules: :active active / :total total',
         'automation_execs' => '🔄 Executions: :count',
         'automation_success' => '✅ Success rate: :rate%',
+        // Automation management
+        'automation_created' => '⚙️ Automation ":name" (ID: :id) created\n  🎯 Trigger: :trigger → :actions actions\n  :status',
+        'automation_updated' => '✏️ Automation ":name" (ID: :id) updated — changed: :fields',
+        'automation_toggled' => '🔄 Automation ":name" (ID: :id): :state',
+        'automation_deleted' => '🗑️ Automation ":name" (ID: :id) deleted',
+        'automation_active' => 'Active',
+        'automation_inactive' => 'Inactive',
+        'automation_list_header' => '⚙️ **Automations** (:count)',
+        'automation_actions_label' => 'actions',
+        'automation_none' => 'No automations yet. Create your first automation!',
+        'automation_missing_fields' => '⚠️ Missing automation name or trigger',
+        'automation_invalid_trigger' => '⚠️ Unknown trigger: :trigger',
+        'automation_no_actions' => '⚠️ Automation must have at least one action',
+        'automation_missing_id' => '⚠️ Missing automation ID',
+        'automation_not_found' => '⚠️ Automation ID :id not found',
+        'automation_no_changes' => 'No changes to apply',
+        'automation_system_protected' => '⚠️ Automation ":name" is a system rule and cannot be deleted',
     ],
 
     // === Campaign Agent ===
@@ -123,6 +148,24 @@ return [
         'info_lists' => '📋 **Your lists:**',
         'info_when' => '5. **When to send?** — immediately, or schedule for a specific date?',
         'info_footer' => 'Provide as many details as you can and I will prepare a professional campaign plan.',
+        // A/B Tests
+        'ab_test_created' => '🧪 A/B Test ":name" (ID: :id) created\n  Type: :type | :variants variants | Sample: :sample% | Duration: :duration h',
+        'ab_test_name' => 'A/B Test: :subject',
+        'ab_results_header' => '📊 **A/B Results: :name** (:status)',
+        'ab_list_header' => '🧪 **A/B Tests** (:count)',
+        'ab_no_message' => '⚠️ No message for A/B test — create a message first',
+        'ab_message_not_found' => '⚠️ Message ID :id not found',
+        'ab_no_tests' => 'No A/B tests',
+        'ab_sent' => 'Sent',
+        'ab_winner' => 'Winner: variant :letter (by :metric)',
+        'ab_still_running' => 'Test in progress (:elapsed)',
+        'ab_variants_label' => 'variants',
+        'ab_metric' => 'Metric',
+        // CRM targeting
+        'crm_contacts_selected' => '👥 Selected :count CRM contacts',
+        'crm_segment_selected' => '👥 CRM segment [:segment]: :count contacts',
+        // Scheduling
+        'schedule_created' => '📅 Scheduled: ":subject"\n  ⏰ :schedule\n  📋 List: :list',
     ],
 
     // === List Agent ===
@@ -182,6 +225,12 @@ return [
         'cron_tasks_found' => '📝 Tasks found: :count',
         'cron_executed' => 'Executed: :success/:total',
         'cron_next_run' => 'Next run: ~:time',
+        'cron_pending_approval' => '📩 Tasks pending approval: :count',
+        'cron_manual_mode' => 'Manual mode — you can execute the above tasks from the panel.',
+        'cron_approval_title' => 'Task for approval (CRON)',
+        'priority' => 'Priority',
+        'goals_auto_created' => 'Auto-created :count goals',
+        'kb_enriched' => 'Analysis saved to knowledge base.',
     ],
 
     // === Research Agent ===
