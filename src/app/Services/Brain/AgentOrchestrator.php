@@ -1333,12 +1333,4 @@ PROMPT;
         $data = json_decode($response, true);
         return is_array($data) ? $data : null;
     }
-
-    /**
-     * Get all registered agents.
-     */
-    public function getAgents(): array
-    {
-        return $this->agents;
-    }
 }
