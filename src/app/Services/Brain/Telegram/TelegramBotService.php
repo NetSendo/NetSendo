@@ -255,6 +255,10 @@ class TelegramBotService
             '/new' => $this->handleNewConversation($chatId),
             '/help' => $this->sendMessage($chatId, $this->getHelpMessage()),
             '/knowledge' => $this->handleKnowledge($chatId, array_slice($parts, 1)),
+            '/goals' => $this->handleGoals($chatId),
+            '/report' => $this->handleReport($chatId),
+            '/kpi' => $this->handleKpi($chatId),
+            '/calendar' => $this->handleCalendar($chatId),
             default => $this->sendMessage($chatId, "Unknown command. Use /help to see available commands."),
         };
     }
@@ -373,6 +377,189 @@ class TelegramBotService
         $entry = $kb->addEntry($user, 'company', mb_substr($text, 0, 100), $text, 'telegram');
 
         $this->sendMessage($chatId, "✅ Saved to knowledge base (category: {$entry->category}).");
+    }
+
+    /**
+     * Handle /goals command — list active goals with progress.
+     */
+    protected function handleGoals(string $chatId): void
+    {
+        $user = $this->authService->findUserByChatId($chatId);
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ Not connected.");
+            return;
+        }
+
+        $this->setUserLocale($user);
+
+        try {
+            $goals = \App\Models\AiGoal::forUser($user->id)
+                ->active()
+                ->orderByDesc('created_at')
+                ->limit(5)
+                ->get();
+
+            if ($goals->isEmpty()) {
+                $this->sendMessage($chatId, "🎯 No active goals.\n\nCreate one in the Brain Monitor or via chat.");
+                return;
+            }
+
+            $lines = ["🎯 *" . __('brain.goals.active_goals', 'Active Goals') . "*\n"];
+            foreach ($goals as $goal) {
+                $progress = $goal->progress ?? 0;
+                $bar = str_repeat('▓', (int) ($progress / 10)) . str_repeat('░', 10 - (int) ($progress / 10));
+                $emoji = match ($goal->priority) {
+                    'high' => '🔴',
+                    'medium' => '🟡',
+                    'low' => '🟢',
+                    default => '⚪',
+                };
+                $lines[] = "{$emoji} *{$goal->title}*";
+                $lines[] = "   {$bar} {$progress}%";
+                if ($goal->description) {
+                    $lines[] = "   ↳ " . mb_substr($goal->description, 0, 80);
+                }
+                $lines[] = "";
+            }
+
+            $this->sendMessage($chatId, implode("\n", $lines));
+        } catch (\Exception $e) {
+            $this->sendMessage($chatId, "❌ Could not load goals.");
+        }
+    }
+
+    /**
+     * Handle /report command — send latest weekly digest summary.
+     */
+    protected function handleReport(string $chatId): void
+    {
+        $user = $this->authService->findUserByChatId($chatId);
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ Not connected.");
+            return;
+        }
+
+        $this->setUserLocale($user);
+        $this->sendMessage($chatId, "📊 Generating report...");
+
+        try {
+            $digestService = app(\App\Services\Brain\WeeklyDigestService::class);
+            $digest = $digestService->generateDigest($user, 'week');
+
+            if (!$digest || empty($digest['summary'])) {
+                $this->sendMessage($chatId, "No report data available yet.");
+                return;
+            }
+
+            $lines = ["📊 *" . __('brain.digest.title', 'Weekly Report') . "*\n"];
+            $lines[] = $digest['summary'];
+
+            if (!empty($digest['recommendations'])) {
+                $lines[] = "\n💡 *" . __('brain.digest.recommendations', 'Recommendations') . ":*";
+                foreach (array_slice($digest['recommendations'], 0, 3) as $rec) {
+                    $lines[] = "• {$rec}";
+                }
+            }
+
+            $this->sendMessage($chatId, implode("\n", $lines));
+        } catch (\Exception $e) {
+            $this->sendMessage($chatId, "❌ Report generation failed.");
+        }
+    }
+
+    /**
+     * Handle /kpi command — quick KPI snapshot.
+     */
+    protected function handleKpi(string $chatId): void
+    {
+        $user = $this->authService->findUserByChatId($chatId);
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ Not connected.");
+            return;
+        }
+
+        $this->setUserLocale($user);
+
+        try {
+            $now = now();
+            $weekAgo = $now->copy()->subWeek();
+            $monthAgo = $now->copy()->subMonth();
+
+            // Subscribers
+            $total = \App\Models\Subscriber::where('user_id', $user->id)->count();
+            $newThisWeek = \App\Models\Subscriber::where('user_id', $user->id)
+                ->where('created_at', '>=', $weekAgo)->count();
+
+            // Campaign metrics
+            $snapshots = \App\Models\AiPerformanceSnapshot::forUser($user->id)
+                ->where('captured_at', '>=', $monthAgo)->get();
+            $avgOR = $snapshots->count() > 0 ? round($snapshots->avg('open_rate'), 1) : null;
+            $avgCTR = $snapshots->count() > 0 ? round($snapshots->avg('click_rate'), 1) : null;
+
+            // Brain efficiency
+            $completed = \App\Models\AiActionPlan::forUser($user->id)
+                ->where('status', 'completed')
+                ->where('completed_at', '>=', $monthAgo)->count();
+            $totalPlans = \App\Models\AiActionPlan::forUser($user->id)
+                ->whereIn('status', ['completed', 'failed'])
+                ->where('created_at', '>=', $monthAgo)->count();
+            $efficiency = $totalPlans > 0 ? round(($completed / $totalPlans) * 100) : null;
+
+            $lines = ["📈 *KPI Snapshot*\n"];
+            $lines[] = "👥 Subscribers: *{$total}* (+{$newThisWeek} this week)";
+            $lines[] = "📧 Open Rate: *" . ($avgOR !== null ? "{$avgOR}%" : '—') . "* (30d avg)";
+            $lines[] = "🖱️ Click Rate: *" . ($avgCTR !== null ? "{$avgCTR}%" : '—') . "* (30d avg)";
+            $lines[] = "🧠 Brain Efficiency: *" . ($efficiency !== null ? "{$efficiency}%" : '—') . "* ({$completed}/{$totalPlans} plans)";
+
+            $this->sendMessage($chatId, implode("\n", $lines));
+        } catch (\Exception $e) {
+            $this->sendMessage($chatId, "❌ Could not load KPIs.");
+        }
+    }
+
+    /**
+     * Handle /calendar command — upcoming planned campaigns.
+     */
+    protected function handleCalendar(string $chatId): void
+    {
+        $user = $this->authService->findUserByChatId($chatId);
+        if (!$user) {
+            $this->sendMessage($chatId, "⚠️ Not connected.");
+            return;
+        }
+
+        $this->setUserLocale($user);
+
+        try {
+            $calendarService = app(\App\Services\Brain\CampaignCalendarService::class);
+            $upcoming = $calendarService->getUpcomingCampaigns($user, 7);
+
+            if ($upcoming->isEmpty()) {
+                $this->sendMessage($chatId, "📅 No planned campaigns. The Brain will generate a calendar during the next CRON cycle.");
+                return;
+            }
+
+            $typeEmoji = [
+                'newsletter' => '📰',
+                'promotion' => '🏷️',
+                'nurturing' => '🌱',
+                'win_back' => '🔄',
+                'announcement' => '📢',
+            ];
+
+            $lines = ["📅 *" . __('brain.calendar.upcoming', 'Upcoming Campaigns') . "*\n"];
+            foreach ($upcoming as $entry) {
+                $day = $entry->planned_date->format('D m/d');
+                $emoji = $typeEmoji[$entry->campaign_type] ?? '📧';
+                $status = strtoupper($entry->status);
+                $lines[] = "{$emoji} *{$day}* — {$entry->topic}";
+                $lines[] = "   ↳ {$entry->campaign_type} | {$entry->target_audience} | [{$status}]";
+            }
+
+            $this->sendMessage($chatId, implode("\n", $lines));
+        } catch (\Exception $e) {
+            $this->sendMessage($chatId, "❌ Could not load calendar.");
+        }
     }
 
     /**
@@ -677,6 +864,10 @@ MSG;
 📊 `/status` — Account status and tokens
 🆕 `/new` — Start a new conversation
 📝 `/knowledge [text]` — Add to knowledge base
+🎯 `/goals` — View active goals with progress
+📈 `/kpi` — Quick KPI snapshot
+📊 `/report` — Weekly performance report
+📅 `/calendar` — Upcoming planned campaigns
 ❓ `/help` — This help
 
 **Work modes:**

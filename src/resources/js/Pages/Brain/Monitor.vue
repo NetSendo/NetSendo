@@ -56,6 +56,9 @@ const editGoalForm = reactive({
     priority: "medium",
 });
 
+// KPI data
+const kpiData = ref(null);
+
 // --- Intervals ---
 const CRON_INTERVALS = [
     { value: 5, label: "5 min" },
@@ -282,6 +285,7 @@ function formatDate(dateStr) {
 onMounted(() => {
     fetchMonitorData();
     fetchLogs();
+    fetchKpiData();
     refreshInterval = setInterval(() => {
         if (autoRefresh.value) {
             fetchMonitorData();
@@ -308,6 +312,31 @@ function onFilterChange() {
 function goToPage(page) {
     currentPage.value = page;
     fetchLogs();
+}
+
+async function fetchKpiData() {
+    try {
+        const { data } = await axios.get("/brain/api/kpi");
+        if (data.success) {
+            kpiData.value = data.data;
+        }
+    } catch (e) {
+        console.warn("KPI fetch failed", e);
+    }
+}
+
+function trendIcon(trend) {
+    if (trend === "up") return "↑";
+    if (trend === "down") return "↓";
+    return "→";
+}
+
+function trendClass(trend, higherIsBetter = true) {
+    if (trend === "up")
+        return higherIsBetter ? "text-emerald-500" : "text-red-500";
+    if (trend === "down")
+        return higherIsBetter ? "text-red-500" : "text-emerald-500";
+    return "text-gray-400";
 }
 </script>
 
@@ -683,6 +712,280 @@ function goToPage(page) {
 
                 <!-- ============ OVERVIEW TAB — Agent Grid + Cron ============ -->
                 <div v-if="activeTab === 'overview'" class="space-y-6">
+                    <!-- KPI Cards -->
+                    <div v-if="kpiData">
+                        <h3
+                            class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-100"
+                        >
+                            📈
+                            {{ t("brain.monitor.kpi_title", "Wskaźniki KPI") }}
+                        </h3>
+                        <div
+                            class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
+                        >
+                            <!-- Subscribers -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">👥</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_subscribers",
+                                                "Subskrybenci",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        kpiData.subscribers?.total?.toLocaleString() ??
+                                        "—"
+                                    }}
+                                </div>
+                                <div
+                                    class="mt-1 flex items-center gap-1 text-xs"
+                                >
+                                    <span
+                                        :class="
+                                            trendClass(
+                                                kpiData.subscribers?.trend,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            trendIcon(
+                                                kpiData.subscribers?.trend,
+                                            )
+                                        }}
+                                        +{{
+                                            kpiData.subscribers
+                                                ?.growth_this_week ?? 0
+                                        }}
+                                    </span>
+                                    <span class="text-gray-400">{{
+                                        t(
+                                            "brain.monitor.this_week",
+                                            "ten tydz.",
+                                        )
+                                    }}</span>
+                                </div>
+                            </div>
+                            <!-- Open Rate -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">📧</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_open_rate",
+                                                "Open Rate",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        kpiData.campaigns?.avg_open_rate != null
+                                            ? kpiData.campaigns.avg_open_rate +
+                                              "%"
+                                            : "—"
+                                    }}
+                                </div>
+                                <div
+                                    class="mt-1 flex items-center gap-1 text-xs"
+                                    v-if="kpiData.campaigns?.or_trend"
+                                >
+                                    <span
+                                        :class="
+                                            trendClass(
+                                                kpiData.campaigns.or_trend,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            trendIcon(
+                                                kpiData.campaigns.or_trend,
+                                            )
+                                        }}
+                                    </span>
+                                    <span class="text-gray-400"
+                                        >vs
+                                        {{
+                                            t(
+                                                "brain.monitor.prev_period",
+                                                "poprz.",
+                                            )
+                                        }}</span
+                                    >
+                                </div>
+                            </div>
+                            <!-- Click Rate -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">🖱️</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_click_rate",
+                                                "Click Rate",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        kpiData.campaigns?.avg_click_rate !=
+                                        null
+                                            ? kpiData.campaigns.avg_click_rate +
+                                              "%"
+                                            : "—"
+                                    }}
+                                </div>
+                                <div
+                                    class="mt-1 flex items-center gap-1 text-xs"
+                                    v-if="kpiData.campaigns?.ctr_trend"
+                                >
+                                    <span
+                                        :class="
+                                            trendClass(
+                                                kpiData.campaigns.ctr_trend,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            trendIcon(
+                                                kpiData.campaigns.ctr_trend,
+                                            )
+                                        }}
+                                    </span>
+                                    <span class="text-gray-400"
+                                        >vs
+                                        {{
+                                            t(
+                                                "brain.monitor.prev_period",
+                                                "poprz.",
+                                            )
+                                        }}</span
+                                    >
+                                </div>
+                            </div>
+                            <!-- CRM Pipeline -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">💰</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_pipeline",
+                                                "Pipeline",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        kpiData.crm?.pipeline_value != null
+                                            ? "€" +
+                                              Number(
+                                                  kpiData.crm.pipeline_value,
+                                              ).toLocaleString()
+                                            : "—"
+                                    }}
+                                </div>
+                                <div class="mt-1 text-xs text-gray-400">
+                                    {{ kpiData.crm?.deals_won_30d ?? 0 }}
+                                    {{
+                                        t(
+                                            "brain.monitor.deals_won",
+                                            "wygranych",
+                                        )
+                                    }}
+                                    <span
+                                        v-if="
+                                            kpiData.crm?.conversion_rate != null
+                                        "
+                                    >
+                                        ·
+                                        {{ kpiData.crm.conversion_rate }}%</span
+                                    >
+                                </div>
+                            </div>
+                            <!-- Brain Efficiency -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">🧠</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_efficiency",
+                                                "Skuteczność",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold"
+                                    :class="{
+                                        'text-emerald-500':
+                                            kpiData.brain?.efficiency >= 80,
+                                        'text-amber-500':
+                                            kpiData.brain?.efficiency >= 50 &&
+                                            kpiData.brain?.efficiency < 80,
+                                        'text-red-500':
+                                            kpiData.brain?.efficiency != null &&
+                                            kpiData.brain?.efficiency < 50,
+                                        'text-gray-900 dark:text-white':
+                                            kpiData.brain?.efficiency == null,
+                                    }"
+                                >
+                                    {{
+                                        kpiData.brain?.efficiency != null
+                                            ? kpiData.brain.efficiency + "%"
+                                            : "—"
+                                    }}
+                                </div>
+                                <div class="mt-1 text-xs text-gray-400">
+                                    {{
+                                        kpiData.brain?.plans_completed_30d ?? 0
+                                    }}/{{ kpiData.brain?.plans_total_30d ?? 0 }}
+                                    {{
+                                        t(
+                                            "brain.monitor.plans_30d",
+                                            "planów (30d)",
+                                        )
+                                    }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Agent Grid -->
                     <div>
                         <h3
@@ -1024,6 +1327,213 @@ function goToPage(page) {
                                             >~{{ nextCronRun }}</span
                                         >
                                     </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Insights -->
+                    <div
+                        v-if="monitorData?.performance_snapshots?.length"
+                        class="overflow-hidden rounded-2xl border bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <div
+                            class="border-b border-gray-100 px-6 py-4 dark:border-gray-700"
+                        >
+                            <h3
+                                class="text-lg font-semibold text-gray-800 dark:text-gray-100"
+                            >
+                                📊
+                                {{
+                                    t(
+                                        "brain.monitor.performance_insights",
+                                        "Performance Insights",
+                                    )
+                                }}
+                            </h3>
+                            <p
+                                class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                            >
+                                {{
+                                    t(
+                                        "brain.monitor.performance_insights_desc",
+                                        "Campaign performance reviews — Brain learns from results",
+                                    )
+                                }}
+                            </p>
+                        </div>
+                        <div
+                            class="divide-y divide-gray-100 dark:divide-gray-700"
+                        >
+                            <div
+                                v-for="snap in monitorData.performance_snapshots"
+                                :key="snap.id"
+                                class="px-6 py-4"
+                            >
+                                <div class="flex items-start justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-lg">
+                                            {{
+                                                snap.above_average ? "🟢" : "🟡"
+                                            }}
+                                        </span>
+                                        <div>
+                                            <h4
+                                                class="text-sm font-semibold text-gray-900 dark:text-white"
+                                            >
+                                                {{ snap.campaign_title }}
+                                            </h4>
+                                            <p
+                                                class="text-xs text-gray-500 dark:text-gray-400"
+                                            >
+                                                {{
+                                                    snap.campaign_sent_at
+                                                        ? new Date(
+                                                              snap.campaign_sent_at,
+                                                          ).toLocaleDateString()
+                                                        : ""
+                                                }}
+                                                · Sent:
+                                                {{
+                                                    snap.sent_count?.toLocaleString()
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-3 text-xs"
+                                    >
+                                        <div class="text-center">
+                                            <p
+                                                class="font-bold"
+                                                :class="
+                                                    snap.benchmark_comparison
+                                                        ?.open_rate === 'above'
+                                                        ? 'text-green-600 dark:text-green-400'
+                                                        : snap
+                                                                .benchmark_comparison
+                                                                ?.open_rate ===
+                                                            'below'
+                                                          ? 'text-red-500'
+                                                          : 'text-gray-600 dark:text-gray-400'
+                                                "
+                                            >
+                                                {{ snap.open_rate }}%
+                                            </p>
+                                            <p
+                                                class="text-gray-400 dark:text-gray-500"
+                                            >
+                                                OR
+                                            </p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p
+                                                class="font-bold"
+                                                :class="
+                                                    snap.benchmark_comparison
+                                                        ?.click_rate === 'above'
+                                                        ? 'text-green-600 dark:text-green-400'
+                                                        : snap
+                                                                .benchmark_comparison
+                                                                ?.click_rate ===
+                                                            'below'
+                                                          ? 'text-red-500'
+                                                          : 'text-gray-600 dark:text-gray-400'
+                                                "
+                                            >
+                                                {{ snap.click_rate }}%
+                                            </p>
+                                            <p
+                                                class="text-gray-400 dark:text-gray-500"
+                                            >
+                                                CTR
+                                            </p>
+                                        </div>
+                                        <div class="text-center">
+                                            <p
+                                                class="font-bold text-gray-600 dark:text-gray-400"
+                                            >
+                                                {{ snap.unsubscribe_rate }}%
+                                            </p>
+                                            <p
+                                                class="text-gray-400 dark:text-gray-500"
+                                            >
+                                                Unsub
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Lessons -->
+                                <div
+                                    v-if="
+                                        snap.lessons_learned ||
+                                        snap.what_worked?.length ||
+                                        snap.what_to_improve?.length
+                                    "
+                                    class="mt-3 rounded-lg bg-gray-50 p-3 text-xs dark:bg-gray-700/50"
+                                >
+                                    <p
+                                        v-if="snap.lessons_learned"
+                                        class="mb-2 text-gray-600 dark:text-gray-300"
+                                    >
+                                        {{ snap.lessons_learned }}
+                                    </p>
+                                    <div class="flex gap-4">
+                                        <div
+                                            v-if="snap.what_worked?.length"
+                                            class="flex-1"
+                                        >
+                                            <p
+                                                class="mb-1 font-medium text-green-600 dark:text-green-400"
+                                            >
+                                                ✅
+                                                {{
+                                                    t(
+                                                        "brain.monitor.what_worked",
+                                                        "What worked",
+                                                    )
+                                                }}
+                                            </p>
+                                            <ul>
+                                                <li
+                                                    v-for="(
+                                                        item, i
+                                                    ) in snap.what_worked"
+                                                    :key="'w' + i"
+                                                    class="text-gray-500 dark:text-gray-400"
+                                                >
+                                                    • {{ item }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div
+                                            v-if="snap.what_to_improve?.length"
+                                            class="flex-1"
+                                        >
+                                            <p
+                                                class="mb-1 font-medium text-amber-600 dark:text-amber-400"
+                                            >
+                                                📈
+                                                {{
+                                                    t(
+                                                        "brain.monitor.what_to_improve",
+                                                        "To improve",
+                                                    )
+                                                }}
+                                            </p>
+                                            <ul>
+                                                <li
+                                                    v-for="(
+                                                        item, i
+                                                    ) in snap.what_to_improve"
+                                                    :key="'i' + i"
+                                                    class="text-gray-500 dark:text-gray-400"
+                                                >
+                                                    • {{ item }}
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -266,6 +266,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/api/goals', [\App\Http\Controllers\BrainController::class, 'createGoal'])->name('api.goals.store');
         Route::patch('/api/goals/{id}', [\App\Http\Controllers\BrainController::class, 'updateGoal'])->name('api.goals.update');
         Route::get('/api/goals/{id}/plans', [\App\Http\Controllers\BrainController::class, 'goalPlans'])->name('api.goals.plans');
+
+        // Digest
+        Route::get('/api/digest', [\App\Http\Controllers\BrainController::class, 'digest'])->name('api.digest');
+        Route::post('/api/digest/send', [\App\Http\Controllers\BrainController::class, 'sendDigest'])->name('api.digest.send');
+
+        // KPI
+        Route::get('/api/kpi', [\App\Http\Controllers\BrainController::class, 'kpi'])->name('api.kpi');
     });
 
     // AutoTag Pro - Segmentation Dashboard

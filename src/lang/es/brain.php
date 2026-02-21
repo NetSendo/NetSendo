@@ -230,6 +230,7 @@ return [
         'cron_approval_title' => 'Tarea para aprobación (CRON)',
         'priority' => 'Prioridad',
         'goals_auto_created' => ':count objetivos creados automáticamente',
+        'performance_reviewed' => 'Rendimiento de :count campaña(s) revisado',
         'kb_enriched' => 'Análisis guardado en la base de conocimiento.',
     ],
 

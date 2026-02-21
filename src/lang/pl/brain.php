@@ -230,6 +230,7 @@ return [
         'cron_approval_title' => 'Zadanie do zatwierdzenia (CRON)',
         'priority' => 'Priorytet',
         'goals_auto_created' => 'Auto-utworzono :count celów',
+        'performance_reviewed' => 'Przeanalizowano wydajność :count kampanii',
         'kb_enriched' => 'Analiza zapisana do bazy wiedzy.',
     ],
 

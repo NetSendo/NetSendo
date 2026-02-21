@@ -14,6 +14,10 @@ use App\Services\Brain\GoalPlanner;
 use App\Services\Brain\KnowledgeBaseService;
 use App\Services\Brain\ModeController;
 use App\Services\Brain\SituationAnalyzer;
+use App\Services\Brain\PerformanceTracker;
+use App\Services\Brain\TaskScorer;
+use App\Services\Brain\CampaignCalendarService;
+use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Telegram\TelegramBotService;
 use Illuminate\Console\Command;
@@ -97,6 +101,8 @@ class RunBrainCronCommand extends Command
         $workMode = $settings->work_mode;
         $cronResults = [
             'analysis' => null,
+            'performance_review' => null,
+            'weekly_digest' => null,
             'goals_created' => [],
             'tasks_executed' => [],
             'tasks_pending_approval' => [],
@@ -124,6 +130,23 @@ class RunBrainCronCommand extends Command
             ]);
         }
 
+        // Step 0.5: Performance review — learn from completed campaigns
+        try {
+            $performanceTracker = app(PerformanceTracker::class);
+            $performanceReview = $performanceTracker->reviewCompletedCampaigns($user);
+
+            if ($performanceReview['reviewed'] > 0) {
+                $this->info("[Brain CRON] User #{$user->id}: Reviewed {$performanceReview['reviewed']} campaign(s) performance.");
+                $cronResults['performance_review'] = $performanceReview;
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Performance review failed: {$e->getMessage()}");
+            Log::warning('Brain CRON performance review failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         // Step 1: Auto-create goals if none exist
         try {
             $cronResults['goals_created'] = $this->autoCreateGoals($user, $analysisReport, $workMode);
@@ -139,6 +162,18 @@ class RunBrainCronCommand extends Command
             $cronResults['knowledge_saved'] = $this->enrichKnowledgeBase($user, $analysisReport);
         } catch (\Exception $e) {
             $this->warn("[Brain CRON] User #{$user->id}: KB enrichment failed: {$e->getMessage()}");
+        }
+
+        // Step 2.5: Generate weekly campaign calendar (if not yet planned)
+        try {
+            $calendarService = app(CampaignCalendarService::class);
+            $calendarResult = $calendarService->generateWeeklyPlan($user);
+            if ($calendarResult['generated']) {
+                $cronResults['calendar_generated'] = $calendarResult['entries'];
+                $this->info("[Brain CRON] User #{$user->id}: Generated {$calendarResult['entries']} calendar entries.");
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Calendar generation failed: {$e->getMessage()}");
         }
 
         // Step 3: Convert AI priorities to executable tasks
@@ -167,14 +202,10 @@ class RunBrainCronCommand extends Command
         // Step 5: Merge — AI analysis priorities first, then rule-based tasks
         $allTasks = array_merge($aiTasks, $suggestedTasks);
 
-        // Determine minimum priority threshold
-        $minPriority = $settings->cron_min_priority ?? 'high';
-        $acceptedPriorities = $this->getAcceptedPriorities($minPriority);
-
-        // Filter to accepted priority tasks
-        $eligibleTasks = collect($allTasks)
-            ->filter(fn($t) => in_array($t['priority'] ?? 'medium', $acceptedPriorities))
-            ->values();
+        // Step 5.5: Score and rank tasks using TaskScorer
+        $taskScorer = app(TaskScorer::class);
+        $maxTasks = (int) ($settings->cron_max_tasks ?? 5);
+        $eligibleTasks = $taskScorer->scoreAll($allTasks, $user, $maxTasks);
 
         if ($eligibleTasks->isEmpty()) {
             $this->line("[Brain CRON] User #{$user->id}: No eligible tasks. Updating timestamps.");
@@ -223,6 +254,22 @@ class RunBrainCronCommand extends Command
 
         // Telegram report
         $this->sendTelegramReport($settings, $user, $eligibleTasks, $cronResults['tasks_executed'], $cronResults);
+
+        // Weekly digest — auto-send if due
+        try {
+            $digestService = app(WeeklyDigestService::class);
+            if ($digestService->shouldSendDigest($user)) {
+                $digest = $digestService->generateDigest($user);
+                $digestService->sendViaTelegram($user, $digest);
+                $cronResults['weekly_digest'] = 'sent';
+                $this->info("[Brain CRON] User #{$user->id}: Weekly digest sent via Telegram.");
+            }
+        } catch (\Exception $e) {
+            Log::warning('Brain CRON weekly digest failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $executedCount = count(array_filter($cronResults['tasks_executed'], fn($r) => $r === 'success'));
         $pendingCount = count($cronResults['tasks_pending_approval']);
@@ -582,7 +629,9 @@ class RunBrainCronCommand extends Command
                 $message .= "{$plan->description}\n";
             }
             $message .= "\n🎯 Agent: {$task['agent']}\n";
-            $message .= "📊 " . __('brain.monitor.priority') . ": {$task['priority']}\n";
+            $score = $task['score'] ?? null;
+            $scoreLine = $score !== null ? " (score: {$score}/100)" : '';
+            $message .= "📊 " . __('brain.monitor.priority') . ": {$task['priority']}{$scoreLine}\n";
             $message .= "\n⏰ " . __('brain.approval_expiry');
 
             $keyboard = [
@@ -644,6 +693,17 @@ class RunBrainCronCommand extends Command
                 $lines[] = "📋 " . $analysisReport['summary'] . "\n";
             }
 
+            // Report performance reviews
+            $performanceReview = $cronResults['performance_review'] ?? null;
+            if ($performanceReview && $performanceReview['reviewed'] > 0) {
+                $lines[] = "📊 *" . __('brain.monitor.performance_reviewed', ['count' => $performanceReview['reviewed']]) . "*";
+                foreach ($performanceReview['lessons'] ?? [] as $lesson) {
+                    $icon = ($lesson['above_average'] ?? false) ? '🟢' : '🟡';
+                    $lines[] = "  {$icon} {$lesson['title']}: OR {$lesson['open_rate']}%, CTR {$lesson['click_rate']}%";
+                }
+                $lines[] = "";
+            }
+
             // Report auto-created goals
             $goalsCreated = $cronResults['goals_created'] ?? [];
             if (!empty($goalsCreated)) {
@@ -682,7 +742,9 @@ class RunBrainCronCommand extends Command
                     foreach ($tasks as $i => $task) {
                         $status = $taskResults[$i] ?? 'skipped';
                         $icon = $status === 'success' ? '✅' : ($status === 'error' ? '❌' : '⏭️');
-                        $lines[] = "{$icon} {$task['title']}";
+                        $score = $task['score'] ?? null;
+                        $scoreLabel = $score !== null ? " [{$score}]" : '';
+                        $lines[] = "{$icon}{$scoreLabel} {$task['title']}";
                     }
 
                     $successCount = collect($taskResults)->filter(fn($r) => $r === 'success')->count();

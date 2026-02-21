@@ -230,6 +230,7 @@ return [
         'cron_approval_title' => 'Aufgabe zur Genehmigung (CRON)',
         'priority' => 'Priorität',
         'goals_auto_created' => ':count Ziele automatisch erstellt',
+        'performance_reviewed' => ':count Kampagnenleistung(en) überprüft',
         'kb_enriched' => 'Analyse in Wissensdatenbank gespeichert.',
     ],
 

@@ -45,6 +45,8 @@ class KnowledgeEntry extends Model
         'templates' => 'Szablony i wzorce',
         'competitors' => 'Konkurencja',
         'goals' => 'Cele biznesowe',
+        'style_preference' => 'Preferencje stylu i tonu',
+        'performance_pattern' => 'Wzorce skutecznych kampanii',
     ];
 
     public function user(): BelongsTo

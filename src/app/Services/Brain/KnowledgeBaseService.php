@@ -80,10 +80,10 @@ class KnowledgeBaseService
     public function getContext(User $user, string $taskType, int $maxEntries = 5): string
     {
         $categoryMap = [
-            'campaign' => ['company', 'products', 'brand_voice', 'audience', 'best_practices', 'goals'],
-            'message' => ['brand_voice', 'products', 'company', 'templates', 'audience'],
+            'campaign' => ['company', 'products', 'brand_voice', 'audience', 'best_practices', 'goals', 'style_preference', 'performance_pattern'],
+            'message' => ['brand_voice', 'products', 'company', 'templates', 'audience', 'style_preference', 'performance_pattern'],
             'list' => ['audience', 'products', 'goals'],
-            'analysis' => ['insights', 'best_practices', 'goals', 'competitors'],
+            'analysis' => ['insights', 'best_practices', 'goals', 'competitors', 'performance_pattern'],
             'general' => ['company', 'products', 'brand_voice', 'goals'],
         ];
 
@@ -188,6 +188,152 @@ PROMPT;
             ]);
             return [];
         }
+    }
+
+    /**
+     * Extract style preferences from an executed action plan.
+     * Called after successful plan execution to learn from user-approved content.
+     */
+    public function extractStylePreferences(User $user, \App\Models\AiActionPlan $plan): void
+    {
+        // Only extract from campaign/message plans
+        $relevantAgents = ['campaign', 'message'];
+        if (!in_array($plan->agent, $relevantAgents)) {
+            return;
+        }
+
+        // Avoid duplicate extractions
+        $existing = KnowledgeEntry::forUser($user->id)
+            ->active()
+            ->forCategory('style_preference')
+            ->where('source_reference', 'plan:' . $plan->id)
+            ->exists();
+
+        if ($existing) {
+            return;
+        }
+
+        // Gather plan details
+        $steps = $plan->steps->map(fn($s) => [
+            'action' => $s->action,
+            'config' => $s->config,
+            'result' => mb_substr($s->result ?? '', 0, 500),
+        ])->toArray();
+
+        $planSummary = json_encode($steps, JSON_UNESCAPED_UNICODE);
+
+        $integration = $this->aiService->getDefaultIntegration();
+        if (!$integration) {
+            return;
+        }
+
+        try {
+            $prompt = <<<PROMPT
+Analyze this executed marketing plan and extract the user's content preferences and style patterns.
+
+Plan type: {$plan->agent}
+Title: {$plan->title}
+Description: {$plan->description}
+Steps: {$planSummary}
+
+Extract specific, reusable observations about:
+- Writing tone (formal/casual/humorous)
+- Subject line style (short/long, emojis, questions)
+- Content structure (paragraphs, bullets, CTA placement)
+- Preferred topics or angles
+- Any unique patterns
+
+Respond as a single compact paragraph (max 200 words) summarizing the style preferences.
+If there's nothing notable to extract, respond with: SKIP
+PROMPT;
+
+            $response = $this->aiService->generateContent(
+                AiService::prependDateContext($prompt),
+                $integration,
+                ['max_tokens' => 500, 'temperature' => 0.3]
+            );
+
+            $response = trim($response);
+            if ($response === 'SKIP' || strlen($response) < 20) {
+                return;
+            }
+
+            $this->addEntry(
+                user: $user,
+                category: 'style_preference',
+                title: "Style from: {$plan->title}",
+                content: $response,
+                source: 'ai_enrichment',
+                sourceReference: 'plan:' . $plan->id,
+                tags: ['auto_extracted', $plan->agent],
+            );
+        } catch (\Exception $e) {
+            Log::warning('Style preference extraction failed', [
+                'plan_id' => $plan->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Extract performance patterns from a high-performing campaign snapshot.
+     * Called from PerformanceTracker when a campaign performs above benchmark.
+     */
+    public function extractPerformancePatterns(
+        User $user,
+        \App\Models\AiPerformanceSnapshot $snapshot,
+    ): void {
+        // Only extract from above-benchmark campaigns
+        $comparison = $snapshot->benchmark_comparison ?? [];
+        $isAbove = ($comparison['open_rate'] ?? '') === 'above'
+            || ($comparison['click_rate'] ?? '') === 'above';
+
+        if (!$isAbove) {
+            return;
+        }
+
+        // Avoid duplicate extractions
+        $existing = KnowledgeEntry::forUser($user->id)
+            ->active()
+            ->forCategory('performance_pattern')
+            ->where('source_reference', 'snapshot:' . $snapshot->id)
+            ->exists();
+
+        if ($existing) {
+            return;
+        }
+
+        // Build a concise pattern summary without AI (rule-based, fast)
+        $parts = [];
+        $parts[] = "Campaign: {$snapshot->campaign_name}";
+        $parts[] = "Sent: {$snapshot->sent_count}, OR: {$snapshot->open_rate}%, CTR: {$snapshot->click_rate}%";
+
+        if (($comparison['open_rate'] ?? '') === 'above') {
+            $parts[] = "Open rate ABOVE benchmark";
+        }
+        if (($comparison['click_rate'] ?? '') === 'above') {
+            $parts[] = "Click rate ABOVE benchmark";
+        }
+
+        $lessons = $snapshot->lessons_learned;
+        if (!empty($lessons['what_worked'])) {
+            $worked = is_array($lessons['what_worked'])
+                ? implode('; ', $lessons['what_worked'])
+                : $lessons['what_worked'];
+            $parts[] = "What worked: {$worked}";
+        }
+
+        $content = implode('. ', $parts);
+
+        $this->addEntry(
+            user: $user,
+            category: 'performance_pattern',
+            title: "Top campaign: {$snapshot->campaign_name}",
+            content: $content,
+            source: 'performance_tracker',
+            sourceReference: 'snapshot:' . $snapshot->id,
+            tags: ['auto_extracted', 'top_performer'],
+        );
     }
 
     /**

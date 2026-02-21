@@ -10,6 +10,7 @@ use App\Models\AiExecutionLog;
 use App\Models\AiGoal;
 use App\Models\User;
 use App\Services\AI\AiService;
+use App\Services\Brain\PerformanceTracker;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use Illuminate\Support\Facades\Log;
 
@@ -206,6 +207,25 @@ class SituationAnalyzer
         // 8. Work mode
         $context['work_mode'] = $settings->work_mode;
 
+        // 9. Campaign performance history (from PerformanceTracker)
+        try {
+            $performanceTracker = app(PerformanceTracker::class);
+            $context['campaign_performance'] = $performanceTracker->getPerformanceContext($user);
+        } catch (\Exception $e) {
+            $context['campaign_performance'] = ['has_data' => false];
+        }
+
+        // 10. Upcoming campaign calendar
+        try {
+            $calendarService = app(CampaignCalendarService::class);
+            $calendarContext = $calendarService->getUpcomingContext($user);
+            if (!empty($calendarContext)) {
+                $context['campaign_calendar'] = $calendarContext;
+            }
+        } catch (\Exception $e) {
+            // Ignore — table may not exist
+        }
+
         return $context;
     }
 
@@ -325,6 +345,10 @@ INSTRUCTIONS:
 5. Consider: campaign gaps, CRM opportunities, data hygiene, engagement optimization
 6. If there are active goals, prioritize actions that advance those goals
 7. Don't suggest actions that were recently completed (check recent_activity)
+8. If campaign_performance data is available, use lessons from past campaigns to inform new recommendations
+   - If a campaign had low open rates → suggest better subject lines or different audience targeting
+   - If a campaign performed well → suggest similar approaches or scaling up
+   - Reference specific past campaign metrics when relevant
 
 Respond in VALID JSON ONLY:
 {

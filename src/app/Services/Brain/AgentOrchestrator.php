@@ -517,6 +517,13 @@ PROMPT;
                 'plan_id' => $plan->id,
             ]);
 
+            // Extract style preferences from completed campaign/message plans
+            try {
+                $this->knowledgeBase->extractStylePreferences($user, $plan);
+            } catch (\Exception $e) {
+                Log::debug('Style extraction skipped', ['error' => $e->getMessage()]);
+            }
+
             return [
                 'type' => 'execution_result',
                 'message' => $result['message'] ?? __('brain.plan_executed'),

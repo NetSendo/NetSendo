@@ -45,6 +45,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Added `TYPE_ENGAGEMENT` constant to `PixelEvent` model with explicit `engagement` category in `determineCategory()`. Engagement events do not trigger automation dispatches (intentional — they are metric-only).
   - Added `scroll_depth` and `custom_data` validation to `batchEvents()` endpoint.
 
+- **Brain — Performance Tracker (Closed-Loop Feedback):**
+  - **PerformanceTracker Service:** New service that automatically reviews completed campaigns (24–168 hours post-sending). Gathers metrics (open rate, click rate, unsubscribe rate, bounce rate), compares against user benchmarks (min 3 campaigns) or industry averages, and generates AI-powered insights (lessons learned, what worked, what to improve) with rule-based fallback.
+  - **AiPerformanceSnapshot Model:** New Eloquent model with benchmark calculation helpers (`isAboveAverage()`, `getBenchmarkComparison()`).
+  - **Database Migration:** New `ai_performance_snapshots` table for storing campaign review data.
+  - **CRON Integration:** Added as Step 0.5 in the Brain CRON pipeline (between situation analysis and goal creation), ensuring the Brain learns from past performance before planning new actions.
+  - **SituationAnalyzer Enhancement:** Campaign performance history injected as context step 9, with 3 new AI prompt instructions guiding the AI to reference past campaign metrics when making recommendations.
+  - **Knowledge Base Integration:** Performance insights automatically saved to Knowledge Base under `insights` category for long-term learning.
+  - **Monitor API:** Added `performance_snapshots` to `/brain/api/monitor` response with last 10 campaign reviews.
+  - **Monitor Frontend:** New "Performance Insights" section in Monitor overview tab showing campaign metrics, benchmark indicators (green/red), and expandable AI-generated lessons (what worked / what to improve).
+  - **Telegram Reports:** CRON Telegram report now includes a performance review summary with reviewed campaign names and key metrics.
+  - **Localization:** Added `performance_reviewed` translation key in PL, EN, DE, ES.
+
+- **Brain — Weekly Digest (Strategic Reports):**
+  - **WeeklyDigestService:** New service generating comprehensive weekly/monthly performance digests. Aggregates campaign metrics, subscriber growth, CRM deal data, AI usage statistics, top campaigns from PerformanceTracker, goal progress, and Brain activity summary. Compares all metrics with previous period (week-over-week or month-over-month).
+  - **AI Strategic Report:** Each digest includes an AI-generated executive summary with key wins, areas of concern, strategic recommendations, and focus priorities for the next period. Rule-based fallback report when AI is unavailable.
+  - **CRON Auto-Send:** Digest automatically sent via Telegram at end of CRON cycle when ≥5 days since last weekly digest (or ≥25 days for monthly).
+  - **Telegram Delivery:** Full Telegram formatting with auto-splitting for messages exceeding 4096 character limit.
+  - **API Endpoints:** `GET /brain/api/digest` (fetch last or generate new with `?generate=true&period=week|month`), `POST /brain/api/digest/send` (generate and send via Telegram).
+
+- **Brain — Style/Preference Memory (Phase 3):**
+  - New KB categories `style_preference` and `performance_pattern` added to `KnowledgeEntry`.
+  - `KnowledgeBaseService::extractStylePreferences()` — AI extracts tone, style, and formatting patterns from executed campaign/message plans.
+  - `KnowledgeBaseService::extractPerformancePatterns()` — saves patterns from above-benchmark campaigns (rule-based, fast).
+  - `getContext()` category maps updated so campaign and message tasks receive style/performance context.
+  - Integrated into `AgentOrchestrator` (after plan execution) and `PerformanceTracker` (after snapshot save).
+
+- **Brain — Intelligent Task Scoring (Phase 4):**
+  - **TaskScorer Service:** Replaces simple high/medium/low priority filtering with 4-dimension scoring (0-100): Impact (subscriber count, category), Urgency (time since last execution), Goal Alignment (keyword similarity), Freshness (penalize recently-done similar tasks).
+  - CRON pipeline now scores and sorts tasks by score (highest first) instead of filtering by priority threshold.
+  - Task scores displayed in Telegram CRON reports and approval messages.
+
+- **Brain — KPI Dashboard (Phase 5):**
+  - New `GET /brain/api/kpi` endpoint returning: subscriber growth (week/week), avg OR/CTR (30d with period-over-period trends), CRM pipeline value + deal conversion, and Brain efficiency (completed plans / total).
+  - Monitor overview tab now shows 5 KPI cards at the top with trend indicators (↑↓→) and color-coded efficiency.
+
+- **Brain — Campaign Calendar (Phase 6):**
+  - **CampaignCalendarService:** AI-powered weekly campaign planning based on active goals, audience size, and past performance.
+  - **Database migration:** New `ai_campaign_calendar` table with fields for planned date, campaign type, topic, target audience, and status (draft/approved/executed/skipped).
+  - **AiCampaignCalendar model** with scopes for user, upcoming, week, and status.
+  - CRON pipeline auto-generates next week's calendar when none exists.
+  - SituationAnalyzer injects upcoming calendar entries as AI context (step 10).
+
+- **Brain — Telegram UX (Phase 7):**
+  - `/goals` — Lists active goals with progress bars (▓░) and priority indicators.
+  - `/report` — Generates and sends the latest weekly digest summary with recommendations.
+  - `/kpi` — Quick KPI snapshot (subscribers, OR, CTR, Brain efficiency).
+  - `/calendar` — Shows upcoming planned campaigns with type emojis and statuses.
+  - Updated `/help` to include all new commands.
+
 ## [2.0.3] – Short Description
 
 **Release date:** 2026-02-21

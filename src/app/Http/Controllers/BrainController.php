@@ -8,6 +8,7 @@ use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
 use App\Models\AiExecutionLog;
 use App\Models\AiGoal;
+use App\Models\AiPerformanceSnapshot;
 use App\Models\KnowledgeEntry;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\KnowledgeBaseService;
@@ -16,6 +17,7 @@ use App\Services\Brain\VoiceTranscriptionService;
 use App\Services\Brain\WebResearchService;
 use App\Services\Brain\Telegram\TelegramAuthService;
 use App\Services\Brain\Telegram\TelegramBotService;
+use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Skills\ResearchSkill;
 use Illuminate\Http\Request;
@@ -872,6 +874,25 @@ class BrainController extends Controller
                 ResearchSkill::getSuggestedTasks($user),
             ),
             'task_categories' => MarketingSalesSkill::getTaskCategories(),
+            'performance_snapshots' => AiPerformanceSnapshot::forUser($user->id)
+                ->orderByDesc('captured_at')
+                ->limit(10)
+                ->get()
+                ->map(fn($s) => [
+                    'id' => $s->id,
+                    'campaign_title' => $s->campaign_title,
+                    'sent_count' => $s->sent_count,
+                    'open_rate' => $s->open_rate,
+                    'click_rate' => $s->click_rate,
+                    'unsubscribe_rate' => $s->unsubscribe_rate,
+                    'above_average' => $s->isAboveAverage(),
+                    'benchmark_comparison' => $s->benchmark_comparison,
+                    'lessons_learned' => $s->lessons_learned,
+                    'what_worked' => $s->what_worked,
+                    'what_to_improve' => $s->what_to_improve,
+                    'campaign_sent_at' => $s->campaign_sent_at,
+                    'captured_at' => $s->captured_at,
+                ]),
             'timestamp' => now()->toISOString(),
         ]);
     }
@@ -927,6 +948,153 @@ class BrainController extends Controller
             'cron_enabled' => (bool) $settings->cron_enabled,
             'cron_interval_minutes' => (int) $settings->cron_interval_minutes,
         ]);
+    }
+
+    /**
+     * Get the latest weekly digest or generate a new one.
+     * GET /brain/api/digest
+     */
+    public function digest(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $digestService = app(WeeklyDigestService::class);
+
+        $forceGenerate = $request->boolean('generate', false);
+        $period = $request->query('period', 'week');
+
+        if ($forceGenerate) {
+            $digest = $digestService->generateDigest($user, $period);
+            return response()->json($digest);
+        }
+
+        // Return last digest
+        $lastDigest = $digestService->getLastDigest($user);
+        return response()->json($lastDigest ?: ['empty' => true]);
+    }
+
+    /**
+     * Generate and send a digest via Telegram.
+     * POST /brain/api/digest/send
+     */
+    public function sendDigest(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $period = $request->input('period', 'week');
+
+        $digestService = app(WeeklyDigestService::class);
+        $digest = $digestService->generateDigest($user, $period);
+        $sent = $digestService->sendViaTelegram($user, $digest);
+
+        return response()->json([
+            'success' => true,
+            'telegram_sent' => $sent,
+            'digest' => $digest,
+        ]);
+    }
+
+    /**
+     * Get marketing/sales KPIs for the Brain Monitor dashboard.
+     * GET /brain/api/kpi
+     */
+    public function kpi(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $now = now();
+        $weekAgo = $now->copy()->subWeek();
+        $twoWeeksAgo = $now->copy()->subWeeks(2);
+        $monthAgo = $now->copy()->subMonth();
+
+        try {
+            // 1. Subscriber growth
+            $subsThisWeek = \App\Models\Subscriber::where('user_id', $user->id)
+                ->where('created_at', '>=', $weekAgo)->count();
+            $subsLastWeek = \App\Models\Subscriber::where('user_id', $user->id)
+                ->whereBetween('created_at', [$twoWeeksAgo, $weekAgo])->count();
+            $totalSubscribers = \App\Models\Subscriber::where('user_id', $user->id)->count();
+
+            // 2. Campaign metrics (last 30 days)
+            $snapshots = \App\Models\AiPerformanceSnapshot::forUser($user->id)
+                ->where('captured_at', '>=', $monthAgo)->get();
+            $avgOpenRate = $snapshots->count() > 0 ? round($snapshots->avg('open_rate'), 2) : null;
+            $avgClickRate = $snapshots->count() > 0 ? round($snapshots->avg('click_rate'), 2) : null;
+            $campaignCount = $snapshots->count();
+
+            // Previous month for trend
+            $prevSnapshots = \App\Models\AiPerformanceSnapshot::forUser($user->id)
+                ->whereBetween('captured_at', [$now->copy()->subMonths(2), $monthAgo])->get();
+            $prevAvgOR = $prevSnapshots->count() > 0 ? round($prevSnapshots->avg('open_rate'), 2) : null;
+            $prevAvgCTR = $prevSnapshots->count() > 0 ? round($prevSnapshots->avg('click_rate'), 2) : null;
+
+            // 3. CRM pipeline
+            $pipelineValue = 0;
+            $dealsWon = 0;
+            $dealsTotal = 0;
+            try {
+                $pipelineValue = \App\Models\CrmDeal::where('user_id', $user->id)
+                    ->whereIn('status', ['open', 'negotiation', 'proposal'])
+                    ->sum('value');
+                $dealsWon = \App\Models\CrmDeal::where('user_id', $user->id)
+                    ->where('status', 'won')
+                    ->where('updated_at', '>=', $monthAgo)
+                    ->count();
+                $dealsTotal = \App\Models\CrmDeal::where('user_id', $user->id)
+                    ->where('updated_at', '>=', $monthAgo)
+                    ->whereIn('status', ['won', 'lost'])
+                    ->count();
+            } catch (\Exception $e) {
+                // CRM tables may not exist
+            }
+            $conversionRate = $dealsTotal > 0 ? round(($dealsWon / $dealsTotal) * 100, 1) : null;
+
+            // 4. Brain efficiency (successful plans / total plans, last 30 days)
+            $completedPlans = \App\Models\AiActionPlan::forUser($user->id)
+                ->where('status', 'completed')
+                ->where('completed_at', '>=', $monthAgo)->count();
+            $totalPlans = \App\Models\AiActionPlan::forUser($user->id)
+                ->whereIn('status', ['completed', 'failed'])
+                ->where('created_at', '>=', $monthAgo)->count();
+            $brainEfficiency = $totalPlans > 0 ? round(($completedPlans / $totalPlans) * 100, 1) : null;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'subscribers' => [
+                        'total' => $totalSubscribers,
+                        'growth_this_week' => $subsThisWeek,
+                        'growth_last_week' => $subsLastWeek,
+                        'trend' => $subsThisWeek > $subsLastWeek ? 'up' : ($subsThisWeek < $subsLastWeek ? 'down' : 'flat'),
+                    ],
+                    'campaigns' => [
+                        'count_30d' => $campaignCount,
+                        'avg_open_rate' => $avgOpenRate,
+                        'avg_click_rate' => $avgClickRate,
+                        'prev_avg_open_rate' => $prevAvgOR,
+                        'prev_avg_click_rate' => $prevAvgCTR,
+                        'or_trend' => ($avgOpenRate !== null && $prevAvgOR !== null)
+                            ? ($avgOpenRate > $prevAvgOR ? 'up' : ($avgOpenRate < $prevAvgOR ? 'down' : 'flat'))
+                            : null,
+                        'ctr_trend' => ($avgClickRate !== null && $prevAvgCTR !== null)
+                            ? ($avgClickRate > $prevAvgCTR ? 'up' : ($avgClickRate < $prevAvgCTR ? 'down' : 'flat'))
+                            : null,
+                    ],
+                    'crm' => [
+                        'pipeline_value' => round($pipelineValue, 2),
+                        'deals_won_30d' => $dealsWon,
+                        'conversion_rate' => $conversionRate,
+                    ],
+                    'brain' => [
+                        'plans_completed_30d' => $completedPlans,
+                        'plans_total_30d' => $totalPlans,
+                        'efficiency' => $brainEfficiency,
+                    ],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

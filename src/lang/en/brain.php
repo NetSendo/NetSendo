@@ -230,6 +230,7 @@ return [
         'cron_approval_title' => 'Task for approval (CRON)',
         'priority' => 'Priority',
         'goals_auto_created' => 'Auto-created :count goals',
+        'performance_reviewed' => 'Reviewed :count campaign(s) performance',
         'kb_enriched' => 'Analysis saved to knowledge base.',
     ],
 
