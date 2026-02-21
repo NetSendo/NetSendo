@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Brain Monitor — Manual Goal Management:**
+  - Added **Add Goal** button ("+") in Goals tab header and empty state, opening a modal with title (required), description, and priority selector (Low/Medium/High/Urgent).
+  - Added **Edit Goal** button (✏️) on each goal card for active/paused goals, opening a pre-populated edit modal.
+  - Both modals use `Teleport` to render above all content with backdrop overlay.
+  - Localization: Full translations for all goal management UI in PL, EN, DE, ES (`brain.goals.*` — 25 keys per locale).
+
 - **Brain — AI Situation Analysis:**
   - **SituationAnalyzer Service:** New AI-powered strategic analysis that runs during each CRON cycle before rule-based task detection. Gathers full user context (goals, CRM, campaigns, execution history, plans) and asks AI to identify highest-impact priorities with reasoning.
   - **CRON Integration:** AI-analyzed priorities are merged with existing rule-based tasks, with AI priorities taking precedence. Analysis summary included in activity logs and Telegram reports.
@@ -37,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Localization: Full translations in PL, EN, DE, ES.
 
 ### Fixed
+
+- **Brain Monitor — Goals List Always Empty:**
+  - Fixed `GET /brain/api/goals` silently returning `{"data":[], "total": 0}` even when goals existed in the database. Root cause: `$goal->append('progress_percent')` tried to invoke a non-existent Eloquent accessor `getProgressPercentAttribute()`, throwing an exception caught by the controller's catch-all block. Removed the unnecessary `append()` call since `progress_percent` is a regular database column already included in the model's JSON output.
 
 - **Brain MessageAgent — Incorrect Personalization Variables:**
   - Fixed `MessageAgent` using incorrect `{{first_name}}` placeholder syntax instead of the real NetSendo insert variable system (`[[fname]]`, `[[!fname]]`, `{{male|female}}`). AI-generated email content now uses the correct variable syntax that the mail sending engine actually resolves.

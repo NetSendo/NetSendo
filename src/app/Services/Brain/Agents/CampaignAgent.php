@@ -156,7 +156,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'campaign');
+            $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.3], $user, 'campaign');
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -251,7 +251,7 @@ Include best practices and optimization tips.
 Respond in a readable format with emoji.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'campaign');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'campaign');
 
         return [
             'type' => 'advice',
@@ -327,7 +327,7 @@ Respond in JSON:
 }
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.7], $user, 'content_generation');
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.7], $user, 'content_generation');
         $data = $this->parseJson($response);
 
         return [

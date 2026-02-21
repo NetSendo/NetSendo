@@ -81,7 +81,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3]);
+            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3]);
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -172,7 +172,7 @@ Provide:
 Respond with emoji and formatting.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.6]);
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.6]);
 
         return [
             'type' => 'advice',
@@ -270,7 +270,7 @@ Rules:
 - Use [[fname]] or [[!fname]] for at least one personalized subject variant
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8]);
         $data = $this->parseJson($response);
         $subjects = $data['subjects'] ?? [];
 
@@ -343,7 +343,7 @@ Rules:
 PROMPT;
         }
 
-        $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.7]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.7]);
         $data = $this->parseJson($response);
 
         return [
@@ -416,7 +416,7 @@ Each variant should test a different variable (CTA, personalization, urgency, et
 Consider using [[fname]] or [[!fname]] in at least one variant to test personalization impact.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8]);
         $data = $this->parseJson($response);
 
         $variants = $data['variants'] ?? [];
@@ -472,7 +472,7 @@ IMPORTANT: Preserve any existing personalization variables in the content (e.g. 
 If the content lacks personalization, consider adding [[fname]] or [[!fname]] where natural.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.5]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.5]);
         $data = $this->parseJson($response);
 
         if ($data) {

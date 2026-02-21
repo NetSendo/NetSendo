@@ -162,7 +162,7 @@ PROMPT;
             $response = $this->aiService->generateContent(
                 AiService::prependDateContext($prompt),
                 $integration,
-                ['max_tokens' => 2000, 'temperature' => 0.3]
+                ['max_tokens' => 4000, 'temperature' => 0.3]
             );
 
             $entries = $this->parseEnrichmentResponse($response);

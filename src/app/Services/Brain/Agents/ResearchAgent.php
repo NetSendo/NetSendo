@@ -122,7 +122,7 @@ Create 2-4 focused research steps. Always end with save_to_knowledge if findings
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'research');
+            $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.3], $user, 'research');
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -222,7 +222,7 @@ sources to check, and how to apply findings to their marketing/CRM strategy.
 Use emoji for readability.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'research');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'research');
 
         return [
             'type' => 'advice',
@@ -413,7 +413,7 @@ Write a clear, structured summary.
 PROMPT;
 
         try {
-            $summary = $this->callAi($prompt, ['max_tokens' => 800, 'temperature' => 0.3], $user, 'research');
+            $summary = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'research');
 
             $entry = $this->knowledgeBase->addEntry(
                 $user,

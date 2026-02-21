@@ -82,7 +82,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'list');
+            $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.3], $user, 'list');
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -167,7 +167,7 @@ Current lists:
 Provide specific step-by-step instructions to follow in the NetSendo panel.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'list');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'list');
 
         return [
             'type' => 'advice',

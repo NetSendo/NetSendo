@@ -54,7 +54,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3], $user, 'segmentation');
+            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3], $user, 'segmentation');
             $data = $this->parseJson($response);
             if (!$data || empty($data['steps'])) return null;
 
@@ -119,7 +119,7 @@ Question: {$intent['intent']}
 Provide segmentation advice with specific steps. Use emoji.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'segmentation');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'segmentation');
         return ['type' => 'advice', 'message' => $response];
     }
 
@@ -247,7 +247,7 @@ Suggest 3-5 new segments with criteria and recommended actions.
 Use emoji. Be specific.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.6]);
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.6]);
         return ['status' => 'completed', 'message' => $response];
     }
 

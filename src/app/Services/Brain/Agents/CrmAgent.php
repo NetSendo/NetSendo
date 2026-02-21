@@ -84,7 +84,7 @@ Available action_types:
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'crm');
+            $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.3], $user, 'crm');
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -174,7 +174,7 @@ Include best practices for contact management and sales pipeline.
 Respond in a readable format with emoji.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.5], $user, 'crm');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'crm');
 
         return [
             'type' => 'advice',

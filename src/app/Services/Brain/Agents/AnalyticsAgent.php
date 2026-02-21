@@ -57,7 +57,7 @@ Analytics agent is read-only — never modifies data.
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 1500, 'temperature' => 0.3], $user, 'analytics');
+            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3], $user, 'analytics');
             $data = $this->parseJson($response);
             if (!$data || empty($data['steps'])) return null;
 
@@ -107,7 +107,7 @@ PROMPT;
         $stats = $this->gatherQuickStats($user);
         $langInstruction = $this->getLanguageInstruction($user);
         $prompt = "You are an analytics expert. Statistics:\n{$stats}\nQuestion: {$intent['intent']}\n{$knowledgeContext}\n\n{$langInstruction}\n\nProvide analysis with numbers and recommendations. Use emoji.";
-        $response = $this->callAi($prompt, ['max_tokens' => 2500, 'temperature' => 0.5], $user, 'analytics');
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.5], $user, 'analytics');
         return ['type' => 'advice', 'message' => $response];
     }
 
@@ -163,7 +163,7 @@ PROMPT;
         $langInstruction = $this->getLanguageInstruction(User::find($step->plan->user_id));
 
         $prompt = "Generate a professional report based on:\n{$ctx}\n\n{$langInstruction}\n\nFormat: 1) Summary 2) Analysis 3) Trends 4) Recommendations. Use emoji.";
-        $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.4]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.4]);
 
         return ['status' => 'completed', 'message' => $response];
     }

@@ -665,7 +665,7 @@ PROMPT;
         $result = $provider->generateTextWithUsage(
             json_encode($messages),
             $modelToUse,
-            ['max_tokens' => 4000, 'temperature' => 0.7]
+            ['max_tokens' => 8000, 'temperature' => 0.7]
         );
 
         $actualModel = $modelToUse ?: ($integration->default_model ?: 'unknown');
@@ -765,7 +765,7 @@ PROMPT;
                 foreach ($provider->generateTextStream(
                     json_encode($messages),
                     $modelToUse,
-                    ['max_tokens' => 2000, 'temperature' => 0.7]
+                    ['max_tokens' => 8000, 'temperature' => 0.7]
                 ) as $chunk) {
                     $fullText .= $chunk;
                     yield $chunk;
