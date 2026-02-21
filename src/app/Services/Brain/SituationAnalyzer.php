@@ -59,7 +59,7 @@ class SituationAnalyzer
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 [
-                    'max_tokens' => 2500,
+                    'max_tokens' => 4000,
                     'temperature' => 0.3,
                 ]
             );
@@ -302,6 +302,7 @@ You are an expert marketing strategist and CRM advisor for an email marketing & 
 
 Analyze the user's current situation and decide what the most impactful next actions should be.
 Your goal is to act like a proactive business advisor who identifies opportunities and risks.
+You should generate ACTIONABLE tasks that agents can execute autonomously WITHOUT asking the user for more details.
 
 CURRENT CONTEXT:
 {$contextJson}
@@ -319,10 +320,11 @@ AVAILABLE AGENTS (you can assign tasks to any of these):
 INSTRUCTIONS:
 1. Summarize the current situation in 2-3 concise sentences (what's going well, what needs attention)
 2. Identify 1-3 highest-impact priorities based on the data
-3. For each priority, specify what agent should handle it and a clear action message
-4. Consider: campaign gaps, CRM opportunities, data hygiene, engagement optimization
-5. If there are active goals, prioritize actions that advance those goals
-6. Don't suggest actions that were recently completed (check recent_activity)
+3. For each priority, specify what agent should handle it and a DETAILED, SELF-CONTAINED action message
+4. The action message MUST contain all info the agent needs — topic, audience, tone, goal — so it can execute WITHOUT asking the user
+5. Consider: campaign gaps, CRM opportunities, data hygiene, engagement optimization
+6. If there are active goals, prioritize actions that advance those goals
+7. Don't suggest actions that were recently completed (check recent_activity)
 
 Respond in VALID JSON ONLY:
 {
@@ -331,10 +333,12 @@ Respond in VALID JSON ONLY:
     {
       "title": "short title (max 10 words)",
       "agent": "campaign|list|message|crm|analytics|segmentation|research",
-      "action": "detailed action message that the agent can execute",
+      "action": "detailed, self-contained action message with topic, audience, tone, and goal — the agent must be able to execute this without asking for clarification",
       "priority": "high|medium|low",
       "reasoning": "why this matters now (1 sentence)",
-      "estimated_impact": "high|medium|low"
+      "estimated_impact": "high|medium|low",
+      "target_list_ids": [1, 2],
+      "exclude_segments": ["churned", "bounced"]
     }
   ]
 }

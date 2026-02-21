@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Telegram Reports:** Fixed hardcoded Polish strings; all report text now uses `__()` translation helpers.
   - **Localization:** Full translations in PL, EN, DE, ES.
 
+- **Brain — Autonomous Mode Direct Dispatch:**
+  - **`executeCronTask()`:** New method in `AgentOrchestrator` that bypasses intent classification and info gathering for CRON-generated tasks. Dispatches directly to the correct agent with auto-filled context.
+  - **`gatherAutoContext()`:** Auto-collects CRM data (lists, subscribers, recent topics, hot leads, open deals) so agents have all context needed for autonomous execution without user input.
+  - **Cron-Aware Agents:** `BaseAgent.needsMoreInfo()` and `CampaignAgent.needsMoreInfo()` now return `false` for cron channel, preventing autonomous tasks from blocking on user input.
+  - **Auto-Context in Campaign Plans:** `CampaignAgent.plan()` enriched with auto-context block for cron tasks, including available lists, recent topics to avoid, and mandatory instructions for AI to pick concrete values.
+  - **Self-Contained Task Actions:** `MarketingSalesSkill.getSuggestedTasks()` and `SituationAnalyzer` now generate detailed, self-contained action descriptions with list IDs, topics, tones, and goals — eliminating the need for agents to ask clarifying questions.
+  - **Increased Token Limit:** `SituationAnalyzer` max_tokens increased from 2500 to 4000 to prevent truncated analysis reports.
+
 - **Brain Knowledge Base — View & Edit Entries:**
   - Added **View modal** (👁) to preview the full content of a knowledge entry with metadata (source, confidence, usage count, active status).
   - Added **Edit modal** (✏️) to modify title, category, and content of existing entries with character counter and validation.
@@ -29,6 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Localization: Full translations in PL, EN, DE, ES.
 
 ### Fixed
+
+- **Brain MessageAgent — Incorrect Personalization Variables:**
+  - Fixed `MessageAgent` using incorrect `{{first_name}}` placeholder syntax instead of the real NetSendo insert variable system (`[[fname]]`, `[[!fname]]`, `{{male|female}}`). AI-generated email content now uses the correct variable syntax that the mail sending engine actually resolves.
+  - Added `getPersonalizationInstructions()` helper method with a complete reference of all available NetSendo variables (subscriber data, vocative case, gender-dependent forms, links, dates).
+  - Updated all 7 prompt methods (`plan`, `advise`, `executeGenerateSubject`, `executeGenerateBody`, `executeGenerateAbVariants`, `executeImproveContent`) to include correct variable syntax and usage examples.
 
 - **Voice Message Transcription — 422 Error:**
   - Fixed `422 Unrecognized file format` error when sending voice messages in Brain chat. Root cause: PHP temp uploads (e.g., `/tmp/phpXXXXXX`) have no file extension, causing OpenAI Whisper API to reject them. Now passes the original uploaded filename (e.g., `voice.webm`) to the Whisper API request.

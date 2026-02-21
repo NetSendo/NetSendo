@@ -56,9 +56,17 @@ abstract class BaseAgent
      * Default is false — the user's message (captured in the intent description)
      * provides enough context for most agents. Override in subclasses that
      * truly need specific inputs (e.g. CampaignAgent, ResearchAgent).
+     *
+     * IMPORTANT: Always returns false for cron channel — autonomous tasks
+     * must never block waiting for user input.
      */
     public function needsMoreInfo(array $intent, User $user, string $knowledgeContext = ''): bool
     {
+        // Cron tasks have auto-filled context — never ask for more info
+        if (($intent['channel'] ?? '') === 'cron' || !empty($intent['parameters']['cron_task'])) {
+            return false;
+        }
+
         return false;
     }
 

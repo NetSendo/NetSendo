@@ -41,6 +41,20 @@ const activeTab = ref("overview"); // 'overview', 'tasks', 'logs', 'goals'
 // Goals
 const goalsData = ref(null);
 const goalsLoading = ref(false);
+const showAddGoalModal = ref(false);
+const showEditGoalModal = ref(false);
+const goalSaving = ref(false);
+const addGoalForm = reactive({
+    title: "",
+    description: "",
+    priority: "medium",
+});
+const editGoalForm = reactive({
+    id: null,
+    title: "",
+    description: "",
+    priority: "medium",
+});
 
 // --- Intervals ---
 const CRON_INTERVALS = [
@@ -120,6 +134,51 @@ async function updateGoalStatus(goalId, newStatus) {
         fetchGoals();
     } catch (e) {
         console.error("Goal update failed:", e);
+    }
+}
+
+async function createGoal() {
+    goalSaving.value = true;
+    try {
+        await axios.post("/brain/api/goals", {
+            title: addGoalForm.title,
+            description: addGoalForm.description || null,
+            priority: addGoalForm.priority,
+        });
+        showAddGoalModal.value = false;
+        addGoalForm.title = "";
+        addGoalForm.description = "";
+        addGoalForm.priority = "medium";
+        fetchGoals();
+    } catch (e) {
+        console.error("Goal creation failed:", e);
+    } finally {
+        goalSaving.value = false;
+    }
+}
+
+function openEditGoal(goal) {
+    editGoalForm.id = goal.id;
+    editGoalForm.title = goal.title;
+    editGoalForm.description = goal.description || "";
+    editGoalForm.priority = goal.priority;
+    showEditGoalModal.value = true;
+}
+
+async function saveEditGoal() {
+    goalSaving.value = true;
+    try {
+        await axios.patch(`/brain/api/goals/${editGoalForm.id}`, {
+            title: editGoalForm.title,
+            description: editGoalForm.description || null,
+            priority: editGoalForm.priority,
+        });
+        showEditGoalModal.value = false;
+        fetchGoals();
+    } catch (e) {
+        console.error("Goal edit failed:", e);
+    } finally {
+        goalSaving.value = false;
     }
 }
 
@@ -1401,6 +1460,25 @@ function goToPage(page) {
                         >
                             🎯 {{ t("brain.goals.title", "Cele") }}
                         </h3>
+                        <button
+                            @click="showAddGoalModal = true"
+                            class="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M12 4v16m8-8H4"
+                                />
+                            </svg>
+                            {{ t("brain.goals.add_goal", "Add Goal") }}
+                        </button>
                     </div>
 
                     <div v-if="goalsLoading" class="flex justify-center py-10">
@@ -1437,6 +1515,12 @@ function goToPage(page) {
                         <p class="text-gray-500 dark:text-gray-400">
                             {{ t("brain.goals.no_goals", "No active goals") }}
                         </p>
+                        <button
+                            @click="showAddGoalModal = true"
+                            class="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700"
+                        >
+                            {{ t("brain.goals.add_goal", "Add Goal") }}
+                        </button>
                     </div>
 
                     <div v-else class="space-y-4">
@@ -1509,6 +1593,22 @@ function goToPage(page) {
                                         </p>
                                     </div>
                                     <div class="ml-4 flex gap-1">
+                                        <button
+                                            v-if="
+                                                goal.status === 'active' ||
+                                                goal.status === 'paused'
+                                            "
+                                            @click="openEditGoal(goal)"
+                                            class="rounded-lg px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-50 dark:text-violet-400 dark:hover:bg-violet-900/20"
+                                            :title="
+                                                t(
+                                                    'brain.goals.edit_goal',
+                                                    'Edit',
+                                                )
+                                            "
+                                        >
+                                            ✏️
+                                        </button>
                                         <button
                                             v-if="goal.status === 'active'"
                                             @click="
@@ -1614,6 +1714,314 @@ function goToPage(page) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- ADD GOAL MODAL -->
+                    <Teleport to="body">
+                        <div
+                            v-if="showAddGoalModal"
+                            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        >
+                            <div
+                                class="fixed inset-0 bg-black/50"
+                                @click="showAddGoalModal = false"
+                            ></div>
+                            <div
+                                class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800"
+                            >
+                                <h3
+                                    class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+                                >
+                                    🎯
+                                    {{ t("brain.goals.add_goal", "Add Goal") }}
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_title",
+                                                    "Title",
+                                                )
+                                            }}
+                                            *
+                                        </label>
+                                        <input
+                                            v-model="addGoalForm.title"
+                                            type="text"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            :placeholder="
+                                                t(
+                                                    'brain.goals.title_placeholder',
+                                                    'e.g. Increase newsletter signups by 20%',
+                                                )
+                                            "
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_description",
+                                                    "Description",
+                                                )
+                                            }}
+                                        </label>
+                                        <textarea
+                                            v-model="addGoalForm.description"
+                                            rows="3"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            :placeholder="
+                                                t(
+                                                    'brain.goals.description_placeholder',
+                                                    'Describe what you want to achieve...',
+                                                )
+                                            "
+                                        ></textarea>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_priority",
+                                                    "Priority",
+                                                )
+                                            }}
+                                        </label>
+                                        <select
+                                            v-model="addGoalForm.priority"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        >
+                                            <option value="low">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_low",
+                                                        "Low",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="medium">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_medium",
+                                                        "Medium",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="high">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_high",
+                                                        "High",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="urgent">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_urgent",
+                                                        "Urgent",
+                                                    )
+                                                }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end gap-3">
+                                    <button
+                                        @click="showAddGoalModal = false"
+                                        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        {{ t("brain.goals.cancel", "Cancel") }}
+                                    </button>
+                                    <button
+                                        @click="createGoal"
+                                        :disabled="
+                                            !addGoalForm.title.trim() ||
+                                            goalSaving
+                                        "
+                                        class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
+                                    >
+                                        <svg
+                                            v-if="goalSaving"
+                                            class="h-4 w-4 animate-spin"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle>
+                                            <path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                            ></path>
+                                        </svg>
+                                        {{ t("brain.goals.create", "Create") }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </Teleport>
+
+                    <!-- EDIT GOAL MODAL -->
+                    <Teleport to="body">
+                        <div
+                            v-if="showEditGoalModal"
+                            class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        >
+                            <div
+                                class="fixed inset-0 bg-black/50"
+                                @click="showEditGoalModal = false"
+                            ></div>
+                            <div
+                                class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800"
+                            >
+                                <h3
+                                    class="text-lg font-semibold text-gray-900 dark:text-white mb-4"
+                                >
+                                    ✏️
+                                    {{
+                                        t("brain.goals.edit_goal", "Edit Goal")
+                                    }}
+                                </h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_title",
+                                                    "Title",
+                                                )
+                                            }}
+                                            *
+                                        </label>
+                                        <input
+                                            v-model="editGoalForm.title"
+                                            type="text"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_description",
+                                                    "Description",
+                                                )
+                                            }}
+                                        </label>
+                                        <textarea
+                                            v-model="editGoalForm.description"
+                                            rows="3"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        ></textarea>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                        >
+                                            {{
+                                                t(
+                                                    "brain.goals.form_priority",
+                                                    "Priority",
+                                                )
+                                            }}
+                                        </label>
+                                        <select
+                                            v-model="editGoalForm.priority"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:ring-violet-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                        >
+                                            <option value="low">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_low",
+                                                        "Low",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="medium">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_medium",
+                                                        "Medium",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="high">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_high",
+                                                        "High",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="urgent">
+                                                {{
+                                                    t(
+                                                        "brain.goals.priority_urgent",
+                                                        "Urgent",
+                                                    )
+                                                }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-6 flex justify-end gap-3">
+                                    <button
+                                        @click="showEditGoalModal = false"
+                                        class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                        {{ t("brain.goals.cancel", "Cancel") }}
+                                    </button>
+                                    <button
+                                        @click="saveEditGoal"
+                                        :disabled="
+                                            !editGoalForm.title.trim() ||
+                                            goalSaving
+                                        "
+                                        class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
+                                    >
+                                        <svg
+                                            v-if="goalSaving"
+                                            class="h-4 w-4 animate-spin"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                class="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                stroke-width="4"
+                                            ></circle>
+                                            <path
+                                                class="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                            ></path>
+                                        </svg>
+                                        {{ t("brain.goals.save", "Save") }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </Teleport>
                 </div>
             </template>
         </div>

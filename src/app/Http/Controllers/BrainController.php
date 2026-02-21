@@ -401,12 +401,6 @@ class BrainController extends Controller
 
             $goals = $query->paginate(20);
 
-            // Append computed attributes
-            $goals->getCollection()->transform(function ($goal) {
-                $goal->append('progress_percent');
-                return $goal;
-            });
-
             return response()->json($goals);
         } catch (\Exception $e) {
             // ai_goals table may not exist if migration hasn't been run

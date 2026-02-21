@@ -52,6 +52,12 @@ class CampaignAgent extends BaseAgent
     public function needsMoreInfo(array $intent, User $user, string $knowledgeContext = ''): bool
     {
         $params = $intent['parameters'] ?? [];
+
+        // Cron tasks have auto-filled context — never block autonomous execution
+        if (($intent['channel'] ?? '') === 'cron' || !empty($params['cron_task'])) {
+            return false;
+        }
+
         // If user already provided details via the info-gathering step, no more info needed
         if (!empty($params['user_details'])) {
             return false;
@@ -91,14 +97,36 @@ class CampaignAgent extends BaseAgent
     public function plan(array $intent, User $user, string $knowledgeContext = ''): ?AiActionPlan
     {
         $intentDesc = $intent['intent'];
-        $paramsJson = json_encode($intent['parameters'] ?? []);
+        $params = $intent['parameters'] ?? [];
 
+        // For cron tasks, enrich intent with auto-context so AI has everything it needs
+        $autoContextBlock = '';
+        if (!empty($params['cron_task']) && !empty($params['auto_context'])) {
+            $auto = $params['auto_context'];
+            $autoContextBlock = "\n\nAUTOMATIC EXECUTION CONTEXT (cron mode — no user interaction available):\n";
+            if (!empty($auto['lists'])) {
+                $autoContextBlock .= "Available contact lists:\n";
+                foreach ($auto['lists'] as $list) {
+                    $autoContextBlock .= "  - \"{$list['name']}\" (ID: {$list['id']}, {$list['subscribers_count']} subscribers)\n";
+                }
+            }
+            if (!empty($auto['recent_topics'])) {
+                $autoContextBlock .= "Recently used topics (avoid repeating): " . implode(', ', $auto['recent_topics']) . "\n";
+            }
+            $autoContextBlock .= "IMPORTANT: Since this is a cron task, you MUST choose a concrete topic, audience, and tone. Do NOT leave them empty or ask for clarification. Pick the best option based on the available data.\n";
+            // Remove auto_context from params to avoid huge JSON
+            unset($params['auto_context']);
+            unset($params['cron_task']);
+        }
+
+        $paramsJson = json_encode($params);
         $langInstruction = $this->getLanguageInstruction($user);
 
         $prompt = <<<PROMPT
 You are an email marketing expert. The user wants to perform the following action:
 Intent: {$intentDesc}
 Parameters: {$paramsJson}
+{$autoContextBlock}
 
 {$knowledgeContext}
 

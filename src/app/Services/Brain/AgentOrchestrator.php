@@ -1057,18 +1057,13 @@ PROMPT;
             }
         }
 
-        // In autonomous mode, execute high-priority tasks immediately
+        // In autonomous mode, execute high-priority tasks immediately via direct dispatch
         if ($settings->work_mode === ModeController::MODE_AUTONOMOUS && !empty($createdTasks)) {
             $executed = 0;
             foreach ($createdTasks as $task) {
-                if (($task['priority'] ?? 'medium') === 'high' && !empty($task['action'])) {
+                if (($task['priority'] ?? 'medium') === 'high' && !empty($task['action']) && !empty($task['agent'])) {
                     try {
-                        $taskResult = $this->processMessage(
-                            $task['action'],
-                            $user,
-                            'web',
-                            $conversation->id,
-                        );
+                        $taskResult = $this->executeCronTask($task, $user);
                         $executed++;
                     } catch (\Exception $e) {
                         Log::warning('Auto-executing situation task failed', [
@@ -1087,6 +1082,190 @@ PROMPT;
             'type' => 'situation_analysis',
             'message' => $message,
         ];
+    }
+
+    /**
+     * Execute a task directly from CRON — bypasses intent classification.
+     * The task already has agent, action, and priority defined.
+     * Auto-fills context from CRM data so agents don't need to ask for info.
+     */
+    public function executeCronTask(array $task, User $user): array
+    {
+        $startTime = microtime(true);
+        $agentName = $task['agent'] ?? null;
+        $agent = $this->agents[$agentName] ?? null;
+
+        if (!$agent) {
+            Log::warning('executeCronTask: agent not found', ['agent' => $agentName]);
+            return [
+                'type' => 'error',
+                'message' => "Agent '{$agentName}' not found for cron task.",
+            ];
+        }
+
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        // Log cron task dispatch
+        AiBrainActivityLog::logEvent($user->id, 'cron_task_dispatch', 'started', $agentName, [
+            'task_title' => $task['title'] ?? '',
+            'task_action' => $task['action'] ?? '',
+        ]);
+
+        // Auto-fill context from CRM data — replace the info-gathering step
+        $autoContext = $this->gatherAutoContext($user, $agentName);
+
+        // Build enriched intent — no classification needed, task already specifies everything
+        $intent = [
+            'requires_agent' => true,
+            'agent' => $agentName,
+            'intent' => $task['action'] ?? $task['title'] ?? '',
+            'task_type' => $agentName,
+            'confidence' => 1.0,
+            'channel' => 'cron',
+            'has_user_details' => true, // Skip needsMoreInfo()
+            'parameters' => array_merge(
+                $task['parameters'] ?? [],
+                ['auto_context' => $autoContext],
+                ['cron_task' => true],
+            ),
+        ];
+
+        // Get knowledge context
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName);
+
+        // Enrich knowledge context with auto-gathered data
+        if (!empty($autoContext)) {
+            $autoContextStr = "\n\n--- AUTO-CONTEXT (from CRM/lists) ---\n";
+            if (!empty($autoContext['lists'])) {
+                $autoContextStr .= "Available lists:\n";
+                foreach ($autoContext['lists'] as $list) {
+                    $autoContextStr .= "  - {$list['name']} (ID: {$list['id']}, {$list['subscribers_count']} subscribers)\n";
+                }
+            }
+            if (!empty($autoContext['recent_topics'])) {
+                $autoContextStr .= "Recent campaign topics (avoid repeating): " . implode(', ', $autoContext['recent_topics']) . "\n";
+            }
+            if (!empty($autoContext['business_context'])) {
+                $autoContextStr .= "Business context: {$autoContext['business_context']}\n";
+            }
+            $autoContextStr .= "---\n";
+            $knowledgeContext .= $autoContextStr;
+        }
+
+        try {
+            // Create plan directly — agent already has all needed context
+            $plan = $agent->plan($intent, $user, $knowledgeContext);
+
+            if (!$plan) {
+                Log::warning('executeCronTask: plan creation failed', [
+                    'agent' => $agentName,
+                    'task' => $task['title'] ?? '',
+                ]);
+                return [
+                    'type' => 'error',
+                    'message' => "Failed to create plan for cron task: {$task['title']}",
+                ];
+            }
+
+            // Execute immediately — cron is always autonomous
+            $result = $this->executePlan($plan, $user);
+
+            $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+
+            AiBrainActivityLog::logEvent($user->id, 'cron_task_complete', 'completed', $agentName, [
+                'task_title' => $task['title'] ?? '',
+                'plan_id' => $plan->id,
+                'duration_ms' => $durationMs,
+            ], $durationMs);
+
+            return $result;
+
+        } catch (\Exception $e) {
+            Log::error('executeCronTask: execution failed', [
+                'agent' => $agentName,
+                'task' => $task['title'] ?? '',
+                'error' => $e->getMessage(),
+            ]);
+
+            AiBrainActivityLog::logEvent($user->id, 'cron_task_error', 'error', $agentName, [
+                'task_title' => $task['title'] ?? '',
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'type' => 'error',
+                'message' => "Cron task failed: {$e->getMessage()}",
+            ];
+        }
+    }
+
+    /**
+     * Gather auto-context from CRM/lists for autonomous task execution.
+     * Provides agents with the data they'd normally ask the user for.
+     */
+    protected function gatherAutoContext(User $user, string $agentName): array
+    {
+        $context = [];
+
+        try {
+            // Contact lists with subscriber counts
+            $lists = \App\Models\ContactList::where('user_id', $user->id)
+                ->withCount('subscribers')
+                ->orderByDesc('subscribers_count')
+                ->get();
+
+            $context['lists'] = $lists->map(fn($l) => [
+                'id' => $l->id,
+                'name' => $l->name,
+                'subscribers_count' => $l->subscribers_count,
+            ])->toArray();
+
+            $context['total_subscribers'] = $lists->sum('subscribers_count');
+        } catch (\Exception $e) {
+            $context['lists'] = [];
+            $context['total_subscribers'] = 0;
+        }
+
+        // Recent campaign topics to avoid repetition
+        try {
+            $recentPlans = AiActionPlan::forUser($user->id)
+                ->where('agent_type', 'campaign')
+                ->where('created_at', '>=', now()->subDays(14))
+                ->pluck('title')
+                ->toArray();
+
+            $context['recent_topics'] = $recentPlans;
+        } catch (\Exception $e) {
+            $context['recent_topics'] = [];
+        }
+
+        // CRM data for CRM/segmentation agents
+        if (in_array($agentName, ['crm', 'segmentation', 'analytics'])) {
+            try {
+                $context['hot_leads'] = \App\Models\CrmContact::where('user_id', $user->id)
+                    ->where('score', '>=', 50)
+                    ->count();
+                $context['open_deals'] = \App\Models\CrmDeal::where('user_id', $user->id)
+                    ->whereNull('closed_at')
+                    ->count();
+                $context['total_contacts'] = \App\Models\CrmContact::where('user_id', $user->id)
+                    ->count();
+            } catch (\Exception $e) {
+                // CRM tables may not exist
+            }
+        }
+
+        // Business context from knowledge base
+        try {
+            $kbContext = $this->knowledgeBase->getContext($user, 'business');
+            if ($kbContext) {
+                $context['business_context'] = mb_substr($kbContext, 0, 500);
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        return $context;
     }
 
     /**

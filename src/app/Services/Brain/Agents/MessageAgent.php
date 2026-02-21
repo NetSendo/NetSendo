@@ -44,6 +44,8 @@ class MessageAgent extends BaseAgent
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $personalization = $this->getPersonalizationInstructions();
+
         $prompt = <<<PROMPT
 You are an email/SMS copywriting expert. The user wants:
 Intent: {$intentDesc}
@@ -52,6 +54,9 @@ Parameters: {$paramsJson}
 {$knowledgeContext}
 
 {$langInstruction}
+
+You have access to the following personalization variables that can be used in email/SMS content:
+{$personalization}
 
 Create a content creation plan. Respond in JSON:
 {
@@ -144,6 +149,8 @@ PROMPT;
     {
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $personalization = $this->getPersonalizationInstructions();
+
         $prompt = <<<PROMPT
 Advise the user on creating email/SMS content. Manual mode.
 
@@ -152,12 +159,15 @@ Intent: {$intent['intent']}
 
 {$langInstruction}
 
+The platform supports the following personalization variables:
+{$personalization}
+
 Provide:
 1. Copywriting tips
 2. Example message subjects
 3. Content structure
 4. Best practices for email/SMS marketing
-5. Personalization tips
+5. Personalization tips — mention the available variables listed above with examples of how to use them effectively
 
 Respond with emoji and formatting.
 PROMPT;
@@ -168,6 +178,53 @@ PROMPT;
             'type' => 'advice',
             'message' => $response,
         ];
+    }
+
+    // === Helpers ===
+
+    /**
+     * Get personalization instructions for AI prompts.
+     * Lists all available NetSendo insert variables with correct syntax.
+     */
+    protected function getPersonalizationInstructions(): string
+    {
+        return <<<'VARS'
+PERSONALIZATION VARIABLES (inserts):
+Use double square brackets [[variable]] for personalization. NEVER use curly braces for field names.
+Gender-dependent word forms use a SPECIAL syntax: {{male_form|female_form}}.
+
+AVAILABLE VARIABLES:
+  Subscriber data:
+  - [[fname]] — First name (e.g. "Anna")
+  - [[!fname]] — First name in VOCATIVE case / Polish declension (e.g. "Anno", "Grzegorzu")
+  - [[lname]] — Last name
+  - [[email]] — Email address
+  - [[phone]] — Phone number
+  - [[sex]] — Gender (M/F)
+
+  Gender-dependent forms (special syntax with curly braces):
+  - {{male_word|female_word}} — Inserts the correct word based on subscriber's gender
+  - Examples: {{Drogi|Droga}}, {{Byłeś|Byłaś}}, {{zainteresowany|zainteresowana}}
+
+  Links:
+  - [[unsubscribe]] — Unsubscribe link
+  - [[manage]] — Manage subscription preferences link
+
+  Dates:
+  - [[system-created]] — Account creation date
+  - [[last-message]] — Last message date
+  - [[list-created]] — List signup date
+
+EXAMPLES:
+  "{{Drogi|Droga}} [[!fname]], dziękujemy za subskrypcję!"
+  "Cześć [[fname]]! {{Byłeś|Byłaś}} ostatnio u nas [[last-message]]."
+  "[[fname]], mamy dla Ciebie coś specjalnego!"
+
+IMPORTANT:
+- Use [[fname]] or [[!fname]] for personalization — NEVER {{first_name}} or {first_name}
+- Gender forms ONLY use curly braces: {{male|female}}
+- All other variables use square brackets: [[variable_name]]
+VARS;
     }
 
     // === Step Executors ===
@@ -183,6 +240,8 @@ PROMPT;
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $personalization = $this->getPersonalizationInstructions();
+
         $prompt = <<<PROMPT
 Generate {$count} email subject line variants.
 
@@ -192,6 +251,8 @@ Tone: {$tone}
 {$knowledgeContext}
 
 {$langInstruction}
+
+{$personalization}
 
 Respond in JSON:
 {
@@ -206,6 +267,7 @@ Rules:
 - One subject with emoji, rest without
 - Use different copywriting techniques
 - Avoid spammy words
+- Use [[fname]] or [[!fname]] for at least one personalized subject variant
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
@@ -248,6 +310,7 @@ Respond in JSON: {"content": "SMS content", "characters": N}
 PROMPT;
         } else {
             $langInstruction = $this->getLanguageInstruction($user);
+            $personalization = $this->getPersonalizationInstructions();
 
             $prompt = <<<PROMPT
 Generate marketing email content in HTML.
@@ -259,6 +322,8 @@ Length: {$length}
 {$knowledgeContext}
 
 {$langInstruction}
+
+{$personalization}
 
 Respond in JSON:
 {
@@ -273,7 +338,8 @@ Rules:
 - Responsive HTML
 - Clear CTA
 - Short paragraphs
-- Personalization: use {{first_name}} as placeholder
+- Use personalization variables from the list above (e.g. [[fname]], [[!fname]], {{male|female}} forms)
+- NEVER use {{first_name}} or {first_name} — always use [[fname]] or [[!fname]]
 PROMPT;
         }
 
@@ -327,12 +393,16 @@ PROMPT;
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $personalization = $this->getPersonalizationInstructions();
+
         $prompt = <<<PROMPT
 Generate {$count} A/B variants for the email subject line.
 
 Original subject: {$original}
 
 {$langInstruction}
+
+{$personalization}
 
 Respond in JSON:
 {
@@ -343,6 +413,7 @@ Respond in JSON:
 }
 
 Each variant should test a different variable (CTA, personalization, urgency, etc.)
+Consider using [[fname]] or [[!fname]] in at least one variant to test personalization impact.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 1000, 'temperature' => 0.8]);
@@ -376,6 +447,8 @@ PROMPT;
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $personalization = $this->getPersonalizationInstructions();
+
         $prompt = <<<PROMPT
 Improve marketing email content.
 
@@ -386,12 +459,17 @@ Required improvements: {$improvements}
 
 {$langInstruction}
 
+{$personalization}
+
 Respond in JSON:
 {
   "improved_subject": "...",
   "improved_content": "...",
   "changes_made": ["change 1", "change 2"]
 }
+
+IMPORTANT: Preserve any existing personalization variables in the content (e.g. [[fname]], [[!fname]], {{...|...}}).
+If the content lacks personalization, consider adding [[fname]] or [[!fname]] where natural.
 PROMPT;
 
         $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.5]);

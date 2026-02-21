@@ -143,6 +143,7 @@ class MarketingSalesSkill
 
     /**
      * Generate dynamic task suggestions based on user's CRM data.
+     * Tasks include all context needed for autonomous execution (list IDs, topics, goals).
      */
     public static function getSuggestedTasks(User $user): array
     {
@@ -150,11 +151,13 @@ class MarketingSalesSkill
         $now = now();
 
         // 1. Check for contacts without recent campaigns
-        $totalContacts = ContactList::where('user_id', $user->id)
+        $contactLists = ContactList::where('user_id', $user->id)
             ->withCount('subscribers')
             ->get();
-        $totalSubscribers = $totalContacts->sum('subscribers_count');
-        $listCount = $totalContacts->count();
+        $totalSubscribers = $contactLists->sum('subscribers_count');
+        $listCount = $contactLists->count();
+        $listIds = $contactLists->pluck('id')->toArray();
+        $listNames = $contactLists->pluck('name', 'id')->toArray();
 
         if ($totalSubscribers > 0) {
             // Check recent campaign activity
@@ -164,15 +167,23 @@ class MarketingSalesSkill
                 ->count();
 
             if ($recentCampaigns === 0 && $totalSubscribers >= 10) {
+                // Pick the largest list for targeting
+                $targetList = $contactLists->sortByDesc('subscribers_count')->first();
                 $tasks[] = [
                     'id' => 'suggest_campaign_' . $now->timestamp,
                     'category' => 'promotional_blast',
                     'icon' => '🎯',
                     'title' => "Plan a campaign for {$totalSubscribers} subscribers",
-                    'description' => "You have {$listCount} lists with {$totalSubscribers} subscribers — no campaigns in the last 7 days. Plan a new email campaign.",
+                    'description' => "You have {$listCount} lists with {$totalSubscribers} subscribers — no campaigns in the last 7 days.",
                     'priority' => 'high',
-                    'action' => 'Create an email campaign for my subscribers',
+                    'action' => "Create a professional email campaign about product updates and value highlights. Target list: \"{$targetList->name}\" ({$targetList->subscribers_count} subscribers). Tone: professional and engaging. Goal: re-engage subscribers and drive product interest. Include a compelling subject line and clear CTA.",
                     'agent' => 'campaign',
+                    'parameters' => [
+                        'list_ids' => [$targetList->id],
+                        'topic' => 'product updates and value highlights',
+                        'tone' => 'professional',
+                        'goal' => 're-engage subscribers',
+                    ],
                 ];
             }
 
@@ -188,10 +199,16 @@ class MarketingSalesSkill
                     'category' => 'drip_campaign',
                     'icon' => '💧',
                     'title' => 'Create a drip campaign sequence',
-                    'description' => 'You don\'t have an automatic drip sequence yet. Build a welcome series or nurturing sequence to engage new subscribers.',
+                    'description' => 'No automatic drip sequence exists. Build a welcome series for new subscribers.',
                     'priority' => 'high',
-                    'action' => 'Create a drip campaign welcome series',
+                    'action' => "Create a 3-email welcome drip campaign series for new subscribers. Email 1: Welcome and product overview. Email 2: Key features and tutorials. Email 3: Success stories and CTA to try/buy. Tone: friendly and helpful. Space emails 2 days apart.",
                     'agent' => 'campaign',
+                    'parameters' => [
+                        'list_ids' => $listIds,
+                        'topic' => 'welcome series for new subscribers',
+                        'tone' => 'friendly and helpful',
+                        'goal' => 'onboard new subscribers and drive first conversion',
+                    ],
                 ];
             }
         }
@@ -212,10 +229,14 @@ class MarketingSalesSkill
                     'category' => 'crm_pipeline',
                     'icon' => '🔥',
                     'title' => "Follow up {$hotLeads} hot leads",
-                    'description' => "You have {$hotLeads} contacts with score 50+. Plan personalized follow-ups to increase conversion.",
+                    'description' => "{$hotLeads} contacts with score 50+. Plan personalized follow-ups.",
                     'priority' => 'high',
-                    'action' => "Prepare follow-up for hot leads in CRM",
+                    'action' => "Review and prepare follow-up actions for {$hotLeads} hot leads (score 50+) in CRM. For each lead, create a personalized follow-up task with next steps based on their engagement history. Prioritize by score descending.",
                     'agent' => 'crm',
+                    'parameters' => [
+                        'min_score' => 50,
+                        'action_type' => 'follow_up',
+                    ],
                 ];
             }
 
@@ -225,9 +246,9 @@ class MarketingSalesSkill
                     'category' => 'analytics_report',
                     'icon' => '📊',
                     'title' => "Pipeline review: {$openDeals} open deals",
-                    'description' => "You have {$openDeals} open deals. Analyze the pipeline, identify blockers and plan follow-ups.",
+                    'description' => "{$openDeals} open deals. Analyze pipeline, identify blockers.",
                     'priority' => 'medium',
-                    'action' => "Analyze CRM pipeline and suggest next steps",
+                    'action' => "Generate a CRM pipeline analysis report covering {$openDeals} open deals. Include: deals by stage, average time in stage, stalled deals (no activity 7+ days), total pipeline value, and recommended next actions for top 5 deals by value.",
                     'agent' => 'analytics',
                 ];
             }
@@ -246,9 +267,9 @@ class MarketingSalesSkill
                 'category' => 'analytics_report',
                 'icon' => '📈',
                 'title' => 'Generate weekly report',
-                'description' => 'No report in the last 7 days. Generate analysis of campaigns, subscriptions and trends.',
+                'description' => 'No report in the last 7 days.',
                 'priority' => 'low',
-                'action' => 'Generate full analytics report',
+                'action' => 'Generate a comprehensive weekly analytics report covering: campaign performance (open rate, CTR, bounces), subscriber growth trends, top-performing content, and actionable optimization recommendations for next week.',
                 'agent' => 'analytics',
             ];
         }
@@ -260,10 +281,14 @@ class MarketingSalesSkill
                 'category' => 'list_hygiene',
                 'icon' => '🧹',
                 'title' => 'Clean contact lists',
-                'description' => "Check {$totalSubscribers} subscribers for bounced, inactive and duplicates. Maintain healthy lists.",
+                'description' => "Check {$totalSubscribers} subscribers for bounced, inactive and duplicates.",
                 'priority' => 'low',
-                'action' => 'Clean list from inactive and bounced subscribers',
+                'action' => "Audit and clean contact lists: identify bounced emails, inactive subscribers (no opens in 90+ days), and duplicates across {$listCount} lists ({$totalSubscribers} total subscribers). Generate a cleanup report with recommended actions.",
                 'agent' => 'list',
+                'parameters' => [
+                    'list_ids' => $listIds,
+                    'inactive_days' => 90,
+                ],
             ];
         }
 
@@ -274,10 +299,14 @@ class MarketingSalesSkill
                 'category' => 'segmentation',
                 'icon' => '🎯',
                 'title' => 'Contact base segmentation',
-                'description' => 'Divide your base into segments by activity, interests and scoring. Increase campaign targeting accuracy.',
+                'description' => 'Divide base into segments by activity, interests and scoring.',
                 'priority' => 'medium',
-                'action' => 'Run contact base segmentation',
+                'action' => "Analyze {$totalSubscribers} subscribers and create smart segments based on: engagement level (active/inactive), subscription recency, and interaction frequency. Suggest at least 3 actionable segments for targeted campaigns.",
                 'agent' => 'segmentation',
+                'parameters' => [
+                    'list_ids' => $listIds,
+                    'total_subscribers' => $totalSubscribers,
+                ],
             ];
         }
 

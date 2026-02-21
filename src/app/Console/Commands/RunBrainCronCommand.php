@@ -120,6 +120,10 @@ class RunBrainCronCommand extends Command
                     'priority' => $p['priority'] ?? 'medium',
                     'action' => $p['action'] ?? '',
                     'agent' => $p['agent'] ?? null,
+                    'parameters' => array_filter([
+                        'target_list_ids' => $p['target_list_ids'] ?? [],
+                        'exclude_segments' => $p['exclude_segments'] ?? [],
+                    ]),
                 ])->toArray();
         }
 
@@ -170,14 +174,8 @@ class RunBrainCronCommand extends Command
             $this->line("[Brain CRON]   → Executing: {$task['title']}");
 
             try {
-                // Use the task's action as the message to the orchestrator
-                $result = $orchestrator->processMessage(
-                    $task['action'],
-                    $user,
-                    'cron', // channel = cron to distinguish from manual
-                    null,   // no specific conversation
-                    true,   // force new conversation
-                );
+                // Use direct agent dispatch — bypasses intent classification
+                $result = $orchestrator->executeCronTask($task, $user);
 
                 $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
                 $taskResults[$i] = $status;
