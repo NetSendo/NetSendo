@@ -489,16 +489,32 @@ class RunBrainCronCommand extends Command
                         null,
                     );
 
+                    // Decompose goal into executable sub-plans immediately
+                    $subPlanCount = 0;
+                    try {
+                        $subPlans = $goalPlanner->decomposeGoal($goal, $user);
+                        $subPlanCount = count($subPlans);
+                        $this->line("[Brain CRON]   📋 Goal '{$goal->title}': decomposed into {$subPlanCount} sub-plans.");
+                    } catch (\Exception $decomposeEx) {
+                        Log::warning('Auto-goal decomposition failed', [
+                            'goal_id' => $goal->id,
+                            'error' => $decomposeEx->getMessage(),
+                        ]);
+                        $this->warn("[Brain CRON]   ⚠️  Goal '{$goal->title}': decomposition failed: {$decomposeEx->getMessage()}");
+                    }
+
                     AiBrainActivityLog::logEvent($user->id, 'auto_goal_created', 'completed', null, [
                         'goal_id' => $goal->id,
                         'title' => $goal->title,
                         'source' => 'cron_analysis',
+                        'sub_plans' => $subPlanCount,
                     ]);
 
                     $createdGoals[] = [
                         'id' => $goal->id,
                         'title' => $goal->title,
                         'status' => 'created',
+                        'sub_plans' => $subPlanCount,
                     ];
 
                     $this->line("[Brain CRON]   🎯 Auto-created goal: {$goal->title}");
@@ -652,6 +668,21 @@ class RunBrainCronCommand extends Command
                     'progress' => 100,
                 ];
                 continue;
+            }
+
+            // Ensure goal has decomposition — run if missing (fixes goals created without decomposition)
+            if (empty($goal->context['decomposition'])) {
+                try {
+                    $subPlans = $goalPlanner->decomposeGoal($goal, $user);
+                    if (empty($subPlans)) {
+                        $this->warn("[Brain CRON]   ⚠️  Goal '{$goal->title}': decomposition returned no plans.");
+                        continue;
+                    }
+                    $this->line("[Brain CRON]   📋 Goal '{$goal->title}': decomposed into " . count($subPlans) . " sub-plans.");
+                } catch (\Exception $e) {
+                    $this->warn("[Brain CRON]   ⚠️  Goal '{$goal->title}': decomposition failed: {$e->getMessage()}");
+                    continue;
+                }
             }
 
             // Get the next action for this goal
