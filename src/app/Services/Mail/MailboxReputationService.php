@@ -284,6 +284,10 @@ class MailboxReputationService
      *
      * Domain-based blocklists work differently from IP-based ones:
      * Just query domain.zone directly (no IP reversal needed)
+     *
+     * IMPORTANT: Many DNSBLs (Spamhaus, SURBL, URIBL) return special error codes
+     * when queries come from public/shared DNS resolvers (Google 8.8.8.8, Cloudflare, etc.).
+     * These must NOT be treated as "listed" results.
      */
     private function checkDomainDnsbl(string $domain, string $zone): bool
     {
@@ -291,9 +295,57 @@ class MailboxReputationService
 
         try {
             $results = @dns_get_record($lookup, DNS_A);
-            return !empty($results);
+
+            if (empty($results)) {
+                return false;
+            }
+
+            // Validate each returned IP — filter out error/test/block responses
+            foreach ($results as $record) {
+                $ip = $record['ip'] ?? '';
+
+                if (empty($ip)) {
+                    continue;
+                }
+
+                // Spamhaus error/block responses (public resolver detected):
+                // 127.255.255.252 = Typing error in DNSBL name
+                // 127.255.255.254 = Query via public/open resolver
+                // 127.255.255.255 = Excessive query volume
+                if (str_starts_with($ip, '127.255.255.')) {
+                    Log::debug("DNSBL {$zone}: error response {$ip} for {$domain} (public resolver?)");
+                    continue;
+                }
+
+                // Some DNSBLs use 127.0.0.1 or 127.0.0.2 as test/error
+                // Valid listing responses are typically 127.0.0.x (x > 1) or 127.0.1.x
+                // But 127.0.0.0/24 with x=1 is sometimes "test"
+                if ($ip === '127.0.0.1') {
+                    continue;
+                }
+
+                // SURBL/URIBL error responses — 127.0.0.x where x > 128 can indicate errors
+                // Valid SURBL responses are bit-masked in the last octet (2, 4, 8, 16, 32, 64)
+                if ($zone === 'multi.surbl.org' || $zone === 'multi.uribl.com') {
+                    $lastOctet = (int) substr($ip, strrpos($ip, '.') + 1);
+                    // Valid listing bits: 2, 4, 8, 16, 32, 64 (values 1-127)
+                    // Error range: >= 128
+                    if ($lastOctet >= 128) {
+                        Log::debug("DNSBL {$zone}: error response {$ip} for {$domain}");
+                        continue;
+                    }
+                }
+
+                // If we reach here, it's a genuine listing response
+                Log::info("DNSBL {$zone}: domain {$domain} IS LISTED (response: {$ip})");
+                return true;
+            }
+
+            // All responses were error/block codes — domain is NOT actually listed
+            return false;
         } catch (\Exception $e) {
             // DNS error — assume not listed
+            Log::debug("DNSBL {$zone}: DNS error for {$domain}: {$e->getMessage()}");
             return false;
         }
     }

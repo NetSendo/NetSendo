@@ -73,7 +73,7 @@ const checkReputation = async (mailbox) => {
     checkingReputation.value = mailbox.id;
     try {
         const response = await fetch(
-            route("mailboxes.check-reputation", mailbox.id),
+            route("settings.mailboxes.check-reputation", mailbox.id),
             {
                 method: "POST",
                 headers: {

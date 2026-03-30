@@ -367,12 +367,17 @@ FORMAT: Clean markdown text. No JSON wrapper.
 PROMPT;
 
         try {
-            return $this->aiService->chat(
-                $prompt,
-                '',
-                ['max_tokens' => 4000, 'temperature' => 0.5],
-                $user,
-                'analytics'
+            $integration = $this->aiService->getDefaultIntegration();
+
+            if (!$integration) {
+                Log::warning('Weekly digest: no AI integration configured', ['user_id' => $user->id]);
+                return $this->generateFallbackReport($context);
+            }
+
+            return $this->aiService->generateContent(
+                AiService::prependDateContext($prompt, $user->timezone),
+                $integration,
+                ['max_tokens' => 4000, 'temperature' => 0.5]
             );
         } catch (\Exception $e) {
             Log::warning('Weekly digest AI report generation failed', [

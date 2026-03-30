@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.6] – Short Description
+
+**Release date:** 2026-03-30
+
+### Fixed
+
+- **Mailbox Reputation — False Blacklist Positives:**
+  - Fixed all mailboxes being incorrectly flagged as "Na czarnej liście!" (Blacklisted). Root cause: Spamhaus, SURBL, and URIBL return special error IPs (e.g., `127.255.255.254`) when queried from public/shared DNS resolvers (Google DNS, Cloudflare). The `checkDomainDnsbl()` method treated any DNS response as "listed". Now validates response IPs and filters out known error/block/test ranges before determining listing status.
+  - Migration resets all existing reputation data so the corrected logic can re-evaluate on next check.
+
+- **Mailbox Reputation — "Error checking reputation" Button Failure:**
+  - Fixed the "Check Reputation" button in Mailbox settings returning an error. Root cause: frontend called `route("mailboxes.check-reputation")` but the actual route name is `settings.mailboxes.check-reputation` (due to the `Route::prefix('settings/mailboxes')->name('settings.mailboxes.')` group). Updated `Mailboxes/Index.vue` to use the correct route name.
+
+- **Brain — Weekly Digest AI Report Crash (`AiService::chat()` undefined):**
+  - Fixed `Call to undefined method App\Services\AI\AiService::chat()` error in `WeeklyDigestService::generateAiReport()`. Replaced the non-existent `chat()` call with the correct pattern: `getDefaultIntegration()` + `generateContent()` with `AiService::prependDateContext()`, matching the established calling convention used by `BaseAgent::callAi()` and `SituationAnalyzer`.
+
+- **Brain — CampaignAgent Plan Creation Crash (`Data too long for column 'intent'`):**
+  - Fixed `SQLSTATE[22001]: String data, right truncated: 1406 Data too long for column 'intent'` in `ai_action_plans` table. The `intent` column was `VARCHAR(255)` but AI-generated intent descriptions (especially from cron tasks and situation analysis) regularly exceed this limit. Migration changes the column type to `TEXT`.
+
 ## [2.0.5] – Short Description
 
 **Release date:** 2026-03-13
