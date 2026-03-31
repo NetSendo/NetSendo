@@ -444,7 +444,7 @@ onMounted(() => {
                                 />
                             </svg>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="relative z-10 flex items-center gap-1">
                             <Link
                                 :href="
                                     route('subscribers.index', {

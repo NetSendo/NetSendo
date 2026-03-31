@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.0.8] – Short Description
+
+**Release date:** 2026-03-31
+
+### Fixed
+
+- **Mailing Lists — Grid View Action Buttons Unresponsive:**
+  - Fixed all action buttons (Subscribers, Create Message, Edit, Clone, Delete) on mailing list cards being unclickable. Root cause: the list name `<Link>` contained a `<span class="absolute inset-0">` overlay that covered the entire card (which has `position: relative`), intercepting all click events and redirecting to the edit page. Added `relative z-10` to the action buttons container to elevate them above the overlay.
+
 ## [2.0.7] – Short Description
 
 **Release date:** 2026-03-31
