@@ -16,7 +16,7 @@ return new class extends Migration
         // due to public DNS resolver error responses being treated as "listed".
         // The scheduled task will re-check with corrected logic.
         \Illuminate\Support\Facades\DB::table('mailboxes')->update([
-            'reputation_overall' => null,
+            'reputation_overall' => 'unchecked',
             'reputation_status' => null,
             'reputation_checked_at' => null,
         ]);

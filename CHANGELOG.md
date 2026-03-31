@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<!-- [AI_unreleased_notes] -->
+
+## [2.0.7] – Short Description
+
+**Release date:** 2026-03-31
+
+### Changed
+
+- **Tailwind CSS v3 → v4 Migration:**
+  - Migrated from Tailwind CSS v3 to v4 with new CSS-native configuration approach.
+  - Replaced `@tailwind base/components/utilities` directives with `@import "tailwindcss"` in `app.css`.
+  - Added `@custom-variant dark (&:where(.dark, .dark *))` to preserve class-based dark mode toggling (replaces `darkMode: 'class'` from `tailwind.config.js`).
+  - Added `@theme` block with font-family configuration (replaces `theme.extend` from `tailwind.config.js`).
+  - Converted `@layer utilities` custom classes to `@utility` syntax.
+  - Removed `tailwind.config.js` and `postcss.config.js` (no longer needed in Tailwind v4).
+  - Added `@tailwindcss/vite` plugin to `vite.config.js` (replaces PostCSS-based integration).
+  - Added `@reference "tailwindcss"` directive to Vue components with `<style scoped>` blocks using `@apply` (Builder, Code, Stats, Cron/Index).
+
+- **Frontend Dependency Updates:**
+  - Upgraded Vite from v7 to v8.
+  - Upgraded `laravel-vite-plugin` from v2 to v3.
+  - Upgraded `@tailwindcss/vite` from v4.0.0 to v4.2.2.
+  - Upgraded `@vitejs/plugin-vue` from v6.0.3 to v6.0.5.
+  - Upgraded Vue from v3.4.0 to v3.5.31.
+  - Upgraded `vue-i18n` from v9.14.5 to v11.3.0.
+  - Upgraded `axios` from v1.11.0 to v1.14.0 (moved from devDependencies to dependencies).
+  - Upgraded all `@tiptap/*` packages from v3.13–3.14 to v3.21.
+  - Upgraded `laravel-echo` from v2.2.7 to v2.3.1.
+  - Upgraded `marked` from v17.0.3 to v17.0.5.
+  - Upgraded `pusher-js` from v8.4.0 to v8.4.3.
+  - Pinned `@inertiajs/vue3` to v2.x (v3.0 requires backend Inertia v3 upgrade).
+  - Removed `autoprefixer` and `postcss` (no longer needed with Tailwind v4).
+  - Removed `@tailwindcss/forms` (Tailwind v4 includes form styles natively).
+
+- **Backend Dependency Updates:**
+  - Upgraded `laravel/framework` from v12.43.1 to v12.56.0.
+  - Upgraded `dedoc/scramble` from v0.13.8 to v0.13.17.
+  - Upgraded `laravel/reverb` from v1.7.0 to v1.9.0.
+  - Upgraded `laravel/sanctum` from v4.2.1 to v4.3.1.
+  - Upgraded `laravel/breeze` from v2.3.8 to v2.4.1.
+  - Upgraded `laravel/pail` from v1.2.4 to v1.2.6.
+  - Upgraded `laravel/pint` from v1.26.0 to v1.29.0.
+  - Upgraded `laravel/sail` from v1.51.0 to v1.55.0.
+  - Upgraded `league/csv` from v9.27.1 to v9.28.0.
+  - Upgraded `nunomaduro/collision` from v8.8.3 to v8.9.1.
+  - Upgraded `tightenco/ziggy` from v2.6.0 to v2.6.2.
+  - Upgraded `bacon/bacon-qr-code` from v3.0.3 to v3.0.4.
+
+### Fixed
+
+- **Mailbox Reputation Migration — NOT NULL Constraint Violation:**
+  - Fixed `SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'reputation_overall' cannot be null` error during migration `2026_03_30_081500`. The migration attempted to reset `reputation_overall` to `null`, but the column has a `NOT NULL` constraint with a default value of `'unchecked'`. Changed the reset value from `null` to `'unchecked'`.
+
+- **Docker — Route Cache `CompiledRouteCollection` Error:**
+  - Fixed `RouteCacheCommand::buildRouteCacheFile(): Argument #1 ($routes) must be of type RouteCollection, CompiledRouteCollection given` error during container startup. Root cause: `docker-entrypoint.sh` ran `php artisan route:cache` without clearing the existing cache first. When a compiled route cache already exists, Laravel loads `CompiledRouteCollection` instead of fresh `RouteCollection`, causing a `TypeError`. Added `php artisan route:clear` before `route:cache` in the entrypoint.
+
+### Security
+
+- **PHPUnit — Unsafe Deserialization (CVE-2026-24765):**
+  - Upgraded `phpunit/phpunit` from v11.5.46 to v11.5.55 to fix a high-severity vulnerability in PHPT code coverage handling that could allow unsafe deserialization.
+
+- **PsySH — Local Privilege Escalation (CVE-2026-25129):**
+  - Upgraded `psy/psysh` from v0.12.18 to v0.12.22 to fix a medium-severity vulnerability where a `.psysh.php` file in the current working directory could be auto-loaded, enabling local privilege escalation.
+
 ## [2.0.6] – Short Description
 
 **Release date:** 2026-03-30

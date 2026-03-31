@@ -807,6 +807,7 @@ curl "{{ webhookSettings.webhook_url }}?token=YOUR_TOKEN"</pre>
 </template>
 
 <style scoped>
+@reference "tailwindcss";
 .btn {
     @apply px-3 py-1.5 rounded font-medium text-sm transition-colors;
 }

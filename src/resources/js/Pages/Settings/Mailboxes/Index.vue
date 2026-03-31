@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
-import { Head, useForm, router } from "@inertiajs/vue3";
+import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -91,8 +91,6 @@ const checkReputation = async (mailbox) => {
             reputationSummary.value = data.data.summary;
             reputationDetails.value = data.data.details;
             showReputationModal.value = true;
-            // Refresh to get updated status
-            router.reload({ only: ["mailboxes"] });
         } else {
             showToast(data.message || "Error checking reputation", false);
         }
@@ -123,6 +121,8 @@ const closeReputationModal = () => {
     reputationMailbox.value = null;
     reputationDetails.value = null;
     reputationSummary.value = null;
+    // Refresh mailboxes to get updated reputation status
+    router.reload({ only: ["mailboxes"] });
 };
 
 const getReputationBadgeClass = (overall) => {
