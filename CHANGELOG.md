@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.0.9] – Short Description
+
+**Release date:** 2026-04-01
+
+### Fixed
+
+- **Modal Overlay — Content Hidden Behind Backdrop:**
+  - Fixed all modal dialogs (Delete, Copy, and others) having their content hidden behind the semi-transparent backdrop overlay. Root cause: the modal content container in `Modal.vue` had default `static` positioning, causing the `absolute inset-0` backdrop (`bg-gray-500 opacity-75`) to render on top of it. Added `relative z-[51]` to the modal content container to create a proper stacking context and ensure the modal body always renders above the backdrop.
+
 ## [2.0.8] – Short Description
 
 **Release date:** 2026-03-31
