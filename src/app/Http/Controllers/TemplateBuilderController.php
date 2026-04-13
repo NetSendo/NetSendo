@@ -85,8 +85,8 @@ class TemplateBuilderController extends Controller
         // Store in public disk under templates folder
         $path = $file->storeAs('templates/images', $filename, 'public');
 
-        // Return relative URL that works with any port
-        $url = '/storage/' . $path;
+        // Return absolute URL so images work in email clients
+        $url = rtrim(config('app.url'), '/') . '/storage/' . $path;
 
         return response()->json([
             'success' => true,

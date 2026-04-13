@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+
+## [2.0.10] – Short Description
+
+**Release date:** 2026-04-13
+
+### Fixed
+
+- **Automations — Modal Buttons Hidden Behind Backdrop Overlay:**
+  - Fixed Duplicate, Delete, and Restore Defaults confirmation modals on the `/automations` page having their buttons unclickable due to the backdrop overlay rendering on top of the modal content. Same root cause as the global `Modal.vue` fix in v2.0.9 — the inline modals in `Automations/Index.vue` were missing `relative z-[51]` on the modal content container, causing the `fixed inset-0 bg-gray-500 bg-opacity-75` backdrop to cover the buttons. Added `relative z-[51]` to all three modal content containers.
+
+- **Template Builder / Editor — Relative Image URLs in Emails (GitHub #6):**
+  - Fixed uploaded images in the email editor ("Wgraj obraz" / "Click to upload image") being saved with relative paths (`/storage/templates/images/...`) instead of absolute URLs. Since email clients cannot resolve relative paths, images appeared broken in received emails. Root cause: `TemplateBuilderController::uploadImage()` returned a plain relative path without prepending `APP_URL`. Now uses `config('app.url')` to generate absolute URLs (e.g., `https://yourdomain.com/storage/templates/images/xyz.png`). Images uploaded via the Media Library were not affected.
+
+- **Dark Mode — Stats Page Month/Year Selector Invisible Text (GitHub #7):**
+  - Fixed month and year `<select>` dropdowns on the Global Stats page (`/settings/stats`) having invisible text in Dark Mode. Root cause: the selects had no explicit `dark:text-*` class, so the text color defaulted to a dark value that was invisible against the dark background (`dark:bg-slate-800`). Added `text-slate-900 dark:text-white` to both selects.
+
+- **Dark Mode — Subscribers Import Column Mapping Dropdown Unstyled (GitHub #7):**
+  - Fixed the column mapping `<select>` on the Subscribers Import page (`/subscribers/import`) appearing with a bright background when focused in Dark Mode. Added `dark:focus:border-indigo-400 dark:focus:bg-slate-800` to maintain dark styling on focus. Also added a global `color-scheme: dark` rule for all `<select>` elements in dark mode to ensure native `<option>` dropdowns render with a dark background.
+
+- **API Documentation — Incomplete POST /api/v1/subscribers Reference (GitHub #8):**
+  - Fixed the `POST /api/v1/subscribers` endpoint documentation in `docs/API_DOCUMENTATION.md` which was missing a formal parameter table. Previously only showed a JSON example and a minimal cURL with just `email` and `contact_list_id`. Added a complete parameter reference table listing all 12 accepted fields (`email`, `contact_list_id`, `first_name`, `last_name`, `phone`, `status`, `source`, `tags`, `custom_fields`, `ip_address`, `user_agent`, `device`) with types, required flags, and descriptions. Expanded the JSON example and cURL to include more fields. Also added a note about duplicate handling behavior (200 vs 201). Updated the in-app API example on the API Keys settings page to include `first_name` and `last_name` in the sample cURL command.
+
+- **API — Missing Permission Scopes Cause 403 for n8n Node and API Clients (GitHub #9):**
+  - Fixed `403 Forbidden - API key does not have email:read permission` (and `email:write`, `funnels:read`, `funnels:write`) errors when using the dedicated n8n node or any API client with "All Permissions" API keys. Root cause: the `ApiKey::PERMISSIONS` constant (used as the default when creating keys, and as the validation whitelist when updating them) was missing `email:read`, `email:write`, `funnels:read`, and `funnels:write`. These scopes were added to the controllers (`EmailController`, `FunnelController`) but never registered in the model's permission registry. As a result, even "All Permissions" keys lacked these scopes, and the `hasPermission()` check always returned `false`. Added the 4 missing permissions to the `PERMISSIONS` constant. **Note:** Existing API keys created before this fix will need to be re-created or manually updated (via Settings → API Keys → Edit Permissions) to include the new scopes.
+
+
+- **Mailing List / SMS List Deletion — 404 Error When Deleting List With Subscribers (GitHub #10):**
+  - Fixed `404 NOT FOUND` error when attempting to permanently delete a mailing list or SMS list that contains subscribers via the "Usuń trwale subskrybentów i listę" option. Root cause: `MailingListController::destroy()` and `SmsListController::destroy()` used `$request->has('transfer_to_id')` to check whether subscribers should be transferred. However, Inertia.js v2 `form.delete()` sends all form fields (including empty ones) as query parameters, so `transfer_to_id` was always present as an empty string `""`. Since `$request->has()` returns `true` for empty strings, the code entered the transfer branch and called `findOrFail('')`, which threw a `ModelNotFoundException` (404). Changed both controllers to use `$request->filled('transfer_to_id')`, which correctly ignores empty/null values and allows the `force_delete` branch to execute.
+
+
 ## [2.0.9] – Short Description
 
 **Release date:** 2026-04-01

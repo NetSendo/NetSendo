@@ -381,7 +381,7 @@ class MailingListController extends Controller
         $subscribersCount = $mailingList->subscribers()->wherePivot('status', 'active')->count();
 
         if ($subscribersCount > 0) {
-            if ($request->has('transfer_to_id')) {
+            if ($request->filled('transfer_to_id')) {
                 // Validate target list - must also be editable/owned by user
                 // Using accessibleLists to allow transfer to any list they have access to might be risky if they don't own it.
                 // Safest to restrict to lists they own.

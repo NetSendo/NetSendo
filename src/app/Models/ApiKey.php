@@ -38,10 +38,14 @@ class ApiKey extends Model
         'tags:read',
         'webhooks:read',
         'webhooks:write',
+        'email:read',
+        'email:write',
         'sms:read',
         'sms:write',
         'messages:read',
         'messages:write',
+        'funnels:read',
+        'funnels:write',
     ];
 
     /**

@@ -25,3 +25,8 @@
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(1);
 }
+
+/* Fix native select dropdown options in dark mode */
+.dark select {
+    color-scheme: dark;
+}

@@ -149,13 +149,13 @@ const getBarHeight = (value, max) => {
             <div class="flex items-center gap-3">
                 <select 
                     v-model="selectedMonth"
-                    class="rounded-lg border-slate-300 bg-transparent text-sm font-semibold focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                    class="rounded-lg border-slate-300 bg-transparent text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 >
                     <option v-for="m in months" :key="m.value" :value="m.value">{{ m.label }}</option>
                 </select>
                 <select 
                     v-model="selectedYear"
-                    class="rounded-lg border-slate-300 bg-transparent text-sm font-semibold focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                    class="rounded-lg border-slate-300 bg-transparent text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                 >
                     <option v-for="y in availableYears" :key="y" :value="y">{{ y }}</option>
                 </select>

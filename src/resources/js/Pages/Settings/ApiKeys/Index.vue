@@ -485,7 +485,7 @@ curl -H "Authorization: Bearer ns_live_TWOJ_KLUCZ" \
 curl -X POST \
      -H "Authorization: Bearer ns_live_TWOJ_KLUCZ" \
      -H "Content-Type: application/json" \
-     -d '{"email":"test@example.com","contact_list_id":1}' \
+     -d '{"email":"test@example.com","contact_list_id":1,"first_name":"Jan","last_name":"Kowalski"}' \
      {{ originUrl }}/api/v1/subscribers</pre
                         >
                     </div>

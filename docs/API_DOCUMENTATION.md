@@ -239,9 +239,33 @@ POST /api/v1/subscribers
   "custom_fields": {
     "city": "Kraków",
     "company": "Firma Sp. z o.o."
-  }
+  },
+  "ip_address": "192.168.1.1",
+  "user_agent": "Mozilla/5.0",
+  "device": "desktop"
 }
 ```
+
+**Parametry:**
+
+| Pole             | Typ     | Wymagane | Opis                                                                            |
+| ---------------- | ------- | -------- | ------------------------------------------------------------------------------- |
+| `email`          | string  | ✅*      | Adres email subskrybenta (wymagane dla list typu `email`)                       |
+| `contact_list_id`| integer | ✅       | ID listy kontaktów, do której dodać subskrybenta                                |
+| `first_name`     | string  | ❌       | Imię subskrybenta (max 255 znaków)                                              |
+| `last_name`      | string  | ❌       | Nazwisko subskrybenta (max 255 znaków)                                          |
+| `phone`          | string  | ✅*      | Numer telefonu z kodem kraju (wymagane dla list typu `sms`, max 50 znaków)      |
+| `status`         | string  | ❌       | Status: `active`, `inactive`, `unsubscribed`, `bounced` (domyślnie: `active`)   |
+| `source`         | string  | ❌       | Źródło zapisu (domyślnie: `api`, max 255 znaków)                                |
+| `tags`           | array   | ❌       | Tablica ID tagów do przypisania, np. `[1, 3]`                                   |
+| `custom_fields`  | object  | ❌       | Obiekt z polami niestandardowymi, np. `{"city": "Kraków"}`                      |
+| `ip_address`     | string  | ❌       | Adres IP subskrybenta (przydatne przy proxy, np. n8n)                           |
+| `user_agent`     | string  | ❌       | User agent przeglądarki (max 500 znaków)                                        |
+| `device`         | string  | ❌       | Typ urządzenia, np. `desktop`, `mobile` (max 50 znaków)                         |
+
+\* `email` jest wymagane dla list typu `email`, `phone` jest wymagane dla list typu `sms`.
+
+> **Uwaga:** Jeśli subskrybent o podanym adresie email już istnieje, zostanie dodany do nowej listy (lub reaktywowany) zamiast tworzenia duplikatu. W takim przypadku zwracany jest status `200` zamiast `201`.
 
 **Odpowiedź (201):**
 
@@ -250,7 +274,22 @@ POST /api/v1/subscribers
   "data": {
     "id": 456,
     "email": "maria@example.com",
-    ...
+    "first_name": "Maria",
+    "last_name": "Nowak",
+    "phone": "+48987654321",
+    "status": "active",
+    "contact_list_id": 5,
+    "source": "api",
+    "tags": [
+      {"id": 1, "name": "VIP"},
+      {"id": 3, "name": "Newsletter"}
+    ],
+    "custom_fields": {
+      "city": "Kraków",
+      "company": "Firma Sp. z o.o."
+    },
+    "subscribed_at": "2025-01-15T10:30:00.000000Z",
+    "created_at": "2025-01-15T10:30:00.000000Z"
   }
 }
 ```
@@ -261,7 +300,14 @@ POST /api/v1/subscribers
 curl -X POST "https://example.com/api/v1/subscribers" \
   -H "Authorization: Bearer ns_live_xxxxxxxx" \
   -H "Content-Type: application/json" \
-  -d '{"email":"maria@example.com","contact_list_id":5}'
+  -d '{
+    "email": "maria@example.com",
+    "contact_list_id": 5,
+    "first_name": "Maria",
+    "last_name": "Nowak",
+    "tags": [1, 3],
+    "custom_fields": {"city": "Kraków"}
+  }'
 ```
 
 ---

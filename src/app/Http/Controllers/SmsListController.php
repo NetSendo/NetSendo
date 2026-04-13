@@ -250,7 +250,7 @@ class SmsListController extends Controller
         $subscribersCount = $smsList->subscribers()->wherePivot('status', 'active')->count();
 
         if ($subscribersCount > 0) {
-            if ($request->has('transfer_to_id')) {
+            if ($request->filled('transfer_to_id')) {
                 $targetList = auth()->user()->contactLists()->sms()->findOrFail($request->transfer_to_id);
 
                 if ($targetList->id === $smsList->id) {
