@@ -31,4 +31,15 @@ return [
         'never_scanned' => 'Noch nie gescannt',
         'processed' => ':count Bounce(s) verarbeitet',
     ],
+
+    'custom_headers' => [
+        'section_title' => 'Benutzerdefinierte SMTP-Header',
+        'section_desc' => 'Fügen Sie benutzerdefinierte Header zu allen E-Mails hinzu, die von diesem Sendeserver gesendet werden (z.B. Feedback-ID für Google Postmaster Tools).',
+        'key' => 'Header-Name',
+        'value' => 'Header-Wert',
+        'add' => 'Header hinzufügen',
+        'remove' => 'Entfernen',
+        'key_placeholder' => 'z.B. Feedback-ID',
+        'value_placeholder' => 'z.B. campaign1:user123:netsendo',
+    ],
 ];

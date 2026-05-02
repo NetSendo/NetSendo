@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\SubscriberResource;
 use App\Models\ContactList;
+use App\Models\MessageQueueEntry;
 use App\Models\Subscriber;
 use App\Models\Tag;
 use App\Events\SubscriberSignedUp;
@@ -12,6 +13,7 @@ use App\Services\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use App\Services\GenderService;
 
@@ -154,6 +156,22 @@ class SubscriberController extends Controller
         if ($existing) {
             if ($existing->trashed()) {
                 $existing->restore();
+
+                // Completely reset the subscriber - detach ALL existing contact lists
+                // This prevents the subscriber from being silently re-added to old lists
+                // (fixes: re-creating a soft-deleted subscriber restores all previous list associations)
+                $existing->contactLists()->detach();
+
+                // Delete all message queue entries to allow fresh autoresponder sequences
+                MessageQueueEntry::where('subscriber_id', $existing->id)->delete();
+
+                // Reset subscription date on subscriber record
+                $existing->update(['subscribed_at' => now()]);
+
+                Log::info('Restored and reset soft-deleted subscriber via API', [
+                    'subscriber_id' => $existing->id,
+                    'email' => $existing->email,
+                ]);
             }
 
             // Check if already subscribed to this list
@@ -577,6 +595,21 @@ class SubscriberController extends Controller
                 if ($existing) {
                     if ($existing->trashed()) {
                         $existing->restore();
+
+                        // Completely reset the subscriber - detach ALL existing contact lists
+                        // This prevents the subscriber from being silently re-added to old lists
+                        $existing->contactLists()->detach();
+
+                        // Delete all message queue entries to allow fresh autoresponder sequences
+                        MessageQueueEntry::where('subscriber_id', $existing->id)->delete();
+
+                        // Reset subscription date
+                        $existing->update(['subscribed_at' => now()]);
+
+                        Log::info('Restored and reset soft-deleted subscriber via batch API', [
+                            'subscriber_id' => $existing->id,
+                            'email' => $existing->email,
+                        ]);
                     }
 
                     $subscriber = $existing;

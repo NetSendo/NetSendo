@@ -39,6 +39,8 @@ class Mailbox extends Model
         'bounce_imap_folder',
         'bounce_last_scanned_at',
         'bounce_last_scan_count',
+        // Custom SMTP headers
+        'custom_headers',
         // Reputation monitoring
         'reputation_status',
         'reputation_checked_at',
@@ -58,6 +60,7 @@ class Mailbox extends Model
         'bounce_imap_port' => 'integer',
         'bounce_last_scanned_at' => 'datetime',
         'bounce_last_scan_count' => 'integer',
+        'custom_headers' => 'array',
         'reputation_status' => 'array',
         'reputation_checked_at' => 'datetime',
     ];

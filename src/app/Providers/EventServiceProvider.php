@@ -35,6 +35,7 @@ use App\Listeners\TriggerAutomationsListener;
 use App\Listeners\CrmEventListener;
 use App\Listeners\SendNewSubscriberNotification;
 use App\Listeners\SendUnsubscribeConfirmation;
+use App\Listeners\DispatchWebhooksListener;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -49,6 +50,7 @@ class EventServiceProvider extends ServiceProvider
             TriggerAutomationsListener::class,
             SendNewSubscriberNotification::class,
             \App\Listeners\CreateAutoresponderQueueEntries::class,
+            DispatchWebhooksListener::class,
         ],
         EmailOpened::class => [
             TriggerAutomationsListener::class,
@@ -59,18 +61,22 @@ class EventServiceProvider extends ServiceProvider
         SubscriberUnsubscribed::class => [
             TriggerAutomationsListener::class,
             SendUnsubscribeConfirmation::class,
+            DispatchWebhooksListener::class,
         ],
         EmailBounced::class => [
             TriggerAutomationsListener::class,
+            DispatchWebhooksListener::class,
         ],
         FormSubmitted::class => [
             TriggerAutomationsListener::class,
         ],
         TagAdded::class => [
             TriggerAutomationsListener::class,
+            DispatchWebhooksListener::class,
         ],
         TagRemoved::class => [
             TriggerAutomationsListener::class,
+            DispatchWebhooksListener::class,
         ],
         // New automation events
         PageVisited::class => [

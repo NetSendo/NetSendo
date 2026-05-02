@@ -170,10 +170,10 @@ class UnsubscribeController extends Controller
     }
 
     /**
-     * Global unsubscribe - redirects to preferences page.
+     * Global unsubscribe - shows a confirmation page with the option
+     * to unsubscribe from ALL lists at once (Master Opt-Out).
      *
-     * When user clicks unsubscribe from a message sent to multiple lists,
-     * they are redirected to the preferences page where they can manage all lists.
+     * Requires a signed URL generated via [[unsubscribe_global]] placeholder.
      */
     public function globalUnsubscribe(Request $request, Subscriber $subscriber)
     {
@@ -181,10 +181,96 @@ class UnsubscribeController extends Controller
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
         }
 
-        // Redirect to preferences page with new signed URL
-        $preferencesUrl = $this->placeholderService->generateManageLink($subscriber);
+        // Generate the signed URL for the actual global unsubscribe action
+        $globalProcessUrl = URL::signedRoute('subscriber.unsubscribe.global.process', [
+            'subscriber' => $subscriber->id,
+        ], now()->addHours(24));
 
-        return redirect($preferencesUrl);
+        // Generate the manage/preferences link as an alternative
+        $manageUrl = $this->placeholderService->generateManageLink($subscriber);
+
+        // Count how many active lists the subscriber has
+        $activeListCount = $subscriber->contactLists()
+            ->wherePivot('status', 'active')
+            ->count();
+
+        Log::info('Global unsubscribe page shown', [
+            'subscriber_id' => $subscriber->id,
+            'active_list_count' => $activeListCount,
+        ]);
+
+        return $this->renderSystemPage('unsubscribe_global_confirm', $subscriber, null, [
+            'global_unsubscribe_url' => $globalProcessUrl,
+            'manage_url' => $manageUrl,
+            'active_list_count' => (string) $activeListCount,
+        ]);
+    }
+
+    /**
+     * Process the global unsubscribe action.
+     *
+     * Unsubscribes the subscriber from ALL lists belonging to their user/account.
+     * Dispatches SubscriberUnsubscribed event for each list to trigger automations.
+     */
+    public function globalUnsubscribeProcess(Request $request, Subscriber $subscriber)
+    {
+        if (!$request->hasValidSignature()) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+
+        try {
+            // Get all lists the subscriber is actively subscribed to
+            $activeLists = $subscriber->contactLists()
+                ->wherePivot('status', 'active')
+                ->get();
+
+            if ($activeLists->isEmpty()) {
+                Log::info('Global unsubscribe - subscriber has no active lists', [
+                    'subscriber_id' => $subscriber->id,
+                ]);
+                return $this->renderSystemPage('unsubscribe_global_success', $subscriber, null, [
+                    'unsubscribed_count' => '0',
+                ]);
+            }
+
+            $unsubscribedCount = 0;
+
+            foreach ($activeLists as $list) {
+                $subscriber->contactLists()->updateExistingPivot($list->id, [
+                    'status' => 'unsubscribed',
+                    'unsubscribed_at' => now(),
+                ]);
+
+                // Dispatch event for each list — ensures automations are triggered per-list
+                event(new SubscriberUnsubscribed($subscriber, $list, 'global_unsubscribe'));
+
+                $unsubscribedCount++;
+
+                Log::info('Global unsubscribe - removed from list', [
+                    'subscriber_id' => $subscriber->id,
+                    'list_id' => $list->id,
+                    'list_name' => $list->name,
+                ]);
+            }
+
+            Log::info('Global unsubscribe completed', [
+                'subscriber_id' => $subscriber->id,
+                'subscriber_email' => $subscriber->email,
+                'unsubscribed_count' => $unsubscribedCount,
+            ]);
+
+            return $this->renderSystemPage('unsubscribe_global_success', $subscriber, null, [
+                'unsubscribed_count' => (string) $unsubscribedCount,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Global unsubscribe failed', [
+                'subscriber_id' => $subscriber->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
     }
 
     /**
@@ -252,10 +338,24 @@ class UnsubscribeController extends Controller
         if (!$systemPage) {
             $fallbackContent = match($slug) {
                 'unsubscribe_confirm_sent' => '<h1>Check Your Email</h1><p>We have sent you a confirmation email. Please click the link in the email to unsubscribe from this list.</p>',
+                'unsubscribe_global_confirm' => '<h1>Unsubscribe from All Lists</h1>'
+                    . '<p>You are currently subscribed to <strong>[[active_list_count]]</strong> mailing list(s).</p>'
+                    . '<p>Choose how you would like to proceed:</p>'
+                    . '<div class="btn-group">'
+                    . '<a href="[[global_unsubscribe_url]]" class="btn btn-danger">Unsubscribe from Everything</a>'
+                    . '<a href="[[manage_url]]" class="btn btn-outline">Manage My Preferences</a>'
+                    . '</div>'
+                    . '<p class="text-muted" style="margin-top: 24px; font-size: 13px;">Choosing "Unsubscribe from Everything" will remove you from all mailing lists immediately. You can use "Manage My Preferences" to selectively choose which lists to keep.</p>',
+                'unsubscribe_global_success' => '<h1>You Have Been Unsubscribed</h1>'
+                    . '<p>You have been successfully unsubscribed from all <strong>[[unsubscribed_count]]</strong> mailing list(s).</p>'
+                    . '<p>You will no longer receive any emails from us.</p>'
+                    . '<p class="text-muted" style="margin-top: 16px; font-size: 13px;">If this was a mistake, you can re-subscribe at any time through our website.</p>',
                 default => '<h1>Page not found</h1>',
             };
             $title = match($slug) {
                 'unsubscribe_confirm_sent' => 'Confirmation Email Sent',
+                'unsubscribe_global_confirm' => 'Unsubscribe from All Lists',
+                'unsubscribe_global_success' => 'Unsubscribed Successfully',
                 default => 'NetSendo',
             };
         } else {
@@ -281,6 +381,7 @@ class UnsubscribeController extends Controller
 
         // Determine icon based on slug
         $icon = match (true) {
+            str_contains($slug, 'global_confirm') => 'warning',
             str_contains($slug, 'success') => 'success',
             str_contains($slug, 'error') => 'error',
             str_contains($slug, 'confirm') || str_contains($slug, 'sent') => 'info',

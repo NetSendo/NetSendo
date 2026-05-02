@@ -9,6 +9,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.0.11] – Short Description
+
+**Release date:** 2026-05-02
+
+### Added
+
+- **Tags — Optional Description Field:**
+  - Added an optional `description` field to tags, allowing users to document the purpose and intended usage of each tag. This prevents confusion over time as the number of tags grows.
+  - **Database migration:** Added nullable `text` column `description` to the `tags` table.
+  - **Tag model:** Added `description` to the `$fillable` array.
+  - **TagController (web):** Updated `store()` and `update()` validation and mass assignment to accept `description` (max 1000 characters).
+  - **TagResource (API):** Added `description` to the API response payload for `GET /api/v1/tags`.
+  - **Frontend (`Tag/Index.vue`):** Added a textarea input in the tag create/edit form with placeholder and help text. Tag pills now display the description as a native browser tooltip on hover.
+  - **Localization:** Added `tags.fields.description`, `tags.fields.description_placeholder`, and `tags.fields.description_help` translation keys in EN, PL, DE, ES.
+  - **Files:** `database/migrations/2026_05_02_113605_add_description_to_tags_table.php` [NEW], `app/Models/Tag.php`, `app/Http/Controllers/TagController.php`, `app/Http/Resources/Api/V1/TagResource.php`, `resources/js/Pages/Tag/Index.vue`, `resources/js/locales/{en,pl,de,es}.json`
+
+- **Global Unsubscribe — Master Opt-Out for Multi-List Subscribers (GitHub #15):**
+  - Implemented a **Global Unsubscribe (Master Opt-Out)** feature that allows subscribers who belong to multiple mailing lists to unsubscribe from **all** lists in a single action, preventing "spam fatigue" when a user receives messages from multiple lists and wants to stop all communications at once.
+  - **New `[[unsubscribe_global]]` placeholder:** Added a new placeholder that can be used in email templates to generate a signed URL leading directly to the Global Unsubscribe confirmation page. When clicked, subscribers see a two-option page: **"Unsubscribe from Everything"** (removes from all lists immediately) or **"Manage My Preferences"** (redirects to the preferences page for granular control).
+  - **`UnsubscribeController` — Two new methods:**
+    - Rewrote `globalUnsubscribe()` to render a dedicated confirmation page with two clear action buttons instead of silently redirecting to the preferences page.
+    - Added `globalUnsubscribeProcess()` that performs the bulk unsubscribe — iterates over all active subscriptions and sets each to `unsubscribed`. Dispatches `SubscriberUnsubscribed` event per-list with reason `global_unsubscribe` to ensure all automations are triggered correctly.
+  - **`PlaceholderService` — New link generator:**
+    - Added `generateGlobalUnsubscribeLink()` method that creates a signed URL for the global unsubscribe route.
+    - Registered `unsubscribe_global` in the system placeholders registry so it appears in the template editor's placeholder picker.
+    - Integrated the new placeholder into both `processEmailContent()` and `processEmailContentWithWebinar()` so it is automatically available in all email sending contexts.
+  - **Route:** Added `GET /unsubscribe/{subscriber}/process-all` as a new signed route (`subscriber.unsubscribe.global.process`).
+  - **System pages:** Added fallback content for `unsubscribe_global_confirm` (two-button choice page) and `unsubscribe_global_success` (confirmation page with count of unsubscribed lists). These can be overridden via SystemPage entries in the database.
+  - **UI:** Extended `system-page.blade.php` with `.btn-danger`, `.btn-outline`, `.btn-group`, and `.text-muted` CSS classes for the two-button layout.
+  - **GDPR Compliance:** The global unsubscribe action is immediate (no confirmation email required), fully transparent, and honors the subscriber's right to opt out of all communications in a single click.
+  - **Files:** `app/Http/Controllers/UnsubscribeController.php`, `app/Services/PlaceholderService.php`, `routes/web.php`, `resources/views/forms/system-page.blade.php`
+
+- **Custom SMTP Headers — GUI & API Support (GitHub #16):**
+  - Implemented full support for **custom SMTP headers** on outgoing emails, configurable both via the Mailbox settings UI and the email sending API. This enables headers like `Feedback-ID` for Google Postmaster Tools deliverability monitoring.
+  - **Database migrations:** Added `custom_headers` JSON column to `mailboxes` table (persistent per-server headers) and `messages` table (per-message API-injected headers).
+  - **Mailbox model:** Added `custom_headers` to `$fillable` and `$casts` (as `array`).
+  - **Message model:** Added `custom_headers` to `$fillable` and `$casts` (as `array`).
+  - **MailboxController:** Updated `index()` to expose `custom_headers` in Inertia data, and `store()`/`update()` to validate and persist custom header key-value pairs (`custom_headers.*.key`, `custom_headers.*.value`).
+  - **EmailController (API):** Added optional `headers` object parameter to `POST /api/v1/email/send` and `POST /api/v1/email/batch` endpoints. Headers are validated (`headers.*` string, max 1024 chars) and stored as `custom_headers` on the Message model.
+  - **SendEmailJob — 3-tier header merge:** Extended `resolveHeaders()` with a hierarchical merge strategy: Global User Settings → List Settings → Mailbox Custom Headers → API Per-Message Headers. Later tiers override earlier ones for the same key. All custom header values support placeholder replacement (e.g., `[[subscriber_email]]`).
+  - **Forbidden header blacklist:** Headers `From`, `To`, `CC`, `BCC`, `Subject`, `Date`, `MIME-Version`, `Content-Type`, `Content-Transfer-Encoding`, `Message-ID`, and `Return-Path` are silently filtered to prevent spoofing or MIME structure corruption.
+  - **Frontend:** Added a "Custom SMTP Headers" section to the Mailbox settings modal in `Settings/Mailboxes/Index.vue` with a dynamic key-value pair editor (add/remove rows, placeholder hints for `Feedback-ID`).
+  - **Localization:** Full translations for custom headers UI section in EN, PL, DE, ES (`mailboxes.custom_headers.*` — 8 keys per locale).
+  - **Files:** `database/migrations/2026_05_02_090000_add_custom_headers_to_mailboxes.php`, `database/migrations/2026_05_02_090100_add_custom_headers_to_messages.php`, `app/Models/Mailbox.php`, `app/Models/Message.php`, `app/Http/Controllers/MailboxController.php`, `app/Http/Controllers/Api/V1/EmailController.php`, `app/Jobs/SendEmailJob.php`, `resources/js/Pages/Settings/Mailboxes/Index.vue`, `lang/{en,pl,de,es}/mailboxes.php`
+
+### Fixed
+
+- **API Keys — Missing Permission Scope Labels in UI (GitHub #9):**
+  - Added missing `email:read`, `email:write`, `funnels:read`, and `funnels:write` entries to the `permissionLabels` map in `Settings/ApiKeys/Index.vue`. These scopes were added to the backend `ApiKey::PERMISSIONS` in v2.0.10 but were not reflected in the frontend, causing them to render without icons or labels in the API key management panel.
+  - Added corresponding translation keys (`email_read`, `email_write`, `funnels_read`, `funnels_write`) to all 4 locale files (EN, PL, ES, DE) under `api_keys.permissions`.
+  - Icons: 📬/📤 for Email scopes, 🔄 for Funnel scopes.
+
+- **Docker — Backup Fails with Exitcode 2 (SSL Error) on MySQL 8.0 (GitHub #11):**
+  - Fixed `mysqldump: Got error: 2026: "TLS/SSL error: self-signed certificate in certificate chain"` when running backups in Docker with MySQL 8.0. Root cause: MySQL 8.0 auto-generates self-signed SSL certificates, which the MariaDB client (`default-mysql-client`) in the app container rejects during `mysqldump`.
+  - **Dockerfile:** Added `/etc/my.cnf` with `[client] ssl=0` to globally disable SSL certificate verification for the MySQL client. This is safe for internal Docker network connections where traffic never leaves the bridge network.
+  - **Database config:** Added `dump` key to the `mysql` connection in `config/database.php` with `--ssl-mode=DISABLED` extra option for `spatie/db-dumper`. Configurable via new `MYSQL_DUMP_SSL` env variable (default: `false`). Also enabled `useSingleTransaction` for consistent InnoDB dumps.
+  - **Backup temp directory:** Fixed `storage/app/backup-temp` permission errors by creating the directory with `775` permissions in both the Dockerfile and `docker-entrypoint.sh` (since `storage/app` is a Docker volume that may not retain image-created directories).
+  - **`.env.example`:** Documented the new `MYSQL_DUMP_SSL=false` variable with explanation.
+
+- **n8n Node — Critical Payload Mapping Issues When Sending Emails via API (GitHub #12):**
+  - **Bug 1 — Validation failure when sending to a mailing list:** Fixed `POST /api/v1/email/batch` rejecting requests that use `contact_list_ids` (array) instead of the legacy `list_id` (integer). The n8n node sends `contact_list_ids: [1, 2]` (v2 format), but the endpoint only accepted `list_id: 1`. Added `contact_list_ids` as an accepted parameter with automatic normalization. Now supports both single-list (`list_id`) and multi-list (`contact_list_ids`) targeting.
+  - **Bug 2 — Missing sending server (mailbox) on created messages:** Fixed `POST /api/v1/email/send` and `POST /api/v1/email/batch` not recognizing `sending_server_id` sent by the n8n node. The API expected `mailbox_id` but n8n uses the term "Sending Server" (`sending_server_id`). Added `sending_server_id` as an accepted alias that is automatically normalized to `mailbox_id`.
+  - **File:** `app/Http/Controllers/Api/V1/EmailController.php`
+
+- **Broadcasts — Scheduled Messages to Empty Lists Remain Active Indefinitely (GitHub #13):**
+  - Fixed a logic bug where broadcasts scheduled to empty mailing lists stayed in "Scheduled" (`Zaplanowana`) status forever. The CRON queue processor (`CronScheduleService`) continuously called `syncPlannedRecipients()` on active scheduled messages, which for broadcasts with `sent_count == 0` would add any new subscribers as planned recipients. This meant that if a subscriber was added to the target list days or weeks later, they would immediately receive the outdated broadcast — a form of "email bombing."
+  - **Root cause:** Broadcast completion was only checked inside `SendEmailJob::markQueueEntryAsSent()` when `pendingCount === 0`. If a broadcast targeted an empty list, no `SendEmailJob` was ever dispatched, so the completion check never ran.
+  - **Fix:** Added a post-sync guard in `CronScheduleService::processQueue()` (email and SMS paths) that checks if a broadcast has zero pending queue entries after synchronization. If so, and the message status is still `scheduled`, it is immediately marked as `sent`. This handles both the "empty list" scenario (`totalEntries === 0`) and the edge case where all entries have already been processed but the status wasn't updated.
+  - **Files:** `app/Services/CronScheduleService.php`
+
+- **Mailboxes — IMAP Bounce Settings UI Missing (GitHub #14):**
+  - Fixed the IMAP bounce monitoring settings being invisible in the Mailboxes settings UI, despite full backend support since v2.0.5. The `Index.vue` component was missing the form fields and modal section for configuring bounce monitoring.
+  - **Root cause:** The Vue component (`resources/js/Pages/Settings/Mailboxes/Index.vue`) was never updated to include input fields for the bounce IMAP configuration when the feature was introduced in v2.0.5. The backend (controller, model, migrations, Artisan command, translations) was fully implemented.
+  - **Fix:** Added a complete "Bounce Mailbox Monitoring" section to the mailbox configuration modal in `Index.vue`:
+    - Extended the `form` object with `bounce_enabled`, `bounce_imap_host`, `bounce_imap_port`, `bounce_imap_encryption`, `bounce_imap_username`, `bounce_imap_password`, and `bounce_imap_folder` fields.
+    - Added an enable/disable toggle with smooth animated transition for the IMAP configuration fields.
+    - Added input fields for IMAP Host, Port, Encryption (SSL/TLS/None), Folder, Username, and Password (with visibility toggle).
+    - Added "Test IMAP Connection" button that calls the existing `test-bounce` endpoint.
+    - Added display of last scan timestamp and bounce count when available.
+    - Section is only visible in edit mode for non-Gmail providers.
+    - Credentials (username/password) are left blank on edit to match the existing SMTP credentials pattern (leave empty to keep existing).
+  - **File:** `resources/js/Pages/Settings/Mailboxes/Index.vue`
+
+- **Webhooks — System Non-Functional for All Real Events (GitHub #20):**
+  - Fixed the webhook system failing to trigger for any real-life events (`subscriber.created`, `subscriber.unsubscribed`, `subscriber.bounced`, `subscriber.tag_added`, `subscriber.tag_removed`). While the manual "Test Webhook" button worked correctly, no actual subscriber lifecycle events produced webhook deliveries or `webhook_logs` entries.
+  - **Root cause:** The `WebhookDispatcher` service was only called inline from two specific code paths: the **API controller** (`Api\V1\SubscriberController`) and `FormSubmissionService`. All other entry points — **web UI subscriber creation**, **unsubscribe links**, **bounce processing**, **tag management**, and **CSV import** — dispatched internal Laravel events (`SubscriberSignedUp`, `SubscriberUnsubscribed`, `EmailBounced`, `TagAdded`, `TagRemoved`) for automation processing but never invoked the `WebhookDispatcher`.
+  - **Fix:** Created a new **`DispatchWebhooksListener`** that listens to all subscriber-lifecycle Laravel events centrally and dispatches the corresponding webhooks via `WebhookDispatcher`. This listener is registered in `EventServiceProvider` alongside the existing `TriggerAutomationsListener`, ensuring webhooks fire regardless of the entry point (web UI, API, forms, unsubscribe links, bounces, tags, CSV import). The listener maps each event to its webhook event type and constructs standardized payloads including subscriber data, list context, and event-specific metadata (bounce type/reason, tag name, unsubscribe reason).
+  - **Events now covered:** `subscriber.created`, `subscriber.subscribed`, `subscriber.unsubscribed`, `subscriber.bounced`, `subscriber.tag_added`, `subscriber.tag_removed`.
+  - **Files:** `app/Listeners/DispatchWebhooksListener.php` [NEW], `app/Providers/EventServiceProvider.php`
+
+- **Subscribers — Soft-Deleted Subscriber Restoration Brings Back All Previous List Associations (GitHub #17):**
+  - Fixed a critical logic flaw where re-creating a previously soft-deleted subscriber via the API (`POST /api/v1/subscribers`), batch endpoint (`POST /api/v1/subscribers/batch`), subscription forms, or CSV import would silently restore all old mailing list associations. This caused the subscriber to receive messages from lists they were not intentionally re-added to — a form of "email bombing."
+  - **Root cause:** When a subscriber was deleted via `DELETE /api/v1/subscribers/{id}` (Soft Delete) and later re-added, the API controller called `$existing->restore()` without clearing stale `contact_list_subscriber` pivot records. The web UI controller (`SubscriberController@store`) already handled this correctly by calling `->contactLists()->detach()` after restoration, but the API, Form, and Import code paths did not.
+  - **Fix:** Implemented a "clean slate" restoration pattern across all four affected code paths. After `restore()`, the system now: (1) detaches all existing contact list associations (`contactLists()->detach()`), (2) deletes all pending message queue entries (`MessageQueueEntry::where(...)->delete()`) to prevent stale autoresponder sequences from firing, and (3) resets the `subscribed_at` timestamp. The subscriber is then attached only to the list(s) specified in the current request.
+  - **Files:** `app/Http/Controllers/Api/V1/SubscriberController.php` (store + batch), `app/Services/Forms/FormSubmissionService.php`, `app/Http/Controllers/SubscriberController.php` (import)
 
 ## [2.0.10] – Short Description
 

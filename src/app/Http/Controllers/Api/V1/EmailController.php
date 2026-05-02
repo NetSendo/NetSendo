@@ -45,9 +45,17 @@ class EmailController extends Controller
             'content' => 'required|string',
             'preheader' => 'nullable|string|max:500',
             'mailbox_id' => 'nullable|integer|exists:mailboxes,id',
+            'sending_server_id' => 'nullable|integer|exists:mailboxes,id', // n8n alias for mailbox_id
             'subscriber_id' => 'nullable|integer',
             'schedule_at' => 'nullable|date|after:now',
+            'headers' => 'nullable|array',
+            'headers.*' => 'string|max:1024',
         ]);
+
+        // Normalize sending_server_id → mailbox_id (n8n sends sending_server_id)
+        if (!empty($validated['sending_server_id']) && empty($validated['mailbox_id'])) {
+            $validated['mailbox_id'] = $validated['sending_server_id'];
+        }
 
         // Get mailbox
         $mailbox = null;
@@ -108,6 +116,7 @@ class EmailController extends Controller
             'mailbox_id' => $mailbox->id,
             'status' => 'scheduled',
             'scheduled_at' => $scheduledAt,
+            'custom_headers' => $validated['headers'] ?? null,
         ]);
 
         // Create queue entry for single recipient
@@ -165,21 +174,38 @@ class EmailController extends Controller
             'content' => 'required|string',
             'preheader' => 'nullable|string|max:500',
             'list_id' => 'nullable|integer',
+            'contact_list_ids' => 'nullable|array',       // v2 alias for list_id (array of IDs)
+            'contact_list_ids.*' => 'integer',
             'tag_ids' => 'nullable|array',
             'tag_ids.*' => 'integer',
             'subscriber_ids' => 'nullable|array',
             'subscriber_ids.*' => 'integer',
             'mailbox_id' => 'nullable|integer|exists:mailboxes,id',
+            'sending_server_id' => 'nullable|integer|exists:mailboxes,id', // n8n alias for mailbox_id
             'schedule_at' => 'nullable|date|after:now',
             'excluded_list_ids' => 'nullable|array',
             'excluded_list_ids.*' => 'integer',
+            'headers' => 'nullable|array',
+            'headers.*' => 'string|max:1024',
         ]);
 
+        // Normalize contact_list_ids → list_id for backward compatibility
+        // If contact_list_ids is provided (v2/n8n format), merge into list_id handling
+        if (!empty($validated['contact_list_ids']) && empty($validated['list_id'])) {
+            // Use first ID as list_id for legacy single-list targeting
+            $validated['list_id'] = $validated['contact_list_ids'][0];
+        }
+
+        // Normalize sending_server_id → mailbox_id (n8n sends sending_server_id)
+        if (!empty($validated['sending_server_id']) && empty($validated['mailbox_id'])) {
+            $validated['mailbox_id'] = $validated['sending_server_id'];
+        }
+
         // Must provide at least one targeting option
-        if (empty($validated['list_id']) && empty($validated['tag_ids']) && empty($validated['subscriber_ids'])) {
+        if (empty($validated['list_id']) && empty($validated['contact_list_ids']) && empty($validated['tag_ids']) && empty($validated['subscriber_ids'])) {
             return response()->json([
                 'error' => 'Validation Error',
-                'message' => 'You must provide list_id, tag_ids, or subscriber_ids',
+                'message' => 'You must provide list_id, contact_list_ids, tag_ids, or subscriber_ids',
             ], 422);
         }
 
@@ -203,15 +229,23 @@ class EmailController extends Controller
             ->whereNotNull('email')
             ->where('is_active_global', true);
 
-        if (!empty($validated['list_id'])) {
-            $list = ContactList::forUser($user->id)->email()->find($validated['list_id']);
-            if (!$list) {
+        // Determine effective list IDs (support both list_id and contact_list_ids)
+        $effectiveListIds = [];
+        if (!empty($validated['contact_list_ids'])) {
+            $effectiveListIds = $validated['contact_list_ids'];
+        } elseif (!empty($validated['list_id'])) {
+            $effectiveListIds = [$validated['list_id']];
+        }
+
+        if (!empty($effectiveListIds)) {
+            $lists = ContactList::forUser($user->id)->email()->whereIn('id', $effectiveListIds)->get();
+            if ($lists->isEmpty()) {
                 return response()->json([
                     'error' => 'Not Found',
-                    'message' => 'Email list not found',
+                    'message' => 'Email list(s) not found',
                 ], 404);
             }
-            $subscriberQuery->whereHas('contactLists', fn($q) => $q->where('contact_lists.id', $list->id));
+            $subscriberQuery->whereHas('contactLists', fn($q) => $q->whereIn('contact_lists.id', $lists->pluck('id')));
         }
 
         if (!empty($validated['tag_ids'])) {
@@ -254,11 +288,12 @@ class EmailController extends Controller
             'mailbox_id' => $mailbox->id,
             'status' => 'scheduled',
             'scheduled_at' => $scheduledAt,
+            'custom_headers' => $validated['headers'] ?? null,
         ]);
 
-        // Attach list if provided
-        if (!empty($validated['list_id'])) {
-            $message->contactLists()->attach($validated['list_id']);
+        // Attach contact lists if provided
+        if (!empty($effectiveListIds)) {
+            $message->contactLists()->attach($effectiveListIds);
         }
 
         // Create queue entries

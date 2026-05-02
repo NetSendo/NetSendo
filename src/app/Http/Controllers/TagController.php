@@ -26,11 +26,13 @@ class TagController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'nullable|string|max:7',
+            'description' => 'nullable|string|max:1000',
         ]);
 
         Tag::create([
             'name' => $request->name,
             'color' => $request->color ?? '#3b82f6',
+            'description' => $request->description,
             'user_id' => Auth::id(),
         ]);
 
@@ -46,9 +48,10 @@ class TagController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'nullable|string|max:7',
+            'description' => 'nullable|string|max:1000',
         ]);
 
-        $tag->update($request->only('name', 'color'));
+        $tag->update($request->only('name', 'color', 'description'));
 
         return back()->with('success', 'Tag został zaktualizowany.');
     }

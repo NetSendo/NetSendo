@@ -132,6 +132,41 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
             text-decoration: none;
         }
+        /* Danger button (Global Unsubscribe) */
+        .system-page-content .btn-danger {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+        .system-page-content .btn-danger:hover {
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        /* Outline button (Manage Preferences) */
+        .system-page-content .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .system-page-content .btn-outline:hover {
+            background: rgba(102, 126, 234, 0.08);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        /* Button group layout */
+        .system-page-content .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-top: 24px;
+        }
+        @media (min-width: 480px) {
+            .system-page-content .btn-group {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        /* Muted text */
+        .system-page-content .text-muted {
+            color: #9CA3AF;
+        }
     </style>
 </head>
 <body>

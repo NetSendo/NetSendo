@@ -31,6 +31,7 @@ class Message extends Model
         'day', // day offset
         'subject',
         'preheader',
+        'custom_headers',
         'content',
         'status',
         'timezone',
@@ -59,6 +60,7 @@ class Message extends Model
         'ab_enabled' => 'boolean',
         'ab_split_percentage' => 'integer',
         'trigger_config' => 'array',
+        'custom_headers' => 'array',
         'is_active' => 'boolean',
         'send_in_subscriber_timezone' => 'boolean',
         'sent_count' => 'integer',

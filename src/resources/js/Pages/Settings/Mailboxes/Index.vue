@@ -43,6 +43,9 @@ const editingMailbox = ref(null);
 const testingMailbox = ref(null);
 const testResult = ref(null);
 const showPassword = ref({});
+const showBouncePassword = ref(false);
+const testingBounce = ref(false);
+const bounceTestResult = ref(null);
 
 // Delete modal state
 const showDeleteModal = ref(false);
@@ -188,6 +191,16 @@ const form = useForm({
     daily_limit: null,
     time_restriction: 2,
     google_integration_id: null,
+    // Bounce IMAP monitoring
+    bounce_enabled: false,
+    bounce_imap_host: "",
+    bounce_imap_port: 993,
+    bounce_imap_encryption: "ssl",
+    bounce_imap_username: "",
+    bounce_imap_password: "",
+    bounce_imap_folder: "INBOX",
+    // Custom SMTP headers
+    custom_headers: [],
 });
 
 // Provider icons
@@ -267,6 +280,18 @@ const openModal = (mailbox = null) => {
         form.daily_limit = mailbox.daily_limit;
         form.time_restriction = mailbox.time_restriction;
         form.google_integration_id = mailbox.google_integration_id || null;
+        // Populate bounce IMAP fields
+        form.bounce_enabled = mailbox.bounce_enabled || false;
+        form.bounce_imap_host = mailbox.bounce_imap_host || "";
+        form.bounce_imap_port = mailbox.bounce_imap_port || 993;
+        form.bounce_imap_encryption = mailbox.bounce_imap_encryption || "ssl";
+        form.bounce_imap_username = "";
+        form.bounce_imap_password = "";
+        form.bounce_imap_folder = mailbox.bounce_imap_folder || "INBOX";
+        // Populate custom headers
+        form.custom_headers = (mailbox.custom_headers && mailbox.custom_headers.length > 0)
+            ? mailbox.custom_headers.map(h => ({ key: h.key || '', value: h.value || '' }))
+            : [];
     } else {
         // Create mode
         modalMode.value = "create";
@@ -279,7 +304,9 @@ const openModal = (mailbox = null) => {
         form.time_restriction = 2;
     }
     testResult.value = null;
+    bounceTestResult.value = null;
     showPassword.value = {};
+    showBouncePassword.value = false;
     showModal.value = true;
 };
 
@@ -289,6 +316,38 @@ const closeModal = () => {
     editingMailbox.value = null;
     form.reset();
     testResult.value = null;
+    bounceTestResult.value = null;
+};
+
+// Test bounce IMAP connection
+const testBounceConnection = async () => {
+    if (!editingMailbox.value) return;
+    testingBounce.value = true;
+    bounceTestResult.value = null;
+
+    try {
+        const response = await fetch(
+            route("settings.mailboxes.test-bounce", editingMailbox.value.id),
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]',
+                    )?.content,
+                },
+            },
+        );
+        const data = await response.json();
+        bounceTestResult.value = data;
+        showToast(data.message, data.success);
+    } catch (error) {
+        bounceTestResult.value = { success: false, message: error.message };
+        showToast(t("common.notifications.error") + ": " + error.message, false);
+    } finally {
+        testingBounce.value = false;
+    }
 };
 
 // Submit form
@@ -1675,6 +1734,252 @@ const isBroadcastDisabled = computed(() => {
                                 :placeholder="$t('mailboxes.modal.no_limit')"
                                 class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                             />
+                        </div>
+
+                        <!-- Bounce IMAP Monitoring Section (Edit mode only, non-Gmail) -->
+                        <div v-if="modalMode === 'edit' && form.provider !== 'gmail'" class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                            <!-- Section Header -->
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        {{ $t('mailboxes.bounce.section_title') }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.bounce.section_desc') }}</p>
+                                </div>
+                                <!-- Enable Toggle -->
+                                <button
+                                    type="button"
+                                    @click="form.bounce_enabled = !form.bounce_enabled"
+                                    class="relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    :class="form.bounce_enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-600'"
+                                >
+                                    <span
+                                        class="absolute left-0.5 top-0.5 h-5 w-5 transform rounded-full bg-white shadow transition-transform"
+                                        :class="form.bounce_enabled ? 'translate-x-5' : 'translate-x-0'"
+                                    ></span>
+                                </button>
+                            </div>
+
+                            <!-- Bounce IMAP Fields (shown when enabled) -->
+                            <Transition
+                                enter-active-class="transition ease-out duration-200"
+                                enter-from-class="opacity-0 -translate-y-1"
+                                enter-to-class="opacity-100 translate-y-0"
+                                leave-active-class="transition ease-in duration-150"
+                                leave-from-class="opacity-100 translate-y-0"
+                                leave-to-class="opacity-0 -translate-y-1"
+                            >
+                                <div v-if="form.bounce_enabled" class="space-y-3 mt-3">
+                                    <!-- Host & Port Row -->
+                                    <div class="grid grid-cols-3 gap-3">
+                                        <div class="col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_host') }}</label>
+                                            <input
+                                                v-model="form.bounce_imap_host"
+                                                type="text"
+                                                placeholder="imap.example.com"
+                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_port') }}</label>
+                                            <input
+                                                v-model.number="form.bounce_imap_port"
+                                                type="number"
+                                                min="1"
+                                                max="65535"
+                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Encryption & Folder Row -->
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_encryption') }}</label>
+                                            <select
+                                                v-model="form.bounce_imap_encryption"
+                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            >
+                                                <option value="ssl">SSL</option>
+                                                <option value="tls">TLS</option>
+                                                <option value="none">None</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_folder') }}</label>
+                                            <input
+                                                v-model="form.bounce_imap_folder"
+                                                type="text"
+                                                placeholder="INBOX"
+                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <!-- Username -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_username') }}</label>
+                                        <input
+                                            v-model="form.bounce_imap_username"
+                                            type="email"
+                                            placeholder="bounces@example.com"
+                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        />
+                                        <p v-if="editingMailbox" class="mt-1 text-xs text-gray-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
+                                    </div>
+
+                                    <!-- Password -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_password') }}</label>
+                                        <div class="relative mt-1">
+                                            <input
+                                                v-model="form.bounce_imap_password"
+                                                :type="showBouncePassword ? 'text' : 'password'"
+                                                :placeholder="$t('mailboxes.modal.leave_empty')"
+                                                class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            />
+                                            <button
+                                                type="button"
+                                                @click="showBouncePassword = !showBouncePassword"
+                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <svg v-if="showBouncePassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                </svg>
+                                                <svg v-else class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
+                                    </div>
+
+                                    <!-- Last Scan Info -->
+                                    <div v-if="editingMailbox?.bounce_last_scanned_at" class="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-gray-500 dark:text-gray-400">
+                                                {{ $t('mailboxes.bounce.last_scanned') }}:
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                                    {{ new Date(editingMailbox.bounce_last_scanned_at).toLocaleString() }}
+                                                </span>
+                                            </span>
+                                            <span v-if="editingMailbox.bounce_last_scan_count !== null" class="text-gray-500 dark:text-gray-400">
+                                                {{ $t('mailboxes.bounce.last_scan_count') }}: <strong>{{ editingMailbox.bounce_last_scan_count }}</strong>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="editingMailbox?.bounce_enabled" class="text-xs text-gray-500 dark:text-gray-400 italic">
+                                        {{ $t('mailboxes.bounce.never_scanned') }}
+                                    </div>
+
+                                    <!-- Test Bounce Connection -->
+                                    <div v-if="editingMailbox">
+                                        <button
+                                            type="button"
+                                            @click="testBounceConnection"
+                                            :disabled="testingBounce || !form.bounce_imap_host"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                        >
+                                            <svg v-if="testingBounce" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {{ $t('mailboxes.bounce.test_connection') }}
+                                        </button>
+                                    </div>
+
+                                    <!-- Bounce Test Result -->
+                                    <div
+                                        v-if="bounceTestResult"
+                                        class="rounded-lg p-3"
+                                        :class="bounceTestResult.success ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-rose-50 dark:bg-rose-900/20'"
+                                    >
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <svg v-if="bounceTestResult.success" class="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <svg v-else class="h-4 w-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span :class="bounceTestResult.success ? 'text-emerald-800 dark:text-emerald-200' : 'text-rose-800 dark:text-rose-200'">
+                                                {{ bounceTestResult.message }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Transition>
+                        </div>
+
+                        <!-- Custom SMTP Headers Section -->
+                        <div class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                            <!-- Section Header -->
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                        </svg>
+                                        {{ $t('mailboxes.custom_headers.section_title') }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.custom_headers.section_desc') }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Custom Headers List -->
+                            <div class="space-y-2">
+                                <div
+                                    v-for="(header, index) in form.custom_headers"
+                                    :key="index"
+                                    class="flex items-start gap-2"
+                                >
+                                    <div class="flex-1">
+                                        <input
+                                            v-model="header.key"
+                                            type="text"
+                                            :placeholder="$t('mailboxes.custom_headers.key_placeholder')"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div class="flex-1">
+                                        <input
+                                            v-model="header.value"
+                                            type="text"
+                                            :placeholder="$t('mailboxes.custom_headers.value_placeholder')"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="form.custom_headers.splice(index, 1)"
+                                        class="mt-1 flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                                        :title="$t('mailboxes.custom_headers.remove')"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Add Header Button -->
+                            <button
+                                type="button"
+                                @click="form.custom_headers.push({ key: '', value: '' })"
+                                class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-gray-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+                            >
+                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                {{ $t('mailboxes.custom_headers.add') }}
+                            </button>
                         </div>
 
                         <!-- Test Result -->

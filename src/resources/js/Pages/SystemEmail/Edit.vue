@@ -55,6 +55,7 @@ const placeholders = [
     { code: '[[date]]', label: t('system_emails.placeholders.date') || 'Data' },
     { code: '[[activation-link]]', label: t('system_emails.placeholders.activation_link') || 'Link aktywacyjny' },
     { code: '[[unsubscribe_link]]', label: t('system_emails.placeholders.unsubscribe_link') || 'Link wypisania' },
+    { code: '[[unsubscribe_global]]', label: t('system_emails.placeholders.unsubscribe_global') || 'Wypisanie globalne (ze wszystkich list)' },
 ];
 
 // Śledzenie pozycji kursora w polu subject

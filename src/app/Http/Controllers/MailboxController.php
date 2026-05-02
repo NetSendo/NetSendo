@@ -67,6 +67,8 @@ class MailboxController extends Controller
                     'bounce_imap_folder' => $mailbox->bounce_imap_folder,
                     'bounce_last_scanned_at' => $mailbox->bounce_last_scanned_at?->toIso8601String(),
                     'bounce_last_scan_count' => $mailbox->bounce_last_scan_count,
+                    // Custom headers
+                    'custom_headers' => $mailbox->custom_headers ?? [],
                     // Reputation monitoring
                     'reputation_overall' => $mailbox->reputation_overall ?? 'unchecked',
                     'reputation_checked_at' => $mailbox->reputation_checked_at?->toIso8601String(),
@@ -123,6 +125,9 @@ class MailboxController extends Controller
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
+            'custom_headers' => ['nullable', 'array'],
+            'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
+            'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
 
         $mailbox = Mailbox::create([
@@ -138,6 +143,7 @@ class MailboxController extends Controller
             'daily_limit' => $validated['daily_limit'] ?? null,
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
+            'custom_headers' => $validated['custom_headers'] ?? null,
         ]);
 
         // Set as default if it's the first mailbox
@@ -221,6 +227,9 @@ class MailboxController extends Controller
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
+            'custom_headers' => ['nullable', 'array'],
+            'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
+            'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
 
         $updateData = [
@@ -234,6 +243,7 @@ class MailboxController extends Controller
             'daily_limit' => $validated['daily_limit'],
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
+            'custom_headers' => $validated['custom_headers'] ?? null,
         ];
 
         // Only update credentials if provided

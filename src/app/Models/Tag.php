@@ -13,6 +13,7 @@ class Tag extends Model
     protected $fillable = [
         'name',
         'color',
+        'description',
         'user_id',
     ];
 

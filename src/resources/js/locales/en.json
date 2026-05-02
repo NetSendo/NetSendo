@@ -2565,7 +2565,10 @@
         "edit_tag": "Edit tag",
         "fields": {
             "name": "Tag Name",
-            "color": "Color"
+            "color": "Color",
+            "description": "Description",
+            "description_placeholder": "What is this tag used for?",
+            "description_help": "Optional note to remember the purpose of this tag."
         },
         "empty_state": "No tags created.",
         "confirm_delete": "Are you sure you want to delete this tag?"
@@ -4491,7 +4494,11 @@
             "sms_read": "SMS (read)",
             "sms_write": "SMS (write)",
             "messages_read": "Campaigns (read)",
-            "messages_write": "Campaigns (write)"
+            "messages_write": "Campaigns (write)",
+            "email_read": "Email (read)",
+            "email_write": "Email (write)",
+            "funnels_read": "Funnels (read)",
+            "funnels_write": "Funnels (write)"
         },
         "status": {
             "expired": "expired",

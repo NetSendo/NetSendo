@@ -960,6 +960,7 @@ Route::prefix('t/pixel')->name('pixel.')->group(function () {
 });
 
 // Unsubscribe Routes (signed URLs from emails)
+Route::get('/unsubscribe/{subscriber}/process-all', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribeProcess'])->name('subscriber.unsubscribe.global.process');
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');

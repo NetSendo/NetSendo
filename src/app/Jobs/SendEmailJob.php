@@ -349,10 +349,20 @@ class SendEmailJob implements ShouldQueue
     }
 
     /**
-     * Resolve custom headers (Global < List)
+     * Resolve custom headers (Return-Path < Global < List < Mailbox Custom < API Custom)
+     *
+     * Forbidden headers (From, To, Subject, etc.) are silently filtered out
+     * to prevent spoofing or breaking MIME structure.
      */
     private function resolveHeaders(PlaceholderService $placeholderService): array
     {
+        // Headers that must not be overridden by users
+        $forbiddenHeaders = [
+            'from', 'to', 'cc', 'bcc', 'subject', 'date',
+            'mime-version', 'content-type', 'content-transfer-encoding',
+            'message-id', 'return-path',
+        ];
+
         $rawHeaders = [];
 
         // 0. Return-Path for bounce mailbox handling
@@ -382,6 +392,33 @@ class SendEmailJob implements ShouldQueue
              $rawHeaders = array_merge($rawHeaders, $listHeaders);
         }
 
+        // 3. Mailbox-level custom headers (overrides global/list)
+        $mailbox = $this->mailbox ?? $this->message->mailbox;
+        if ($mailbox && !empty($mailbox->custom_headers) && is_array($mailbox->custom_headers)) {
+            foreach ($mailbox->custom_headers as $header) {
+                if (!empty($header['key']) && isset($header['value']) && $header['value'] !== '') {
+                    $headerKey = trim($header['key']);
+                    // Skip forbidden headers
+                    if (!in_array(strtolower($headerKey), $forbiddenHeaders)) {
+                        $rawHeaders[$headerKey] = $header['value'];
+                    }
+                }
+            }
+        }
+
+        // 4. API per-message custom headers (highest custom priority, overrides mailbox)
+        if (!empty($this->message->custom_headers) && is_array($this->message->custom_headers)) {
+            foreach ($this->message->custom_headers as $key => $value) {
+                if (!empty($key) && isset($value) && $value !== '') {
+                    $headerKey = trim($key);
+                    // Skip forbidden headers
+                    if (!in_array(strtolower($headerKey), $forbiddenHeaders)) {
+                        $rawHeaders[$headerKey] = $value;
+                    }
+                }
+            }
+        }
+
         if (empty($rawHeaders)) {
             return [];
         }
@@ -404,7 +441,7 @@ class SendEmailJob implements ShouldQueue
         // Process values
         $finalHeaders = [];
 
-        // List-Unsubscribe
+        // List-Unsubscribe (special handling)
         if (!empty($rawHeaders['list_unsubscribe'])) {
             $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe'], $this->subscriber, $additionalData);
             if (!empty($value)) {
@@ -412,12 +449,29 @@ class SendEmailJob implements ShouldQueue
             }
         }
 
-        // List-Unsubscribe-Post
+        // List-Unsubscribe-Post (special handling)
         if (!empty($rawHeaders['list_unsubscribe_post'])) {
             $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe_post'], $this->subscriber, $additionalData);
             if (!empty($value)) {
                  $finalHeaders['List-Unsubscribe-Post'] = $value;
             }
+        }
+
+        // Pass through all other non-special headers (custom headers from mailbox/API/settings)
+        $specialKeys = ['list_unsubscribe', 'list_unsubscribe_post', 'Return-Path'];
+        foreach ($rawHeaders as $key => $value) {
+            if (!in_array($key, $specialKeys) && !isset($finalHeaders[$key])) {
+                // Process placeholder replacement in custom header values too
+                $processedValue = $placeholderService->replacePlaceholders($value, $this->subscriber, $additionalData);
+                if (!empty($processedValue)) {
+                    $finalHeaders[$key] = $processedValue;
+                }
+            }
+        }
+
+        // Always include Return-Path if set (system-level, not user-overridable)
+        if (!empty($rawHeaders['Return-Path'])) {
+            $finalHeaders['Return-Path'] = $rawHeaders['Return-Path'];
         }
 
         return $finalHeaders;

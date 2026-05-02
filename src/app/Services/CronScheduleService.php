@@ -195,6 +195,33 @@ class CronScheduleService
                     'results' => $syncResult
                 ]);
                 $stats['synced'] += $syncResult['added'];
+
+                // FIX #13: Auto-complete broadcasts targeting empty lists.
+                // If a broadcast has passed its scheduled time and has zero queue entries
+                // (target list was empty), mark it as 'sent' immediately to prevent
+                // "zombie" scheduled state that could trigger for future subscribers.
+                if ($message->type === 'broadcast') {
+                    $totalEntries = $message->queueEntries()->count();
+                    $pendingEntries = $message->queueEntries()
+                        ->whereIn('status', [
+                            MessageQueueEntry::STATUS_PLANNED,
+                            MessageQueueEntry::STATUS_QUEUED,
+                        ])
+                        ->count();
+
+                    if ($pendingEntries === 0 && $message->status === 'scheduled') {
+                        // Either the list was empty (totalEntries == 0) or all entries
+                        // have been processed (sent/failed/skipped). Mark as complete.
+                        $message->update(['status' => 'sent']);
+                        Log::info('CronScheduleService: Broadcast auto-completed', [
+                            'message_id' => $message->id,
+                            'total_entries' => $totalEntries,
+                            'reason' => $totalEntries === 0
+                                ? 'Empty recipient list — no subscribers to send to'
+                                : 'All queue entries processed',
+                        ]);
+                    }
+                }
             }
 
             // 2. Przetwórz kolejkę używając chunków, aby ominąć zablokowane listy
@@ -509,6 +536,28 @@ class CronScheduleService
             foreach ($activeMessages as $message) {
                 $syncResult = $message->syncPlannedRecipients();
                 $stats['synced'] += $syncResult['added'];
+
+                // FIX #13: Auto-complete SMS broadcasts targeting empty lists.
+                if ($message->type === 'broadcast') {
+                    $totalEntries = $message->queueEntries()->count();
+                    $pendingEntries = $message->queueEntries()
+                        ->whereIn('status', [
+                            MessageQueueEntry::STATUS_PLANNED,
+                            MessageQueueEntry::STATUS_QUEUED,
+                        ])
+                        ->count();
+
+                    if ($pendingEntries === 0 && $message->status === 'scheduled') {
+                        $message->update(['status' => 'sent']);
+                        Log::info('CronScheduleService: SMS Broadcast auto-completed', [
+                            'message_id' => $message->id,
+                            'total_entries' => $totalEntries,
+                            'reason' => $totalEntries === 0
+                                ? 'Empty recipient list — no subscribers to send to'
+                                : 'All queue entries processed',
+                        ]);
+                    }
+                }
             }
 
             // 2. Przetwórz kolejkę SMS używając chunków

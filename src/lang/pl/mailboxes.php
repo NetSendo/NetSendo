@@ -31,4 +31,15 @@ return [
         'never_scanned' => 'Nigdy nie skanowano',
         'processed' => 'Przetworzono :count bounce(ów)',
     ],
+
+    'custom_headers' => [
+        'section_title' => 'Niestandardowe nagłówki SMTP',
+        'section_desc' => 'Dodaj niestandardowe nagłówki do wszystkich e-maili wysyłanych z tego serwera (np. Feedback-ID dla Google Postmaster Tools).',
+        'key' => 'Nazwa nagłówka',
+        'value' => 'Wartość nagłówka',
+        'add' => 'Dodaj nagłówek',
+        'remove' => 'Usuń',
+        'key_placeholder' => 'np. Feedback-ID',
+        'value_placeholder' => 'np. campaign1:user123:netsendo',
+    ],
 ];

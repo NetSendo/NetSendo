@@ -2191,7 +2191,10 @@
         "edit_tag": "Edytuj tag",
         "fields": {
             "name": "Nazwa tagu",
-            "color": "Kolor"
+            "color": "Kolor",
+            "description": "Opis",
+            "description_placeholder": "Do czego służy ten tag?",
+            "description_help": "Opcjonalna notatka, aby pamiętać do czego jest ten tag."
         },
         "empty_state": "Brak utworzonych tagów.",
         "confirm_delete": "Czy na pewno chcesz usunąć ten tag?"
@@ -4458,7 +4461,11 @@
             "sms_read": "SMS (odczyt)",
             "sms_write": "SMS (zapis)",
             "messages_read": "Kampanie (odczyt)",
-            "messages_write": "Kampanie (zapis)"
+            "messages_write": "Kampanie (zapis)",
+            "email_read": "E-mail (odczyt)",
+            "email_write": "E-mail (zapis)",
+            "funnels_read": "Lejki (odczyt)",
+            "funnels_write": "Lejki (zapis)"
         },
         "status": {
             "expired": "wygasł",

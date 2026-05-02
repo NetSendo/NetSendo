@@ -2370,7 +2370,10 @@
         "edit_tag": "Tag bearbeiten",
         "fields": {
             "name": "Tag-Name",
-            "color": "Farbe"
+            "color": "Farbe",
+            "description": "Beschreibung",
+            "description_placeholder": "Wofür wird dieses Tag verwendet?",
+            "description_help": "Optionaler Hinweis, um den Zweck dieses Tags zu merken."
         },
         "empty_state": "Keine Tags erstellt.",
         "confirm_delete": "Sind Sie sicher, dass Sie dieses Tag löschen möchten?"
@@ -3526,7 +3529,11 @@
             "sms_read": "SMS (Lesen)",
             "sms_write": "SMS (Schreiben)",
             "messages_read": "Kampagnen (Lesen)",
-            "messages_write": "Kampagnen (Schreiben)"
+            "messages_write": "Kampagnen (Schreiben)",
+            "email_read": "E-Mail (Lesen)",
+            "email_write": "E-Mail (Schreiben)",
+            "funnels_read": "Funnels (Lesen)",
+            "funnels_write": "Funnels (Schreiben)"
         },
         "status": {
             "expired": "abgelaufen",

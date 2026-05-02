@@ -31,4 +31,15 @@ return [
         'never_scanned' => 'Never scanned',
         'processed' => ':count bounce(s) processed',
     ],
+
+    'custom_headers' => [
+        'section_title' => 'Custom SMTP Headers',
+        'section_desc' => 'Add custom headers to all emails sent from this sending server (e.g. Feedback-ID for Google Postmaster Tools).',
+        'key' => 'Header Name',
+        'value' => 'Header Value',
+        'add' => 'Add Header',
+        'remove' => 'Remove',
+        'key_placeholder' => 'e.g. Feedback-ID',
+        'value_placeholder' => 'e.g. campaign1:user123:netsendo',
+    ],
 ];

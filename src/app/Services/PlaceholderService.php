@@ -29,6 +29,7 @@ class PlaceholderService
     protected array $systemPlaceholders = [
         'unsubscribe_link' => ['label' => 'Link wypisania', 'description' => 'Link do wypisania z listy'],
         'unsubscribe_url' => ['label' => 'URL wypisania', 'description' => 'URL do wypisania (alias)'],
+        'unsubscribe_global' => ['label' => 'Link wypisania globalnego', 'description' => 'Link do wypisania ze wszystkich list (Master Opt-Out)'],
         'manage' => ['label' => 'Link zarządzania preferencjami', 'description' => 'Link do strony zarządzania subskrypcjami'],
         'manage_url' => ['label' => 'URL zarządzania', 'description' => 'URL do zarządzania (alias)'],
         'webinar_register_link' => ['label' => 'Link rejestracji na webinar', 'description' => 'Link do strony rejestracji na webinar'],
@@ -204,6 +205,15 @@ class PlaceholderService
     }
 
     /**
+     * Generate global unsubscribe link for a subscriber.
+     * This link leads to a page where the subscriber can unsubscribe from ALL lists at once.
+     */
+    public function generateGlobalUnsubscribeLink(Subscriber $subscriber): string
+    {
+        return URL::signedRoute('subscriber.unsubscribe.global', ['subscriber' => $subscriber->id]);
+    }
+
+    /**
      * Generate manage/preferences link for a subscriber.
      */
     public function generateManageLink(Subscriber $subscriber): string
@@ -221,10 +231,13 @@ class PlaceholderService
         $unsubscribeLink = $this->generateUnsubscribeLink($subscriber, $list);
         $manageLink = $this->generateManageLink($subscriber);
 
+        $globalUnsubscribeLink = $this->generateGlobalUnsubscribeLink($subscriber);
+
         $additionalData = [
             'unsubscribe_link' => $unsubscribeLink,
             'unsubscribe_url' => $unsubscribeLink,
             'unsubscribe' => $unsubscribeLink,
+            'unsubscribe_global' => $globalUnsubscribeLink,
             'manage' => $manageLink,
             'manage_url' => $manageLink,
         ];
@@ -251,10 +264,13 @@ class PlaceholderService
         $unsubscribeLink = $this->generateUnsubscribeLink($subscriber, $list);
         $manageLink = $this->generateManageLink($subscriber);
 
+        $globalUnsubscribeLink = $this->generateGlobalUnsubscribeLink($subscriber);
+
         $additionalData = [
             'unsubscribe_link' => $unsubscribeLink,
             'unsubscribe_url' => $unsubscribeLink,
             'unsubscribe' => $unsubscribeLink,
+            'unsubscribe_global' => $globalUnsubscribeLink,
             'manage' => $manageLink,
             'manage_url' => $manageLink,
         ];

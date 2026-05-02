@@ -99,6 +99,26 @@ const permissionLabels = computed(() => ({
         icon: "✉️",
         color: "indigo",
     },
+    "email:read": {
+        label: t("api_keys.permissions.email_read"),
+        icon: "📬",
+        color: "cyan",
+    },
+    "email:write": {
+        label: t("api_keys.permissions.email_write"),
+        icon: "📤",
+        color: "cyan",
+    },
+    "funnels:read": {
+        label: t("api_keys.permissions.funnels_read"),
+        icon: "🔄",
+        color: "amber",
+    },
+    "funnels:write": {
+        label: t("api_keys.permissions.funnels_write"),
+        icon: "🔄",
+        color: "amber",
+    },
 }));
 
 function openCreateModal() {

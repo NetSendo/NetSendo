@@ -11,6 +11,7 @@ const props = defineProps({
 const form = ref({
     name: '',
     color: '#3b82f6',
+    description: '',
 });
 
 const editingTag = ref(null);
@@ -22,6 +23,7 @@ const submit = () => {
                 editingTag.value = null;
                 form.value.name = '';
                 form.value.color = '#3b82f6';
+                form.value.description = '';
             },
         });
     } else {
@@ -29,6 +31,7 @@ const submit = () => {
             onSuccess: () => {
                 form.value.name = '';
                 form.value.color = '#3b82f6';
+                form.value.description = '';
             },
         });
     }
@@ -38,12 +41,14 @@ const edit = (tag) => {
     editingTag.value = tag;
     form.value.name = tag.name;
     form.value.color = tag.color;
+    form.value.description = tag.description || '';
 };
 
 const cancelEdit = () => {
     editingTag.value = null;
     form.value.name = '';
     form.value.color = '#3b82f6';
+    form.value.description = '';
 };
 
 const destroy = (tag) => {
@@ -113,6 +118,17 @@ const closeDeleteModal = () => {
                                     />
                                 </div>
                             </div>
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-slate-300">{{ $t('tags.fields.description') }}</label>
+                                <textarea
+                                    id="description"
+                                    v-model="form.description"
+                                    rows="3"
+                                    class="mt-1 block w-full rounded-md border-slate-600 bg-slate-900 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    :placeholder="$t('tags.fields.description_placeholder')"
+                                ></textarea>
+                                <p class="mt-1 text-xs text-slate-500">{{ $t('tags.fields.description_help') }}</p>
+                            </div>
                             <div class="flex items-center gap-2">
                                 <button
                                     type="submit"
@@ -145,6 +161,7 @@ const closeDeleteModal = () => {
                                     :key="tag.id"
                                     class="group relative inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white transition-transform hover:scale-105"
                                     :style="{ backgroundColor: tag.color }"
+                                    :title="tag.description || ''"
                                 >
                                     {{ tag.name }}
                                     <div class="ml-2 flex items-center space-x-1 border-l border-white/20 pl-2">

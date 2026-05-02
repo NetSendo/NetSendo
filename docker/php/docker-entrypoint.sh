@@ -133,6 +133,19 @@ if [ $attempt -lt $max_attempts ]; then
     fi
     
     # =============================================================================
+    # ENSURE BACKUP TEMP DIRECTORY (GitHub #11)
+    # =============================================================================
+    # The backup-temp directory must exist with write permissions for www-data.
+    # Since storage/app is a Docker volume, the directory from the image may
+    # not persist across container recreations.
+    
+    if [ ! -d "storage/app/backup-temp" ]; then
+        echo "📦 Creating backup temp directory..."
+        mkdir -p storage/app/backup-temp
+    fi
+    chmod 775 storage/app/backup-temp 2>/dev/null || true
+    
+    # =============================================================================
     # SEED DEFAULT AUTOMATIONS
     # =============================================================================
     # Ensure default AutoTag Pro automations exist for all users.

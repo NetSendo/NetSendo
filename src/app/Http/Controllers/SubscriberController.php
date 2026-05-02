@@ -1116,10 +1116,18 @@ class SubscriberController extends Controller
             }
 
             if ($subscriber) {
-                // If subscriber was soft-deleted, restore it
+                // If subscriber was soft-deleted, restore it and reset
                 if ($subscriber->trashed()) {
                     $subscriber->restore();
-                    Log::info('Restored soft-deleted subscriber during import', [
+
+                    // Completely reset the subscriber - detach ALL existing contact lists
+                    // This prevents the subscriber from being silently re-added to old lists
+                    $subscriber->contactLists()->detach();
+
+                    // Delete all message queue entries to allow fresh autoresponder sequences
+                    MessageQueueEntry::where('subscriber_id', $subscriber->id)->delete();
+
+                    Log::info('Restored and reset soft-deleted subscriber during import', [
                         'subscriber_id' => $subscriber->id,
                         'email' => $subscriber->email,
                     ]);

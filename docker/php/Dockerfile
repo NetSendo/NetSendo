@@ -59,10 +59,24 @@ RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
 # This ensures that `docker compose pull && up` correctly updates static files.
 RUN cp -r /var/www/public /var/www/public.dist
 
+# =============================================================================
+# MYSQL CLIENT SSL CONFIGURATION (GitHub #11)
+# =============================================================================
+# MySQL 8.0 generates self-signed SSL certificates by default.
+# The MariaDB client (default-mysql-client) rejects these during mysqldump,
+# causing "TLS/SSL error: self-signed certificate in certificate chain".
+# Disabling SSL for the client is safe for internal Docker network connections.
+RUN printf '[client]\nssl=0\n' > /etc/my.cnf
+
 # Set proper permissions
 RUN chown -R dev:www-data /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
+
+# Ensure backup temp directory exists with correct permissions (GitHub #11)
+RUN mkdir -p /var/www/storage/app/backup-temp \
+    && chown dev:www-data /var/www/storage/app/backup-temp \
+    && chmod 775 /var/www/storage/app/backup-temp
 
 USER dev
 

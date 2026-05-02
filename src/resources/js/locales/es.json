@@ -2269,7 +2269,10 @@
         "edit_tag": "Editar etiqueta",
         "fields": {
             "name": "Nombre de la etiqueta",
-            "color": "Color"
+            "color": "Color",
+            "description": "Descripción",
+            "description_placeholder": "¿Para qué se usa esta etiqueta?",
+            "description_help": "Nota opcional para recordar el propósito de esta etiqueta."
         },
         "empty_state": "No hay etiquetas creadas.",
         "confirm_delete": "¿Está seguro de que desea eliminar esta etiqueta?"
@@ -3485,7 +3488,11 @@
             "sms_read": "SMS (lectura)",
             "sms_write": "SMS (escritura)",
             "messages_read": "Campañas (lectura)",
-            "messages_write": "Campañas (escritura)"
+            "messages_write": "Campañas (escritura)",
+            "email_read": "Email (lectura)",
+            "email_write": "Email (escritura)",
+            "funnels_read": "Embudos (lectura)",
+            "funnels_write": "Embudos (escritura)"
         },
         "status": {
             "expired": "expirado",

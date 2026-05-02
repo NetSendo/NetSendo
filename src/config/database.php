@@ -61,6 +61,25 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
+
+            /*
+             * mysqldump configuration for spatie/laravel-backup.
+             *
+             * In Docker environments with MySQL 8.0, the server generates
+             * self-signed SSL certificates by default. The MariaDB client
+             * bundled in the app container rejects these during mysqldump,
+             * causing "TLS/SSL error: self-signed certificate in certificate
+             * chain" (exit code 2). Setting MYSQL_DUMP_SSL=false in .env
+             * disables SSL for the dump connection.
+             *
+             * @see https://github.com/spatie/db-dumper
+             */
+            'dump' => array_filter([
+                'addExtraOption' => env('MYSQL_DUMP_SSL', false) === false
+                    ? '--ssl-mode=DISABLED'
+                    : null,
+                'useSingleTransaction' => true,
+            ]),
         ],
 
         'mariadb' => [

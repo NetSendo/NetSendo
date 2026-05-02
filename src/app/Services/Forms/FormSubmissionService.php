@@ -384,6 +384,20 @@ class FormSubmissionService
         } elseif ($subscriber->trashed()) {
             // Restore soft-deleted subscriber
             $subscriber->restore();
+
+            // Completely reset the subscriber - detach ALL existing contact lists
+            // This prevents the subscriber from being silently re-added to old lists
+            // (fixes: re-creating a soft-deleted subscriber restores all previous list associations)
+            $subscriber->contactLists()->detach();
+
+            // Delete all message queue entries to allow fresh autoresponder sequences
+            \App\Models\MessageQueueEntry::where('subscriber_id', $subscriber->id)->delete();
+
+            Log::info('Restored and reset soft-deleted subscriber via form', [
+                'subscriber_id' => $subscriber->id,
+                'email' => $subscriber->email,
+            ]);
+
             $isNew = false; // Not technically new, but was deleted
         }
 
