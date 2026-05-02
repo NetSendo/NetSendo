@@ -703,11 +703,20 @@ const deleteEntry = async (id) => {
     }
 };
 
-const bulkDeleteEntries = async () => {
-    if (selectedIds.value.size === 0) return;
-    const ids = Array.from(selectedIds.value);
-    if (!confirm(t('brain.knowledge.bulk_delete_confirm', `Czy na pewno chcesz usunąć ${ids.length} wpisów? Tej operacji nie można cofnąć.`))) return;
+const showBulkDeleteModal = ref(false);
 
+const openBulkDeleteModal = () => {
+    if (selectedIds.value.size === 0) return;
+    showBulkDeleteModal.value = true;
+};
+
+const closeBulkDeleteModal = () => {
+    showBulkDeleteModal.value = false;
+};
+
+const confirmBulkDelete = async () => {
+    const ids = Array.from(selectedIds.value);
+    showBulkDeleteModal.value = false;
     isDeletingBulk.value = true;
     try {
         await axios.post('/brain/api/knowledge/bulk-delete', { ids });
@@ -2063,7 +2072,7 @@ const getCategoryColor = (key) => {
                         }}
                     </button>
                     <button
-                        @click="bulkDeleteEntries"
+                        @click="openBulkDeleteModal"
                         :disabled="isDeletingBulk"
                         class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg shadow-red-500/25 transition-all hover:bg-red-600 hover:shadow-xl disabled:opacity-50"
                     >
@@ -2073,6 +2082,51 @@ const getCategoryColor = (key) => {
                         }}
                     </button>
                 </div>
+
+                <!-- Bulk Delete Confirmation Modal -->
+                <Teleport to="body">
+                    <div
+                        v-if="showBulkDeleteModal"
+                        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                    >
+                        <div
+                            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            @click="closeBulkDeleteModal"
+                        ></div>
+                        <div
+                            class="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+                        >
+                            <div class="mb-4 flex items-center gap-3">
+                                <span class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-2xl dark:bg-red-900/30">🗑️</span>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                                        {{ t('brain.knowledge.bulk_delete_title', 'Potwierdź usunięcie') }}
+                                    </h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                                        {{ t('brain.knowledge.bulk_delete_subtitle', 'Tej operacji nie można cofnąć') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="mb-6 text-sm text-slate-600 dark:text-slate-300">
+                                {{ t('brain.knowledge.bulk_delete_confirm', `Czy na pewno chcesz usunąć ${selectedIds.size} wpisów z bazy wiedzy? Wszystkie zaznaczone wpisy zostaną trwale usunięte.`) }}
+                            </p>
+                            <div class="flex items-center justify-end gap-3">
+                                <button
+                                    @click="closeBulkDeleteModal"
+                                    class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+                                >
+                                    {{ t('brain.knowledge.cancel', 'Anuluj') }}
+                                </button>
+                                <button
+                                    @click="confirmBulkDelete"
+                                    class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-red-500/25 transition-all hover:bg-red-600 hover:shadow-xl"
+                                >
+                                    {{ t('brain.knowledge.confirm_delete', `Usuń ${selectedIds.size} wpisów`) }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Teleport>
 
                 <!-- Entries Table -->
                 <div class="overflow-x-auto">
