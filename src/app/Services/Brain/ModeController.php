@@ -27,12 +27,22 @@ class ModeController
     ];
 
     /**
-     * Get the current work mode for a user.
+     * Get the current work mode for a user (global).
      */
     public function getMode(User $user): string
     {
         $settings = AiBrainSettings::getForUser($user->id);
         return $settings->work_mode;
+    }
+
+    /**
+     * Get the effective mode for a specific agent.
+     * Checks per-agent overrides first, falls back to global work_mode.
+     */
+    public function getModeForAgent(User $user, string $agentType): string
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+        return $settings->getAgentMode($agentType);
     }
 
     /**
@@ -50,8 +60,9 @@ class ModeController
 
     /**
      * Check if an action requires user approval.
+     * Supports per-agent mode — if agentType is provided, checks its specific mode.
      */
-    public function requiresApproval(string $actionType, User $user): bool
+    public function requiresApproval(string $actionType, User $user, ?string $agentType = null): bool
     {
         // Critical actions always need approval
         if (in_array($actionType, self::CRITICAL_ACTIONS)) {
@@ -59,11 +70,14 @@ class ModeController
         }
 
         $settings = AiBrainSettings::getForUser($user->id);
+        $effectiveMode = $agentType
+            ? $settings->getAgentMode($agentType)
+            : $settings->work_mode;
 
-        return match ($settings->work_mode) {
+        return match ($effectiveMode) {
             self::MODE_AUTONOMOUS => false,
             self::MODE_SEMI_AUTO => true,
-            self::MODE_MANUAL => true, // manual doesn't execute, but still "requires approval" conceptually
+            self::MODE_MANUAL => true,
             default => true,
         };
     }

@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Brain — Performance-Driven Task Scoring (5th Dimension):**
+  - Integrated `PerformanceLearner` signals into `TaskScorer`, adding a `performance_affinity` scoring dimension (0–25 scale) that rewards tasks matching historically successful patterns (winning days, hours, campaign types, subject patterns). Total task score range now 0–125 (previously 0–100).
+  - `gatherScoringContext()` now includes `performance_signals` from `PerformanceLearner::getTuningSignals()` for data-driven prioritization.
+  - **File:** `app/Services/Brain/TaskScorer.php`
+
+- **Brain — Strategy-Aware AI Analysis & Campaign Planning:**
+  - `SituationAnalyzer` now injects `PERFORMANCE INSIGHTS` (top-performing days/hours/types) and `STRATEGY CONSTRAINTS` (tone, excluded days, send limits, goal focus) into the AI analysis prompt. Added prompt instructions 9 & 10 requiring AI to respect user-defined constraints and leverage historical performance data.
+  - `CampaignCalendarService` weekly planning prompt now includes `STRATEGY CONSTRAINTS` and `PERFORMANCE INSIGHTS` sections, ensuring the calendar respects excluded days, max weekly sends, preferred hours, tone, and goal focus from user settings.
+  - **Files:** `app/Services/Brain/SituationAnalyzer.php`, `app/Services/Brain/CampaignCalendarService.php`
+
+- **Brain — Calendar-Driven Autonomous Campaign Execution:**
+  - New `executeDueCalendarEntries()` method in the CRON pipeline automatically picks up due `AiCampaignCalendar` entries (where `planned_date <= today` and `status = 'draft'`) and routes them through the per-agent mode pipeline. Enforces weekly send limits from user strategy settings. Safety cap of 3 entries per CRON cycle.
+  - Calendar entries are converted into fully-formed tasks with campaign type, target audience, tone, and strategic context, then executed via the agent orchestrator.
+  - **File:** `app/Console/Commands/RunBrainCronCommand.php`
+
+- **Brain — Per-Agent Autonomy Mode Routing:**
+  - Refactored the CRON task execution loop to route tasks based on **individual agent modes** instead of a single global work mode. Each task now checks its agent's mode via `$settings->getAgentMode($agentType)`:
+    - `autonomous` → execute immediately via `AgentOrchestrator::executeCronTask()`
+    - `semi_auto` → create action plan + send Telegram approval request
+    - `manual` → log as suggestion, skip execution
+  - This enables granular control (e.g., Campaign agent on autonomous, CRM agent on semi-auto, List agent on manual).
+  - **File:** `app/Console/Commands/RunBrainCronCommand.php`
+
+- **Brain — Strategy & Agent Mode Settings UI:**
+  - **Per-Agent Mode Grid:** New `🧩 Tryby agentów` section in Brain Settings with a 7-agent grid (Campaign, List, Message, CRM, Analytics, Segmentation, Research). Each agent has an individual dropdown to select its autonomy level (Autonomous / Semi-Auto / Manual). Changes are saved independently via `PUT /brain/api/settings`.
+  - **Campaign Strategy Settings:** New `🎯 Strategia kampanii` section with:
+    - Communication tone selector (professional, casual, friendly, formal, humorous)
+    - Max campaigns per week slider (1–20)
+    - Excluded days toggle buttons (Mon–Sun)
+    - Preferred send hours (from/to)
+    - Goal focus selector (engagement, conversion, retention, growth)
+    - Preferred topics input (comma-separated)
+  - Strategy settings are persisted as a deep-merged JSON structure in `AiBrainSettings.strategy_settings`.
+  - **Files:** `app/Http/Controllers/BrainController.php`, `app/Http/Controllers/BrainPageController.php`, `resources/js/Pages/Brain/Settings.vue`
+
+### Changed
+
+- **Brain — Knowledge Base Enrichment Disabled:**
+  - Removed automatic knowledge base enrichment from the CRON pipeline. The Brain no longer auto-populates KB entries during autonomous execution cycles. Knowledge base management is now exclusively user-controlled via the Settings UI to prevent unwanted data accumulation.
+  - **File:** `app/Console/Commands/RunBrainCronCommand.php`
+
 <!-- [AI_unreleased_notes] -->
 
 ## [2.0.11] – Short Description

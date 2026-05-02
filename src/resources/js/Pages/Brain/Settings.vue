@@ -15,7 +15,129 @@ const props = defineProps({
     knowledgeCategories: Object,
     aiIntegrations: Array,
     modelRoutingTasks: Object,
+    agents: Array,
+    agent_modes: Object,
+    strategy_settings: Object,
 });
+
+// --- Strategy Settings ---
+const defaultStrategy = {
+    campaign: {
+        tone: 'professional',
+        max_sends_per_week: 5,
+        excluded_days: [],
+        preferred_send_hours: { start: 9, end: 17 },
+        goal_focus: 'engagement',
+        preferred_topics: [],
+    },
+};
+
+const strategyForm = reactive({
+    tone: props.strategy_settings?.campaign?.tone || 'professional',
+    max_sends_per_week: props.strategy_settings?.campaign?.max_sends_per_week || 5,
+    excluded_days: props.strategy_settings?.campaign?.excluded_days || [],
+    preferred_send_hours_start: props.strategy_settings?.campaign?.preferred_send_hours?.start || 9,
+    preferred_send_hours_end: props.strategy_settings?.campaign?.preferred_send_hours?.end || 17,
+    goal_focus: props.strategy_settings?.campaign?.goal_focus || 'engagement',
+    preferred_topics_text: (props.strategy_settings?.campaign?.preferred_topics || []).join(', '),
+});
+
+const isSavingStrategy = ref(false);
+const strategySaved = ref(false);
+
+const toneOptions = [
+    { value: 'professional', label: 'brain.strategy.tone_professional', emoji: '💼' },
+    { value: 'casual', label: 'brain.strategy.tone_casual', emoji: '😊' },
+    { value: 'friendly', label: 'brain.strategy.tone_friendly', emoji: '🤗' },
+    { value: 'formal', label: 'brain.strategy.tone_formal', emoji: '📋' },
+    { value: 'humorous', label: 'brain.strategy.tone_humorous', emoji: '😄' },
+];
+
+const goalFocusOptions = [
+    { value: 'engagement', label: 'brain.strategy.focus_engagement', emoji: '💬' },
+    { value: 'conversion', label: 'brain.strategy.focus_conversion', emoji: '💰' },
+    { value: 'retention', label: 'brain.strategy.focus_retention', emoji: '🔄' },
+    { value: 'growth', label: 'brain.strategy.focus_growth', emoji: '📈' },
+];
+
+const dayLabels = [
+    { value: 1, label: 'Mon' },
+    { value: 2, label: 'Tue' },
+    { value: 3, label: 'Wed' },
+    { value: 4, label: 'Thu' },
+    { value: 5, label: 'Fri' },
+    { value: 6, label: 'Sat' },
+    { value: 7, label: 'Sun' },
+];
+
+const toggleDay = (day) => {
+    const idx = strategyForm.excluded_days.indexOf(day);
+    if (idx > -1) {
+        strategyForm.excluded_days.splice(idx, 1);
+    } else {
+        strategyForm.excluded_days.push(day);
+    }
+};
+
+const saveStrategy = async () => {
+    isSavingStrategy.value = true;
+    strategySaved.value = false;
+
+    try {
+        const topics = strategyForm.preferred_topics_text
+            .split(',')
+            .map(t => t.trim())
+            .filter(t => t.length > 0);
+
+        await axios.put("/brain/api/settings", {
+            strategy_settings: {
+                campaign: {
+                    tone: strategyForm.tone,
+                    max_sends_per_week: strategyForm.max_sends_per_week,
+                    excluded_days: strategyForm.excluded_days,
+                    preferred_send_hours: {
+                        start: strategyForm.preferred_send_hours_start,
+                        end: strategyForm.preferred_send_hours_end,
+                    },
+                    goal_focus: strategyForm.goal_focus,
+                    preferred_topics: topics,
+                },
+            },
+        });
+        strategySaved.value = true;
+        setTimeout(() => (strategySaved.value = false), 2000);
+    } catch (error) {
+        console.error('Strategy save failed', error);
+    } finally {
+        isSavingStrategy.value = false;
+    }
+};
+
+// --- Per-Agent Mode ---
+const agentList = props.agents || ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research'];
+const agentModesLocal = reactive({ ...(props.agent_modes || {}) });
+const isSavingAgentModes = ref(false);
+const agentModesSaved = ref(false);
+
+const agentIcons = {
+    campaign: '📧', list: '📋', message: '✉️', crm: '🤝',
+    analytics: '📊', segmentation: '🎯', research: '🔍',
+};
+
+const saveAgentModes = async () => {
+    isSavingAgentModes.value = true;
+    agentModesSaved.value = false;
+
+    try {
+        await axios.put("/brain/api/settings", { agent_modes: agentModesLocal });
+        agentModesSaved.value = true;
+        setTimeout(() => (agentModesSaved.value = false), 2000);
+    } catch (error) {
+        console.error('Agent modes save failed', error);
+    } finally {
+        isSavingAgentModes.value = false;
+    }
+};
 
 // --- Mode ---
 const currentMode = ref(props.settings?.work_mode || "semi_auto");
@@ -466,6 +588,32 @@ const newEntry = reactive({
 const CONTENT_MAX_LENGTH = 10000;
 const TITLE_MAX_LENGTH = 255;
 const isSavingEntry = ref(false);
+
+// --- Bulk Selection ---
+const selectedIds = ref(new Set());
+const isDeletingBulk = ref(false);
+
+const isAllSelected = computed(() => {
+    return entries.value.length > 0 && selectedIds.value.size === entries.value.length;
+});
+
+const toggleSelectAll = () => {
+    if (isAllSelected.value) {
+        selectedIds.value = new Set();
+    } else {
+        selectedIds.value = new Set(entries.value.map((e) => e.id));
+    }
+};
+
+const toggleSelection = (id) => {
+    const next = new Set(selectedIds.value);
+    if (next.has(id)) {
+        next.delete(id);
+    } else {
+        next.add(id);
+    }
+    selectedIds.value = next;
+};
 const editingEntryId = ref(null);
 
 // --- View / Edit Knowledge Entry ---
@@ -549,8 +697,26 @@ const deleteEntry = async (id) => {
     try {
         await axios.delete(`/brain/api/knowledge/${id}`);
         entries.value = entries.value.filter((e) => e.id !== id);
+        selectedIds.value.delete(id);
     } catch (error) {
         // Error
+    }
+};
+
+const bulkDeleteEntries = async () => {
+    if (selectedIds.value.size === 0) return;
+    const ids = Array.from(selectedIds.value);
+    if (!confirm(t('brain.knowledge.bulk_delete_confirm', `Czy na pewno chcesz usunąć ${ids.length} wpisów? Tej operacji nie można cofnąć.`))) return;
+
+    isDeletingBulk.value = true;
+    try {
+        await axios.post('/brain/api/knowledge/bulk-delete', { ids });
+        entries.value = entries.value.filter((e) => !selectedIds.value.has(e.id));
+        selectedIds.value = new Set();
+    } catch (error) {
+        // Error
+    } finally {
+        isDeletingBulk.value = false;
     }
 };
 
@@ -724,6 +890,208 @@ const getCategoryColor = (key) => {
                         </span>
                     </button>
                 </div>
+            </div>
+
+            <!-- Per-Agent Mode Grid -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    🧩 {{ t("brain.agent_modes.title", "Tryby agentów") }}
+                    <span
+                        v-if="agentModesSaved"
+                        class="text-xs font-normal text-green-500"
+                        >✓ {{ t("brain.saved", "Zapisano") }}</span
+                    >
+                </h3>
+                <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    {{ t("brain.agent_modes.description", "Ustaw indywidualny tryb autonomii dla każdego agenta. Dzięki temu np. analizy mogą działać w pełni automatycznie, a kampanie wymagać zatwierdzenia.") }}
+                </p>
+                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div
+                        v-for="agent in agentList"
+                        :key="agent"
+                        class="rounded-lg border border-slate-200 p-3 dark:border-slate-600"
+                    >
+                        <div class="mb-2 flex items-center gap-2">
+                            <span class="text-lg">{{ agentIcons[agent] || '🤖' }}</span>
+                            <span class="text-sm font-medium capitalize text-slate-900 dark:text-white">{{ agent }}</span>
+                        </div>
+                        <select
+                            v-model="agentModesLocal[agent]"
+                            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        >
+                            <option value="autonomous">🚀 {{ t("brain.mode.autonomous", "Autonomiczny") }}</option>
+                            <option value="semi_auto">🤝 {{ t("brain.mode.semi_auto", "Pół-auto") }}</option>
+                            <option value="manual">💡 {{ t("brain.mode.manual", "Ręczny") }}</option>
+                        </select>
+                    </div>
+                </div>
+                <button
+                    @click="saveAgentModes"
+                    :disabled="isSavingAgentModes"
+                    class="mt-4 rounded-lg bg-cyan-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                >
+                    {{ isSavingAgentModes ? '...' : t("brain.save_agent_modes", "Zapisz tryby agentów") }}
+                </button>
+            </div>
+
+            <!-- Campaign Strategy Settings -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-2 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    🎯 {{ t("brain.strategy.title", "Strategia kampanii") }}
+                    <span
+                        v-if="strategySaved"
+                        class="text-xs font-normal text-green-500"
+                        >✓ {{ t("brain.saved", "Zapisano") }}</span
+                    >
+                </h3>
+                <p class="mb-5 text-sm text-slate-500 dark:text-slate-400">
+                    {{ t("brain.strategy.description", "Zdefiniuj ograniczenia i preferencje, którymi Brain będzie się kierował przy planowaniu i realizacji kampanii.") }}
+                </p>
+
+                <div class="space-y-5">
+                    <!-- Tone -->
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ t("brain.strategy.tone_label", "Ton komunikacji") }}
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                v-for="opt in toneOptions"
+                                :key="opt.value"
+                                @click="strategyForm.tone = opt.value"
+                                class="rounded-lg border-2 px-3 py-1.5 text-sm transition"
+                                :class="{
+                                    'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': strategyForm.tone === opt.value,
+                                    'border-slate-200 dark:border-slate-600': strategyForm.tone !== opt.value,
+                                }"
+                            >
+                                {{ opt.emoji }} {{ t(opt.label, opt.value) }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Max Sends Per Week -->
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ t("brain.strategy.max_sends_label", "Maks. kampanii na tydzień") }}: <strong>{{ strategyForm.max_sends_per_week }}</strong>
+                        </label>
+                        <input
+                            type="range"
+                            v-model.number="strategyForm.max_sends_per_week"
+                            min="1"
+                            max="20"
+                            class="w-full accent-cyan-500"
+                        />
+                        <div class="mt-1 flex justify-between text-xs text-slate-400">
+                            <span>1</span>
+                            <span>5</span>
+                            <span>10</span>
+                            <span>15</span>
+                            <span>20</span>
+                        </div>
+                    </div>
+
+                    <!-- Excluded Days -->
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ t("brain.strategy.excluded_days_label", "Wykluczone dni (nie wysyłaj)") }}
+                        </label>
+                        <div class="flex gap-2">
+                            <button
+                                v-for="day in dayLabels"
+                                :key="day.value"
+                                @click="toggleDay(day.value)"
+                                class="flex h-10 w-10 items-center justify-center rounded-lg border-2 text-xs font-medium transition"
+                                :class="{
+                                    'border-red-400 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400':
+                                        strategyForm.excluded_days.includes(day.value),
+                                    'border-slate-200 text-slate-600 dark:border-slate-600 dark:text-slate-400':
+                                        !strategyForm.excluded_days.includes(day.value),
+                                }"
+                            >
+                                {{ day.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Send Hours -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {{ t("brain.strategy.send_from", "Od godziny") }}
+                            </label>
+                            <input
+                                type="number"
+                                v-model.number="strategyForm.preferred_send_hours_start"
+                                min="0"
+                                max="23"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            />
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                {{ t("brain.strategy.send_to", "Do godziny") }}
+                            </label>
+                            <input
+                                type="number"
+                                v-model.number="strategyForm.preferred_send_hours_end"
+                                min="0"
+                                max="23"
+                                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Goal Focus -->
+                    <div>
+                        <label class="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ t("brain.strategy.goal_focus_label", "Główny cel") }}
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                v-for="opt in goalFocusOptions"
+                                :key="opt.value"
+                                @click="strategyForm.goal_focus = opt.value"
+                                class="rounded-lg border-2 px-3 py-1.5 text-sm transition"
+                                :class="{
+                                    'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': strategyForm.goal_focus === opt.value,
+                                    'border-slate-200 dark:border-slate-600': strategyForm.goal_focus !== opt.value,
+                                }"
+                            >
+                                {{ opt.emoji }} {{ t(opt.label, opt.value) }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preferred Topics -->
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {{ t("brain.strategy.topics_label", "Preferowane tematy (oddziel przecinkami)") }}
+                        </label>
+                        <input
+                            type="text"
+                            v-model="strategyForm.preferred_topics_text"
+                            :placeholder="t('brain.strategy.topics_placeholder', 'np. nowości produktowe, porady branżowe, case studies')"
+                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                    </div>
+                </div>
+
+                <button
+                    @click="saveStrategy"
+                    :disabled="isSavingStrategy"
+                    class="mt-5 rounded-lg bg-cyan-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:opacity-50"
+                >
+                    {{ isSavingStrategy ? '...' : t("brain.save_strategy", "Zapisz strategię") }}
+                </button>
             </div>
 
             <!-- Response Language Card -->
@@ -1677,6 +2045,35 @@ const getCategoryColor = (key) => {
                     </div>
                 </div>
 
+                <!-- Bulk Action Toolbar -->
+                <div
+                    v-if="selectedIds.size > 0"
+                    class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 dark:border-red-800/50 dark:bg-red-900/10"
+                >
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {{ t('brain.knowledge.selected_count', `Zaznaczono: ${selectedIds.size}`) }}
+                    </span>
+                    <button
+                        @click="toggleSelectAll"
+                        class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700"
+                    >
+                        {{ isAllSelected
+                            ? t('brain.knowledge.deselect_all', 'Odznacz wszystkie')
+                            : t('brain.knowledge.select_all', 'Zaznacz wszystkie')
+                        }}
+                    </button>
+                    <button
+                        @click="bulkDeleteEntries"
+                        :disabled="isDeletingBulk"
+                        class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white shadow-lg shadow-red-500/25 transition-all hover:bg-red-600 hover:shadow-xl disabled:opacity-50"
+                    >
+                        {{ isDeletingBulk
+                            ? t('brain.knowledge.deleting', 'Usuwanie...')
+                            : t('brain.knowledge.delete_selected', `🗑️ Usuń zaznaczone (${selectedIds.size})`)
+                        }}
+                    </button>
+                </div>
+
                 <!-- Entries Table -->
                 <div class="overflow-x-auto">
                     <table v-if="entries.length" class="w-full text-sm">
@@ -1684,6 +2081,14 @@ const getCategoryColor = (key) => {
                             <tr
                                 class="border-b border-slate-200 dark:border-slate-700"
                             >
+                                <th class="pb-2 pr-2 text-left">
+                                    <input
+                                        type="checkbox"
+                                        :checked="isAllSelected"
+                                        @change="toggleSelectAll"
+                                        class="h-4 w-4 rounded border-slate-300 text-cyan-500 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700"
+                                    />
+                                </th>
                                 <th
                                     class="pb-2 text-left text-xs font-medium uppercase tracking-wider text-slate-400"
                                 >
@@ -1729,6 +2134,14 @@ const getCategoryColor = (key) => {
                                 :key="entry.id"
                                 class="border-b border-slate-100 dark:border-slate-700/50"
                             >
+                                <td class="py-3 pr-2">
+                                    <input
+                                        type="checkbox"
+                                        :checked="selectedIds.has(entry.id)"
+                                        @change="toggleSelection(entry.id)"
+                                        class="h-4 w-4 rounded border-slate-300 text-cyan-500 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700"
+                                    />
+                                </td>
                                 <td class="py-3 pr-4">
                                     <p
                                         class="font-medium text-slate-900 dark:text-white"

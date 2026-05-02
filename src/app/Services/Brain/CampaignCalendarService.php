@@ -2,11 +2,13 @@
 
 namespace App\Services\Brain;
 
+use App\Models\AiBrainSettings;
 use App\Models\AiCampaignCalendar;
 use App\Models\AiGoal;
 use App\Models\AiPerformanceSnapshot;
 use App\Models\User;
 use App\Services\AI\AiService;
+use App\Services\Brain\PerformanceLearner;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -52,6 +54,44 @@ class CampaignCalendarService
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        // Gather strategy constraints for campaign agent
+        $settings = AiBrainSettings::getForUser($user->id);
+        $strategy = $settings->getStrategyForAgent('campaign');
+
+        $strategySection = '';
+        if (!empty($strategy)) {
+            $maxSends = $strategy['max_sends_per_week'] ?? 5;
+            $tone = $strategy['tone'] ?? 'professional';
+            $excludedDays = $strategy['excluded_days'] ?? [];
+            $preferredHours = $strategy['preferred_send_hours'] ?? ['start' => 9, 'end' => 17];
+            $goalFocus = $strategy['goal_focus'] ?? 'engagement';
+            $preferredTopics = $strategy['preferred_topics'] ?? [];
+
+            $strategySection = "\nSTRATEGY CONSTRAINTS:\n";
+            $strategySection .= "- Maximum campaigns per week: {$maxSends}\n";
+            $strategySection .= "- Tone: {$tone}\n";
+            if (!empty($excludedDays)) {
+                $strategySection .= "- Do NOT schedule on days: " . implode(', ', $excludedDays) . " (1=Monday, 7=Sunday)\n";
+            }
+            $strategySection .= "- Preferred send hours: {$preferredHours['start']}:00 - {$preferredHours['end']}:00\n";
+            $strategySection .= "- Goal focus: {$goalFocus}\n";
+            if (!empty($preferredTopics)) {
+                $strategySection .= "- Preferred topics: " . implode(', ', $preferredTopics) . "\n";
+            }
+        }
+
+        // Gather performance insights
+        $performanceSection = '';
+        try {
+            $learner = app(PerformanceLearner::class);
+            $signals = $learner->getTuningSignals($user);
+            if (!empty($signals['has_data'])) {
+                $performanceSection = "\n" . $learner->formatAsPromptContext($signals);
+            }
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
         $prompt = <<<PROMPT
 You are a marketing strategist planning the upcoming week's email campaigns.
 
@@ -61,6 +101,8 @@ CURRENT CONTEXT:
 - Recent performance: {$context['performance']}
 - Today: {$context['today']}
 - Planning for week: {$weekStart->format('Y-m-d')} to {$weekStart->copy()->addDays(6)->format('Y-m-d')}
+{$strategySection}
+{$performanceSection}
 
 {$langInstruction}
 
@@ -70,6 +112,11 @@ Plan 2-4 campaigns for the upcoming week. For each campaign include:
 - topic: short topic description
 - description: 1-2 sentence description of what this campaign should cover
 - target_audience: who should receive it
+
+IMPORTANT:
+- Respect all STRATEGY CONSTRAINTS above (max sends, excluded days, tone, goal focus)
+- If PERFORMANCE INSIGHTS are available, schedule campaigns on the best-performing days
+- Use performance-proven patterns and topics when possible
 
 Respond in JSON array format:
 [

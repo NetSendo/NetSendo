@@ -188,8 +188,9 @@ class PerformanceTracker
             'captured_at' => now(),
         ]);
 
-        // Save lessons to Knowledge Base for future context
-        $this->saveToKnowledgeBase($user, $snapshot, $lessons);
+        // Disabled: AI auto-enrichment removed — only users can add KB entries
+        // Performance data is already stored in AiPerformanceSnapshot table
+        // $this->saveToKnowledgeBase($user, $snapshot, $lessons);
 
         return $snapshot;
     }

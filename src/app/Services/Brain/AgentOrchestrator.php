@@ -280,7 +280,8 @@ class AgentOrchestrator
 
             // Step 7: Auto-enrich knowledge base (async-friendly, but done inline for now)
             if ($conversation->message_count % 5 === 0) {
-                $this->tryAutoEnrich($user, $conversation);
+                // Disabled: AI auto-enrichment removed — only users can add KB entries
+                // $this->tryAutoEnrich($user, $conversation);
             }
 
             // Log execution
@@ -596,12 +597,12 @@ PROMPT;
                 'plan_id' => $plan->id,
             ]);
 
-            // Extract style preferences from completed campaign/message plans
-            try {
-                $this->knowledgeBase->extractStylePreferences($user, $plan);
-            } catch (\Exception $e) {
-                Log::debug('Style extraction skipped', ['error' => $e->getMessage()]);
-            }
+            // Disabled: AI style extraction to KB removed — only users can add KB entries
+            // try {
+            //     $this->knowledgeBase->extractStylePreferences($user, $plan);
+            // } catch (\Exception $e) {
+            //     Log::debug('Style extraction skipped', ['error' => $e->getMessage()]);
+            // }
 
             // Post-execution: evaluate goal continuation
             $continuationMessage = '';
@@ -1053,7 +1054,8 @@ PROMPT;
 
                     // Auto-enrich knowledge
                     if ($streamCompleted && $conversation->message_count % 5 === 0) {
-                        $this->tryAutoEnrich($user, $conversation);
+                        // Disabled: AI auto-enrichment removed — only users can add KB entries
+                        // $this->tryAutoEnrich($user, $conversation);
                     }
 
                     // Set continuation flag for follow-up detection

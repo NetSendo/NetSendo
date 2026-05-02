@@ -23,6 +23,8 @@ class AiBrainSettings extends Model
         'model_routing',
         'preferences',
         'agent_permissions',
+        'strategy_settings',
+        'agent_modes',
         'daily_token_limit',
         'tokens_used_today',
         'token_reset_date',
@@ -36,6 +38,8 @@ class AiBrainSettings extends Model
     protected $casts = [
         'preferences' => 'array',
         'agent_permissions' => 'array',
+        'strategy_settings' => 'array',
+        'agent_modes' => 'array',
         'model_routing' => 'array',
         'telegram_linked_at' => 'datetime',
         'telegram_bot_token' => 'encrypted',
@@ -49,6 +53,53 @@ class AiBrainSettings extends Model
         'cron_interval_minutes' => 'integer',
         'last_cron_run_at' => 'datetime',
         'last_activity_at' => 'datetime',
+    ];
+
+    /**
+     * Default strategy settings per agent type.
+     */
+    public const DEFAULT_STRATEGY = [
+        'campaign' => [
+            'tone' => 'professional',
+            'max_sends_per_week' => 5,
+            'preferred_topics' => [],
+            'excluded_days' => [],
+            'preferred_send_hours' => ['start' => 9, 'end' => 17],
+            'max_audience_per_campaign' => 0,
+            'require_ab_test' => false,
+            'goal_focus' => 'engagement',
+        ],
+        'crm' => [
+            'auto_follow_up' => true,
+            'follow_up_delay_hours' => 24,
+            'min_score_for_action' => 30,
+        ],
+        'analytics' => [
+            'report_frequency' => 'weekly',
+            'include_recommendations' => true,
+        ],
+        'segmentation' => [
+            'auto_tag' => true,
+            'min_segment_size' => 10,
+        ],
+        'message' => [
+            'tone' => 'friendly',
+            'max_length_chars' => 0,
+            'always_include_cta' => true,
+        ],
+    ];
+
+    /**
+     * Available agent types for per-agent configuration.
+     */
+    public const AGENT_TYPES = [
+        'campaign' => '📧 Campaign',
+        'message' => '✉️ Message / Content',
+        'crm' => '👥 CRM',
+        'analytics' => '📊 Analytics',
+        'segmentation' => '🎯 Segmentation',
+        'list' => '📋 List Management',
+        'research' => '🔍 Research',
     ];
 
     /**
@@ -166,12 +217,58 @@ class AiBrainSettings extends Model
      */
     public function isAgentAllowed(string $agentType): bool
     {
-        if ($this->work_mode === 'manual') {
+        $mode = $this->getAgentMode($agentType);
+        if ($mode === 'manual') {
             return false;
         }
 
         $permissions = $this->agent_permissions ?? [];
         return $permissions[$agentType] ?? true; // default: allowed
+    }
+
+    /**
+     * Get strategy settings for a specific agent type.
+     * Returns merged defaults + user overrides.
+     */
+    public function getStrategyForAgent(string $agentType): array
+    {
+        $defaults = self::DEFAULT_STRATEGY[$agentType] ?? [];
+        $userSettings = ($this->strategy_settings ?? [])[$agentType] ?? [];
+
+        return array_merge($defaults, $userSettings);
+    }
+
+    /**
+     * Get the effective work mode for a specific agent.
+     * Checks agent_modes first, falls back to global work_mode.
+     */
+    public function getAgentMode(string $agentType): string
+    {
+        $agentModes = $this->agent_modes ?? [];
+        return $agentModes[$agentType] ?? $this->work_mode;
+    }
+
+    /**
+     * Set the work mode for a specific agent.
+     */
+    public function setAgentMode(string $agentType, string $mode): void
+    {
+        $validModes = ['autonomous', 'semi_auto', 'manual'];
+        if (!in_array($mode, $validModes)) {
+            throw new \InvalidArgumentException("Invalid agent mode: {$mode}");
+        }
+
+        $agentModes = $this->agent_modes ?? [];
+        $agentModes[$agentType] = $mode;
+        $this->update(['agent_modes' => $agentModes]);
+    }
+
+    /**
+     * Check if per-agent modes are configured (not just using global).
+     */
+    public function hasPerAgentModes(): bool
+    {
+        return !empty($this->agent_modes);
     }
 
     /**

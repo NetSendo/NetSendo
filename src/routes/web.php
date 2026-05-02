@@ -247,6 +247,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
         Route::put('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])->name('api.knowledge.update');
         Route::delete('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'deleteKnowledge'])->name('api.knowledge.destroy');
+        Route::post('/api/knowledge/bulk-delete', [\App\Http\Controllers\BrainController::class, 'bulkDeleteKnowledge'])->name('api.knowledge.bulk-delete');
 
         // Chat API (session-authenticated, used by Index.vue)
         Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');

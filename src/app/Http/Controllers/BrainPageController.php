@@ -72,6 +72,13 @@ class BrainPageController extends Controller
                 ];
             });
 
+        // Build agent modes for frontend
+        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research'];
+        $agentModes = [];
+        foreach ($agents as $agent) {
+            $agentModes[$agent] = $settings->getAgentMode($agent);
+        }
+
         return Inertia::render('Brain/Settings', [
             'settings' => $settings,
             'modes' => [
@@ -96,6 +103,9 @@ class BrainPageController extends Controller
             'knowledgeCategories' => KnowledgeEntry::CATEGORIES,
             'aiIntegrations' => $integrations,
             'modelRoutingTasks' => collect(AiBrainSettings::MODEL_ROUTING_TASKS)->map(fn($v, $k) => 'brain.task.' . $k),
+            'agents' => $agents,
+            'agent_modes' => $agentModes,
+            'strategy_settings' => $settings->strategy_settings ?? AiBrainSettings::DEFAULT_STRATEGY,
         ]);
     }
 

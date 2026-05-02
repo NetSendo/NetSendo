@@ -324,6 +324,27 @@ class BrainController extends Controller
     }
 
     /**
+     * Bulk delete knowledge entries.
+     * POST /brain/api/knowledge/bulk-delete
+     */
+    public function bulkDeleteKnowledge(Request $request): JsonResponse
+    {
+        $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $deleted = KnowledgeEntry::where('user_id', $request->user()->id)
+            ->whereIn('id', $request->input('ids'))
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+        ]);
+    }
+
+    /**
      * Get action plans.
      * GET /api/brain/plans
      */
@@ -510,6 +531,13 @@ class BrainController extends Controller
         $user = $request->user();
         $settings = AiBrainSettings::getForUser($user->id);
 
+        // Build agent modes for frontend grid
+        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research'];
+        $agentModes = [];
+        foreach ($agents as $agent) {
+            $agentModes[$agent] = $settings->getAgentMode($agent);
+        }
+
         return response()->json([
             'settings' => $settings,
             'modes' => [
@@ -529,6 +557,9 @@ class BrainController extends Controller
                     'description' => $this->modeController->getModeDescription('manual'),
                 ],
             ],
+            'agents' => $agents,
+            'agent_modes' => $agentModes,
+            'strategy_settings' => $settings->strategy_settings ?? AiBrainSettings::DEFAULT_STRATEGY,
             'telegram_connected' => $settings->isTelegramConnected(),
         ]);
     }
@@ -550,9 +581,20 @@ class BrainController extends Controller
             'preferred_model' => 'nullable|string|max:100',
             'preferred_integration_id' => 'nullable|integer|exists:ai_integrations,id',
             'model_routing' => 'nullable|array',
+            'strategy_settings' => 'nullable|array',
+            'strategy_settings.campaign' => 'nullable|array',
+            'strategy_settings.campaign.tone' => 'nullable|string|in:professional,casual,friendly,formal,humorous',
+            'strategy_settings.campaign.max_sends_per_week' => 'nullable|integer|min:1|max:20',
+            'strategy_settings.campaign.excluded_days' => 'nullable|array',
+            'strategy_settings.campaign.preferred_send_hours' => 'nullable|array',
+            'strategy_settings.campaign.goal_focus' => 'nullable|string|in:engagement,conversion,retention,growth',
+            'strategy_settings.campaign.preferred_topics' => 'nullable|array',
+            'agent_modes' => 'nullable|array',
         ]);
 
         $settings = AiBrainSettings::getForUser($request->user()->id);
+
+        // Standard fields
         $settings->update($request->only([
             'work_mode', 'preferred_language', 'daily_token_limit',
             'preferences', 'telegram_bot_token',
@@ -560,6 +602,24 @@ class BrainController extends Controller
             'preferred_model', 'preferred_integration_id',
             'model_routing',
         ]));
+
+        // Strategy settings — deep merge
+        if ($request->has('strategy_settings')) {
+            $current = $settings->strategy_settings ?? AiBrainSettings::DEFAULT_STRATEGY;
+            $incoming = $request->input('strategy_settings');
+            $merged = array_replace_recursive($current, $incoming);
+            $settings->update(['strategy_settings' => $merged]);
+        }
+
+        // Agent modes — update individual agents
+        if ($request->has('agent_modes')) {
+            $validModes = ['autonomous', 'semi_auto', 'manual'];
+            foreach ($request->input('agent_modes') as $agent => $mode) {
+                if (in_array($mode, $validModes)) {
+                    $settings->setAgentMode($agent, $mode);
+                }
+            }
+        }
 
         // Auto-register webhook when bot token is saved
         if ($request->has('telegram_bot_token') && !empty($request->input('telegram_bot_token'))) {

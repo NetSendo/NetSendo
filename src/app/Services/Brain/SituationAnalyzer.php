@@ -10,6 +10,7 @@ use App\Models\AiExecutionLog;
 use App\Models\AiGoal;
 use App\Models\User;
 use App\Services\AI\AiService;
+use App\Services\Brain\PerformanceLearner;
 use App\Services\Brain\PerformanceTracker;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use Illuminate\Support\Facades\Log;
@@ -226,6 +227,24 @@ class SituationAnalyzer
             // Ignore — table may not exist
         }
 
+        // 11. Performance learning signals
+        try {
+            $learner = app(PerformanceLearner::class);
+            $signals = $learner->getTuningSignals($user);
+            if (!empty($signals['has_data'])) {
+                $context['performance_insights'] = $learner->formatAsPromptContext($signals);
+            }
+        } catch (\Exception $e) {
+            // Ignore
+        }
+
+        // 12. User strategy constraints
+        $campaignStrategy = $settings->getStrategyForAgent('campaign');
+        if (!empty($campaignStrategy)) {
+            $learnerForStrategy = app(PerformanceLearner::class);
+            $context['strategy_constraints'] = $learnerForStrategy->formatStrategyAsPromptContext($campaignStrategy, 'campaign');
+        }
+
         return $context;
     }
 
@@ -317,6 +336,18 @@ Summary: {$context['last_analysis']['summary']}
 NOTE;
         }
 
+        // Include performance insights if available
+        $performanceInsightsSection = '';
+        if (!empty($context['performance_insights'])) {
+            $performanceInsightsSection = "\n{$context['performance_insights']}";
+        }
+
+        // Include strategy constraints if set
+        $strategySection = '';
+        if (!empty($context['strategy_constraints'])) {
+            $strategySection = "\n{$context['strategy_constraints']}";
+        }
+
         return <<<PROMPT
 You are an expert marketing strategist and CRM advisor for an email marketing & CRM platform.
 
@@ -327,6 +358,8 @@ You should generate ACTIONABLE tasks that agents can execute autonomously WITHOU
 CURRENT CONTEXT:
 {$contextJson}
 {$lastAnalysisNote}
+{$performanceInsightsSection}
+{$strategySection}
 
 AVAILABLE AGENTS (you can assign tasks to any of these):
 - campaign: email/SMS campaigns, drip series, automation
@@ -349,6 +382,12 @@ INSTRUCTIONS:
    - If a campaign had low open rates → suggest better subject lines or different audience targeting
    - If a campaign performed well → suggest similar approaches or scaling up
    - Reference specific past campaign metrics when relevant
+9. If PERFORMANCE INSIGHTS are provided, use them to optimize timing, audience, and content strategy
+10. If USER STRATEGY CONSTRAINTS are provided, you MUST respect them:
+    - Do NOT suggest campaigns on excluded days
+    - Respect max_sends_per_week limits
+    - Match the specified tone in action descriptions
+    - Focus on the specified goal_focus area
 
 Respond in VALID JSON ONLY:
 {

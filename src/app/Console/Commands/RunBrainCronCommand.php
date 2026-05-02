@@ -6,6 +6,7 @@ use App\Models\AiActionPlan;
 use App\Models\AiActionPlanStep;
 use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
+use App\Models\AiCampaignCalendar;
 use App\Models\AiGoal;
 use App\Models\AiPendingApproval;
 use App\Models\User;
@@ -157,12 +158,9 @@ class RunBrainCronCommand extends Command
             $this->warn("[Brain CRON] User #{$user->id}: Auto-goal creation failed: {$e->getMessage()}");
         }
 
-        // Step 2: Enrich knowledge base from analysis insights
-        try {
-            $cronResults['knowledge_saved'] = $this->enrichKnowledgeBase($user, $analysisReport);
-        } catch (\Exception $e) {
-            $this->warn("[Brain CRON] User #{$user->id}: KB enrichment failed: {$e->getMessage()}");
-        }
+        // Step 2: Knowledge base enrichment — DISABLED
+        // AI auto-additions to KB have been removed. Only users can add KB entries.
+        // $cronResults['knowledge_saved'] = $this->enrichKnowledgeBase($user, $analysisReport);
 
         // Step 2.5: Generate weekly campaign calendar (if not yet planned)
         try {
@@ -184,6 +182,16 @@ class RunBrainCronCommand extends Command
             }
         } catch (\Exception $e) {
             $this->warn("[Brain CRON] User #{$user->id}: Goal continuation failed: {$e->getMessage()}");
+        }
+
+        // Step 2.6: Execute due campaign calendar entries
+        try {
+            $cronResults['calendar_executed'] = $this->executeDueCalendarEntries($orchestrator, $user, $settings);
+            if (!empty($cronResults['calendar_executed'])) {
+                $this->info("[Brain CRON] User #{$user->id}: Executed " . count($cronResults['calendar_executed']) . " calendar entry/entries.");
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Calendar execution failed: {$e->getMessage()}");
         }
 
         // Step 3: Convert AI priorities to executable tasks
@@ -240,21 +248,128 @@ class RunBrainCronCommand extends Command
             return;
         }
 
-        $this->info("[Brain CRON] User #{$user->id}: Found {$eligibleTasks->count()} eligible tasks (mode: {$workMode}).");
+        $this->info("[Brain CRON] User #{$user->id}: Found {$eligibleTasks->count()} eligible tasks.");
 
-        // Step 6: Route based on work mode
-        if ($workMode === ModeController::MODE_SEMI_AUTO) {
-            // Semi-auto: create plans and send approval requests to Telegram
-            $cronResults['tasks_pending_approval'] = $this->handleSemiAutoTasks(
-                $orchestrator, $user, $settings, $eligibleTasks
-            );
-        } elseif ($workMode === ModeController::MODE_AUTONOMOUS) {
-            // Autonomous: execute immediately
-            $cronResults['tasks_executed'] = $this->handleAutonomousTasks(
-                $orchestrator, $user, $eligibleTasks
-            );
+        // Step 6: Route based on per-agent mode
+        foreach ($eligibleTasks as $i => $task) {
+            $agentType = $task['agent'] ?? 'campaign';
+            $agentMode = $settings->getAgentMode($agentType);
+
+            if ($agentMode === ModeController::MODE_AUTONOMOUS) {
+                // Autonomous: execute immediately
+                $this->line("[Brain CRON]   → [{$agentType}:autonomous] Executing: {$task['title']}");
+                try {
+                    $result = $orchestrator->executeCronTask($task, $user);
+                    $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
+                    $cronResults['tasks_executed'][$i] = $status;
+
+                    AiBrainActivityLog::logEvent(
+                        $user->id,
+                        'cron_task',
+                        $status,
+                        null,
+                        [
+                            'task_title' => $task['title'] ?? '',
+                            'agent' => $agentType,
+                            'mode' => 'autonomous',
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    $cronResults['tasks_executed'][$i] = 'error';
+                    Log::warning('Brain CRON autonomous task failed', [
+                        'user_id' => $user->id,
+                        'task' => $task['title'] ?? '',
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } elseif ($agentMode === ModeController::MODE_SEMI_AUTO) {
+                // Semi-auto: create plan and send for approval
+                $this->line("[Brain CRON]   → [{$agentType}:semi_auto] Queuing for approval: {$task['title']}");
+                try {
+                    $agentName = $task['agent'] ?? null;
+                    $agents = $orchestrator->getAgents();
+                    $agent = $agents[$agentName] ?? null;
+
+                    if (!$agent) {
+                        $this->warn("[Brain CRON]   ✗ Agent '{$agentName}' not found.");
+                        continue;
+                    }
+
+                    $autoContext = $orchestrator->gatherAutoContext($user, $agentName);
+                    $intent = [
+                        'requires_agent' => true,
+                        'agent' => $agentName,
+                        'intent' => $task['action'] ?? $task['title'] ?? '',
+                        'task_type' => $agentName,
+                        'confidence' => 1.0,
+                        'channel' => 'cron',
+                        'has_user_details' => true,
+                        'parameters' => array_merge(
+                            $task['parameters'] ?? [],
+                            ['auto_context' => $autoContext],
+                            ['cron_task' => true],
+                        ),
+                    ];
+
+                    $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
+                    $plan = $agent->plan($intent, $user, $knowledgeContext);
+
+                    if (!$plan) {
+                        $this->warn("[Brain CRON]   ✗ Plan creation failed for: {$task['title']}");
+                        continue;
+                    }
+
+                    $plan->update(['status' => 'pending_approval']);
+                    $approval = AiPendingApproval::create([
+                        'ai_action_plan_id' => $plan->id,
+                        'user_id' => $user->id,
+                        'channel' => 'telegram',
+                        'status' => 'pending',
+                        'summary' => "📋 **{$plan->title}**\n{$plan->description}\n\n🤖 Agent: {$agentName}\n⏰ " . __('brain.approval_expiry'),
+                        'expires_at' => now()->addHours(24),
+                    ]);
+
+                    $this->sendTaskApprovalToTelegram($settings, $user, $plan, $approval, $task);
+                    $cronResults['tasks_pending_approval'][] = $plan->id;
+
+                    $this->line("[Brain CRON]   📩 Sent for Telegram approval (plan #{$plan->id})");
+
+                    AiBrainActivityLog::logEvent(
+                        $user->id,
+                        'cron_task_pending_approval',
+                        'pending',
+                        $agentName,
+                        [
+                            'task_title' => $task['title'] ?? null,
+                            'plan_id' => $plan->id,
+                            'approval_id' => $approval->id,
+                            'mode' => 'semi_auto',
+                        ],
+                    );
+                } catch (\Exception $e) {
+                    Log::warning('Brain CRON semi-auto task failed', [
+                        'user_id' => $user->id,
+                        'task' => $task['title'] ?? '',
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } else {
+                // Manual mode: log suggestion but don't execute
+                $this->line("[Brain CRON]   → [{$agentType}:manual] Skipped: {$task['title']}");
+                AiBrainActivityLog::logEvent(
+                    $user->id,
+                    'cron_task_skipped',
+                    'info',
+                    null,
+                    [
+                        'task_title' => $task['title'] ?? '',
+                        'agent' => $agentType,
+                        'mode' => 'manual',
+                        'reason' => 'Agent in manual mode',
+                    ]
+                );
+            }
         }
-        // Manual mode: just report, don't execute
 
         // Update timestamps
         $settings->update([
@@ -630,6 +745,121 @@ class RunBrainCronCommand extends Command
             Log::warning('KB enrichment from CRON failed', ['error' => $e->getMessage()]);
             return false;
         }
+    }
+
+    /**
+     * Execute due campaign calendar entries.
+     *
+     * Finds calendar entries where planned_date <= today and status = 'draft',
+     * converts them into tasks, and routes through the per-agent mode pipeline.
+     */
+    private function executeDueCalendarEntries(
+        AgentOrchestrator $orchestrator,
+        User $user,
+        AiBrainSettings $settings,
+    ): array {
+        $executed = [];
+
+        try {
+            $dueEntries = AiCampaignCalendar::forUser($user->id)
+                ->where('status', 'draft')
+                ->where('planned_date', '<=', now()->endOfDay())
+                ->orderBy('planned_date')
+                ->limit(3) // Safety: max 3 per cycle
+                ->get();
+        } catch (\Exception $e) {
+            return []; // Table may not exist
+        }
+
+        if ($dueEntries->isEmpty()) {
+            return [];
+        }
+
+        // Check weekly send limits from strategy
+        $strategy = $settings->getStrategyForAgent('campaign');
+        $maxPerWeek = $strategy['max_sends_per_week'] ?? 5;
+
+        // Count campaigns already executed this week
+        $weekStart = now()->startOfWeek(\Carbon\Carbon::MONDAY);
+        $executedThisWeek = AiCampaignCalendar::forUser($user->id)
+            ->where('status', 'completed')
+            ->where('planned_date', '>=', $weekStart)
+            ->count();
+
+        $remainingSlots = max(0, $maxPerWeek - $executedThisWeek);
+
+        foreach ($dueEntries->take($remainingSlots) as $entry) {
+            $this->line("[Brain CRON]   📅 Calendar entry due: {$entry->topic} ({$entry->campaign_type})");
+
+            // Build task from calendar entry
+            $task = [
+                'id' => 'calendar_' . $entry->id,
+                'category' => 'campaign_calendar',
+                'icon' => '📅',
+                'title' => $entry->topic,
+                'description' => $entry->description ?? '',
+                'priority' => 'high',
+                'action' => "Execute planned campaign: {$entry->topic}. "
+                    . "Type: {$entry->campaign_type}. "
+                    . "Target audience: {$entry->target_audience}. "
+                    . "Description: {$entry->description}. "
+                    . "Tone: " . ($strategy['tone'] ?? 'professional') . ". "
+                    . "This is a pre-planned calendar campaign — execute it with full creative autonomy.",
+                'agent' => 'campaign',
+                'parameters' => [
+                    'campaign_type' => $entry->campaign_type,
+                    'target_audience' => $entry->target_audience,
+                    'calendar_entry_id' => $entry->id,
+                ],
+            ];
+
+            $agentMode = $settings->getAgentMode('campaign');
+
+            if ($agentMode === ModeController::MODE_AUTONOMOUS) {
+                try {
+                    $entry->update(['status' => 'executing']);
+                    $result = $orchestrator->executeCronTask($task, $user);
+                    $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
+
+                    $entry->update([
+                        'status' => $status === 'success' ? 'completed' : 'failed',
+                        'executed_at' => now(),
+                    ]);
+
+                    $executed[] = [
+                        'calendar_id' => $entry->id,
+                        'topic' => $entry->topic,
+                        'status' => $status,
+                    ];
+
+                    $this->line("[Brain CRON]   ✓ Calendar campaign {$status}: {$entry->topic}");
+                } catch (\Exception $e) {
+                    $entry->update(['status' => 'failed']);
+                    Log::warning('Calendar execution failed', [
+                        'calendar_id' => $entry->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } elseif ($agentMode === ModeController::MODE_SEMI_AUTO) {
+                $entry->update(['status' => 'pending_approval']);
+                $executed[] = [
+                    'calendar_id' => $entry->id,
+                    'topic' => $entry->topic,
+                    'status' => 'pending_approval',
+                ];
+                $this->line("[Brain CRON]   📩 Calendar campaign queued for approval: {$entry->topic}");
+            } else {
+                $entry->update(['status' => 'skipped']);
+                $this->line("[Brain CRON]   ⏭ Calendar campaign skipped (manual mode): {$entry->topic}");
+            }
+        }
+
+        if ($remainingSlots < $dueEntries->count()) {
+            $skippedCount = $dueEntries->count() - $remainingSlots;
+            $this->line("[Brain CRON]   ⚠ {$skippedCount} calendar entries skipped — weekly limit ({$maxPerWeek}) reached.");
+        }
+
+        return $executed;
     }
 
     /**

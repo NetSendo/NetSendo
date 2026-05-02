@@ -6,14 +6,15 @@ use App\Models\AiExecutionLog;
 use App\Models\AiGoal;
 use App\Models\AiPerformanceSnapshot;
 use App\Models\User;
+use App\Services\Brain\PerformanceLearner;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
  * TaskScorer — Intelligent task prioritization for CRON pipeline.
  *
- * Replaces simple high/medium/low filtering with a data-driven 0-100 score
- * based on impact potential, urgency, goal alignment, and freshness.
+ * Replaces simple high/medium/low filtering with a data-driven 0-125 score
+ * based on impact potential, urgency, goal alignment, freshness, and performance affinity.
  */
 class TaskScorer
 {
@@ -64,6 +65,7 @@ class TaskScorer
             'urgency' => $this->scoreUrgency($task, $context),
             'goal_alignment' => $this->scoreGoalAlignment($task, $context),
             'freshness' => $this->scoreFreshness($task, $context),
+            'performance_affinity' => $this->scorePerformanceAffinity($task, $context),
         ];
     }
 
@@ -193,6 +195,23 @@ class TaskScorer
     }
 
     /**
+     * Performance affinity score (0-25): Does historical data support this task type?
+     * Powered by PerformanceLearner — boosts tasks matching winning patterns
+     * and penalizes tasks targeting consistently underperforming areas.
+     */
+    protected function scorePerformanceAffinity(array $task, array $context): int
+    {
+        $signals = $context['performance_signals'] ?? [];
+
+        try {
+            $learner = app(PerformanceLearner::class);
+            return $learner->scorePerformanceAffinity($task, $signals);
+        } catch (\Exception $e) {
+            return 12; // Neutral score on failure
+        }
+    }
+
+    /**
      * Gather scoring context (called once per scoring batch).
      */
     protected function gatherScoringContext(User $user): array
@@ -249,7 +268,21 @@ class TaskScorer
             'active_goals' => $activeGoals,
             'recent_tasks' => $recentTasks,
             'total_subscribers' => $totalSubscribers,
+            'performance_signals' => $this->gatherPerformanceSignals($user),
         ];
+    }
+
+    /**
+     * Gather performance learning signals for scoring.
+     */
+    protected function gatherPerformanceSignals(User $user): array
+    {
+        try {
+            $learner = app(PerformanceLearner::class);
+            return $learner->getTuningSignals($user);
+        } catch (\Exception $e) {
+            return ['has_data' => false];
+        }
     }
 
     /**
