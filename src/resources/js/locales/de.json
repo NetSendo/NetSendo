@@ -1467,6 +1467,12 @@
                 "event_unsubscribe": "Abmeldung",
                 "event_update": "Datenaktualisierung",
                 "event_bounce": "Bounce",
+                "event_created": "Neuer Abonnent (erstellt)",
+                "event_subscribed": "Zur Liste angemeldet",
+                "event_unsubscribed": "Abmeldung",
+                "event_bounced": "Bounce",
+                "event_tag_added": "Tag hinzugefügt",
+                "event_tag_removed": "Tag entfernt",
                 "test_webhook": "Test-Webhook senden",
                 "endpoint_section": "Anmelde-Endpoint",
                 "endpoint_desc": "Verwenden Sie diese URL, um Abonnenten aus externen Quellen hinzuzufügen"

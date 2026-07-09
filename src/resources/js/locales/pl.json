@@ -1124,6 +1124,12 @@
                 "event_unsubscribe": "Wypisanie",
                 "event_update": "Aktualizacja danych",
                 "event_bounce": "Odbicie (bounce)",
+                "event_created": "Nowy subskrybent (utworzony)",
+                "event_subscribed": "Zapis na listę",
+                "event_unsubscribed": "Wypisanie",
+                "event_bounced": "Odbicie (bounce)",
+                "event_tag_added": "Dodanie tagu",
+                "event_tag_removed": "Usunięcie tagu",
                 "test_webhook": "Wyślij testowy webhook",
                 "endpoint_section": "Endpoint Subskrypcji",
                 "endpoint_desc": "Użyj tego URL aby dodawać subskrybentów z zewnętrznych źródeł"

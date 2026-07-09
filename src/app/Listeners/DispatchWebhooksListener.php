@@ -66,21 +66,20 @@ class DispatchWebhooksListener
 
         $subscriberData = $this->formatSubscriberData($subscriber, $event->source);
 
-        // subscriber.created — a new subscriber record was made
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.created', [
+        $payload = [
             'subscriber' => $subscriberData,
             'list_id' => $event->list->id,
             'list_name' => $event->list->name,
             'source' => $event->source,
-        ]);
+        ];
+
+        // subscriber.created — a new subscriber record was made
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.created', $payload);
+        $this->webhookDispatcher->dispatchToList($event->list, 'subscriber.created', $payload);
 
         // subscriber.subscribed — subscriber was added to a list
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.subscribed', [
-            'subscriber' => $subscriberData,
-            'list_id' => $event->list->id,
-            'list_name' => $event->list->name,
-            'source' => $event->source,
-        ]);
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.subscribed', $payload);
+        $this->webhookDispatcher->dispatchToList($event->list, 'subscriber.subscribed', $payload);
     }
 
     /**
@@ -91,12 +90,15 @@ class DispatchWebhooksListener
         $subscriber = $event->subscriber;
         $userId = $event->list->user_id;
 
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.unsubscribed', [
+        $payload = [
             'subscriber' => $this->formatSubscriberData($subscriber, $event->reason),
             'list_id' => $event->list->id,
             'list_name' => $event->list->name,
             'reason' => $event->reason,
-        ]);
+        ];
+
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.unsubscribed', $payload);
+        $this->webhookDispatcher->dispatchToList($event->list, 'subscriber.unsubscribed', $payload);
     }
 
     /**
@@ -112,12 +114,15 @@ class DispatchWebhooksListener
 
         $userId = $subscriber->user_id;
 
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.bounced', [
+        $payload = [
             'subscriber' => $this->formatSubscriberData($subscriber, 'bounce'),
             'bounce_type' => $event->bounceType,
             'bounce_reason' => $event->bounceReason,
             'message_id' => $event->messageId,
-        ]);
+        ];
+
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.bounced', $payload);
+        $this->dispatchToSubscriberLists($subscriber, 'subscriber.bounced', $payload);
     }
 
     /**
@@ -128,11 +133,14 @@ class DispatchWebhooksListener
         $subscriber = $event->subscriber;
         $userId = $subscriber->user_id;
 
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.tag_added', [
+        $payload = [
             'subscriber' => $this->formatSubscriberData($subscriber, 'tag'),
             'tag_id' => $event->tag->id,
             'tag_name' => $event->tag->name,
-        ]);
+        ];
+
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.tag_added', $payload);
+        $this->dispatchToSubscriberLists($subscriber, 'subscriber.tag_added', $payload);
     }
 
     /**
@@ -143,11 +151,26 @@ class DispatchWebhooksListener
         $subscriber = $event->subscriber;
         $userId = $subscriber->user_id;
 
-        $this->webhookDispatcher->dispatch($userId, 'subscriber.tag_removed', [
+        $payload = [
             'subscriber' => $this->formatSubscriberData($subscriber, 'tag'),
             'tag_id' => $event->tag->id,
             'tag_name' => $event->tag->name,
-        ]);
+        ];
+
+        $this->webhookDispatcher->dispatch($userId, 'subscriber.tag_removed', $payload);
+        $this->dispatchToSubscriberLists($subscriber, 'subscriber.tag_removed', $payload);
+    }
+
+    /**
+     * Fan a subscriber-scoped event (bounce, tag change) out to the per-list
+     * webhook of every list the subscriber belongs to. dispatchToList() no-ops
+     * for lists without a webhook_url or not subscribed to the event.
+     */
+    protected function dispatchToSubscriberLists(Subscriber $subscriber, string $event, array $data): void
+    {
+        foreach ($subscriber->contactLists as $list) {
+            $this->webhookDispatcher->dispatchToList($list, $event, $data);
+        }
     }
 
     /**

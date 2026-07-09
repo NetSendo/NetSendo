@@ -37,7 +37,7 @@ class UnsubscribeController extends Controller
     public function confirm(Request $request, Subscriber $subscriber, ContactList $list)
     {
         if (!$request->hasValidSignature()) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list, [], 403);
         }
 
         try {
@@ -108,7 +108,7 @@ class UnsubscribeController extends Controller
                 'subscriber_id' => $subscriber->id,
                 'list_id' => $list->id,
             ]);
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list, [], 403);
         }
 
         try {
@@ -178,7 +178,7 @@ class UnsubscribeController extends Controller
     public function globalUnsubscribe(Request $request, Subscriber $subscriber)
     {
         if (!$request->hasValidSignature()) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null, [], 403);
         }
 
         // Generate the signed URL for the actual global unsubscribe action
@@ -215,7 +215,7 @@ class UnsubscribeController extends Controller
     public function globalUnsubscribeProcess(Request $request, Subscriber $subscriber)
     {
         if (!$request->hasValidSignature()) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null, [], 403);
         }
 
         try {
@@ -324,8 +324,10 @@ class UnsubscribeController extends Controller
 
     /**
      * Render a system page with placeholder replacement.
+     *
+     * @param int $status HTTP status code for the response (e.g. 403 for invalid/missing signatures).
      */
-    protected function renderSystemPage(string $slug, Subscriber $subscriber, ?ContactList $list, array $extraPlaceholders = [])
+    protected function renderSystemPage(string $slug, Subscriber $subscriber, ?ContactList $list, array $extraPlaceholders = [], int $status = 200)
     {
         $listId = $list?->id;
         $systemPage = SystemPage::getBySlug($slug, $listId);
@@ -388,11 +390,11 @@ class UnsubscribeController extends Controller
             default => 'info',
         };
 
-        return view('forms.system-page', [
+        return response()->view('forms.system-page', [
             'title' => $title,
             'content' => $content,
             'icon' => $icon,
             'systemPage' => $systemPage,
-        ]);
+        ], $status);
     }
 }

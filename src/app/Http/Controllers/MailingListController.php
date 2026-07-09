@@ -184,6 +184,8 @@ class MailingListController extends Controller
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array',
             'settings.advanced.bounce_analysis' => 'boolean',
+            'settings.advanced.bounce_scope' => 'nullable|in:list,global',
+            'settings.advanced.soft_bounce_threshold' => 'nullable|integer|min:1|max:10',
         ]);
 
         $list = auth()->user()->contactLists()->create($validated);
@@ -329,11 +331,13 @@ class MailingListController extends Controller
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array', // e.g., ['Mon', 'Fri']
             'settings.advanced.bounce_analysis' => 'boolean',
+            'settings.advanced.bounce_scope' => 'nullable|in:list,global',
+            'settings.advanced.soft_bounce_threshold' => 'nullable|integer|min:1|max:10',
 
             // Integration
             'webhook_url' => 'nullable|url|max:500',
             'webhook_events' => 'nullable|array',
-            'webhook_events.*' => 'string|in:subscribe,unsubscribe,update,bounce',
+            'webhook_events.*' => 'string|in:' . implode(',', ContactList::acceptedWebhookEvents()),
 
             // Co-registration / Advanced limits
             'parent_list_id' => 'nullable|exists:contact_lists,id',

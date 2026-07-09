@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+<!-- [AI_unreleased_notes] -->
+
+## [2.0.12] – Short Description
+
+**Release date:** 2026-07-09
+
 ### Added
 
 - **Brain — Performance-Driven Task Scoring (5th Dimension):**
@@ -44,13 +50,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Strategy settings are persisted as a deep-merged JSON structure in `AiBrainSettings.strategy_settings`.
   - **Files:** `app/Http/Controllers/BrainController.php`, `app/Http/Controllers/BrainPageController.php`, `resources/js/Pages/Brain/Settings.vue`
 
+- **Webhooks — per-list event picker expanded to the full subscriber lifecycle (GitHub #20):**
+  - The list settings → Integration webhook event picker previously offered only the legacy short names `subscribe`, `unsubscribe`, `update`, `bounce`. It now offers the canonical event set that the webhook pipeline actually dispatches — `subscriber.created`, `subscriber.subscribed`, `subscriber.unsubscribed`, `subscriber.bounced`, `subscriber.tag_added`, `subscriber.tag_removed`. Existing lists' legacy selections are auto-mapped to the new names when the settings page loads and on save, so no configuration is lost on upgrade.
+  - Added matching i18n labels for the new events in all four locales.
+  - **Files:** `resources/js/Pages/MailingList/Edit.vue`, `resources/js/locales/{pl,en,de,es}.json`, `app/Models/ContactList.php`, `app/Http/Controllers/MailingListController.php`
+
 ### Changed
 
 - **Brain — Knowledge Base Enrichment Disabled:**
   - Removed automatic knowledge base enrichment from the CRON pipeline. The Brain no longer auto-populates KB entries during autonomous execution cycles. Knowledge base management is now exclusively user-controlled via the Settings UI to prevent unwanted data accumulation.
   - **File:** `app/Console/Commands/RunBrainCronCommand.php`
 
-<!-- [AI_unreleased_notes] -->
+### Fixed
+
+- **Webhooks — creating a webhook failed with "Field 'secret' doesn't have a default value" (GitHub #20):**
+  - The `webhooks.secret` column was `NOT NULL` with no default and was only ever populated by `Webhook::createWithSecret()`. Any other creation path (for example a plain `Webhook::create()` from Tinker) aborted with `SQLSTATE[HY000] 1364`. The `Webhook` model now auto-generates a 64-character secret on the `creating` event regardless of entry point, and a migration relaxes the column to nullable as a belt-and-suspenders guard against raw SQL inserts.
+  - **Files:** `app/Models/Webhook.php`, `database/migrations/2026_07_09_000000_make_webhooks_secret_nullable.php`
+
+- **Webhooks — the per-list webhook (list settings → Integration) never fired for real events (GitHub #20):**
+  - A list's `webhook_url` was only delivered from a few inline call sites (the API list subscribe/unsubscribe endpoints, form submissions, and the "Test webhook" button), so subscriber events originating from the Web UI, unsubscribe links, bounce processing, CSV import, and tag changes were silently dropped and never appeared in `webhook_logs`. `DispatchWebhooksListener` now also delivers to the relevant list's `webhook_url` for every subscriber-lifecycle event — asynchronously via the new queued `DispatchListWebhookJob` and recorded in `webhook_logs` like registered webhooks — so per-list webhooks fire on the same real events as account-level webhooks.
+  - Removed the now-redundant inline `triggerWebhook('subscribe')` call from `FormSubmissionService` (the listener covers form submissions via the `SubscriberSignedUp` event), preventing a duplicate per-list delivery. `ContactList::triggerWebhook()` — still used by the API subscribe/unsubscribe endpoints and the test button — now resolves legacy short event names to the canonical vocabulary, so lists configured either way keep matching.
+  - **Files:** `app/Listeners/DispatchWebhooksListener.php`, `app/Services/WebhookDispatcher.php`, `app/Jobs/DispatchListWebhookJob.php`, `app/Models/ContactList.php`, `app/Services/Forms/FormSubmissionService.php`
+
+- **Global unsubscribe — invalid/missing signatures now return HTTP 403 instead of 200 (GitHub #15 follow-up):**
+  - Every public unsubscribe endpoint (per-list `confirm()`/`process()` and global `globalUnsubscribe()`/`globalUnsubscribeProcess()`) rendered the `unsubscribe_error` system page with a `200 OK` status when the signed-URL signature was invalid, tampered, or expired — masking failed authorization as a successful response. `renderSystemPage()` now accepts an HTTP status argument and the four signature-failure paths return `403 Forbidden`, so unauthorized access is correctly surfaced for security auditing and monitoring. The user-facing error page content is unchanged; only the status code differs.
+  - Verified while investigating the reported `[[unsubscribe_global]]` "empty href" symptom: the controller (`URL::signedRoute(...)`) and the registered route both already use the name `subscriber.unsubscribe.global.process`, so the signed URL generates correctly in the current build — no route-name change was required.
+  - **File:** `app/Http/Controllers/UnsubscribeController.php`
+
+- **Mailing lists — Advanced "Bounce Scope" & "Soft Bounce Threshold" settings were never saved (GitHub #14 follow-up):**
+  - The list settings form sent `settings.advanced.bounce_scope` and `settings.advanced.soft_bounce_threshold`, but the controllers' validation rules only whitelisted `settings.advanced.bounce_analysis`. Since Laravel's `$request->validate()` returns **only** the keys it has rules for — and that validated array is exactly what gets persisted — both fields were silently stripped on every save. The UI showed the "settings saved" confirmation while the values snapped back to their defaults ("Per list" and `3`). Added the missing rules (`bounce_scope` → `in:list,global`, `soft_bounce_threshold` → `integer|min:1|max:10`) so the values now persist. Applied consistently to list creation, list update, and the global default settings.
+  - **Files:** `app/Http/Controllers/MailingListController.php` (`store()`, `update()`), `app/Http/Controllers/DefaultSettingsController.php`
+
+- **Backup — mysqldump aborts with "unknown variable 'ssl-mode=DISABLED'" (GitHub #11 follow-up):**
+  - The MySQL-8.0 SSL fix added `--ssl-mode=DISABLED` to the `dump` config, but the app image ships the **MariaDB** client (`default-mysql-client`), whose `mysqldump` doesn't recognize that MySQL-client-only flag and aborts immediately. Switched the extra option to the MariaDB-compatible `--ssl=0`, which matches the `[client] ssl=0` already written to `/etc/my.cnf` in the image. Backups no longer crash on the dump step.
+  - **File:** `config/database.php`
+
+- **Message editor — "Select by tag" quick-select no longer submits the form:**
+  - The tag quick-select buttons in the message recipients panel were missing `type="button"`, so inside the surrounding `<form>` they defaulted to `type="submit"`. Clicking a tag saved the message and redirected to the list ("kicked out" of create/edit) instead of selecting the lists associated with that tag. Added `type="button"` so the button only runs `toggleByTag()`, which selects all lists for the tag (adding any missing) or deselects them if all were already selected.
+  - **File:** `resources/js/Pages/Message/Create.vue`
 
 ## [2.0.11] – Short Description
 

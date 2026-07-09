@@ -61,6 +61,39 @@ const getDefaultSchedule = () => {
     return schedule;
 };
 
+// Per-list webhook events (list settings → Integration). Values mirror the
+// subscriber-lifecycle events delivered by the backend DispatchWebhooksListener,
+// so the list's webhook_url fires on real events — not only 'subscribe'/'unsubscribe'.
+// Must be defined before useForm (webhook_events is normalized on init).
+const WEBHOOK_EVENT_OPTIONS = [
+    { value: "subscriber.created", labelKey: "event_created" },
+    { value: "subscriber.subscribed", labelKey: "event_subscribed" },
+    { value: "subscriber.unsubscribed", labelKey: "event_unsubscribed" },
+    { value: "subscriber.bounced", labelKey: "event_bounced" },
+    { value: "subscriber.tag_added", labelKey: "event_tag_added" },
+    { value: "subscriber.tag_removed", labelKey: "event_tag_removed" },
+];
+
+// Map legacy short event names to canonical ones so lists configured before
+// the rework keep their selections after upgrading.
+const LEGACY_WEBHOOK_EVENT_MAP = {
+    subscribe: "subscriber.subscribed",
+    unsubscribe: "subscriber.unsubscribed",
+    bounce: "subscriber.bounced",
+};
+
+const normalizeWebhookEvents = (events) => {
+    const known = WEBHOOK_EVENT_OPTIONS.map((o) => o.value);
+    const out = [];
+    (events || []).forEach((raw) => {
+        const mapped = LEGACY_WEBHOOK_EVENT_MAP[raw] || raw;
+        if (known.includes(mapped) && !out.includes(mapped)) {
+            out.push(mapped);
+        }
+    });
+    return out;
+};
+
 const minutesToTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -192,7 +225,7 @@ const form = useForm({
     },
     // Integration fields
     webhook_url: props.list.webhook_url || "",
-    webhook_events: props.list.webhook_events || [],
+    webhook_events: normalizeWebhookEvents(props.list.webhook_events),
     // Advanced co-registration fields
     parent_list_id: props.list.parent_list_id || null,
     sync_settings: {
@@ -2516,22 +2549,17 @@ const subscribeEndpoint = computed(() => {
                                                     class="flex flex-wrap gap-2"
                                                 >
                                                     <div
-                                                        v-for="event in [
-                                                            'subscribe',
-                                                            'unsubscribe',
-                                                            'update',
-                                                            'bounce',
-                                                        ]"
-                                                        :key="event"
+                                                        v-for="option in WEBHOOK_EVENT_OPTIONS"
+                                                        :key="option.value"
                                                         @click="
                                                             toggleWebhookEvent(
-                                                                event,
+                                                                option.value,
                                                             )
                                                         "
                                                         class="cursor-pointer rounded-lg border px-3 py-1.5 text-sm font-medium transition-all"
                                                         :class="
                                                             form.webhook_events.includes(
-                                                                event,
+                                                                option.value,
                                                             )
                                                                 ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
                                                                 : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
@@ -2539,7 +2567,7 @@ const subscribeEndpoint = computed(() => {
                                                     >
                                                         {{
                                                             $t(
-                                                                `mailing_lists.settings.integration.event_${event}`,
+                                                                `mailing_lists.settings.integration.${option.labelKey}`,
                                                             )
                                                         }}
                                                     </div>

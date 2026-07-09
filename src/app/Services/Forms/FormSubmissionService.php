@@ -187,17 +187,13 @@ class FormSubmissionService
                 ]);
             }
 
-            // Trigger list webhook for subscribe event (legacy/list-specific webhook)
-            $form->contactList->triggerWebhook('subscribe', [
-                'subscriber_email' => $subscriber->email,
-                'subscriber_id' => $subscriber->id,
-                'first_name' => $subscriber->first_name,
-                'last_name' => $subscriber->last_name,
-                'phone' => $subscriber->phone,
-                'source' => 'form:' . $form->slug,
-                'form_id' => $form->id,
-                'form_name' => $form->name,
-            ]);
+            // NOTE: The per-list webhook (list settings → Integration) is no
+            // longer triggered inline here. For non-double-opt-in forms the
+            // SubscriberSignedUp event dispatched above flows through
+            // DispatchWebhooksListener, which delivers the list webhook with
+            // the canonical event names (subscriber.created / subscriber.subscribed)
+            // and logs it — avoiding a duplicate delivery. Double-opt-in forms
+            // deliver it after confirmation, when SubscriberSignedUp fires. (GitHub #20)
 
             // Track affiliate lead conversion (if applicable)
             try {

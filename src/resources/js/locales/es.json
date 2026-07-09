@@ -1496,6 +1496,12 @@
                 "event_unsubscribe": "Baja",
                 "event_update": "Actualización de datos",
                 "event_bounce": "Rebote (bounce)",
+                "event_created": "Nuevo suscriptor (creado)",
+                "event_subscribed": "Suscrito a la lista",
+                "event_unsubscribed": "Baja",
+                "event_bounced": "Rebote (bounce)",
+                "event_tag_added": "Etiqueta añadida",
+                "event_tag_removed": "Etiqueta eliminada",
                 "test_webhook": "Enviar webhook de prueba",
                 "endpoint_section": "Endpoint de suscripción",
                 "endpoint_desc": "Usa esta URL para añadir suscriptores desde fuentes externas"

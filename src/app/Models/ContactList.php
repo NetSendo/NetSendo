@@ -57,6 +57,66 @@ class ContactList extends Model
         'reset_autoresponders_on_resubscription' => 'boolean',
     ];
 
+    /**
+     * Canonical webhook events selectable for a list's webhook (list
+     * settings → Integration). These mirror the subscriber-lifecycle events
+     * dispatched by DispatchWebhooksListener so a list's webhook_url fires on
+     * real events, not only the legacy 'subscribe'/'unsubscribe' paths.
+     */
+    public const WEBHOOK_EVENTS = [
+        'subscriber.created',
+        'subscriber.subscribed',
+        'subscriber.unsubscribed',
+        'subscriber.bounced',
+        'subscriber.tag_added',
+        'subscriber.tag_removed',
+    ];
+
+    /**
+     * Legacy short event names → canonical event. Older lists stored the
+     * short names; keep them working so upgrading never silently drops a
+     * configured delivery.
+     */
+    public const LEGACY_WEBHOOK_EVENT_ALIASES = [
+        'subscribe' => 'subscriber.subscribed',
+        'unsubscribe' => 'subscriber.unsubscribed',
+        'bounce' => 'subscriber.bounced',
+    ];
+
+    /**
+     * All accepted webhook event values (canonical + legacy), used for
+     * request validation.
+     */
+    public static function acceptedWebhookEvents(): array
+    {
+        return array_merge(
+            self::WEBHOOK_EVENTS,
+            array_keys(self::LEGACY_WEBHOOK_EVENT_ALIASES),
+            ['subscriber.updated', 'update'] // tolerated for backward compatibility
+        );
+    }
+
+    /**
+     * Whether this list's webhook is subscribed to a canonical event,
+     * honouring legacy short-name aliases still stored on older lists.
+     */
+    public function subscribedToWebhookEvent(string $event): bool
+    {
+        $events = $this->webhook_events ?? [];
+
+        if (in_array($event, $events, true)) {
+            return true;
+        }
+
+        foreach (self::LEGACY_WEBHOOK_EVENT_ALIASES as $legacy => $canonical) {
+            if ($canonical === $event && in_array($legacy, $events, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -156,7 +216,12 @@ class ContactList extends Model
     }
 
     /**
-     * Trigger webhook for an event
+     * Trigger webhook for an event (legacy inline callers: API list
+     * subscribe/unsubscribe and the "test webhook" button).
+     *
+     * Accepts the legacy short event names and resolves them to canonical
+     * ones so a list configured with the new event vocabulary
+     * (subscriber.subscribed, …) still matches.
      */
     public function triggerWebhook(string $event, array $data = []): bool
     {
@@ -164,8 +229,10 @@ class ContactList extends Model
             return false;
         }
 
-        $events = $this->webhook_events ?? [];
-        if (!in_array($event, $events)) {
+        // The 'test' event bypasses the subscription check (testWebhook()
+        // sets webhook_events = ['test'] before calling).
+        $canonical = self::LEGACY_WEBHOOK_EVENT_ALIASES[$event] ?? $event;
+        if ($event !== 'test' && !$this->subscribedToWebhookEvent($canonical)) {
             return false;
         }
 

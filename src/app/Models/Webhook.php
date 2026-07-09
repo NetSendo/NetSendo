@@ -26,6 +26,24 @@ class Webhook extends Model
     ];
 
     /**
+     * Model event hooks.
+     *
+     * Guarantees every webhook has a signing secret, regardless of the
+     * creation path. Previously only Webhook::createWithSecret() populated
+     * the column, so any plain create() (e.g. via Tinker or a future
+     * controller) failed with "Field 'secret' doesn't have a default value"
+     * (GitHub #20).
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $webhook) {
+            if (empty($webhook->secret)) {
+                $webhook->secret = Str::random(64);
+            }
+        });
+    }
+
+    /**
      * Available webhook events
      */
     public const EVENTS = [

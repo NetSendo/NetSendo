@@ -69,6 +69,8 @@ class DefaultSettingsController extends Controller
             'settings.advanced.facebook_integration' => 'nullable|string',
             'settings.advanced.queue_days' => 'nullable|array',
             'settings.advanced.bounce_analysis' => 'boolean',
+            'settings.advanced.bounce_scope' => 'nullable|in:list,global',
+            'settings.advanced.soft_bounce_threshold' => 'nullable|integer|min:1|max:10',
             'settings.sending.mailbox_id' => 'nullable|integer',
         ]);
 

@@ -2859,6 +2859,7 @@ if (form.contact_list_ids.length > 0) {
                                         <button
                                             v-for="tag in tags"
                                             :key="tag.id"
+                                            type="button"
                                             @click="toggleByTag(tag.id)"
                                             :class="
                                                 isTagSelected(tag.id)

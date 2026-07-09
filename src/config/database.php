@@ -72,11 +72,16 @@ return [
              * chain" (exit code 2). Setting MYSQL_DUMP_SSL=false in .env
              * disables SSL for the dump connection.
              *
+             * NOTE: the app image ships the MariaDB client (default-mysql-client),
+             * whose mysqldump only understands `--ssl=0` / `--skip-ssl`. The
+             * MySQL-client-only `--ssl-mode=DISABLED` makes it abort with
+             * "unknown variable 'ssl-mode=DISABLED'" (GitHub #11 follow-up).
+             *
              * @see https://github.com/spatie/db-dumper
              */
             'dump' => array_filter([
                 'addExtraOption' => env('MYSQL_DUMP_SSL', false) === false
-                    ? '--ssl-mode=DISABLED'
+                    ? '--ssl=0'
                     : null,
                 'useSingleTransaction' => true,
             ]),

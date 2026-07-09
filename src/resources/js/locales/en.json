@@ -1123,6 +1123,12 @@
                 "event_unsubscribe": "Unsubscription",
                 "event_update": "Data update",
                 "event_bounce": "Bounce",
+                "event_created": "New subscriber (created)",
+                "event_subscribed": "Subscribed to list",
+                "event_unsubscribed": "Unsubscribed",
+                "event_bounced": "Bounce",
+                "event_tag_added": "Tag added",
+                "event_tag_removed": "Tag removed",
                 "test_webhook": "Send test webhook",
                 "endpoint_section": "Subscription Endpoint",
                 "endpoint_desc": "Use this URL to add subscribers from external sources"
