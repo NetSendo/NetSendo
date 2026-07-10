@@ -260,7 +260,9 @@
             "validation_error": "Please check your input and try again.",
             "confirm_delete": "Are you sure you want to delete this?",
             "confirm_action": "Are you sure you want to proceed?",
-            "action_irreversible": "This action is irreversible."
+            "action_irreversible": "This action is irreversible.",
+            "exported_failed": "Export failed.",
+            "imported_failed": "Import failed."
         },
         "days": {
             "monday": "Monday",
@@ -306,7 +308,8 @@
         "phone": "Phone",
         "status": "Status",
         "name": "Name",
-        "characters": "characters"
+        "characters": "characters",
+        "source_placeholder": "Type or paste HTML code..."
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -957,7 +960,8 @@
             "groups_tags": "Group / Tags",
             "subscribers": "Subscribers",
             "created_at": "Created at",
-            "actions": "Actions"
+            "actions": "Actions",
+            "list_id": "List ID"
         },
         "delete_modal": {
             "title": "Delete list \"{name}\"",
@@ -1182,7 +1186,8 @@
             "groups_tags": "Group / Tags",
             "subscribers": "Subscribers",
             "created_at": "Created",
-            "actions": "Actions"
+            "actions": "Actions",
+            "list_id": "List ID"
         },
         "delete_modal": {
             "title": "Delete SMS list \"{name}\"",
@@ -1853,7 +1858,11 @@
                     "sent": "Sent",
                     "failed": "Failed",
                     "skipped": "Skipped"
-                }
+                },
+                "click_to_view_error": "Click to view the full error",
+                "copied": "Copied!",
+                "copy_error": "Copy error",
+                "error_details": "Error details"
             },
             "actions": "Actions",
             "search_email_or_url": "Search email or URL...",
@@ -1867,7 +1876,17 @@
             "bulk_add_title": "Add to list",
             "bulk_add_description": "{count} unique subscribers will be added to the selected list",
             "bulk_add_button": "Add to list",
-            "bulk_add_success": "Added to list \"{list}\""
+            "bulk_add_success": "Added to list \"{list}\"",
+            "read_time": {
+                "average": "Average time",
+                "distribution": "Read time distribution",
+                "max": "Max time",
+                "median": "Median",
+                "sessions": "Reading sessions",
+                "time": "Time",
+                "top_readers": "Top readers"
+            },
+            "add_to_list_btn": "Add to list"
         },
         "translations": {
             "title": "Language Versions",
@@ -1898,7 +1917,8 @@
             "field_phone": "Phone",
             "field_gender": "Gender",
             "no_email_lists": "No email lists available."
-        }
+        },
+        "has_pdf_attachments": "{count} PDF attachment(s)"
     },
     "subscribers": {
         "title": "Subscribers",
@@ -2054,7 +2074,122 @@
         "crm_already_exists": "CRM contact already exists for this subscriber.",
         "crm_added_success": "Subscriber has been added to CRM as a lead.",
         "crm_add_failed": "Failed to add subscriber to CRM.",
-        "crm_log_activity": "Subscriber added to CRM as a lead"
+        "crm_log_activity": "Subscriber added to CRM as a lead",
+        "confirm_proceed": "Continue",
+        "items_per_page": "{count} per page",
+        "stats_total": "{total} subscribers ({current} on page) • {lists} lists",
+        "api_keys": {
+            "broadcast_disabled": "Not available for Gmail",
+            "delete_confirm": "Are you sure you want to delete this API key? This action cannot be undone.",
+            "docs": {
+                "text": "Full API documentation is available at",
+                "title": "API Documentation"
+            },
+            "empty_text": "You don't have any API keys yet",
+            "empty_title": "No API keys",
+            "examples": {
+                "add_subscriber": "Add a new subscriber",
+                "get_subscribers": "Get subscriber list",
+                "title": "Usage example"
+            },
+            "generate_first": "Generate first key",
+            "generate_new": "Generate new key",
+            "gmail_auto_email": "The sender address (From Email) will be set automatically to your Google account address once the connection is complete.",
+            "gmail_oauth_info": "We use the official Gmail API. Sending limits depend on your Google account (typically 500/day for free accounts, 2000/day for Workspace).",
+            "go_to_integrations": "Go to integration settings",
+            "google_integration_label": "Select Google integration",
+            "google_integration_placeholder": "-- Select integration --",
+            "integration_changed_warning": "You changed the integration. Save your changes before connecting.",
+            "integration_not_configured_warning": "Google integration is not configured.",
+            "modal": {
+                "cancel": "Cancel",
+                "close": "Close",
+                "copied": "Copied",
+                "copy": "Copy",
+                "expires_label": "Expiration date (optional)",
+                "generate": "Generate key",
+                "hide": "Hide",
+                "key_label": "Your API key:",
+                "name_label": "Key name",
+                "name_placeholder": "e.g. CRM Integration",
+                "permissions_label": "Permissions",
+                "show": "Show",
+                "success_title": "API key has been created!",
+                "title": "Generate new API key",
+                "warning_text": "The key is displayed only once. After closing this window, you won't be able to see it again.",
+                "warning_title": "Save this key now!"
+            },
+            "new_key": "Generate new key",
+            "no_integrations": "No active integrations. Add them in the Integrations tab.",
+            "permissions": {
+                "lists_read": "Lists (read)",
+                "subscribers_read": "Subscribers (read)",
+                "subscribers_write": "Subscribers (write)",
+                "tags_read": "Tags (read)"
+            },
+            "select_integration_to_connect": "Select an integration to connect.",
+            "status": {
+                "expired": "expired",
+                "never_used": "Never"
+            },
+            "subtitle": "Manage API keys for external integrations",
+            "table": {
+                "actions": "Actions",
+                "created": "Created",
+                "key": "Key",
+                "last_used": "Last used",
+                "name": "Name",
+                "permissions": "Permissions"
+            },
+            "title": "API Keys"
+        },
+        "click_for_details": "Click to see error details",
+        "error_details": {
+            "title": "Connection error details"
+        },
+        "info": {
+            "gmail": "Gmail API (OAuth 2.0) - secure sending without via gmail.com",
+            "sendgrid": "SendGrid API - get an API key at sendgrid.com",
+            "smtp": "Your own SMTP server or email service (Mailgun, Amazon SES, etc.)",
+            "title": "Provider information"
+        },
+        "oauth": {
+            "connect_google": "Connect with Google",
+            "connected": "Connected to Google",
+            "disconnect": "Disconnect",
+            "disconnected": "Google account disconnected.",
+            "not_connected": "Not connected",
+            "save_first": "Save the mailbox to connect it with a Gmail account."
+        },
+        "reputation": {
+            "blacklist_name": "Blacklist",
+            "check_now": "Check reputation",
+            "checking": "Checking...",
+            "clean": "Clean",
+            "clean_label": "OK",
+            "critical": "Blacklisted!",
+            "domain": "Domain",
+            "last_checked": "Last checked",
+            "listed": "Listed",
+            "listed_on": "Listed on",
+            "lookup_url": "Check / Delist",
+            "modal_title": "Domain Reputation — Details",
+            "never_checked": "Never checked",
+            "not_listed": "Not listed",
+            "severity": "Severity",
+            "severity_critical": "Critical",
+            "severity_high": "High",
+            "severity_low": "Low",
+            "severity_medium": "Medium",
+            "status": "Status",
+            "subtitle": "Sender domain status on DNS blacklists",
+            "summary_clean": "Domain is clean — not detected on any blacklist.",
+            "summary_critical": "WARNING: Domain is on {count} critical blacklist(s)! Email delivery may be blocked.",
+            "summary_warning": "Domain detected on {count} low/medium priority blacklist(s).",
+            "title": "Domain Reputation",
+            "unchecked": "Unchecked",
+            "warning": "Warning"
+        }
     },
     "subscriber_card": {
         "title": "Subscriber Card",
@@ -2446,7 +2581,8 @@
         "add_new": "Add new group",
         "edit_group": "Edit group",
         "fields": {
-            "name": "Group Name"
+            "name": "Group Name",
+            "parent": "Parent group"
         },
         "actions": {
             "create": "Create",
@@ -2459,7 +2595,9 @@
             "lists_count": "Lists count",
             "actions": "Actions"
         },
-        "confirm_delete": "Are you sure you want to delete this group? Lists assigned to it will not be deleted."
+        "confirm_delete": "Are you sure you want to delete this group? Lists assigned to it will not be deleted.",
+        "no_parent": "— None (root group) —",
+        "total_count": "Total: {count} groups"
     },
     "cron": {
         "title": "CRON Settings",
@@ -2548,7 +2686,16 @@
         },
         "stats": {
             "title": "Execution Statistics",
-            "info_title": "Information"
+            "info_title": "Information",
+            "avg_duration": "Avg. duration",
+            "emails_sent": "Emails sent",
+            "failed": "Failed",
+            "global_limit": "Global limit",
+            "last_daily_run": "Last daily operations",
+            "last_run": "Last run",
+            "maintenance_at": "Maintenance at",
+            "successful": "Success",
+            "total_runs": "Runs"
         },
         "verification": {
             "title": "How to verify?",
@@ -2562,7 +2709,23 @@
             "stats": "Statistics (24h)",
             "logs": "Execution History",
             "instructions": "Installation Instructions"
-        }
+        },
+        "lists": {
+            "allowed_now": "Lists with active dispatch (now)",
+            "no_active": "No lists with active dispatch at the moment"
+        },
+        "logs": {
+            "duration": "Duration",
+            "emails_failed": "Failed",
+            "emails_sent": "Sent",
+            "job_name": "Job",
+            "no_logs": "No logs to display",
+            "started_at": "Started",
+            "status": "Status",
+            "title": "Run History"
+        },
+        "logs_cleared": "Deleted {count} old logs",
+        "settings_saved": "CRON settings have been saved"
     },
     "tags": {
         "title": "Tags Management",
@@ -2824,7 +2987,15 @@
         "select_variant": "Select variant",
         "variable_product": "Variable product",
         "selected_variant": "Selected variant",
-        "no_variants_found": "No variants found"
+        "no_variants_found": "No variants found",
+        "image": "Image",
+        "product": "Product",
+        "connect_woocommerce_desc": "Connect your store to import products.",
+        "connect_woocommerce_title": "Connect to WooCommerce",
+        "go_to_settings": "Go to settings",
+        "pixel_no_products": "No recently viewed products recorded",
+        "recently_viewed_pixel": "Recently viewed (Pixel)",
+        "select": "Select"
     },
     "setup": {
         "title": "NetSendo Installation",
@@ -3038,6 +3209,10 @@
             "messaging": {
                 "title": "Messaging",
                 "desc": "Chat with AI via messengers"
+            },
+            "email": {
+                "desc": "Email delivery services",
+                "title": "Email"
             }
         },
         "request_title": "Need a specific integration?",
@@ -3871,6 +4046,71 @@
             "summary_warning": "Domain detected on {count} low/medium priority blacklist(s).",
             "summary_critical": "WARNING: Domain is on {count} critical blacklist(s)! Email delivery may be blocked.",
             "never_checked": "Never checked"
+        },
+        "woocommerce": {
+            "add_store": "Add store",
+            "api_keys_help": "You can generate API keys in your WordPress dashboard: WooCommerce → Settings → Advanced → REST API. Create a new key with read permissions.",
+            "api_keys_title": "Where to find API keys?",
+            "confirm_delete_store": "Are you sure you want to delete this store? This action cannot be undone.",
+            "confirm_disconnect": "Are you sure you want to disconnect WooCommerce?",
+            "connect": "Connect WooCommerce store",
+            "connected": "Connected to WooCommerce",
+            "connection_failed": "Failed to connect to WooCommerce",
+            "connection_success": "Successfully connected to WooCommerce",
+            "consumer_key": "Consumer Key",
+            "consumer_secret": "Consumer Secret",
+            "credentials_update_hint": "Leave blank to keep current credentials",
+            "currency": "Currency",
+            "default_set": "Default store has been set",
+            "default_store": "Default",
+            "delete_modal_message": "Are you sure you want to delete the store \"{name}\"? This action cannot be undone and will delete all data associated with this store.",
+            "delete_modal_title": "Delete store",
+            "delete_store": "Delete store",
+            "disconnect": "Disconnect",
+            "disconnect_modal_message": "Are you sure you want to disconnect the store \"{name}\"? The store will remain saved, but the connection will be deactivated.",
+            "disconnect_modal_title": "Disconnect store",
+            "disconnected": "WooCommerce has been disconnected",
+            "edit_store": "Edit store",
+            "feature_import": "Import products",
+            "feature_import_desc": "Add products from your store directly to email templates",
+            "feature_recently_viewed": "Recently viewed",
+            "feature_recently_viewed_desc": "Show products your subscribers have visited",
+            "feature_sync": "Automatic sync",
+            "feature_sync_desc": "Product data is always up to date",
+            "feature_templates": "Product templates",
+            "feature_templates_desc": "Create beautiful product showcases in your emails",
+            "features_title": "What can you do after connecting?",
+            "fill_all_fields": "Fill in all fields",
+            "not_connected": "Not connected",
+            "open_store": "Open store",
+            "reconnect": "Reconnect",
+            "reconnected": "Store has been reconnected",
+            "save_settings": "Save settings",
+            "select_store": "Select store",
+            "set_as_default": "Set as default",
+            "store_added": "Store has been added",
+            "store_deleted": "Store has been deleted",
+            "store_name": "Store name",
+            "store_name_help": "A friendly name to identify the store",
+            "store_name_placeholder": "e.g. My Main Store",
+            "store_not_found": "Store not found",
+            "store_updated": "Store has been updated",
+            "store_url": "Store URL",
+            "store_url_exists": "A store with this URL is already connected",
+            "store_url_help": "Enter the full URL of your WooCommerce store",
+            "store_url_placeholder": "https://your-store.com",
+            "stores_empty": "You have no connected WooCommerce stores",
+            "stores_empty_desc": "Add your first store to import products into email templates",
+            "stores_title": "Connected stores",
+            "subtitle": "Connect your WooCommerce store to import products into email templates",
+            "test_connection": "Test connection",
+            "test_failed": "Connection inactive",
+            "test_store": "Test",
+            "test_success": "Connection active",
+            "testing": "Testing...",
+            "title": "WooCommerce Integration",
+            "update_credentials": "Update connection credentials",
+            "verified_at": "Verified"
         }
     },
     "funnels": {
@@ -3961,7 +4201,8 @@
             "trigger": "Trigger",
             "status": "Status",
             "subscribers": "Subscribers",
-            "completed": "Completed"
+            "completed": "Completed",
+            "actions": "Actions"
         },
         "stats": {
             "total_subscribers": "Total Subscribers",
@@ -3976,6 +4217,12 @@
             "info": "Funnel Info",
             "no_data": "No data",
             "no_data_desc": "Activate the funnel to start collecting statistics."
+        },
+        "search_placeholder": "Search funnels...",
+        "status": {
+            "active": "Active",
+            "draft": "Draft",
+            "paused": "Paused"
         }
     },
     "automations": {
@@ -4976,6 +5223,19 @@
             "unsubscribe_request": "Request to confirm unsubscription from the mailing list.",
             "unsubscribed_confirmation": "Confirmation of removal from the mailing list.",
             "new_subscriber_notification": "Admin notification about a new subscriber on the list."
+        },
+        "click_to_insert": "Click to insert into content",
+        "insert_to_content": "Insert into content",
+        "insert_to_subject": "Insert into subject",
+        "placeholders": {
+            "activation_link": "Subscription activation link",
+            "date": "Current date",
+            "email": "Subscriber's email address",
+            "first_name": "Subscriber's first name",
+            "fname_vocative": "First name in vocative form (e.g. Aniu instead of Anna)",
+            "last_name": "Subscriber's last name",
+            "list_name": "Mailing list name",
+            "unsubscribe_link": "Unsubscribe link"
         }
     },
     "notifications": {
@@ -5507,10 +5767,11 @@
             "video_provider": "Video Provider",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Direct video URL",
             "vimeo_id": "Vimeo ID",
             "vimeo_id_help": "Vimeo video ID (e.g. 76979871). For unlisted videos: 76979871/abc123",
             "video_url": "Video URL",
-            "video_url_help": "Link to recorded video (YouTube, Vimeo or self-hosted)",
+            "video_url_help": "Direct link to a video file (MP4)",
             "integration": "Contact List Integration",
             "target_list": "Target List",
             "no_list": "Do not add to list",
@@ -5571,6 +5832,7 @@
             "video_provider": "Video Provider",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Direct video URL",
             "vimeo_id": "Vimeo ID",
             "vimeo_id_help": "Vimeo video ID (e.g. 76979871). For unlisted videos: 76979871/abc123",
             "video_url": "Video URL",
@@ -5772,7 +6034,10 @@
         "info": {
             "title": "Supported Providers",
             "twilio": "Twilio: Global coverage, reliable delivery.",
-            "smsapi": "SMS API (PL): Best solution for Polish market."
+            "smsapi": "SMS API (PL): Best solution for Polish market.",
+            "messagebird": "MessageBird: Dutch provider, good prices in Europe.",
+            "plivo": "Plivo: Cost-effective alternative to Twilio.",
+            "vonage": "Vonage (Nexmo): #2 worldwide, great API and reliability."
         },
         "modal": {
             "add_title": "Add SMS Provider",
@@ -5781,8 +6046,33 @@
             "name_placeholder": "e.g. My Twilio Account",
             "from_number": "Sender ID / From Number",
             "daily_limit": "Daily Limit",
-            "daily_limit_placeholder": "e.g. 1000 (leave empty for unlimited)"
-        }
+            "daily_limit_placeholder": "e.g. 1000 (leave empty for unlimited)",
+            "edit_title": "Edit SMS Provider",
+            "from_name": "Sender Name",
+            "from_name_hint": "Maximum 11 alphanumeric characters",
+            "is_active": "Active",
+            "is_default": "Default"
+        },
+        "default": "Default",
+        "delete_modal": {
+            "message": "Are you sure you want to delete this SMS provider? This action cannot be undone.",
+            "title": "Delete SMS Provider"
+        },
+        "notifications": {
+            "created": "SMS provider has been created.",
+            "deleted": "SMS provider has been deleted.",
+            "set_default": "Provider has been set as default.",
+            "updated": "SMS provider has been updated."
+        },
+        "sent_today": "Sent today",
+        "set_as_default": "Set as default",
+        "status": {
+            "active": "Active",
+            "error": "Connection error",
+            "inactive": "Inactive",
+            "not_tested": "Not tested"
+        },
+        "test_connection": "Test connection"
     },
     "external_pages": {
         "index": {
@@ -6215,7 +6505,8 @@
             },
             "activity_history": "Activity History",
             "no_activities": "No activity history",
-            "by": "by"
+            "by": "by",
+            "new_contact": "New contact"
         },
         "companies": {
             "title_page": "CRM Companies",
@@ -6453,7 +6744,8 @@
                 "add": "Add"
             },
             "history": "Activity History",
-            "by_system": "by System"
+            "by_system": "by System",
+            "system": "System"
         },
         "import": {
             "title_page": "CRM Import",

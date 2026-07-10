@@ -260,7 +260,9 @@
             "validation_error": "Sprawdź wprowadzone dane i spróbuj ponownie.",
             "confirm_delete": "Czy na pewno chcesz to usunąć?",
             "confirm_action": "Czy na pewno chcesz kontynuować?",
-            "action_irreversible": "Tej akcji nie można cofnąć."
+            "action_irreversible": "Tej akcji nie można cofnąć.",
+            "exported_failed": "Błąd eksportu.",
+            "imported_failed": "Błąd importu."
         },
         "days": {
             "monday": "Poniedziałek",
@@ -306,7 +308,8 @@
         "phone": "Telefon",
         "status": "Status",
         "name": "Nazwa",
-        "characters": "znaków"
+        "characters": "znaków",
+        "source_placeholder": "Wpisz lub wklej kod HTML..."
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -1883,7 +1886,8 @@
             "bulk_add_title": "Dodaj do listy",
             "bulk_add_description": "{count} unikalnych subskrybentów zostanie dodanych do wybranej listy",
             "bulk_add_button": "Dodaj do listy",
-            "bulk_add_success": "Dodano do listy \"{list}\""
+            "bulk_add_success": "Dodano do listy \"{list}\"",
+            "add_to_list_btn": "Dodaj do listy"
         },
         "translations": {
             "title": "Wersje językowe",
@@ -1912,7 +1916,8 @@
             "field_lname": "Nazwisko",
             "field_email": "Email",
             "field_phone": "Telefon",
-            "field_gender": "Płeć"
+            "field_gender": "Płeć",
+            "no_email_lists": "Brak dostępnych list mailingowych."
         }
     },
     "subscribers": {
@@ -2072,7 +2077,119 @@
         "crm_already_exists": "Kontakt CRM już istnieje dla tego subskrybenta.",
         "crm_added_success": "Subskrybent został dodany do CRM jako lead.",
         "crm_add_failed": "Nie udało się dodać subskrybenta do CRM.",
-        "crm_log_activity": "Subskrybent dodany do CRM jako lead"
+        "crm_log_activity": "Subskrybent dodany do CRM jako lead",
+        "api_keys": {
+            "broadcast_disabled": "Niedostępne dla Gmail",
+            "delete_confirm": "Czy na pewno chcesz usunąć ten klucz API? Ta operacja jest nieodwracalna.",
+            "docs": {
+                "text": "Pełna dokumentacja API jest dostępna pod adresem",
+                "title": "Dokumentacja API"
+            },
+            "empty_text": "Nie masz jeszcze żadnych kluczy API",
+            "empty_title": "Brak kluczy API",
+            "examples": {
+                "add_subscriber": "Dodaj nowego subskrybenta",
+                "get_subscribers": "Pobierz listę subskrybentów",
+                "title": "Przykład użycia"
+            },
+            "generate_first": "Wygeneruj pierwszy klucz",
+            "generate_new": "Wygeneruj nowy klucz",
+            "gmail_auto_email": "Adres nadawcy (From Email) zostanie ustawiony automatycznie na adres Twojego konta Google po zakończeniu połączenia.",
+            "gmail_oauth_info": "Używamy oficjalnego API Gmail. Limity wysyłki zależą od Twojego konta Google (zwykle 500/dzień dla darmowych, 2000/dzień dla Workspace).",
+            "go_to_integrations": "Przejdź do ustawień integracji",
+            "google_integration_label": "Wybierz integrację Google",
+            "google_integration_placeholder": "-- Wybierz integrację --",
+            "integration_changed_warning": "Zmieniłeś integrację. Zapisz zmiany przed połączeniem.",
+            "integration_not_configured_warning": "Integracja Google nie jest skonfigurowana.",
+            "modal": {
+                "cancel": "Anuluj",
+                "close": "Zamknij",
+                "copied": "Skopiowano",
+                "copy": "Kopiuj",
+                "expires_label": "Data wygaśnięcia (opcjonalnie)",
+                "generate": "Wygeneruj klucz",
+                "hide": "Ukryj",
+                "key_label": "Twój klucz API:",
+                "name_label": "Nazwa klucza",
+                "name_placeholder": "np. Integracja CRM",
+                "permissions_label": "Uprawnienia",
+                "show": "Pokaż",
+                "success_title": "Klucz API został utworzony!",
+                "title": "Wygeneruj nowy klucz API",
+                "warning_text": "Klucz jest wyświetlany tylko raz. Po zamknięciu tego okna nie będziesz mógł go ponownie zobaczyć.",
+                "warning_title": "Zapisz ten klucz teraz!"
+            },
+            "new_key": "Wygeneruj nowy klucz",
+            "no_integrations": "Brak aktywnych integracji. Dodaj je w zakładce Integracje.",
+            "permissions": {
+                "lists_read": "Listy (odczyt)",
+                "subscribers_read": "Subskrybenci (odczyt)",
+                "subscribers_write": "Subskrybenci (zapis)",
+                "tags_read": "Tagi (odczyt)"
+            },
+            "select_integration_to_connect": "Wybierz integrację aby połączyć.",
+            "status": {
+                "expired": "wygasł",
+                "never_used": "Nigdy"
+            },
+            "subtitle": "Zarządzaj kluczami API dla zewnętrznych integracji",
+            "table": {
+                "actions": "Akcje",
+                "created": "Utworzono",
+                "key": "Klucz",
+                "last_used": "Ostatnie użycie",
+                "name": "Nazwa",
+                "permissions": "Uprawnienia"
+            },
+            "title": "Klucze API"
+        },
+        "click_for_details": "Kliknij, aby zobaczyć szczegóły błędu",
+        "error_details": {
+            "title": "Szczegóły błędu połączenia"
+        },
+        "info": {
+            "gmail": "Gmail API (OAuth 2.0) - bezpieczna wysyłka bez via gmail.com",
+            "sendgrid": "SendGrid API - uzyskaj klucz API na sendgrid.com",
+            "smtp": "Własny serwer SMTP lub usługa mailowa (Mailgun, Amazon SES, itp.)",
+            "title": "Informacje o dostawcach"
+        },
+        "oauth": {
+            "connect_google": "Połącz z Google",
+            "connected": "Połączono z Google",
+            "disconnect": "Rozłącz",
+            "disconnected": "Rozłączono konto Google.",
+            "not_connected": "Nie połączono",
+            "save_first": "Zapisz skrzynkę, aby móc połączyć ją z kontem Gmail."
+        },
+        "reputation": {
+            "blacklist_name": "Czarna lista",
+            "check_now": "Sprawdź reputację",
+            "checking": "Sprawdzanie...",
+            "clean": "Czysta",
+            "clean_label": "OK",
+            "critical": "Na czarnej liście!",
+            "domain": "Domena",
+            "last_checked": "Ostatnio sprawdzono",
+            "listed": "Wykryto",
+            "listed_on": "Wykryto na",
+            "lookup_url": "Sprawdź / Usuń z listy",
+            "modal_title": "Reputacja domeny — szczegóły",
+            "never_checked": "Nigdy nie sprawdzano",
+            "not_listed": "Niewykryto",
+            "severity": "Istotność",
+            "severity_critical": "Krytyczna",
+            "severity_high": "Wysoka",
+            "severity_low": "Niska",
+            "severity_medium": "Średnia",
+            "status": "Status",
+            "subtitle": "Status domeny nadawcy na czarnych listach DNS",
+            "summary_clean": "Domena jest czysta — nie wykryto na żadnej czarnej liście.",
+            "summary_critical": "UWAGA: Domena jest na {count} krytycznej czarnej liście! Wysyłka emaili może być blokowana.",
+            "summary_warning": "Domena wykryta na {count} czarnej liście o niskim/średnim priorytecie.",
+            "title": "Reputacja domeny",
+            "unchecked": "Niesprawdzona",
+            "warning": "Ostrzeżenie"
+        }
     },
     "subscriber_card": {
         "title": "Karta Subskrybenta",
@@ -2462,6 +2579,10 @@
             "messaging": {
                 "title": "Komunikatory",
                 "desc": "Czatuj z AI przez messengery"
+            },
+            "email": {
+                "desc": "Usługi dostarczania e-maili",
+                "title": "E-mail"
             }
         },
         "request_title": "Potrzebujesz konkretnej integracji?",
@@ -3492,7 +3613,13 @@
         "select_variant": "Wybierz wariant",
         "variable_product": "Produkt z wariantami",
         "selected_variant": "Wybrany wariant",
-        "no_variants_found": "Nie znaleziono wariantów"
+        "no_variants_found": "Nie znaleziono wariantów",
+        "connect_woocommerce_desc": "Połącz swój sklep, aby importować produkty.",
+        "connect_woocommerce_title": "Połącz z WooCommerce",
+        "go_to_settings": "Przejdź do ustawień",
+        "pixel_no_products": "Brak zarejestrowanych ostatnio oglądanych produktów",
+        "recently_viewed_pixel": "Ostatnio oglądane (Pixel)",
+        "select": "Wybierz"
     },
     "mailboxes": {
         "title": "Skrzynki pocztowe",
@@ -3606,6 +3733,71 @@
             "summary_warning": "Domena wykryta na {count} czarnej liście o niskim/średnim priorytecie.",
             "summary_critical": "UWAGA: Domena jest na {count} krytycznej czarnej liście! Wysyłka emaili może być blokowana.",
             "never_checked": "Nigdy nie sprawdzano"
+        },
+        "woocommerce": {
+            "add_store": "Dodaj sklep",
+            "api_keys_help": "Klucze API możesz wygenerować w panelu WordPress: WooCommerce → Ustawienia → Zaawansowane → REST API. Utwórz nowy klucz z uprawnieniami do odczytu.",
+            "api_keys_title": "Gdzie znaleźć klucze API?",
+            "confirm_delete_store": "Czy na pewno chcesz usunąć ten sklep? Ta operacja jest nieodwracalna.",
+            "confirm_disconnect": "Czy na pewno chcesz rozłączyć WooCommerce?",
+            "connect": "Połącz sklep WooCommerce",
+            "connected": "Połączono z WooCommerce",
+            "connection_failed": "Nie udało się połączyć z WooCommerce",
+            "connection_success": "Pomyślnie połączono z WooCommerce",
+            "consumer_key": "Consumer Key",
+            "consumer_secret": "Consumer Secret",
+            "credentials_update_hint": "Pozostaw puste, aby zachować obecne dane",
+            "currency": "Waluta",
+            "default_set": "Domyślny sklep został ustawiony",
+            "default_store": "Domyślny",
+            "delete_modal_message": "Czy na pewno chcesz usunąć sklep \"{name}\"? Ta operacja jest nieodwracalna i usunie wszystkie dane powiązane z tym sklepem.",
+            "delete_modal_title": "Usuń sklep",
+            "delete_store": "Usuń sklep",
+            "disconnect": "Rozłącz",
+            "disconnect_modal_message": "Czy na pewno chcesz rozłączyć sklep \"{name}\"? Sklep pozostanie zapisany, ale połączenie zostanie deaktywowane.",
+            "disconnect_modal_title": "Rozłącz sklep",
+            "disconnected": "WooCommerce został rozłączony",
+            "edit_store": "Edytuj sklep",
+            "feature_import": "Importuj produkty",
+            "feature_import_desc": "Dodawaj produkty ze sklepu bezpośrednio do szablonów email",
+            "feature_recently_viewed": "Ostatnio oglądane",
+            "feature_recently_viewed_desc": "Wyświetlaj produkty, które odwiedzili Twoi subskrybenci",
+            "feature_sync": "Automatyczna synchronizacja",
+            "feature_sync_desc": "Dane produktów są zawsze aktualne",
+            "feature_templates": "Szablony produktowe",
+            "feature_templates_desc": "Twórz piękne prezentacje produktów w emailach",
+            "features_title": "Co możesz zrobić po połączeniu?",
+            "fill_all_fields": "Wypełnij wszystkie pola",
+            "not_connected": "Nie połączono",
+            "open_store": "Otwórz sklep",
+            "reconnect": "Połącz ponownie",
+            "reconnected": "Sklep został ponownie połączony",
+            "save_settings": "Zapisz ustawienia",
+            "select_store": "Wybierz sklep",
+            "set_as_default": "Ustaw jako domyślny",
+            "store_added": "Sklep został dodany",
+            "store_deleted": "Sklep został usunięty",
+            "store_name": "Nazwa sklepu",
+            "store_name_help": "Przyjazna nazwa do identyfikacji sklepu",
+            "store_name_placeholder": "np. Mój Sklep Główny",
+            "store_not_found": "Sklep nie został znaleziony",
+            "store_updated": "Sklep został zaktualizowany",
+            "store_url": "URL sklepu",
+            "store_url_exists": "Sklep o tym adresie URL jest już połączony",
+            "store_url_help": "Wprowadź pełny adres URL swojego sklepu WooCommerce",
+            "store_url_placeholder": "https://twoj-sklep.pl",
+            "stores_empty": "Nie masz połączonych sklepów WooCommerce",
+            "stores_empty_desc": "Dodaj swój pierwszy sklep, aby móc importować produkty do szablonów email",
+            "stores_title": "Połączone sklepy",
+            "subtitle": "Połącz swój sklep WooCommerce, aby importować produkty do szablonów email",
+            "test_connection": "Testuj połączenie",
+            "test_failed": "Połączenie nieaktywne",
+            "test_store": "Testuj",
+            "test_success": "Połączenie aktywne",
+            "testing": "Testowanie...",
+            "title": "Integracja WooCommerce",
+            "update_credentials": "Zaktualizuj dane połączenia",
+            "verified_at": "Zweryfikowano"
         }
     },
     "sms_providers": {
@@ -4168,7 +4360,8 @@
             "trigger": "Trigger",
             "status": "Status",
             "subscribers": "Subskrybenci",
-            "completed": "Ukończone"
+            "completed": "Ukończone",
+            "actions": "Akcje"
         },
         "stats": {
             "total_subscribers": "Wszystkich subskrybentów",
@@ -4183,6 +4376,12 @@
             "info": "Informacje o lejku",
             "no_data": "Brak danych",
             "no_data_desc": "Aktywuj lejek, aby zacząć zbierać statystyki."
+        },
+        "search_placeholder": "Szukaj lejków...",
+        "status": {
+            "active": "Aktywny",
+            "draft": "Szkic",
+            "paused": "Wstrzymany"
         }
     },
     "automations": {
@@ -4894,7 +5093,11 @@
             "open_store": "Otwórz sklep",
             "test_store": "Testuj",
             "test_success": "Połączenie aktywne",
-            "test_failed": "Połączenie nieaktywne"
+            "test_failed": "Połączenie nieaktywne",
+            "plugin_version": "Wtyczka",
+            "stale_connection": "Nieaktywna wtyczka",
+            "stale_plugin_hint": "Wtyczka nie komunikowała się od ponad 7 dni. Sprawdź, czy wtyczka jest poprawnie zainstalowana i skonfigurowana.",
+            "update_to": "Zaktualizuj do"
         }
     },
     "tracked_links": {
@@ -5611,10 +5814,11 @@
             "video_provider": "Dostawca wideo",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Nagranie (bezpośredni URL)",
             "vimeo_id": "Vimeo ID",
             "vimeo_id_help": "ID filmu Vimeo (np. 76979871). Dla filmów niepublicznych: 76979871/abc123",
             "video_url": "URL nagrania",
-            "video_url_help": "Link do nagranego wideo (YouTube, Vimeo lub własny hosting)",
+            "video_url_help": "Bezpośredni link do pliku wideo (MP4)",
             "integration": "Integracja z listą kontaktów",
             "target_list": "Lista docelowa",
             "no_list": "Nie dodawaj do listy",
@@ -5675,6 +5879,7 @@
             "video_provider": "Dostawca wideo",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Nagranie (bezpośredni URL)",
             "vimeo_id": "Vimeo ID",
             "vimeo_id_help": "ID filmu Vimeo (np. 76979871). Dla filmów niepublicznych: 76979871/abc123",
             "video_url": "URL nagrania",
@@ -6263,7 +6468,8 @@
                 "notes": "Notatki",
                 "tags": "Tagi",
                 "owner": "Opiekun",
-                "score": "Score"
+                "score": "Score",
+                "email_required": "Email *"
             },
             "tabs": {
                 "overview": "Przegląd",
@@ -6291,7 +6497,11 @@
             },
             "activity_history": "Historia aktywności",
             "no_activities": "Brak historii aktywności",
-            "by": "przez"
+            "by": "przez",
+            "placeholders": {
+                "position": "np. CEO, Marketing Manager...",
+                "source": "np. LinkedIn, konferencja..."
+            }
         },
         "companies": {
             "title_page": "Firmy CRM",
@@ -6658,7 +6868,9 @@
                 "not_contains": "Nie zawiera",
                 "starts_with": "Zaczyna się od",
                 "ends_with": "Kończy się na",
-                "regex": "Regex"
+                "regex": "Regex",
+                "greater_than": "Większe niż",
+                "less_than": "Mniejsze niż"
             },
             "activities": {
                 "log": {
@@ -7885,5 +8097,10 @@
             "topics_placeholder": "np. nowości produktowe, porady branżowe, case studies"
         },
         "edit_title": "Edytuj tytuł"
-    }
+    },
+    "Pole o tej nazwie już istnieje.": "Pole o tej nazwie już istnieje.",
+    "Pole zostało usunięte.": "Pole zostało usunięte.",
+    "Pole zostało utworzone.": "Pole zostało utworzone.",
+    "Pole zostało zaktualizowane.": "Pole zostało zaktualizowane.",
+    "Ta nazwa pola jest zarezerwowana przez system.": "Ta nazwa pola jest zarezerwowana przez system."
 }

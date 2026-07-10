@@ -39,12 +39,17 @@
         "fields": {
             "name": "Vorlagenname",
             "name_placeholder": "z.B. Monatlicher Newsletter",
-            "content": "Inhalt"
+            "content": "Inhalt",
+            "created_at": "Erstellt: {date}"
         },
         "actions": {
-            "create": "Vorlage erstellen"
+            "create": "Vorlage erstellen",
+            "update": "Vorlage aktualisieren"
         },
-        "default_content": "<p>Beginnen Sie mit der Bearbeitung Ihrer Vorlage...</p>"
+        "default_content": "<p>Beginnen Sie mit der Bearbeitung Ihrer Vorlage...</p>",
+        "builder_badge": "Builder",
+        "edit_subtitle": "Aktualisieren Sie Ihre Nachrichtenvorlage",
+        "edit_title": "Vorlage bearbeiten"
     },
     "affiliate": {
         "title": "Partnerprogramm",
@@ -284,7 +289,9 @@
             "validation_error": "Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut.",
             "confirm_delete": "Sind Sie sicher, dass Sie dies löschen möchten?",
             "confirm_action": "Sind Sie sicher, dass Sie fortfahren möchten?",
-            "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden."
+            "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
+            "exported_failed": "Export fehlgeschlagen.",
+            "imported_failed": "Import fehlgeschlagen."
         },
         "days": {
             "monday": "Montag",
@@ -330,7 +337,24 @@
         "hours": "Stunden",
         "status": "Status",
         "name": "Name",
-        "characters": "Zeichen"
+        "characters": "Zeichen",
+        "browse_logos": "Logo aus der Bibliothek einfügen",
+        "browse_media": "Medienbibliothek durchsuchen",
+        "change": "Ändern",
+        "clear_selection": "Auswahl aufheben",
+        "default": "Standard",
+        "duplicate": "Duplizieren",
+        "email": "E-Mail",
+        "errors": "Fehler",
+        "hide": "Ausblenden",
+        "optional": "optional",
+        "processing": "Verarbeitung...",
+        "search_placeholder": "Suchen...",
+        "selected_of": "ausgewählt von",
+        "show": "Anzeigen",
+        "soon": "Demnächst",
+        "view_all": "Alle anzeigen",
+        "source_placeholder": "HTML-Code eingeben oder einfügen..."
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -551,7 +575,17 @@
         "text_transform_uppercase": "GROßBUCHSTABEN",
         "text_transform_lowercase": "kleinbuchstaben",
         "text_transform_capitalize": "Erster Großbuchstabe",
-        "clear_text_transform": "Normal"
+        "clear_text_transform": "Normal",
+        "emoji_categories": {
+            "business": "Business",
+            "faces": "Gesichter",
+            "gestures": "Gesten",
+            "hearts": "Herzen",
+            "nature": "Natur",
+            "symbols": "Symbole"
+        },
+        "refresh": "Aktualisieren",
+        "refresh_preview": "Vorschau aktualisieren"
     },
     "marketplace": {
         "title": "Marktplatz",
@@ -748,6 +782,10 @@
             "ai": {
                 "title": "KI & Forschung",
                 "desc": "Intelligenz-Tools"
+            },
+            "analytics": {
+                "desc": "Ergebnisse messen",
+                "title": "Analysen"
             }
         },
         "request_title": "Benötigen Sie eine bestimmte Integration?",
@@ -907,6 +945,72 @@
             "help_title": "Brauchen Sie Hilfe?",
             "help_desc": "Überprüfen Sie unsere Dokumentation für detaillierte Einrichtungsanweisungen.",
             "documentation_button": "Dokumentation"
+        },
+        "woocommerce": {
+            "api_config_title": "🔑 API-Konfiguration",
+            "api_key_desc": "Erstellen Sie einen API-Schlüssel in NetSendo, der für die Plugin-Autorisierung verwendet wird.",
+            "api_key_label": "API-Schlüssel",
+            "api_url_help": "Geben Sie diese URL in den WooCommerce-Plugin-Einstellungen ein",
+            "api_url_label": "NetSendo URL",
+            "description": "Professionelle Anmeldeformulare und Kundensynchronisierung für WooCommerce-Shops.",
+            "docs_link": "WooCommerce Docs",
+            "documentation_button": "Dokumentation",
+            "download_button": "Plugin herunterladen",
+            "features": {
+                "auto_subscribe": {
+                    "description": "Fügen Sie Kunden nach dem Produktkauf automatisch zu Mailinglisten hinzu.",
+                    "title": "Automatische Anmeldung"
+                },
+                "cart_recovery": {
+                    "description": "Tragen Sie Kunden mit unbezahlten Bestellungen in eine separate Liste für Follow-ups ein.",
+                    "title": "Warenkorb-Wiederherstellung"
+                },
+                "external_pages": {
+                    "description": "Leiten Sie Kunden nach dem Kauf auf externe Seiten mit Verkaufstrichter weiter.",
+                    "title": "Externe Seiten"
+                },
+                "product_settings": {
+                    "description": "Überschreiben Sie die Standardlisten für einzelne WooCommerce-Produkte.",
+                    "title": "Einstellungen pro Produkt"
+                }
+            },
+            "features_title": "🚀 Funktionen",
+            "funnels_link": "Verkaufstrichter",
+            "help_desc": "Überprüfen Sie die Dokumentation oder kontaktieren Sie unser Support-Team.",
+            "help_title": "Brauchen Sie Hilfe?",
+            "hero_description": "Das NetSendo für WooCommerce Plugin fügt Kunden nach einem Kauf oder bei einem Kaufversuch (unbezahlte Bestellung) automatisch zu Mailinglisten hinzu. Sie können Kunden auch auf externe Seiten mit Verkaufstrichter weiterleiten.",
+            "hero_subtitle": "Integrieren Sie Ihren WooCommerce-Shop mit NetSendo - tragen Sie Kunden nach dem Kauf automatisch in Mailinglisten ein.",
+            "hero_title": "WooCommerce",
+            "lists_link": "Listen verwalten",
+            "manage_api_keys": "API-Schlüssel verwalten",
+            "requirements": {
+                "account": "Aktives NetSendo-Konto mit API-Schlüssel",
+                "php": "PHP 7.4 oder neuer",
+                "wc": "WooCommerce 5.0 oder neuer",
+                "wp": "WordPress 5.8 oder neuer"
+            },
+            "requirements_title": "📋 Anforderungen",
+            "resources_title": "Ressourcen",
+            "setup_steps": {
+                "configure": {
+                    "description": "Gehen Sie in WordPress zu WooCommerce → NetSendo, geben Sie NetSendo-URL und API-Schlüssel ein und speichern Sie die Einstellungen vor dem Verbindungstest.",
+                    "title": "Verbindung konfigurieren"
+                },
+                "download": {
+                    "description": "Klicken Sie auf den Button unten, um das NetSendo für WooCommerce Plugin herunterzuladen.",
+                    "title": "Plugin herunterladen"
+                },
+                "install": {
+                    "description": "Gehen Sie zu WordPress → Plugins → Installieren → Plugin hochladen und installieren Sie die heruntergeladene ZIP-Datei.",
+                    "title": "In WordPress installieren"
+                },
+                "lists": {
+                    "description": "Wählen Sie die Listen, in die Kunden nach dem Kauf und bei unbezahlten Bestellungen eingetragen werden sollen.",
+                    "title": "Standardlisten festlegen"
+                }
+            },
+            "setup_title": "⚙️ Installation",
+            "title": "WooCommerce"
         }
     },
     "deliverability": {
@@ -1226,7 +1330,9 @@
             "last_7_days": "Letzte 7 Tage",
             "sent": "Gesendet",
             "subscribers": "Abonnenten",
-            "opens": "Öffnungen"
+            "opens": "Öffnungen",
+            "empty_description": "Aktivitätsdaten erscheinen nach dem ersten Versand.",
+            "empty_title": "Keine Daten"
         },
         "quick_actions": {
             "title": "Schnellaktionen",
@@ -1251,7 +1357,10 @@
                 "sent": "Gesendet",
                 "scheduled": "Geplant",
                 "draft": "Entwurf"
-            }
+            },
+            "create_first": "Nachricht erstellen",
+            "empty_description": "Erstellen Sie Ihre erste Nachricht, um sie hier zu sehen.",
+            "empty_title": "Keine Kampagnen"
         },
         "cron": {
             "status_title": "⏰ CRON-Status",
@@ -1265,7 +1374,13 @@
                 "sent_emails": "Gesendete E-Mails",
                 "errors": "Fehler",
                 "last_run": "Letzte Ausführung"
-            }
+            },
+            "not_configured_warning": "⚠️ CRON ist nicht konfiguriert! Geplante Nachrichten werden nicht automatisch versendet.",
+            "see_instructions": "Anleitung ansehen →"
+        },
+        "clock": {
+            "timezone_label": "Zeitzone",
+            "title": "Aktuelle Uhrzeit"
         }
     },
     "mailing_lists": {
@@ -1314,7 +1429,8 @@
             "groups_tags": "Gruppe / Tags",
             "subscribers": "Abonnenten",
             "created_at": "Erstellt am",
-            "actions": "Aktionen"
+            "actions": "Aktionen",
+            "list_id": "Listen-ID"
         },
         "delete_modal": {
             "title": "Liste \"{name}\" löschen",
@@ -1476,8 +1592,23 @@
                 "test_webhook": "Test-Webhook senden",
                 "endpoint_section": "Anmelde-Endpoint",
                 "endpoint_desc": "Verwenden Sie diese URL, um Abonnenten aus externen Quellen hinzuzufügen"
-            }
-        }
+            },
+            "delete_unconfirmed_after_days": "Löschen nach",
+            "delete_unconfirmed_after_days_help": "Unbestätigte Adressen werden nach Ablauf dieser Zeit automatisch gelöscht",
+            "delete_unconfirmed_days_label": "Tagen",
+            "headers_help": "Überschreiben Sie hier die globalen List-Unsubscribe-Header.",
+            "headers_inherit_help": "Leer lassen, um die globalen Einstellungen zu verwenden.",
+            "headers_section": "Verifizierungs-Header / Anti-Spam",
+            "insert_template": "Vorlage einfügen",
+            "reset_autoresponders": "Autoresponder bei erneuter Anmeldung zurücksetzen",
+            "reset_autoresponders_desc": "Wenn sich ein Abonnent erneut in die Liste einträgt, werden die bisherigen Warteschlangeneinträge gelöscht und der Autoresponder startet von vorn.",
+            "resubscription_behavior": "Verhalten bei erneuter Anmeldung",
+            "resubscription_behavior_desc": "Legt fest, was mit dem Anmeldedatum passiert, wenn sich ein aktiver Abonnent erneut anzumelden versucht. Bei ehemaligen Abonnenten (abgemeldet/gelöscht) wird das Datum immer zurückgesetzt.",
+            "resubscription_keep_date": "Ursprüngliches Anmeldedatum beibehalten",
+            "resubscription_reset_date": "Anmeldedatum zurücksetzen (Autoresponder-Warteschlange startet von vorn)"
+        },
+        "create_message": "Nachricht erstellen",
+        "default_settings_subtitle": "Konfigurieren Sie die Standardeinstellungen für neue Mailinglisten"
     },
     "sms_lists": {
         "title": "SMS-Listen",
@@ -1525,7 +1656,8 @@
             "groups_tags": "Gruppe / Tags",
             "subscribers": "Abonnenten",
             "created_at": "Erstellt",
-            "actions": "Aktionen"
+            "actions": "Aktionen",
+            "list_id": "Listen-ID"
         },
         "delete_modal": {
             "title": "SMS-Liste \"{name}\" löschen",
@@ -1550,6 +1682,64 @@
             "always_copied": "Wird immer kopiert",
             "always_copied_list": "Listeneinstellungen, Gruppe, Tags, Sendezeitplan-Einstellungen",
             "submit": "Liste kopieren"
+        },
+        "create_sms": "SMS erstellen",
+        "settings": {
+            "advanced": {
+                "block_signups": "Neue Anmeldungen blockieren",
+                "block_signups_desc": "Anmeldungen zur Liste vorübergehend blockieren",
+                "coregistration_section": "Co-Registrierung",
+                "limits_section": "Limits und Einschränkungen",
+                "max_subscribers": "Maximale Anzahl an Abonnenten",
+                "max_subscribers_help": "Lassen Sie 0 für kein Limit",
+                "no_parent": "-- Keine übergeordnete Liste --",
+                "parent_list": "Übergeordnete Liste",
+                "parent_list_desc": "Abonnenten dieser Liste werden automatisch in die übergeordnete Liste kopiert",
+                "sync_on_subscribe": "Bei Anmeldung synchronisieren",
+                "sync_on_unsubscribe": "Bei Abmeldung synchronisieren"
+            },
+            "advanced_section": "Erweitert",
+            "cron_disabled": "Versand deaktiviert",
+            "cron_from": "Von:",
+            "cron_limit_help": "Leer lassen, um das globale Limit zu verwenden.",
+            "cron_limit_label": "SMS-Limit / Minute (für diese Liste)",
+            "cron_limit_placeholder": "z.B. 50 (leer = global verwenden)",
+            "cron_section": "⏰ SMS-Versandzeitplan",
+            "cron_to": "Bis:",
+            "integration": {
+                "api_key_desc": "Verwenden Sie diesen Schlüssel für die Integration mit externen Systemen",
+                "api_key_label": "API-Schlüssel",
+                "api_key_section": "API-Schlüssel der SMS-Liste",
+                "copied": "Kopiert!",
+                "copy_key": "Kopieren",
+                "endpoint_desc": "Verwenden Sie diese URL, um Nummern aus externen Quellen hinzuzufügen",
+                "endpoint_section": "SMS-Anmelde-Endpoint",
+                "event_subscribe": "Neue Anmeldung",
+                "event_unsubscribe": "Abmeldung",
+                "event_update": "Datenaktualisierung",
+                "generate_key": "Neuen Schlüssel generieren",
+                "list_id_label": "Listen-ID",
+                "no_api_key": "Es wurde noch kein API-Schlüssel generiert",
+                "test_webhook": "Test-Webhook senden",
+                "title": "API-Integration (SMS)",
+                "webhook_events": "Zu sendende Ereignisse",
+                "webhook_section": "Webhooks",
+                "webhook_url": "Webhook-URL",
+                "webhook_url_placeholder": "https://ihre-seite.de/webhook"
+            },
+            "tabs": {
+                "advanced": "Erweitert",
+                "cron": "Zeitplan (CRON)",
+                "integration": "Integration"
+            },
+            "use_custom_cron": "Eigene CRON-Einstellungen",
+            "use_custom_cron_desc": "Deaktiviert = globale Einstellungen verwenden. Aktiviert = eigenen Zeitplan für diese SMS-Liste festlegen.",
+            "using_global_cron": "Sie verwenden die globalen CRON-Einstellungen",
+            "weekly_schedule": "Wöchentlicher Zeitplan"
+        },
+        "tabs": {
+            "general": "Allgemein",
+            "settings": "Einstellungen"
         }
     },
     "sms": {
@@ -1607,7 +1797,10 @@
             "scheduling": "Planung",
             "schedule_now": "Jetzt senden",
             "schedule_later": "Für später planen",
-            "datetime": "Datum und Uhrzeit"
+            "datetime": "Datum und Uhrzeit",
+            "provider": "SMS-Absender",
+            "provider_auto": "Automatisch (Standard)",
+            "provider_available": "Verfügbare Absender"
         },
         "actions": {
             "save_draft": "Entwurf speichern",
@@ -1627,6 +1820,69 @@
             "sending": "Senden...",
             "success": "Test-SMS erfolgreich gesendet!",
             "error": "Fehler beim Senden der Test-SMS."
+        },
+        "ai_assistant": {
+            "chars": "Zeichen",
+            "count_one": "1 Vorschlag",
+            "count_three": "3 Vorschläge",
+            "describe_content": "Beschreiben Sie, was Sie generieren möchten",
+            "error_generating": "Beim Generieren des Inhalts ist ein Fehler aufgetreten.",
+            "generate": "Inhalt generieren",
+            "generating": "Generierung...",
+            "no_models_available": "Keine KI-Integrationen konfiguriert. Konfigurieren Sie diese in den Einstellungen.",
+            "placeholder": "z.B. Aktion -30% auf alle Produkte, endet heute...",
+            "placeholders": {
+                "custom_title": "Benutzerdefinierte Felder (auswählen)",
+                "no_custom": "Keine benutzerdefinierten Felder.",
+                "section_title": "Personalisierung (Platzhalter)",
+                "special_title": "Spezielle Platzhalter",
+                "standard_title": "Standardfelder (immer aktiv)"
+            },
+            "prompts": {
+                "discount_code": "Rabattcode",
+                "event_notify": "Event-Benachrichtigung",
+                "order_confirm": "Bestellbestätigung",
+                "promo_reminder": "Aktions-Erinnerung"
+            },
+            "quick_prompts": "Schnelle Ideen",
+            "segments": "SMS",
+            "select_count": "Wie viele Vorschläge?",
+            "select_model": "KI-Modell",
+            "select_tone": "Tonfall wählen",
+            "subtitle": "Generieren Sie SMS-Inhalte mit KI-Unterstützung",
+            "suggestions": "Vorschläge",
+            "title": "KI-Assistent für SMS",
+            "tones": {
+                "casual": "Locker",
+                "formal": "Formal",
+                "persuasive": "Überzeugend"
+            },
+            "use_this": "Diesen Inhalt verwenden",
+            "voice": {
+                "listening": "Ich höre zu...",
+                "start": "Per Sprache diktieren",
+                "stop": "Aufnahme stoppen"
+            }
+        },
+        "inserts": {
+            "custom": "Benutzerdefiniert",
+            "insert_variable": "Variable einfügen",
+            "standard": "Standard",
+            "title": "Platzhalter"
+        },
+        "preview": {
+            "info": "Die Vorschau berücksichtigt die Daten des ausgewählten Empfängers.",
+            "no_results": "Keine Ergebnisse",
+            "no_subscriber": "Keine (rohe Platzhalter)",
+            "refresh": "Vorschau aktualisieren",
+            "search_placeholder": "Empfänger suchen...",
+            "select_subscriber": "Empfänger für die Vorschau auswählen",
+            "title": "Vorschau mit Daten"
+        },
+        "provider_source": {
+            "explicit": "Manuell ausgewählt",
+            "global": "Globaler Standard",
+            "list": "Aus Listeneinstellungen"
         }
     },
     "messages": {
@@ -1728,7 +1984,9 @@
                 "inactivity": "Inaktivität",
                 "page_visit": "Seitenbesuch",
                 "custom": "Benutzerdefinierte Aktion (Tag)",
-                "recent_subscribers": "Neueste Anmeldungen"
+                "recent_subscribers": "Neueste Anmeldungen",
+                "not_opened_message": "Nachricht nicht geöffnet",
+                "opened_message": "Nachricht geöffnet"
             },
             "desc": {
                 "none": "Nachricht wird nicht automatisch ausgelöst",
@@ -1738,7 +1996,9 @@
                 "inactivity": "Senden, wenn Abonnent inaktiv ist",
                 "page_visit": "Senden, wenn Abonnent eine Seite besucht",
                 "custom": "Senden, wenn ein bestimmter Tag hinzugefügt wird",
-                "recent_subscribers": "Nur an Personen senden, die sich in den letzten X Tagen angemeldet haben"
+                "recent_subscribers": "Nur an Personen senden, die sich in den letzten X Tagen angemeldet haben",
+                "not_opened_message": "Nicht an Personen senden, die die ausgewählte Nachricht geöffnet haben",
+                "opened_message": "An Personen senden, die die ausgewählte Nachricht geöffnet haben"
             },
             "config": {
                 "inactive_days": "Tage der Inaktivität",
@@ -1748,7 +2008,12 @@
                 "select_tag": "-- Tag auswählen --",
                 "no_config_needed": "Dieser Trigger erfordert keine zusätzliche Konfiguration",
                 "recent_days": "Tage seit Anmeldung",
-                "recent_days_help": "Verwenden Sie den Schieberegler oder geben Sie eine Zahl ein (1-365 Tage)"
+                "recent_days_help": "Verwenden Sie den Schieberegler oder geben Sie eine Zahl ein (1-365 Tage)",
+                "not_opened_message_help": "Die Nachricht wird NICHT an Personen gesendet, die die ausgewählte Nachricht geöffnet haben",
+                "opened_message_help": "Die Nachricht wird nur an Personen gesendet, die die ausgewählte Nachricht geöffnet haben",
+                "search_message_placeholder": "Nach Betreff oder ID suchen...",
+                "select_message": "Nachricht auswählen",
+                "select_message_placeholder": "-- Nachricht auswählen --"
             }
         },
         "ab_testing": {
@@ -1926,7 +2191,8 @@
             "schedule": "Planen",
             "schedule_send": "Versand planen",
             "activate": "Aktivieren (Speichern)",
-            "test": "Testen"
+            "test": "Testen",
+            "select_datetime": "Datum und Uhrzeit des Versands wählen"
         },
         "test": {
             "title": "Test-E-Mail senden",
@@ -2013,7 +2279,10 @@
                 "queued": "In Warteschlange",
                 "sent": "Gesendet",
                 "failed": "Fehlgeschlagen",
-                "skipped": "Übersprungen"
+                "skipped": "Übersprungen",
+                "resend_error": "Beim Wiederholen des Versands ist ein Fehler aufgetreten",
+                "resend_failed": "Wiederholen",
+                "resending": "Wird gesendet..."
             },
             "recipients": {
                 "title": "Empfängerliste",
@@ -2035,17 +2304,7 @@
                     "skipped": "Übersprungen"
                 }
             },
-            "add_to_list": {
-                "title": "Zu Liste hinzufügen",
-                "actions": "Aktionen",
-                "search": "Listen durchsuchen...",
-                "select_list": "Zielliste auswählen",
-                "no_lists": "Keine Listen verfügbar",
-                "loading": "Laden...",
-                "adding": "Hinzufügen...",
-                "success": "Abonnent erfolgreich zur Liste hinzugefügt",
-                "error": "Fehler beim Hinzufügen des Abonnenten zur Liste"
-            },
+            "add_to_list": "Zur Liste hinzufügen",
             "actions": "Aktionen",
             "search_email_or_url": "E-Mail oder URL suchen...",
             "add_to_list_btn": "Zu Liste hinzufügen",
@@ -2058,7 +2317,16 @@
             "bulk_add_title": "Zu Liste hinzufügen",
             "bulk_add_description": "{count} eindeutige Abonnenten werden zur ausgewählten Liste hinzugefügt",
             "bulk_add_button": "Zu Liste hinzufügen",
-            "bulk_add_success": "Zur Liste \"{list}\" hinzugefügt"
+            "bulk_add_success": "Zur Liste \"{list}\" hinzugefügt",
+            "read_time": {
+                "average": "Durchschnittliche Zeit",
+                "distribution": "Verteilung der Lesezeit",
+                "max": "Max. Zeit",
+                "median": "Median",
+                "sessions": "Lesesitzungen",
+                "time": "Zeit",
+                "top_readers": "Top-Leser"
+            }
         },
         "translations": {
             "title": "Sprachversionen",
@@ -2087,7 +2355,8 @@
             "field_lname": "Nachname",
             "field_email": "E-Mail",
             "field_phone": "Telefon",
-            "field_gender": "Geschlecht"
+            "field_gender": "Geschlecht",
+            "no_email_lists": "Keine E-Mail-Listen verfügbar."
         },
         "ab_test_badge": "A/B-Test",
         "ab_test_view_results": "Klicken Sie, um Ergebnisse anzuzeigen und A/B-Test zu verwalten",
@@ -2098,7 +2367,29 @@
             "paused": "Pausiert",
             "completed": "Abgeschlossen",
             "cancelled": "Abgebrochen"
-        }
+        },
+        "attachments": {
+            "dropzone": "PDF-Dateien hierher ziehen oder klicken, um auszuwählen",
+            "existing": "Gespeicherte Anhänge",
+            "info": "Maximal {max} Dateien, jeweils bis zu {size}",
+            "max_files": "Sie können maximal {count} Anhänge hinzufügen",
+            "max_size": "Die maximale Dateigröße beträgt {size}",
+            "new": "Neue Anhänge (zum Hochladen)",
+            "only_pdf": "Nur PDF-Dateien sind erlaubt",
+            "ready": "Bereit zum Hochladen",
+            "title": "PDF-Anhänge"
+        },
+        "has_pdf_attachments": "{count} PDF-Anhang/Anhänge",
+        "resend_button": "Versand wiederholen",
+        "resend_confirm_description": "Nachricht an neue Empfänger senden",
+        "resend_confirm_title": "Nachrichtenversand wiederholen",
+        "resend_error_title": "Versandfehler",
+        "resend_new_recipients": "Neue Empfänger: {count}",
+        "resend_note_description": "Die Nachricht wird nur an Personen gesendet, die sie noch nicht erhalten haben (z.B. neu hinzugekommene Abonnenten). Personen, die sie bereits erhalten haben, bekommen sie nicht erneut.",
+        "resend_note_title": "Hinweis",
+        "resend_success_title": "Versand geplant!",
+        "resending": "Wird gesendet...",
+        "scheduled_for": "Geplant für"
     },
     "subscribers": {
         "title": "Abonnenten",
@@ -2338,7 +2629,9 @@
             "list": "Liste",
             "added_at": "Hinzugefügt am",
             "language": "Sprache",
-            "actions": "Aktionen"
+            "actions": "Aktionen",
+            "phone": "Telefon",
+            "subscribed_at": "Beitrittsdatum"
         },
         "statuses": {
             "active": "Aktiv",
@@ -2347,14 +2640,35 @@
             "bounced": "Unzustellbar"
         },
         "empty_state": "Keine Abonnenten gefunden, die den Kriterien entsprechen.",
-        "confirm_delete": "Sind Sie sicher, dass Sie den Abonnenten {email} löschen möchten?"
+        "confirm_delete": "Sind Sie sicher, dass Sie den Abonnenten {email} löschen möchten?",
+        "add_to_crm": "Zum CRM hinzufügen",
+        "confirm_proceed": "Fortfahren",
+        "crm_add_failed": "Abonnent konnte nicht zum CRM hinzugefügt werden.",
+        "crm_added_success": "Abonnent wurde als Lead zum CRM hinzugefügt.",
+        "crm_already_exists": "Für diesen Abonnenten existiert bereits ein CRM-Kontakt.",
+        "crm_log_activity": "Abonnent als Lead zum CRM hinzugefügt",
+        "delete_modal": {
+            "delete_completely": "Vollständig löschen",
+            "description": "Wählen Sie, aus welchen Listen der Abonnent {email} entfernt werden soll",
+            "gdpr_description": "Alle Daten des Abonnenten gemäß dem Recht auf Vergessenwerden dauerhaft löschen.",
+            "gdpr_section": "Vollständige Löschung (DSGVO)",
+            "gdpr_warning": "Diese Aktion ist unwiderruflich. Alle Daten werden dauerhaft gelöscht.",
+            "no_lists": "Der Abonnent gehört zu keiner Liste",
+            "remove_from_lists": "Aus Listen entfernen",
+            "select_lists": "Zu entfernende Listen",
+            "title": "Abonnenten löschen"
+        },
+        "edit_title": "Abonnenten bearbeiten",
+        "items_per_page": "{count} pro Seite",
+        "stats_total": "{total} Abonnenten ({current} auf der Seite) • {lists} Listen"
     },
     "groups": {
         "title": "Mailinglisten-Gruppen",
         "add_new": "Neue Gruppe hinzufügen",
         "edit_group": "Gruppe bearbeiten",
         "fields": {
-            "name": "Gruppenname"
+            "name": "Gruppenname",
+            "parent": "Übergeordnete Gruppe"
         },
         "actions": {
             "create": "Erstellen",
@@ -2367,7 +2681,9 @@
             "lists_count": "Anzahl der Listen",
             "actions": "Aktionen"
         },
-        "confirm_delete": "Sind Sie sicher, dass Sie diese Gruppe löschen möchten? Die ihr zugeordneten Listen werden nicht gelöscht."
+        "confirm_delete": "Sind Sie sicher, dass Sie diese Gruppe löschen möchten? Die ihr zugeordneten Listen werden nicht gelöscht.",
+        "no_parent": "— Keine (Hauptgruppe) —",
+        "total_count": "Gesamt: {count} Gruppen"
     },
     "tags": {
         "title": "Tag-Verwaltung",
@@ -2441,7 +2757,8 @@
             "tokens_small_label": "Token (kleine Aufgaben)",
             "tokens_small_help": "Für Titel, kurze Texte (Standard: {default})",
             "tokens_large_label": "Token (große Aufgaben)",
-            "tokens_large_help": "Für E-Mail-Inhalte, Vorlagen (Standard: {default})"
+            "tokens_large_help": "Für E-Mail-Inhalte, Vorlagen (Standard: {default})",
+            "optional": "optional"
         },
         "delete": {
             "title": "Integration löschen",
@@ -2459,7 +2776,8 @@
             "thinking": "Tiefe Analyse",
             "fast_and_cheap": "Schnell und günstig",
             "reasoning": "Schlussfolgern",
-            "fast": "Schnell"
+            "fast": "Schnell",
+            "new": "Neu"
         }
     },
     "welcome": {
@@ -2529,6 +2847,21 @@
             "link_sent": "Ein neuer Verifizierungslink wurde an die E-Mail-Adresse gesendet, die Sie bei der Registrierung angegeben haben.",
             "submit": "Bestätigungs-E-Mail erneut senden",
             "logout": "Abmelden"
+        },
+        "code": "Code",
+        "confirm": "Bestätigen",
+        "enter_code_from_app": "Geben Sie den Code aus der Authentifizierungs-App ein, um Ihre Identität zu bestätigen.",
+        "status_status": "2FA-Status",
+        "two_factor_active": "2FA aktiv",
+        "two_factor_inactive": "2FA inaktiv",
+        "two_factor_verification": "Zwei-Faktor-Verifizierung",
+        "verifying": "Verifizierung...",
+        "webhook_reset": {
+            "button": "Passwort zurücksetzen",
+            "content": "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Passwort zurückzusetzen. Das System verarbeitet Ihre Anfrage und Sie erhalten ein neues Passwort per E-Mail.",
+            "processing": "Verarbeitung...",
+            "success": "Ein neues Passwort wurde generiert und an Ihre E-Mail-Adresse gesendet.",
+            "title": "Passwort zurücksetzen"
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "Dieser Feldname ist vom System reserviert.",
@@ -2790,7 +3123,21 @@
         "select_variant": "Variante auswählen",
         "variable_product": "Produkt mit Varianten",
         "selected_variant": "Ausgewählte Variante",
-        "no_variants_found": "Keine Varianten gefunden"
+        "no_variants_found": "Keine Varianten gefunden",
+        "confirm_selection": "Auswahl bestätigen",
+        "connect_woocommerce": "Mit WooCommerce verbinden",
+        "connect_woocommerce_hint": "Gehen Sie zu den WooCommerce-Einstellungen, um Ihren Shop zu verbinden",
+        "error_loading_products": "Fehler beim Laden der Produkte",
+        "image": "Bild",
+        "loading_products": "Produkte werden geladen...",
+        "no_recently_viewed": "Keine kürzlich angesehenen Produkte",
+        "product": "Produkt",
+        "recently_viewed_hint": "Produkte werden hier angezeigt, sobald NetSendo Pixel in Ihrem Shop installiert und aktiviert wurde",
+        "select_multiple_products": "Produkte für das Raster auswählen",
+        "select_one_product": "Ein Produkt auswählen",
+        "selected_count": "Ausgewählt: {count}",
+        "views": "Aufrufe",
+        "woocommerce_not_connected": "Nicht mit WooCommerce verbunden"
     },
     "subscriber_card": {
         "title": "Abonnentenkarte",
@@ -2949,6 +3296,33 @@
             "title": "Feld löschen",
             "message": "Sind Sie sicher, dass Sie das Feld \"{name}\" löschen möchten?",
             "warning": "Alle den Abonnenten zugewiesenen Werte werden gelöscht. Diese Aktion kann nicht rückgängig gemacht werden."
+        },
+        "form": {
+            "add_option": "Option hinzufügen",
+            "basic_info": "Grundlegende Informationen",
+            "create_title": "Neues Feld",
+            "default_value": "Standardwert",
+            "default_value_placeholder": "Angezeigter Wert, wenn das Feld leer ist...",
+            "description": "Beschreibung (für Administratoren)",
+            "description_placeholder": "Optionale Feldbeschreibung...",
+            "edit_title": "Feld bearbeiten",
+            "field_type": "Feldtyp",
+            "is_public": "Öffentliches Feld",
+            "is_public_help": "Sichtbar in Anmeldeformularen für Besucher.",
+            "is_required": "Pflichtfeld",
+            "is_required_help": "Muss bei der Anmeldung ausgefüllt werden.",
+            "is_static": "Statisches Feld",
+            "is_static_help": "Nur der Administrator kann den Wert bearbeiten.",
+            "label": "Beschriftung",
+            "label_placeholder": "z. B. Firma, Hobby, Stadt",
+            "name": "Technischer Name",
+            "name_format_error": "Der Name darf nur Buchstaben, Ziffern und Unterstriche enthalten und muss mit einem Buchstaben beginnen.",
+            "name_help": "Nur Kleinbuchstaben, Ziffern und Unterstriche. Wird in Platzhaltern verwendet.",
+            "name_placeholder": "z.B. firma, hobby, stadt",
+            "name_reserved_error": "Dieser Name ist vom System reserviert.",
+            "option_placeholder": "Option {n}",
+            "options": "Verfügbare Optionen",
+            "settings": "Einstellungen"
         }
     },
     "campaign_architect": {
@@ -3234,7 +3608,14 @@
             "status": "Status",
             "source": "Quelle",
             "date": "Datum"
-        }
+        },
+        "activate": "Aktivieren",
+        "activated": "Formular wurde aktiviert",
+        "deactivate": "Deaktivieren",
+        "deactivated": "Formular wurde deaktiviert",
+        "deleted": "Formular wurde gelöscht",
+        "duplicated": "Formular wurde dupliziert",
+        "saved_success": "Formular wurde gespeichert"
     },
     "funnels": {
         "title": "Verkaufstrichter",
@@ -3452,7 +3833,8 @@
             "total_rules": "Gesamt Regeln",
             "active_rules": "Aktive Regeln",
             "executions_30d": "Ausführungen (30T)",
-            "success_rate": "Erfolgsrate"
+            "success_rate": "Erfolgsrate",
+            "executions_24h": "Ausführungen (24h)"
         },
         "score_segments": {
             "title": "Scoring-Segmente",
@@ -3507,7 +3889,8 @@
         "confirm_delete": "Möchten Sie dieses Backup wirklich löschen?",
         "info_title": "System-Backups",
         "info_text": "Backups enthalten die Datenbank und wichtige Konfigurationsdateien. Es wird empfohlen, regelmäßig Kopien auf einem externen Datenträger zu speichern.",
-        "only_db": "Nur Datenbank"
+        "only_db": "Nur Datenbank",
+        "delete": "Löschen"
     },
     "api_keys": {
         "title": "API-Schlüssel",
@@ -3572,7 +3955,17 @@
             "get_subscribers": "Abonnentenliste abrufen",
             "add_subscriber": "Neuen Abonnenten hinzufügen"
         },
-        "delete_confirm": "Sind Sie sicher, dass Sie diesen API-Schlüssel löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden."
+        "delete_confirm": "Sind Sie sicher, dass Sie diesen API-Schlüssel löschen möchten? Dieser Vorgang kann nicht rückgängig gemacht werden.",
+        "delete_confirm_title": "API-Schlüssel löschen",
+        "edit": "Bearbeiten",
+        "edit_modal": {
+            "title": "API-Schlüssel bearbeiten"
+        },
+        "mcp_key": "MCP-Schlüssel",
+        "mcp_key_hint": "Verwenden Sie diesen Schlüssel für die Integration mit Claude, Cursor oder VS Code",
+        "mcp_plain_key_hint": "Fügen Sie Ihren API-Schlüssel ein, um das Testen der MCP-Verbindung zu ermöglichen",
+        "mcp_plain_key_label": "API-Schlüssel zur Verschlüsselung",
+        "mcp_plain_key_placeholder": "ns_live_..."
     },
     "inserts": {
         "title": "Bausteine und Signaturen",
@@ -3646,6 +4039,17 @@
             "special": "Spezial",
             "gender_form": "Geschlechtsabhängige Form",
             "gender_form_desc": "Fügt männliche oder weibliche Form eines Wortes ein"
+        },
+        "button_title": "Bausteine und Variablen",
+        "insert_variable": "Baustein einfügen",
+        "no_results": "Keine Suchergebnisse",
+        "paste_html_hint": "Fügen Sie hier den HTML-Code der Signatur ein oder geben Sie ihn manuell ein...",
+        "picker_title": "Baustein oder Variable auswählen",
+        "search": "Suchen...",
+        "tabs": {
+            "inserts": "Bausteine",
+            "signatures": "Signaturen",
+            "variables": "Variablen"
         }
     },
     "settings": {
@@ -3708,7 +4112,20 @@
             "export_csv": "CSV exportieren",
             "prev_month": "Vorheriger Monat",
             "next_month": "Nächster Monat",
-            "no_lists": "Keine E-Mail-Listen vorhanden"
+            "no_lists": "Keine E-Mail-Listen vorhanden",
+            "active": "Aktiv",
+            "clicks_count": "Klicks",
+            "new": "Neu",
+            "opens_count": "Öffnungen",
+            "stats_for": "Systemstatistiken für",
+            "table": {
+                "active": "Aktiv",
+                "clicks": "Klicks",
+                "list": "Liste",
+                "new": "Neu",
+                "opens": "Öffnungen",
+                "unsubscribed": "Abgemeldet"
+            }
         },
         "logs": {
             "title": "Aktivitätsprotokoll",
@@ -3849,7 +4266,11 @@
             "open_store": "Shop öffnen",
             "test_store": "Testen",
             "test_success": "Verbindung aktiv",
-            "test_failed": "Verbindung inaktiv"
+            "test_failed": "Verbindung inaktiv",
+            "plugin_version": "Plugin",
+            "stale_connection": "Inaktives Plugin",
+            "stale_plugin_hint": "Das Plugin hat seit über 7 Tagen nicht kommuniziert. Prüfen Sie, ob das Plugin korrekt installiert und konfiguriert ist.",
+            "update_to": "Aktualisieren auf"
         }
     },
     "tracked_links": {
@@ -4183,7 +4604,15 @@
                 },
                 "summary": "GOLD = Automatisierungs-Engine + Entwicklerschicht + KI ohne Architekturbeschränkungen"
             }
-        }
+        },
+        "check_status": "Lizenzstatus prüfen",
+        "checking_status": "Prüfe...",
+        "status_check_error": "Fehler bei der Verbindung zum Verifizierungsserver",
+        "status_check_failed": "Lizenzstatus konnte nicht geprüft werden",
+        "status_deactivated": "Die Lizenz wurde deaktiviert. Die Seite wird aktualisiert...",
+        "status_invalid": "Die Lizenz ist ungültig oder inaktiv",
+        "status_verified": "Lizenz erfolgreich verifiziert",
+        "view_eula": "Lizenzvereinbarung (EULA) lesen"
     },
     "notifications": {
         "title": "Benachrichtigungen",
@@ -4262,7 +4691,9 @@
             "revenue": "Umsatzauswirkungen",
             "automation": "Automatisierung",
             "growth": "Listenwachstum"
-        }
+        },
+        "based_on_estimates": "Schätzung basierend auf Branchen-Benchmarks",
+        "based_on_real_data": "Basierend auf echten Transaktionen"
     },
     "campaign_advisor": {
         "title": "KI-Berater",
@@ -4280,7 +4711,10 @@
         "expected_impact": "Erwartete Auswirkung",
         "action_steps": "Handlungsschritte",
         "apply": "Als angewendet markieren",
-        "applied": "Angewendet"
+        "applied": "Angewendet",
+        "audit_lookback_days": "Analysezeitraum",
+        "audit_lookback_days_hint": "Legt fest, wie viele Tage rückwirkend beim Audit analysiert werden",
+        "days": "Tage"
     },
     "queue_stats": {
         "title": "Warteschlangen-Statistiken",
@@ -4295,7 +4729,8 @@
         "send_to_missed": "Jetzt an Verpasste senden",
         "send_to_missed_confirm": "Möchten Sie diese Nachricht wirklich an {count} verpasste Abonnenten senden?",
         "send_success": "Versand an {count} verpasste Abonnenten geplant.",
-        "no_missed": "Keine verpassten Abonnenten - hervorragend!"
+        "no_missed": "Keine verpassten Abonnenten - hervorragend!",
+        "today": "Heute"
     },
     "system_pages": {
         "title": "Systemseiten",
@@ -4392,7 +4827,35 @@
             "unsubscribe_request": "Anfrage zur Bestätigung der Abmeldung von der Mailingliste.",
             "unsubscribed_confirmation": "Bestätigung der Entfernung von der Mailingliste.",
             "new_subscriber_notification": "Admin-Benachrichtigung über einen neuen Abonnenten auf der Liste."
-        }
+        },
+        "available_placeholders": "Verfügbare Platzhalter",
+        "back_to_list": "← Zurück zur Liste",
+        "cannot_delete_global": "Die globale E-Mail-Vorlage kann nicht gelöscht werden.",
+        "cannot_toggle_global": "Der Status globaler E-Mails kann nicht geändert werden.",
+        "click_to_insert": "Klicken, um in den Inhalt einzufügen",
+        "content_label": "HTML-Inhalt der E-Mail",
+        "context": "Kontext:",
+        "custom_created": "Angepasste E-Mail-Version für diese Liste erstellt.",
+        "edit_title": "E-Mail bearbeiten: {name}",
+        "global_defaults": "Globale Vorlagen",
+        "insert_to_content": "In Inhalt einfügen",
+        "insert_to_subject": "In Betreff einfügen",
+        "is_active": "Versand aktiviert",
+        "is_active_desc": "Wenn deaktiviert, wird diese Nachricht nicht gesendet",
+        "placeholders": {
+            "activation_link": "Link zur Aktivierung des Abonnements",
+            "date": "Aktuelles Datum",
+            "email": "E-Mail-Adresse des Abonnenten",
+            "first_name": "Vorname des Abonnenten",
+            "fname_vocative": "Vorname im Vokativ (z.B. Aniu statt Anna)",
+            "last_name": "Nachname des Abonnenten",
+            "list_name": "Name der Mailingliste",
+            "unsubscribe_link": "Link zur Abmeldung von der Liste"
+        },
+        "reset_to_default": "Standardversion der E-Mail wiederhergestellt.",
+        "subject_label": "Betreff der Nachricht",
+        "toggled": "E-Mail-Status wurde geändert.",
+        "updated": "E-Mail wurde aktualisiert."
     },
     "stripe": {
         "products": "Stripe Produkte",
@@ -4805,10 +5268,11 @@
             "video_provider": "Video-Anbieter",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Direkte Video-URL",
             "vimeo_id": "Vimeo-ID",
             "vimeo_id_help": "Vimeo-Video-ID (z. B. 76979871). Für nicht gelistete Videos: 76979871/abc123",
             "video_url": "Video-URL",
-            "video_url_help": "Link zum aufgezeichneten Video (YouTube, Vimeo oder selbst gehostet)",
+            "video_url_help": "Direkter Link zu einer Videodatei (MP4)",
             "integration": "Kontaktlisten-Integration",
             "target_list": "Zielliste",
             "no_list": "Nicht zur Liste hinzufügen",
@@ -4869,6 +5333,7 @@
             "video_provider": "Video-Anbieter",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "Direkte Video-URL",
             "vimeo_id": "Vimeo-ID",
             "vimeo_id_help": "Vimeo-Video-ID (z. B. 76979871). Für nicht gelistete Videos: 76979871/abc123",
             "video_url": "Video-URL",
@@ -5070,7 +5535,10 @@
         "info": {
             "title": "Unterstützte Anbieter",
             "twilio": "Twilio: Weltweite Abdeckung, zuverlässige Zustellung.",
-            "smsapi": "SMS API (PL): Beste Lösung für den polnischen Markt."
+            "smsapi": "SMS API (PL): Beste Lösung für den polnischen Markt.",
+            "messagebird": "MessageBird - niederländischer Anbieter, gute Preise in Europa",
+            "plivo": "Plivo - günstige Alternative zu Twilio",
+            "vonage": "Vonage (Nexmo) - #2 weltweit, hervorragende API und Zuverlässigkeit"
         },
         "modal": {
             "add_title": "SMS-Anbieter hinzufügen",
@@ -5079,8 +5547,33 @@
             "name_placeholder": "z.B. Mein Twilio-Konto",
             "from_number": "Absender-ID / Absendernummer",
             "daily_limit": "Tageslimit",
-            "daily_limit_placeholder": "z.B. 1000 (leer lassen für unbegrenzt)"
-        }
+            "daily_limit_placeholder": "z.B. 1000 (leer lassen für unbegrenzt)",
+            "edit_title": "SMS-Anbieter bearbeiten",
+            "from_name": "Absendername",
+            "from_name_hint": "Maximal 11 alphanumerische Zeichen",
+            "is_active": "Aktiv",
+            "is_default": "Standard"
+        },
+        "default": "Standard",
+        "delete_modal": {
+            "message": "Möchten Sie diesen SMS-Anbieter wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+            "title": "SMS-Anbieter löschen"
+        },
+        "notifications": {
+            "created": "SMS-Anbieter wurde erstellt.",
+            "deleted": "SMS-Anbieter wurde gelöscht.",
+            "set_default": "Anbieter wurde als Standard festgelegt.",
+            "updated": "SMS-Anbieter wurde aktualisiert."
+        },
+        "sent_today": "Heute gesendet",
+        "set_as_default": "Als Standard festlegen",
+        "status": {
+            "active": "Aktiv",
+            "error": "Verbindungsfehler",
+            "inactive": "Inaktiv",
+            "not_tested": "Nicht getestet"
+        },
+        "test_connection": "Verbindung testen"
     },
     "external_pages": {
         "index": {
@@ -5166,7 +5659,8 @@
         },
         "compressing": "Bilder werden komprimiert...",
         "compressed_info": "{count} Dateien komprimiert, {saved} gespart",
-        "files_too_large": "{count} Datei(en) sind zu groß zum Hochladen (max. {maxSize}): {files}"
+        "files_too_large": "{count} Datei(en) sind zu groß zum Hochladen (max. {maxSize}): {files}",
+        "no_logos_found": "Keine Logos gefunden. Laden Sie Bilder hoch und markieren Sie sie als Typ 'Logo'."
     },
     "brands": {
         "title": "Markenverwaltung",
@@ -5254,7 +5748,8 @@
                 "select_calendar": "Kalender auswählen",
                 "default": "Standard",
                 "primary": "Primär",
-                "synced": "Mit Kalender synchronisiert"
+                "synced": "Mit Kalender synchronisiert",
+                "not_connected": "Google Calendar-Konfiguration erforderlich"
             },
             "actions": {
                 "cancel": "Abbrechen",
@@ -5281,7 +5776,9 @@
                     "declined": "Abgelehnt",
                     "tentative": "Mit Vorbehalt",
                     "needsAction": "Aktion erforderlich"
-                }
+                },
+                "enable_sync_first": "Aktivieren Sie die Kalendersynchronisierung",
+                "not_connected": "Google Calendar-Konfiguration erforderlich"
             },
             "zoom": {
                 "include_zoom": "Zoom-Meeting hinzufügen",
@@ -5291,7 +5788,9 @@
                 "attendees": "Eingeladene Gäste",
                 "add_email": "E-Mail eingeben...",
                 "add_guest": "Hinzufügen",
-                "attendees_hint": "Gäste erhalten eine Einladung mit dem Meeting-Link"
+                "attendees_hint": "Gäste erhalten eine Einladung mit dem Meeting-Link",
+                "enable_sync_first": "Aktivieren Sie die Kalendersynchronisierung",
+                "not_connected": "Zoom-Konfiguration erforderlich"
             },
             "empty": {
                 "button": "Erste Aufgabe hinzufügen",
@@ -5436,7 +5935,12 @@
                 "prospect": "Interessent",
                 "client": "Kunde",
                 "dormant": "Inaktiv",
-                "archived": "Archiviert"
+                "archived": "Archiviert",
+                "contacted": "Kontaktiert",
+                "customer": "Kunde",
+                "new": "Neu",
+                "qualified": "Qualifiziert",
+                "unqualified": "Nicht qualifiziert"
             },
             "title": "Kontakte",
             "leads": "Leads",
@@ -5474,7 +5978,8 @@
                 "notes": "Notizen",
                 "tags": "Tags",
                 "owner": "Betreuer",
-                "email_required": "E-Mail *"
+                "email_required": "E-Mail *",
+                "score": "Score"
             },
             "tabs": {
                 "overview": "Übersicht",
@@ -5492,7 +5997,17 @@
             },
             "deleted": "Kontakt gelöscht",
             "created": "Kontakt erstellt",
-            "updated": "Kontakt aktualisiert"
+            "updated": "Kontakt aktualisiert",
+            "activity_history": "Aktivitätsverlauf",
+            "by": "von",
+            "no_activities": "Kein Aktivitätsverlauf",
+            "sections": {
+                "contact_details": "Kontaktdaten",
+                "email_lists": "E-Mail-Listen",
+                "marketing_data": "Marketingdaten",
+                "open_deals": "Offene Deals",
+                "sms_lists": "SMS-Listen"
+            }
         },
         "companies": {
             "title_page": "CRM Firmen",
@@ -5693,7 +6208,8 @@
             "deleted": "Aufgabe gelöscht",
             "created": "Aufgabe erstellt",
             "updated": "Aufgabe aktualisiert",
-            "completed": "Aufgabe erledigt"
+            "completed": "Aufgabe erledigt",
+            "empty_contact": "Keine Aufgaben für diesen Kontakt"
         },
         "activities": {
             "title": "Aktivitäten",
@@ -5720,19 +6236,25 @@
                 "ae_address_list": "AE-Adressliste",
                 "email_opened": "E-Mail geöffnet",
                 "status_change_lead_to_prospect_scoring": "Status geändert von Lead zu Interessent (automatisch durch Scoring)",
-                "system": "System"
+                "system": "System",
+                "contact_created": "Kontakt erstellt"
             },
             "created_by": "Von",
             "system": "System",
             "empty": "Keine Aktivitäten",
             "history": "Aktivitätsverlauf",
-            "by_system": "vom System"
+            "by_system": "vom System",
+            "actions": {
+                "add": "Hinzufügen"
+            }
         },
         "import": {
             "title_page": "CRM Import",
             "upload": {
                 "loading": "Lädt...",
-                "select_file": "Datei auswählen"
+                "select_file": "Datei auswählen",
+                "description": "Laden Sie eine CSV-Datei mit Kontakten hoch. Pflichtfeld: E-Mail.",
+                "title_upload": "CSV-Datei hochladen"
             },
             "mapping": {
                 "title": "Feldzuordnung",
@@ -5968,7 +6490,10 @@
                 "report": "Bericht",
                 "duplicate": "Duplizieren",
                 "delete": "Löschen",
-                "delete_confirm": "Sind Sie sicher, dass Sie diese Sequenz löschen möchten? Alle Schritte werden gelöscht."
+                "delete_confirm": "Sind Sie sicher, dass Sie diese Sequenz löschen möchten? Alle Schritte werden gelöscht.",
+                "add_step": "Schritt hinzufügen",
+                "create": "Sequenz erstellen",
+                "save_changes": "Änderungen speichern"
             },
             "banner": {
                 "title": "Automatische Follow-up Sequenzen",
@@ -5980,7 +6505,51 @@
                 "button": "Erste Sequenz erstellen"
             },
             "steps_count": "{count} Schritte",
-            "active_enrollments": "{count} aktiv"
+            "active_enrollments": "{count} aktiv",
+            "delay": {
+                "days": "Tage",
+                "hours": "Std.",
+                "immediate": "Sofort",
+                "label": "Verzögerung:"
+            },
+            "empty_steps": "Fügen Sie den ersten Schritt zur Sequenz hinzu",
+            "fields": {
+                "description": "Beschreibung (optional)",
+                "description_placeholder": "Beschreiben Sie das Ziel dieser Sequenz...",
+                "is_active": "Sequenz aktiv",
+                "name": "Name der Sequenz",
+                "trigger": "Auslöser"
+            },
+            "priorities": {
+                "high": "Hoch",
+                "low": "Niedrig",
+                "medium": "Mittel"
+            },
+            "sections": {
+                "basic_info": "Grundlegende Informationen",
+                "steps": "Sequenzschritte"
+            },
+            "step_fields": {
+                "action_type": "Aktionstyp",
+                "if_no_response": "Wenn keine Antwort",
+                "priority": "Priorität",
+                "task_description": "Aufgabenbeschreibung (optional)",
+                "task_description_placeholder": "Zusätzliche Details...",
+                "task_title": "Aufgabentitel",
+                "task_type": "Aufgabentyp"
+            },
+            "step_options": {
+                "continue": "Sequenz fortsetzen",
+                "escalate": "Eskalieren",
+                "stop": "Sequenz stoppen"
+            },
+            "task_types": {
+                "call": "Anruf",
+                "email": "E-Mail",
+                "follow_up": "Follow-up",
+                "meeting": "Meeting",
+                "task": "Aufgabe"
+            }
         },
         "reports": {
             "title": "Bericht: {name}",
@@ -6466,6 +7035,10 @@
                 "supported_models": "Unterstützte AI Vision-Modelle:",
                 "configure_ai": "KI konfigurieren"
             }
+        },
+        "global_search": {
+            "open_search": "Suchen (⌘K)",
+            "placeholder": "Suchen..."
         }
     },
     "onboarding": {
@@ -6528,7 +7101,7 @@
         }
     },
     "nmi": {
-        "title": "NetSendo Mail Infrastruktur",
+        "title": "NetSendo Mail Infrastructure",
         "subtitle": "Verwalten Sie dedizierte IP-Adressen und Absender-Reputation",
         "pool_details": "Pool-Details",
         "pool_dedicated": "Dediziert",
@@ -6606,7 +7179,61 @@
         "warming_started": "IP-Warming gestartet!",
         "dkim_generated": "DKIM-Schlüssel erfolgreich generiert!",
         "dkim_verified": "DKIM erfolgreich verifiziert!",
-        "dkim_not_verified": "DKIM-Eintrag nicht gefunden. Überprüfen Sie Ihre DNS-Konfiguration."
+        "dkim_not_verified": "DKIM-Eintrag nicht gefunden. Überprüfen Sie Ihre DNS-Konfiguration.",
+        "add_ip": {
+            "cancel": "Abbrechen",
+            "description": "Beschreibung (optional)",
+            "description_placeholder": "Optionale Notizen zu dieser IP",
+            "hostname": "Hostname",
+            "hostname_placeholder": "z.B. mail.example.com",
+            "ip_address": "IP-Adresse",
+            "ip_address_placeholder": "z.B. 192.168.1.100",
+            "submit": "IP hinzufügen",
+            "title": "IP-Adresse hinzufügen"
+        },
+        "delete_ip": {
+            "confirm": "Möchten Sie diese IP-Adresse wirklich löschen?",
+            "title": "IP-Adresse löschen",
+            "warning": "Diese Aktion kann nicht rückgängig gemacht werden."
+        },
+        "invalid_ip_address": "Ungültiges IP-Adressformat.",
+        "ip_added": "IP-Adresse wurde erfolgreich hinzugefügt!",
+        "ip_deleted": "IP-Adresse wurde gelöscht.",
+        "ip_has_mailboxes": "IP-Adressen mit zugewiesenen Postfächern können nicht gelöscht werden.",
+        "ip_provisioned": "IP-Adresse erfolgreich bestellt!",
+        "mta_status": {
+            "checking": "Überprüfung...",
+            "offline": "MTA Offline",
+            "online": "MTA Online",
+            "title": "MTA-Status"
+        },
+        "pool_max_ips_reached": "Dieser Pool hat die maximale Anzahl an IP-Adressen erreicht.",
+        "provider_not_configured": "Dieser Anbieter ist nicht konfiguriert. Fügen Sie einen API-Schlüssel in den Anbieter-Einstellungen hinzu.",
+        "provider_saved": "Anbieter-Einstellungen erfolgreich gespeichert!",
+        "providers": {
+            "api_key_placeholder": "API-Schlüssel eingeben...",
+            "configure": "Anbieter konfigurieren",
+            "configured": "Konfiguriert",
+            "connected": "Verbunden",
+            "digitalocean": "DigitalOcean",
+            "info": "API-Schlüssel werden sicher verschlüsselt. Anbieter dienen der automatischen Bestellung von IP-Adressen für die E-Mail-Infrastruktur.",
+            "linode": "Linode",
+            "not_configured": "Nicht konfiguriert",
+            "not_connected": "Nicht verbunden",
+            "settings_title": "IP-Anbieter-Einstellungen",
+            "vultr": "Vultr"
+        },
+        "provision": {
+            "cancel": "Abbrechen",
+            "no_providers": "Keine Anbieter konfiguriert. Klicken Sie auf „Anbieter konfigurieren“, um API-Schlüssel hinzuzufügen.",
+            "provider": "Anbieter",
+            "provisioning": "Wird bestellt...",
+            "region": "Region",
+            "select_provider": "Anbieter wählen",
+            "select_region": "Region wählen",
+            "submit": "IP bestellen",
+            "title": "IP aus der Cloud bestellen"
+        }
     },
     "high_confidence_data": "Hohe Datenqualität",
     "brain": {
@@ -6976,5 +7603,504 @@
             "topics_placeholder": "z. B. Produktneuheiten, Branchentipps, Case Studies"
         },
         "edit_title": "Titel bearbeiten"
+    },
+    "mailboxes": {
+        "add_first": "Erstes Postfach hinzufügen",
+        "add_new": "Postfach hinzufügen",
+        "click_for_details": "Klicken Sie, um die Fehlerdetails anzuzeigen",
+        "default": "Standard",
+        "delete": {
+            "confirm": "Möchten Sie das Postfach \"{name}\" wirklich löschen?",
+            "title": "Postfach löschen"
+        },
+        "empty": {
+            "description": "Fügen Sie ein Postfach hinzu, um mit dem E-Mail-Versand zu beginnen.",
+            "title": "Keine Postfächer"
+        },
+        "error_details": {
+            "title": "Details zum Verbindungsfehler"
+        },
+        "info": {
+            "gmail": "Gmail-API (OAuth 2.0) - sicherer Versand ohne via gmail.com",
+            "sendgrid": "SendGrid-API - API-Key auf sendgrid.com anfordern",
+            "smtp": "Eigener SMTP-Server oder E-Mail-Dienst (Mailgun, Amazon SES usw.)",
+            "title": "Anbieterinformationen"
+        },
+        "modal": {
+            "add_title": "Postfach hinzufügen",
+            "allowed_types": "Erlaubte Nachrichtentypen",
+            "broadcast_disabled": "Für Gmail nicht verfügbar",
+            "daily_limit": "Tägliches Versandlimit",
+            "edit_title": "Postfach bearbeiten",
+            "from_email": "Absenderadresse",
+            "from_email_placeholder": "absender{'@'}beispiel.de",
+            "from_name": "Absendername",
+            "from_name_placeholder": "z.B. Meine Firma",
+            "gmail_auto_email": "Die Absenderadresse (From Email) wird nach Abschluss der Verbindung automatisch auf die Adresse Ihres Google-Kontos gesetzt.",
+            "gmail_oauth_info": "Wir verwenden die offizielle Gmail-API. Die Versandlimits hängen von Ihrem Google-Konto ab (in der Regel 500/Tag für kostenlose Konten, 2000/Tag für Workspace).",
+            "go_to_integrations": "Zu den Integrationseinstellungen",
+            "google_integration_label": "Google-Integration auswählen",
+            "google_integration_placeholder": "-- Integration auswählen --",
+            "integration_changed_warning": "Sie haben die Integration geändert. Speichern Sie die Änderungen vor dem Verbinden.",
+            "integration_not_configured_warning": "Die Google-Integration ist nicht konfiguriert.",
+            "leave_empty": "leer lassen, um nicht zu ändern",
+            "min_interval": "Minimaler Abstand pro Benutzer",
+            "min_interval_desc": "Minimale Zeit in Sekunden zwischen Nachrichten, bevor die nächste Nachricht an denselben Benutzer gesendet werden kann.",
+            "name": "Postfachname",
+            "name_placeholder": "z.B. Hauptpostfach, Newsletter",
+            "no_integrations": "Keine aktiven Integrationen. Fügen Sie diese im Tab Integrationen hinzu.",
+            "no_limit": "Kein Limit",
+            "optional": "optional",
+            "provider": "Anbieter",
+            "reply_to": "Antwort an (Reply-To)",
+            "reply_to_placeholder": "antwort-an{'@'}beispiel.de (optional)",
+            "seconds": "Sekunden",
+            "select_integration_to_connect": "Wählen Sie eine Integration aus, um zu verbinden."
+        },
+        "notifications": {
+            "created": "Postfach wurde erstellt.",
+            "deleted": "Postfach wurde gelöscht.",
+            "set_default": "Postfach wurde als Standard festgelegt.",
+            "updated": "Postfach wurde aktualisiert."
+        },
+        "oauth": {
+            "connect_google": "Mit Google verbinden",
+            "connected": "Mit Google verbunden",
+            "disconnect": "Trennen",
+            "disconnected": "Google-Konto getrennt.",
+            "not_connected": "Nicht verbunden",
+            "save_first": "Speichern Sie das Postfach, um es mit einem Gmail-Konto verknüpfen zu können."
+        },
+        "reputation": {
+            "blacklist_name": "Blacklist",
+            "check_now": "Reputation prüfen",
+            "checking": "Prüfe...",
+            "clean": "Sauber",
+            "clean_label": "OK",
+            "critical": "Auf der Blacklist!",
+            "domain": "Domain",
+            "last_checked": "Zuletzt geprüft",
+            "listed": "Gefunden",
+            "listed_on": "Gefunden auf",
+            "lookup_url": "Prüfen / Entfernen",
+            "modal_title": "Domain-Reputation — Details",
+            "never_checked": "Nie geprüft",
+            "not_listed": "Nicht gefunden",
+            "severity": "Schweregrad",
+            "severity_critical": "Kritisch",
+            "severity_high": "Hoch",
+            "severity_low": "Niedrig",
+            "severity_medium": "Mittel",
+            "status": "Status",
+            "subtitle": "Status der Absenderdomain auf DNS-Blacklists",
+            "summary_clean": "Domain ist sauber — auf keiner Blacklist gefunden.",
+            "summary_critical": "ACHTUNG: Domain ist auf {count} kritischen Blacklist(s)! E-Mail-Zustellung könnte blockiert werden.",
+            "summary_warning": "Domain auf {count} Blacklist(s) mit niedriger/mittlerer Priorität gefunden.",
+            "title": "Domain-Reputation",
+            "unchecked": "Nicht geprüft",
+            "warning": "Warnung"
+        },
+        "sent_today": "Heute gesendet",
+        "set_as_default": "Als Standard festlegen",
+        "status": {
+            "active": "Aktiv",
+            "error": "Verbindungsfehler",
+            "inactive": "Inaktiv",
+            "not_tested": "Nicht getestet",
+            "pending_auth": "Autorisierung ausstehend"
+        },
+        "subtitle": "Verwalten Sie Postfächer für den E-Mail-Versand (SMTP, SendGrid, Gmail)",
+        "test_connection": "Verbindung testen",
+        "title": "Postfächer",
+        "types": {
+            "autoresponder": "Autoresponder (Warteschlange)",
+            "broadcast": "Einmalig (Broadcast)",
+            "system": "System"
+        },
+        "woocommerce": {
+            "add_store": "Shop hinzufügen",
+            "api_keys_help": "API-Schlüssel können Sie im WordPress-Panel generieren: WooCommerce → Einstellungen → Erweitert → REST API. Erstellen Sie einen neuen Schlüssel mit Leseberechtigung.",
+            "api_keys_title": "Wo finde ich die API-Schlüssel?",
+            "confirm_delete_store": "Möchten Sie diesen Shop wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.",
+            "confirm_disconnect": "Möchten Sie WooCommerce wirklich trennen?",
+            "connect": "WooCommerce-Shop verbinden",
+            "connected": "Mit WooCommerce verbunden",
+            "connection_failed": "Verbindung mit WooCommerce fehlgeschlagen",
+            "connection_success": "Erfolgreich mit WooCommerce verbunden",
+            "consumer_key": "Consumer Key",
+            "consumer_secret": "Consumer Secret",
+            "credentials_update_hint": "Leer lassen, um die aktuellen Zugangsdaten beizubehalten",
+            "currency": "Währung",
+            "default_set": "Standard-Shop wurde festgelegt",
+            "default_store": "Standard",
+            "delete_modal_message": "Möchten Sie den Shop \"{name}\" wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden und löscht alle mit diesem Shop verknüpften Daten.",
+            "delete_modal_title": "Shop löschen",
+            "delete_store": "Shop löschen",
+            "disconnect": "Trennen",
+            "disconnect_modal_message": "Möchten Sie den Shop \"{name}\" wirklich trennen? Der Shop bleibt gespeichert, aber die Verbindung wird deaktiviert.",
+            "disconnect_modal_title": "Shop trennen",
+            "disconnected": "WooCommerce wurde getrennt",
+            "edit_store": "Shop bearbeiten",
+            "feature_import": "Produkte importieren",
+            "feature_import_desc": "Fügen Sie Produkte aus dem Shop direkt in E-Mail-Vorlagen ein",
+            "feature_recently_viewed": "Zuletzt angesehen",
+            "feature_recently_viewed_desc": "Zeigen Sie Produkte an, die Ihre Abonnenten besucht haben",
+            "feature_sync": "Automatische Synchronisierung",
+            "feature_sync_desc": "Produktdaten sind immer aktuell",
+            "feature_templates": "Produktvorlagen",
+            "feature_templates_desc": "Erstellen Sie ansprechende Produktpräsentationen in E-Mails",
+            "features_title": "Was können Sie nach der Verbindung tun?",
+            "fill_all_fields": "Füllen Sie alle Felder aus",
+            "not_connected": "Nicht verbunden",
+            "open_store": "Shop öffnen",
+            "reconnect": "Erneut verbinden",
+            "reconnected": "Shop wurde erneut verbunden",
+            "save_settings": "Einstellungen speichern",
+            "select_store": "Shop auswählen",
+            "set_as_default": "Als Standard festlegen",
+            "store_added": "Shop wurde hinzugefügt",
+            "store_deleted": "Shop wurde gelöscht",
+            "store_name": "Shop-Name",
+            "store_name_help": "Ein sprechender Name zur Identifikation des Shops",
+            "store_name_placeholder": "z.B. Mein Haupt-Shop",
+            "store_not_found": "Shop wurde nicht gefunden",
+            "store_updated": "Shop wurde aktualisiert",
+            "store_url": "Shop-URL",
+            "store_url_exists": "Ein Shop mit dieser URL ist bereits verbunden",
+            "store_url_help": "Geben Sie die vollständige URL Ihres WooCommerce-Shops ein",
+            "store_url_placeholder": "https://ihr-shop.de",
+            "stores_empty": "Sie haben keine verbundenen WooCommerce-Shops",
+            "stores_empty_desc": "Fügen Sie Ihren ersten Shop hinzu, um Produkte in E-Mail-Vorlagen importieren zu können",
+            "stores_title": "Verbundene Shops",
+            "subtitle": "Verbinden Sie Ihren WooCommerce-Shop, um Produkte in E-Mail-Vorlagen zu importieren",
+            "test_connection": "Verbindung testen",
+            "test_failed": "Verbindung inaktiv",
+            "test_store": "Testen",
+            "test_success": "Verbindung aktiv",
+            "testing": "Wird getestet...",
+            "title": "WooCommerce-Integration",
+            "update_credentials": "Zugangsdaten aktualisieren",
+            "verified_at": "Verifiziert"
+        }
+    },
+    "mcp": {
+        "agent_prompt_content": "Sie sind ein KI-Assistent mit Zugriff auf NetSendo — eine E-Mail/SMS-Marketing-Plattform.\n\nVERFÜGBARE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLATZHALTER IM INHALT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - Abonnentendaten\n- [[!fname]] - Vorname im Vokativ (Polnisch)\n- [[unsubscribe_link]] - ERFORDERLICH in jeder E-Mail\n- [[manage]] - Link zur Verwaltung der Einstellungen\n- {'{'}{'{'}männlich|weiblich{'}'}{'}'}  - geschlechtsabhängige Form, z. B. {'{'}{'{'}Lieber|Liebe{'}'}{'}'} \n\nKAMPAGNEN-WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWICHTIG:\n- Verwenden Sie zu Beginn immer list_placeholders, um die verfügbaren Platzhalter zu kennen\n- Jede E-Mail MUSS [[unsubscribe_link]] enthalten\n- Vor dem Versand einer Kampagne MÜSSEN Sie Listen zuweisen (set_campaign_lists)",
+        "agent_prompt_description": "Kopieren Sie diesen Prompt in Ihren KI-Agenten, damit er NetSendo MCP effektiv nutzen kann. Der Prompt enthält Bedienungsanweisungen, eine Liste der verfügbaren Tools und Anwendungsbeispiele.",
+        "agent_prompt_label": "Technischer Prompt",
+        "agent_prompt_title": "Prompt für KI-Agenten",
+        "api_config_title": "API-Konfiguration",
+        "api_key_label": "API-Schlüssel",
+        "api_url_label": "NetSendo URL",
+        "clients": {
+            "claude": {
+                "description": "Vollständige Integration mit der Claude Desktop App"
+            },
+            "cursor": {
+                "description": "Integrierte MCP-Unterstützung in der IDE"
+            },
+            "vscode": {
+                "description": "GitHub Copilot Erweiterung"
+            }
+        },
+        "config_example": "Konfigurationsbeispiel",
+        "documentation": "Dokumentation",
+        "examples": {
+            "analyze_list": "Analysiere die Qualität meiner Kontaktliste",
+            "count_subscribers": "Wie viele Abonnenten habe ich auf der Liste Newsletter?",
+            "create_subscriber": "Füge jan{'@'}example.com zur Hauptliste hinzu",
+            "send_email": "Sende eine Willkommens-E-Mail an den neuen Abonnenten",
+            "show_lists": "Zeige mir alle Mailinglisten"
+        },
+        "examples_title": "Beispielbefehle",
+        "features": {
+            "ab_tests": {
+                "description": "Testen Sie verschiedene Nachrichtenvarianten und wählen Sie Gewinner automatisch aus.",
+                "title": "A/B-Tests"
+            },
+            "campaigns": {
+                "description": "Erstellen, planen und versenden Sie E-Mail- und SMS-Kampagnen mit Listenausschlüssen.",
+                "title": "E-Mail/SMS-Kampagnen"
+            },
+            "funnels": {
+                "description": "Erstellen Sie E-Mail-Sequenzen mit Triggern und zeitgesteuerten Schritten.",
+                "title": "Automatisierungs-Trichter"
+            },
+            "lists": {
+                "description": "Durchsuchen Sie Listen, rufen Sie Abonnenten aus Listen ab, verwalten Sie Tags.",
+                "title": "Verwaltung von Kontaktlisten"
+            },
+            "messaging": {
+                "description": "Senden Sie E-Mail-Nachrichten direkt aus der KI an Abonnenten.",
+                "title": "E-Mail-Versand"
+            },
+            "sms": {
+                "description": "Senden Sie SMS-Nachrichten über konfigurierte Anbieter.",
+                "title": "SMS-Versand"
+            },
+            "stats": {
+                "description": "Rufen Sie Statistiken, Instanzinformationen und eine schnelle Datenübersicht ab.",
+                "title": "Statistiken und Ressourcen"
+            },
+            "subscribers": {
+                "description": "Erstellen, bearbeiten, löschen und suchen Sie Abonnenten per Textbefehl.",
+                "title": "Abonnentenverwaltung"
+            },
+            "tags": {
+                "description": "Synchronisieren Sie Abonnenten-Tags, durchsuchen Sie verfügbare Tags.",
+                "title": "Tags und Segmentierung"
+            }
+        },
+        "features_title": "Funktionen",
+        "help_description": "Sehen Sie in unserer Dokumentation nach detaillierten Installations- und Konfigurationsanweisungen.",
+        "hero_description": "Der MCP Server ist die Brücke zwischen NetSendo und modernen KI-Assistenten wie Claude, Cursor oder VS Code Copilot. Sprechen Sie mit der KI über Ihre Abonnenten, Listen und Nachrichten — und die KI führt die Operationen für Sie aus.",
+        "hero_subtitle": "Lassen Sie KI-Assistenten Ihr NetSendo auf natürliche Weise verwalten",
+        "hero_title": "Model Context Protocol",
+        "how_it_works_description": "MCP (Model Context Protocol) ist ein offener Standard, der KI-Assistenten sicheren Zugriff auf externe Tools ermöglicht. Ihr Assistent verbindet sich über Docker mit dem MCP Server, der mit der NetSendo API kommuniziert.",
+        "how_it_works_title": "Wie funktioniert es?",
+        "installation_title": "Installation",
+        "local_description": "Für selbst gehostetes NetSendo mit Docker Compose.",
+        "local_docker": "Docker-Installation",
+        "local_setup_note": "Wichtig: Stellen Sie sicher, dass Sie bei einem der API-Schlüssel in den Einstellungen die Option \"Für MCP verwenden\" aktiviert haben. Der Server verwendet ihn automatisch.",
+        "manage_api_keys": "API-Schlüssel verwalten",
+        "mode_local": "Lokal (Docker)",
+        "mode_remote": "Remote-Installation",
+        "need_help": "Brauchen Sie Hilfe?",
+        "page_title": "MCP Server - KI-Integration",
+        "placeholder_email": "E-Mail-Adresse",
+        "placeholder_first_name": "Vorname des Abonnenten",
+        "placeholder_gender_example": "Lieber → für Männer, Liebe → für Frauen",
+        "placeholder_last_name": "Nachname",
+        "placeholder_manage": "Link zur Verwaltung der Einstellungen",
+        "placeholder_phone": "Telefonnummer",
+        "placeholder_unsubscribe": "Abmeldung von der Liste (ERFORDERLICH)",
+        "placeholder_vocative": "Vorname im Vokativ (Anna → Anno)",
+        "placeholders_description": "Verwenden Sie Platzhalter im Nachrichteninhalt, um jede E-Mail/SMS zu personalisieren. Sie werden automatisch durch die Abonnentendaten ersetzt.",
+        "placeholders_gender": "Geschlechtsabhängige Form",
+        "placeholders_standard": "Standard-Platzhalter",
+        "placeholders_system": "System (erforderlich)",
+        "placeholders_title": "Nachrichtenpersonalisierung",
+        "remote_description": "Kein Docker erforderlich. Node.js 18+ auf Ihrem Computer genügt.",
+        "remote_recommended": "Empfohlen",
+        "remote_setup_hint": "Verwenden Sie den unten generierten Befehl. Er enthält die Konfiguration Ihres API-Schlüssels.",
+        "replace_api_key": "Ersetzen Sie YOUR_API_KEY_HERE durch Ihren tatsächlichen API-Schlüssel",
+        "security_note": "Der API-Schlüssel gewährt Zugriff auf Ihr Konto. Bewahren Sie ihn sicher auf und geben Sie ihn nicht öffentlich weiter. Der MCP Server läuft lokal in Ihrer Docker-Umgebung.",
+        "security_title": "Sicherheit",
+        "steps": {
+            "add_env": {
+                "description": "Setzen Sie die Variable MCP_API_KEY mit Ihrem Schlüssel in der .env-Datei.",
+                "title": "Schlüssel zur .env hinzufügen"
+            },
+            "api_key": {
+                "description": "Gehen Sie zu Einstellungen → API-Schlüssel und generieren Sie einen neuen Schlüssel für MCP.",
+                "title": "API-Schlüssel erstellen"
+            },
+            "build": {
+                "description": "Führen Sie aus: docker compose build mcp",
+                "title": "Docker-Image bauen"
+            },
+            "configure": {
+                "description": "Fügen Sie die MCP-Konfiguration zu Claude Desktop, Cursor oder VS Code hinzu.",
+                "title": "KI-Client konfigurieren"
+            },
+            "configure_remote": {
+                "description": "Kopieren Sie die Konfiguration unten in Ihren KI-Client."
+            },
+            "install_node": {
+                "description": "Laden Sie Node.js 18+ von nodejs.org herunter und installieren Sie es (enthält npx).",
+                "title": "Node.js installieren"
+            }
+        },
+        "supported_clients": "Unterstützte Clients",
+        "test_connection_description": "Verwenden Sie diesen Endpoint in externen Anwendungen (KI-Assistenten), um die Verbindung zur NetSendo API zu testen.",
+        "test_connection_title": "Verbindungstest",
+        "test_curl_example": "curl-Beispiel",
+        "test_endpoint_label": "Test-Endpoint",
+        "test_success_hint": "Ein gültiger API-Schlüssel liefert JSON mit Kontoinformationen zurück",
+        "title": "MCP Server",
+        "tool_categories": {
+            "ab_tests": "A/B-Tests",
+            "account": "Konto",
+            "campaigns": "Kampagnen",
+            "funnels": "Automatisierungs-Trichter",
+            "lists": "Listen und Tags",
+            "messaging": "Nachrichten",
+            "subscribers": "Abonnenten"
+        },
+        "tools": {
+            "activate_funnel": "Funnel aktivieren",
+            "add_ab_variant": "Testvariante hinzufügen",
+            "add_funnel_step": "Schritt zum Funnel hinzufügen",
+            "create_ab_test": "A/B-Test erstellen",
+            "create_campaign": "Neue Kampagne erstellen",
+            "create_funnel": "Funnel erstellen",
+            "create_subscriber": "Neuen Abonnenten erstellen",
+            "delete_ab_test": "A/B-Test löschen",
+            "delete_campaign": "Kampagne löschen",
+            "delete_funnel": "Funnel löschen",
+            "delete_subscriber": "Abonnenten löschen",
+            "end_ab_test": "Test beenden",
+            "get_ab_test_results": "Testergebnisse abrufen",
+            "get_account_info": "Kontoinformationen abrufen",
+            "get_campaign": "Kampagnendetails abrufen",
+            "get_campaign_stats": "Kampagnenstatistiken abrufen",
+            "get_funnel": "Funnel-Details abrufen",
+            "get_funnel_stats": "Funnel-Statistiken abrufen",
+            "get_subscriber": "Abonnentendetails abrufen",
+            "list_ab_tests": "A/B-Tests auflisten",
+            "list_campaigns": "Kampagnen auflisten",
+            "list_contact_lists": "Kontaktlisten auflisten",
+            "list_funnels": "Funnels auflisten",
+            "list_placeholders": "Verfügbare Platzhalter auflisten",
+            "list_subscribers": "Abonnenten auflisten",
+            "list_tags": "Verfügbare Tags auflisten",
+            "pause_funnel": "Funnel pausieren",
+            "schedule_campaign": "Versand planen",
+            "send_campaign": "Kampagne senden",
+            "send_email": "E-Mail-Nachricht senden",
+            "send_sms": "SMS-Nachricht senden",
+            "set_campaign_exclusions": "Ausschlüsse festlegen",
+            "set_campaign_lists": "Empfängerlisten festlegen",
+            "start_ab_test": "Test starten",
+            "sync_subscriber_tags": "Abonnenten-Tags synchronisieren",
+            "test_connection": "API-Verbindung testen",
+            "update_campaign": "Kampagne aktualisieren",
+            "update_subscriber": "Abonnentendaten aktualisieren"
+        },
+        "tools_count": "{count} Tools über KI verfügbar",
+        "tools_title": "Verfügbare Tools"
+    },
+    "mcp_status": {
+        "api_key_missing": "MCP-API-Schlüssel fehlt",
+        "connected": "Verbunden",
+        "disconnected": "Getrennt",
+        "go_to_settings": "Zu den MCP-Einstellungen",
+        "last_tested": "Letzter Test",
+        "never_tested": "Nie getestet",
+        "not_configured": "Nicht konfiguriert",
+        "test_failed": "Verbindungstest fehlgeschlagen",
+        "test_now": "Jetzt testen",
+        "test_success": "Verbindungstest erfolgreich",
+        "testing": "Wird getestet...",
+        "title": "MCP-Serverstatus"
+    },
+    "names": {
+        "add_name": "Vornamen hinzufügen",
+        "all_countries": "Alle Länder",
+        "all_genders": "Alle Geschlechter",
+        "all_sources": "Alle Quellen",
+        "column_actions": "Aktionen",
+        "column_country": "Land",
+        "column_gender": "Geschlecht",
+        "column_name": "Vorname",
+        "column_source": "Quelle",
+        "column_vocative": "Vokativ",
+        "created": "Vorname wurde hinzugefügt",
+        "delete_confirm": "Möchten Sie den Vornamen \"{name}\" wirklich löschen?",
+        "delete_title": "Vornamen löschen",
+        "deleted": "Vorname wurde gelöscht",
+        "edit_name": "Vornamen bearbeiten",
+        "errors": {
+            "already_exists": "Dieser Vorname existiert bereits für das ausgewählte Land",
+            "cannot_delete_system": "Systemvornamen können nicht gelöscht werden",
+            "cannot_edit_system": "Systemvornamen können nicht bearbeitet werden"
+        },
+        "export": "Exportieren",
+        "field_country": "Land",
+        "field_file": "CSV-Datei",
+        "field_gender": "Geschlecht",
+        "field_name": "Vorname",
+        "field_vocative": "Vokativ",
+        "gender_female": "Weiblich",
+        "gender_male": "Männlich",
+        "gender_matching": {
+            "breakdown": "Aufschlüsselung",
+            "completed": "Geschlechtszuordnung abgeschlossen",
+            "country_label": "Land für die Namenserkennung",
+            "description": "Geschlecht automatisch anhand der Vornamen der Abonnenten erkennen und zuweisen",
+            "detected_gender": "Erkanntes Geschlecht",
+            "job_started": "Geschlechtszuordnung im Hintergrund gestartet",
+            "matched": "Zugeordnet",
+            "no_subscribers": "Keine Abonnenten zum Zuordnen",
+            "notification_message": "{matched} Abonnenten zugeordnet, {unmatched} konnten nicht zugeordnet werden",
+            "notification_title": "Geschlechtszuordnung abgeschlossen",
+            "preview": "Vorschau",
+            "preview_desc": "{count} Abonnenten werden aktualisiert",
+            "preview_title": "Vorschau der Geschlechtszuordnung",
+            "processing": "Verarbeitung",
+            "results_desc": "Die Geschlechtszuordnung wurde erfolgreich abgeschlossen",
+            "results_title": "Geschlechtszuordnung abgeschlossen",
+            "run_matching": "Zuordnung starten",
+            "showing_first_50": "Die ersten 50 Einträge werden angezeigt",
+            "stat_matchable": "Zuzuordnen",
+            "stat_total": "Alle Abonnenten",
+            "stat_unmatchable": "Nicht zuordenbar",
+            "stat_without_gender": "Ohne Geschlecht",
+            "title": "Automatische Geschlechtszuordnung",
+            "unmatched": "Nicht zugeordnet"
+        },
+        "gender_neutral": "Neutral",
+        "help_desc": "Die Namensdatenbank hilft NetSendo, das Geschlecht der Abonnenten anhand ihres Vornamens zu bestimmen. Dies ermöglicht die automatische grammatikalische Personalisierung in Nachrichten.",
+        "help_title": "Grammatikalische Personalisierung",
+        "import": "CSV importieren",
+        "import_desc": "Laden Sie eine CSV-Datei mit Namen hoch (Format: Name,Geschlecht pro Zeile)",
+        "import_success": "{imported} Namen importiert, {skipped} übersprungen",
+        "import_title": "Namen importieren",
+        "no_names": "Keine Namen gefunden",
+        "search_placeholder": "Namen suchen...",
+        "source_system": "System",
+        "source_user": "Eigene",
+        "stats_countries": "Länder",
+        "stats_system": "Systemnamen",
+        "stats_total": "Alle Namen",
+        "stats_user": "Eigene Namen",
+        "subtitle": "Verwalten Sie Namen für die grammatikalische Personalisierung",
+        "syntax_desc": "Verwenden Sie die Syntax {'{{'}männliche_Form|weibliche_Form{'}}'}. Das System wählt automatisch die richtige Form anhand des Geschlechts des Abonnenten (bekannt oder anhand des Namens erkannt).",
+        "syntax_result": "Verwendet die männliche oder weibliche Form",
+        "syntax_title": "Dynamische Syntax",
+        "title": "Namensdatenbank",
+        "updated": "Name wurde aktualisiert",
+        "vocative_help": "Vokativform des Namens für die Personalisierung [[!fname]]",
+        "vocative_placeholder": "z.B. Anno, Janie..."
+    },
+    "users": {
+        "add_first_user": "Ersten Benutzer hinzufügen",
+        "add_user": "Benutzer hinzufügen",
+        "cancel": "Abbrechen",
+        "cancel_invitation_confirm": "Möchten Sie diese Einladung wirklich stornieren?",
+        "delete_confirm": "Möchten Sie diesen Benutzer wirklich aus dem Team entfernen? Der Benutzer verliert den Zugriff auf alle Listen.",
+        "delete_user": "Benutzer löschen",
+        "info_text": "Als Administrator können Sie Benutzer einladen, die bei der Verwaltung von NetSendo helfen. Weisen Sie ihnen Berechtigungen für ausgewählte Mailinglisten zu.",
+        "info_title": "Team verwalten",
+        "manage_permissions": "Berechtigungen verwalten",
+        "modal": {
+            "add_title": "Benutzer zum Team hinzufügen",
+            "create": "Benutzer hinzufügen",
+            "email": "E-Mail-Adresse",
+            "list_permissions": "Listenberechtigungen (optional)",
+            "name": "Vollständiger Name",
+            "password": "Passwort",
+            "password_confirm": "Passwort bestätigen"
+        },
+        "no_lists_assigned": "Keine Listen zugewiesen",
+        "no_members": "Sie haben noch keine Benutzer in Ihrem Team",
+        "pending_invitations": "Ausstehende Einladungen",
+        "permission_edit": "Anzeigen und Bearbeiten",
+        "permission_view": "Nur Anzeigen",
+        "permissions_modal": {
+            "description": "Wählen Sie die Listen aus, auf die der Benutzer Zugriff haben soll, und legen Sie die Berechtigungsstufe fest.",
+            "save": "Berechtigungen speichern",
+            "title": "Benutzerberechtigungen"
+        },
+        "sent": "Gesendet",
+        "table": {
+            "actions": "Aktionen",
+            "added": "Hinzugefügt",
+            "email": "E-Mail",
+            "lists_access": "Listenzugriff",
+            "user": "Benutzer"
+        },
+        "team_members": "Teammitglieder",
+        "team_members_subtitle": "Benutzer mit Zugriff auf Ihr NetSendo-Konto",
+        "title": "Benutzerverwaltung"
     }
 }

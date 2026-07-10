@@ -134,4 +134,34 @@ class BounceProcessingService
             $error
         );
     }
+
+    /**
+     * Determine if an SMTP error is transient and worth retrying.
+     *
+     * Transient failures are provider-side throttling / rate limiting (most
+     * notably "421 Too many connections"), greylisting and other temporary 4xx
+     * conditions — they should be released back to the queue and retried rather
+     * than counted as a permanent delivery failure (issue #21).
+     *
+     * Permanent 5xx / hard-bounce errors are never transient.
+     */
+    public function isTransientError(string $error): bool
+    {
+        // Permanent (5xx) failures are never worth an automatic retry.
+        if ($this->isHardBounceError($error)) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b421\b'                             // service not available / too many connections
+            . '|\b45[0-2]\b'                       // 450/451/452 temporary failures & greylisting
+            . '|\b4\.[0-7]\.[0-9]\b'               // enhanced 4.x.x status codes
+            . '|too many connection'               // "421 Too many connections"
+            . '|reduce.*connection|connection.*limit|too many (?:concurrent|messages|recipients)'
+            . '|rate.?limit|throttl|slow down|try again|temporar'
+            . '|greylist|deferred|resources? temporarily'
+            . '|service (?:unavailable|not available)|please retry/i',
+            $error
+        );
+    }
 }

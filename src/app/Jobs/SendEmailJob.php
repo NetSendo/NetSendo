@@ -252,12 +252,41 @@ class SendEmailJob implements ShouldQueue
 
         } catch (\Exception $e) {
             $errorMsg = $e->getMessage();
+            $bounceService = app(BounceProcessingService::class);
+
+            // Intelligent retry for transient SMTP failures (issue #21).
+            // Throttling / connection-limit / greylisting responses (e.g. the
+            // "421 Too many connections" a rate-limited provider returns when the
+            // worker opens too many sessions at once) are transient: release the
+            // job back to the queue with a backoff delay so it is retried instead
+            // of being marked as a permanent failure. Permanent 5xx errors fall
+            // through to the bounce/fail path below.
+            if (config('netsendo.email.transient_retry', true)
+                && $this->attempts() < $this->tries
+                && $bounceService->isTransientError($errorMsg)
+            ) {
+                $base = (int) config('netsendo.email.transient_backoff_base', 15);
+                $jitter = (int) config('netsendo.email.transient_backoff_jitter', 15);
+                $delay = ($base * $this->attempts()) + ($jitter > 0 ? random_int(0, $jitter) : 0);
+
+                Log::warning("Transient SMTP error for {$this->subscriber->email} — releasing back to queue", [
+                    'attempt' => $this->attempts(),
+                    'max_tries' => $this->tries,
+                    'retry_in_seconds' => $delay,
+                    'error' => $errorMsg,
+                ]);
+
+                // Leave the queue entry as 'queued' (do NOT mark failed) so it is
+                // picked up again after the backoff delay.
+                $this->release($delay);
+
+                return;
+            }
+
             Log::error("Failed to send email to {$this->subscriber->email}: " . $errorMsg);
 
             // Detect inline SMTP bounce from error codes (5xx = hard bounce)
             try {
-                $bounceService = app(BounceProcessingService::class);
-
                 if ($bounceService->isHardBounceError($errorMsg)) {
                     Log::info("Inline hard bounce detected for {$this->subscriber->email}", [
                         'error' => $errorMsg,

@@ -27,7 +27,9 @@ const form = useForm({
     youtube_live_id: props.webinar.youtube_live_id || '',
     vimeo_id: props.webinar.vimeo_id || '',
     video_provider: props.webinar.video_provider
-        || (props.webinar.vimeo_id ? 'vimeo' : 'youtube'),
+        || (props.webinar.vimeo_id
+            ? 'vimeo'
+            : (props.webinar.type === 'live' ? 'youtube' : 'upload')),
     thumbnail_url: props.webinar.thumbnail_url || '',
     settings: props.webinar.settings || {},
 });
@@ -37,14 +39,20 @@ const statusUpdating = ref(false);
 
 const submit = () => {
     // Only persist the id for the selected provider so the player renders
-    // unambiguously (see watch.blade.php / Studio.vue).
+    // unambiguously from field presence (see watch.blade.php / Studio.vue).
     form.transform((data) => {
-        if (props.webinar.type === 'live') {
-            return data.video_provider === 'vimeo'
-                ? { ...data, youtube_live_id: '' }
-                : { ...data, vimeo_id: '' };
+        const d = { ...data };
+        if (d.video_provider === 'vimeo') {
+            d.youtube_live_id = '';
+            d.video_url = '';
+        } else if (d.video_provider === 'youtube') {
+            d.vimeo_id = '';
+            d.video_url = '';
+        } else {
+            d.youtube_live_id = '';
+            d.vimeo_id = '';
         }
-        return data;
+        return d;
     }).put(route('webinars.update', props.webinar.id));
 };
 
@@ -291,40 +299,44 @@ const getStatusColor = (status) => {
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ $t('webinars.edit.video_settings') }}</h3>
 
                         <div class="space-y-4">
-                            <template v-if="webinar.type === 'live'">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.video_provider') }}</label>
-                                    <select
-                                        v-model="form.video_provider"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    >
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.video_provider') }}</label>
+                                <select
+                                    v-model="form.video_provider"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                >
+                                    <template v-if="webinar.type === 'live'">
                                         <option value="youtube">{{ $t('webinars.edit.provider_youtube') }}</option>
                                         <option value="vimeo">{{ $t('webinars.edit.provider_vimeo') }}</option>
-                                    </select>
-                                </div>
+                                    </template>
+                                    <template v-else>
+                                        <option value="upload">{{ $t('webinars.edit.provider_upload') }}</option>
+                                        <option value="vimeo">{{ $t('webinars.edit.provider_vimeo') }}</option>
+                                    </template>
+                                </select>
+                            </div>
 
-                                <div v-if="form.video_provider === 'vimeo'">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.vimeo_id') }}</label>
-                                    <input
-                                        v-model="form.vimeo_id"
-                                        type="text"
-                                        placeholder="np. 76979871"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.vimeo_id_help') }}</p>
-                                </div>
+                            <div v-if="webinar.type === 'live' && form.video_provider === 'youtube'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.youtube_id') }}</label>
+                                <input
+                                    v-model="form.youtube_live_id"
+                                    type="text"
+                                    placeholder="np. dQw4w9WgXcQ"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.youtube_id_help') }}</p>
+                            </div>
 
-                                <div v-else>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.youtube_id') }}</label>
-                                    <input
-                                        v-model="form.youtube_live_id"
-                                        type="text"
-                                        placeholder="np. dQw4w9WgXcQ"
-                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.youtube_id_help') }}</p>
-                                </div>
-                            </template>
+                            <div v-else-if="form.video_provider === 'vimeo'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.vimeo_id') }}</label>
+                                <input
+                                    v-model="form.vimeo_id"
+                                    type="text"
+                                    placeholder="np. 76979871"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.edit.vimeo_id_help') }}</p>
+                            </div>
 
                             <div v-else>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.video_url') }}</label>

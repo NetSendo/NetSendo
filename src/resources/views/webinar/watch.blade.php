@@ -136,11 +136,12 @@
                 @endif
 
                 @php
-                    // Prefer Vimeo when explicitly selected, or when it's the only id present.
-                    $useVimeo = $webinar->vimeo_id && ($webinar->video_provider === 'vimeo' || empty($webinar->youtube_live_id));
+                    // Player selection is presence-based; the save flow (Create/Edit
+                    // transform) guarantees only one source id is set per webinar.
+                    $rendersVimeo = empty($webinar->youtube_live_id) && !empty($webinar->vimeo_id);
                 @endphp
                 <div id="video-player-container" class="absolute inset-0 {{ (!$shouldPlay && $sessionStartTime) || ($sessionEnded ?? false) ? 'hidden' : '' }}">
-                    @if($webinar->youtube_live_id && !$useVimeo)
+                    @if($webinar->youtube_live_id)
                         <div class="relative w-full h-full">
                             <div class="youtube-overlay" onclick="return false;"></div>
                             <iframe
@@ -152,7 +153,7 @@
                                 allowfullscreen
                             ></iframe>
                         </div>
-                    @elseif($useVimeo)
+                    @elseif($rendersVimeo)
                         <div class="relative w-full h-full">
                             <div class="youtube-overlay" onclick="return false;"></div>
                             <iframe
@@ -256,10 +257,88 @@
         </div>
     </div>
 
+    @if($rendersVimeo)
+        <script src="https://player.vimeo.com/api/player.js"></script>
+    @endif
     <script>
         // Session start time from server
         const sessionStartTime = @json($sessionStartTime);
         const shouldPlayInitially = @json($shouldPlay);
+        const videoSyncEnabled = @json($videoSyncEnabled ?? false);
+
+        // Evergreen sync: for a scheduled recording, a late joiner should resume at
+        // the elapsed offset (wall-clock since the session started), not from zero.
+        // Computed on the client so it stays accurate despite render/network delay.
+        function currentSyncOffset() {
+            if (!videoSyncEnabled || !sessionStartTime) return 0;
+            return Math.max(0, Math.floor((Date.now() - new Date(sessionStartTime).getTime()) / 1000));
+        }
+
+        // Unified video tracker: abstracts the native <video> (direct URL) and the
+        // Vimeo iframe (via the Vimeo Player SDK) so play/seek and attendance
+        // tracking work the same for both. Live YouTube has no trackable position.
+        const videoTracker = (function () {
+            const nativeVideo = document.getElementById('webinar-video');
+            if (nativeVideo) {
+                return {
+                    hasPlayer: true,
+                    currentTime: () => Math.floor(nativeVideo.currentTime || 0),
+                    duration: () => nativeVideo.duration || 0,
+                    play: () => nativeVideo.play().catch(e => console.log('Autoplay blocked:', e)),
+                    seek: (s) => new Promise((resolve) => {
+                        const apply = () => { nativeVideo.currentTime = s; resolve(); };
+                        // currentTime can only be set once metadata (duration) is known.
+                        if (nativeVideo.readyState >= 1) apply();
+                        else nativeVideo.addEventListener('loadedmetadata', apply, { once: true });
+                    }),
+                };
+            }
+
+            const vimeoIframe = document.getElementById('vimeo-player');
+            if (vimeoIframe && window.Vimeo && window.Vimeo.Player) {
+                const player = new window.Vimeo.Player(vimeoIframe);
+                let seconds = 0;
+                let duration = 0;
+                player.on('timeupdate', (data) => {
+                    seconds = data.seconds || 0;
+                    duration = data.duration || 0;
+                });
+                return {
+                    hasPlayer: true,
+                    currentTime: () => Math.floor(seconds),
+                    duration: () => duration,
+                    play: () => player.play().catch(e => console.log('Autoplay blocked:', e)),
+                    seek: (s) => player.setCurrentTime(s).catch(() => {}),
+                };
+            }
+
+            return { hasPlayer: false, currentTime: () => 0, duration: () => 0, play: () => {}, seek: () => Promise.resolve() };
+        })();
+
+        // Re-sync an evergreen recording forward when the viewer has fallen behind
+        // the schedule (tab throttling, buffering). Never seeks backward, and never
+        // past the end of the recording.
+        function resyncIfBehind() {
+            if (!videoSyncEnabled || !videoTracker.hasPlayer) return;
+            const expected = currentSyncOffset();
+            const duration = videoTracker.duration();
+            if (expected - videoTracker.currentTime() > 4 && (duration === 0 || expected < duration)) {
+                videoTracker.seek(expected);
+            }
+        }
+
+        // Start playback when the session is already live on initial load, seeking
+        // an evergreen recording to the current wall-clock offset first.
+        if (shouldPlayInitially) {
+            const offset = currentSyncOffset();
+            const ready = offset > 0 ? videoTracker.seek(offset) : Promise.resolve();
+            ready.then(() => videoTracker.play());
+        }
+
+        // Catch up as soon as the viewer returns to a backgrounded tab.
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) resyncIfBehind();
+        });
 
         // Countdown timer logic
         function updateCountdown() {
@@ -297,11 +376,8 @@
                 videoContainer.classList.remove('hidden');
             }
 
-            // Start video playback
-            const video = document.getElementById('webinar-video');
-            if (video) {
-                video.play().catch(e => console.log('Autoplay blocked:', e));
-            }
+            // Start video playback (native <video> or Vimeo player)
+            videoTracker.play();
 
             // Reload page to get live session data
             setTimeout(() => window.location.reload(), 1000);
@@ -335,18 +411,20 @@
 
         // Leave tracking
         window.addEventListener('beforeunload', function() {
-            const video = document.getElementById('webinar-video');
-            const currentTime = video ? Math.floor(video.currentTime) : 0;
-
             navigator.sendBeacon('{{ route('webinar.leave', [$webinar->slug, $registration->access_token]) }}', JSON.stringify({
-                video_time_seconds: currentTime
+                video_time_seconds: videoTracker.currentTime()
             }));
         });
 
         // Progress tracking every 30 seconds
         setInterval(function() {
-            const video = document.getElementById('webinar-video');
-            if (!video) return;
+            if (!videoTracker.hasPlayer) return;
+
+            // Keep evergreen recordings locked to the schedule clock.
+            resyncIfBehind();
+
+            const currentTime = videoTracker.currentTime();
+            const duration = videoTracker.duration();
 
             fetch('{{ route('webinar.progress', [$webinar->slug, $registration->access_token]) }}', {
                 method: 'POST',
@@ -355,8 +433,8 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    video_time_seconds: Math.floor(video.currentTime),
-                    percent: Math.round((video.currentTime / video.duration) * 100)
+                    video_time_seconds: currentTime,
+                    percent: duration > 0 ? Math.round((currentTime / duration) * 100) : 0
                 })
             });
         }, 30000);

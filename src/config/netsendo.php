@@ -134,6 +134,35 @@ return [
 
         // Timeout for fetching remote images (in seconds)
         'image_fetch_timeout' => env('EMAIL_IMAGE_FETCH_TIMEOUT', 10),
+
+        /*
+        | Transient SMTP failure handling (issue #21 — "421 Too many connections").
+        | Transient 4xx responses (throttling, connection/rate limits, greylisting)
+        | are released back to the queue with a backoff delay and retried instead
+        | of being marked as permanently failed. Permanent 5xx errors (invalid
+        | recipient, mailbox not found) still fail immediately.
+        */
+        'transient_retry' => env('EMAIL_TRANSIENT_RETRY', true),
+
+        // Base backoff in seconds. Actual delay = base * attempt + random jitter,
+        // so the first retry waits ~base..base+jitter, the second ~2*base.., etc.
+        'transient_backoff_base' => env('EMAIL_TRANSIENT_BACKOFF_BASE', 15),
+
+        // Upper bound (seconds) of the random jitter added to each backoff, so
+        // retries from the same burst don't all reconnect at the same instant.
+        'transient_backoff_jitter' => env('EMAIL_TRANSIENT_BACKOFF_JITTER', 15),
+
+        /*
+        | Staggered dispatch: spread each cron run's sends across the sending
+        | window instead of dispatching them all at once. Dispatching the whole
+        | minute's allowance simultaneously opens a burst of concurrent SMTP
+        | connections, which many providers reject with "421 Too many connections".
+        */
+        'stagger_sends' => env('EMAIL_STAGGER_SENDS', true),
+
+        // Window (seconds) across which a minute's worth of sends is spread.
+        // Kept just under 60 so a run finishes before the next cron tick.
+        'stagger_window_seconds' => env('EMAIL_STAGGER_WINDOW', 55),
     ],
 
     /*

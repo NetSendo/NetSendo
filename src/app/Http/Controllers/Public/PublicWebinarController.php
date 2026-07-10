@@ -142,6 +142,15 @@ class PublicWebinarController extends Controller
         // Check if replay is available
         $hasReplay = !empty($webinar->video_url);
 
+        // Evergreen sync: auto/hybrid webinars play a recording tied to the session
+        // clock, so a late joiner resumes at the elapsed offset (computed on the
+        // client from sessionStartTime) instead of restarting. Live streams are
+        // never seeked.
+        $videoSyncEnabled = !$isLive
+            && in_array($webinar->type, [Webinar::TYPE_AUTO, Webinar::TYPE_HYBRID], true)
+            && $sessionStartTime !== null
+            && (!empty($webinar->video_url) || !empty($webinar->vimeo_id));
+
         // Get registration's timezone for display
         $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
 
@@ -158,6 +167,7 @@ class PublicWebinarController extends Controller
             'shouldPlay' => $shouldPlay,
             'sessionEnded' => $sessionEnded,
             'hasReplay' => $hasReplay,
+            'videoSyncEnabled' => $videoSyncEnabled,
             'registrationTimezone' => $registrationTimezone,
         ]);
     }

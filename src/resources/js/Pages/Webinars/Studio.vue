@@ -32,10 +32,8 @@ const vimeoEmbedUrl = computed(() => {
     return `https://player.vimeo.com/video/${id}?${params.toString()}`;
 });
 
-// Prefer Vimeo when explicitly selected, or when it's the only id present.
-const useVimeo = computed(() =>
-    !!props.webinar.vimeo_id && (props.webinar.video_provider === 'vimeo' || !props.webinar.youtube_live_id)
-);
+// Player selection is presence-based (the save flow persists only one source id).
+const useVimeo = computed(() => !props.webinar.youtube_live_id && !!props.webinar.vimeo_id);
 
 // Fetch dashboard data periodically
 const fetchDashboardData = async () => {

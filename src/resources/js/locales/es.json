@@ -294,7 +294,22 @@
         "source_placeholder": "Escriba o pegue el código HTML...",
         "status": "Estado",
         "name": "Nombre",
-        "characters": "caracteres"
+        "characters": "caracteres",
+        "browse_logos": "Insertar logo desde la biblioteca",
+        "browse_media": "Explorar biblioteca de medios",
+        "change": "Cambiar",
+        "clear_selection": "Deseleccionar todo",
+        "default": "Predeterminado",
+        "duplicate": "Duplicar",
+        "email": "Email",
+        "errors": "Errores",
+        "hide": "Ocultar",
+        "optional": "opcional",
+        "processing": "Procesando...",
+        "search_placeholder": "Buscar...",
+        "selected_of": "seleccionados de",
+        "show": "Mostrar",
+        "view_all": "Ver todo"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -515,7 +530,17 @@
         "text_transform_uppercase": "MAYÚSCULAS",
         "text_transform_lowercase": "minúsculas",
         "text_transform_capitalize": "Primera Mayúscula",
-        "clear_text_transform": "Normal"
+        "clear_text_transform": "Normal",
+        "emoji_categories": {
+            "business": "Negocios",
+            "faces": "Caras",
+            "gestures": "Gestos",
+            "hearts": "Corazones",
+            "nature": "Naturaleza",
+            "symbols": "Símbolos"
+        },
+        "refresh": "Actualizar",
+        "refresh_preview": "Actualizar vista previa"
     },
     "marketplace": {
         "title": "Marketplace",
@@ -778,6 +803,10 @@
             "ai": {
                 "title": "IA e Investigación",
                 "desc": "Herramientas de inteligencia"
+            },
+            "analytics": {
+                "desc": "Mida los resultados",
+                "title": "Analítica"
             }
         },
         "request_title": "¿Necesita una integración específica?",
@@ -1256,7 +1285,9 @@
             "last_7_days": "Últimos 7 días",
             "sent": "Enviado",
             "subscribers": "Suscriptores",
-            "opens": "Aperturas"
+            "opens": "Aperturas",
+            "empty_description": "Los datos de actividad aparecerán después del primer envío.",
+            "empty_title": "Sin datos"
         },
         "quick_actions": {
             "title": "Acciones rápidas",
@@ -1281,7 +1312,10 @@
                 "sent": "Enviado",
                 "scheduled": "Programado",
                 "draft": "Borrador"
-            }
+            },
+            "create_first": "Crear mensaje",
+            "empty_description": "Crea tu primer mensaje para verlo aquí.",
+            "empty_title": "Sin campañas"
         },
         "cron": {
             "status_title": "⏰ Estado de CRON",
@@ -1295,7 +1329,13 @@
                 "sent_emails": "Correos enviados",
                 "errors": "Errores",
                 "last_run": "Última ejecución"
-            }
+            },
+            "not_configured_warning": "⚠️ ¡CRON no está configurado! Los mensajes programados no se enviarán automáticamente.",
+            "see_instructions": "Ver instrucciones →"
+        },
+        "clock": {
+            "timezone_label": "Zona horaria",
+            "title": "Hora actual"
         }
     },
     "mailing_lists": {
@@ -1343,7 +1383,8 @@
             "groups_tags": "Grupo / Etiquetas",
             "subscribers": "Suscriptores",
             "created_at": "Creado el",
-            "actions": "Acciones"
+            "actions": "Acciones",
+            "list_id": "ID de la lista"
         },
         "delete_modal": {
             "title": "Eliminar lista \"{name}\"",
@@ -1505,8 +1546,24 @@
                 "test_webhook": "Enviar webhook de prueba",
                 "endpoint_section": "Endpoint de suscripción",
                 "endpoint_desc": "Usa esta URL para añadir suscriptores desde fuentes externas"
-            }
-        }
+            },
+            "delete_unconfirmed_after_days": "Eliminar después de",
+            "delete_unconfirmed_after_days_help": "Las direcciones no confirmadas se eliminarán automáticamente transcurrido este tiempo",
+            "delete_unconfirmed_days_label": "días",
+            "headers_help": "Sobrescriba aquí los encabezados globales List-Unsubscribe.",
+            "headers_inherit_help": "Deje en blanco para usar la configuración global.",
+            "headers_section": "Encabezados de verificación / Anti-Spam",
+            "insert_template": "Insertar plantilla",
+            "reset_autoresponders": "Reiniciar el autoresponder al volver a suscribirse",
+            "reset_autoresponders_desc": "Cuando un suscriptor vuelva a suscribirse a la lista, elimine las entradas anteriores de la cola y envíe el autoresponder desde el principio.",
+            "resubscription_behavior": "Comportamiento al volver a suscribirse",
+            "resubscription_behavior_desc": "Determina qué ocurre con la fecha de suscripción cuando un suscriptor activo intenta suscribirse de nuevo. A los antiguos suscriptores (dados de baja/eliminados) siempre se les reinicia la fecha.",
+            "resubscription_keep_date": "Mantener la fecha de alta original",
+            "resubscription_reset_date": "Reiniciar la fecha de alta (la cola del autoresponder comienza de nuevo)"
+        },
+        "create_message": "Crear mensaje",
+        "default_settings_subtitle": "Configure los ajustes predeterminados para las nuevas listas de correo",
+        "view_subscribers": "Ver suscriptores"
     },
     "sms_lists": {
         "title": "Listas de SMS",
@@ -1539,7 +1596,8 @@
             "groups_tags": "Grupo / Etiquetas",
             "subscribers": "Suscriptores",
             "created_at": "Creado el",
-            "actions": "Acciones"
+            "actions": "Acciones",
+            "list_id": "ID de la lista"
         },
         "delete_modal": {
             "title": "Eliminar lista de SMS \"{name}\"",
@@ -1564,7 +1622,80 @@
             "always_copied": "Siempre copiado",
             "always_copied_list": "configuración de lista, grupo, etiquetas, configuración de programación de envío",
             "submit": "Copiar lista"
-        }
+        },
+        "clear_filters": "Limpiar filtros",
+        "create_list": "Crear lista",
+        "create_sms": "Crear SMS",
+        "create_subtitle": "Crea un nuevo grupo de destinatarios para tus campañas de SMS",
+        "create_title": "Nueva lista de SMS",
+        "edit_subtitle": "Actualiza los datos de la lista \"{name}\"",
+        "edit_title": "Editar lista de SMS",
+        "empty_description": "Crea tu primera lista para empezar a recopilar números.",
+        "empty_title": "No hay listas de SMS",
+        "grid_view": "Vista de cuadrícula",
+        "list_view": "Vista de lista",
+        "private": "Privada",
+        "public": "Pública",
+        "settings": {
+            "advanced": {
+                "block_signups": "Bloquear nuevas suscripciones",
+                "block_signups_desc": "Bloquea temporalmente la posibilidad de suscribirse a la lista",
+                "coregistration_section": "Co-registro",
+                "limits_section": "Límites y restricciones",
+                "max_subscribers": "Número máximo de suscriptores",
+                "max_subscribers_help": "Deja 0 para no aplicar límite",
+                "no_parent": "-- Sin lista principal --",
+                "parent_list": "Lista principal",
+                "parent_list_desc": "Los suscriptores de esta lista se copiarán automáticamente a la lista principal",
+                "sync_on_subscribe": "Sincronizar al suscribirse",
+                "sync_on_unsubscribe": "Sincronizar al darse de baja"
+            },
+            "advanced_section": "Avanzado",
+            "cron_disabled": "Envío desactivado",
+            "cron_from": "Desde:",
+            "cron_limit_help": "Deja el campo vacío para usar el límite global.",
+            "cron_limit_label": "Límite de SMS / minuto (para esta lista)",
+            "cron_limit_placeholder": "ej. 50 (vacío = usar el global)",
+            "cron_section": "⏰ Programación de envío de SMS",
+            "cron_to": "Hasta:",
+            "integration": {
+                "api_key_desc": "Usa esta clave para integraciones con sistemas externos",
+                "api_key_label": "Clave API",
+                "api_key_section": "Clave API de la lista de SMS",
+                "copied": "¡Copiado!",
+                "copy_key": "Copiar",
+                "endpoint_desc": "Usa esta URL para añadir números desde fuentes externas",
+                "endpoint_section": "Endpoint de suscripción SMS",
+                "event_subscribe": "Nueva suscripción",
+                "event_unsubscribe": "Baja",
+                "event_update": "Actualización de datos",
+                "generate_key": "Generar nueva clave",
+                "list_id_label": "ID de la lista",
+                "no_api_key": "La clave API aún no se ha generado",
+                "test_webhook": "Enviar webhook de prueba",
+                "title": "Integración API (SMS)",
+                "webhook_events": "Eventos a enviar",
+                "webhook_section": "Webhooks",
+                "webhook_url": "URL del webhook",
+                "webhook_url_placeholder": "https://tu-sitio.com/webhook"
+            },
+            "tabs": {
+                "advanced": "Avanzado",
+                "cron": "Programación (CRON)",
+                "integration": "Integración"
+            },
+            "use_custom_cron": "Configuración CRON propia",
+            "use_custom_cron_desc": "Desactivado = usar la configuración global. Activado = define una programación propia para esta lista de SMS.",
+            "using_global_cron": "Estás usando la configuración global de CRON",
+            "weekly_schedule": "Programación semanal"
+        },
+        "show_title": "Detalles de la lista",
+        "stats_title": "Estadísticas",
+        "tabs": {
+            "general": "General",
+            "settings": "Configuración"
+        },
+        "view_subscribers": "Ver suscriptores"
     },
     "sms": {
         "title": "Campañas SMS",
@@ -1621,7 +1752,10 @@
             "scheduling": "Programación",
             "schedule_now": "Enviar ahora",
             "schedule_later": "Programar para más tarde",
-            "datetime": "Fecha y hora"
+            "datetime": "Fecha y hora",
+            "provider": "Remitente SMS",
+            "provider_auto": "Automático (predeterminado)",
+            "provider_available": "Remitentes disponibles"
         },
         "actions": {
             "save_draft": "Guardar borrador",
@@ -1641,6 +1775,69 @@
             "sending": "Enviando...",
             "success": "¡SMS de prueba enviado con éxito!",
             "error": "Error al enviar el SMS de prueba."
+        },
+        "ai_assistant": {
+            "chars": "caracteres",
+            "count_one": "1 propuesta",
+            "count_three": "3 propuestas",
+            "describe_content": "Describa qué desea generar",
+            "error_generating": "Se produjo un error al generar el contenido.",
+            "generate": "Generar contenido",
+            "generating": "Generando...",
+            "no_models_available": "No hay integraciones de IA configuradas. Configúrelas en Ajustes.",
+            "placeholder": "ej. Promoción -30% en todos los productos, expira hoy...",
+            "placeholders": {
+                "custom_title": "Campos personalizados (elegir)",
+                "no_custom": "No hay campos personalizados.",
+                "section_title": "Personalización (inserciones)",
+                "special_title": "Inserciones especiales",
+                "standard_title": "Campos estándar (siempre activos)"
+            },
+            "prompts": {
+                "discount_code": "Código de descuento",
+                "event_notify": "Notificación de evento",
+                "order_confirm": "Confirmación de pedido",
+                "promo_reminder": "Recordatorio de promoción"
+            },
+            "quick_prompts": "Ideas rápidas",
+            "segments": "SMS",
+            "select_count": "¿Cuántas propuestas?",
+            "select_model": "Modelo de IA",
+            "select_tone": "Elige el tono",
+            "subtitle": "Genera el contenido del SMS con ayuda de la IA",
+            "suggestions": "Propuestas",
+            "title": "Asistente de IA para SMS",
+            "tones": {
+                "casual": "Informal",
+                "formal": "Formal",
+                "persuasive": "Persuasivo"
+            },
+            "use_this": "Usar este contenido",
+            "voice": {
+                "listening": "Escuchando...",
+                "start": "Dictar por voz",
+                "stop": "Detener grabación"
+            }
+        },
+        "inserts": {
+            "custom": "Personalizadas",
+            "insert_variable": "Insertar variable",
+            "standard": "Estándar",
+            "title": "Inserciones"
+        },
+        "preview": {
+            "info": "La vista previa incluye los datos del destinatario seleccionado.",
+            "no_results": "Sin resultados",
+            "no_subscriber": "Ninguno (inserciones sin procesar)",
+            "refresh": "Actualizar vista previa",
+            "search_placeholder": "Buscar destinatario...",
+            "select_subscriber": "Selecciona un destinatario para la vista previa",
+            "title": "Vista previa con datos"
+        },
+        "provider_source": {
+            "explicit": "Seleccionado manualmente",
+            "global": "Global predeterminado",
+            "list": "De la configuración de la lista"
         }
     },
     "messages": {
@@ -1742,7 +1939,9 @@
                 "inactivity": "Inactividad",
                 "page_visit": "Visita a la página",
                 "custom": "Acción personalizada (etiqueta)",
-                "recent_subscribers": "Registros recientes"
+                "recent_subscribers": "Registros recientes",
+                "not_opened_message": "No abrieron el mensaje",
+                "opened_message": "Abrieron el mensaje"
             },
             "desc": {
                 "none": "El mensaje no se disparará automáticamente",
@@ -1752,7 +1951,9 @@
                 "inactivity": "Enviar cuando el suscriptor está inactivo",
                 "page_visit": "Enviar cuando el suscriptor visita una página",
                 "custom": "Enviar cuando se añade una etiqueta específica",
-                "recent_subscribers": "Enviar solo a personas que se registraron en los últimos X días"
+                "recent_subscribers": "Enviar solo a personas que se registraron en los últimos X días",
+                "not_opened_message": "No enviar a las personas que abrieron el mensaje seleccionado",
+                "opened_message": "Enviar a las personas que abrieron el mensaje seleccionado"
             },
             "config": {
                 "inactive_days": "Días de inactividad",
@@ -1762,7 +1963,12 @@
                 "select_tag": "-- Seleccionar etiqueta --",
                 "no_config_needed": "Este disparador no requiere configuración adicional",
                 "recent_days": "Días desde el registro",
-                "recent_days_help": "Use el deslizador o ingrese un número manualmente (1-365 días)"
+                "recent_days_help": "Use el deslizador o ingrese un número manualmente (1-365 días)",
+                "not_opened_message_help": "El mensaje NO se enviará a las personas que abrieron el mensaje seleccionado",
+                "opened_message_help": "El mensaje se enviará solo a las personas que abrieron el mensaje seleccionado",
+                "search_message_placeholder": "Buscar por asunto o ID...",
+                "select_message": "Seleccionar mensaje",
+                "select_message_placeholder": "-- Seleccionar mensaje --"
             }
         },
         "ab_testing": {
@@ -1940,7 +2146,8 @@
             "schedule": "Programar",
             "schedule_send": "Programar envío",
             "activate": "Activar (Guardar)",
-            "test": "Probar"
+            "test": "Probar",
+            "select_datetime": "Seleccione la fecha y hora de envío"
         },
         "test": {
             "title": "Enviar correo de prueba",
@@ -2027,7 +2234,10 @@
                 "queued": "En cola",
                 "sent": "Enviado",
                 "failed": "Fallido",
-                "skipped": "Omitido"
+                "skipped": "Omitido",
+                "resend_error": "Ocurrió un error al reintentar el envío",
+                "resend_failed": "Reintentar",
+                "resending": "Enviando..."
             },
             "recipients": {
                 "title": "Lista de destinatarios",
@@ -2043,19 +2253,13 @@
                     "sent": "Enviado",
                     "failed": "Fallido",
                     "skipped": "Omitido"
-                }
+                },
+                "click_to_view_error": "Haga clic para ver el error completo",
+                "copied": "¡Copiado!",
+                "copy_error": "Copiar error",
+                "error_details": "Detalles del error"
             },
-            "add_to_list": {
-                "title": "Añadir a lista",
-                "actions": "Acciones",
-                "search": "Buscar listas...",
-                "select_list": "Seleccionar lista de destino",
-                "no_lists": "No hay listas disponibles",
-                "loading": "Cargando...",
-                "adding": "Añadiendo...",
-                "success": "Suscriptor añadido a la lista con éxito",
-                "error": "Error al añadir suscriptor a la lista"
-            },
+            "add_to_list": "Añadir a la lista",
             "actions": "Acciones",
             "search_email_or_url": "Buscar email o URL...",
             "add_to_list_btn": "Añadir a lista",
@@ -2068,7 +2272,16 @@
             "bulk_add_title": "Añadir a lista",
             "bulk_add_description": "{count} suscriptores únicos serán añadidos a la lista seleccionada",
             "bulk_add_button": "Añadir a lista",
-            "bulk_add_success": "Añadido a la lista \"{list}\""
+            "bulk_add_success": "Añadido a la lista \"{list}\"",
+            "read_time": {
+                "average": "Tiempo medio",
+                "distribution": "Distribución del tiempo de lectura",
+                "max": "Tiempo máx.",
+                "median": "Mediana",
+                "sessions": "Sesiones de lectura",
+                "time": "Tiempo",
+                "top_readers": "Mejores lectores"
+            }
         },
         "translations": {
             "title": "Versiones de idioma",
@@ -2097,7 +2310,8 @@
             "field_lname": "Apellido",
             "field_email": "Correo electrónico",
             "field_phone": "Teléfono",
-            "field_gender": "Género"
+            "field_gender": "Género",
+            "no_email_lists": "No hay listas de correo disponibles."
         },
         "ab_test_badge": "Prueba A/B",
         "ab_test_view_results": "Haz clic para ver resultados y gestionar el test A/B",
@@ -2108,7 +2322,29 @@
             "paused": "Pausado",
             "completed": "Completado",
             "cancelled": "Cancelado"
-        }
+        },
+        "attachments": {
+            "dropzone": "Arrastre archivos PDF aquí o haga clic para seleccionar",
+            "existing": "Adjuntos guardados",
+            "info": "Máximo {max} archivos, cada uno de hasta {size}",
+            "max_files": "Puede añadir un máximo de {count} adjuntos",
+            "max_size": "El tamaño máximo de archivo es {size}",
+            "new": "Nuevos adjuntos (por subir)",
+            "only_pdf": "Solo se permiten archivos PDF",
+            "ready": "Listo para subir",
+            "title": "Adjuntos PDF"
+        },
+        "has_pdf_attachments": "{count} adjunto(s) PDF",
+        "resend_button": "Reintentar envío",
+        "resend_confirm_description": "Enviar el mensaje a nuevos destinatarios",
+        "resend_confirm_title": "Reenviar mensaje",
+        "resend_error_title": "Error de envío",
+        "resend_new_recipients": "Nuevos destinatarios: {count}",
+        "resend_note_description": "El mensaje se enviará solo a las personas que aún no lo han recibido (p. ej., suscriptores recién incorporados). Quienes ya lo recibieron no lo recibirán de nuevo.",
+        "resend_note_title": "Nota",
+        "resend_success_title": "¡Envío programado!",
+        "resending": "Enviando...",
+        "scheduled_for": "Programado para"
     },
     "subscribers": {
         "title": "Suscriptores",
@@ -2237,7 +2473,9 @@
             "list": "Lista",
             "added_at": "Fecha de adición",
             "language": "Idioma",
-            "actions": "Acciones"
+            "actions": "Acciones",
+            "phone": "Teléfono",
+            "subscribed_at": "Fecha de alta"
         },
         "statuses": {
             "active": "Activo",
@@ -2246,14 +2484,146 @@
             "bounced": "Rebotado"
         },
         "empty_state": "No se encontraron suscriptores que coincidan con sus criterios.",
-        "confirm_delete": "¿Está seguro de que desea eliminar al suscriptor {email}?"
+        "confirm_delete": "¿Está seguro de que desea eliminar al suscriptor {email}?",
+        "add_to_crm": "Añadir al CRM",
+        "confirm_proceed": "Continuar",
+        "crm_add_failed": "No se pudo añadir el suscriptor al CRM.",
+        "crm_added_success": "El suscriptor se ha añadido al CRM como lead.",
+        "crm_already_exists": "Ya existe un contacto CRM para este suscriptor.",
+        "crm_log_activity": "Suscriptor añadido al CRM como lead",
+        "delete_modal": {
+            "delete_completely": "Eliminar por completo",
+            "description": "Elige de qué listas eliminar al suscriptor {email}",
+            "gdpr_description": "Elimina permanentemente todos los datos del suscriptor conforme al derecho al olvido.",
+            "gdpr_section": "Eliminación completa (GDPR)",
+            "gdpr_warning": "Esta operación es irreversible. Todos los datos se eliminarán permanentemente.",
+            "no_lists": "El suscriptor no pertenece a ninguna lista",
+            "remove_from_lists": "Eliminar de las listas",
+            "select_lists": "Listas a eliminar",
+            "title": "Eliminar suscriptor"
+        },
+        "items_per_page": "{count} por página",
+        "stats_total": "{total} suscriptores ({current} en la página) • {lists} listas",
+        "api_keys": {
+            "broadcast_disabled": "No disponible para Gmail",
+            "delete_confirm": "¿Está seguro de que desea eliminar esta clave API? Esta operación es irreversible.",
+            "docs": {
+                "text": "La documentación completa de la API está disponible en",
+                "title": "Documentación de la API"
+            },
+            "empty_text": "Aún no tiene claves API",
+            "empty_title": "No hay claves API",
+            "examples": {
+                "add_subscriber": "Añadir nuevo suscriptor",
+                "get_subscribers": "Obtener lista de suscriptores",
+                "title": "Ejemplo de uso"
+            },
+            "generate_first": "Generar su primera clave",
+            "generate_new": "Generar nueva clave",
+            "gmail_auto_email": "La dirección del remitente (From Email) se establecerá automáticamente con la dirección de su cuenta de Google al completar la conexión.",
+            "gmail_oauth_info": "Usamos la API oficial de Gmail. Los límites de envío dependen de su cuenta de Google (normalmente 500/día para cuentas gratuitas, 2000/día para Workspace).",
+            "go_to_integrations": "Ir a la configuración de integraciones",
+            "google_integration_label": "Seleccione la integración de Google",
+            "google_integration_placeholder": "-- Seleccione una integración --",
+            "integration_changed_warning": "Ha cambiado la integración. Guarde los cambios antes de conectar.",
+            "integration_not_configured_warning": "La integración de Google no está configurada.",
+            "modal": {
+                "cancel": "Cancelar",
+                "close": "Cerrar",
+                "copied": "Copiado",
+                "copy": "Copiar",
+                "expires_label": "Fecha de expiración (opcional)",
+                "generate": "Generar clave",
+                "hide": "Ocultar",
+                "key_label": "Su clave API:",
+                "name_label": "Nombre de la clave",
+                "name_placeholder": "ej. Integración CRM",
+                "permissions_label": "Permisos",
+                "show": "Mostrar",
+                "success_title": "¡Clave API creada!",
+                "title": "Generar nueva clave API",
+                "warning_text": "La clave se muestra solo una vez. Después de cerrar esta ventana, no podrá volver a verla.",
+                "warning_title": "¡Guarde esta clave ahora!"
+            },
+            "new_key": "Generar nueva clave",
+            "no_integrations": "No hay integraciones activas. Añádalas en la pestaña Integraciones.",
+            "permissions": {
+                "lists_read": "Listas (lectura)",
+                "subscribers_read": "Suscriptores (lectura)",
+                "subscribers_write": "Suscriptores (escritura)",
+                "tags_read": "Etiquetas (lectura)"
+            },
+            "select_integration_to_connect": "Seleccione una integración para conectar.",
+            "status": {
+                "expired": "expirado",
+                "never_used": "Nunca"
+            },
+            "subtitle": "Gestione claves API para integraciones externas",
+            "table": {
+                "actions": "Acciones",
+                "created": "Creado el",
+                "key": "Clave",
+                "last_used": "Último uso",
+                "name": "Nombre",
+                "permissions": "Permisos"
+            },
+            "title": "Claves API"
+        },
+        "click_for_details": "Haga clic para ver los detalles del error",
+        "error_details": {
+            "title": "Detalles del Error de Conexión"
+        },
+        "info": {
+            "gmail": "API de Gmail (OAuth 2.0) - envío seguro sin via gmail.com",
+            "sendgrid": "API de SendGrid - obtenga su clave API en sendgrid.com",
+            "smtp": "Servidor SMTP propio o servicio de correo (Mailgun, Amazon SES, etc.)",
+            "title": "Información de proveedores"
+        },
+        "oauth": {
+            "connect_google": "Conectar con Google",
+            "connected": "Conectado con Google",
+            "disconnect": "Desconectar",
+            "disconnected": "Cuenta de Google desconectada.",
+            "not_connected": "No conectado",
+            "save_first": "Guarde la cuenta para poder conectarla con una cuenta de Gmail."
+        },
+        "reputation": {
+            "blacklist_name": "Lista negra",
+            "check_now": "Verificar reputación",
+            "checking": "Verificando...",
+            "clean": "Limpio",
+            "clean_label": "OK",
+            "critical": "¡En lista negra!",
+            "domain": "Dominio",
+            "last_checked": "Última verificación",
+            "listed": "Detectado",
+            "listed_on": "Detectado en",
+            "lookup_url": "Verificar / Eliminar de la lista",
+            "modal_title": "Reputación del dominio — Detalles",
+            "never_checked": "Nunca verificado",
+            "not_listed": "No detectado",
+            "severity": "Severidad",
+            "severity_critical": "Crítica",
+            "severity_high": "Alta",
+            "severity_low": "Baja",
+            "severity_medium": "Media",
+            "status": "Estado",
+            "subtitle": "Estado del dominio del remitente en listas negras DNS",
+            "summary_clean": "El dominio está limpio — no detectado en ninguna lista negra.",
+            "summary_critical": "ATENCIÓN: ¡El dominio está en {count} lista(s) negra(s) crítica(s)! El envío de emails puede estar bloqueado.",
+            "summary_warning": "Dominio detectado en {count} lista(s) negra(s) de baja/media prioridad.",
+            "title": "Reputación del dominio",
+            "unchecked": "No verificado",
+            "warning": "Advertencia"
+        }
     },
     "groups": {
         "title": "Grupos de listas de correo",
         "add_new": "Añadir nuevo grupo",
         "edit_group": "Editar grupo",
         "fields": {
-            "name": "Nombre del grupo"
+            "name": "Nombre del grupo",
+            "parent": "Grupo superior"
         },
         "actions": {
             "create": "Crear",
@@ -2266,7 +2636,9 @@
             "lists_count": "Número de listas",
             "actions": "Acciones"
         },
-        "confirm_delete": "¿Está seguro de que desea eliminar este grupo? Las listas asignadas a él no se eliminarán."
+        "confirm_delete": "¿Está seguro de que desea eliminar este grupo? Las listas asignadas a él no se eliminarán.",
+        "no_parent": "— Ninguno (grupo principal) —",
+        "total_count": "Total: {count} grupos"
     },
     "tags": {
         "title": "Gestión de etiquetas",
@@ -2323,7 +2695,10 @@
                 "transactional": "Transaccional",
                 "notification": "Notificación"
             }
-        }
+        },
+        "confirm_delete": "¿Está seguro de que desea eliminar esta plantilla?",
+        "duplicate": "Duplicar plantilla",
+        "updated_at": "Actualizado"
     },
     "setup": {
         "title": "Instalación de NetSendo",
@@ -2382,7 +2757,8 @@
             "tokens_small_label": "Tokens (tareas pequeñas)",
             "tokens_small_help": "Para títulos, textos cortos (predeterminado: {default})",
             "tokens_large_label": "Tokens (tareas grandes)",
-            "tokens_large_help": "Para contenido de correo electrónico, plantillas (predeterminado: {default})"
+            "tokens_large_help": "Para contenido de correo electrónico, plantillas (predeterminado: {default})",
+            "optional": "opcional"
         },
         "delete": {
             "title": "Eliminar integración",
@@ -2400,7 +2776,8 @@
             "thinking": "Análisis profundo",
             "fast_and_cheap": "Rápido y barato",
             "reasoning": "Razonamiento",
-            "fast": "Rápido"
+            "fast": "Rápido",
+            "new": "Novedad"
         }
     },
     "welcome": {
@@ -2470,6 +2847,21 @@
             "link_sent": "Se ha enviado un nuevo enlace de verificación a la dirección de correo electrónico que proporcionó durante el registro.",
             "submit": "Reenviar correo de verificación",
             "logout": "Cerrar sesión"
+        },
+        "code": "Código",
+        "confirm": "Confirmar",
+        "enter_code_from_app": "Introduce el código de la aplicación de autenticación para confirmar tu identidad.",
+        "status_status": "Estado 2FA",
+        "two_factor_active": "2FA Activo",
+        "two_factor_inactive": "2FA Inactivo",
+        "two_factor_verification": "Verificación en dos pasos",
+        "verifying": "Verificando...",
+        "webhook_reset": {
+            "button": "Restablecer contraseña",
+            "content": "Introduce tu dirección de correo para restablecer la contraseña. El sistema procesará tu solicitud y recibirás la nueva contraseña por correo electrónico.",
+            "processing": "Procesando...",
+            "success": "Se ha generado una nueva contraseña y se ha enviado a tu dirección de correo.",
+            "title": "Restablecer contraseña"
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "Este nombre de campo está reservado por el sistema.",
@@ -2729,7 +3121,23 @@
         "select_variant": "Seleccionar variante",
         "variable_product": "Producto variable",
         "selected_variant": "Variante seleccionada",
-        "no_variants_found": "No se encontraron variantes"
+        "no_variants_found": "No se encontraron variantes",
+        "confirm_selection": "Confirmar selección",
+        "connect_woocommerce": "Conectar con WooCommerce",
+        "connect_woocommerce_hint": "Vaya a los ajustes de WooCommerce para conectar su tienda",
+        "default_currency": "EUR",
+        "default_price": "99,00",
+        "error_loading_products": "Error al cargar los productos",
+        "image": "Imagen",
+        "loading_products": "Cargando productos...",
+        "no_recently_viewed": "No hay productos vistos recientemente",
+        "product": "Producto",
+        "recently_viewed_hint": "Los productos aparecerán aquí después de instalar y activar NetSendo Pixel en su tienda",
+        "select_multiple_products": "Seleccione productos para la cuadrícula",
+        "select_one_product": "Seleccione un producto",
+        "selected_count": "Seleccionados: {count}",
+        "views": "visualizaciones",
+        "woocommerce_not_connected": "No conectado con WooCommerce"
     },
     "subscriber_card": {
         "title": "Ficha del Suscriptor",
@@ -3107,7 +3515,14 @@
             "status": "Estado",
             "source": "Fuente",
             "date": "Fecha"
-        }
+        },
+        "activate": "Activar",
+        "activated": "El formulario ha sido activado",
+        "deactivate": "Desactivar",
+        "deactivated": "El formulario ha sido desactivado",
+        "deleted": "El formulario ha sido eliminado",
+        "duplicated": "El formulario ha sido duplicado",
+        "saved_success": "El formulario ha sido guardado"
     },
     "funnels": {
         "title": "Embudos de venta",
@@ -3197,7 +3612,8 @@
             "trigger": "Disparador",
             "status": "Estado",
             "subscribers": "Suscriptores",
-            "completed": "Completados"
+            "completed": "Completados",
+            "actions": "Acciones"
         },
         "stats": {
             "total_subscribers": "Total suscriptores",
@@ -3212,6 +3628,12 @@
             "info": "Información del embudo",
             "no_data": "Sin datos disponibles",
             "no_data_desc": "Las estadísticas aparecerán cuando los suscriptores empiecen a pasar por el embudo."
+        },
+        "search_placeholder": "Buscar embudos...",
+        "status": {
+            "active": "Activo",
+            "draft": "Borrador",
+            "paused": "Pausado"
         }
     },
     "campaign_architect": {
@@ -3411,7 +3833,8 @@
             "total_rules": "Reglas Totales",
             "active_rules": "Reglas Activas",
             "executions_30d": "Ejecuciones (30d)",
-            "success_rate": "Tasa de Éxito"
+            "success_rate": "Tasa de Éxito",
+            "executions_24h": "Ejecuciones (24h)"
         },
         "score_segments": {
             "title": "Segmentos de Puntuación",
@@ -3466,7 +3889,8 @@
         "confirm_delete": "¿Desea eliminar este backup?",
         "info_title": "Backups del sistema",
         "info_text": "Los backups incluyen la base de datos y archivos de configuración importantes. Se recomienda guardar copias regularmente en un almacenamiento externo.",
-        "only_db": "Solo base de datos"
+        "only_db": "Solo base de datos",
+        "delete": "Eliminar"
     },
     "api_keys": {
         "title": "Claves API",
@@ -3531,7 +3955,17 @@
             "get_subscribers": "Obtener lista de suscriptores",
             "add_subscriber": "Añadir nuevo suscriptor"
         },
-        "delete_confirm": "¿Está seguro de que desea eliminar esta clave API? Esta operación es irreversible."
+        "delete_confirm": "¿Está seguro de que desea eliminar esta clave API? Esta operación es irreversible.",
+        "delete_confirm_title": "Eliminar clave API",
+        "edit": "Editar",
+        "edit_modal": {
+            "title": "Editar clave API"
+        },
+        "mcp_key": "Clave MCP",
+        "mcp_key_hint": "Usa esta clave para integraciones con Claude, Cursor o VS Code",
+        "mcp_plain_key_hint": "Pega tu clave API para poder probar la conexión MCP",
+        "mcp_plain_key_label": "Clave API para cifrar",
+        "mcp_plain_key_placeholder": "ns_live_..."
     },
     "inserts": {
         "title": "Fragmentos y Firmas",
@@ -3605,6 +4039,17 @@
             "special": "Especial",
             "gender_form": "Forma según género",
             "gender_form_desc": "Inserta forma masculina o femenina de una palabra"
+        },
+        "button_title": "Inserciones y variables",
+        "insert_variable": "Insertar fragmento",
+        "no_results": "Sin resultados de búsqueda",
+        "paste_html_hint": "Pegue aquí el código HTML de la firma o escríbalo manualmente...",
+        "picker_title": "Seleccione un fragmento o variable",
+        "search": "Buscar...",
+        "tabs": {
+            "inserts": "Fragmentos",
+            "signatures": "Firmas",
+            "variables": "Variables"
         }
     },
     "settings": {
@@ -3757,6 +4202,75 @@
             "default": "Por defecto",
             "edit": "Editar",
             "customize": "Personalizar"
+        },
+        "woocommerce": {
+            "add_store": "Añadir tienda",
+            "api_keys_help": "Puede generar las claves API en el panel de WordPress: WooCommerce → Ajustes → Avanzado → REST API. Cree una nueva clave con permisos de lectura.",
+            "api_keys_title": "¿Dónde encontrar las claves API?",
+            "confirm_delete_store": "¿Seguro que desea eliminar esta tienda? Esta operación es irreversible.",
+            "confirm_disconnect": "¿Seguro que desea desconectar esta tienda WooCommerce?",
+            "connect": "Conectar tienda WooCommerce",
+            "connected": "Conectado",
+            "connection_failed": "No se pudo conectar con WooCommerce",
+            "connection_success": "Conexión con WooCommerce establecida correctamente",
+            "consumer_key": "Consumer Key",
+            "consumer_secret": "Consumer Secret",
+            "credentials_update_hint": "Deje en blanco para conservar los datos actuales",
+            "currency": "Moneda",
+            "default_set": "La tienda predeterminada ha sido establecida",
+            "default_store": "Predeterminada",
+            "delete_modal_message": "¿Seguro que desea eliminar la tienda \"{name}\"? Esta operación es irreversible y eliminará todos los datos asociados a esta tienda.",
+            "delete_modal_title": "Eliminar tienda",
+            "delete_store": "Eliminar tienda",
+            "disconnect": "Desconectar",
+            "disconnect_modal_message": "¿Seguro que desea desconectar la tienda \"{name}\"? La tienda permanecerá guardada, pero la conexión se desactivará.",
+            "disconnect_modal_title": "Desconectar tienda",
+            "disconnected": "La tienda ha sido desconectada",
+            "edit_store": "Editar tienda",
+            "feature_import": "Importar productos",
+            "feature_import_desc": "Añada productos de la tienda directamente a las plantillas de correo",
+            "feature_recently_viewed": "Vistos recientemente",
+            "feature_recently_viewed_desc": "Muestre los productos que visitaron sus suscriptores",
+            "feature_sync": "Sincronización automática",
+            "feature_sync_desc": "Los datos de los productos están siempre actualizados",
+            "feature_templates": "Plantillas de productos",
+            "feature_templates_desc": "Cree atractivas presentaciones de productos en los correos",
+            "features_title": "¿Qué puede hacer después de conectar?",
+            "fill_all_fields": "Complete todos los campos",
+            "not_connected": "No conectado",
+            "open_store": "Abrir tienda",
+            "reconnect": "Reconectar",
+            "reconnected": "La tienda ha sido reconectada",
+            "save_settings": "Guardar",
+            "select_store": "Seleccionar tienda",
+            "set_as_default": "Establecer como predeterminada",
+            "store_added": "La tienda ha sido añadida",
+            "store_deleted": "La tienda ha sido eliminada",
+            "store_name": "Nombre de la tienda",
+            "store_name_help": "Nombre descriptivo para identificar la tienda",
+            "store_name_placeholder": "p. ej. Mi Tienda Principal",
+            "store_not_found": "No se encontró la tienda",
+            "store_updated": "La tienda ha sido actualizada",
+            "store_url": "URL de la tienda",
+            "store_url_exists": "Ya hay una tienda conectada con esta URL",
+            "store_url_help": "Introduzca la URL completa de su tienda WooCommerce",
+            "store_url_placeholder": "https://mi-tienda.com",
+            "stores_empty": "No tiene tiendas WooCommerce conectadas",
+            "stores_empty_desc": "Añada su primera tienda para poder importar productos a las plantillas de correo",
+            "stores_title": "Tiendas conectadas",
+            "subtitle": "Conecte sus tiendas WooCommerce para importar productos a las plantillas de correo",
+            "test_connection": "Probar conexión",
+            "test_failed": "Conexión inactiva",
+            "test_store": "Probar",
+            "test_success": "Conexión activa",
+            "testing": "Probando...",
+            "title": "Integración con WooCommerce",
+            "update_credentials": "Actualizar datos de conexión",
+            "verified_at": "Verificado",
+            "plugin_version": "Plugin",
+            "stale_connection": "Plugin inactivo",
+            "stale_plugin_hint": "El plugin no se ha comunicado desde hace más de 7 días. Compruebe que el plugin esté correctamente instalado y configurado.",
+            "update_to": "Actualizar a"
         }
     },
     "mailboxes": {
@@ -3772,7 +4286,8 @@
             "active": "Activa",
             "inactive": "Inactiva",
             "error": "Error de conexión",
-            "not_tested": "No probada"
+            "not_tested": "No probada",
+            "pending_auth": "Pendiente de autorización"
         },
         "types": {
             "broadcast": "Único (Broadcast)",
@@ -4268,7 +4783,15 @@
                 },
                 "summary": "GOLD = motor de automatización + capa de desarrollador + IA sin límites de arquitectura"
             }
-        }
+        },
+        "check_status": "Comprobar estado de la licencia",
+        "checking_status": "Comprobando...",
+        "status_check_error": "Error de conexión con el servidor de verificación",
+        "status_check_failed": "No se pudo comprobar el estado de la licencia",
+        "status_deactivated": "La licencia ha sido desactivada. La página se actualizará...",
+        "status_invalid": "La licencia no es válida o está inactiva",
+        "status_verified": "Licencia verificada correctamente",
+        "view_eula": "Leer el acuerdo de licencia (EULA)"
     },
     "notifications": {
         "title": "Notificaciones",
@@ -4347,7 +4870,9 @@
             "revenue": "Impacto en Ingresos",
             "automation": "Automatización",
             "growth": "Crecimiento de la lista"
-        }
+        },
+        "based_on_estimates": "Estimación basada en benchmarks del sector",
+        "based_on_real_data": "Basado en transacciones reales"
     },
     "campaign_advisor": {
         "title": "Asesor IA",
@@ -4365,7 +4890,10 @@
         "expected_impact": "Impacto esperado",
         "action_steps": "Pasos de acción",
         "apply": "Marcar como aplicado",
-        "applied": "Aplicado"
+        "applied": "Aplicado",
+        "audit_lookback_days": "Período de análisis de datos",
+        "audit_lookback_days_hint": "Define cuántos días hacia atrás se analizarán durante la auditoría",
+        "days": "días"
     },
     "queue_stats": {
         "title": "Estadísticas de cola",
@@ -4380,7 +4908,8 @@
         "send_to_missed": "Enviar ahora a omitidos",
         "send_to_missed_confirm": "¿Está seguro de que desea enviar este mensaje a {count} suscriptores omitidos?",
         "send_success": "Envío programado para {count} suscriptores omitidos.",
-        "no_missed": "No hay suscriptores omitidos - ¡excelente!"
+        "no_missed": "No hay suscriptores omitidos - ¡excelente!",
+        "today": "Hoy"
     },
     "system_pages": {
         "title": "Páginas del sistema",
@@ -4477,7 +5006,35 @@
             "unsubscribe_request": "Solicitud de confirmación de baja de la lista de correo.",
             "unsubscribed_confirmation": "Confirmación de eliminación de la lista de correo.",
             "new_subscriber_notification": "Notificación al administrador sobre un nuevo suscriptor en la lista."
-        }
+        },
+        "available_placeholders": "Variables disponibles",
+        "back_to_list": "← Volver a la lista",
+        "cannot_delete_global": "No se puede eliminar la plantilla de email global.",
+        "cannot_toggle_global": "No se puede cambiar el estado de los emails globales.",
+        "click_to_insert": "Haga clic para insertar en el contenido",
+        "content_label": "Contenido HTML del email",
+        "context": "Contexto:",
+        "custom_created": "Se creó una versión personalizada del email para esta lista.",
+        "edit_title": "Editar email: {name}",
+        "global_defaults": "Plantillas globales",
+        "insert_to_content": "Insertar en el contenido",
+        "insert_to_subject": "Insertar en el asunto",
+        "is_active": "Envío activado",
+        "is_active_desc": "Cuando está desactivado, este mensaje no se enviará",
+        "placeholders": {
+            "activation_link": "Enlace de activación de la suscripción",
+            "date": "Fecha actual",
+            "email": "Dirección de email del suscriptor",
+            "first_name": "Nombre del suscriptor",
+            "fname_vocative": "Nombre en vocativo (p. ej. Aniu en lugar de Anna)",
+            "last_name": "Apellido del suscriptor",
+            "list_name": "Nombre de la lista de correo",
+            "unsubscribe_link": "Enlace para darse de baja de la lista"
+        },
+        "reset_to_default": "Se restauró la versión predeterminada del email.",
+        "subject_label": "Asunto del mensaje",
+        "toggled": "Se ha cambiado el estado del email.",
+        "updated": "El email ha sido actualizado."
     },
     "stripe": {
         "products": "Productos Stripe",
@@ -4890,10 +5447,11 @@
             "video_provider": "Proveedor de video",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "URL de video directa",
             "vimeo_id": "ID de Vimeo",
             "vimeo_id_help": "ID del video de Vimeo (p. ej. 76979871). Para videos no listados: 76979871/abc123",
             "video_url": "URL del video",
-            "video_url_help": "Enlace al video grabado (YouTube, Vimeo o alojamiento propio)",
+            "video_url_help": "Enlace directo a un archivo de video (MP4)",
             "integration": "Integración de lista de contactos",
             "target_list": "Lista de destino",
             "no_list": "No añadir a la lista",
@@ -4954,6 +5512,7 @@
             "video_provider": "Proveedor de video",
             "provider_youtube": "YouTube",
             "provider_vimeo": "Vimeo",
+            "provider_upload": "URL de video directa",
             "vimeo_id": "ID de Vimeo",
             "vimeo_id_help": "ID del video de Vimeo (p. ej. 76979871). Para videos no listados: 76979871/abc123",
             "video_url": "URL del video",
@@ -5155,7 +5714,10 @@
         "info": {
             "title": "Proveedores soportados",
             "twilio": "Twilio: Cobertura global, entrega confiable.",
-            "smsapi": "SMS API (PL): La mejor solución para el mercado polaco."
+            "smsapi": "SMS API (PL): La mejor solución para el mercado polaco.",
+            "messagebird": "MessageBird - proveedor neerlandés, buenos precios en Europa",
+            "plivo": "Plivo - alternativa económica a Twilio",
+            "vonage": "Vonage (Nexmo) - #2 a nivel mundial, excelente API y fiabilidad"
         },
         "modal": {
             "add_title": "Añadir proveedor SMS",
@@ -5164,8 +5726,33 @@
             "name_placeholder": "p.ej. Mi cuenta de Twilio",
             "from_number": "ID de remitente / Número de origen",
             "daily_limit": "Límite diario",
-            "daily_limit_placeholder": "p.ej. 1000 (dejar vacío para ilimitado)"
-        }
+            "daily_limit_placeholder": "p.ej. 1000 (dejar vacío para ilimitado)",
+            "edit_title": "Editar proveedor SMS",
+            "from_name": "Nombre del remitente",
+            "from_name_hint": "Máximo 11 caracteres alfanuméricos",
+            "is_active": "Activo",
+            "is_default": "Predeterminado"
+        },
+        "default": "Predeterminado",
+        "delete_modal": {
+            "message": "¿Seguro que quieres eliminar este proveedor SMS? Esta operación no se puede deshacer.",
+            "title": "Eliminar proveedor SMS"
+        },
+        "notifications": {
+            "created": "El proveedor SMS se ha creado.",
+            "deleted": "El proveedor SMS se ha eliminado.",
+            "set_default": "El proveedor se ha establecido como predeterminado.",
+            "updated": "El proveedor SMS se ha actualizado."
+        },
+        "sent_today": "Enviados hoy",
+        "set_as_default": "Establecer como predeterminado",
+        "status": {
+            "active": "Activo",
+            "error": "Error de conexión",
+            "inactive": "Inactivo",
+            "not_tested": "Sin probar"
+        },
+        "test_connection": "Probar conexión"
     },
     "external_pages": {
         "index": {
@@ -5251,7 +5838,8 @@
         },
         "compressing": "Comprimiendo imágenes...",
         "compressed_info": "{count} archivos comprimidos, {saved} ahorrados",
-        "files_too_large": "{count} archivo(s) son demasiado grandes para subir (máx. {maxSize}): {files}"
+        "files_too_large": "{count} archivo(s) son demasiado grandes para subir (máx. {maxSize}): {files}",
+        "no_logos_found": "No se encontraron logotipos. Suba imágenes y márquelas como tipo 'Logo'."
     },
     "brands": {
         "title": "Gestión de Marcas",
@@ -5339,7 +5927,8 @@
                 "select_calendar": "Seleccionar calendario",
                 "default": "Predeterminado",
                 "primary": "Principal",
-                "synced": "Sincronizado con calendario"
+                "synced": "Sincronizado con calendario",
+                "not_connected": "Se requiere configurar Google Calendar"
             },
             "actions": {
                 "cancel": "Cancelar",
@@ -5366,7 +5955,9 @@
                     "declined": "Rechazado",
                     "tentative": "Provisional",
                     "needsAction": "Necesita acción"
-                }
+                },
+                "enable_sync_first": "Activa la sincronización con el calendario",
+                "not_connected": "Se requiere configurar Google Calendar"
             },
             "zoom": {
                 "include_zoom": "Añadir reunión Zoom",
@@ -5376,7 +5967,9 @@
                 "attendees": "Invitados",
                 "add_email": "Ingrese correo electrónico...",
                 "add_guest": "Añadir",
-                "attendees_hint": "Los invitados recibirán una invitación con el enlace de la reunión"
+                "attendees_hint": "Los invitados recibirán una invitación con el enlace de la reunión",
+                "enable_sync_first": "Activa la sincronización con el calendario",
+                "not_connected": "Se requiere configurar Zoom"
             },
             "empty": {
                 "button": "Añadir primera tarea",
@@ -5521,7 +6114,12 @@
                 "prospect": "Prospecto",
                 "client": "Cliente",
                 "dormant": "Inactivo",
-                "archived": "Archivado"
+                "archived": "Archivado",
+                "contacted": "Contactado",
+                "customer": "Cliente",
+                "new": "Nuevo",
+                "qualified": "Calificado",
+                "unqualified": "No calificado"
             },
             "title": "Contactos",
             "leads": "leads",
@@ -5559,7 +6157,8 @@
                 "notes": "Notas",
                 "tags": "Etiquetas",
                 "owner": "Propietario",
-                "email_required": "Email *"
+                "email_required": "Email *",
+                "score": "Score"
             },
             "tabs": {
                 "overview": "Resumen",
@@ -5577,7 +6176,17 @@
             },
             "deleted": "Contacto eliminado",
             "created": "Contacto creado",
-            "updated": "Contacto actualizado"
+            "updated": "Contacto actualizado",
+            "activity_history": "Historial de actividad",
+            "by": "por",
+            "no_activities": "Sin historial de actividad",
+            "sections": {
+                "contact_details": "Datos del contacto",
+                "email_lists": "Listas de email",
+                "marketing_data": "Datos de marketing",
+                "open_deals": "Deals abiertos",
+                "sms_lists": "Listas de SMS"
+            }
         },
         "companies": {
             "title_page": "Empresas CRM",
@@ -5778,7 +6387,8 @@
             "deleted": "Tarea eliminada",
             "created": "Tarea creada",
             "updated": "Tarea actualizada",
-            "completed": "Tarea completada"
+            "completed": "Tarea completada",
+            "empty_contact": "No hay tareas para este contacto"
         },
         "activities": {
             "title": "Actividades",
@@ -5805,19 +6415,25 @@
                 "ae_address_list": "Lista de direcciones AE",
                 "email_opened": "Correo electrónico abierto",
                 "status_change_lead_to_prospect_scoring": "Estado cambiado de Lead a Prospecto (automáticamente por puntuación)",
-                "system": "Sistema"
+                "system": "Sistema",
+                "contact_created": "Contacto creado"
             },
             "created_by": "Por",
             "system": "Sistema",
             "empty": "Sin actividades",
             "history": "Historial de actividades",
-            "by_system": "por el Sistema"
+            "by_system": "por el Sistema",
+            "actions": {
+                "add": "Añadir"
+            }
         },
         "import": {
             "title_page": "CRM Import",
             "upload": {
                 "loading": "Cargando...",
-                "select_file": "Seleccionar archivo"
+                "select_file": "Seleccionar archivo",
+                "description": "Sube un archivo CSV con contactos. Campo obligatorio: email.",
+                "title_upload": "Subir archivo CSV"
             },
             "mapping": {
                 "title": "Mapeo de campos",
@@ -6053,7 +6669,10 @@
                 "report": "Informe",
                 "duplicate": "Duplicar",
                 "delete": "Eliminar",
-                "delete_confirm": "¿Está seguro de que desea eliminar esta secuencia? Se eliminarán todos los pasos."
+                "delete_confirm": "¿Está seguro de que desea eliminar esta secuencia? Se eliminarán todos los pasos.",
+                "add_step": "Añadir paso",
+                "create": "Crear secuencia",
+                "save_changes": "Guardar cambios"
             },
             "banner": {
                 "title": "Secuencias automáticas",
@@ -6065,7 +6684,51 @@
                 "button": "Crear primera secuencia"
             },
             "steps_count": "{count} pasos",
-            "active_enrollments": "{count} activos"
+            "active_enrollments": "{count} activos",
+            "delay": {
+                "days": "días",
+                "hours": "h",
+                "immediate": "Inmediatamente",
+                "label": "Retraso:"
+            },
+            "empty_steps": "Añade el primer paso a la secuencia",
+            "fields": {
+                "description": "Descripción (opcional)",
+                "description_placeholder": "Describe el objetivo de esta secuencia...",
+                "is_active": "Secuencia activa",
+                "name": "Nombre de la secuencia",
+                "trigger": "Disparador"
+            },
+            "priorities": {
+                "high": "Alta",
+                "low": "Baja",
+                "medium": "Media"
+            },
+            "sections": {
+                "basic_info": "Información básica",
+                "steps": "Pasos de la secuencia"
+            },
+            "step_fields": {
+                "action_type": "Tipo de acción",
+                "if_no_response": "Si no hay respuesta",
+                "priority": "Prioridad",
+                "task_description": "Descripción de la tarea (opcional)",
+                "task_description_placeholder": "Detalles adicionales...",
+                "task_title": "Título de la tarea",
+                "task_type": "Tipo de tarea"
+            },
+            "step_options": {
+                "continue": "Continuar secuencia",
+                "escalate": "Escalar",
+                "stop": "Detener secuencia"
+            },
+            "task_types": {
+                "call": "Llamada",
+                "email": "Email",
+                "follow_up": "Follow-up",
+                "meeting": "Reunión",
+                "task": "Tarea"
+            }
         },
         "reports": {
             "title": "Informe: {name}",
@@ -6506,7 +7169,9 @@
                 "delete": "Eliminar",
                 "email_sent_success": "¡Email enviado exitosamente!",
                 "generate_new_hint": "Generar nuevo",
-                "add_to_list_success": "Añadido a la lista"
+                "add_to_list_success": "Añadido a la lista",
+                "select_list": "Seleccionar lista",
+                "select_list_desc": "Selecciona la lista de correo a la que quieres añadir este contacto"
             },
             "record": {
                 "synced": "Sincronizado"
@@ -6539,7 +7204,20 @@
                 "required": "Integración AI Vision requerida",
                 "supported_models": "Modelos AI Vision compatibles:",
                 "configure_ai": "Configurar IA"
+            },
+            "personalization": {
+                "formal": "Formal (usted)",
+                "formality": "Forma de trato",
+                "gender": "Género",
+                "gender_auto": "Automático",
+                "gender_female": "Mujer",
+                "gender_male": "Hombre",
+                "informal": "Informal (tú)"
             }
+        },
+        "global_search": {
+            "open_search": "Buscar (⌘K)",
+            "placeholder": "Buscar..."
         }
     },
     "onboarding": {
@@ -6602,7 +7280,7 @@
         }
     },
     "nmi": {
-        "title": "Infraestructura de Correo NetSendo",
+        "title": "NetSendo Mail Infrastructure",
         "subtitle": "Gestione direcciones IP dedicadas y reputación del remitente",
         "pool_details": "Detalles del Pool",
         "pool_dedicated": "Dedicado",
@@ -6680,7 +7358,61 @@
         "warming_started": "¡Calentamiento de IP iniciado!",
         "dkim_generated": "¡Claves DKIM generadas exitosamente!",
         "dkim_verified": "¡DKIM verificado exitosamente!",
-        "dkim_not_verified": "Registro DKIM no encontrado. Verifique su configuración DNS."
+        "dkim_not_verified": "Registro DKIM no encontrado. Verifique su configuración DNS.",
+        "add_ip": {
+            "cancel": "Cancelar",
+            "description": "Descripción (opcional)",
+            "description_placeholder": "Notas opcionales sobre esta IP",
+            "hostname": "Hostname",
+            "hostname_placeholder": "p. ej. mail.example.com",
+            "ip_address": "Dirección IP",
+            "ip_address_placeholder": "p. ej. 192.168.1.100",
+            "submit": "Añadir IP",
+            "title": "Añadir dirección IP"
+        },
+        "delete_ip": {
+            "confirm": "¿Seguro que desea eliminar esta dirección IP?",
+            "title": "Eliminar dirección IP",
+            "warning": "Esta operación no se puede deshacer."
+        },
+        "invalid_ip_address": "Formato de dirección IP no válido.",
+        "ip_added": "¡La dirección IP se ha añadido correctamente!",
+        "ip_deleted": "La dirección IP ha sido eliminada.",
+        "ip_has_mailboxes": "No se puede eliminar una dirección IP con buzones asignados.",
+        "ip_provisioned": "¡Dirección IP aprovisionada correctamente!",
+        "mta_status": {
+            "checking": "Comprobando...",
+            "offline": "MTA Offline",
+            "online": "MTA Online",
+            "title": "Estado del MTA"
+        },
+        "pool_max_ips_reached": "Este pool ha alcanzado el número máximo de direcciones IP.",
+        "provider_not_configured": "Este proveedor no está configurado. Añada una clave API en la configuración de proveedores.",
+        "provider_saved": "¡Configuración del proveedor guardada correctamente!",
+        "providers": {
+            "api_key_placeholder": "Introduzca la clave API...",
+            "configure": "Configurar proveedores",
+            "configured": "Configurado",
+            "connected": "Conectado",
+            "digitalocean": "DigitalOcean",
+            "info": "Las claves API se cifran de forma segura. Los proveedores se usan para aprovisionar automáticamente direcciones IP para la infraestructura de correo.",
+            "linode": "Linode",
+            "not_configured": "No configurado",
+            "not_connected": "No conectado",
+            "settings_title": "Configuración de proveedores de IP",
+            "vultr": "Vultr"
+        },
+        "provision": {
+            "cancel": "Cancelar",
+            "no_providers": "No hay proveedores configurados. Haga clic en Configurar proveedores para añadir claves API.",
+            "provider": "Proveedor",
+            "provisioning": "Aprovisionando...",
+            "region": "Región",
+            "select_provider": "Seleccione un proveedor",
+            "select_region": "Seleccione una región",
+            "submit": "Aprovisionar IP",
+            "title": "Aprovisionar IP desde la nube"
+        }
     },
     "high_confidence_data": "Datos de alta confianza",
     "brain": {
@@ -7050,5 +7782,325 @@
             "topics_placeholder": "p. ej. novedades de producto, consejos del sector, casos de éxito"
         },
         "edit_title": "Editar título"
+    },
+    "mcp": {
+        "agent_prompt_content": "Eres un asistente de IA con acceso a NetSendo — una plataforma de marketing por email/SMS.\n\nHERRAMIENTAS DISPONIBLES:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS EN EL CONTENIDO:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - datos del suscriptor\n- [[!fname]] - nombre en vocativo (polaco)\n- [[unsubscribe_link]] - OBLIGATORIO en cada email\n- [[manage]] - enlace de gestión de preferencias\n- {'{'}{'{'}masculino|femenino{'}'}{'}'}  - flexión por género, p. ej. {'{'}{'{'}Estimado|Estimada{'}'}{'}'} \n\nFLUJO DE CAMPAÑA:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANTE:\n- Usa siempre list_placeholders al principio para conocer los placeholders disponibles\n- Cada email DEBE contener [[unsubscribe_link]]\n- Antes de enviar una campaña DEBES asignar las listas (set_campaign_lists)",
+        "agent_prompt_description": "Copie este prompt en su agente de IA para que pueda usar NetSendo MCP de forma eficaz. El prompt incluye instrucciones de uso, la lista de herramientas disponibles y ejemplos de uso.",
+        "agent_prompt_label": "Prompt técnico",
+        "agent_prompt_title": "Prompt para el Agente de IA",
+        "api_config_title": "Configuración de la API",
+        "api_key_label": "Clave API",
+        "api_url_label": "URL de NetSendo",
+        "clients": {
+            "claude": {
+                "description": "Integración completa con Claude Desktop App"
+            },
+            "cursor": {
+                "description": "Soporte MCP integrado en el IDE"
+            },
+            "vscode": {
+                "description": "Extensión GitHub Copilot"
+            }
+        },
+        "config_example": "Ejemplo de configuración",
+        "documentation": "Documentación",
+        "examples": {
+            "analyze_list": "Analiza la calidad de mi lista de contactos",
+            "count_subscribers": "¿Cuántos suscriptores tengo en la lista Newsletter?",
+            "create_subscriber": "Añade jan{'@'}example.com a la lista principal",
+            "send_email": "Envía un email de bienvenida al nuevo suscriptor",
+            "show_lists": "Muéstrame todas las listas de correo"
+        },
+        "examples_title": "Comandos de ejemplo",
+        "features": {
+            "ab_tests": {
+                "description": "Pruebe distintas variantes de mensajes y elija los ganadores automáticamente.",
+                "title": "Tests A/B"
+            },
+            "campaigns": {
+                "description": "Cree, programe y envíe campañas de email y SMS con exclusiones de listas.",
+                "title": "Campañas Email/SMS"
+            },
+            "funnels": {
+                "description": "Cree secuencias de email con triggers y pasos temporizados.",
+                "title": "Embudos de Automatización"
+            },
+            "lists": {
+                "description": "Consulte listas, obtenga suscriptores de las listas y gestione tags.",
+                "title": "Gestión de Listas de Contactos"
+            },
+            "messaging": {
+                "description": "Envíe mensajes de email a los suscriptores directamente desde la IA.",
+                "title": "Envío de Email"
+            },
+            "sms": {
+                "description": "Envíe mensajes SMS a través de los proveedores configurados.",
+                "title": "Envío de SMS"
+            },
+            "stats": {
+                "description": "Obtenga estadísticas, información de la instancia y un resumen rápido de los datos.",
+                "title": "Estadísticas y Recursos"
+            },
+            "subscribers": {
+                "description": "Cree, edite, elimine y busque suscriptores mediante comandos de texto.",
+                "title": "Gestión de Suscriptores"
+            },
+            "tags": {
+                "description": "Sincronice los tags de los suscriptores y consulte los tags disponibles.",
+                "title": "Tags y Segmentación"
+            }
+        },
+        "features_title": "Funcionalidades",
+        "help_description": "Consulte nuestra documentación para obtener instrucciones detalladas de instalación y configuración.",
+        "hero_description": "MCP Server es el puente entre NetSendo y los asistentes de IA modernos como Claude, Cursor o VS Code Copilot. Hable con la IA sobre sus suscriptores, listas y mensajes — y la IA ejecutará las operaciones por usted.",
+        "hero_subtitle": "Permita que los asistentes de IA gestionen su NetSendo de forma natural",
+        "hero_title": "Model Context Protocol",
+        "how_it_works_description": "MCP (Model Context Protocol) es un estándar abierto que permite a los asistentes de IA acceder de forma segura a herramientas externas. Su asistente se conecta al MCP Server a través de Docker, que se comunica con la API de NetSendo.",
+        "how_it_works_title": "¿Cómo funciona?",
+        "installation_title": "Instalación",
+        "local_description": "Para NetSendo self-hosted con Docker Compose.",
+        "local_docker": "Instalación con Docker",
+        "local_setup_note": "Importante: Asegúrese de haber marcado la opción \"Usar para MCP\" en una de las claves API en Configuración. El servidor la usará automáticamente.",
+        "manage_api_keys": "Gestionar claves API",
+        "mode_local": "Local (Docker)",
+        "mode_remote": "Instalación remota",
+        "need_help": "¿Necesita ayuda?",
+        "page_title": "MCP Server - Integración con IA",
+        "placeholder_email": "Dirección de email",
+        "placeholder_first_name": "Nombre del suscriptor",
+        "placeholder_gender_example": "Drogi → para hombres, Droga → para mujeres",
+        "placeholder_last_name": "Apellido",
+        "placeholder_manage": "Enlace de gestión de preferencias",
+        "placeholder_phone": "Número de teléfono",
+        "placeholder_unsubscribe": "Baja de la lista (OBLIGATORIO)",
+        "placeholder_vocative": "Nombre en vocativo (Anna → Anno)",
+        "placeholders_description": "Use placeholders en el contenido del mensaje para personalizar cada email/SMS. Se sustituirán automáticamente por los datos del suscriptor.",
+        "placeholders_gender": "Flexión por género",
+        "placeholders_standard": "Placeholders estándar",
+        "placeholders_system": "De sistema (obligatorios)",
+        "placeholders_title": "Personalización de mensajes",
+        "remote_description": "No requiere Docker. Basta con Node.js 18+ en su ordenador.",
+        "remote_recommended": "Recomendado",
+        "remote_setup_hint": "Use el comando generado a continuación. Incluye la configuración de su clave API.",
+        "replace_api_key": "Sustituya YOUR_API_KEY_HERE por su clave API real",
+        "security_note": "La clave API da acceso a su cuenta. Guárdela de forma segura y no la comparta públicamente. El MCP Server se ejecuta localmente en su entorno Docker.",
+        "security_title": "Seguridad",
+        "steps": {
+            "add_env": {
+                "description": "Defina la variable MCP_API_KEY con su clave en el archivo .env.",
+                "title": "Añada la clave a .env"
+            },
+            "api_key": {
+                "description": "Vaya a Configuración → Claves API y genere una nueva clave para MCP.",
+                "title": "Cree una clave API"
+            },
+            "build": {
+                "description": "Ejecute: docker compose build mcp",
+                "title": "Construya la imagen Docker"
+            },
+            "configure": {
+                "description": "Añada la configuración de MCP a Claude Desktop, Cursor o VS Code.",
+                "title": "Configure el cliente de IA"
+            },
+            "configure_remote": {
+                "description": "Copie la configuración de abajo en su cliente de IA."
+            },
+            "install_node": {
+                "description": "Descargue e instale Node.js 18+ desde nodejs.org (incluye npx).",
+                "title": "Instale Node.js"
+            }
+        },
+        "supported_clients": "Clientes Compatibles",
+        "test_connection_description": "Use este endpoint en aplicaciones externas (asistentes de IA) para probar la conexión con la API de NetSendo.",
+        "test_connection_title": "Prueba de conexión",
+        "test_curl_example": "Ejemplo con curl",
+        "test_endpoint_label": "Endpoint de prueba",
+        "test_success_hint": "Una clave API correcta devolverá un JSON con la información de la cuenta",
+        "title": "MCP Server",
+        "tool_categories": {
+            "ab_tests": "Tests A/B",
+            "account": "Cuenta",
+            "campaigns": "Campañas",
+            "funnels": "Embudos de automatización",
+            "lists": "Listas y tags",
+            "messaging": "Mensajes",
+            "subscribers": "Suscriptores"
+        },
+        "tools": {
+            "activate_funnel": "Activar embudo",
+            "add_ab_variant": "Añadir variante de test",
+            "add_funnel_step": "Añadir paso al embudo",
+            "create_ab_test": "Crear test A/B",
+            "create_campaign": "Crear nueva campaña",
+            "create_funnel": "Crear embudo",
+            "create_subscriber": "Crear nuevo suscriptor",
+            "delete_ab_test": "Eliminar test A/B",
+            "delete_campaign": "Eliminar campaña",
+            "delete_funnel": "Eliminar embudo",
+            "delete_subscriber": "Eliminar suscriptor",
+            "end_ab_test": "Finalizar test",
+            "get_ab_test_results": "Obtener resultados del test",
+            "get_account_info": "Obtener información de la cuenta",
+            "get_campaign": "Obtener detalles de la campaña",
+            "get_campaign_stats": "Obtener estadísticas de la campaña",
+            "get_funnel": "Obtener detalles del embudo",
+            "get_funnel_stats": "Obtener estadísticas del embudo",
+            "get_subscriber": "Obtener detalles del suscriptor",
+            "list_ab_tests": "Listar tests A/B",
+            "list_campaigns": "Listar campañas",
+            "list_contact_lists": "Listar listas de contactos",
+            "list_funnels": "Listar embudos",
+            "list_placeholders": "Listar marcadores disponibles",
+            "list_subscribers": "Listar suscriptores",
+            "list_tags": "Listar etiquetas disponibles",
+            "pause_funnel": "Pausar embudo",
+            "schedule_campaign": "Programar envío",
+            "send_campaign": "Enviar campaña",
+            "send_email": "Enviar mensaje de correo",
+            "send_sms": "Enviar mensaje SMS",
+            "set_campaign_exclusions": "Establecer exclusiones",
+            "set_campaign_lists": "Establecer listas de destinatarios",
+            "start_ab_test": "Iniciar test",
+            "sync_subscriber_tags": "Sincronizar etiquetas del suscriptor",
+            "test_connection": "Probar conexión con la API",
+            "update_campaign": "Actualizar campaña",
+            "update_subscriber": "Actualizar datos del suscriptor"
+        },
+        "tools_count": "{count} herramientas disponibles a través de IA",
+        "tools_title": "Herramientas disponibles"
+    },
+    "mcp_status": {
+        "api_key_missing": "Falta la clave API de MCP",
+        "connected": "Conectado",
+        "disconnected": "Desconectado",
+        "go_to_settings": "Ir a la configuración de MCP",
+        "last_tested": "Última prueba",
+        "never_tested": "Nunca probado",
+        "not_configured": "No configurado",
+        "test_failed": "Prueba de conexión fallida",
+        "test_now": "Probar ahora",
+        "test_success": "Prueba de conexión exitosa",
+        "testing": "Probando...",
+        "title": "Estado del servidor MCP"
+    },
+    "names": {
+        "add_name": "Añadir nombre",
+        "all_countries": "Todos los países",
+        "all_genders": "Todos los géneros",
+        "all_sources": "Todas las fuentes",
+        "column_actions": "Acciones",
+        "column_country": "País",
+        "column_gender": "Género",
+        "column_name": "Nombre",
+        "column_source": "Fuente",
+        "column_vocative": "Vocativo",
+        "created": "El nombre ha sido añadido",
+        "delete_confirm": "¿Está seguro de que desea eliminar el nombre \"{name}\"?",
+        "delete_title": "Eliminar nombre",
+        "deleted": "El nombre ha sido eliminado",
+        "edit_name": "Editar nombre",
+        "errors": {
+            "already_exists": "Este nombre ya existe para el país seleccionado",
+            "cannot_delete_system": "Los nombres del sistema no se pueden eliminar",
+            "cannot_edit_system": "Los nombres del sistema no se pueden editar"
+        },
+        "export": "Exportar",
+        "field_country": "País",
+        "field_file": "Archivo CSV",
+        "field_gender": "Género",
+        "field_name": "Nombre",
+        "field_vocative": "Vocativo",
+        "gender_female": "Mujer",
+        "gender_male": "Hombre",
+        "gender_matching": {
+            "breakdown": "Desglose",
+            "completed": "Asignación de género completada",
+            "country_label": "País para la detección de nombres",
+            "description": "Detecte y asigne automáticamente el género según los nombres de los suscriptores",
+            "detected_gender": "Género detectado",
+            "job_started": "Asignación de género iniciada en segundo plano",
+            "matched": "Asignados",
+            "no_subscribers": "No hay suscriptores para asignar",
+            "notification_message": "Se asignaron {matched} suscriptores, {unmatched} no se pudieron asignar",
+            "notification_title": "Asignación de género completada",
+            "preview": "Vista previa",
+            "preview_desc": "{count} suscriptores serán actualizados",
+            "preview_title": "Vista previa de la asignación de género",
+            "processing": "Procesando",
+            "results_desc": "La asignación de género se completó correctamente",
+            "results_title": "Asignación de género completada",
+            "run_matching": "Ejecutar asignación",
+            "showing_first_50": "Mostrando los primeros 50 elementos",
+            "stat_matchable": "Por asignar",
+            "stat_total": "Total de suscriptores",
+            "stat_unmatchable": "No se pueden asignar",
+            "stat_without_gender": "Sin género",
+            "title": "Asignación automática de género",
+            "unmatched": "No asignados"
+        },
+        "gender_neutral": "Neutro",
+        "help_desc": "La base de nombres ayuda a NetSendo a determinar el género de los suscriptores a partir de su nombre. Esto permite la personalización gramatical automática en los mensajes.",
+        "help_title": "Personalización gramatical",
+        "import": "Importar CSV",
+        "import_desc": "Suba un archivo CSV con nombres (formato: nombre,género en cada línea)",
+        "import_success": "Se importaron {imported} nombres, se omitieron {skipped}",
+        "import_title": "Importar nombres",
+        "no_names": "No se encontraron nombres",
+        "search_placeholder": "Buscar nombres...",
+        "source_system": "Del sistema",
+        "source_user": "Propios",
+        "stats_countries": "Países",
+        "stats_system": "Nombres del sistema",
+        "stats_total": "Todos los nombres",
+        "stats_user": "Nombres propios",
+        "subtitle": "Gestione los nombres para la personalización gramatical",
+        "syntax_desc": "Use la sintaxis {'{{'}forma_masculina|forma_femenina{'}}'}. El sistema seleccionará automáticamente la forma correcta según el género del suscriptor (conocido o detectado a partir del nombre).",
+        "syntax_result": "Usa la forma masculina o femenina",
+        "syntax_title": "Sintaxis dinámica",
+        "title": "Base de nombres",
+        "updated": "El nombre ha sido actualizado",
+        "vocative_help": "Forma vocativa del nombre usada en la personalización [[!fname]]",
+        "vocative_placeholder": "p. ej. Anno, Janie..."
+    },
+    "users": {
+        "add_first_user": "Añadir primer usuario",
+        "add_user": "Añadir usuario",
+        "cancel": "Cancelar",
+        "cancel_invitation_confirm": "¿Está seguro de que desea cancelar esta invitación?",
+        "delete_confirm": "¿Está seguro de que desea eliminar a este usuario del equipo? El usuario perderá el acceso a todas las listas.",
+        "delete_user": "Eliminar usuario",
+        "info_text": "Como administrador, puede invitar a usuarios para que le ayuden a gestionar NetSendo. Concédales permisos a las listas de correo seleccionadas.",
+        "info_title": "Gestione su equipo",
+        "manage_permissions": "Gestionar permisos",
+        "modal": {
+            "add_title": "Añadir usuario al equipo",
+            "create": "Añadir usuario",
+            "email": "Dirección de email",
+            "list_permissions": "Permisos de listas (opcional)",
+            "name": "Nombre y apellido",
+            "password": "Contraseña",
+            "password_confirm": "Confirmar contraseña"
+        },
+        "no_lists_assigned": "Sin listas asignadas",
+        "no_members": "Aún no tiene usuarios en su equipo",
+        "pending_invitations": "Invitaciones pendientes",
+        "permission_edit": "Ver y editar",
+        "permission_view": "Solo ver",
+        "permissions_modal": {
+            "description": "Seleccione las listas a las que el usuario tendrá acceso y establezca el nivel de permisos.",
+            "save": "Guardar permisos",
+            "title": "Permisos del usuario"
+        },
+        "sent": "Enviado",
+        "table": {
+            "actions": "Acciones",
+            "added": "Añadido",
+            "email": "Email",
+            "lists_access": "Acceso a listas",
+            "user": "Usuario"
+        },
+        "team_members": "Miembros del equipo",
+        "team_members_subtitle": "Usuarios con acceso a su cuenta de NetSendo",
+        "title": "Gestión de Usuarios"
     }
 }

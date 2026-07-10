@@ -162,6 +162,7 @@ class CronScheduleService
         try {
             $globalVolume = (int) CronSetting::getValue('volume_per_minute', 100);
             $listVolumes = []; // Tracker zużycia limitu per lista
+            $staggerSlots = []; // Licznik pozycji do rozłożenia wysyłki w czasie (issue #21)
 
             // 1. Pobierz aktywne wiadomości i zsynchronizuj odbiorców
             // Optymalizacja: pobieramy tylko schedulowane wiadomości, które "powinny" być już wysłane
@@ -367,6 +368,10 @@ class CronScheduleService
                     // Pobierz listę (pierwszą jeśli wiele)
                     $listId = $message->contactLists->first()?->id;
 
+                    // Effective per-minute rate used to stagger this send (issue #21).
+                    // Defaults to the global limit; overridden by the list limit below.
+                    $dispatchRate = $globalVolume;
+
                     if ($listId) {
                         // Sprawdź harmonogram listy
                         if (!$this->isDispatchAllowed($listId)) {
@@ -386,6 +391,7 @@ class CronScheduleService
                         // Sprawdź limit listy
                         $settings = ContactListCronSetting::getOrCreateForList($listId);
                         $listVolume = $settings->getEffectiveVolumePerMinute();
+                        $dispatchRate = $listVolume; // Stagger według limitu listy (issue #21)
                         $listVolumes[$listId] = ($listVolumes[$listId] ?? 0);
 
                         if ($listVolumes[$listId] >= $listVolume) {
@@ -453,12 +459,31 @@ class CronScheduleService
                     try {
                         $entry->markAsQueued();
 
+                        // Staggered dispatch (issue #21): spread this run's sends across
+                        // the sending window so the worker doesn't open a burst of
+                        // simultaneous SMTP connections at the top of the minute, which
+                        // rate-limited providers reject with "421 Too many connections".
+                        // Delay = slot * (window / rate), capped at the window length.
+                        $dispatchDelay = 0;
+                        if (config('netsendo.email.stagger_sends', true)) {
+                            $staggerKey = $listId ?? '_global';
+                            $slot = $staggerSlots[$staggerKey] ?? 0;
+                            $staggerSlots[$staggerKey] = $slot + 1;
+                            $window = (int) config('netsendo.email.stagger_window_seconds', 55);
+                            $dispatchDelay = (int) min(
+                                $window,
+                                round($slot * ($window / max($dispatchRate, 1)))
+                            );
+                        }
+
                         // Dispatch job dla konkretnego subskrybenta
                         // Pass entry ID so the job can update status upon completion
-                        SendEmailJob::dispatch($message, $subscriber, null, $entry->id);
+                        SendEmailJob::dispatch($message, $subscriber, null, $entry->id)
+                            ->delay(now()->addSeconds($dispatchDelay));
                         Log::info('CronScheduleService: Job dispatched', [
                             'entry_id' => $entry->id,
-                            'subscriber_id' => $subscriber->id
+                            'subscriber_id' => $subscriber->id,
+                            'delay_seconds' => $dispatchDelay,
                         ]);
 
                         // Note: markAsSent() is now called by SendEmailJob after successful delivery
