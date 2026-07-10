@@ -51,6 +51,7 @@ return [
             'add_to_calendar' => '¡Añade el seminario web al calendario para no perderte nada!',
             'calendar_description' => 'Únete al seminario web aquí:',
             'go_to_webinar' => 'Ir a la sala del seminario',
+            'apple_calendar' => 'Apple / iCal',
         ],
         'watch' => [
             'waiting' => 'Esperando transmisión...',
@@ -67,6 +68,7 @@ return [
             'session_ended_desc' => 'Desafortunadamente, te perdiste esta transmisión. Puedes ver la grabación o registrarte para otra hora.',
             'watch_replay' => 'Ver grabación',
             'register_another_time' => 'Registrarse para otra hora',
+            'tap_to_unmute' => 'Toca para activar el sonido',
             'countdown' => [
                 'days' => 'Días',
                 'hours' => 'Horas',

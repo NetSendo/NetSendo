@@ -10,12 +10,12 @@ class AnthropicProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'claude-opus-4-6';
+        return 'claude-opus-4-8';
     }
 
     public function supportsFetchModels(): bool
     {
-        return false; // Anthropic doesn't have a models list endpoint
+        return true; // Anthropic exposes GET /v1/models
     }
 
     protected function getDefaultHeaders(): array
@@ -137,8 +137,29 @@ class AnthropicProvider extends BaseProvider
 
     public function fetchAvailableModels(): array
     {
-        // Return default models since Anthropic doesn't have a models endpoint
-        return [];
+        // Anthropic returns models newest-first from GET /v1/models.
+        $response = $this->makeRequest('get', 'v1/models', ['limit' => 1000]);
+
+        if (!$response['success']) {
+            return [];
+        }
+
+        $models = [];
+        $data = $response['data']['data'] ?? [];
+
+        foreach ($data as $model) {
+            $id = $model['id'] ?? '';
+            if ($id === '' || !str_starts_with($id, 'claude')) {
+                continue;
+            }
+
+            $models[] = [
+                'model_id' => $id,
+                'display_name' => $model['display_name'] ?? $id,
+            ];
+        }
+
+        return $models;
     }
 
     public function generateText(string $prompt, ?string $model = null, array $options = []): string

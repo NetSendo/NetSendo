@@ -51,6 +51,7 @@ return [
             'add_to_calendar' => 'Add webinar to calendar so you don\'t miss it!',
             'calendar_description' => 'Join the webinar here:',
             'go_to_webinar' => 'Go to webinar room',
+            'apple_calendar' => 'Apple / iCal',
         ],
         'watch' => [
             'waiting' => 'Waiting for broadcast...',
@@ -67,6 +68,7 @@ return [
             'session_ended_desc' => 'Unfortunately, you missed this broadcast. You can watch the recording or register for another time.',
             'watch_replay' => 'Watch Recording',
             'register_another_time' => 'Register for another time',
+            'tap_to_unmute' => 'Tap to unmute',
             'countdown' => [
                 'days' => 'Days',
                 'hours' => 'Hours',

@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail\Providers;
 
+use App\Helpers\EmailHtmlDocument;
 use App\Services\Mail\MailProviderInterface;
 use Illuminate\Support\Facades\Http;
 use Exception;
@@ -18,6 +19,9 @@ class SendGridProvider implements MailProviderInterface
 
     public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
+        // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
+        $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+
         try {
             $payload = [
                 'personalizations' => [

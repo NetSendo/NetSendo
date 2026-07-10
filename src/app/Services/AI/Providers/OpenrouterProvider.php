@@ -8,7 +8,7 @@ class OpenrouterProvider extends BaseProvider
 {
     protected function getDefaultModel(): string
     {
-        return 'openai/gpt-5';
+        return 'openai/gpt-5.2';
     }
 
     public function supportsFetchModels(): bool
@@ -55,18 +55,18 @@ class OpenrouterProvider extends BaseProvider
         $models = [];
         $data = $response['data']['data'] ?? [];
 
-        // Get top popular models for Jan 2026
+        // Curated shortlist surfaced first (refreshed July 2026)
         $popularModels = [
-            'openai/gpt-5',
+            'openai/gpt-5.2',
             'openai/gpt-5-mini',
             'openai/o3',
-            'anthropic/claude-4-opus',
-            'anthropic/claude-4-sonnet',
-            'google/gemini-2.0-pro',
+            'anthropic/claude-opus-4-8',
+            'anthropic/claude-sonnet-5',
+            'google/gemini-2.5-pro',
             'meta-llama/llama-4-405b-instruct',
             'meta-llama/llama-4-70b-instruct',
             'mistralai/mistral-large-3',
-            'x-ai/grok-3',
+            'x-ai/grok-4',
             'deepseek/deepseek-v3',
             'moonshotai/kimi-k2.5',
             // Free Models

@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail\Providers;
 
+use App\Helpers\EmailHtmlDocument;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Mail\GmailOAuthService;
 use App\Models\Mailbox;
@@ -24,6 +25,9 @@ class GmailProvider implements MailProviderInterface
 
     public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
+        // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
+        $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+
         try {
             // Get valid access token
             $accessToken = $this->oauthService->getValidAccessToken($this->mailbox);

@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 import { useI18n } from 'vue-i18n';
 import { useDateTime } from '@/Composables/useDateTime';
 
@@ -12,17 +13,68 @@ const page = usePage();
 const props = defineProps({
     backups: Array,
     disk: String,
+    restoreSupported: { type: Boolean, default: false },
+    currentOperation: { type: Object, default: null },
+    lastOperation: { type: Object, default: null },
 });
 
-const isCreating = ref(false);
 const onlyDb = ref(true);
+const processing = ref(false);
 
-async function createBackup() {
-    isCreating.value = true;
-    router.post(route('settings.backup.create'), {
-        only_db: onlyDb.value
-    }, {
-        onFinish: () => isCreating.value = false
+// A create/restore is in progress when the server reports a running operation.
+const isRunning = computed(() => !!props.currentOperation);
+const runningType = computed(() => props.currentOperation?.type ?? null);
+
+const flashSuccess = computed(() => page.props.flash?.success);
+const flashError = computed(() => page.props.flash?.error);
+
+// ---- Progress polling -------------------------------------------------------
+// While an operation runs we refresh only the operation/list props so the user
+// sees live progress and the result without a blocking request.
+let pollTimer = null;
+
+function startPolling() {
+    if (pollTimer) return;
+    pollTimer = setInterval(() => {
+        router.reload({
+            only: ['backups', 'currentOperation', 'lastOperation'],
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }, 4000);
+}
+
+function stopPolling() {
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
+}
+
+watch(isRunning, (running) => (running ? startPolling() : stopPolling()));
+onMounted(() => { if (isRunning.value) startPolling(); });
+onUnmounted(stopPolling);
+
+// ---- Result banner ----------------------------------------------------------
+const lastResult = computed(() => {
+    const op = props.lastOperation;
+    if (!op || isRunning.value) return null;
+
+    const ok = op.status === 'success';
+    const key = `backup.result_${ok ? 'success' : 'failed'}_${op.type}`;
+    return {
+        ok,
+        title: t(key),
+        message: op.message || null,
+        safetyBackup: op.type === 'restore' && ok ? op.safety_backup : null,
+    };
+});
+
+// ---- Actions ----------------------------------------------------------------
+function createBackup() {
+    if (isRunning.value) return;
+    router.post(route('settings.backup.create'), { only_db: onlyDb.value }, {
+        preserveScroll: true,
     });
 }
 
@@ -30,10 +82,38 @@ function downloadBackup(filename) {
     window.location.href = route('settings.backup.download', filename);
 }
 
-function deleteBackup(filename) {
-    if (confirm(t('backup.confirm_delete', 'Czy na pewno chcesz usunąć ten backup?'))) {
-        router.delete(route('settings.backup.destroy', filename));
-    }
+// Restore confirmation
+const restoreTarget = ref(null);
+function askRestore(filename) {
+    restoreTarget.value = filename;
+}
+function confirmRestore() {
+    if (!restoreTarget.value) return;
+    processing.value = true;
+    router.post(route('settings.backup.restore', restoreTarget.value), {}, {
+        preserveScroll: true,
+        onFinish: () => {
+            processing.value = false;
+            restoreTarget.value = null;
+        },
+    });
+}
+
+// Delete confirmation
+const deleteTarget = ref(null);
+function askDelete(filename) {
+    deleteTarget.value = filename;
+}
+function confirmDelete() {
+    if (!deleteTarget.value) return;
+    processing.value = true;
+    router.delete(route('settings.backup.destroy', deleteTarget.value), {
+        preserveScroll: true,
+        onFinish: () => {
+            processing.value = false;
+            deleteTarget.value = null;
+        },
+    });
 }
 
 function formatDate(date) {
@@ -58,23 +138,81 @@ function formatDate(date) {
                 </h2>
                 <button
                     @click="createBackup"
-                    :disabled="isCreating"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    :disabled="isRunning"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <svg v-if="isCreating" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg v-if="isRunning" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    {{ isCreating ? t('backup.creating') : t('backup.create') }}
+                    {{ isRunning && runningType === 'create' ? t('backup.creating') : t('backup.create') }}
                 </button>
             </div>
         </template>
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+                <!-- Flash messages -->
+                <div v-if="flashSuccess" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-sm text-green-800 dark:text-green-200">
+                    {{ flashSuccess }}
+                </div>
+                <div v-if="flashError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-sm text-red-800 dark:text-red-200">
+                    {{ flashError }}
+                </div>
+
+                <!-- Live progress banner -->
+                <div
+                    v-if="isRunning"
+                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+                >
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 mt-0.5 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                {{ runningType === 'restore' ? t('backup.running_restore') : t('backup.running_create') }}
+                            </p>
+                            <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
+                                {{ t('backup.running_note') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Last operation result -->
+                <div
+                    v-else-if="lastResult"
+                    class="rounded-lg p-4 border"
+                    :class="lastResult.ok
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'"
+                >
+                    <div class="flex items-start gap-3">
+                        <svg v-if="lastResult.ok" class="w-5 h-5 mt-0.5 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <svg v-else class="w-5 h-5 mt-0.5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium" :class="lastResult.ok ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
+                                {{ lastResult.title }}
+                            </p>
+                            <p v-if="lastResult.message" class="text-sm mt-1 break-words" :class="lastResult.ok ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'">
+                                {{ lastResult.message }}
+                            </p>
+                            <p v-if="lastResult.safetyBackup" class="text-xs mt-1 text-green-600 dark:text-green-300">
+                                {{ t('backup.safety_backup_note', { name: lastResult.safetyBackup }) }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Info Box -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <div class="flex items-start gap-3">
@@ -101,7 +239,8 @@ function formatDate(date) {
                         <input
                             type="checkbox"
                             v-model="onlyDb"
-                            class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            :disabled="isRunning"
+                            class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
                         />
                         <span class="text-gray-700 dark:text-gray-300">
                             {{ t('backup.only_db') }}
@@ -126,8 +265,8 @@ function formatDate(date) {
                         </p>
                         <button
                             @click="createBackup"
-                            :disabled="isCreating"
-                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+                            :disabled="isRunning"
+                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('backup.create_first') }}
                         </button>
@@ -169,6 +308,17 @@ function formatDate(date) {
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <button
+                                            v-if="restoreSupported"
+                                            @click="askRestore(backup.name)"
+                                            :disabled="isRunning"
+                                            class="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            {{ t('backup.restore') }}
+                                        </button>
+                                        <button
                                             @click="downloadBackup(backup.name)"
                                             class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                                         >
@@ -178,8 +328,9 @@ function formatDate(date) {
                                             {{ t('backup.download') }}
                                         </button>
                                         <button
-                                            @click="deleteBackup(backup.name)"
-                                            class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                            @click="askDelete(backup.name)"
+                                            :disabled="isRunning"
+                                            class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -194,5 +345,29 @@ function formatDate(date) {
                 </div>
             </div>
         </div>
+
+        <!-- Restore confirmation -->
+        <ConfirmModal
+            :show="restoreTarget !== null"
+            type="danger"
+            :title="t('backup.restore_confirm_title')"
+            :message="`${t('backup.restore_confirm_message')} ${t('backup.restore_safety_note')}`"
+            :confirm-text="t('backup.restore')"
+            :processing="processing"
+            @close="restoreTarget = null"
+            @confirm="confirmRestore"
+        />
+
+        <!-- Delete confirmation -->
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            type="danger"
+            :title="t('backup.delete_confirm_title')"
+            :message="t('backup.confirm_delete')"
+            :confirm-text="t('backup.delete')"
+            :processing="processing"
+            @close="deleteTarget = null"
+            @confirm="confirmDelete"
+        />
     </AuthenticatedLayout>
 </template>

@@ -30,6 +30,10 @@ return [
         'gpt-3.5-turbo' => [0.50, 1.50],
 
         // --- Anthropic (2026) ---
+        'claude-opus-4-8' => [15.00, 75.00],
+        'claude-sonnet-5' => [3.00, 15.00],
+        'claude-haiku-4-5' => [0.80, 4.00],
+        'claude-fable-5' => [1.00, 5.00],
         'claude-opus-4' => [15.00, 75.00],
         'claude-sonnet-4' => [3.00, 15.00],
         'claude-4-5-opus' => [15.00, 75.00],
@@ -48,11 +52,13 @@ return [
         'haiku' => [0.80, 4.00],
 
         // --- xAI ---
+        'grok-4' => [3.00, 15.00],
         'grok-3' => [3.00, 15.00],
         'grok-2' => [2.00, 10.00],
 
         // --- Google ---
         'gemini-2.5-pro' => [1.25, 10.00],
+        'gemini-2.5-flash-lite' => [0.10, 0.40],
         'gemini-2.5-flash' => [0.30, 2.50],
         'gemini-2.0-pro' => [1.25, 5.00],
         'gemini-2.0-flash' => [0.10, 0.40],

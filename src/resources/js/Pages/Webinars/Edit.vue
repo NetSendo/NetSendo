@@ -31,7 +31,22 @@ const form = useForm({
             ? 'vimeo'
             : (props.webinar.type === 'live' ? 'youtube' : 'upload')),
     thumbnail_url: props.webinar.thumbnail_url || '',
-    settings: props.webinar.settings || {},
+    settings: {
+        ...(props.webinar.settings || {}),
+        // Editable funnel-page copy + benefit bullets (issue #25).
+        content: { ...((props.webinar.settings && props.webinar.settings.content) || {}) },
+        benefits: (props.webinar.settings && Array.isArray(props.webinar.settings.benefits))
+            ? [...props.webinar.settings.benefits]
+            : [],
+    },
+});
+
+// Benefit bullets edited as one-per-line text, stored as an array.
+const benefitsText = computed({
+    get: () => (form.settings.benefits || []).join('\n'),
+    set: (val) => {
+        form.settings.benefits = val.split('\n').map((s) => s.trim()).filter(Boolean);
+    },
 });
 
 const copied = ref(false);
@@ -269,13 +284,19 @@ const getStatusColor = (status) => {
 
 
 
-                            <div v-if="webinar.type === 'live'" class="md:col-span-2">
+                            <div v-if="webinar.type === 'live' || webinar.type === 'hybrid'" class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.edit.scheduled_at') }}</label>
                                 <input
                                     v-model="form.scheduled_at"
                                     type="datetime-local"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.scheduled_at_help') }}</p>
+                            </div>
+                            <div v-else-if="webinar.type === 'auto'" class="md:col-span-2">
+                                <div class="rounded-md bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-3 text-sm text-purple-800 dark:text-purple-300">
+                                    {{ $t('webinars.content.auto_schedule_hint') }}
+                                </div>
                             </div>
 
                             <div class="md:col-span-2">
@@ -358,6 +379,110 @@ const getStatusColor = (status) => {
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Funnel Page Content (issue #25) -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.content.section') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.content.section_desc') }}</p>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.register_headline') }}</label>
+                                <input
+                                    v-model="form.settings.content.register_headline"
+                                    type="text"
+                                    :placeholder="webinar.name"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.register_subheadline') }}</label>
+                                <textarea
+                                    v-model="form.settings.content.register_subheadline"
+                                    rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.register_form_title') }}</label>
+                                    <input
+                                        v-model="form.settings.content.register_form_title"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.register_button') }}</label>
+                                    <input
+                                        v-model="form.settings.content.register_button"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.benefits_title') }}</label>
+                                <input
+                                    v-model="form.settings.content.register_benefits_title"
+                                    type="text"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.benefits') }}</label>
+                                <textarea
+                                    v-model="benefitsText"
+                                    rows="4"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.benefits_help') }}</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.thankyou_headline') }}</label>
+                                    <input
+                                        v-model="form.settings.content.thankyou_headline"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.waiting_title') }}</label>
+                                    <input
+                                        v-model="form.settings.content.waiting_title"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.thankyou_message') }}</label>
+                                <textarea
+                                    v-model="form.settings.content.thankyou_message"
+                                    rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.content.waiting_message') }}</label>
+                                <textarea
+                                    v-model="form.settings.content.waiting_message"
+                                    rows="2"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                />
+                            </div>
+
+                            <p class="text-xs text-gray-400">{{ $t('webinars.content.optional_hint') }}</p>
                         </div>
                     </div>
 

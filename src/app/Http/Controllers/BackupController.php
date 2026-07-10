@@ -2,120 +2,118 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ContactList;
+use App\Jobs\RestoreBackupJob;
+use App\Jobs\RunBackupJob;
+use App\Models\BackupOperation;
+use App\Services\Backup\BackupManager;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class BackupController extends Controller
 {
+    public function __construct(protected BackupManager $manager)
+    {
+    }
+
     /**
-     * Display the backup management page
+     * Display the backup management page.
      */
     public function index()
     {
-        $backups = $this->getBackupFiles();
-        
         return Inertia::render('Settings/Backup/Index', [
-            'backups' => $backups,
-            'disk' => config('backup.backup.destination.disks')[0] ?? 'local',
+            'backups' => $this->manager->files(),
+            'disk' => $this->manager->disk(),
+            'restoreSupported' => $this->manager->restoreSupported(),
+            'currentOperation' => BackupOperation::current(),
+            'lastOperation' => BackupOperation::lastFinished(),
         ]);
     }
 
     /**
-     * Create a new backup
+     * Start a new backup (runs on the queue; the page polls for progress).
      */
     public function create(Request $request)
     {
-        try {
-            // Run backup artisan command
-            Artisan::call('backup:run', [
-                '--only-db' => $request->input('only_db', false),
-            ]);
-            
-            return redirect()->route('settings.backup.index')
-                ->with('success', __('Backup został utworzony pomyślnie.'));
-        } catch (\Exception $e) {
-            return redirect()->route('settings.backup.index')
-                ->with('error', __('Błąd podczas tworzenia backupu: ') . $e->getMessage());
+        if (BackupOperation::current()) {
+            return back()->with('error', __('backup.operation_in_progress'));
         }
+
+        $operation = BackupOperation::create([
+            'user_id' => $request->user()?->id,
+            'type' => BackupOperation::TYPE_CREATE,
+            'status' => BackupOperation::STATUS_RUNNING,
+            'only_db' => $request->boolean('only_db'),
+            'started_at' => now(),
+        ]);
+
+        RunBackupJob::dispatch($operation->id, $operation->only_db);
+
+        return redirect()->route('settings.backup.index')
+            ->with('success', __('backup.backup_started'));
     }
 
     /**
-     * Download a backup file
+     * Restore the database from a backup (queued; takes a safety backup first).
+     */
+    public function restore(Request $request, string $filename)
+    {
+        $filename = basename($filename);
+
+        if (! $this->manager->restoreSupported()) {
+            return back()->with('error', __('backup.restore_not_supported'));
+        }
+
+        if (! $this->manager->exists($filename)) {
+            abort(404, __('backup.file_not_found'));
+        }
+
+        if (BackupOperation::current()) {
+            return back()->with('error', __('backup.operation_in_progress'));
+        }
+
+        $operation = BackupOperation::create([
+            'user_id' => $request->user()?->id,
+            'type' => BackupOperation::TYPE_RESTORE,
+            'status' => BackupOperation::STATUS_RUNNING,
+            'filename' => $filename,
+            'started_at' => now(),
+        ]);
+
+        RestoreBackupJob::dispatch($operation->id, $filename);
+
+        return redirect()->route('settings.backup.index')
+            ->with('success', __('backup.restore_started'));
+    }
+
+    /**
+     * Download a backup file.
      */
     public function download(string $filename)
     {
-        $disk = config('backup.backup.destination.disks')[0] ?? 'local';
-        $path = config('backup.backup.name', 'NetSendo') . '/' . $filename;
-        
-        if (!Storage::disk($disk)->exists($path)) {
-            abort(404, 'Plik backupu nie istnieje.');
+        $filename = basename($filename);
+
+        if (! $this->manager->exists($filename)) {
+            abort(404, __('backup.file_not_found'));
         }
-        
-        return Storage::disk($disk)->download($path);
+
+        return Storage::disk($this->manager->disk())->download($this->manager->relativePath($filename));
     }
 
     /**
-     * Delete a backup file
+     * Delete a backup file.
      */
     public function destroy(string $filename)
     {
-        $disk = config('backup.backup.destination.disks')[0] ?? 'local';
-        $path = config('backup.backup.name', 'NetSendo') . '/' . $filename;
-        
-        if (!Storage::disk($disk)->exists($path)) {
-            abort(404, 'Plik backupu nie istnieje.');
+        $filename = basename($filename);
+
+        if (! $this->manager->exists($filename)) {
+            abort(404, __('backup.file_not_found'));
         }
-        
-        Storage::disk($disk)->delete($path);
-        
+
+        Storage::disk($this->manager->disk())->delete($this->manager->relativePath($filename));
+
         return redirect()->route('settings.backup.index')
-            ->with('success', __('Backup został usunięty.'));
-    }
-
-    /**
-     * Get list of backup files
-     */
-    protected function getBackupFiles(): array
-    {
-        $disk = config('backup.backup.destination.disks')[0] ?? 'local';
-        $backupName = config('backup.backup.name', 'NetSendo');
-        
-        try {
-            $files = Storage::disk($disk)->files($backupName);
-        } catch (\Exception $e) {
-            return [];
-        }
-        
-        return collect($files)
-            ->filter(fn($file) => str_ends_with($file, '.zip'))
-            ->map(function ($file) use ($disk, $backupName) {
-                $filename = basename($file);
-                return [
-                    'name' => $filename,
-                    'size' => Storage::disk($disk)->size($file),
-                    'size_human' => $this->humanFileSize(Storage::disk($disk)->size($file)),
-                    'date' => date('Y-m-d H:i:s', Storage::disk($disk)->lastModified($file)),
-                ];
-            })
-            ->sortByDesc('date')
-            ->values()
-            ->toArray();
-    }
-
-    /**
-     * Convert bytes to human readable format
-     */
-    protected function humanFileSize(int $bytes): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-        
-        return round($bytes, 2) . ' ' . $units[$i];
+            ->with('success', __('backup.deleted'));
     }
 }

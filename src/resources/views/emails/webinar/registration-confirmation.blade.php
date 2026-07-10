@@ -14,6 +14,10 @@ Twoja rejestracja na webinar **{{ $webinar->name }}** została potwierdzona.
 Dołącz do webinaru
 @endcomponent
 
+@if($registration->scheduledStart())
+**Dodaj do kalendarza:** [Google Calendar]({{ $registration->google_calendar_link }}) &nbsp;•&nbsp; [Outlook]({{ $registration->outlook_calendar_link }}) &nbsp;•&nbsp; [Apple / .ics]({{ $registration->ics_url }})
+@endif
+
 Zachowaj ten email - zawiera Twój unikalny link do webinaru.
 
 **Wskazówki:**

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\UniqueConstraintViolationException;
 use App\Events\TagAdded;
 use App\Events\TagRemoved;
 use App\Traits\LogsActivity;
@@ -217,15 +218,35 @@ class Subscriber extends Model
     }
 
     /**
-     * Add a tag to subscriber and dispatch event
+     * Add a tag to subscriber and dispatch event.
+     *
+     * Idempotent (fixes #24): the previous implementation guarded the insert
+     * with an in-memory `$this->tags->contains(...)` check, which is unreliable
+     * when the relationship is stale or was loaded before another code path
+     * attached the tag — the raw INSERT then hit the
+     * `subscriber_tag_subscriber_id_tag_id_unique` constraint (SQLSTATE 23000 /
+     * 1062) and threw, aborting the surrounding automation/event chain.
+     *
+     * `syncWithoutDetaching()` checks the live pivot table before inserting, so
+     * re-adding a tag the subscriber already has is a no-op. The rare
+     * concurrent-insert race (two requests attaching the same tag at once) is
+     * caught so a unique-constraint violation can never bubble up. The
+     * `TagAdded` event is dispatched only when the tag was genuinely attached.
      */
     public function addTag(Tag $tag): void
     {
-        $currentTags = $this->tags ?? collect();
-        if (!$currentTags->contains('id', $tag->id)) {
-            $this->tags()->attach($tag->id);
-            $this->load('tags'); // Refresh relationship
+        try {
+            $changes = $this->tags()->syncWithoutDetaching([$tag->id]);
+            $attached = !empty($changes['attached']);
+        } catch (UniqueConstraintViolationException $e) {
+            // A concurrent request attached the same tag between the existence
+            // check and the insert — the tag is present, so treat it as a no-op.
+            $attached = false;
+        }
 
+        $this->load('tags'); // Refresh relationship
+
+        if ($attached) {
             event(new TagAdded($this, $tag));
         }
     }

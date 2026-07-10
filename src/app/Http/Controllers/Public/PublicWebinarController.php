@@ -139,8 +139,10 @@ class PublicWebinarController extends Controller
             }
         }
 
-        // Check if replay is available
-        $hasReplay = !empty($webinar->video_url);
+        // Check if replay is available (any recording source, when the webinar
+        // allows replays). Mirrors the guard in replay() below.
+        $hasReplay = ($webinar->settings_with_defaults['allow_replay'] ?? true)
+            && (!empty($webinar->video_url) || !empty($webinar->vimeo_id));
 
         // Evergreen sync: auto/hybrid webinars play a recording tied to the session
         // clock, so a late joiner resumes at the elapsed offset (computed on the
@@ -232,6 +234,32 @@ class PublicWebinarController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Download the .ics calendar file for a registration (issue #25).
+     * Token-scoped like the watch/replay routes so the link works from the
+     * confirmation e-mail and the thank-you page.
+     */
+    public function calendar(string $slug, string $token)
+    {
+        $registration = WebinarRegistration::where('access_token', $token)
+            ->whereHas('webinar', fn($q) => $q->where('slug', $slug))
+            ->with(['webinar', 'session'])
+            ->firstOrFail();
+
+        $ics = $registration->toIcs();
+
+        if (!$ics) {
+            abort(404);
+        }
+
+        $filename = \Illuminate\Support\Str::slug($registration->webinar->name ?: 'webinar') . '.ics';
+
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     /**

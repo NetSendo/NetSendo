@@ -61,41 +61,7 @@
                 @if($sessionEnded ?? false)
                     <!-- Session Ended View -->
                     <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-                        <div class="text-center max-w-lg p-8">
-                            @if($webinar->thumbnail_url)
-                                <img src="{{ $webinar->thumbnail_url }}" alt="{{ $webinar->name }}" class="mx-auto rounded-xl shadow-2xl mb-8 max-w-sm w-full opacity-60">
-                            @else
-                                <div class="mb-8">
-                                    <svg class="w-24 h-24 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                </div>
-                            @endif
-
-                            <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">{{ __('webinars.public.watch.session_ended') }}</h2>
-                            <p class="text-gray-400 mb-8">{{ __('webinars.public.watch.session_ended_desc') }}</p>
-
-                            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                                @if($hasReplay ?? false)
-                                    <a href="{{ route('webinar.replay', ['slug' => $webinar->slug, 'token' => $registration->access_token]) }}"
-                                       class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                        {{ __('webinars.public.watch.watch_replay') }}
-                                    </a>
-                                @endif
-
-                                <a href="{{ route('webinar.register', $webinar->slug) }}"
-                                   class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg font-medium transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    {{ __('webinars.public.watch.register_another_time') }}
-                                </a>
-                            </div>
-                        </div>
+                        @include('webinar.partials.ended')
                     </div>
                 @elseif(!$shouldPlay && $sessionStartTime)
                     <!-- Countdown Timer -->
@@ -158,7 +124,7 @@
                             <div class="youtube-overlay" onclick="return false;"></div>
                             <iframe
                                 id="vimeo-player"
-                                src="{{ $webinar->vimeoEmbedUrl(['autoplay' => 1, 'controls' => 0, 'title' => 0, 'byline' => 0, 'portrait' => 0, 'dnt' => 1]) }}"
+                                src="{{ $webinar->vimeoEmbedUrl(['autoplay' => 1, 'muted' => 1, 'controls' => 0, 'title' => 0, 'byline' => 0, 'portrait' => 0, 'dnt' => 1]) }}"
                                 class="absolute inset-0 w-full h-full"
                                 frameborder="0"
                                 allow="autoplay; fullscreen; picture-in-picture"
@@ -170,6 +136,7 @@
                             id="webinar-video"
                             class="absolute inset-0 w-full h-full"
                             autoplay
+                            muted
                             playsinline
                             disablepictureinpicture
                             controlslist="nodownload nofullscreen noremoteplayback"
@@ -185,12 +152,34 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                     </svg>
                                 </div>
-                                <h3 class="text-xl font-semibold text-white mb-2">{{ __('webinars.public.watch.not_started_yet') }}</h3>
-                                <p class="text-gray-400">{{ __('webinars.public.watch.not_started_yet_desc') }}</p>
+                                <h3 class="text-xl font-semibold text-white mb-2">{{ $webinar->pageContent('waiting_title', __('webinars.public.watch.not_started_yet')) }}</h3>
+                                <p class="text-gray-400">{{ $webinar->pageContent('waiting_message', __('webinars.public.watch.not_started_yet_desc')) }}</p>
                             </div>
                         </div>
                     @endif
                 </div>
+
+                @if(!($sessionEnded ?? false) && ($videoSyncEnabled ?? false))
+                    <!-- Recording-ended view, revealed client-side once the synced
+                         recording finishes (or a late joiner arrives past its end). -->
+                    <div id="recording-ended-overlay" class="absolute inset-0 hidden items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+                        @include('webinar.partials.ended')
+                    </div>
+                @endif
+
+                @if($rendersVimeo || $webinar->video_url)
+                    <!-- Unmute affordance (issue #25): browsers block autoplay WITH
+                         sound, so native/Vimeo recordings start muted and this button
+                         restores audio on the first click. Revealed by JS once muted
+                         playback begins; hidden for the countdown/ended states. -->
+                    <button id="unmute-button" type="button"
+                        class="hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-20 items-center gap-2 px-5 py-3 bg-white/90 text-gray-900 font-semibold rounded-full shadow-2xl hover:bg-white transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.657 6.343a8 8 0 010 11.314M11 5L6 9H2v6h4l5 4V5z"/>
+                        </svg>
+                        {{ __('webinars.public.watch.tap_to_unmute') }}
+                    </button>
+                @endif
             </div>
 
             <!-- Pinned Product (overlay) -->
@@ -291,6 +280,12 @@
                         if (nativeVideo.readyState >= 1) apply();
                         else nativeVideo.addEventListener('loadedmetadata', apply, { once: true });
                     }),
+                    getDuration: () => new Promise((resolve) => {
+                        if (nativeVideo.readyState >= 1) resolve(nativeVideo.duration || 0);
+                        else nativeVideo.addEventListener('loadedmetadata', () => resolve(nativeVideo.duration || 0), { once: true });
+                    }),
+                    onEnded: (cb) => nativeVideo.addEventListener('ended', cb),
+                    setMuted: (m) => { nativeVideo.muted = m; },
                 };
             }
 
@@ -309,10 +304,22 @@
                     duration: () => duration,
                     play: () => player.play().catch(e => console.log('Autoplay blocked:', e)),
                     seek: (s) => player.setCurrentTime(s).catch(() => {}),
+                    getDuration: () => player.getDuration().catch(() => 0),
+                    onEnded: (cb) => player.on('ended', cb),
+                    setMuted: (m) => player.setMuted(m).catch(() => {}),
                 };
             }
 
-            return { hasPlayer: false, currentTime: () => 0, duration: () => 0, play: () => {}, seek: () => Promise.resolve() };
+            return {
+                hasPlayer: false,
+                currentTime: () => 0,
+                duration: () => 0,
+                play: () => {},
+                seek: () => Promise.resolve(),
+                getDuration: () => Promise.resolve(0),
+                onEnded: () => {},
+                setMuted: () => {},
+            };
         })();
 
         // Re-sync an evergreen recording forward when the viewer has fallen behind
@@ -327,12 +334,75 @@
             }
         }
 
-        // Start playback when the session is already live on initial load, seeking
-        // an evergreen recording to the current wall-clock offset first.
+        // Reveal the recording-ended screen and hide the player + unmute button.
+        function showRecordingEnded() {
+            const overlay = document.getElementById('recording-ended-overlay');
+            if (!overlay) return;
+            const container = document.getElementById('video-player-container');
+            if (container) container.classList.add('hidden');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            hideUnmute();
+        }
+
+        // Muted-autoplay unmute affordance (issue #25). Playback starts muted so
+        // the browser doesn't block it; this reveals a button that restores sound.
+        let unmuteWired = false;
+        function revealUnmute() {
+            const btn = document.getElementById('unmute-button');
+            if (!btn || !videoTracker.hasPlayer) return;
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+            if (unmuteWired) return;
+            unmuteWired = true;
+            btn.addEventListener('click', function () {
+                videoTracker.setMuted(false);
+                hideUnmute();
+            });
+        }
+
+        function hideUnmute() {
+            const btn = document.getElementById('unmute-button');
+            if (!btn) return;
+            btn.classList.add('hidden');
+            btn.classList.remove('flex');
+        }
+
+        // Resolve with a fallback if a promise doesn't settle in time, so a
+        // stalled/unreachable video never blocks the playback-start decision.
+        function withTimeout(promise, ms, fallback) {
+            return Promise.race([
+                Promise.resolve(promise),
+                new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
+            ]);
+        }
+
+        // A synced recording that finishes during playback ends the session.
+        if (videoSyncEnabled) {
+            videoTracker.onEnded(showRecordingEnded);
+        }
+
+        // Start playback when the session is already live on initial load. For an
+        // evergreen recording: if the wall-clock offset is already past the end of
+        // the recording, show the ended screen; otherwise seek to the offset first.
         if (shouldPlayInitially) {
-            const offset = currentSyncOffset();
-            const ready = offset > 0 ? videoTracker.seek(offset) : Promise.resolve();
-            ready.then(() => videoTracker.play());
+            if (videoSyncEnabled) {
+                withTimeout(videoTracker.getDuration(), 8000, 0).then((duration) => {
+                    const offset = currentSyncOffset();
+                    if (duration > 0 && offset >= duration - 1) {
+                        showRecordingEnded();
+                    } else if (offset > 0) {
+                        videoTracker.seek(offset).then(() => videoTracker.play());
+                        revealUnmute();
+                    } else {
+                        videoTracker.play();
+                        revealUnmute();
+                    }
+                });
+            } else {
+                videoTracker.play();
+                revealUnmute();
+            }
         }
 
         // Catch up as soon as the viewer returns to a backgrounded tab.
@@ -378,6 +448,7 @@
 
             // Start video playback (native <video> or Vimeo player)
             videoTracker.play();
+            revealUnmute();
 
             // Reload page to get live session data
             setTimeout(() => window.location.reload(), 1000);

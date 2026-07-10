@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.0.12',
+    'version' => '2.1.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -163,6 +163,17 @@ return [
         // Window (seconds) across which a minute's worth of sends is spread.
         // Kept just under 60 so a run finishes before the next cron tick.
         'stagger_window_seconds' => env('EMAIL_STAGGER_WINDOW', 55),
+
+        /*
+        | Master HTML layout (issue #22 — HTML_MIME_NO_HTML_TAG).
+        | Fragment content produced by the editor/API (e.g. starting straight
+        | with a <div> or preheader) is wrapped in a full HTML document
+        | (<!DOCTYPE html>, <html>, <head>, <body>) before sending, so messages
+        | are not penalised by spam filters for lacking an <html> tag. Content
+        | that is already a full document is left untouched. Disable to restore
+        | the previous send-content-verbatim behaviour.
+        */
+        'wrap_html_document' => env('EMAIL_WRAP_HTML_DOCUMENT', true),
     ],
 
     /*

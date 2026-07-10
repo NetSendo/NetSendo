@@ -51,6 +51,7 @@ return [
             'add_to_calendar' => 'Fügen Sie das Webinar zum Kalender hinzu, damit Sie es nicht verpassen!',
             'calendar_description' => 'Hier am Webinar teilnehmen:',
             'go_to_webinar' => 'Zum Webinarraum gehen',
+            'apple_calendar' => 'Apple / iCal',
         ],
         'watch' => [
             'waiting' => 'Warten auf Übertragung...',
@@ -67,6 +68,7 @@ return [
             'session_ended_desc' => 'Leider haben Sie diese Übertragung verpasst. Sie können die Aufzeichnung ansehen oder sich für einen anderen Termin anmelden.',
             'watch_replay' => 'Aufzeichnung ansehen',
             'register_another_time' => 'Für anderen Termin anmelden',
+            'tap_to_unmute' => 'Zum Aktivieren des Tons klicken',
             'countdown' => [
                 'days' => 'Tage',
                 'hours' => 'Stunden',

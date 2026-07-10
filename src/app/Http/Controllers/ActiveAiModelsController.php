@@ -21,31 +21,21 @@ class ActiveAiModelsController extends Controller
             })
             ->get()
             ->map(function ($integration) {
-                // Start with default models to ensure new models are always available
-                $defaultModels = AiIntegration::getDefaultModels($integration->provider);
-                $modelMap = collect($defaultModels)->keyBy('model_id')->map(function ($model) {
-                    return [
+                // availableModels() merges the default catalog with stored/fetched
+                // models so newly released models are always available.
+                $models = collect($integration->availableModels())
+                    ->map(fn (array $model) => [
                         'id' => $model['model_id'],
                         'name' => $model['display_name'],
-                    ];
-                });
-
-                // Merge with stored models (stored models take precedence for display names)
-                $integration->models->each(function ($model) use (&$modelMap) {
-                    $modelMap[$model->model_id] = [
-                        'id' => $model->model_id,
-                        'name' => $model->display_name,
-                    ];
-                });
-
-                $models = $modelMap->values();
+                    ])
+                    ->all();
 
                 return [
                     'id' => $integration->id,
                     'provider' => $integration->provider,
                     'name' => $integration->name,
                     'default_model' => $integration->default_model,
-                    'models' => $models->all(),
+                    'models' => $models,
                 ];
             });
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Mail\Providers;
 
+use App\Helpers\EmailHtmlDocument;
 use App\Services\Mail\MailProviderInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
@@ -63,6 +64,9 @@ class SmtpProvider implements MailProviderInterface
 
     public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
+        // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
+        $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+
         try {
             $email = (new Email())
                 ->from(new Address($this->fromEmail, $this->fromName));

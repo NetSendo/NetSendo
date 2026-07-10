@@ -4,6 +4,7 @@ namespace App\Services\Mail\Providers;
 
 use App\Models\DedicatedIpAddress;
 use App\Models\DomainConfiguration;
+use App\Helpers\EmailHtmlDocument;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Nmi\DkimKeyManager;
 use Symfony\Component\Mailer\Mailer;
@@ -106,6 +107,9 @@ class NmiProvider implements MailProviderInterface
 
     public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
     {
+        // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
+        $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+
         // Check warming limits
         if (!$this->canSend()) {
             throw new Exception('Daily warming limit reached for this IP');

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class WebinarRegistration extends Model
@@ -182,14 +183,24 @@ class WebinarRegistration extends Model
     }
 
     /**
-     * Get Google Calendar link.
+     * The registration's effective start time — its own session's scheduled
+     * time, or the webinar's scheduled time. Null when nothing is scheduled yet.
      */
-    public function getGoogleCalendarLinkAttribute(): string
+    public function scheduledStart(): ?Carbon
     {
-        $startDate = $this->session?->scheduled_at ?? $this->webinar->scheduled_at;
+        return $this->session?->scheduled_at ?? $this->webinar->scheduled_at;
+    }
+
+    /**
+     * Get Google Calendar link, or null when the webinar has no start time yet
+     * (so the UI can hide the button instead of linking to a dead "#").
+     */
+    public function getGoogleCalendarLinkAttribute(): ?string
+    {
+        $startDate = $this->scheduledStart();
 
         if (!$startDate) {
-            return '#';
+            return null;
         }
 
         $endDate = $startDate->copy()->addMinutes($this->webinar->duration_minutes ?? 60);
@@ -197,7 +208,7 @@ class WebinarRegistration extends Model
         $params = [
             'action' => 'TEMPLATE',
             'text' => $this->webinar->name,
-            'dates' => $startDate->format('Ymd\THis\Z') . '/' . $endDate->format('Ymd\THis\Z'),
+            'dates' => $startDate->copy()->utc()->format('Ymd\THis\Z') . '/' . $endDate->copy()->utc()->format('Ymd\THis\Z'),
             'details' => __('webinars.public.registered.calendar_description') . "\n\n" . $this->watch_url,
             'location' => $this->watch_url,
         ];
@@ -206,14 +217,14 @@ class WebinarRegistration extends Model
     }
 
     /**
-     * Get Outlook Calendar link.
+     * Get Outlook Calendar link, or null when nothing is scheduled yet.
      */
-    public function getOutlookCalendarLinkAttribute(): string
+    public function getOutlookCalendarLinkAttribute(): ?string
     {
-        $startDate = $this->session?->scheduled_at ?? $this->webinar->scheduled_at;
+        $startDate = $this->scheduledStart();
 
         if (!$startDate) {
-            return '#';
+            return null;
         }
 
         $endDate = $startDate->copy()->addMinutes($this->webinar->duration_minutes ?? 60);
@@ -221,14 +232,73 @@ class WebinarRegistration extends Model
         $params = [
             'path' => '/calendar/action/compose',
             'rru' => 'addevent',
-            'startdt' => $startDate->format('Y-m-d\TH:i:s\Z'),
-            'enddt' => $endDate->format('Y-m-d\TH:i:s\Z'),
+            'startdt' => $startDate->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
+            'enddt' => $endDate->copy()->utc()->format('Y-m-d\TH:i:s\Z'),
             'subject' => $this->webinar->name,
             'body' => __('webinars.public.registered.calendar_description') . "\n\n" . $this->watch_url,
             'location' => $this->watch_url,
         ];
 
         return 'https://outlook.live.com/calendar/0/deeplink.compose?' . http_build_query($params);
+    }
+
+    /**
+     * URL to download the .ics calendar file (Apple Calendar, Outlook desktop,
+     * any standards-compliant client). Null when nothing is scheduled yet.
+     */
+    public function getIcsUrlAttribute(): ?string
+    {
+        if (!$this->scheduledStart()) {
+            return null;
+        }
+
+        return route('webinar.calendar', [
+            'slug' => $this->webinar->slug,
+            'token' => $this->access_token,
+        ]);
+    }
+
+    /**
+     * Build the iCalendar (.ics) document for this registration, or null when
+     * the webinar has no scheduled start time.
+     */
+    public function toIcs(): ?string
+    {
+        $start = $this->scheduledStart();
+
+        if (!$start) {
+            return null;
+        }
+
+        $end = $start->copy()->addMinutes($this->webinar->duration_minutes ?? 60);
+
+        // RFC 5545 text escaping: backslash, comma and semicolon are escaped,
+        // and newlines become the literal "\n" sequence.
+        $escape = fn (string $text): string => addcslashes($text, "\\,;\n");
+
+        $host = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'netsendo';
+        $description = $escape(__('webinars.public.registered.calendar_description') . "\n\n" . $this->watch_url);
+
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//NetSendo//Webinar//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            'UID:webinar-' . $this->webinar_id . '-' . $this->id . '@' . $host,
+            'DTSTAMP:' . now()->utc()->format('Ymd\THis\Z'),
+            'DTSTART:' . $start->copy()->utc()->format('Ymd\THis\Z'),
+            'DTEND:' . $end->copy()->utc()->format('Ymd\THis\Z'),
+            'SUMMARY:' . $escape($this->webinar->name),
+            'DESCRIPTION:' . $description,
+            'LOCATION:' . $escape($this->watch_url),
+            'URL:' . $this->watch_url,
+            'END:VEVENT',
+            'END:VCALENDAR',
+        ];
+
+        return implode("\r\n", $lines) . "\r\n";
     }
 
     /**

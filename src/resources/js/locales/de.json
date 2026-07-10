@@ -3890,7 +3890,21 @@
         "info_title": "System-Backups",
         "info_text": "Backups enthalten die Datenbank und wichtige Konfigurationsdateien. Es wird empfohlen, regelmäßig Kopien auf einem externen Datenträger zu speichern.",
         "only_db": "Nur Datenbank",
-        "delete": "Löschen"
+        "delete": "Löschen",
+        "restore": "Wiederherstellen",
+        "restore_confirm_title": "Dieses Backup wiederherstellen?",
+        "restore_confirm_message": "Dadurch werden ALLE aktuellen Daten in der Datenbank durch den Inhalt dieses Backups ersetzt. Alles, was nach diesem Backup erstellt wurde, geht verloren, und Sie werden möglicherweise abgemeldet.",
+        "restore_safety_note": "Vor der Wiederherstellung wird automatisch ein Sicherheits-Backup der aktuellen Datenbank erstellt, sodass der Vorgang rückgängig gemacht werden kann.",
+        "restoring": "Wiederherstellung läuft...",
+        "running_create": "Backup wird erstellt…",
+        "running_restore": "Datenbank wird wiederhergestellt…",
+        "running_note": "Der Vorgang läuft im Hintergrund. Vollständige Backups können eine Weile dauern — Sie können diese Seite gefahrlos verlassen.",
+        "result_success_create": "Backup erfolgreich erstellt.",
+        "result_success_restore": "Datenbank erfolgreich wiederhergestellt.",
+        "result_failed_create": "Backup fehlgeschlagen.",
+        "result_failed_restore": "Wiederherstellung fehlgeschlagen.",
+        "safety_backup_note": "Sicherheits-Backup der vorherigen Datenbank: {name}",
+        "delete_confirm_title": "Dieses Backup löschen?"
     },
     "api_keys": {
         "title": "API-Schlüssel",
@@ -5205,6 +5219,25 @@
         }
     },
     "webinars": {
+        "content": {
+            "section": "Inhalt der Funnel-Seiten",
+            "section_desc": "Passen Sie die Texte der Anmelde-, Dank- und Warteseiten an. Leer lassen, um den Standard zu verwenden.",
+            "register_headline": "Überschrift der Anmeldeseite",
+            "register_subheadline": "Unterüberschrift / Beschreibung",
+            "register_form_title": "Überschrift des Anmeldeformulars",
+            "register_button": "Text der Anmelde-Schaltfläche",
+            "benefits_title": "Überschrift des Vorteile-Bereichs",
+            "benefits": "Vorteile (einer pro Zeile)",
+            "benefits_help": "Jede Zeile ist ein Punkt. Der Bereich erscheint nur, wenn Sie mindestens einen Vorteil hinzufügen.",
+            "thankyou_headline": "Überschrift der Dankeseite",
+            "thankyou_message": "Nachricht der Dankeseite",
+            "waiting_title": "Überschrift des Wartebildschirms",
+            "waiting_message": "Text des Wartebildschirms",
+            "optional_hint": "Leer lassen, um den Standard zu verwenden.",
+            "scheduled_at_help": "Dieses Datum steuert den Countdown auf der Webinarseite. Ohne Datum sehen Teilnehmer die Meldung „beginnt bald“.",
+            "auto_schedule_hint": "Legen Sie die Sitzungszeiten des Auto-Webinars nach dem Speichern auf dem Bildschirm „Zeitplan“ fest.",
+            "auto_schedule_hint_create": "Nach dem Erstellen legen Sie die Sitzungszeiten auf dem Bildschirm „Zeitplan“ fest."
+        },
         "timezone": "Zeitzone",
         "timezone_default": "Standard (von Ihrem Konto)",
         "timezone_help": "Wählen Sie eine Zeitzone für dieses Webinar. Wenn Standard, wird die Zeitzone Ihres Kontos verwendet.",

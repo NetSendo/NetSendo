@@ -4638,7 +4638,21 @@
         "delete": "Usuń",
         "confirm_delete": "Czy na pewno chcesz usunąć ten backup?",
         "info_title": "Informacja o backupie",
-        "info_text": "Backup zawiera bazę danych oraz pliki konfiguracyjne. Regularne tworzenie kopii zapasowych jest zalecane."
+        "info_text": "Backup zawiera bazę danych oraz pliki konfiguracyjne. Regularne tworzenie kopii zapasowych jest zalecane.",
+        "restore": "Przywróć",
+        "restore_confirm_title": "Przywrócić tę kopię?",
+        "restore_confirm_message": "Spowoduje to zastąpienie WSZYSTKICH obecnych danych w bazie zawartością tej kopii. Wszystko, co powstało po utworzeniu tej kopii, zostanie utracone, a Ty możesz zostać wylogowany(a).",
+        "restore_safety_note": "Przed przywróceniem automatycznie tworzona jest awaryjna kopia bieżącej bazy danych, więc operację można cofnąć.",
+        "restoring": "Przywracanie...",
+        "running_create": "Tworzenie kopii zapasowej…",
+        "running_restore": "Przywracanie bazy danych…",
+        "running_note": "Operacja działa w tle. Pełny backup może chwilę potrwać — możesz spokojnie opuścić tę stronę.",
+        "result_success_create": "Kopia zapasowa została utworzona pomyślnie.",
+        "result_success_restore": "Baza danych została przywrócona pomyślnie.",
+        "result_failed_create": "Tworzenie kopii zapasowej nie powiodło się.",
+        "result_failed_restore": "Przywracanie nie powiodło się.",
+        "safety_backup_note": "Awaryjna kopia poprzedniej bazy danych: {name}",
+        "delete_confirm_title": "Usunąć tę kopię?"
     },
     "api_keys": {
         "title": "Klucze API",
@@ -5751,6 +5765,25 @@
         }
     },
     "webinars": {
+        "content": {
+            "section": "Treść stron lejka",
+            "section_desc": "Dostosuj teksty na stronach: rejestracji, podziękowania i oczekiwania. Pozostaw pole puste, aby użyć wartości domyślnej.",
+            "register_headline": "Nagłówek strony rejestracji",
+            "register_subheadline": "Podtytuł / opis",
+            "register_form_title": "Nagłówek formularza zapisu",
+            "register_button": "Tekst przycisku zapisu",
+            "benefits_title": "Nagłówek sekcji korzyści",
+            "benefits": "Korzyści (jedna w wierszu)",
+            "benefits_help": "Każdy wiersz to jeden punkt. Sekcja pojawia się tylko, gdy dodasz co najmniej jedną korzyść.",
+            "thankyou_headline": "Nagłówek strony podziękowania",
+            "thankyou_message": "Wiadomość na stronie podziękowania",
+            "waiting_title": "Nagłówek ekranu oczekiwania",
+            "waiting_message": "Tekst ekranu oczekiwania",
+            "optional_hint": "Pozostaw puste, aby użyć wartości domyślnej.",
+            "scheduled_at_help": "Ta data steruje odliczaniem na stronie webinaru. Bez ustawionej daty uczestnik zobaczy komunikat „wkrótce”.",
+            "auto_schedule_hint": "Terminy sesji auto-webinaru ustawisz na ekranie „Harmonogram” po zapisaniu.",
+            "auto_schedule_hint_create": "Po utworzeniu ustawisz terminy sesji na ekranie „Harmonogram”."
+        },
         "timezone": "Strefa czasowa",
         "timezone_default": "Domyślna (z Twojego konta)",
         "timezone_help": "Wybierz strefę czasową dla tego webinaru. Jeśli zostawisz domyślną, webinar będzie używał strefy z Twojego konta.",

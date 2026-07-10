@@ -19,9 +19,10 @@
                 @if($webinar->thumbnail_url)
                     <img src="{{ $webinar->thumbnail_url }}" alt="{{ $webinar->name }}" class="mx-auto rounded-2xl shadow-2xl mb-8 max-w-2xl w-full">
                 @endif
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ $webinar->name }}</h1>
-                @if($webinar->description)
-                    <p class="text-xl opacity-90 max-w-2xl mx-auto">{{ $webinar->description }}</p>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ $webinar->pageContent('register_headline', $webinar->name) }}</h1>
+                @php($registerSubheadline = $webinar->pageContent('register_subheadline', $webinar->description))
+                @if($registerSubheadline)
+                    <p class="text-xl opacity-90 max-w-2xl mx-auto">{{ $registerSubheadline }}</p>
                 @endif
             </div>
 
@@ -57,7 +58,7 @@
             <!-- Registration Form -->
             @if($canRegister)
                 <div class="bg-white rounded-2xl shadow-2xl p-8 text-gray-900">
-                    <h2 class="text-2xl font-bold mb-6 text-center">{{ __('webinars.public.register.title') }}</h2>
+                    <h2 class="text-2xl font-bold mb-6 text-center">{{ $webinar->pageContent('register_form_title', __('webinars.public.register.title')) }}</h2>
 
                     @if(session('error'))
                         <div class="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
@@ -107,7 +108,7 @@
 
                         <button type="submit"
                             class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg text-lg hover:from-indigo-700 hover:to-purple-700 transition-all transform hover:scale-[1.02] shadow-lg">
-                            {{ __('webinars.public.register.submit') }}
+                            {{ $webinar->pageContent('register_button', __('webinars.public.register.submit')) }}
                         </button>
 
                         <p class="text-xs text-gray-500 text-center mt-4">
@@ -141,11 +142,12 @@
             @endif
 
             <!-- Benefits / What You'll Learn -->
-            @if($webinar->settings_with_defaults['show_benefits'] ?? false)
+            @php($benefits = $webinar->benefitsList())
+            @if(count($benefits) > 0)
                 <div class="mt-12 bg-white/10 backdrop-blur rounded-xl p-8">
-                    <h3 class="text-2xl font-bold mb-6 text-center">{{ __('webinars.public.register.benefits') }}</h3>
+                    <h3 class="text-2xl font-bold mb-6 text-center">{{ $webinar->pageContent('register_benefits_title', __('webinars.public.register.benefits')) }}</h3>
                     <ul class="space-y-4">
-                        @foreach($webinar->settings_with_defaults['benefits'] ?? [] as $benefit)
+                        @foreach($benefits as $benefit)
                             <li class="flex items-start gap-3">
                                 <svg class="w-6 h-6 text-green-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>

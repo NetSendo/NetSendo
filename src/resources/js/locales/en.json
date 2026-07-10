@@ -4479,7 +4479,21 @@
         "delete": "Delete",
         "confirm_delete": "Are you sure you want to delete this backup?",
         "info_title": "Backup Info",
-        "info_text": "The backup contains the database and configuration files. Regular backups are recommended."
+        "info_text": "The backup contains the database and configuration files. Regular backups are recommended.",
+        "restore": "Restore",
+        "restore_confirm_title": "Restore this backup?",
+        "restore_confirm_message": "This will replace ALL current data in the database with the contents of this backup. Anything created after this backup was made will be lost, and you may be signed out.",
+        "restore_safety_note": "A safety backup of the current database is created automatically before restoring, so this can be undone.",
+        "restoring": "Restoring...",
+        "running_create": "Creating backup…",
+        "running_restore": "Restoring database…",
+        "running_note": "This runs in the background. Full backups can take a while — you can safely leave this page.",
+        "result_success_create": "Backup created successfully.",
+        "result_success_restore": "Database restored successfully.",
+        "result_failed_create": "Backup failed.",
+        "result_failed_restore": "Restore failed.",
+        "safety_backup_note": "Safety backup of the previous database: {name}",
+        "delete_confirm_title": "Delete this backup?"
     },
     "settings": {
         "updates": {
@@ -5704,6 +5718,25 @@
         }
     },
     "webinars": {
+        "content": {
+            "section": "Funnel page content",
+            "section_desc": "Customise the text shown on the registration, thank-you and waiting pages. Leave a field blank to use the default.",
+            "register_headline": "Registration page headline",
+            "register_subheadline": "Subheadline / description",
+            "register_form_title": "Sign-up form heading",
+            "register_button": "Sign-up button text",
+            "benefits_title": "Benefits section heading",
+            "benefits": "Benefits (one per line)",
+            "benefits_help": "Each line is one bullet. The section only appears when you add at least one benefit.",
+            "thankyou_headline": "Thank-you page headline",
+            "thankyou_message": "Thank-you page message",
+            "waiting_title": "Waiting screen heading",
+            "waiting_message": "Waiting screen text",
+            "optional_hint": "Leave blank to use the default.",
+            "scheduled_at_help": "This date drives the countdown on the webinar page. Without a date, attendees see a \"starting soon\" message.",
+            "auto_schedule_hint": "Set the auto-webinar session times on the \"Schedule\" screen after saving.",
+            "auto_schedule_hint_create": "After creating, set the session times on the \"Schedule\" screen."
+        },
         "timezone": "Timezone",
         "timezone_default": "Default (from your account)",
         "timezone_help": "Select a timezone for this webinar. If left default, the webinar will use your account timezone.",

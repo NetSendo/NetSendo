@@ -3890,7 +3890,21 @@
         "info_title": "Backups del sistema",
         "info_text": "Los backups incluyen la base de datos y archivos de configuración importantes. Se recomienda guardar copias regularmente en un almacenamiento externo.",
         "only_db": "Solo base de datos",
-        "delete": "Eliminar"
+        "delete": "Eliminar",
+        "restore": "Restaurar",
+        "restore_confirm_title": "¿Restaurar esta copia de seguridad?",
+        "restore_confirm_message": "Esto reemplazará TODOS los datos actuales de la base de datos con el contenido de esta copia. Todo lo creado después de hacer esta copia se perderá y es posible que se cierre su sesión.",
+        "restore_safety_note": "Antes de restaurar se crea automáticamente una copia de seguridad de la base de datos actual, por lo que la operación se puede deshacer.",
+        "restoring": "Restaurando...",
+        "running_create": "Creando copia de seguridad…",
+        "running_restore": "Restaurando base de datos…",
+        "running_note": "La operación se ejecuta en segundo plano. Las copias completas pueden tardar un poco — puede salir de esta página con seguridad.",
+        "result_success_create": "Copia de seguridad creada correctamente.",
+        "result_success_restore": "Base de datos restaurada correctamente.",
+        "result_failed_create": "La copia de seguridad falló.",
+        "result_failed_restore": "La restauración falló.",
+        "safety_backup_note": "Copia de seguridad de emergencia de la base de datos anterior: {name}",
+        "delete_confirm_title": "¿Eliminar esta copia de seguridad?"
     },
     "api_keys": {
         "title": "Claves API",
@@ -5384,6 +5398,25 @@
         }
     },
     "webinars": {
+        "content": {
+            "section": "Contenido de las páginas del embudo",
+            "section_desc": "Personaliza los textos de las páginas de registro, agradecimiento y espera. Deja el campo vacío para usar el valor predeterminado.",
+            "register_headline": "Título de la página de registro",
+            "register_subheadline": "Subtítulo / descripción",
+            "register_form_title": "Título del formulario de registro",
+            "register_button": "Texto del botón de registro",
+            "benefits_title": "Título de la sección de beneficios",
+            "benefits": "Beneficios (uno por línea)",
+            "benefits_help": "Cada línea es un punto. La sección solo aparece cuando añades al menos un beneficio.",
+            "thankyou_headline": "Título de la página de agradecimiento",
+            "thankyou_message": "Mensaje de la página de agradecimiento",
+            "waiting_title": "Título de la pantalla de espera",
+            "waiting_message": "Texto de la pantalla de espera",
+            "optional_hint": "Déjalo vacío para usar el valor predeterminado.",
+            "scheduled_at_help": "Esta fecha controla la cuenta atrás en la página del seminario. Sin fecha, los asistentes ven un mensaje de \"comienza pronto\".",
+            "auto_schedule_hint": "Configura los horarios de sesión del auto-seminario en la pantalla \"Horario\" después de guardar.",
+            "auto_schedule_hint_create": "Después de crearlo, configura los horarios de sesión en la pantalla \"Horario\"."
+        },
         "timezone": "Zona horaria",
         "timezone_default": "Predeterminado (de su cuenta)",
         "timezone_help": "Seleccione una zona horaria para este seminario web. Si se deja predeterminado, se utilizará la zona horaria de su cuenta.",

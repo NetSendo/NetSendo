@@ -14,11 +14,16 @@
             </svg>
         </div>
 
-        <h1 class="text-3xl font-bold mb-4">{{ __('webinars.public.registered.success_title', ['name' => $registration->first_name ?? '']) }}</h1>
+        <h1 class="text-3xl font-bold mb-4">{{ $webinar->pageContent('thankyou_headline', __('webinars.public.registered.success_title', ['name' => $registration->first_name ?? ''])) }}</h1>
 
-        <p class="text-lg opacity-80 mb-8">
-            {{ __('webinars.public.registered.confirmation_sent') }} <strong>{{ $registration->email }}</strong>
-        </p>
+        @php($thankYouMessage = $webinar->pageContent('thankyou_message'))
+        @if($thankYouMessage)
+            <p class="text-lg opacity-80 mb-8">{{ $thankYouMessage }}</p>
+        @else
+            <p class="text-lg opacity-80 mb-8">
+                {{ __('webinars.public.registered.confirmation_sent') }} <strong>{{ $registration->email }}</strong>
+            </p>
+        @endif
 
         <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
             <p class="text-sm opacity-75 mb-2">{{ __('webinars.public.registered.starts_at') }}</p>
@@ -48,20 +53,26 @@
             </a>
         </div>
 
-        <p class="text-sm opacity-60">
-            {{ __('webinars.public.registered.add_to_calendar') }}
-        </p>
+        @if($registration->scheduledStart())
+            <p class="text-sm opacity-60">
+                {{ __('webinars.public.registered.add_to_calendar') }}
+            </p>
 
-        <div class="flex justify-center gap-4 mt-4">
-            <a href="{{ $registration->google_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
-                Google Calendar
-            </a>
-            <a href="{{ $registration->outlook_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
-                Outlook
-            </a>
-        </div>
+            <div class="flex flex-wrap justify-center gap-4 mt-4">
+                <a href="{{ $registration->google_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
+                    Google Calendar
+                </a>
+                <a href="{{ $registration->outlook_calendar_link }}" target="_blank" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2zm-7 5h5v5h-5v-5z"/></svg>
+                    Outlook
+                </a>
+                <a href="{{ $registration->ics_url }}" class="px-4 py-2 bg-white/10 rounded-lg text-sm hover:bg-white/20 transition flex items-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                    {{ __('webinars.public.registered.apple_calendar') }}
+                </a>
+            </div>
+        @endif
     </div>
 </body>
 </html>

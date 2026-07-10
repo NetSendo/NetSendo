@@ -252,7 +252,8 @@ class WebResearchService
                     'messages' => [
                         ['role' => 'user', 'content' => 'Hello, respond with one word: OK'],
                     ],
-                    'max_tokens' => 10,
+                    // Perplexity requires max_tokens >= 16; keep a small margin above the minimum.
+                    'max_tokens' => 16,
                 ]);
 
             if ($response->successful()) {

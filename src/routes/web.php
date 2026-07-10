@@ -455,6 +455,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::prefix('settings/backup')->name('settings.backup.')->group(function () {
         Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
         Route::post('/create', [\App\Http\Controllers\BackupController::class, 'create'])->name('create');
+        Route::post('/restore/{filename}', [\App\Http\Controllers\BackupController::class, 'restore'])->name('restore');
         Route::get('/download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
         Route::delete('/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
     });
@@ -924,6 +925,7 @@ Route::prefix('webinar')->name('webinar.')->group(function () {
     Route::post('/{slug}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'submitRegistration'])->name('register.submit');
     Route::get('/{slug}/watch/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'watch'])->name('watch');
     Route::get('/{slug}/replay/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'replay'])->name('replay');
+    Route::get('/{slug}/calendar/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'calendar'])->name('calendar');
     Route::post('/{slug}/leave/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'leave'])->name('leave');
     Route::post('/{slug}/progress/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'trackProgress'])->name('progress');
     Route::get('/{slug}/auto/{subscriberToken}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'autoRegister'])->name('auto-register')->middleware('signed');

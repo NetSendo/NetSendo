@@ -260,6 +260,38 @@ class Webinar extends Model
     }
 
     /**
+     * Editable funnel-page copy (issue #25).
+     *
+     * Custom text for the registration / thank-you / watch pages is stored under
+     * settings['content'][$key]. An empty or missing value falls back to
+     * $fallback (normally the default translation), so the public pages render
+     * correctly whether or not the host has customised them.
+     */
+    public function pageContent(string $key, ?string $fallback = null): ?string
+    {
+        $value = $this->settings['content'][$key] ?? null;
+
+        return (is_string($value) && trim($value) !== '') ? $value : $fallback;
+    }
+
+    /**
+     * Editable benefit bullet points for the registration page (issue #25).
+     */
+    public function benefitsList(): array
+    {
+        $benefits = $this->settings['benefits'] ?? [];
+
+        if (!is_array($benefits)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(fn ($b) => is_string($b) ? trim($b) : '', $benefits),
+            fn ($b) => $b !== ''
+        ));
+    }
+
+    /**
      * Get effective timezone (webinar's own or inherited from user).
      */
     public function getEffectiveTimezoneAttribute(): string

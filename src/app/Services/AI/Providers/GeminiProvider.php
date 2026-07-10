@@ -179,8 +179,9 @@ class GeminiProvider extends BaseProvider
     private function formatModelName(string $modelId): string
     {
         $names = [
-            'gemini-2.5-pro' => 'Gemini 2.5 Pro (Styczeń 2026)',
+            'gemini-2.5-pro' => 'Gemini 2.5 Pro',
             'gemini-2.5-flash' => 'Gemini 2.5 Flash',
+            'gemini-2.5-flash-lite' => 'Gemini 2.5 Flash-Lite',
             'gemini-2.0-pro' => 'Gemini 2.0 Pro',
             'gemini-2.0-flash' => 'Gemini 2.0 Flash',
             'gemini-1.5-pro' => 'Gemini 1.5 Pro',

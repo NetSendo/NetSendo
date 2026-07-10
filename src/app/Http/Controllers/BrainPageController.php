@@ -57,8 +57,11 @@ class BrainPageController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        // Get available AI integrations with their models
-        $integrations = AiIntegration::active()
+        // Get available AI integrations with their models. availableModels()
+        // merges the current default catalog with any models fetched from the
+        // provider API, so newly released models show up in the dropdown.
+        $integrations = AiIntegration::with('models')
+            ->active()
             ->whereNotNull('api_key')
             ->orWhere('provider', 'ollama')
             ->get()
@@ -68,7 +71,7 @@ class BrainPageController extends Controller
                     'provider' => $integration->provider,
                     'name' => $integration->name,
                     'default_model' => $integration->default_model,
-                    'models' => AiIntegration::getDefaultModels($integration->provider),
+                    'models' => $integration->availableModels(),
                 ];
             });
 
