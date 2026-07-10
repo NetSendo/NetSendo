@@ -92,6 +92,16 @@ class CampaignCalendarService
             // Ignore
         }
 
+        // Attention-budget allocation (Brain 2.0 Phase 5): the weekly send
+        // budget is distributed across campaign types by measured RPM
+        $allocationSection = '';
+        try {
+            $allocator = app(AllocationService::class);
+            $allocationSection = "\n" . $allocator->formatAsPromptContext($allocator->computeAllocation($user));
+        } catch (\Exception $e) {
+            // Ignore — allocation is an optimization, not a requirement
+        }
+
         $prompt = <<<PROMPT
 You are a marketing strategist planning the upcoming week's email campaigns.
 
@@ -103,6 +113,7 @@ CURRENT CONTEXT:
 - Planning for week: {$weekStart->format('Y-m-d')} to {$weekStart->copy()->addDays(6)->format('Y-m-d')}
 {$strategySection}
 {$performanceSection}
+{$allocationSection}
 
 {$langInstruction}
 
@@ -133,7 +144,9 @@ Be specific and strategic. Align campaigns with active goals when possible.
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent(
+            $response = BrainAi::generate(
+                $user,
+                'weekly_calendar_planning',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 ['max_tokens' => 2000, 'temperature' => 0.5]

@@ -17,14 +17,19 @@ class ModeController
     public const MODE_MANUAL = 'manual';
 
     /**
-     * Actions that always require approval regardless of mode.
+     * Permission tiers for agent step actions (Brain 2.0).
+     * Canonical definitions live in ToolRegistry — these are aliases.
+     *
+     * - read: no side effects (queries, LLM generation)
+     * - write: creates/updates internal records (drafts, tags, deals)
+     * - send: causes outbound communication (email/SMS reaches people)
+     * - destructive: mass mutations or live-automation control —
+     *   ALWAYS requires approval, regardless of work mode
      */
-    private const CRITICAL_ACTIONS = [
-        'delete_list',
-        'delete_all_subscribers',
-        'send_to_all',
-        'change_domain_settings',
-    ];
+    public const TIER_READ = Tools\ToolRegistry::TIER_READ;
+    public const TIER_WRITE = Tools\ToolRegistry::TIER_WRITE;
+    public const TIER_SEND = Tools\ToolRegistry::TIER_SEND;
+    public const TIER_DESTRUCTIVE = Tools\ToolRegistry::TIER_DESTRUCTIVE;
 
     /**
      * Get the current work mode for a user (global).
@@ -59,22 +64,49 @@ class ModeController
     }
 
     /**
-     * Check if an action requires user approval.
-     * Supports per-agent mode — if agentType is provided, checks its specific mode.
+     * Get the permission tier for a step action type.
+     * Delegates to the central ToolRegistry; unknown actions default to TIER_WRITE.
      */
-    public function requiresApproval(string $actionType, User $user, ?string $agentType = null): bool
+    public function getActionTier(string $actionType): string
     {
-        // Critical actions always need approval
-        if (in_array($actionType, self::CRITICAL_ACTIONS)) {
+        return Tools\ToolRegistry::tierOf($actionType);
+    }
+
+    /**
+     * Check if a plan contains any destructive-tier steps.
+     */
+    public function planHasDestructiveSteps(AiActionPlan $plan): bool
+    {
+        return $plan->steps()
+            ->get()
+            ->contains(fn ($step) => $this->getActionTier($step->action_type) === self::TIER_DESTRUCTIVE);
+    }
+
+    /**
+     * Decide whether a concrete plan requires user approval.
+     *
+     * Rules:
+     * - any destructive-tier step => ALWAYS requires approval
+     * - otherwise per-agent effective mode: autonomous executes,
+     *   semi_auto/manual require approval
+     */
+    public function planRequiresApproval(AiActionPlan $plan, User $user): bool
+    {
+        if ($this->planHasDestructiveSteps($plan)) {
             return true;
         }
 
-        $settings = AiBrainSettings::getForUser($user->id);
-        $effectiveMode = $agentType
-            ? $settings->getAgentMode($agentType)
-            : $settings->work_mode;
+        return $this->requiresApproval($user, $plan->agent_type);
+    }
 
-        return match ($effectiveMode) {
+    /**
+     * Mode-based approval check for an agent type (per-agent override aware).
+     */
+    public function requiresApproval(User $user, string $agentType): bool
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        return match ($settings->getAgentMode($agentType)) {
             self::MODE_AUTONOMOUS => false,
             self::MODE_SEMI_AUTO => true,
             self::MODE_MANUAL => true,

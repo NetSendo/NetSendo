@@ -57,6 +57,8 @@ class SegmentationAgent extends BaseAgent
             ->map(fn($r) => "  #{$r->id}: {$r->name} (trigger: {$r->trigger_event}, active: " . ($r->is_active ? 'yes' : 'no') . ")")
             ->join("\n");
 
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('segmentation');
+
         $prompt = <<<PROMPT
 You are a marketing segmentation and automation expert. The user wants:
 Intent: {$intentDesc}
@@ -80,18 +82,7 @@ AVAILABLE CONDITION TYPES:
 Create a plan in JSON:
 {"title":"","description":"","steps":[{"action_type":"","title":"","description":"","config":{}}]}
 
-Available step action_types:
-- analyze_tag_distribution: show tag distribution (config: {limit: 15})
-- analyze_score_distribution: show scoring segments (config: {})
-- create_tag: create tag (config: {name: "", color: "#hex"})
-- apply_tag: apply tag to subscribers (config: {tag_name: "", criteria: {status: "", min_score: N}})
-- suggest_segments: AI segmentation recommendations (config: {})
-- automation_stats: automation statistics (config: {days: 7})
-- create_automation: create automation rule (config: {name: "", trigger_event: "", trigger_config: {}, conditions: [{type: "", config: {}}], condition_logic: "and"|"or", actions: [{type: "", config: {}}], is_active: true|false, limit_per_subscriber: true|false, limit_count: N, limit_period: "hour"|"day"|"week"|"month"|"ever"})
-- update_automation: update existing automation (config: {automation_id: N, name: "", is_active: true|false, trigger_event: "", actions: [...]})
-- toggle_automation: enable/disable automation (config: {automation_id: N})
-- delete_automation: delete automation (config: {automation_id: N})
-- list_automations: list all automations with stats (config: {})
+{$actionsBlock}
 PROMPT;
 
         try {
@@ -141,7 +132,7 @@ PROMPT;
             'toggle_automation' => $this->toggleAutomation($step, $user),
             'delete_automation' => $this->deleteAutomation($step, $user),
             'list_automations' => $this->listAutomations($step, $user),
-            default => ['status' => 'completed', 'message' => "Action noted"],
+            default => $this->failUnknownAction($step),
         };
     }
 

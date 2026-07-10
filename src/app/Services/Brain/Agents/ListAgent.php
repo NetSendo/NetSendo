@@ -26,11 +26,8 @@ class ListAgent extends BaseAgent
     {
         return [
             'create_list',
-            'manage_subscribers',
             'clean_list',
-            'segment_subscribers',
             'tag_subscribers',
-            'import_subscribers',
             'list_stats',
         ];
     }
@@ -44,6 +41,8 @@ class ListAgent extends BaseAgent
 
         $intentDesc = $intent['intent'];
         $paramsJson = json_encode($intent['parameters'] ?? []);
+
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('list');
 
         $prompt = <<<PROMPT
 You are an email list management expert. The user wants:
@@ -71,14 +70,7 @@ Create an action plan. Respond in JSON:
   ]
 }
 
-Available action_types:
-- create_list: create a new list (config: {name: "", description: ""})
-- add_subscribers: add subscribers (config: {list_id: N, emails: [], source: ""})
-- remove_subscribers: remove subscribers (config: {list_id: N, criteria: {}})
-- tag_subscribers: tag subscribers (config: {tag_name: "", list_id: N, criteria: {}})
-- clean_bounced: clean bounced/unsubscribed (config: {list_id: N})
-- segment: create segment (config: {name: "", criteria: {}})
-- show_stats: show statistics (config: {list_id: N})
+{$actionsBlock}
 PROMPT;
 
         try {
@@ -135,7 +127,7 @@ PROMPT;
             'clean_bounced' => $this->executeCleanBounced($step, $user),
             'tag_subscribers' => $this->executeTagSubscribers($step, $user),
             'show_stats' => $this->executeShowStats($step, $user),
-            default => ['status' => 'completed', 'message' => "Noted: {$step->action_type}"],
+            default => $this->failUnknownAction($step),
         };
     }
 

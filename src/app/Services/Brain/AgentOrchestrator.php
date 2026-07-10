@@ -52,6 +52,9 @@ class AgentOrchestrator
             'analytics' => app(AnalyticsAgent::class),
             'segmentation' => app(SegmentationAgent::class),
             'research' => app(ResearchAgent::class),
+            'revenue' => app(\App\Services\Brain\Agents\RevenueAgent::class),
+            'funnel' => app(\App\Services\Brain\Agents\FunnelAgent::class),
+            'deliverability' => app(\App\Services\Brain\Agents\DeliverabilityAgent::class),
         ];
     }
 
@@ -417,7 +420,7 @@ NEVER re-classify a follow-up answer as requiring an agent — the conversation 
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent($prompt, $integration, [
+            $response = BrainAi::generate($user, 'classify_intent', $prompt, $integration, [
                 'max_tokens' => 500,
                 'temperature' => 0.1,
             ]);
@@ -544,8 +547,8 @@ PROMPT;
             // ai_goals table may not exist yet if migration hasn't been run
         }
 
-        // Check if approval is needed
-        if ($this->modeController->requiresApproval($plan->agent_type, $user)) {
+        // Check if approval is needed (per-agent mode + destructive-step gate)
+        if ($this->modeController->planRequiresApproval($plan, $user)) {
             $approval = $this->modeController->requestApproval($plan, $user, $channel);
 
             return [
@@ -1113,10 +1116,15 @@ Response: {$aiResponse}
 Title:
 PROMPT;
 
-            $title = $this->aiService->generateContent($prompt, $integration, [
-                'max_tokens' => 30,
-                'temperature' => 0.3,
-            ]);
+            $title = $user
+                ? BrainAi::generate($user, 'conversation_title', $prompt, $integration, [
+                    'max_tokens' => 30,
+                    'temperature' => 0.3,
+                ])
+                : $this->aiService->generateContent($prompt, $integration, [
+                    'max_tokens' => 30,
+                    'temperature' => 0.3,
+                ]);
 
             $title = trim($title, " \n\r\t\"'.");
             if (mb_strlen($title) > 80) {
@@ -1417,8 +1425,29 @@ PROMPT;
                 ];
             }
 
-            // Execute immediately — cron is always autonomous
+            // Destructive-tier steps must never auto-execute — even in
+            // autonomous cron mode they go through the approval queue
+            if ($this->modeController->planHasDestructiveSteps($plan)) {
+                $approval = $this->modeController->requestApproval($plan, $user, 'telegram');
+
+                AiBrainActivityLog::logEvent($user->id, 'cron_task_approval_required', 'pending', $agentName, [
+                    'task_title' => $task['title'] ?? '',
+                    'plan_id' => $plan->id,
+                    'approval_id' => $approval->id,
+                    'reason' => 'destructive_steps',
+                ]);
+
+                return [
+                    'type' => 'approval_request',
+                    'message' => "Plan '{$plan->title}' contains destructive actions and awaits approval.",
+                    'plan_id' => $plan->id,
+                    'approval_id' => $approval->id,
+                ];
+            }
+
+            // Execute immediately — cron is autonomous for non-destructive plans
             $result = $this->executePlan($plan, $user);
+            $result['plan_id'] = $plan->id;
 
             $durationMs = (int) ((microtime(true) - $startTime) * 1000);
 
@@ -1493,7 +1522,7 @@ PROMPT;
         if (in_array($agentName, ['crm', 'segmentation', 'analytics'])) {
             try {
                 $context['hot_leads'] = \App\Models\CrmContact::where('user_id', $user->id)
-                    ->where('score', '>=', 50)
+                    ->where('score', '>=', AiBrainSettings::hotLeadScore($user->id))
                     ->count();
                 $context['open_deals'] = \App\Models\CrmDeal::where('user_id', $user->id)
                     ->whereNull('closed_at')

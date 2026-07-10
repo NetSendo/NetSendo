@@ -80,6 +80,18 @@ abstract class BaseAgent
     }
 
     /**
+     * Whether Brain dry-run (simulation) mode is enabled for this user.
+     * In dry-run mode, send/destructive actions report what they WOULD do
+     * instead of doing it.
+     */
+    protected function isDryRun(User $user): bool
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        return (bool) (($settings->preferences ?? [])['dry_run_mode'] ?? false);
+    }
+
+    /**
      * Get a language instruction string for AI prompts, based on user's preferred language.
      * Returns e.g. "IMPORTANT: Respond in English."
      */
@@ -139,8 +151,21 @@ abstract class BaseAgent
     }
 
     /**
+     * Token usage accumulated by callAi() during the current step execution.
+     * Reset in executeStep(), flushed into the AiExecutionLog entry.
+     */
+    protected int $stepTokensInput = 0;
+    protected int $stepTokensOutput = 0;
+    protected ?string $stepModelUsed = null;
+
+    /** Whether callAi() runs inside executeStep() (tokens logged with the step). */
+    protected bool $inStepExecution = false;
+
+    /**
      * Call AI provider with prompt.
      * Supports per-task model routing via AiBrainSettings.
+     * Records REAL token usage: accumulates per-step counters and charges
+     * the user's daily token budget (Brain 2.0, D5).
      */
     protected function callAi(string $prompt, array $options = [], ?User $user = null, ?string $task = null): string
     {
@@ -167,11 +192,50 @@ abstract class BaseAgent
             }
         }
 
-        return $this->aiService->generateContent(
+        $startTime = microtime(true);
+
+        $result = $this->aiService->generateContentWithUsage(
             AiService::prependDateContext($prompt, $user?->timezone),
             $integration,
             $options
         );
+
+        $tokensIn = $result['tokens_input'];
+        $tokensOut = $result['tokens_output'];
+
+        $this->stepTokensInput += $tokensIn;
+        $this->stepTokensOutput += $tokensOut;
+        $this->stepModelUsed = $result['model'] ?? $this->stepModelUsed;
+
+        if ($user && ($tokensIn + $tokensOut) > 0) {
+            try {
+                AiBrainSettings::getForUser($user->id)->addTokensUsed($tokensIn + $tokensOut);
+            } catch (\Exception $e) {
+                Log::warning('Failed to record Brain token usage', ['error' => $e->getMessage()]);
+            }
+
+            // Plan/advise-time calls (outside executeStep) get their own log row,
+            // so the Monitor's token/cost aggregation sees ALL spend exactly once
+            if (!$this->inStepExecution) {
+                try {
+                    AiExecutionLog::logSuccess(
+                        $user->id,
+                        $this->getName(),
+                        'ai_call:' . ($task ?? 'general'),
+                        [],
+                        [],
+                        $tokensIn,
+                        $tokensOut,
+                        $this->stepModelUsed,
+                        (int) ((microtime(true) - $startTime) * 1000)
+                    );
+                } catch (\Exception $e) {
+                    // Logging must never break the agent
+                }
+            }
+        }
+
+        return $result['text'];
     }
 
     /**
@@ -186,6 +250,32 @@ abstract class BaseAgent
         ?int $conversationId = null,
     ): AiActionPlan {
         $settings = AiBrainSettings::getForUser($user->id);
+
+        // Validate steps against the ToolRegistry at plan-creation time:
+        // invalid action types are rejected HERE (with a clear log), not at
+        // execution time. A plan with zero valid steps is a planning failure.
+        $agentName = $this->getName();
+        $validSteps = [];
+        foreach ($steps as $step) {
+            $actionType = $step['action_type'] ?? '';
+            if (\App\Services\Brain\Tools\ToolRegistry::isValidAction($agentName, $actionType)) {
+                $validSteps[] = $step;
+            } else {
+                Log::warning('Plan step rejected: unknown action for agent', [
+                    'agent' => $agentName,
+                    'action_type' => $actionType,
+                    'step_title' => $step['title'] ?? '',
+                ]);
+            }
+        }
+
+        if (empty($validSteps)) {
+            throw new \RuntimeException(
+                "Plan for agent '{$agentName}' contains no valid steps (all action types unknown)"
+            );
+        }
+
+        $steps = array_values($validSteps);
 
         $plan = AiActionPlan::create([
             'user_id' => $user->id,
@@ -224,6 +314,12 @@ abstract class BaseAgent
         $maxRetries = 2;
         $lastException = null;
 
+        // Reset per-step token accounting (accumulated by callAi)
+        $this->stepTokensInput = 0;
+        $this->stepTokensOutput = 0;
+        $this->stepModelUsed = null;
+        $this->inStepExecution = true;
+
         for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
             try {
                 if ($attempt > 0) {
@@ -245,10 +341,15 @@ abstract class BaseAgent
                     "execute_step:{$step->action_type}",
                     $step->config,
                     array_merge($result, ['attempts' => $attempt + 1]),
-                    0, 0, null, $durationMs,
+                    $this->stepTokensInput,
+                    $this->stepTokensOutput,
+                    $this->stepModelUsed,
+                    $durationMs,
                     $step->ai_action_plan_id,
                     $step->id
                 );
+
+                $this->inStepExecution = false;
 
                 return $result;
 
@@ -270,6 +371,7 @@ abstract class BaseAgent
         }
 
         // All retries exhausted — mark as failed
+        $this->inStepExecution = false;
         $step->markFailed($lastException->getMessage());
 
         AiExecutionLog::logError(
@@ -306,7 +408,19 @@ abstract class BaseAgent
      */
     protected function executeStepAction(AiActionPlanStep $step, User $user): array
     {
-        return ['status' => 'completed', 'message' => 'Step executed'];
+        $this->failUnknownAction($step);
+    }
+
+    /**
+     * Fail loudly on an action type the agent cannot execute.
+     * Silent "noted" no-ops made plans look successful while doing nothing —
+     * an unknown action is a planning error and must surface as a failed step.
+     */
+    protected function failUnknownAction(AiActionPlanStep $step): never
+    {
+        throw new \RuntimeException(
+            "Unknown action type '{$step->action_type}' for agent '{$this->getName()}' — no executor implemented"
+        );
     }
 
     /**

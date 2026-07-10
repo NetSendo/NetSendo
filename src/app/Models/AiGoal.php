@@ -17,6 +17,9 @@ class AiGoal extends Model
         'status',
         'priority',
         'success_criteria',
+        'target_metric',
+        'target_value',
+        'baseline_value',
         'context',
         'total_plans',
         'completed_plans',
@@ -28,6 +31,8 @@ class AiGoal extends Model
 
     protected $casts = [
         'success_criteria' => 'array',
+        'target_value' => 'decimal:2',
+        'baseline_value' => 'decimal:2',
         'context' => 'array',
         'total_plans' => 'integer',
         'completed_plans' => 'integer',

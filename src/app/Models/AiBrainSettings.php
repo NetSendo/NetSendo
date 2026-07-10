@@ -31,6 +31,7 @@ class AiBrainSettings extends Model
         'is_active',
         'cron_enabled',
         'cron_interval_minutes',
+        'cron_max_tasks',
         'last_cron_run_at',
         'last_activity_at',
     ];
@@ -51,6 +52,7 @@ class AiBrainSettings extends Model
         'tokens_used_today' => 'integer',
         'cron_enabled' => 'boolean',
         'cron_interval_minutes' => 'integer',
+        'cron_max_tasks' => 'integer',
         'last_cron_run_at' => 'datetime',
         'last_activity_at' => 'datetime',
     ];
@@ -100,6 +102,9 @@ class AiBrainSettings extends Model
         'segmentation' => '🎯 Segmentation',
         'list' => '📋 List Management',
         'research' => '🔍 Research',
+        'revenue' => '💰 Revenue',
+        'funnel' => '🌀 Funnels',
+        'deliverability' => '📮 Deliverability',
     ];
 
     /**
@@ -209,6 +214,32 @@ class AiBrainSettings extends Model
             ]);
         } else {
             $this->increment('tokens_used_today', $tokens);
+        }
+    }
+
+    /**
+     * Get a numeric Brain threshold: preferences override → config default.
+     * Keys mirror config/brain.php (e.g. 'hot_lead_score').
+     */
+    public function getThreshold(string $key, float $default = 0): float
+    {
+        $prefValue = ($this->preferences ?? [])[$key] ?? null;
+        if (is_numeric($prefValue)) {
+            return (float) $prefValue;
+        }
+
+        return (float) config("brain.{$key}", $default);
+    }
+
+    /**
+     * Hot-lead score threshold for this user.
+     */
+    public static function hotLeadScore(int $userId): int
+    {
+        try {
+            return (int) static::getForUser($userId)->getThreshold('hot_lead_score', 50);
+        } catch (\Exception $e) {
+            return (int) config('brain.hot_lead_score', 50);
         }
     }
 

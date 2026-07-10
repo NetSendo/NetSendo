@@ -7,7 +7,6 @@ use App\Models\AiActionPlanStep;
 use App\Models\Message;
 use App\Models\Template;
 use App\Models\User;
-use App\Services\TemplateAiService;
 use Illuminate\Support\Facades\Log;
 
 class MessageAgent extends BaseAgent
@@ -46,6 +45,8 @@ class MessageAgent extends BaseAgent
 
         $personalization = $this->getPersonalizationInstructions();
 
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('message');
+
         $prompt = <<<PROMPT
 You are an email/SMS copywriting expert. The user wants:
 Intent: {$intentDesc}
@@ -72,16 +73,11 @@ Create a content creation plan. Respond in JSON:
   ]
 }
 
-Available action_types:
-- generate_subject: generate subject line variants (config: {topic: "", count: 5, tone: ""})
-- generate_body: generate content (config: {type: "email"|"sms", topic: "", tone: "", length: ""})
-- create_message: save message as draft (config: {subject: "", type: "email"|"sms"})
-- generate_ab_variants: generate A/B variants (config: {original_subject: "", count: 3})
-- improve_content: improve existing content (config: {message_id: N, improvements: []})
+{$actionsBlock}
 PROMPT;
 
         try {
-            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3]);
+            $response = $this->callAi($prompt, ['max_tokens' => 3000, 'temperature' => 0.3], $user, 'content_generation');
             $data = $this->parseJson($response);
 
             if (!$data || empty($data['steps'])) {
@@ -138,7 +134,7 @@ PROMPT;
             'create_message' => $this->executeCreateMessage($step, $user),
             'generate_ab_variants' => $this->executeGenerateAbVariants($step, $user),
             'improve_content' => $this->executeImproveContent($step, $user),
-            default => ['status' => 'completed', 'message' => "Noted: {$step->action_type}"],
+            default => $this->failUnknownAction($step),
         };
     }
 
@@ -172,7 +168,7 @@ Provide:
 Respond with emoji and formatting.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.6]);
+        $response = $this->callAi($prompt, ['max_tokens' => 4000, 'temperature' => 0.6], $user, 'content_generation');
 
         return [
             'type' => 'advice',
@@ -270,7 +266,7 @@ Rules:
 - Use [[fname]] or [[!fname]] for at least one personalized subject variant
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8], $user, 'content_generation');
         $data = $this->parseJson($response);
         $subjects = $data['subjects'] ?? [];
 
@@ -343,7 +339,7 @@ Rules:
 PROMPT;
         }
 
-        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.7]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.7], $user, 'content_generation');
         $data = $this->parseJson($response);
 
         return [
@@ -416,7 +412,7 @@ Each variant should test a different variable (CTA, personalization, urgency, et
 Consider using [[fname]] or [[!fname]] in at least one variant to test personalization impact.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8]);
+        $response = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.8], $user, 'content_generation');
         $data = $this->parseJson($response);
 
         $variants = $data['variants'] ?? [];
@@ -472,7 +468,7 @@ IMPORTANT: Preserve any existing personalization variables in the content (e.g. 
 If the content lacks personalization, consider adding [[fname]] or [[!fname]] where natural.
 PROMPT;
 
-        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.5]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.5], $user, 'content_generation');
         $data = $this->parseJson($response);
 
         if ($data) {

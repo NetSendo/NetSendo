@@ -113,6 +113,26 @@ class AiService
     }
 
     /**
+     * Generate content and return real token usage alongside the text.
+     *
+     * @return array{text: string, tokens_input: int, tokens_output: int, model: ?string}
+     */
+    public function generateContentWithUsage(string $prompt, AiIntegration $integration, array $options = []): array
+    {
+        $provider = $this->getProvider($integration);
+        $model = $options['model'] ?? $integration->default_model;
+
+        $result = $provider->generateTextWithUsage($prompt, $options['model'] ?? null, $options);
+
+        return [
+            'text' => $result['text'] ?? '',
+            'tokens_input' => (int) ($result['tokens_input'] ?? 0),
+            'tokens_output' => (int) ($result['tokens_output'] ?? 0),
+            'model' => $model,
+        ];
+    }
+
+    /**
      * Get current date context for AI prompts.
      * This ensures AI models know the current date when generating content.
      *

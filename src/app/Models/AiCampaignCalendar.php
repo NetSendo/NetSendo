@@ -18,6 +18,7 @@ class AiCampaignCalendar extends Model
         'topic',
         'description',
         'status',
+        'executed_at',
         'ai_goal_id',
         'metadata',
     ];
@@ -25,6 +26,7 @@ class AiCampaignCalendar extends Model
     protected $casts = [
         'week_start' => 'date',
         'planned_date' => 'date',
+        'executed_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -67,7 +69,7 @@ class AiCampaignCalendar extends Model
 
     public function markExecuted(): void
     {
-        $this->update(['status' => 'executed']);
+        $this->update(['status' => 'executed', 'executed_at' => now()]);
     }
 
     public function markSkipped(): void

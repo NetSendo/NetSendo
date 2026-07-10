@@ -9,6 +9,7 @@ use App\Models\ContactList;
 use App\Models\EmailClick;
 use App\Models\EmailOpen;
 use App\Models\Message;
+use App\Models\MessageQueueEntry;
 use App\Models\Subscriber;
 use App\Models\User;
 use Carbon\Carbon;
@@ -34,6 +35,8 @@ class AnalyticsAgent extends BaseAgent
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('analytics');
+
         $prompt = <<<PROMPT
 You are a marketing analytics expert. The user wants:
 Intent: {$intentDesc}
@@ -45,13 +48,7 @@ Parameters: {$paramsJson}
 Create an analysis plan in JSON:
 {"title":"","description":"","steps":[{"action_type":"","title":"","description":"","config":{}}]}
 
-Available action_types:
-- fetch_campaign_stats: campaign statistics (config: {days: 30})
-- fetch_subscriber_stats: subscriber statistics (config: {days: 30})
-- generate_report: AI report (config: {type: "monthly|weekly|custom"})
-- compare_performance: compare campaigns (config: {})
-- analyze_trends: trend analysis (config: {days: 30})
-- ai_usage_report: AI Brain usage (config: {days: 30})
+{$actionsBlock}
 
 Analytics agent is read-only — never modifies data.
 PROMPT;
@@ -98,7 +95,7 @@ PROMPT;
             'compare_performance' => $this->comparePerformance($step, $user),
             'analyze_trends' => $this->analyzeTrends($step, $user),
             'ai_usage_report' => $this->aiUsageReport($step, $user),
-            default => ['status' => 'completed', 'message' => "Action noted"],
+            default => $this->failUnknownAction($step),
         };
     }
 
@@ -125,13 +122,18 @@ PROMPT;
         $uniqueClicks = EmailClick::whereHas('message', fn($q) => $q->where('user_id', $user->id))
             ->where('created_at', '>=', $since)->distinct('subscriber_id')->count('subscriber_id');
 
-        $subCount = Subscriber::where('user_id', $user->id)->active()->count();
-        $openRate = $subCount > 0 ? round(($uniqueOpens / $subCount) * 100, 2) : 0;
-        $clickRate = $uniqueOpens > 0 ? round(($uniqueClicks / $uniqueOpens) * 100, 2) : 0;
+        // Rates against actually delivered emails in the period — not the
+        // whole active-subscriber base (which understates real engagement)
+        $delivered = MessageQueueEntry::whereHas('message', fn($q) => $q->where('user_id', $user->id))
+            ->where('status', MessageQueueEntry::STATUS_SENT)
+            ->where('sent_at', '>=', $since)
+            ->count();
+        $openRate = $delivered > 0 ? round(($uniqueOpens / $delivered) * 100, 2) : 0;
+        $clickRate = $delivered > 0 ? round(($uniqueClicks / $delivered) * 100, 2) : 0;
 
         $msg = __('brain.analytics.campaign_header', ['days' => $days]) . "\n" . __('brain.analytics.campaign_sent', ['count' => $totalSent]) . "\n" . __('brain.analytics.campaign_opens', ['count' => $uniqueOpens]) . "\n" . __('brain.analytics.campaign_clicks', ['count' => $uniqueClicks]) . "\n" . __('brain.analytics.campaign_rates', ['open_rate' => $openRate, 'click_rate' => $clickRate]);
 
-        return ['status' => 'completed', 'data' => compact('totalSent', 'uniqueOpens', 'uniqueClicks', 'openRate', 'clickRate'), 'message' => $msg];
+        return ['status' => 'completed', 'data' => compact('totalSent', 'delivered', 'uniqueOpens', 'uniqueClicks', 'openRate', 'clickRate'), 'message' => $msg];
     }
 
     protected function fetchSubscriberStats(AiActionPlanStep $step, User $user): array
@@ -163,7 +165,7 @@ PROMPT;
         $langInstruction = $this->getLanguageInstruction(User::find($step->plan->user_id));
 
         $prompt = "Generate a professional report based on:\n{$ctx}\n\n{$langInstruction}\n\nFormat: 1) Summary 2) Analysis 3) Trends 4) Recommendations. Use emoji.";
-        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.4]);
+        $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.4], $user, 'analytics');
 
         return ['status' => 'completed', 'message' => $response];
     }
@@ -177,10 +179,12 @@ PROMPT;
 
         $cmp = __('brain.analytics.compare_header') . "\n\n";
         foreach ($messages as $msg) {
+            $delivered = $msg->queueEntries()->where('status', MessageQueueEntry::STATUS_SENT)->count();
             $opens = EmailOpen::where('message_id', $msg->id)->distinct('subscriber_id')->count('subscriber_id');
             $clicks = EmailClick::where('message_id', $msg->id)->distinct('subscriber_id')->count('subscriber_id');
+            $or = $delivered > 0 ? round(($opens / $delivered) * 100, 1) : 0;
             $ctor = $opens > 0 ? round(($clicks / $opens) * 100, 1) : 0;
-            $cmp .= "📧 **{$msg->name}** ({$msg->updated_at->format('d.m')}): 👁️{$opens} 🖱️{$clicks} CTOR:{$ctor}%\n";
+            $cmp .= "📧 **{$msg->subject}** ({$msg->updated_at->format('d.m')}): 📤{$delivered} 👁️{$opens} (OR:{$or}%) 🖱️{$clicks} CTOR:{$ctor}%\n";
         }
 
         return ['status' => 'completed', 'message' => $cmp];

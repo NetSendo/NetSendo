@@ -54,6 +54,9 @@ class WeeklyDigestService
         // Brain activity summary
         $brainActivity = $this->getBrainActivity($user, $since);
 
+        // P&L: attributed revenue minus AI token cost (Brain 2.0 Phase 5)
+        $pnl = $this->getPnl($user, $since, now());
+
         // Build context for AI report
         $context = [
             'period' => $period,
@@ -64,6 +67,7 @@ class WeeklyDigestService
             'top_campaigns' => $topCampaigns,
             'goal_progress' => $goalProgress,
             'brain_activity' => $brainActivity,
+            'pnl' => $pnl,
         ];
 
         // Generate AI-powered strategic report
@@ -92,8 +96,60 @@ class WeeklyDigestService
             'top_campaigns' => $topCampaigns,
             'goal_progress' => $goalProgress,
             'brain_activity' => $brainActivity,
+            'pnl' => $pnl,
             'ai_report' => $aiReport,
         ];
+    }
+
+    /**
+     * Brain P&L for the period (Brain 2.0 Phase 5): revenue from the unified
+     * ledger (total + attributed to campaigns, by source) minus the estimated
+     * AI token cost. The number the whole system optimizes for.
+     */
+    protected function getPnl(User $user, Carbon $from, Carbon $to): array
+    {
+        $pnl = [
+            'revenue_total' => 0.0,
+            'revenue_attributed' => 0.0,
+            'revenue_by_source' => [],
+            'ai_cost_usd' => 0.0,
+            'net_note' => null,
+        ];
+
+        try {
+            $events = \App\Models\RevenueEvent::forUser($user->id)->between($from, $to);
+            $pnl['revenue_total'] = round(((int) (clone $events)->sum('amount')) / 100, 2);
+            $pnl['revenue_attributed'] = round(((int) (clone $events)->attributed()->sum('amount')) / 100, 2);
+            $pnl['revenue_by_source'] = (clone $events)
+                ->selectRaw('source, SUM(amount) as total')
+                ->groupBy('source')
+                ->pluck('total', 'source')
+                ->map(fn ($amount) => round($amount / 100, 2))
+                ->toArray();
+        } catch (\Exception $e) {
+            // revenue_events table may not exist yet
+        }
+
+        try {
+            $tokenRows = \App\Models\AiExecutionLog::where('user_id', $user->id)
+                ->whereBetween('created_at', [$from, $to])
+                ->selectRaw('model_used, SUM(tokens_input) as tin, SUM(tokens_output) as tout')
+                ->groupBy('model_used')
+                ->get();
+
+            $cost = 0.0;
+            foreach ($tokenRows as $row) {
+                $cost += \App\Services\AI\AiCostEstimator::estimate($row->model_used ?? '', (int) $row->tin, (int) $row->tout);
+            }
+            $pnl['ai_cost_usd'] = round($cost, 4);
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        // Revenue currencies vary — the note reminds readers not to naively subtract
+        $pnl['net_note'] = 'revenue in account currencies, AI cost in USD';
+
+        return $pnl;
     }
 
     /**
@@ -349,10 +405,11 @@ METRICS DATA:
 Generate a concise, actionable {$periodLabel} report containing:
 
 1. **📊 Executive Summary** — 2-3 sentences summarizing overall performance
-2. **📈 Key Wins** — What went well this {$context['period']} (with specific numbers)
-3. **⚠️ Areas of Concern** — What needs attention (declining metrics, high unsubscribes, etc.)
-4. **🎯 Strategic Recommendations** — 3-5 specific, actionable next steps based on data
-5. **🔮 Focus for Next {$periodLabel}** — Priority actions for the coming period
+2. **💰 P&L** — revenue this {$context['period']} (total, attributed to campaigns, by source) vs AI cost, based on the `pnl` data; if revenue is zero, say what to instrument (payments, purchase webhook, funnel goals)
+3. **📈 Key Wins** — What went well this {$context['period']} (with specific numbers)
+4. **⚠️ Areas of Concern** — What needs attention (declining metrics, high unsubscribes, etc.)
+5. **🎯 Strategic Recommendations** — 3-5 specific, actionable next steps based on data
+6. **🔮 Focus for Next {$periodLabel}** — Priority actions for the coming period
 
 RULES:
 - Use specific numbers from the data, not vague statements
@@ -374,7 +431,9 @@ PROMPT;
                 return $this->generateFallbackReport($context);
             }
 
-            return $this->aiService->generateContent(
+            return BrainAi::generate(
+                $user,
+                'weekly_digest',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 ['max_tokens' => 4000, 'temperature' => 0.5]

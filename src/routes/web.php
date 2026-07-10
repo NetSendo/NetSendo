@@ -222,6 +222,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\BrainPageController::class, 'index'])->name('index');
         Route::get('/settings', [\App\Http\Controllers\BrainPageController::class, 'settings'])->name('settings');
         Route::get('/monitor', [\App\Http\Controllers\BrainPageController::class, 'monitor'])->name('monitor');
+        Route::get('/guide', [\App\Http\Controllers\BrainPageController::class, 'guide'])->name('guide');
 
         // Brain Status AJAX (dashboard widget)
         Route::get('/api/status', [\App\Http\Controllers\BrainController::class, 'dashboardStatus'])->name('api.status');
@@ -261,6 +262,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/api/plans', [\App\Http\Controllers\BrainController::class, 'plans'])->name('api.plans.index');
         Route::get('/api/plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])->name('api.plans.show');
         Route::post('/api/plans/{id}/approve', [\App\Http\Controllers\BrainController::class, 'approvePlan'])->name('api.plans.approve');
+
+        // Approval Center (Brain 2.0)
+        Route::get('/api/approvals', [\App\Http\Controllers\BrainController::class, 'approvals'])->name('api.approvals.index');
+        Route::post('/api/approvals/{id}/decide', [\App\Http\Controllers\BrainController::class, 'decideApproval'])->name('api.approvals.decide');
 
         // Goals
         Route::get('/api/goals', [\App\Http\Controllers\BrainController::class, 'goals'])->name('api.goals.index');

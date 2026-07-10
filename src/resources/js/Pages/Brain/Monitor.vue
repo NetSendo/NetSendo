@@ -59,6 +59,51 @@ const editGoalForm = reactive({
 // KPI data
 const kpiData = ref(null);
 
+// Approval Center (Brain 2.0)
+const approvalsData = ref([]);
+const approvalsLoading = ref(false);
+const decidingApprovalId = ref(null);
+const pendingApprovalsCount = computed(() => approvalsData.value.length);
+
+async function fetchApprovals() {
+    approvalsLoading.value = true;
+    try {
+        const { data } = await axios.get("/brain/api/approvals");
+        approvalsData.value = data.approvals || [];
+    } catch (e) {
+        console.warn("Approvals fetch failed", e);
+    } finally {
+        approvalsLoading.value = false;
+    }
+}
+
+async function decideApproval(approval, approved) {
+    decidingApprovalId.value = approval.id;
+    try {
+        await axios.post(`/brain/api/approvals/${approval.id}/decide`, {
+            approved,
+        });
+        await fetchApprovals();
+        fetchMonitorData();
+    } catch (e) {
+        console.error("Approval decision failed", e);
+    } finally {
+        decidingApprovalId.value = null;
+    }
+}
+
+function tierBadgeClass(tier) {
+    return (
+        {
+            read: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+            write: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+            send: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+            destructive:
+                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        }[tier] || "bg-slate-100 text-slate-600 dark:bg-slate-700"
+    );
+}
+
 // --- Intervals ---
 const CRON_INTERVALS = [
     { value: 5, label: "5 min" },
@@ -286,9 +331,11 @@ onMounted(() => {
     fetchMonitorData();
     fetchLogs();
     fetchKpiData();
+    fetchApprovals();
     refreshInterval = setInterval(() => {
         if (autoRefresh.value) {
             fetchMonitorData();
+            fetchApprovals();
             if (activeTab.value === "logs") fetchLogs();
         }
     }, 10000);
@@ -302,6 +349,7 @@ function onTabChange(tab) {
     activeTab.value = tab;
     if (tab === "logs") fetchLogs();
     if (tab === "goals") fetchGoals();
+    if (tab === "approvals") fetchApprovals();
 }
 
 function onFilterChange() {
@@ -521,6 +569,18 @@ function trendClass(trend, higherIsBetter = true) {
                                 )
                             }}</span>
                         </p>
+                        <p
+                            v-if="brainStatus.dry_run_mode"
+                            class="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                        >
+                            🧪
+                            {{
+                                t(
+                                    "brain.dry_run.badge",
+                                    "DRY-RUN — symulacja, nic nie jest wysyłane",
+                                )
+                            }}
+                        </p>
                     </div>
 
                     <!-- Plans Today -->
@@ -696,6 +756,18 @@ function trendClass(trend, higherIsBetter = true) {
                                 key: 'goals',
                                 label: '🎯 ' + t('brain.goals.title', 'Cele'),
                             },
+                            {
+                                key: 'approvals',
+                                label:
+                                    '✅ ' +
+                                    t(
+                                        'brain.approvals.title',
+                                        'Zatwierdzenia',
+                                    ) +
+                                    (pendingApprovalsCount
+                                        ? ` (${pendingApprovalsCount})`
+                                        : ''),
+                            },
                         ]"
                         :key="tab.key"
                         @click="onTabChange(tab.key)"
@@ -721,7 +793,7 @@ function trendClass(trend, higherIsBetter = true) {
                             {{ t("brain.monitor.kpi_title", "Wskaźniki KPI") }}
                         </h3>
                         <div
-                            class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5"
+                            class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6"
                         >
                             <!-- Subscribers -->
                             <div
@@ -932,6 +1004,79 @@ function trendClass(trend, higherIsBetter = true) {
                                         ·
                                         {{ kpiData.crm.conversion_rate }}%</span
                                     >
+                                </div>
+                            </div>
+                            <!-- Revenue 30d (Brain 2.0) -->
+                            <div
+                                class="overflow-hidden rounded-2xl border bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                            >
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">💰</span>
+                                    <span
+                                        class="text-xs font-medium text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_revenue",
+                                                "Przychód 30d",
+                                            )
+                                        }}
+                                    </span>
+                                </div>
+                                <div
+                                    class="mt-2 text-2xl font-bold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        kpiData.revenue?.total_30d != null
+                                            ? kpiData.revenue.total_30d.toLocaleString()
+                                            : "—"
+                                    }}
+                                    <span
+                                        v-if="kpiData.revenue?.trend"
+                                        :class="
+                                            trendClass(kpiData.revenue.trend)
+                                        "
+                                        class="text-sm"
+                                        >{{
+                                            trendIcon(kpiData.revenue.trend)
+                                        }}</span
+                                    >
+                                </div>
+                                <div class="mt-1 text-xs text-gray-400">
+                                    <template
+                                        v-if="kpiData.revenue?.rpm_30d != null"
+                                    >
+                                        RPM: {{ kpiData.revenue.rpm_30d }}
+                                    </template>
+                                    <template
+                                        v-if="
+                                            kpiData.revenue?.attributed_share !=
+                                            null
+                                        "
+                                    >
+                                        ·
+                                        {{ kpiData.revenue.attributed_share }}%
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_attributed",
+                                                "z kampanii",
+                                            )
+                                        }}
+                                    </template>
+                                    <template
+                                        v-if="
+                                            kpiData.revenue?.rpm_30d == null &&
+                                            kpiData.revenue?.attributed_share ==
+                                                null
+                                        "
+                                    >
+                                        {{
+                                            t(
+                                                "brain.monitor.kpi_no_revenue",
+                                                "brak danych",
+                                            )
+                                        }}
+                                    </template>
                                 </div>
                             </div>
                             <!-- Brain Efficiency -->
@@ -1963,6 +2108,169 @@ function trendClass(trend, higherIsBetter = true) {
                 </div>
 
                 <!-- ============ GOALS TAB ============ -->
+                <!-- ============ APPROVALS TAB — Approval Center ============ -->
+                <div v-if="activeTab === 'approvals'" class="space-y-4">
+                    <div
+                        v-if="approvalsLoading && !approvalsData.length"
+                        class="rounded-2xl border bg-white p-8 text-center text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                    >
+                        {{ t("brain.approvals.loading", "Ładowanie...") }}
+                    </div>
+
+                    <div
+                        v-else-if="!approvalsData.length"
+                        class="rounded-2xl border bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <p class="text-3xl">✅</p>
+                        <p
+                            class="mt-2 text-sm text-gray-500 dark:text-gray-400"
+                        >
+                            {{
+                                t(
+                                    "brain.approvals.empty",
+                                    "Brak oczekujących zatwierdzeń — Brain nie czeka na żadną decyzję.",
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-for="approval in approvalsData"
+                        :key="approval.id"
+                        class="rounded-2xl border bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+                    >
+                        <!-- Header -->
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+                                    :class="
+                                        approval.type === 'goal_proposal'
+                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    "
+                                >
+                                    {{
+                                        approval.type === "goal_proposal"
+                                            ? "🎯 " +
+                                              t(
+                                                  "brain.approvals.goal_proposal",
+                                                  "Propozycja celu",
+                                              )
+                                            : "📋 " +
+                                              t(
+                                                  "brain.approvals.plan",
+                                                  "Plan działania",
+                                              )
+                                    }}
+                                </span>
+                                <h4
+                                    class="mt-2 text-base font-semibold text-gray-900 dark:text-white"
+                                >
+                                    {{
+                                        approval.type === "goal_proposal"
+                                            ? approval.goal?.title
+                                            : approval.plan?.title
+                                    }}
+                                </h4>
+                                <p
+                                    class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        approval.type === "goal_proposal"
+                                            ? approval.goal?.description
+                                            : approval.plan?.description
+                                    }}
+                                </p>
+                            </div>
+                            <div
+                                class="shrink-0 text-right text-xs text-gray-400"
+                            >
+                                <p>{{ formatDate(approval.created_at) }}</p>
+                                <p class="mt-1">
+                                    ⏳
+                                    {{
+                                        t(
+                                            "brain.approvals.expires",
+                                            "Wygasa",
+                                        )
+                                    }}: {{ formatDate(approval.expires_at) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Plan steps with tier badges -->
+                        <div
+                            v-if="approval.plan?.steps?.length"
+                            class="mt-4 space-y-2"
+                        >
+                            <div
+                                v-for="step in approval.plan.steps"
+                                :key="step.order"
+                                class="flex items-start gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-700/50"
+                            >
+                                <span
+                                    class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200"
+                                    >{{ step.order }}</span
+                                >
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="text-sm font-medium text-gray-900 dark:text-white"
+                                            >{{ step.title }}</span
+                                        >
+                                        <span
+                                            class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                                            :class="tierBadgeClass(step.tier)"
+                                            >{{ step.tier }}</span
+                                        >
+                                    </div>
+                                    <p
+                                        class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{ step.action_type }}
+                                        <template
+                                            v-if="
+                                                step.config &&
+                                                Object.keys(step.config).length
+                                            "
+                                        >
+                                            —
+                                            {{ JSON.stringify(step.config) }}
+                                        </template>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-4 flex items-center gap-3">
+                            <button
+                                @click="decideApproval(approval, true)"
+                                :disabled="decidingApprovalId === approval.id"
+                                class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                                ✓
+                                {{ t("brain.approvals.approve", "Zatwierdź") }}
+                            </button>
+                            <button
+                                @click="decideApproval(approval, false)"
+                                :disabled="decidingApprovalId === approval.id"
+                                class="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                            >
+                                ✕ {{ t("brain.approvals.reject", "Odrzuć") }}
+                            </button>
+                            <span
+                                class="text-xs text-gray-400"
+                                v-if="approval.channel"
+                            >
+                                {{ t("brain.approvals.channel", "Kanał") }}:
+                                {{ approval.channel }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <div v-if="activeTab === 'goals'" class="space-y-4">
                     <div class="flex items-center justify-between">
                         <h3

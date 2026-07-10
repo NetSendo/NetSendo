@@ -110,6 +110,17 @@ class RunBrainCronCommand extends Command
             'knowledge_saved' => false,
         ];
 
+        // Step -0.5: Revenue sync — import new payments into the unified
+        // ledger and attribute them to campaigns (Brain 2.0 Phase 2)
+        try {
+            $revenueSync = app(\App\Services\Brain\RevenueEventService::class)->syncForUser($user);
+            if ($revenueSync['imported'] > 0) {
+                $this->info("[Brain CRON] User #{$user->id}: Imported {$revenueSync['imported']} revenue events ({$revenueSync['attributed']} attributed).");
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Revenue sync failed: {$e->getMessage()}");
+        }
+
         // Step 0: AI-powered situation analysis
         $analysisReport = null;
         try {
@@ -158,9 +169,20 @@ class RunBrainCronCommand extends Command
             $this->warn("[Brain CRON] User #{$user->id}: Auto-goal creation failed: {$e->getMessage()}");
         }
 
+        // Step 1.5: Outcome-driven goal evaluation (Brain 2.0 Phase 4) —
+        // metric goals complete when the metric reaches target, not when
+        // sub-plans finish
+        try {
+            $outcome = app(\App\Services\Brain\GoalOutcomeService::class)->evaluateForUser($user);
+            if ($outcome['evaluated'] > 0) {
+                $this->info("[Brain CRON] User #{$user->id}: Evaluated {$outcome['evaluated']} metric goals ({$outcome['completed']} completed).");
+            }
+        } catch (\Exception $e) {
+            $this->warn("[Brain CRON] User #{$user->id}: Goal metric evaluation failed: {$e->getMessage()}");
+        }
+
         // Step 2: Knowledge base enrichment — DISABLED
         // AI auto-additions to KB have been removed. Only users can add KB entries.
-        // $cronResults['knowledge_saved'] = $this->enrichKnowledgeBase($user, $analysisReport);
 
         // Step 2.5: Generate weekly campaign calendar (if not yet planned)
         try {
@@ -402,150 +424,6 @@ class RunBrainCronCommand extends Command
     }
 
     /**
-     * Handle tasks in autonomous mode — execute immediately.
-     */
-    private function handleAutonomousTasks(
-        AgentOrchestrator $orchestrator,
-        User $user,
-        $tasks,
-    ): array {
-        $taskResults = [];
-
-        foreach ($tasks as $i => $task) {
-            $this->line("[Brain CRON]   → Executing: {$task['title']}");
-
-            try {
-                $result = $orchestrator->executeCronTask($task, $user);
-                $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
-                $taskResults[$i] = $status;
-
-                $this->line("[Brain CRON]   ✓ Result: {$status}");
-
-                AiBrainActivityLog::logEvent(
-                    $user->id,
-                    'cron_task_executed',
-                    $status,
-                    $task['agent'] ?? null,
-                    [
-                        'task_id' => $task['id'] ?? null,
-                        'task_title' => $task['title'] ?? null,
-                        'category' => $task['category'] ?? null,
-                        'result_type' => $result['type'] ?? null,
-                        'result_message' => mb_substr($result['message'] ?? '', 0, 500),
-                    ],
-                );
-            } catch (\Exception $e) {
-                $taskResults[$i] = 'error';
-                $this->warn("[Brain CRON]   ✗ Task failed: {$e->getMessage()}");
-                Log::warning('Brain CRON task execution failed', [
-                    'user_id' => $user->id,
-                    'task' => $task['title'],
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return $taskResults;
-    }
-
-    /**
-     * Handle tasks in semi-auto mode — create plans and send for approval via Telegram.
-     */
-    private function handleSemiAutoTasks(
-        AgentOrchestrator $orchestrator,
-        User $user,
-        AiBrainSettings $settings,
-        $tasks,
-    ): array {
-        $pendingTasks = [];
-
-        foreach ($tasks as $i => $task) {
-            $this->line("[Brain CRON]   → Creating plan for approval: {$task['title']}");
-
-            try {
-                $agentName = $task['agent'] ?? null;
-                $agents = $orchestrator->getAgents();
-                $agent = $agents[$agentName] ?? null;
-
-                if (!$agent) {
-                    $this->warn("[Brain CRON]   ✗ Agent '{$agentName}' not found.");
-                    continue;
-                }
-
-                // Gather auto-context and build intent
-                $autoContext = $orchestrator->gatherAutoContext($user, $agentName);
-                $intent = [
-                    'requires_agent' => true,
-                    'agent' => $agentName,
-                    'intent' => $task['action'] ?? $task['title'] ?? '',
-                    'task_type' => $agentName,
-                    'confidence' => 1.0,
-                    'channel' => 'cron',
-                    'has_user_details' => true,
-                    'parameters' => array_merge(
-                        $task['parameters'] ?? [],
-                        ['auto_context' => $autoContext],
-                        ['cron_task' => true],
-                    ),
-                ];
-
-                $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
-
-                // Create the plan (but DON'T execute)
-                $plan = $agent->plan($intent, $user, $knowledgeContext);
-
-                if (!$plan) {
-                    $this->warn("[Brain CRON]   ✗ Plan creation failed for: {$task['title']}");
-                    continue;
-                }
-
-                // Create pending approval
-                $plan->update(['status' => 'pending_approval']);
-                $approval = AiPendingApproval::create([
-                    'ai_action_plan_id' => $plan->id,
-                    'user_id' => $user->id,
-                    'channel' => 'telegram',
-                    'status' => 'pending',
-                    'summary' => "📋 **{$plan->title}**\n{$plan->description}\n\n🤖 Agent: {$agentName}\n⏰ " . __('brain.approval_expiry'),
-                    'expires_at' => now()->addHours(24),
-                ]);
-
-                // Send individual approval request to Telegram
-                $this->sendTaskApprovalToTelegram($settings, $user, $plan, $approval, $task);
-
-                $pendingTasks[] = [
-                    'plan_id' => $plan->id,
-                    'approval_id' => $approval->id,
-                    'title' => $task['title'],
-                ];
-
-                $this->line("[Brain CRON]   📩 Sent for Telegram approval (plan #{$plan->id})");
-
-                AiBrainActivityLog::logEvent(
-                    $user->id,
-                    'cron_task_pending_approval',
-                    'pending',
-                    $agentName,
-                    [
-                        'task_title' => $task['title'] ?? null,
-                        'plan_id' => $plan->id,
-                        'approval_id' => $approval->id,
-                    ],
-                );
-            } catch (\Exception $e) {
-                $this->warn("[Brain CRON]   ✗ Semi-auto task failed: {$e->getMessage()}");
-                Log::warning('Brain CRON semi-auto task failed', [
-                    'user_id' => $user->id,
-                    'task' => $task['title'] ?? '',
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        return $pendingTasks;
-    }
-
-    /**
      * Auto-create goals from situation analysis when user has zero active goals.
      * In semi-auto mode: sends proposals to Telegram for approval.
      * In autonomous mode: creates goals immediately.
@@ -709,45 +587,6 @@ class RunBrainCronCommand extends Command
     }
 
     /**
-     * Enrich knowledge base from situation analysis insights.
-     */
-    private function enrichKnowledgeBase(User $user, ?array $analysisReport): bool
-    {
-        if (!$analysisReport || empty($analysisReport['summary'])) {
-            return false;
-        }
-
-        try {
-            $kb = app(KnowledgeBaseService::class);
-
-            // Save the analysis summary as a knowledge entry
-            $content = "📊 Sytuacja na " . now()->format('Y-m-d H:i') . ":\n\n";
-            $content .= $analysisReport['summary'] . "\n";
-
-            if (!empty($analysisReport['priorities'])) {
-                $content .= "\nPriorytety:\n";
-                foreach ($analysisReport['priorities'] as $p) {
-                    $content .= "- [{$p['priority']}] {$p['title']}: {$p['reasoning']}\n";
-                }
-            }
-
-            $kb->addEntry(
-                $user,
-                'auto_analysis',
-                'Analiza sytuacji — ' . now()->format('d.m.Y H:i'),
-                $content,
-                'cron_analysis'
-            );
-
-            $this->line("[Brain CRON]   📚 Analysis saved to knowledge base.");
-            return true;
-        } catch (\Exception $e) {
-            Log::warning('KB enrichment from CRON failed', ['error' => $e->getMessage()]);
-            return false;
-        }
-    }
-
-    /**
      * Execute due campaign calendar entries.
      *
      * Finds calendar entries where planned_date <= today and status = 'draft',
@@ -824,6 +663,11 @@ class RunBrainCronCommand extends Command
                     $entry->update([
                         'status' => $status === 'success' ? 'completed' : 'failed',
                         'executed_at' => now(),
+                        // Link the executed plan for revenue-per-campaign-type
+                        // attribution (Brain 2.0 Phase 5 allocator)
+                        'metadata' => array_merge($entry->metadata ?? [], [
+                            'plan_id' => $result['plan_id'] ?? null,
+                        ]),
                     ]);
 
                     $executed[] = [
@@ -1114,19 +958,6 @@ class RunBrainCronCommand extends Command
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Get accepted priority levels based on minimum threshold.
-     */
-    private function getAcceptedPriorities(string $minPriority): array
-    {
-        return match ($minPriority) {
-            'low' => ['low', 'medium', 'high'],
-            'medium' => ['medium', 'high'],
-            'high' => ['high'],
-            default => ['high'],
-        };
     }
 
     /**

@@ -98,6 +98,26 @@ class PurchaseWebhookController extends Controller
             // Trigger automation for purchase event
             $this->automationService->processEvent('purchase', $context);
 
+            // Brain 2.0: persist the purchase in the unified revenue ledger
+            // (previously the value was used to fire automations, then discarded)
+            try {
+                $user = \App\Models\User::find($subscriber->user_id);
+                if ($user) {
+                    app(\App\Services\Brain\RevenueEventService::class)->recordWebhookRevenue(
+                        $user,
+                        \App\Models\RevenueEvent::SOURCE_PURCHASE_WEBHOOK,
+                        (string) $data['order_id'],
+                        (float) $data['value'],
+                        $data['currency'] ?? 'PLN',
+                        $email,
+                        $subscriber->id,
+                        ['product_id' => $data['product_id'] ?? null, 'quantity' => (int) ($data['quantity'] ?? 1)]
+                    );
+                }
+            } catch (\Exception $revenueEx) {
+                Log::warning('Purchase webhook revenue event failed', ['error' => $revenueEx->getMessage()]);
+            }
+
             Log::info("Purchase webhook processed for subscriber: {$subscriber->id}", [
                 'order_id' => $data['order_id'],
                 'value' => $data['value'],

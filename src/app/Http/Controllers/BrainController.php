@@ -8,6 +8,7 @@ use App\Models\AiBrainSettings;
 use App\Models\AiConversation;
 use App\Models\AiExecutionLog;
 use App\Models\AiGoal;
+use App\Models\AiPendingApproval;
 use App\Models\AiPerformanceSnapshot;
 use App\Models\KnowledgeEntry;
 use App\Services\Brain\AgentOrchestrator;
@@ -396,9 +397,139 @@ class BrainController extends Controller
         $this->modeController->processApproval($approval->id, $approved, $reason);
 
         if ($approved) {
-            // Execute the plan
-            $result = $this->orchestrator->executePlan($plan->fresh(), $request->user());
-            return response()->json($result);
+            // Queue the execution (Brain 2.0 Phase 1) — progress is visible
+            // in the Monitor; result lands in the activity feed
+            \App\Jobs\ExecuteBrainPlanJob::dispatch($plan->id, $request->user()->id);
+
+            return response()->json([
+                'type' => 'queued',
+                'status' => 'queued',
+                'plan_id' => $plan->id,
+                'message' => __('brain.plan_queued'),
+            ]);
+        }
+
+        return response()->json(['status' => 'rejected']);
+    }
+
+    /**
+     * Approval Center: list pending approvals (plans + goal proposals).
+     * GET /brain/api/approvals
+     */
+    public function approvals(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+
+        $approvals = AiPendingApproval::where('user_id', $userId)
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now())
+            ->with('plan.steps')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (AiPendingApproval $approval) {
+                // Goal proposals store a JSON payload in `summary` and have no plan
+                $goalData = null;
+                if (!$approval->ai_action_plan_id) {
+                    $decoded = json_decode($approval->summary, true);
+                    if (($decoded['type'] ?? '') === 'goal_proposal') {
+                        $goalData = $decoded;
+                    }
+                }
+
+                $plan = $approval->plan;
+
+                return [
+                    'id' => $approval->id,
+                    'type' => $goalData ? 'goal_proposal' : 'plan',
+                    'channel' => $approval->channel,
+                    'created_at' => $approval->created_at,
+                    'expires_at' => $approval->expires_at,
+                    'summary' => $goalData ? null : $approval->summary,
+                    'goal' => $goalData,
+                    'plan' => $plan ? [
+                        'id' => $plan->id,
+                        'title' => $plan->title,
+                        'description' => $plan->description,
+                        'agent_type' => $plan->agent_type,
+                        'steps' => $plan->steps->sortBy('step_order')->values()->map(fn ($step) => [
+                            'order' => $step->step_order,
+                            'title' => $step->title,
+                            'description' => $step->description,
+                            'action_type' => $step->action_type,
+                            'tier' => $this->modeController->getActionTier($step->action_type),
+                            'config' => $step->config,
+                        ]),
+                    ] : null,
+                ];
+            });
+
+        return response()->json(['approvals' => $approvals]);
+    }
+
+    /**
+     * Approval Center: decide a pending approval (plan or goal proposal).
+     * POST /brain/api/approvals/{id}/decide  { approved: bool, reason?: string }
+     */
+    public function decideApproval(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'approved' => 'required|boolean',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        $user = $request->user();
+        $approved = $request->boolean('approved');
+        $reason = $request->input('reason');
+
+        $approval = AiPendingApproval::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        if ($approval->isExpired()) {
+            return response()->json(['error' => __('brain.goal_expired')], 410);
+        }
+
+        // Goal proposal (no plan attached)
+        if (!$approval->ai_action_plan_id) {
+            $goalData = json_decode($approval->summary, true);
+
+            if (($goalData['type'] ?? '') !== 'goal_proposal') {
+                return response()->json(['error' => __('brain.goal_invalid')], 422);
+            }
+
+            if ($approved) {
+                $goalPlanner = app(\App\Services\Brain\GoalPlanner::class);
+                $goal = $goalPlanner->createGoal(
+                    $user,
+                    $goalData['title'],
+                    $goalData['description'] ?? null,
+                    $goalData['priority'] ?? 'medium',
+                );
+                $approval->update(['status' => 'approved', 'decided_at' => now()]);
+
+                return response()->json([
+                    'status' => 'approved',
+                    'goal_id' => $goal->id,
+                    'message' => __('brain.goal_approved', ['title' => $goal->title, 'id' => $goal->id]),
+                ]);
+            }
+
+            $approval->update(['status' => 'rejected', 'decided_at' => now(), 'rejection_reason' => $reason]);
+
+            return response()->json(['status' => 'rejected']);
+        }
+
+        // Plan approval — queue execution on approve
+        $this->modeController->processApproval($approval->id, $approved, $reason);
+
+        if ($approved) {
+            \App\Jobs\ExecuteBrainPlanJob::dispatch($approval->ai_action_plan_id, $user->id);
+
+            return response()->json([
+                'status' => 'queued',
+                'plan_id' => $approval->ai_action_plan_id,
+                'message' => __('brain.plan_queued'),
+            ]);
         }
 
         return response()->json(['status' => 'rejected']);
@@ -445,6 +576,8 @@ class BrainController extends Controller
             'description' => 'nullable|string|max:2000',
             'priority' => 'nullable|string|in:low,medium,high,urgent',
             'success_criteria' => 'nullable|array',
+            'target_metric' => 'nullable|string|in:open_rate,click_rate,subscribers,revenue_30d',
+            'target_value' => 'nullable|numeric|min:0|required_with:target_metric',
         ]);
 
         try {
@@ -454,6 +587,8 @@ class BrainController extends Controller
                 'description' => $request->input('description'),
                 'priority' => $request->input('priority', 'medium'),
                 'success_criteria' => $request->input('success_criteria'),
+                'target_metric' => $request->input('target_metric'),
+                'target_value' => $request->input('target_value'),
                 'status' => 'active',
             ]);
 
@@ -532,7 +667,7 @@ class BrainController extends Controller
         $settings = AiBrainSettings::getForUser($user->id);
 
         // Build agent modes for frontend grid
-        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research'];
+        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research', 'revenue', 'funnel', 'deliverability'];
         $agentModes = [];
         foreach ($agents as $agent) {
             $agentModes[$agent] = $settings->getAgentMode($agent);
@@ -597,11 +732,19 @@ class BrainController extends Controller
         // Standard fields
         $settings->update($request->only([
             'work_mode', 'preferred_language', 'daily_token_limit',
-            'preferences', 'telegram_bot_token',
+            'telegram_bot_token',
             'perplexity_api_key', 'serpapi_api_key',
             'preferred_model', 'preferred_integration_id',
             'model_routing',
         ]));
+
+        // Preferences — shallow merge so partial updates (e.g. dry_run_mode)
+        // don't wipe unrelated preference keys
+        if ($request->has('preferences')) {
+            $settings->update([
+                'preferences' => array_merge($settings->preferences ?? [], $request->input('preferences')),
+            ]);
+        }
 
         // Strategy settings — deep merge
         if ($request->has('strategy_settings')) {
@@ -905,6 +1048,7 @@ class BrainController extends Controller
                 'is_running' => $isRunning,
                 'work_mode' => $settings->work_mode ?? 'semi_auto',
                 'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+                'dry_run_mode' => (bool) (($settings->preferences ?? [])['dry_run_mode'] ?? false),
                 'last_activity_at' => $settings->last_activity_at ?? $lastActivity?->created_at,
                 'is_active_flag' => $settings->is_active,
             ],
@@ -1106,6 +1250,30 @@ class BrainController extends Controller
             }
             $conversionRate = $dealsTotal > 0 ? round(($dealsWon / $dealsTotal) * 100, 1) : null;
 
+            // 3.5 Revenue (Brain 2.0 Phase 2 — unified revenue ledger)
+            $revenue30d = null;
+            $revenue7d = null;
+            $revenuePrev30d = null;
+            $attributedShare = null;
+            $rpm30d = null;
+            try {
+                $revenue30d = (int) \App\Models\RevenueEvent::forUser($user->id)->recent(30)->sum('amount');
+                $revenue7d = (int) \App\Models\RevenueEvent::forUser($user->id)->recent(7)->sum('amount');
+                $revenuePrev30d = (int) \App\Models\RevenueEvent::forUser($user->id)
+                    ->whereBetween('occurred_at', [$now->copy()->subDays(60), $now->copy()->subDays(30)])
+                    ->sum('amount');
+                $attributed30d = (int) \App\Models\RevenueEvent::forUser($user->id)->recent(30)->attributed()->sum('amount');
+                $attributedShare = $revenue30d > 0 ? round(($attributed30d / $revenue30d) * 100, 1) : null;
+
+                $delivered30d = \App\Models\MessageQueueEntry::whereHas('message', fn ($q) => $q->where('user_id', $user->id))
+                    ->where('status', \App\Models\MessageQueueEntry::STATUS_SENT)
+                    ->where('sent_at', '>=', $monthAgo)
+                    ->count();
+                $rpm30d = $delivered30d > 0 ? round(($attributed30d / 100) / $delivered30d * 1000, 2) : null;
+            } catch (\Exception $e) {
+                // revenue_events table may not exist yet
+            }
+
             // 4. Brain efficiency (successful plans / total plans, last 30 days)
             $completedPlans = \App\Models\AiActionPlan::forUser($user->id)
                 ->where('status', 'completed')
@@ -1142,6 +1310,16 @@ class BrainController extends Controller
                         'deals_won_30d' => $dealsWon,
                         'conversion_rate' => $conversionRate,
                     ],
+                    'revenue' => [
+                        'total_30d' => $revenue30d !== null ? round($revenue30d / 100, 2) : null,
+                        'total_7d' => $revenue7d !== null ? round($revenue7d / 100, 2) : null,
+                        'prev_30d' => $revenuePrev30d !== null ? round($revenuePrev30d / 100, 2) : null,
+                        'trend' => ($revenue30d !== null && $revenuePrev30d !== null)
+                            ? ($revenue30d > $revenuePrev30d ? 'up' : ($revenue30d < $revenuePrev30d ? 'down' : 'flat'))
+                            : null,
+                        'attributed_share' => $attributedShare,
+                        'rpm_30d' => $rpm30d,
+                    ],
                     'brain' => [
                         'plans_completed_30d' => $completedPlans,
                         'plans_total_30d' => $totalPlans,
@@ -1159,49 +1337,11 @@ class BrainController extends Controller
 
     /**
      * Estimate token cost in USD based on model name.
-     * Pricing per 1M tokens (input / output) — approximate, as of 2025.
+     * Pricing lives in config/ai_pricing.php (single source of truth).
      */
     private static function estimateTokenCost(string $model, int $inputTokens, int $outputTokens): float
     {
-        // Pricing per 1M tokens: [input_price, output_price]
-        $pricing = [
-            'gpt-4o'            => [2.50, 10.00],
-            'gpt-4o-mini'       => [0.15, 0.60],
-            'gpt-4-turbo'       => [10.00, 30.00],
-            'gpt-4'             => [30.00, 60.00],
-            'gpt-3.5-turbo'     => [0.50, 1.50],
-            'o1'                => [15.00, 60.00],
-            'o1-mini'           => [3.00, 12.00],
-            'o3-mini'           => [1.10, 4.40],
-            'claude-3-5-sonnet' => [3.00, 15.00],
-            'claude-3-5-haiku'  => [0.80, 4.00],
-            'claude-3-opus'     => [15.00, 75.00],
-            'claude-3-sonnet'   => [3.00, 15.00],
-            'claude-3-haiku'    => [0.25, 1.25],
-            'gemini-2.0-flash'  => [0.10, 0.40],
-            'gemini-1.5-pro'    => [1.25, 5.00],
-            'gemini-1.5-flash'  => [0.075, 0.30],
-        ];
-
-        // Find matching pricing (partial match for versioned model names)
-        $rates = null;
-        $modelLower = strtolower($model);
-        foreach ($pricing as $key => $price) {
-            if (str_contains($modelLower, $key)) {
-                $rates = $price;
-                break;
-            }
-        }
-
-        // Fallback: conservative estimate (GPT-4o-mini level)
-        if (!$rates) {
-            $rates = [0.15, 0.60];
-        }
-
-        return round(
-            ($inputTokens / 1_000_000) * $rates[0] + ($outputTokens / 1_000_000) * $rates[1],
-            6
-        );
+        return \App\Services\AI\AiCostEstimator::estimate($model, $inputTokens, $outputTokens);
     }
 }
 

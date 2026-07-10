@@ -73,7 +73,7 @@ class BrainPageController extends Controller
             });
 
         // Build agent modes for frontend
-        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research'];
+        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research', 'revenue', 'funnel', 'deliverability'];
         $agentModes = [];
         foreach ($agents as $agent) {
             $agentModes[$agent] = $settings->getAgentMode($agent);
@@ -107,6 +107,15 @@ class BrainPageController extends Controller
             'agent_modes' => $agentModes,
             'strategy_settings' => $settings->strategy_settings ?? AiBrainSettings::DEFAULT_STRATEGY,
         ]);
+    }
+
+    /**
+     * Brain Guide — how the whole system works (user-facing knowledge base).
+     * GET /brain/guide
+     */
+    public function guide(): Response
+    {
+        return Inertia::render('Brain/Guide');
     }
 
     /**

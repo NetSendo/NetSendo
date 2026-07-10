@@ -146,6 +146,28 @@ class WooCommerceController extends Controller
             $subscriber->saveCustomFields($customFields);
         }
 
+        // Brain 2.0: record completed orders in the unified revenue ledger
+        // (previously the order total only landed in subscriber custom fields)
+        if ($data['event'] === 'order_completed' && !empty($data['order_id']) && !empty($data['order_total'])) {
+            try {
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    app(\App\Services\Brain\RevenueEventService::class)->recordWebhookRevenue(
+                        $user,
+                        \App\Models\RevenueEvent::SOURCE_WOOCOMMERCE,
+                        (string) $data['order_id'],
+                        (float) str_replace(',', '.', $data['order_total']),
+                        'PLN',
+                        $data['email'],
+                        $subscriber->id,
+                        ['product_id' => $data['product_id'] ?? null, 'product_name' => $data['product_name'] ?? null]
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('WooCommerce revenue event failed', ['error' => $e->getMessage()]);
+            }
+        }
+
         Log::info('WooCommerce subscriber processed', [
             'event' => $data['event'],
             'email' => $data['email'],

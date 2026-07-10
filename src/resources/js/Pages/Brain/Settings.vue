@@ -121,7 +121,8 @@ const agentModesSaved = ref(false);
 
 const agentIcons = {
     campaign: '📧', list: '📋', message: '✉️', crm: '🤝',
-    analytics: '📊', segmentation: '🎯', research: '🔍',
+    analytics: '📊', segmentation: '🎯', research: '🔍', revenue: '💰',
+    funnel: '🌀', deliverability: '📮',
 };
 
 const saveAgentModes = async () => {
@@ -158,6 +159,30 @@ const saveMode = async (mode) => {
         currentMode.value = props.settings?.work_mode || "semi_auto";
     } finally {
         isSavingMode.value = false;
+    }
+};
+
+// --- Dry-run (simulation) mode ---
+const dryRunMode = ref(!!props.settings?.preferences?.dry_run_mode);
+const isSavingDryRun = ref(false);
+const dryRunSaved = ref(false);
+
+const toggleDryRun = async () => {
+    const previous = dryRunMode.value;
+    dryRunMode.value = !previous;
+    isSavingDryRun.value = true;
+    dryRunSaved.value = false;
+
+    try {
+        await axios.put("/brain/api/settings", {
+            preferences: { dry_run_mode: dryRunMode.value },
+        });
+        dryRunSaved.value = true;
+        setTimeout(() => (dryRunSaved.value = false), 2000);
+    } catch (error) {
+        dryRunMode.value = previous;
+    } finally {
+        isSavingDryRun.value = false;
     }
 };
 
@@ -897,6 +922,60 @@ const getCategoryColor = (key) => {
                                 />
                             </svg>
                         </span>
+                    </button>
+                </div>
+
+                <!-- Dry-run (simulation) toggle -->
+                <div
+                    class="mt-4 flex items-center justify-between rounded-xl border-2 p-4 transition-all"
+                    :class="
+                        dryRunMode
+                            ? 'border-amber-400 bg-amber-50 dark:border-amber-500 dark:bg-amber-900/20'
+                            : 'border-slate-200 dark:border-slate-600'
+                    "
+                >
+                    <div>
+                        <div
+                            class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
+                        >
+                            🧪
+                            {{
+                                t(
+                                    "brain.dry_run.title",
+                                    "Tryb symulacji (dry-run)",
+                                )
+                            }}
+                            <span
+                                v-if="dryRunSaved"
+                                class="text-xs font-normal text-green-500"
+                                >✓ {{ t("brain.saved", "Zapisano") }}</span
+                            >
+                        </div>
+                        <p
+                            class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{
+                                t(
+                                    "brain.dry_run.description",
+                                    "Brain wykonuje pełny cykl, ale zamiast wysyłać kampanie raportuje co by zrobił. Nic nie zostaje wysłane.",
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <button
+                        @click="toggleDryRun"
+                        :disabled="isSavingDryRun"
+                        class="relative h-7 w-12 shrink-0 rounded-full transition-colors"
+                        :class="
+                            dryRunMode
+                                ? 'bg-amber-500'
+                                : 'bg-slate-300 dark:bg-slate-600'
+                        "
+                    >
+                        <span
+                            class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
+                            :class="dryRunMode ? 'left-6' : 'left-1'"
+                        ></span>
                     </button>
                 </div>
             </div>
@@ -2060,7 +2139,7 @@ const getCategoryColor = (key) => {
                     class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 dark:border-red-800/50 dark:bg-red-900/10"
                 >
                     <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {{ t('brain.knowledge.selected_count', `Zaznaczono: ${selectedIds.size}`) }}
+                        {{ t('brain.knowledge.selected_count', { count: selectedIds.size }) }}
                     </span>
                     <button
                         @click="toggleSelectAll"
@@ -2078,7 +2157,7 @@ const getCategoryColor = (key) => {
                     >
                         {{ isDeletingBulk
                             ? t('brain.knowledge.deleting', 'Usuwanie...')
-                            : t('brain.knowledge.delete_selected', `🗑️ Usuń zaznaczone (${selectedIds.size})`)
+                            : t('brain.knowledge.delete_selected', { count: selectedIds.size })
                         }}
                     </button>
                 </div>
@@ -2108,7 +2187,7 @@ const getCategoryColor = (key) => {
                                 </div>
                             </div>
                             <p class="mb-6 text-sm text-slate-600 dark:text-slate-300">
-                                {{ t('brain.knowledge.bulk_delete_confirm', `Czy na pewno chcesz usunąć ${selectedIds.size} wpisów z bazy wiedzy? Wszystkie zaznaczone wpisy zostaną trwale usunięte.`) }}
+                                {{ t('brain.knowledge.bulk_delete_confirm', { count: selectedIds.size }) }}
                             </p>
                             <div class="flex items-center justify-end gap-3">
                                 <button
@@ -2121,7 +2200,7 @@ const getCategoryColor = (key) => {
                                     @click="confirmBulkDelete"
                                     class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-red-500/25 transition-all hover:bg-red-600 hover:shadow-xl"
                                 >
-                                    {{ t('brain.knowledge.confirm_delete', `Usuń ${selectedIds.size} wpisów`) }}
+                                    {{ t('brain.knowledge.confirm_delete', { count: selectedIds.size }) }}
                                 </button>
                             </div>
                         </div>

@@ -404,7 +404,7 @@ class TelegramBotService
                 return;
             }
 
-            $lines = ["🎯 *" . __('brain.goals.active_goals', 'Active Goals') . "*\n"];
+            $lines = ["🎯 *" . __('brain.goals.active_goals') . "*\n"];
             foreach ($goals as $goal) {
                 $progress = $goal->progress ?? 0;
                 $bar = str_repeat('▓', (int) ($progress / 10)) . str_repeat('░', 10 - (int) ($progress / 10));
@@ -451,11 +451,11 @@ class TelegramBotService
                 return;
             }
 
-            $lines = ["📊 *" . __('brain.digest.title', 'Weekly Report') . "*\n"];
+            $lines = ["📊 *" . __('brain.digest.title') . "*\n"];
             $lines[] = $digest['summary'];
 
             if (!empty($digest['recommendations'])) {
-                $lines[] = "\n💡 *" . __('brain.digest.recommendations', 'Recommendations') . ":*";
+                $lines[] = "\n💡 *" . __('brain.digest.recommendations') . ":*";
                 foreach (array_slice($digest['recommendations'], 0, 3) as $rec) {
                     $lines[] = "• {$rec}";
                 }
@@ -547,7 +547,7 @@ class TelegramBotService
                 'announcement' => '📢',
             ];
 
-            $lines = ["📅 *" . __('brain.calendar.upcoming', 'Upcoming Campaigns') . "*\n"];
+            $lines = ["📅 *" . __('brain.calendar.upcoming') . "*\n"];
             foreach ($upcoming as $entry) {
                 $day = $entry->planned_date->format('D m/d');
                 $emoji = $typeEmoji[$entry->campaign_type] ?? '📧';
@@ -607,12 +607,13 @@ class TelegramBotService
 
             if ($action === 'approve') {
                 $approval = $modeController->processApproval($approvalId, true);
-                $this->sendMessage($chatId, "✅ Plan approved! Starting execution...");
+                $this->sendMessage($chatId, "✅ " . __('brain.plan_queued'));
 
-                // Execute the plan
-                $orchestrator = app(AgentOrchestrator::class);
-                $result = $orchestrator->executePlan($approval->plan, $user);
-                $this->sendMessage($chatId, $result['message'] ?? 'Plan executed.');
+                // Queue the execution (Brain 2.0 Phase 1) — the job sends
+                // the result back to this chat when it finishes
+                if ($approval->plan) {
+                    \App\Jobs\ExecuteBrainPlanJob::dispatch($approval->plan->id, $user->id, 'telegram');
+                }
 
             } elseif ($action === 'reject') {
                 $modeController->processApproval($approvalId, false, 'Rejected via Telegram');

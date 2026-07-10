@@ -57,8 +57,91 @@ class PerformanceLearner
             'winning_types' => $this->findWinningTypes($snapshots),
             'top_patterns' => $this->extractTopPatterns($snapshots),
             'underperforming' => $this->identifyUnderperforming($snapshots),
+            'subject_features' => $this->analyzeSubjectFeatures($snapshots),
             'recommendations' => $this->buildRecommendationsSummary($snapshots),
         ];
+    }
+
+    /**
+     * Deterministic best send time from structured experiment dimensions
+     * (Brain 2.0 Phase 4). Returns null until enough data exists.
+     *
+     * @return array{day: ?string, hour: ?int, sample: int}|null
+     */
+    public function getBestSendTime(User $user): ?array
+    {
+        $snapshots = AiPerformanceSnapshot::forUser($user->id)
+            ->recent(self::ANALYSIS_WINDOW_DAYS)
+            ->whereNotNull('experiment_dimensions')
+            ->get();
+
+        if ($snapshots->count() < self::MIN_SNAPSHOTS) {
+            return null;
+        }
+
+        $byHour = $snapshots
+            ->filter(fn ($s) => isset($s->experiment_dimensions['send_hour']))
+            ->groupBy(fn ($s) => (int) $s->experiment_dimensions['send_hour'])
+            ->map(fn ($group) => ['avg_or' => (float) $group->avg('open_rate'), 'count' => $group->count()])
+            ->filter(fn ($stats) => $stats['count'] >= 2)
+            ->sortByDesc('avg_or');
+
+        $byDay = $snapshots
+            ->filter(fn ($s) => !empty($s->experiment_dimensions['send_day']))
+            ->groupBy(fn ($s) => $s->experiment_dimensions['send_day'])
+            ->map(fn ($group) => ['avg_or' => (float) $group->avg('open_rate'), 'count' => $group->count()])
+            ->filter(fn ($stats) => $stats['count'] >= 2)
+            ->sortByDesc('avg_or');
+
+        if ($byHour->isEmpty() && $byDay->isEmpty()) {
+            return null;
+        }
+
+        return [
+            'hour' => $byHour->isNotEmpty() ? (int) $byHour->keys()->first() : null,
+            'day' => $byDay->isNotEmpty() ? (string) $byDay->keys()->first() : null,
+            'sample' => $snapshots->count(),
+        ];
+    }
+
+    /**
+     * Per-feature win rates from structured experiment dimensions:
+     * for each boolean subject feature, compare avg open rate WITH vs
+     * WITHOUT the feature. Deterministic — no string matching.
+     */
+    protected function analyzeSubjectFeatures($snapshots): array
+    {
+        $withDimensions = $snapshots->filter(fn ($s) => !empty($s->experiment_dimensions));
+        if ($withDimensions->count() < self::MIN_SNAPSHOTS) {
+            return [];
+        }
+
+        $features = ['has_emoji', 'has_question', 'has_number', 'personalized'];
+        $results = [];
+
+        foreach ($features as $feature) {
+            $with = $withDimensions->filter(fn ($s) => !empty($s->experiment_dimensions[$feature]));
+            $without = $withDimensions->filter(fn ($s) => empty($s->experiment_dimensions[$feature]));
+
+            if ($with->count() < 2 || $without->count() < 2) {
+                continue;
+            }
+
+            $orWith = round((float) $with->avg('open_rate'), 2);
+            $orWithout = round((float) $without->avg('open_rate'), 2);
+
+            $results[] = [
+                'feature' => $feature,
+                'avg_or_with' => $orWith,
+                'avg_or_without' => $orWithout,
+                'lift_pp' => round($orWith - $orWithout, 2),
+                'verdict' => $orWith > $orWithout ? 'helps' : ($orWith < $orWithout ? 'hurts' : 'neutral'),
+                'sample_with' => $with->count(),
+                'sample_without' => $without->count(),
+            ];
+        }
+
+        return $results;
     }
 
     /**
@@ -145,6 +228,16 @@ class PerformanceLearner
         $patterns = $signals['top_patterns'] ?? [];
         if (!empty($patterns)) {
             $lines[] = "Winning patterns: " . implode('; ', array_map(fn($p) => $p['pattern'] ?? '', $patterns));
+        }
+
+        // Subject feature win rates (deterministic, from experiment dimensions)
+        $features = $signals['subject_features'] ?? [];
+        if (!empty($features)) {
+            $featureLines = array_map(
+                fn ($f) => "{$f['feature']}: {$f['verdict']} ({$f['lift_pp']}pp OR lift)",
+                $features
+            );
+            $lines[] = "Subject features (measured): " . implode('; ', $featureLines);
         }
 
         // Recommendations

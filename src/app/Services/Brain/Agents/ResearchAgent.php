@@ -76,21 +76,18 @@ class ResearchAgent extends BaseAgent
 
         $langInstruction = $this->getLanguageInstruction($user);
 
-        // Check what research capabilities are available
+        // Check what research capabilities are available — the ToolRegistry
+        // section is filtered to tools the user's API keys actually enable
         $availability = $this->webResearch->isAvailable($user);
-        $availableTools = [];
+        $availableActions = ['company_research', 'trend_analysis', 'content_research', 'save_to_knowledge'];
         if ($availability['serpapi']) {
-            $availableTools[] = 'web_search — search the web via Google (config: {query: "", type: "general|news"})';
+            $availableActions[] = 'web_search';
         }
         if ($availability['perplexity']) {
-            $availableTools[] = 'deep_research — AI-powered deep research with citations (config: {query: "", context: ""})';
+            $availableActions[] = 'deep_research';
         }
-        $availableTools[] = 'company_research — research a specific company (config: {company: "", website: ""})';
-        $availableTools[] = 'trend_analysis — analyze market/industry trends (config: {topic: ""})';
-        $availableTools[] = 'content_research — research content ideas (config: {topic: "", type: "email|sms"})';
-        $availableTools[] = 'save_to_knowledge — save findings to knowledge base (config: {category: "", title: ""})';
 
-        $toolsList = implode("\n- ", $availableTools);
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('research', $availableActions);
 
         $prompt = <<<PROMPT
 You are an internet research expert. The user wants to research something:
@@ -115,8 +112,7 @@ Create a research plan. Respond in JSON:
   ]
 }
 
-Available action_types:
-- {$toolsList}
+{$actionsBlock}
 
 Create 2-4 focused research steps. Always end with save_to_knowledge if findings are valuable.
 PROMPT;
@@ -188,7 +184,7 @@ PROMPT;
             'trend_analysis' => $this->executeTrendAnalysis($step, $user),
             'content_research' => $this->executeContentResearch($step, $user),
             'save_to_knowledge' => $this->executeSaveToKnowledge($step, $user),
-            default => ['status' => 'completed', 'message' => "Action '{$step->action_type}' noted"],
+            default => $this->failUnknownAction($step),
         };
     }
 

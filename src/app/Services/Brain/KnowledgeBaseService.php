@@ -159,7 +159,9 @@ IMPORTANT: Extract ONLY specific, useful information. Do not repeat general know
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent(
+            $response = BrainAi::generate(
+                $user,
+                'kb_auto_enrich',
                 AiService::prependDateContext($prompt),
                 $integration,
                 ['max_tokens' => 4000, 'temperature' => 0.3]
@@ -198,7 +200,7 @@ PROMPT;
     {
         // Only extract from campaign/message plans
         $relevantAgents = ['campaign', 'message'];
-        if (!in_array($plan->agent, $relevantAgents)) {
+        if (!in_array($plan->agent_type, $relevantAgents)) {
             return;
         }
 
@@ -215,9 +217,9 @@ PROMPT;
 
         // Gather plan details
         $steps = $plan->steps->map(fn($s) => [
-            'action' => $s->action,
+            'action' => $s->action_type,
             'config' => $s->config,
-            'result' => mb_substr($s->result ?? '', 0, 500),
+            'result' => mb_substr(json_encode($s->result ?? [], JSON_UNESCAPED_UNICODE) ?: '', 0, 500),
         ])->toArray();
 
         $planSummary = json_encode($steps, JSON_UNESCAPED_UNICODE);
@@ -231,7 +233,7 @@ PROMPT;
             $prompt = <<<PROMPT
 Analyze this executed marketing plan and extract the user's content preferences and style patterns.
 
-Plan type: {$plan->agent}
+Plan type: {$plan->agent_type}
 Title: {$plan->title}
 Description: {$plan->description}
 Steps: {$planSummary}
@@ -247,7 +249,9 @@ Respond as a single compact paragraph (max 200 words) summarizing the style pref
 If there's nothing notable to extract, respond with: SKIP
 PROMPT;
 
-            $response = $this->aiService->generateContent(
+            $response = BrainAi::generate(
+                $user,
+                'style_extraction',
                 AiService::prependDateContext($prompt),
                 $integration,
                 ['max_tokens' => 500, 'temperature' => 0.3]
@@ -265,7 +269,7 @@ PROMPT;
                 content: $response,
                 source: 'ai_enrichment',
                 sourceReference: 'plan:' . $plan->id,
-                tags: ['auto_extracted', $plan->agent],
+                tags: ['auto_extracted', $plan->agent_type],
             );
         } catch (\Exception $e) {
             Log::warning('Style preference extraction failed', [

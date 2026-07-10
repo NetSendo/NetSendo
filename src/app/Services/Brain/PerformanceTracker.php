@@ -74,7 +74,7 @@ class PerformanceTracker
 
         // Get user's historical benchmarks (or fall back to industry)
         $benchmarks = AiPerformanceSnapshot::getUserBenchmarks($user->id)
-            ?? self::INDUSTRY_BENCHMARKS;
+            ?? config('brain.benchmarks', self::INDUSTRY_BENCHMARKS);
 
         foreach ($plans as $plan) {
             try {
@@ -183,6 +183,7 @@ class PerformanceTracker
             'lessons_learned' => $lessons['summary'] ?? null,
             'what_worked' => $lessons['what_worked'] ?? [],
             'what_to_improve' => $lessons['what_to_improve'] ?? [],
+            'experiment_dimensions' => $this->buildExperimentDimensions($message),
             'review_status' => 'reviewed',
             'campaign_sent_at' => $message->send_at ?? $plan->completed_at,
             'captured_at' => now(),
@@ -193,6 +194,29 @@ class PerformanceTracker
         // $this->saveToKnowledgeBase($user, $snapshot, $lessons);
 
         return $snapshot;
+    }
+
+    /**
+     * Structured experiment dimensions for a sent campaign (Brain 2.0 Phase 4).
+     * Every send is an experiment: these features let PerformanceLearner
+     * compute per-dimension win rates DETERMINISTICALLY instead of relying
+     * on prose lessons.
+     */
+    protected function buildExperimentDimensions(Message $message): array
+    {
+        $subject = (string) ($message->subject ?? '');
+        $sentAt = $message->send_at ?? $message->scheduled_at ?? $message->updated_at;
+
+        return [
+            'send_day' => $sentAt ? strtolower($sentAt->englishDayOfWeek) : null,
+            'send_hour' => $sentAt ? (int) $sentAt->format('G') : null,
+            'subject_length' => mb_strlen($subject),
+            'subject_words' => $subject === '' ? 0 : count(preg_split('/\s+/u', trim($subject)) ?: []),
+            'has_emoji' => (bool) preg_match('/[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}]/u', $subject),
+            'has_question' => str_contains($subject, '?'),
+            'has_number' => (bool) preg_match('/\d/', $subject),
+            'personalized' => str_contains($subject, '[[') || str_contains($message->content ?? '', '[[fname]]'),
+        ];
     }
 
     /**
@@ -334,7 +358,9 @@ Be specific and actionable. Reference actual metrics. Don't be generic.
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent(
+            $response = BrainAi::generate(
+                $user,
+                'performance_lessons',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 ['max_tokens' => 2000, 'temperature' => 0.3]

@@ -74,7 +74,7 @@ IMPORTANT: Respond in {$langName}.
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent($prompt, $integration, [
+            $response = BrainAi::generate($user, 'goal_detection', $prompt, $integration, [
                 'max_tokens' => 1000,
                 'temperature' => 0.2,
             ]);
@@ -151,12 +151,35 @@ PROMPT;
             ));
         }
 
+        // Metric target (outcome-driven goals, Brain 2.0 Phase 4)
+        $metricStr = '';
+        if ($goal->target_metric && $goal->target_value !== null) {
+            $baseline = $goal->baseline_value !== null ? " (baseline: {$goal->baseline_value})" : '';
+            $metricStr = "\nMEASURABLE TARGET: {$goal->target_metric} must reach {$goal->target_value}{$baseline}. "
+                . "The goal completes ONLY when the metric reaches the target — plan actions that actually move this metric.";
+        }
+
+        // Failure feedback loop: past failures inform the next decomposition
+        // (previously recorded to goal context but never read back)
+        $failuresStr = '';
+        $failures = array_slice((array) ($goal->context['failures'] ?? []), -3);
+        if (!empty($failures)) {
+            $failuresStr = "\nPREVIOUS FAILED ATTEMPTS (avoid repeating these mistakes):\n";
+            foreach ($failures as $failure) {
+                $title = $failure['plan_title'] ?? 'plan';
+                $reason = $failure['reason'] ?? 'unknown';
+                $failuresStr .= "- {$title}: {$reason}\n";
+            }
+        }
+
         $prompt = <<<PROMPT
 You are an expert marketing strategist. Decompose this goal into sequential plans.
 
 GOAL: {$goal->title}
 DESCRIPTION: {$goal->description}
 {$criteriaStr}
+{$metricStr}
+{$failuresStr}
 {$completedContext}
 
 {$knowledgeContext}
@@ -169,6 +192,9 @@ Create 2-6 sequential plans. Each plan should be executable by one of these agen
 - analytics: reports, trends, comparisons
 - segmentation: tags, segments, scoring
 - research: web research, competitor analysis
+- funnel: revenue playbooks (welcome, cart abandonment, win-back, post-purchase)
+- revenue: revenue and RPM analysis
+- deliverability: sender health checks
 
 Respond in VALID JSON ONLY:
 {
@@ -188,7 +214,7 @@ IMPORTANT: Only include plans NOT yet completed. Respond in {$langName}.
 PROMPT;
 
         try {
-            $response = $this->aiService->generateContent($prompt, $integration, [
+            $response = BrainAi::generate($user, 'goal_decomposition', $prompt, $integration, [
                 'max_tokens' => 4000,
                 'temperature' => 0.3,
             ]);
@@ -282,12 +308,16 @@ PROMPT;
             ];
         }
 
-        // Log the failure context
-        $goal->addContext("failure_{$plan->id}", [
+        // Log the failure into the goal's failures array — read back by
+        // decomposeGoal so the planner learns from failed attempts
+        $failures = (array) (($goal->context ?? [])['failures'] ?? []);
+        $failures[] = [
+            'plan_id' => $plan->id,
             'plan_title' => $plan->title,
-            'reason' => $reason,
+            'reason' => mb_substr($reason, 0, 300),
             'failed_at' => now()->toIso8601String(),
-        ]);
+        ];
+        $goal->addContext('failures', array_slice($failures, -10));
 
         // Suggest retry with adjusted approach
         return [

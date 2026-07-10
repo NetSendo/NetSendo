@@ -56,8 +56,10 @@ class SituationAnalyzer
             $context = $this->gatherContext($user, $settings);
             $prompt = $this->buildAnalysisPrompt($context, $user, $settings);
 
-            // Call AI with date context
-            $response = $this->aiService->generateContent(
+            // Call AI with date context (tracked: budget + execution log)
+            $response = BrainAi::generate(
+                $user,
+                'situation_analysis',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 [
@@ -152,7 +154,7 @@ class SituationAnalyzer
         try {
             $context['crm'] = [
                 'total_contacts' => \App\Models\CrmContact::where('user_id', $user->id)->count(),
-                'hot_leads' => \App\Models\CrmContact::where('user_id', $user->id)->where('score', '>=', 50)->count(),
+                'hot_leads' => \App\Models\CrmContact::where('user_id', $user->id)->where('score', '>=', AiBrainSettings::hotLeadScore($user->id))->count(),
                 'open_deals' => \App\Models\CrmDeal::where('user_id', $user->id)->whereNull('closed_at')->count(),
             ];
         } catch (\Exception $e) {
@@ -184,6 +186,35 @@ class SituationAnalyzer
             $context['knowledge_entries'] = \App\Models\KnowledgeEntry::where('user_id', $user->id)->count();
         } catch (\Exception $e) {
             $context['knowledge_entries'] = 0;
+        }
+
+        // 6.5 Revenue (Brain 2.0 Phase 2 — unified ledger). Gives the planner
+        // actual money signals: what we earned and which campaigns earned it.
+        try {
+            $revenue30d = (int) \App\Models\RevenueEvent::forUser($user->id)->recent(30)->sum('amount');
+            $attributed30d = (int) \App\Models\RevenueEvent::forUser($user->id)->recent(30)->attributed()->sum('amount');
+            $topCampaigns = \App\Models\RevenueEvent::forUser($user->id)
+                ->recent(30)
+                ->attributed()
+                ->selectRaw('attributed_message_id, SUM(amount) as total')
+                ->groupBy('attributed_message_id')
+                ->orderByDesc('total')
+                ->limit(3)
+                ->get()
+                ->map(fn ($row) => [
+                    'message_id' => $row->attributed_message_id,
+                    'subject' => \App\Models\Message::find($row->attributed_message_id)?->subject,
+                    'revenue' => round($row->total / 100, 2),
+                ])
+                ->toArray();
+
+            $context['revenue'] = [
+                'last_30d_total' => round($revenue30d / 100, 2),
+                'attributed_to_campaigns' => round($attributed30d / 100, 2),
+                'top_earning_campaigns' => $topCampaigns,
+            ];
+        } catch (\Exception $e) {
+            $context['revenue'] = ['last_30d_total' => 0];
         }
 
         // 7. Last situation analysis (to avoid repeating)

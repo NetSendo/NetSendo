@@ -48,6 +48,8 @@ class CrmAgent extends BaseAgent
 
         $langInstruction = $this->getLanguageInstruction($user);
 
+        $actionsBlock = \App\Services\Brain\Tools\ToolRegistry::promptSection('crm');
+
         $prompt = <<<PROMPT
 You are a CRM and contact management expert. The user wants to perform the following action:
 Intent: {$intentDesc}
@@ -71,16 +73,7 @@ Create a detailed CRM plan. Respond in JSON:
   ]
 }
 
-Available action_types:
-- search_contacts: search contacts (config: {query: "", status: "lead|prospect|client", min_score: N})
-- create_contact: create CRM contact from subscriber (config: {email: "", source: "", status: "lead"})
-- update_contact_status: change contact status (config: {contact_id: N, new_status: "prospect|client"})
-- create_deal: create deal in pipeline (config: {name: "", value: N, contact_id: N, pipeline_id: N})
-- move_deal_stage: move deal to stage (config: {deal_id: N, stage_name: ""})
-- create_task: create CRM task (config: {title: "", type: "call|email|meeting|follow_up", priority: "low|medium|high", contact_id: N, due_days: N})
-- score_analysis: analyze lead scoring (config: {min_score: N, status: ""})
-- pipeline_summary: show pipeline summary (config: {pipeline_id: N|null})
-- create_company: create company (config: {name: "", website: "", industry: ""})
+{$actionsBlock}
 PROMPT;
 
         try {
@@ -146,7 +139,7 @@ PROMPT;
             'score_analysis' => $this->executeScoreAnalysis($step, $user),
             'pipeline_summary' => $this->executePipelineSummary($step, $user),
             'create_company' => $this->executeCreateCompany($step, $user),
-            default => ['status' => 'completed', 'message' => "Action '{$step->action_type}' noted"],
+            default => $this->failUnknownAction($step),
         };
     }
 
