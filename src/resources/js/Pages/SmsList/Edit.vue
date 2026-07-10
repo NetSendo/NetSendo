@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
+import { contrastTextColor } from "@/Composables/useColorContrast";
 import { ref, watch, computed } from "vue";
 
 const props = defineProps({
@@ -302,13 +303,14 @@ const subscribeEndpoint = computed(() => {
                                         v-for="tag in tags"
                                         :key="tag.id"
                                         @click="toggleTag(tag.id)"
-                                        class="cursor-pointer rounded-full px-3 py-1 text-sm font-medium text-white transition-all hover:scale-105 select-none"
+                                        class="cursor-pointer rounded-full px-3 py-1 text-sm font-medium transition-all hover:scale-105 select-none"
                                         :class="{
                                             'ring-2 ring-indigo-500 ring-offset-2 ring-offset-slate-900':
                                                 form.tags.includes(tag.id),
                                         }"
                                         :style="{
                                             backgroundColor: tag.color,
+                                            color: contrastTextColor(tag.color),
                                             opacity: form.tags.includes(tag.id)
                                                 ? 1
                                                 : 0.6,

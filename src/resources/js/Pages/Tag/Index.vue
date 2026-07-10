@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import DeleteTagModal from './DeleteTagModal.vue';
+import { contrastTextColor } from '@/Composables/useColorContrast';
 
 const props = defineProps({
     tags: Array,
@@ -116,6 +117,12 @@ const closeDeleteModal = () => {
                                         type="text"
                                         class="block w-full rounded-md border-slate-600 bg-slate-900 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                     />
+                                    <span
+                                        class="inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-sm font-medium"
+                                        :style="{ backgroundColor: form.color, color: contrastTextColor(form.color) }"
+                                    >
+                                        {{ form.name || $t('tags.title') }}
+                                    </span>
                                 </div>
                             </div>
                             <div>
@@ -159,8 +166,8 @@ const closeDeleteModal = () => {
                                 <div
                                     v-for="tag in tags"
                                     :key="tag.id"
-                                    class="group relative inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-white transition-transform hover:scale-105"
-                                    :style="{ backgroundColor: tag.color }"
+                                    class="group relative inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-transform hover:scale-105"
+                                    :style="{ backgroundColor: tag.color, color: contrastTextColor(tag.color) }"
                                     :title="tag.description || ''"
                                 >
                                     {{ tag.name }}

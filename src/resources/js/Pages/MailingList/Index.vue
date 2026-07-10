@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
+import { contrastTextColor } from "@/Composables/useColorContrast";
 import DeleteListModal from "./Partials/DeleteListModal.vue";
 import CopyListModal from "./Partials/CopyListModal.vue";
 
@@ -628,8 +629,8 @@ onMounted(() => {
                             <span
                                 v-for="tag in list.tags"
                                 :key="tag.id"
-                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
-                                :style="{ backgroundColor: tag.color }"
+                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm"
+                                :style="{ backgroundColor: tag.color, color: contrastTextColor(tag.color) }"
                             >
                                 {{ tag.name }}
                             </span>
@@ -1011,9 +1012,10 @@ onMounted(() => {
                                         <span
                                             v-for="tag in list.tags"
                                             :key="tag.id"
-                                            class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                                            class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm"
                                             :style="{
                                                 backgroundColor: tag.color,
+                                                color: contrastTextColor(tag.color),
                                             }"
                                         >
                                             {{ tag.name }}
