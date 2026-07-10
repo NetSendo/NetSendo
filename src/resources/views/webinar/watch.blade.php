@@ -135,8 +135,12 @@
                     </div>
                 @endif
 
+                @php
+                    // Prefer Vimeo when explicitly selected, or when it's the only id present.
+                    $useVimeo = $webinar->vimeo_id && ($webinar->video_provider === 'vimeo' || empty($webinar->youtube_live_id));
+                @endphp
                 <div id="video-player-container" class="absolute inset-0 {{ (!$shouldPlay && $sessionStartTime) || ($sessionEnded ?? false) ? 'hidden' : '' }}">
-                    @if($webinar->youtube_live_id)
+                    @if($webinar->youtube_live_id && !$useVimeo)
                         <div class="relative w-full h-full">
                             <div class="youtube-overlay" onclick="return false;"></div>
                             <iframe
@@ -145,6 +149,18 @@
                                 class="absolute inset-0 w-full h-full"
                                 frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                            ></iframe>
+                        </div>
+                    @elseif($useVimeo)
+                        <div class="relative w-full h-full">
+                            <div class="youtube-overlay" onclick="return false;"></div>
+                            <iframe
+                                id="vimeo-player"
+                                src="{{ $webinar->vimeoEmbedUrl(['autoplay' => 1, 'controls' => 0, 'title' => 0, 'byline' => 0, 'portrait' => 0, 'dnt' => 1]) }}"
+                                class="absolute inset-0 w-full h-full"
+                                frameborder="0"
+                                allow="autoplay; fullscreen; picture-in-picture"
                                 allowfullscreen
                             ></iframe>
                         </div>

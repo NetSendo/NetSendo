@@ -56,7 +56,9 @@ class WebinarController extends Controller
             'missed_tag' => 'nullable|string|max:50',
             'settings' => 'nullable|array',
             'video_url' => 'nullable|url',
-            'youtube_live_id' => 'nullable|string',
+            'youtube_live_id' => 'nullable|string|max:64',
+            'vimeo_id' => 'nullable|string|max:64',
+            'video_provider' => 'nullable|in:youtube,vimeo,upload',
         ]);
 
         $webinar = $this->webinarService->create($validated, auth()->id());
@@ -154,7 +156,9 @@ class WebinarController extends Controller
             'missed_tag' => 'nullable|string|max:50',
             'settings' => 'nullable|array',
             'video_url' => 'nullable|url',
-            'youtube_live_id' => 'nullable|string',
+            'youtube_live_id' => 'nullable|string|max:64',
+            'vimeo_id' => 'nullable|string|max:64',
+            'video_provider' => 'nullable|in:youtube,vimeo,upload',
             'thumbnail_url' => 'nullable|url',
         ]);
 

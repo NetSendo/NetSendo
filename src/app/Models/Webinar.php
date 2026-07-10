@@ -35,6 +35,7 @@ class Webinar extends Model
         'status',
         'video_url',
         'youtube_live_id',
+        'vimeo_id',
         'video_provider',
         'registration_page_id',
         'thank_you_page_id',
@@ -356,6 +357,34 @@ class Webinar extends Model
         }
 
         return round(($this->attendees_count / $this->registrations_count) * 100, 1);
+    }
+
+    /**
+     * Build the Vimeo player embed URL from the stored vimeo_id.
+     *
+     * Accepts a plain numeric id ("123456789") or the unlisted-video form
+     * "123456789/abcdef123" (id + privacy hash), which Vimeo embeds via ?h=.
+     */
+    public function vimeoEmbedUrl(array $params = []): ?string
+    {
+        if (empty($this->vimeo_id)) {
+            return null;
+        }
+
+        [$id, $hash] = array_pad(explode('/', trim($this->vimeo_id), 2), 2, null);
+        $id = preg_replace('/[^0-9]/', '', $id);
+
+        if ($id === '') {
+            return null;
+        }
+
+        if ($hash) {
+            $params = ['h' => $hash] + $params;
+        }
+
+        $query = $params ? '?' . http_build_query($params) : '';
+
+        return "https://player.vimeo.com/video/{$id}{$query}";
     }
 
     // =====================================

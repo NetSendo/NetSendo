@@ -122,7 +122,7 @@ class PublicWebinarController extends Controller
         $shouldPlay = $isLive || ($sessionStartTime && now()->gte($sessionStartTime));
 
         // Check if webinar has video configured
-        $hasVideo = !empty($webinar->video_url) || !empty($webinar->youtube_live_id);
+        $hasVideo = !empty($webinar->video_url) || !empty($webinar->youtube_live_id) || !empty($webinar->vimeo_id);
 
         // Check if session has ended (session time passed, but no live session and no video)
         // For autowebinars: if session start time was more than 2 hours ago and no video

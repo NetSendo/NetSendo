@@ -19,6 +19,24 @@ const activeTab = ref('chat');
 const chatSettings = ref(props.webinar.chat_settings || {});
 const pendingCount = ref(0);
 
+// Build the Vimeo preview URL, supporting the unlisted "id/hash" form.
+const vimeoEmbedUrl = computed(() => {
+    if (!props.webinar.vimeo_id) return null;
+    const [idPart, hash] = String(props.webinar.vimeo_id).trim().split('/');
+    const id = (idPart || '').replace(/[^0-9]/g, '');
+    if (!id) return null;
+    const params = new URLSearchParams({
+        autoplay: '1', muted: '1', controls: '0', title: '0', byline: '0', portrait: '0',
+    });
+    if (hash) params.set('h', hash);
+    return `https://player.vimeo.com/video/${id}?${params.toString()}`;
+});
+
+// Prefer Vimeo when explicitly selected, or when it's the only id present.
+const useVimeo = computed(() =>
+    !!props.webinar.vimeo_id && (props.webinar.video_provider === 'vimeo' || !props.webinar.youtube_live_id)
+);
+
 // Fetch dashboard data periodically
 const fetchDashboardData = async () => {
     try {
@@ -161,7 +179,7 @@ onUnmounted(() => {
             <div class="flex-1 flex overflow-hidden">
                 <!-- Video Preview -->
                 <div class="flex-1 bg-black flex items-center justify-center">
-                    <div v-if="webinar.youtube_live_id" class="w-full h-full">
+                    <div v-if="webinar.youtube_live_id && !useVimeo" class="w-full h-full">
                         <iframe
                             :src="`https://www.youtube.com/embed/${webinar.youtube_live_id}?autoplay=1&mute=1`"
                             class="w-full h-full"
@@ -170,9 +188,18 @@ onUnmounted(() => {
                             allowfullscreen
                         ></iframe>
                     </div>
+                    <div v-else-if="useVimeo && vimeoEmbedUrl" class="w-full h-full">
+                        <iframe
+                            :src="vimeoEmbedUrl"
+                            class="w-full h-full"
+                            frameborder="0"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowfullscreen
+                        ></iframe>
+                    </div>
                     <div v-else class="text-gray-500 text-center">
                         <p class="text-lg">{{ $t('webinars.studio.video_preview') }}</p>
-                        <p class="text-sm mt-2">{{ $t('webinars.studio.configure_youtube') }}</p>
+                        <p class="text-sm mt-2">{{ $t('webinars.studio.configure_video') }}</p>
                     </div>
                 </div>
 
