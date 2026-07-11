@@ -1057,8 +1057,8 @@ const getCategoryColor = (key) => {
                                 @click="strategyForm.tone = opt.value"
                                 class="rounded-lg border-2 px-3 py-1.5 text-sm transition"
                                 :class="{
-                                    'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': strategyForm.tone === opt.value,
-                                    'border-slate-200 dark:border-slate-600': strategyForm.tone !== opt.value,
+                                    'border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300': strategyForm.tone === opt.value,
+                                    'border-slate-200 text-slate-700 dark:border-slate-600 dark:text-slate-300': strategyForm.tone !== opt.value,
                                 }"
                             >
                                 {{ opt.emoji }} {{ t(opt.label, opt.value) }}
@@ -1150,8 +1150,8 @@ const getCategoryColor = (key) => {
                                 @click="strategyForm.goal_focus = opt.value"
                                 class="rounded-lg border-2 px-3 py-1.5 text-sm transition"
                                 :class="{
-                                    'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20': strategyForm.goal_focus === opt.value,
-                                    'border-slate-200 dark:border-slate-600': strategyForm.goal_focus !== opt.value,
+                                    'border-cyan-500 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/20 dark:text-cyan-300': strategyForm.goal_focus === opt.value,
+                                    'border-slate-200 text-slate-700 dark:border-slate-600 dark:text-slate-300': strategyForm.goal_focus !== opt.value,
                                 }"
                             >
                                 {{ opt.emoji }} {{ t(opt.label, opt.value) }}
