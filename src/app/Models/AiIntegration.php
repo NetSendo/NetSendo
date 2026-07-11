@@ -106,7 +106,7 @@ class AiIntegration extends Model
             ],
             'gemini' => [
                 'name' => 'Google Gemini',
-                'description' => 'Gemini 2.5 Pro/Flash i nowsze modele Google',
+                'description' => 'Gemini 2.5 Pro/Flash i inne modele Google',
                 'requires_api_key' => true,
                 'supports_base_url' => false,
                 'default_base_url' => 'https://generativelanguage.googleapis.com/v1beta',
@@ -129,7 +129,7 @@ class AiIntegration extends Model
     {
         $models = [
             'openai' => [
-                ['model_id' => 'gpt-5.2', 'display_name' => 'GPT-5.2 (Najnowszy)'],
+                ['model_id' => 'gpt-5.2', 'display_name' => 'GPT-5.2'],
                 ['model_id' => 'gpt-5-pro', 'display_name' => 'GPT-5 Pro'],
                 ['model_id' => 'gpt-5-mini', 'display_name' => 'GPT-5 Mini'],
                 ['model_id' => 'o3-full', 'display_name' => 'o3 (Reasoning)'],
@@ -138,7 +138,7 @@ class AiIntegration extends Model
                 ['model_id' => 'gpt-4.5', 'display_name' => 'GPT-4.5 (Legacy)'],
             ],
             'anthropic' => [
-                ['model_id' => 'claude-opus-4-8', 'display_name' => 'Claude Opus 4.8 (Najnowszy)'],
+                ['model_id' => 'claude-opus-4-8', 'display_name' => 'Claude Opus 4.8'],
                 ['model_id' => 'claude-sonnet-5', 'display_name' => 'Claude Sonnet 5'],
                 ['model_id' => 'claude-haiku-4-5', 'display_name' => 'Claude Haiku 4.5 (Szybki)'],
                 ['model_id' => 'claude-fable-5', 'display_name' => 'Claude Fable 5'],
@@ -148,7 +148,7 @@ class AiIntegration extends Model
                 ['model_id' => 'claude-4-haiku', 'display_name' => 'Claude 4 Haiku (Legacy)'],
             ],
             'grok' => [
-                ['model_id' => 'grok-4', 'display_name' => 'Grok 4 (Najnowszy)'],
+                ['model_id' => 'grok-4', 'display_name' => 'Grok 4'],
                 ['model_id' => 'grok-3-ultra', 'display_name' => 'Grok 3 Ultra'],
                 ['model_id' => 'grok-3', 'display_name' => 'Grok 3'],
                 ['model_id' => 'grok-2', 'display_name' => 'Grok 2 (Legacy)'],
@@ -165,7 +165,7 @@ class AiIntegration extends Model
                 ['model_id' => 'moonshotai/kimi-k2.5', 'display_name' => 'MoonshotAI Kimi K2.5'],
             ],
             'ollama' => [
-                ['model_id' => 'llama4.1', 'display_name' => 'Llama 4.1 (Latest)'],
+                ['model_id' => 'llama4.1', 'display_name' => 'Llama 4.1'],
                 ['model_id' => 'llama4', 'display_name' => 'Llama 4'],
                 ['model_id' => 'qwen3', 'display_name' => 'Qwen 3'],
                 ['model_id' => 'mistral4', 'display_name' => 'Mistral 4'],
@@ -174,7 +174,7 @@ class AiIntegration extends Model
                 ['model_id' => 'kimi-k2.5:cloud', 'display_name' => 'Kimi K2.5 Cloud (Multimodal Agentic)'],
             ],
             'gemini' => [
-                ['model_id' => 'gemini-2.5-pro', 'display_name' => 'Gemini 2.5 Pro (Najnowszy)'],
+                ['model_id' => 'gemini-2.5-pro', 'display_name' => 'Gemini 2.5 Pro'],
                 ['model_id' => 'gemini-2.5-flash', 'display_name' => 'Gemini 2.5 Flash'],
                 ['model_id' => 'gemini-2.5-flash-lite', 'display_name' => 'Gemini 2.5 Flash-Lite'],
                 ['model_id' => 'gemini-2.0-pro', 'display_name' => 'Gemini 2.0 Pro (Legacy)'],
@@ -186,11 +186,12 @@ class AiIntegration extends Model
     }
 
     /**
-     * Resolve the full model list shown in selectors: the current default
-     * catalog merged with any stored models (custom entries or models
-     * previously fetched from the provider API). Defaults are listed first so
-     * newly released models always appear; stored rows override the display
-     * name for matching IDs and append any extras.
+     * Resolve the full model list shown in selectors: the current curated
+     * catalog plus any stored models that aren't already in it (custom entries
+     * or models fetched from the provider API). The curated catalog is the
+     * source of truth for names and ordering — it is listed first and always
+     * wins on the display name, so a stored row can never resurface an outdated
+     * label. Stored-only models (custom or newly fetched) are appended after.
      *
      * @return array<int, array{model_id: string, display_name: string, is_custom: bool}>
      */
@@ -205,6 +206,10 @@ class AiIntegration extends Model
             ]);
 
         foreach ($this->models as $model) {
+            if ($models->has($model->model_id)) {
+                continue; // curated catalog wins on name/position
+            }
+
             $models[$model->model_id] = [
                 'model_id' => $model->model_id,
                 'display_name' => $model->display_name,

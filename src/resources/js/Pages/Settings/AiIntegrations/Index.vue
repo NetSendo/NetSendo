@@ -315,161 +315,32 @@ const toggleActive = (integration) => {
     );
 };
 
-// Updated default models for February 2026
-// Helper to localize model descriptions
+// Localize the functional descriptors that may appear in a model label.
+// Time/recency wording ("Najnowszy", month tags, …) is deliberately no longer
+// used in model names, so it is not translated here.
 const localizeModelName = (name) => {
     if (!name) return name;
     return name
-        .replace(
-            "(Najnowszy - Luty 2026)",
-            `(${t("ai.models.latest")} - ${t("ai.models.february_2026")})`,
-        )
-        .replace("(Luty 2026)", `(${t("ai.models.february_2026")})`)
-        .replace(
-            "(Najnowszy - Styczeń 2026)",
-            `(${t("ai.models.latest")} - ${t("ai.models.january_2026")})`,
-        )
-        .replace(
-            "(Nowość - Styczeń 2026)",
-            `(${t("ai.models.new")} - ${t("ai.models.january_2026")})`,
-        )
-        .replace(
-            "(Najnowszy - Grudzień 2025)",
-            `(${t("ai.models.latest")} - ${t("ai.models.december_2025")})`,
-        )
-        .replace("(Najnowszy)", `(${t("ai.models.latest")})`)
-        .replace("(Nowość)", `(${t("ai.models.new")})`)
         .replace("(Głębokie analizy)", `(${t("ai.models.thinking")})`)
         .replace("(Szybki i tani)", `(${t("ai.models.fast_and_cheap")})`)
         .replace("(Rozumowanie)", `(${t("ai.models.reasoning")})`)
         .replace("(Szybki)", `(${t("ai.models.fast")})`);
 };
 
-const defaultModels = {
-    openai: [
-        {
-            model_id: "gpt-5.2-preview",
-            display_name: "GPT-5.2 Preview (Nowość - Styczeń 2026)",
-        },
-        { model_id: "gpt-5-pro", display_name: "GPT-5 Pro (Stable)" },
-        { model_id: "gpt-5-mini", display_name: "GPT-5 Mini" },
-        { model_id: "o3-full", display_name: "o3 Full (Perfect Reasoning)" },
-        { model_id: "o3-mini", display_name: "o3 Mini" },
-        { model_id: "o1-pro", display_name: "o1 Pro" },
-        { model_id: "gpt-4.5", display_name: "GPT-4.5 (Legacy)" },
-    ],
-    anthropic: [
-        // Claude 4.6 - Latest (February 2026)
-        {
-            model_id: "claude-opus-4-6",
-            display_name: "Claude Opus 4.6 (Najnowszy - Luty 2026)",
-        },
-        {
-            model_id: "claude-sonnet-4-6",
-            display_name: "Claude Sonnet 4.6 (Luty 2026)",
-        },
-        // Claude 4.5
-        {
-            model_id: "claude-sonnet-4-5-20250929",
-            display_name: "Claude Sonnet 4.5",
-        },
-        {
-            model_id: "claude-haiku-4-5-20251001",
-            display_name: "Claude Haiku 4.5 (Szybki)",
-        },
-        {
-            model_id: "claude-opus-4-5-20251101",
-            display_name: "Claude Opus 4.5",
-        },
-        // Aliases
-        {
-            model_id: "claude-sonnet-4-5",
-            display_name: "Claude Sonnet 4.5 (Alias)",
-        },
-        {
-            model_id: "claude-haiku-4-5",
-            display_name: "Claude Haiku 4.5 (Alias)",
-        },
-        {
-            model_id: "claude-opus-4-5",
-            display_name: "Claude Opus 4.5 (Alias)",
-        },
-        // Legacy
-        {
-            model_id: "claude-sonnet-4-20250514",
-            display_name: "Claude Sonnet 4 (Legacy)",
-        },
-        {
-            model_id: "claude-opus-4-20250514",
-            display_name: "Claude Opus 4 (Legacy)",
-        },
-        {
-            model_id: "claude-3-haiku-20240307",
-            display_name: "Claude 3 Haiku (Legacy)",
-        },
-    ],
-    grok: [
-        {
-            model_id: "grok-3-ultra",
-            display_name: "Grok 3 Ultra (Styczeń 2026)",
-        },
-        { model_id: "grok-3", display_name: "Grok 3" },
-        { model_id: "grok-2", display_name: "Grok 2 (Legacy)" },
-    ],
-    openrouter: [
-        { model_id: "openai/gpt-5.2", display_name: "OpenAI GPT-5.2" },
-        { model_id: "openai/o3", display_name: "OpenAI o3" },
-        {
-            model_id: "anthropic/claude-opus-4-6",
-            display_name: "Claude Opus 4.6",
-        },
-        { model_id: "google/gemini-2.5-pro", display_name: "Gemini 2.5 Pro" },
-        { model_id: "meta-llama/llama-4-405b", display_name: "Llama 4 (Full)" },
-        { model_id: "x-ai/grok-3-ultra", display_name: "Grok 3 Ultra" },
-        {
-            model_id: "mistralai/mistral-large-3",
-            display_name: "Mistral Large 3",
-        },
-        {
-            model_id: "moonshotai/kimi-k2.5",
-            display_name: "MoonshotAI Kimi K2.5",
-        },
-    ],
-    ollama: [
-        { model_id: "llama4.1", display_name: "Llama 4.1 (Latest)" },
-        { model_id: "llama4", display_name: "Llama 4" },
-        { model_id: "qwen3", display_name: "Qwen 3" },
-        { model_id: "mistral4", display_name: "Mistral 4" },
-        { model_id: "phi5", display_name: "Phi-5" },
-        { model_id: "deepseek-v4", display_name: "DeepSeek V4" },
-        {
-            model_id: "kimi-k2.5:cloud",
-            display_name: "Kimi K2.5 Cloud (Multimodal)",
-        },
-    ],
-    gemini: [
-        {
-            model_id: "gemini-2.5-pro",
-            display_name: "Gemini 2.5 Pro (Styczeń 2026)",
-        },
-        { model_id: "gemini-2.5-flash", display_name: "Gemini 2.5 Flash" },
-        { model_id: "gemini-2.0-pro", display_name: "Gemini 2.0 Pro" },
-        { model_id: "gemini-2.0-flash", display_name: "Gemini 2.0 Flash" },
-    ],
-};
-
-// Get models for current provider with search filter
+// Get models for current provider with search filter.
+// The curated catalog comes from the backend (props.providers[…].default_models),
+// so there is a single source of truth and the list never drifts from the server.
 const currentProviderModels = computed(() => {
     if (!form.provider) return [];
 
     const integration = getIntegration(form.provider);
-    const defaults = defaultModels[form.provider] || [];
+    const defaults = props.providers[form.provider]?.default_models || [];
 
-    // Always start with default models
+    // Always start with the curated catalog
     const modelMap = new Map();
     defaults.forEach((m) => modelMap.set(m.model_id, m));
 
-    // Add API models (will not override defaults)
+    // Add API/custom models that aren't already in the catalog
     if (integration && integration.models && integration.models.length > 0) {
         integration.models.forEach((m) => {
             if (!modelMap.has(m.model_id)) {

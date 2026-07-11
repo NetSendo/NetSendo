@@ -121,7 +121,7 @@ class OllamaProvider extends BaseProvider
         $name = explode(':', $modelId)[0];
 
         $names = [
-            'llama4.1' => 'Llama 4.1 (Styczeń 2026)',
+            'llama4.1' => 'Llama 4.1',
             'llama4' => 'Llama 4',
             'llama3.3' => 'Llama 3.3',
             'llama3.2' => 'Llama 3.2',

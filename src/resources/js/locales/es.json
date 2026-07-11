@@ -2766,18 +2766,10 @@
             "irreversible": "Esta acción es irreversible."
         },
         "models": {
-            "latest": "Último",
-            "january_2026": "Enero 2026",
-            "february_2026": "Febrero 2026",
-            "december_2025": "Diciembre 2025",
-            "november_2025": "Noviembre 2025",
-            "october_2025": "Octubre 2025",
-            "september_2025": "Septiembre 2025",
             "thinking": "Análisis profundo",
             "fast_and_cheap": "Rápido y barato",
             "reasoning": "Razonamiento",
-            "fast": "Rápido",
-            "new": "Novedad"
+            "fast": "Rápido"
         }
     },
     "welcome": {

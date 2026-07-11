@@ -23,6 +23,13 @@ class AiIntegrationController extends Controller
         $integrations = AiIntegration::with('models')->get();
         $providers = AiIntegration::getProviders();
 
+        // Attach the curated default model list to each provider so the page
+        // renders the same catalog as the backend (single source of truth).
+        foreach ($providers as $key => &$provider) {
+            $provider['default_models'] = AiIntegration::getDefaultModels($key);
+        }
+        unset($provider);
+
         // Group integrations by provider
         $integrationsMap = $integrations->keyBy('provider');
 
@@ -84,15 +91,10 @@ class AiIntegrationController extends Controller
             'is_active' => true,
         ]);
 
-        // Add default models
-        $defaultModels = AiIntegration::getDefaultModels($validated['provider']);
-        foreach ($defaultModels as $model) {
-            $integration->models()->create([
-                'model_id' => $model['model_id'],
-                'display_name' => $model['display_name'],
-                'is_custom' => false,
-            ]);
-        }
+        // Default models are injected at read time by AiIntegration::availableModels(),
+        // so there's no need to persist a copy here — doing so only created stale
+        // rows that outlived catalog updates. The ai_models table now holds just
+        // custom models and any list fetched on demand from the provider API.
 
         return back()->with('success', 'Integracja AI została dodana.');
     }

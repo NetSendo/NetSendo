@@ -2766,18 +2766,10 @@
             "irreversible": "Diese Aktion ist unwiderruflich."
         },
         "models": {
-            "latest": "Neueste",
-            "january_2026": "Januar 2026",
-            "february_2026": "Februar 2026",
-            "december_2025": "Dezember 2025",
-            "november_2025": "November 2025",
-            "october_2025": "Oktober 2025",
-            "september_2025": "September 2025",
             "thinking": "Tiefe Analyse",
             "fast_and_cheap": "Schnell und günstig",
             "reasoning": "Schlussfolgern",
-            "fast": "Schnell",
-            "new": "Neu"
+            "fast": "Schnell"
         }
     },
     "welcome": {

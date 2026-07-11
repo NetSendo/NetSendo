@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **Cleaner AI model names + single source of truth (follow-up to [#28](https://github.com/NetSendo/NetSendo/issues/28)):** removed the time/recency wording from every AI model label — "Najnowszy", "Nowość", "Latest", "(Stable)" and month/year tags like "Styczeń 2026" / "Luty 2026" — because several models ended up flagged "newest" at the same time (confusing) and such tags go stale by design. Cleared from the PHP catalog (`AiIntegration::getDefaultModels()`), the provider descriptions (`getProviders()` — Google no longer says "…i nowsze modele"), the provider `formatModelName()` maps (Grok/Gemini/Ollama), and the now-orphaned `ai.models.{latest,new,*_2026,*_2025}` i18n keys in all four locales; only functional descriptors (Legacy, Reasoning, Fast, …) remain. The Settings → AI Integrations page had its **own** hardcoded `defaultModels` copy in `Index.vue` that had already drifted from the backend — it now renders the backend catalog (exposed as a `default_models` field per provider in `AiIntegrationController::index()`), so there is a single source of truth. `AiIntegration::availableModels()` now treats the curated catalog as authoritative (it always wins on name/order) instead of letting stored rows override it, and integration creation no longer seeds the default catalog into `ai_models` (it is injected at read time). Migration `2026_07_11_000000_clean_seeded_ai_models` removes the previously-seeded non-custom rows that were surfacing outdated labels such as "Claude 4.5 Opus (Najnowszy - Styczeń 2026)" in the picker (custom models are preserved). **Migration:** `2026_07_11_000000_clean_seeded_ai_models.php`.
+
 ## [2.1.0] – Short Description
 
 **Release date:** 2026-07-10
