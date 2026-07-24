@@ -310,6 +310,9 @@ class CalendlyWebhookHandler
                     'subscribed_at' => now(),
                 ]);
 
+                // Start autoresponder sequences / automations for this list
+                event(new \App\Events\SubscriberSignedUp($subscriber, $list, null, 'calendly'));
+
                 Log::info('Added subscriber to mailing list from Calendly', [
                     'subscriber_id' => $subscriber->id,
                     'list_id' => $listId,

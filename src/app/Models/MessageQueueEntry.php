@@ -19,6 +19,7 @@ class MessageQueueEntry extends Model
         'ab_test_variant_id',
         'status',
         'planned_at',
+        'scheduled_for',
         'queued_at',
         'sent_at',
         'error_message',
@@ -34,6 +35,7 @@ class MessageQueueEntry extends Model
 
     protected $casts = [
         'planned_at' => 'datetime',
+        'scheduled_for' => 'datetime',
         'queued_at' => 'datetime',
         'sent_at' => 'datetime',
     ];

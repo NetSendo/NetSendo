@@ -56,9 +56,9 @@ class SalesFunnelService
                 return;
             }
 
-            // Find or create subscriber
+            // Find or create subscriber (scoped to the list owner's account)
             $subscriber = Subscriber::firstOrCreate(
-                ['email' => $email],
+                ['email' => $email, 'user_id' => $list->user_id],
                 [
                     'first_name' => $this->extractFirstName($name),
                     'last_name' => $this->extractLastName($name),
@@ -66,19 +66,14 @@ class SalesFunnelService
                 ]
             );
 
-            // Attach to list if not already attached
-            if (!$subscriber->lists()->where('contact_list_id', $list->id)->exists()) {
-                $subscriber->lists()->attach($list->id, [
-                    'subscribed_at' => now(),
-                    'source' => 'sales_funnel:' . $funnel->id,
-                ]);
+            // Attach/reactivate on the list and start autoresponder sequences
+            $subscriber->addToList($list->id, 'sales_funnel:' . $funnel->id);
 
-                Log::info('Sales funnel: subscriber added to list', [
-                    'funnel_id' => $funnel->id,
-                    'subscriber_id' => $subscriber->id,
-                    'list_id' => $list->id,
-                ]);
-            }
+            Log::info('Sales funnel: subscriber added to list', [
+                'funnel_id' => $funnel->id,
+                'subscriber_id' => $subscriber->id,
+                'list_id' => $list->id,
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Sales funnel: failed to subscribe to list', [

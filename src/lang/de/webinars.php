@@ -53,6 +53,12 @@ return [
             'go_to_webinar' => 'Zum Webinarraum gehen',
             'apple_calendar' => 'Apple / iCal',
         ],
+        'thankyou' => [
+            'title' => 'Vielen Dank!',
+            'purchase_headline' => 'Vielen Dank für Ihren Kauf!',
+            'purchase_message' => 'Ihre Bestellung ist eingegangen. Die Details haben wir an Ihre E-Mail-Adresse gesendet.',
+            'calendly_title' => 'Termin vereinbaren',
+        ],
         'watch' => [
             'waiting' => 'Warten auf Übertragung...',
             'buy_now' => 'Jetzt kaufen',

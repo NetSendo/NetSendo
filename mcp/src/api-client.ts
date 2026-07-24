@@ -129,8 +129,26 @@ export class NetSendoApiClient {
   }
 
   async createSubscriber(data: SubscriberCreateInput): Promise<Subscriber> {
-    const response = await this.client.post('/subscribers', data);
-    return response.data.data;
+    const { lists, ...rest } = data;
+    const listIds = lists ?? [];
+
+    if (listIds.length === 0) {
+      throw new Error('At least one contact list ID is required (lists parameter)');
+    }
+
+    // The REST endpoint accepts a single contact_list_id — call it once per
+    // list: the first call creates (or finds) the subscriber, subsequent calls
+    // attach the remaining lists (each attach starts that list's sequences).
+    let subscriber: Subscriber | undefined;
+    for (const listId of listIds) {
+      const response = await this.client.post('/subscribers', {
+        ...rest,
+        contact_list_id: listId,
+      });
+      subscriber = response.data.data;
+    }
+
+    return subscriber as Subscriber;
   }
 
   async updateSubscriber(id: number, data: SubscriberUpdateInput): Promise<Subscriber> {

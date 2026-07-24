@@ -59,6 +59,22 @@ class WebinarController extends Controller
             'settings.content.*' => 'nullable|string|max:5000',
             'settings.benefits' => 'nullable|array',
             'settings.benefits.*' => 'nullable|string|max:500',
+            'settings.registration_sections' => 'nullable|array|max:20',
+            'settings.registration_sections.*.type' => 'nullable|in:text,video',
+            'settings.registration_sections.*.title' => 'nullable|string|max:255',
+            'settings.registration_sections.*.body' => 'nullable|string|max:10000',
+            'settings.registration_sections.*.video_url' => 'nullable|string|max:500',
+            'settings.registration_sections.*.placement' => 'nullable|in:above_form,below_form',
+            'settings.thankyou_sections' => 'nullable|array|max:20',
+            'settings.thankyou_sections.*.type' => 'nullable|in:text,video',
+            'settings.thankyou_sections.*.title' => 'nullable|string|max:255',
+            'settings.thankyou_sections.*.body' => 'nullable|string|max:10000',
+            'settings.thankyou_sections.*.video_url' => 'nullable|string|max:500',
+            'settings.calendly' => 'nullable|array',
+            'settings.calendly.enabled' => 'nullable|boolean',
+            'settings.calendly.url' => 'nullable|string|max:500|starts_with:https://calendly.com/,https://www.calendly.com/',
+            'settings.calendly.title' => 'nullable|string|max:255',
+            'settings.calendly.description' => 'nullable|string|max:2000',
             'video_url' => 'nullable|url',
             'youtube_live_id' => 'nullable|string|max:64',
             'vimeo_id' => 'nullable|string|max:64',
@@ -87,6 +103,7 @@ class WebinarController extends Controller
 
         $webinarData = $webinar->load(['products', 'ctas', 'schedule', 'targetList'])->toArray();
         $webinarData['registration_url'] = $webinar->registration_url;
+        $webinarData['purchase_thank_you_url'] = $webinar->purchase_thank_you_url;
         $webinarData['effective_timezone'] = $webinar->effective_timezone;
         $webinarData['user_timezone'] = auth()->user()->timezone;
 
@@ -163,6 +180,22 @@ class WebinarController extends Controller
             'settings.content.*' => 'nullable|string|max:5000',
             'settings.benefits' => 'nullable|array',
             'settings.benefits.*' => 'nullable|string|max:500',
+            'settings.registration_sections' => 'nullable|array|max:20',
+            'settings.registration_sections.*.type' => 'nullable|in:text,video',
+            'settings.registration_sections.*.title' => 'nullable|string|max:255',
+            'settings.registration_sections.*.body' => 'nullable|string|max:10000',
+            'settings.registration_sections.*.video_url' => 'nullable|string|max:500',
+            'settings.registration_sections.*.placement' => 'nullable|in:above_form,below_form',
+            'settings.thankyou_sections' => 'nullable|array|max:20',
+            'settings.thankyou_sections.*.type' => 'nullable|in:text,video',
+            'settings.thankyou_sections.*.title' => 'nullable|string|max:255',
+            'settings.thankyou_sections.*.body' => 'nullable|string|max:10000',
+            'settings.thankyou_sections.*.video_url' => 'nullable|string|max:500',
+            'settings.calendly' => 'nullable|array',
+            'settings.calendly.enabled' => 'nullable|boolean',
+            'settings.calendly.url' => 'nullable|string|max:500|starts_with:https://calendly.com/,https://www.calendly.com/',
+            'settings.calendly.title' => 'nullable|string|max:255',
+            'settings.calendly.description' => 'nullable|string|max:2000',
             'video_url' => 'nullable|url',
             'youtube_live_id' => 'nullable|string|max:64',
             'vimeo_id' => 'nullable|string|max:64',

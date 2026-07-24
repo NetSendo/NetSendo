@@ -311,7 +311,7 @@ class FunnelExecutionService
         $toListId = $config['to_list_id'] ?? null;
 
         if ($fromListId && $toListId) {
-            $subscriber->moveToList($fromListId, $toListId);
+            $subscriber->moveToList($fromListId, $toListId, 'funnel_move');
         }
     }
 
@@ -319,7 +319,7 @@ class FunnelExecutionService
     {
         $listId = $config['list_id'] ?? null;
         if ($listId) {
-            $subscriber->addToList($listId);
+            $subscriber->addToList($listId, 'funnel_copy');
         }
     }
 

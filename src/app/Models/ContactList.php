@@ -125,7 +125,7 @@ class ContactList extends Model
     public function subscribers()
     {
         return $this->belongsToMany(Subscriber::class, 'contact_list_subscriber')
-            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at', 'soft_bounce_count')
+            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at', 'confirmed_at', 'resubscribed_at', 'soft_bounce_count')
             ->withTimestamps();
     }
 
@@ -320,6 +320,9 @@ class ContactList extends Model
                     'status' => 'active',
                     'subscribed_at' => now(),
                 ]);
+
+                // Start autoresponder sequences / automations on the parent list
+                event(new \App\Events\SubscriberSignedUp($subscriber, $parentList, null, 'parent_list_sync'));
             }
         } elseif ($action === 'unsubscribe') {
             // Update status in parent list

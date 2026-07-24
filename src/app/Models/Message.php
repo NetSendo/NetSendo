@@ -222,6 +222,38 @@ class Message extends Model
     }
 
     /**
+     * Calculate the expected send datetime (UTC) for this autoresponder message,
+     * anchored at the given base time (usually the subscription/re-signup moment).
+     *
+     * Applies the day offset and, when time_of_day is set, the configured hour —
+     * interpreted in the subscriber's timezone when send_in_subscriber_timezone
+     * is enabled. Single source of truth shared by the signup listener and CRON.
+     */
+    public function calculateExpectedSendAt(\Carbon\Carbon $base, ?Subscriber $subscriber = null): \Carbon\Carbon
+    {
+        $expected = $base->copy()->addDays($this->day ?? 0);
+
+        if ($this->time_of_day) {
+            $timeParts = explode(':', $this->time_of_day);
+            $hour = (int) ($timeParts[0] ?? 0);
+            $minute = (int) ($timeParts[1] ?? 0);
+
+            $targetTimezone = 'UTC';
+            if ($this->send_in_subscriber_timezone && $subscriber) {
+                $targetTimezone = $subscriber->getEffectiveTimezone($this->effective_timezone);
+            }
+
+            $expected = $expected->copy()
+                ->startOfDay()
+                ->shiftTimezone($targetTimezone)
+                ->setTime($hour, $minute, 0)
+                ->setTimezone('UTC');
+        }
+
+        return $expected;
+    }
+
+    /**
      * Get aggregated queue statistics.
      *
      * @return array{planned: int, queued: int, sent: int, failed: int, skipped: int, total: int}
@@ -289,14 +321,12 @@ class Message extends Model
      *
      * @return array
      */
-    public function getQueueScheduleStats(): array
+    public function getQueueScheduleStats(?int $missedLimit = 100): array
     {
         if (!$this->isQueueType()) {
             return [];
         }
 
-        $dayOffset = $this->day ?? 0;
-        $timeOfDay = $this->time_of_day; // e.g., "15:00" or null
         $now = now();
         $today = $now->copy()->startOfDay();
         $tomorrow = $today->copy()->addDay();
@@ -310,6 +340,7 @@ class Message extends Model
         if (empty($includedListIds)) {
             return [
                 'sent' => 0,
+                'pending' => 0,
                 'today' => 0,
                 'tomorrow' => 0,
                 'day_after_tomorrow' => 0,
@@ -346,21 +377,21 @@ class Message extends Model
             ->unique()
             ->toArray();
 
-        // Get emails that have queue entries waiting to be processed (PLANNED or QUEUED)
-        // These are NOT missed - they are waiting for CRON to process them
-        $pendingEmails = $this->queueEntries()
+        // Emails that have queue entries waiting to be processed (PLANNED or QUEUED)
+        // These are NOT missed - they are waiting for CRON to process them.
+        // Keep their stored scheduled_for so they can be bucketed by send date.
+        $pendingByEmail = $this->queueEntries()
             ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
             ->whereIn('message_queue_entries.status', [
                 MessageQueueEntry::STATUS_PLANNED,
                 MessageQueueEntry::STATUS_QUEUED
             ])
-            ->pluck('subscribers.email')
-            ->unique()
+            ->pluck('message_queue_entries.scheduled_for', 'subscribers.email')
             ->toArray();
 
         $stats = [
             'sent' => count($sentEmails),
-            'pending' => count($pendingEmails), // Add pending count for visibility
+            'pending' => count($pendingByEmail), // Entries already queued, waiting for CRON
             'today' => 0,
             'tomorrow' => 0,
             'day_after_tomorrow' => 0,
@@ -376,48 +407,51 @@ class Message extends Model
                 continue;
             }
 
-            // Skip if has pending queue entry (waiting for CRON to process)
-            // This prevents false "missed" counts for day 0 messages
-            if (in_array($subscriber->email, $pendingEmails)) {
-                continue; // Already counted in 'pending' stat
-            }
+            $isPending = array_key_exists($subscriber->email, $pendingByEmail);
 
             // Get subscribed_at from the first matching list's pivot
             $pivot = $subscriber->contactLists->first()?->pivot;
             $subscribedAt = $pivot?->subscribed_at ? \Carbon\Carbon::parse($pivot->subscribed_at) : null;
 
-            if (!$subscribedAt) {
+            if (!$subscribedAt && !$isPending) {
                 continue;
             }
 
-            // Calculate expected send datetime
-            // Base: subscribed_at + day offset
-            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
-
-            // If time_of_day is set, use that specific hour on the expected day
-            if ($timeOfDay) {
-                // Parse time_of_day (format: "HH:MM" or "H:i")
-                $timeParts = explode(':', $timeOfDay);
-                $hour = (int) ($timeParts[0] ?? 0);
-                $minute = (int) ($timeParts[1] ?? 0);
-                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+            // Expected send datetime: for pending entries prefer the schedule
+            // stored on the queue entry; otherwise derive from subscribed_at
+            $expectedSendDateTime = null;
+            if ($isPending && $pendingByEmail[$subscriber->email]) {
+                $expectedSendDateTime = \Carbon\Carbon::parse($pendingByEmail[$subscriber->email]);
+            } elseif ($subscribedAt) {
+                $expectedSendDateTime = $this->calculateExpectedSendAt($subscribedAt, $subscriber);
             }
-            // If no time_of_day, keep the original subscribed_at time
-            // This means for day=0: expectedSendDateTime = subscribedAt (immediate)
+
+            if (!$expectedSendDateTime) {
+                // Pending entry without a stored schedule and no pivot date —
+                // it will be sent on the next CRON run
+                $stats['today']++;
+                continue;
+            }
 
             // Get just the date portion for category comparison
             $expectedSendDate = $expectedSendDateTime->copy()->startOfDay();
 
-            // Check if this subscriber was "missed" (expected send datetime is in the past)
+            // Check if this subscriber was "missed" (expected send datetime is in the past).
+            // Pending entries are never "missed" — CRON will pick them up; a past
+            // schedule simply means they are due now, so count them as "today".
             if ($expectedSendDateTime->lt($now)) {
+                if ($isPending) {
+                    $stats['today']++;
+                    continue;
+                }
                 $stats['missed']++;
-                // Store first 100 missed subscribers for display
-                if (count($stats['missed_subscribers']) < 100) {
+                // Store missed subscribers for display / send-to-missed
+                if ($missedLimit === null || count($stats['missed_subscribers']) < $missedLimit) {
                     $stats['missed_subscribers'][] = [
                         'id' => $subscriber->id,
                         'email' => $subscriber->email,
                         'name' => trim(($subscriber->first_name ?? '') . ' ' . ($subscriber->last_name ?? '')),
-                        'subscribed_at' => $subscribedAt->format('Y-m-d H:i'),
+                        'subscribed_at' => $subscribedAt?->format('Y-m-d H:i'),
                         'would_send_at' => $expectedSendDateTime->format('Y-m-d H:i'),
                     ];
                 }
@@ -488,6 +522,16 @@ class Message extends Model
                         'error_message' => 'Subscriber removed from list or unsubscribed',
                     ]);
                 $result['skipped'] = $skipped;
+            }
+
+            // Refresh the stored recipients count for autoresponders too, so list
+            // views show a stable number instead of null. Throttled to avoid a DB
+            // write on every CRON run ($currentRecipients is already computed).
+            if (!$this->recipients_calculated_at || $this->recipients_calculated_at->lt(now()->subMinutes(10))) {
+                $this->update([
+                    'planned_recipients_count' => count($currentSubscriberIds),
+                    'recipients_calculated_at' => now(),
+                ]);
             }
 
             return $result;

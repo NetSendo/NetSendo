@@ -111,10 +111,14 @@ class ActivationController extends Controller
             }
 
             if ($pivot) {
-                // Reactivate existing subscription
+                // Reactivate existing subscription.
+                // Former (non-active) subscribers always get the date reset so the
+                // autoresponder sequence is anchored to the re-signup moment.
                 $subscriber->contactLists()->updateExistingPivot($list->id, [
                     'status' => 'active',
+                    'subscribed_at' => now(),
                     'resubscribed_at' => now(),
+                    'unsubscribed_at' => null,
                 ]);
             } else {
                 // Create new subscription

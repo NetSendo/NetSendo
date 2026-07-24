@@ -13,12 +13,21 @@ class SubscriberSignedUp
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * Moment the (re-)signup happened. Queued listeners may run later, so they
+     * must not assume now() — and the pivot subscribed_at may intentionally be
+     * kept unchanged (resubscription_behavior = keep_date).
+     */
+    public ?\Illuminate\Support\Carbon $occurredAt = null;
+
     public function __construct(
         public Subscriber $subscriber,
         public ContactList $list,
         public ?SubscriptionForm $form = null,
         public string $source = 'manual'
-    ) {}
+    ) {
+        $this->occurredAt = now();
+    }
 
     /**
      * Get context for automation processing

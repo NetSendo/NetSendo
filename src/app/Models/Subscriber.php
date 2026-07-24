@@ -82,10 +82,69 @@ class Subscriber extends Model
     public function contactLists(): BelongsToMany
     {
         return $this->belongsToMany(ContactList::class, 'contact_list_subscriber')
-            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at', 'soft_bounce_count')
+            ->withPivot('status', 'source', 'subscribed_at', 'unsubscribed_at', 'confirmed_at', 'resubscribed_at', 'soft_bounce_count')
             ->withTimestamps();
     }
     // Removed old contactList relationship to avoid confusion
+
+    /**
+     * Add (or reactivate) this subscriber on a list, honoring the list's
+     * resubscription_behavior, and fire SubscriberSignedUp so autoresponder
+     * sequences and automations start. Used by funnel/system actions.
+     *
+     * The event is fired only for a new attach or a reactivation — an
+     * already-active membership is left untouched so automated actions
+     * cannot restart sequences on every run.
+     */
+    public function addToList(int $listId, string $source = 'system'): bool
+    {
+        $list = ContactList::find($listId);
+        if (!$list) {
+            return false;
+        }
+
+        $existingPivot = $this->contactLists()->where('contact_list_id', $listId)->first();
+
+        if ($existingPivot) {
+            $wasActive = $existingPivot->pivot->status === 'active';
+            $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+            $pivotData = [
+                'status' => 'active',
+                'unsubscribed_at' => null,
+            ];
+
+            if ($shouldResetDate) {
+                $pivotData['subscribed_at'] = now();
+            }
+
+            $this->contactLists()->updateExistingPivot($listId, $pivotData);
+
+            if ($wasActive) {
+                return true;
+            }
+        } else {
+            $this->contactLists()->attach($listId, [
+                'status' => 'active',
+                'subscribed_at' => now(),
+                'source' => $source,
+            ]);
+        }
+
+        event(new \App\Events\SubscriberSignedUp($this, $list, null, $source));
+
+        return true;
+    }
+
+    /**
+     * Move this subscriber from one list to another (detach + addToList).
+     */
+    public function moveToList(int $fromListId, int $toListId, string $source = 'system'): bool
+    {
+        $this->contactLists()->detach($fromListId);
+
+        return $this->addToList($toListId, $source);
+    }
 
 
     /**

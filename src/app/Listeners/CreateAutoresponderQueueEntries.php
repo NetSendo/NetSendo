@@ -59,9 +59,20 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             ->first()
             ?->pivot;
 
+        $signedUpAt = $event->occurredAt ?? now();
+
         $subscribedAt = $pivot?->subscribed_at
             ? Carbon::parse($pivot->subscribed_at)
-            : now();
+            : $signedUpAt;
+
+        // Anchor for the sequence timeline. Normally the pivot subscribed_at
+        // (reset by the signup path), but when the list keeps the original date
+        // (resubscription_behavior = keep_date) the pivot date is stale — using
+        // it would put every day-offset in the past and dump the whole sequence
+        // at once. In that case anchor to the actual (re-)signup moment.
+        $anchor = $subscribedAt->gte($signedUpAt->copy()->subHours(6))
+            ? $subscribedAt
+            : $signedUpAt;
 
         $created = 0;
 
@@ -81,23 +92,10 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                 }
             }
 
-            // Calculate expected send datetime based on day offset and time_of_day
-            $dayOffset = $message->day ?? 0;
-            $timeOfDay = $message->time_of_day; // e.g., "15:00" or null
-            $now = now();
-
-            // Base: subscribed_at + day offset
-            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
-
-            // If time_of_day is set, use that specific hour
-            if ($timeOfDay) {
-                $timeParts = explode(':', $timeOfDay);
-                $hour = (int) ($timeParts[0] ?? 0);
-                $minute = (int) ($timeParts[1] ?? 0);
-                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
-            }
-            // If no time_of_day, keep the original subscribed_at time
-            // For day=0: expectedSendDateTime = subscribedAt (immediate send time)
+            // Expected send datetime (UTC), anchored to this (re-)signup.
+            // Stored on the entry so CRON does not have to re-derive it from the
+            // pivot (whose date may later change or be intentionally stale).
+            $expectedSendDateTime = $message->calculateExpectedSendAt($anchor, $subscriber);
 
             // Always add to queue regardless of whether time has passed
             // The cron job will catch up on missed operations (e.g., after container restart)
@@ -123,13 +121,25 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                     continue;
                 }
 
-                // Reset is enabled - delete existing entry to allow fresh start
-                $existingEntry->delete();
-                Log::info('CreateAutoresponderQueueEntries: Deleted existing entry for reset', [
+                // Reset is enabled - restart this entry for a fresh cycle
+                // (unique index on message_id+subscriber_id forbids a second row)
+                $oldStatus = $existingEntry->status;
+                $existingEntry->update([
+                    'status' => MessageQueueEntry::STATUS_PLANNED,
+                    'planned_at' => now(),
+                    'scheduled_for' => $expectedSendDateTime,
+                    'queued_at' => null,
+                    'sent_at' => null,
+                    'error_message' => null,
+                ]);
+                Log::info('CreateAutoresponderQueueEntries: Reset existing entry for resubscription', [
                     'subscriber_id' => $subscriber->id,
                     'message_id' => $message->id,
-                    'old_status' => $existingEntry->status,
+                    'old_status' => $oldStatus,
+                    'scheduled_for' => $expectedSendDateTime->format('Y-m-d H:i'),
                 ]);
+                $created++;
+                continue;
             }
 
             // Create queue entry
@@ -137,6 +147,7 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                 'subscriber_id' => $subscriber->id,
                 'status' => MessageQueueEntry::STATUS_PLANNED,
                 'planned_at' => now(),
+                'scheduled_for' => $expectedSendDateTime,
             ]);
 
             Log::info('CreateAutoresponderQueueEntries: Queue entry created', [

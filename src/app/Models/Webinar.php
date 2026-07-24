@@ -292,6 +292,137 @@ class Webinar extends Model
     }
 
     /**
+     * Normalized custom content sections for a funnel page.
+     *
+     * Sections are stored under settings['registration_sections'] /
+     * settings['thankyou_sections'] as arrays of
+     * ['type' => text|video, 'title', 'body', 'video_url', 'placement'].
+     * Invalid entries (unknown type, empty text, unparseable video URL) are
+     * dropped so the public pages never render broken blocks.
+     */
+    public function pageSections(string $page): array
+    {
+        $sections = $this->settings[$page . '_sections'] ?? [];
+
+        if (!is_array($sections)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($sections as $section) {
+            if (!is_array($section)) {
+                continue;
+            }
+
+            $type = $section['type'] ?? 'text';
+            $title = is_string($section['title'] ?? null) ? trim($section['title']) : '';
+            $body = is_string($section['body'] ?? null) ? trim($section['body']) : '';
+            $placement = ($section['placement'] ?? null) === 'below_form' ? 'below_form' : 'above_form';
+
+            if ($type === 'video') {
+                $embedUrl = self::videoEmbedUrl($section['video_url'] ?? null);
+                if (!$embedUrl) {
+                    continue;
+                }
+                $normalized[] = ['type' => 'video', 'title' => $title, 'embed_url' => $embedUrl, 'placement' => $placement];
+            } elseif ($type === 'text') {
+                if ($title === '' && $body === '') {
+                    continue;
+                }
+                $normalized[] = ['type' => 'text', 'title' => $title, 'body' => $body, 'placement' => $placement];
+            }
+        }
+
+        return $normalized;
+    }
+
+    public function registrationSections(?string $placement = null): array
+    {
+        $sections = $this->pageSections('registration');
+
+        if ($placement === null) {
+            return $sections;
+        }
+
+        return array_values(array_filter($sections, fn ($s) => $s['placement'] === $placement));
+    }
+
+    public function thankYouSections(): array
+    {
+        return $this->pageSections('thankyou');
+    }
+
+    /**
+     * Calendly booking widget settings for the thank-you pages, or null when
+     * disabled/misconfigured. Only calendly.com links are accepted so the
+     * embedded iframe can never point at an arbitrary host.
+     */
+    public function calendlySettings(): ?array
+    {
+        $calendly = $this->settings['calendly'] ?? null;
+
+        if (!is_array($calendly) || empty($calendly['enabled'])) {
+            return null;
+        }
+
+        $url = is_string($calendly['url'] ?? null) ? trim($calendly['url']) : '';
+
+        if (!preg_match('#^https://([a-z0-9-]+\.)?calendly\.com/.+#i', $url)) {
+            return null;
+        }
+
+        return [
+            'url' => $url,
+            'title' => is_string($calendly['title'] ?? null) ? trim($calendly['title']) : '',
+            'description' => is_string($calendly['description'] ?? null) ? trim($calendly['description']) : '',
+        ];
+    }
+
+    /**
+     * Turn a YouTube/Vimeo link (or bare video id) into an embed URL.
+     *
+     * The id is extracted by regex and re-assembled into a known player URL,
+     * so user input can never inject an arbitrary iframe src. Bare numeric
+     * ids are treated as Vimeo, other id-shaped strings as YouTube.
+     */
+    public static function videoEmbedUrl(?string $input): ?string
+    {
+        $input = trim((string) $input);
+
+        if ($input === '') {
+            return null;
+        }
+
+        if (preg_match('#vimeo\.com/(?:video/)?(\d+)(?:/([a-zA-Z0-9]+))?#i', $input, $m)) {
+            $query = !empty($m[2]) ? '?h=' . $m[2] : '';
+            return "https://player.vimeo.com/video/{$m[1]}{$query}";
+        }
+
+        if (preg_match('#(?:youtube\.com/(?:watch\?.*?v=|embed/|shorts/|live/)|youtu\.be/)([A-Za-z0-9_-]{6,20})#i', $input, $m)) {
+            return "https://www.youtube.com/embed/{$m[1]}";
+        }
+
+        if (preg_match('/^\d{6,12}$/', $input)) {
+            return "https://player.vimeo.com/video/{$input}";
+        }
+
+        if (preg_match('/^[A-Za-z0-9_-]{6,20}$/', $input)) {
+            return "https://www.youtube.com/embed/{$input}";
+        }
+
+        return null;
+    }
+
+    /**
+     * Public thank-you page URL (usable as a post-purchase redirect).
+     */
+    public function getPurchaseThankYouUrlAttribute(): string
+    {
+        return route('webinar.thankyou', $this->slug);
+    }
+
+    /**
      * Get effective timezone (webinar's own or inherited from user).
      */
     public function getEffectiveTimezoneAttribute(): string

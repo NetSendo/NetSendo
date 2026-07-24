@@ -87,6 +87,22 @@ class PublicWebinarController extends Controller
         ]);
     }
 
+    /**
+     * Standalone public thank-you page (e.g. as a post-purchase redirect
+     * target). Renders the same editable sections + Calendly widget as the
+     * post-registration screen, but without any registration context.
+     */
+    public function thankYou(string $slug): View
+    {
+        $webinar = Webinar::where('slug', $slug)
+            ->whereIn('status', [Webinar::STATUS_SCHEDULED, Webinar::STATUS_LIVE, Webinar::STATUS_PUBLISHED, Webinar::STATUS_ENDED])
+            ->firstOrFail();
+
+        return view('webinar.thankyou', [
+            'webinar' => $webinar,
+        ]);
+    }
+
     public function watch(string $slug, string $token): View
     {
         $registration = WebinarRegistration::where('access_token', $token)

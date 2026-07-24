@@ -395,10 +395,15 @@ class MailingListController extends Controller
                     return back()->withErrors(['transfer_to_id' => 'Nie można przenieść subskrybentów do tej samej listy.']);
                 }
 
-                // Transfer subscribers to target list (many-to-many: detach from source, attach to target)
-                $subscriberIds = $mailingList->subscribers()->pluck('subscribers.id')->toArray();
-                $mailingList->subscribers()->detach($subscriberIds);
-                $targetList->subscribers()->attach($subscriberIds, ['status' => 'active', 'subscribed_at' => now()]);
+                // Transfer subscribers to target list (many-to-many: detach from source,
+                // then add to target). addToList() handles subscribers already present
+                // on the target list and fires SubscriberSignedUp so the target
+                // list's autoresponder sequences start.
+                $subscribers = $mailingList->subscribers()->get();
+                $mailingList->subscribers()->detach($subscribers->pluck('id')->toArray());
+                foreach ($subscribers as $transferredSubscriber) {
+                    $transferredSubscriber->addToList($targetList->id, 'list_transfer');
+                }
 
             } elseif ($request->boolean('force_delete')) {
                 // Delete subscribers

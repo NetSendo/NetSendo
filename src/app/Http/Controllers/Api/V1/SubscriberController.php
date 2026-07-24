@@ -190,6 +190,9 @@ class SubscriberController extends Controller
                     'source' => $validated['source'] ?? 'api',
                 ]);
 
+                // Start autoresponder sequences / automations for this list
+                event(new SubscriberSignedUp($existing, $list, null, 'api'));
+
                 // Dispatch subscriber.subscribed webhook
                 $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
                     'subscriber' => (new SubscriberResource($existing->fresh(['tags', 'fieldValues.customField', 'contactLists'])))->toArray($request),
@@ -201,8 +204,12 @@ class SubscriberController extends Controller
                 $existing->contactLists()->updateExistingPivot($validated['contact_list_id'], [
                     'status' => 'active',
                     'subscribed_at' => now(),
+                    'unsubscribed_at' => null,
                     'source' => $validated['source'] ?? 'api',
                 ]);
+
+                // Start autoresponder sequences / automations for this list
+                event(new SubscriberSignedUp($existing, $list, null, 'api_resubscribe'));
 
                 // Dispatch subscriber.resubscribed webhook
                 $this->webhookDispatcher->dispatch($user->id, 'subscriber.resubscribed', [
@@ -713,6 +720,8 @@ class SubscriberController extends Controller
                     ]);
                 } elseif (!$wasSubscribed) {
                     // Existing subscriber, new list subscription
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch'));
+
                     $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
                         'subscriber' => $subscriberData,
                         'list_id' => $list->id,
@@ -721,6 +730,8 @@ class SubscriberController extends Controller
                     ]);
                 } elseif ($wasSubscribed && $previousStatus !== 'active') {
                     // Resubscription (was inactive/unsubscribed)
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch_resubscribe'));
+
                     $this->webhookDispatcher->dispatch($user->id, 'subscriber.resubscribed', [
                         'subscriber' => $subscriberData,
                         'list_id' => $list->id,

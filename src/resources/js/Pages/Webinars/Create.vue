@@ -1,6 +1,7 @@
 <script setup>
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SectionListEditor from './Partials/SectionListEditor.vue';
 import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
@@ -23,7 +24,14 @@ const form = useForm({
     vimeo_id: '',
     video_provider: 'youtube',
     // Editable funnel-page copy + benefit bullets (issue #25).
-    settings: { ...props.defaultSettings, content: {}, benefits: [] },
+    settings: {
+        ...props.defaultSettings,
+        content: {},
+        benefits: [],
+        registration_sections: [],
+        thankyou_sections: [],
+        calendly: { enabled: false, url: '', title: '', description: '' },
+    },
 });
 
 // Benefit bullets edited as one-per-line text, stored as an array.
@@ -322,6 +330,95 @@ const typeDescriptions = {
                             </div>
 
                             <p class="text-xs text-gray-400">{{ $t('webinars.content.optional_hint') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Registration Page Sections -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.sections.registration_title') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.sections.registration_desc') }}</p>
+
+                        <SectionListEditor :sections="form.settings.registration_sections" :show-placement="true" />
+                    </div>
+
+                    <!-- Thank You Page -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.thankyou_page.title') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.thankyou_page.desc') }}</p>
+
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.purchase_headline') }}</label>
+                                    <input
+                                        v-model="form.settings.content.purchase_thankyou_headline"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.purchase_message') }}</label>
+                                    <textarea
+                                        v-model="form.settings.content.purchase_thankyou_message"
+                                        rows="2"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('webinars.thankyou_page.sections_label') }}</label>
+                                <SectionListEditor :sections="form.settings.thankyou_sections" />
+                            </div>
+
+                            <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $t('webinars.thankyou_page.calendly_title') }}</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('webinars.thankyou_page.calendly_desc') }}</p>
+                                </div>
+
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        v-model="form.settings.calendly.enabled"
+                                        type="checkbox"
+                                        class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:bg-gray-700"
+                                    />
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_enable') }}</span>
+                                </label>
+
+                                <template v-if="form.settings.calendly.enabled">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_url') }}</label>
+                                        <input
+                                            v-model="form.settings.calendly.url"
+                                            type="url"
+                                            placeholder="https://calendly.com/..."
+                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.thankyou_page.calendly_url_help') }}</p>
+                                        <p v-if="form.errors['settings.calendly.url']" class="mt-1 text-sm text-red-600">{{ form.errors['settings.calendly.url'] }}</p>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_heading') }}</label>
+                                            <input
+                                                v-model="form.settings.calendly.title"
+                                                type="text"
+                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_description') }}</label>
+                                            <textarea
+                                                v-model="form.settings.calendly.description"
+                                                rows="2"
+                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 

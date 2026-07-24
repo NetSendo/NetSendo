@@ -281,58 +281,40 @@ class CronScheduleService
                         continue;
                     }
 
-                    // Dla autoresponderów: sprawdź czy minęło wystarczająco dni od subskrypcji
+                    // Dla autoresponderów: sprawdź czy nadszedł termin wysyłki
                     if ($message->type === 'autoresponder' && $message->day !== null) {
-                        $listIds = $message->contactLists->pluck('id')->toArray();
-                        $pivot = $subscriber->contactLists()
-                            ->whereIn('contact_lists.id', $listIds)
-                            ->first()?->pivot;
+                        // Preferred: explicit schedule stored on the entry (anchored
+                        // at signup/resubscription by CreateAutoresponderQueueEntries)
+                        $expectedSendDateTime = $entry->scheduled_for;
 
-                        if ($pivot && $pivot->subscribed_at) {
-                            $subscribedAt = Carbon::parse($pivot->subscribed_at);
-                            $dayOffset = $message->day ?? 0;
-                            $timeOfDay = $message->time_of_day;
+                        // Legacy entries (created before scheduled_for existed):
+                        // derive from the pivot subscribed_at
+                        if (!$expectedSendDateTime) {
+                            $listIds = $message->contactLists->pluck('id')->toArray();
+                            $pivot = $subscriber->contactLists()
+                                ->whereIn('contact_lists.id', $listIds)
+                                ->first()?->pivot;
 
-                            // Calculate expected send datetime with full time component
-                            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
-
-                            if ($timeOfDay) {
-                                // If time_of_day is set, use that specific hour on the expected day
-                                $timeParts = explode(':', $timeOfDay);
-                                $hour = (int) ($timeParts[0] ?? 0);
-                                $minute = (int) ($timeParts[1] ?? 0);
-
-                                // Determine target timezone for the time_of_day
-                                $targetTimezone = 'UTC';
-                                if ($message->send_in_subscriber_timezone) {
-                                    $targetTimezone = $subscriber->getEffectiveTimezone(
-                                        $message->effective_timezone
-                                    );
-                                }
-
-                                // Build the expected send time in the target timezone, then convert to UTC
-                                $expectedSendDateTime = $expectedSendDateTime->copy()
-                                    ->startOfDay()
-                                    ->shiftTimezone($targetTimezone)
-                                    ->setTime($hour, $minute, 0)
-                                    ->setTimezone('UTC');
+                            if ($pivot && $pivot->subscribed_at) {
+                                $expectedSendDateTime = $message->calculateExpectedSendAt(
+                                    Carbon::parse($pivot->subscribed_at),
+                                    $subscriber
+                                );
                             }
-                            // If no time_of_day, we keep the original time from subscribed_at
-                            // This means for day=0: expectedSendDateTime = subscribedAt (immediate)
+                        }
 
-                            // If the expected send datetime is in the future, skip for now
-                            if ($expectedSendDateTime->gt(now('UTC'))) {
-                                Log::info('CronScheduleService: Skipping future autoresponder', [
-                                    'entry_id' => $entry->id,
-                                    'subscriber_id' => $subscriber->id,
-                                    'expected_datetime' => $expectedSendDateTime->format('Y-m-d H:i'),
-                                    'now' => now('UTC')->format('Y-m-d H:i'),
-                                    'subscriber_timezone' => $message->send_in_subscriber_timezone
-                                        ? $subscriber->getEffectiveTimezone($message->effective_timezone)
-                                        : null,
-                                ]);
-                                continue; // Will be processed at the appropriate time
-                            }
+                        // If the expected send datetime is in the future, skip for now
+                        if ($expectedSendDateTime && $expectedSendDateTime->gt(now('UTC'))) {
+                            Log::info('CronScheduleService: Skipping future autoresponder', [
+                                'entry_id' => $entry->id,
+                                'subscriber_id' => $subscriber->id,
+                                'expected_datetime' => $expectedSendDateTime->format('Y-m-d H:i'),
+                                'now' => now('UTC')->format('Y-m-d H:i'),
+                                'subscriber_timezone' => $message->send_in_subscriber_timezone
+                                    ? $subscriber->getEffectiveTimezone($message->effective_timezone)
+                                    : null,
+                            ]);
+                            continue; // Will be processed at the appropriate time
                         }
                     }
 
@@ -636,32 +618,29 @@ class CronScheduleService
                         continue;
                     }
 
-                    // Dla autoresponderów SMS: sprawdź czy minęło wystarczająco dni od subskrypcji
+                    // Dla autoresponderów SMS: sprawdź czy nadszedł termin wysyłki
                     if ($message->type === 'autoresponder' && $message->day !== null) {
-                        $listIds = $message->contactLists->pluck('id')->toArray();
-                        $pivot = $subscriber->contactLists()
-                            ->whereIn('contact_lists.id', $listIds)
-                            ->first()?->pivot;
+                        // Preferred: explicit schedule stored on the entry
+                        $expectedSendDateTime = $entry->scheduled_for;
 
-                        if ($pivot && $pivot->subscribed_at) {
-                            $subscribedAt = Carbon::parse($pivot->subscribed_at);
-                            $dayOffset = $message->day ?? 0;
-                            $timeOfDay = $message->time_of_day;
+                        // Legacy entries: derive from the pivot subscribed_at
+                        if (!$expectedSendDateTime) {
+                            $listIds = $message->contactLists->pluck('id')->toArray();
+                            $pivot = $subscriber->contactLists()
+                                ->whereIn('contact_lists.id', $listIds)
+                                ->first()?->pivot;
 
-                            // Calculate expected send datetime with full time component
-                            $expectedSendDateTime = $subscribedAt->copy()->addDays($dayOffset);
-
-                            if ($timeOfDay) {
-                                $timeParts = explode(':', $timeOfDay);
-                                $hour = (int) ($timeParts[0] ?? 0);
-                                $minute = (int) ($timeParts[1] ?? 0);
-                                $expectedSendDateTime = $expectedSendDateTime->copy()->startOfDay()->setTime($hour, $minute, 0);
+                            if ($pivot && $pivot->subscribed_at) {
+                                $expectedSendDateTime = $message->calculateExpectedSendAt(
+                                    Carbon::parse($pivot->subscribed_at),
+                                    $subscriber
+                                );
                             }
+                        }
 
-                            // If the expected send datetime is in the future, skip for now
-                            if ($expectedSendDateTime->gt(now())) {
-                                continue; // Will be processed at the appropriate time
-                            }
+                        // If the expected send datetime is in the future, skip for now
+                        if ($expectedSendDateTime && $expectedSendDateTime->gt(now('UTC'))) {
+                            continue; // Will be processed at the appropriate time
                         }
                     }
 
@@ -744,8 +723,10 @@ class CronScheduleService
             $cutoffDate = now()->subDays($afterDays);
 
             // Znajdź ID niepotwierdzonych subskrybentów starszych niż X dni
+            // (double opt-in zapisuje status 'pending'; 'unconfirmed' zostaje
+            // dla zgodności wstecznej ze starszymi danymi)
             $subscriberIds = $list->subscribers()
-                ->wherePivot('status', 'unconfirmed')
+                ->wherePivotIn('status', ['pending', 'unconfirmed'])
                 ->wherePivot('subscribed_at', '<', $cutoffDate)
                 ->pluck('subscriber_id')
                 ->toArray();

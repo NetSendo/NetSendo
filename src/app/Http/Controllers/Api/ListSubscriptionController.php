@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\SubscriberSignedUp;
 use App\Http\Controllers\Controller;
 use App\Models\ContactList;
 use App\Models\Subscriber;
@@ -126,6 +127,10 @@ class ListSubscriptionController extends Controller
                     ]);
                 }
 
+                // Re-signup of an active subscriber: restart autoresponder
+                // sequences (the listener honors the list's reset setting)
+                event(new SubscriberSignedUp($subscriber, $list, null, 'list_api'));
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Already subscribed',
@@ -140,12 +145,18 @@ class ListSubscriptionController extends Controller
                 'subscribed_at' => now(),
                 'unsubscribed_at' => null,
             ]);
+
+            // Start autoresponder sequences / automations for this list
+            event(new SubscriberSignedUp($subscriber, $list, null, 'list_api_resubscribe'));
         } else {
             // Add to list
             $list->subscribers()->attach($subscriber->id, [
                 'status' => 'active',
                 'subscribed_at' => now(),
             ]);
+
+            // Start autoresponder sequences / automations for this list
+            event(new SubscriberSignedUp($subscriber, $list, null, 'list_api'));
         }
 
         // Trigger webhook if configured

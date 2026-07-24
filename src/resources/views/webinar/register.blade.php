@@ -26,6 +26,9 @@
                 @endif
             </div>
 
+            <!-- Custom sections (above the form) -->
+            @include('webinar.partials.content-sections', ['sections' => $webinar->registrationSections('above_form')])
+
             <!-- Date Info -->
             @if($webinar->scheduled_at)
                 <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8 text-center">
@@ -158,6 +161,11 @@
                     </ul>
                 </div>
             @endif
+
+            <!-- Custom sections (below the form) -->
+            <div class="mt-12">
+                @include('webinar.partials.content-sections', ['sections' => $webinar->registrationSections('below_form')])
+            </div>
         </div>
     </div>
 </body>

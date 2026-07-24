@@ -84,7 +84,10 @@ const sendToMissed = async () => {
 
 const totalScheduled = computed(() => {
     if (!stats.value) return 0;
+    // "today" is part of the schedule too — queued (pending) entries are
+    // already distributed into the day buckets by the backend
     return (
+        stats.value.today +
         stats.value.tomorrow +
         stats.value.day_after_tomorrow +
         stats.value.days_3_7 +
@@ -234,6 +237,24 @@ const getPercentage = (value) => {
                                 >({{ getPercentage(stats.sent) }}%)</span
                             >
                         </div>
+                    </div>
+
+                    <!-- Already queued (waiting for CRON) -->
+                    <div
+                        v-if="stats.pending > 0"
+                        class="flex items-center justify-between rounded-lg border border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 p-3"
+                    >
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">⏳</span>
+                            <span
+                                class="text-indigo-700 dark:text-indigo-300"
+                                >{{ $t("queue_stats.pending") }}</span
+                            >
+                        </div>
+                        <span
+                            class="font-semibold text-indigo-700 dark:text-indigo-300"
+                            >{{ stats.pending }}</span
+                        >
                     </div>
 
                     <!-- Today -->

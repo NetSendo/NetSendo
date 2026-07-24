@@ -53,6 +53,12 @@ return [
             'go_to_webinar' => 'Go to webinar room',
             'apple_calendar' => 'Apple / iCal',
         ],
+        'thankyou' => [
+            'title' => 'Thank you!',
+            'purchase_headline' => 'Thank you for your purchase!',
+            'purchase_message' => 'Your order has been received. We sent the details to your email address.',
+            'calendly_title' => 'Book a meeting',
+        ],
         'watch' => [
             'waiting' => 'Waiting for broadcast...',
             'buy_now' => 'Buy now',

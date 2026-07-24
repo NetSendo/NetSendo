@@ -727,7 +727,11 @@ class SubscriberController extends Controller
             abort(403, 'Unauthorized access to one or more lists.');
         }
 
-        DB::transaction(function () use ($validated, $subscriber, $request) {
+        // Lists the subscriber was newly attached to or reactivated on —
+        // these get a SubscriberSignedUp event after the transaction commits
+        $signedUpListIds = [];
+
+        DB::transaction(function () use ($validated, $subscriber, $request, &$signedUpListIds) {
             $subscriber->update([
                 'email' => $validated['email'],
                 'first_name' => $validated['first_name'],
@@ -774,12 +778,20 @@ class SubscriberController extends Controller
                     }
 
                     $subscriber->contactLists()->updateExistingPivot($listId, $pivotData);
+
+                    // Reactivation counts as a (re-)signup; unchanged active
+                    // memberships must NOT restart sequences on every edit save
+                    if (!$wasActive) {
+                        $signedUpListIds[] = $listId;
+                    }
                 } else {
                     // New subscription - always set subscribed_at
                     $subscriber->contactLists()->attach($listId, [
                         'status' => 'active',
                         'subscribed_at' => now(),
                     ]);
+
+                    $signedUpListIds[] = $listId;
                 }
             }
 
@@ -795,6 +807,15 @@ class SubscriberController extends Controller
                 }
             }
         });
+
+        // Start autoresponder sequences / automations for newly added or
+        // reactivated lists (after the transaction has committed)
+        if (!empty($signedUpListIds)) {
+            $lists = ContactList::whereIn('id', $signedUpListIds)->get();
+            foreach ($lists as $list) {
+                event(new SubscriberSignedUp($subscriber, $list, null, 'manual_update'));
+            }
+        }
 
         return redirect()->route('subscribers.index')
             ->with('success', 'Subskrybent został zaktualizowany.');

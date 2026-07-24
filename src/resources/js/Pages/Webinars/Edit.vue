@@ -1,6 +1,7 @@
 <script setup>
 import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import SectionListEditor from './Partials/SectionListEditor.vue';
 import { ref, computed } from 'vue';
 
 const props = defineProps({
@@ -38,6 +39,20 @@ const form = useForm({
         benefits: (props.webinar.settings && Array.isArray(props.webinar.settings.benefits))
             ? [...props.webinar.settings.benefits]
             : [],
+        // Custom registration / thank-you page sections + Calendly booking.
+        registration_sections: (props.webinar.settings && Array.isArray(props.webinar.settings.registration_sections))
+            ? props.webinar.settings.registration_sections.map((s) => ({ type: 'text', title: '', body: '', video_url: '', placement: 'above_form', ...s }))
+            : [],
+        thankyou_sections: (props.webinar.settings && Array.isArray(props.webinar.settings.thankyou_sections))
+            ? props.webinar.settings.thankyou_sections.map((s) => ({ type: 'text', title: '', body: '', video_url: '', ...s }))
+            : [],
+        calendly: {
+            enabled: false,
+            url: '',
+            title: '',
+            description: '',
+            ...((props.webinar.settings && props.webinar.settings.calendly) || {}),
+        },
     },
 });
 
@@ -86,6 +101,17 @@ const copyLink = async () => {
         await navigator.clipboard.writeText(props.webinar.registration_url);
         copied.value = true;
         setTimeout(() => copied.value = false, 2000);
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+    }
+};
+
+const copiedThankYou = ref(false);
+const copyThankYouLink = async () => {
+    try {
+        await navigator.clipboard.writeText(props.webinar.purchase_thank_you_url);
+        copiedThankYou.value = true;
+        setTimeout(() => copiedThankYou.value = false, 2000);
     } catch (err) {
         console.error('Failed to copy: ', err);
     }
@@ -483,6 +509,112 @@ const getStatusColor = (status) => {
                             </div>
 
                             <p class="text-xs text-gray-400">{{ $t('webinars.content.optional_hint') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Registration Page Sections -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.sections.registration_title') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.sections.registration_desc') }}</p>
+
+                        <SectionListEditor :sections="form.settings.registration_sections" :show-placement="true" />
+                    </div>
+
+                    <!-- Thank You Page -->
+                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.thankyou_page.title') }}</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ $t('webinars.thankyou_page.desc') }}</p>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.url_label') }}</label>
+                                <div class="mt-1 flex items-center gap-2">
+                                    <div class="flex-1 bg-gray-100 dark:bg-gray-700 rounded-md px-3 py-2 text-gray-700 dark:text-gray-200 font-mono text-sm overflow-x-auto">
+                                        {{ webinar.purchase_thank_you_url }}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="copyThankYouLink"
+                                        class="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-200 uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                    >
+                                        {{ copiedThankYou ? $t('webinars.edit.copied') : $t('webinars.edit.copy_link') }}
+                                    </button>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.thankyou_page.url_help') }}</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.purchase_headline') }}</label>
+                                    <input
+                                        v-model="form.settings.content.purchase_thankyou_headline"
+                                        type="text"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.purchase_message') }}</label>
+                                    <textarea
+                                        v-model="form.settings.content.purchase_thankyou_message"
+                                        rows="2"
+                                        class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('webinars.thankyou_page.sections_label') }}</label>
+                                <SectionListEditor :sections="form.settings.thankyou_sections" />
+                            </div>
+
+                            <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
+                                <div>
+                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $t('webinars.thankyou_page.calendly_title') }}</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('webinars.thankyou_page.calendly_desc') }}</p>
+                                </div>
+
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        v-model="form.settings.calendly.enabled"
+                                        type="checkbox"
+                                        class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:bg-gray-700"
+                                    />
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_enable') }}</span>
+                                </label>
+
+                                <template v-if="form.settings.calendly.enabled">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_url') }}</label>
+                                        <input
+                                            v-model="form.settings.calendly.url"
+                                            type="url"
+                                            placeholder="https://calendly.com/..."
+                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        />
+                                        <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.thankyou_page.calendly_url_help') }}</p>
+                                        <p v-if="form.errors['settings.calendly.url']" class="mt-1 text-sm text-red-600">{{ form.errors['settings.calendly.url'] }}</p>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_heading') }}</label>
+                                            <input
+                                                v-model="form.settings.calendly.title"
+                                                type="text"
+                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('webinars.thankyou_page.calendly_description') }}</label>
+                                            <textarea
+                                                v-model="form.settings.calendly.description"
+                                                rows="2"
+                                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
 

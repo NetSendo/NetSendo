@@ -95,33 +95,42 @@ class WooCommerceController extends Controller
             throw new \Exception('List not found or access denied');
         }
 
-        // Check if subscriber already exists on this list
-        $subscriber = Subscriber::where('email', $data['email'])
-            ->where('contact_list_id', $list->id)
+        // Find or create the subscriber for this account
+        // (subscribers are account-scoped; list membership lives in the pivot)
+        $subscriber = Subscriber::withTrashed()
+            ->where('email', $data['email'])
+            ->where('user_id', $userId)
             ->first();
 
         $isNew = false;
 
         if ($subscriber) {
+            if ($subscriber->trashed()) {
+                $subscriber->restore();
+            }
+
             // Update existing subscriber
             $subscriber->update([
                 'first_name' => $data['first_name'] ?? $subscriber->first_name,
                 'last_name' => $data['last_name'] ?? $subscriber->last_name,
-                'status' => 'active',
+                'is_active_global' => true,
             ]);
         } else {
             // Create new subscriber
             $subscriber = Subscriber::create([
-                'contact_list_id' => $list->id,
+                'user_id' => $userId,
                 'email' => $data['email'],
                 'first_name' => $data['first_name'] ?? '',
                 'last_name' => $data['last_name'] ?? '',
-                'status' => 'active',
+                'is_active_global' => true,
                 'source' => 'woocommerce',
                 'subscribed_at' => now(),
             ]);
             $isNew = true;
         }
+
+        // Attach/reactivate on the target list and start autoresponder sequences
+        $subscriber->addToList($list->id, 'woocommerce');
 
         // Store WooCommerce-specific data in custom fields if available
         $customFields = [];

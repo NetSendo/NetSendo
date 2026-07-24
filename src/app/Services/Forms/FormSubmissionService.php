@@ -99,10 +99,15 @@ class FormSubmissionService
             }
 
             // Mark as confirmed (or pending if double opt-in)
-            if ($form->shouldUseDoubleOptin()) {
+            if ($form->shouldUseDoubleOptin() && !($wasAlreadySubscribed && $previousStatus === 'active')) {
                 $submission->update(['status' => 'pending']);
                 // Send double opt-in confirmation email
                 $this->emailService->sendSignupConfirmation($subscriber, $form->contactList);
+            } elseif ($form->shouldUseDoubleOptin()) {
+                // Double opt-in form, but subscriber is already confirmed and
+                // active — no re-confirmation needed
+                $submission->markConfirmed();
+                $this->emailService->sendAlreadyActiveNotification($subscriber, $form->contactList);
             } else {
                 $submission->markConfirmed();
 
@@ -130,8 +135,10 @@ class FormSubmissionService
             // Dispatch events for automations
             // IMPORTANT: Only dispatch SubscriberSignedUp for non-double-opt-in forms
             // For double opt-in, the event is dispatched after confirmation in ActivationController
-            // This prevents duplicate autoresponder queue entries and double email sends
-            if (!$form->shouldUseDoubleOptin()) {
+            // This prevents duplicate autoresponder queue entries and double email sends.
+            // Exception: an already-active subscriber re-signing up through a double
+            // opt-in form stays active (no re-confirmation), so the event fires now.
+            if (!$form->shouldUseDoubleOptin() || ($wasAlreadySubscribed && $previousStatus === 'active')) {
                 event(new SubscriberSignedUp($subscriber, $form->contactList, $form, 'form'));
             }
             event(new FormSubmitted($submission, $subscriber, $form));
@@ -430,8 +437,13 @@ class FormSubmissionService
         $wasActive = $previousStatus === 'active';
         $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
 
+        // Double opt-in must not demote an already-confirmed (active) subscriber
+        // back to pending — that would silently stop all their mailings until
+        // they re-confirm. Only new/inactive subscriptions await confirmation.
+        $pivotStatus = ($form->shouldUseDoubleOptin() && !$wasActive) ? 'pending' : 'active';
+
         $pivotData = [
-            'status' => $form->shouldUseDoubleOptin() ? 'pending' : 'active',
+            'status' => $pivotStatus,
             'source' => 'form:' . $form->slug,
             'unsubscribed_at' => null,
         ];
@@ -515,8 +527,29 @@ class FormSubmissionService
             $list = ContactList::find($listId);
             if (!$list) continue;
 
-            // Check if subscriber already on this list
-            if ($subscriber->contactLists()->where('contact_list_id', $listId)->exists()) {
+            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $listId)->first();
+
+            if ($existingPivot) {
+                // Already on this list — reactivate (or re-signup if active).
+                // Former subscribers always get the date reset; active ones
+                // follow the list's resubscription_behavior setting.
+                $wasActive = $existingPivot->pivot->status === 'active';
+                $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                $pivotData = [
+                    'status' => 'active',
+                    'unsubscribed_at' => null,
+                ];
+
+                if ($shouldResetDate) {
+                    $pivotData['subscribed_at'] = now();
+                }
+
+                $subscriber->contactLists()->updateExistingPivot($listId, $pivotData);
+
+                // Dispatch event for autoresponder queue entries (the listener
+                // honors the list's reset_autoresponders_on_resubscription flag)
+                event(new SubscriberSignedUp($subscriber, $list, null, $wasActive ? 'coregistration' : 'coregistration_reactivation'));
                 continue;
             }
 

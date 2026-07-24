@@ -6,8 +6,8 @@
     <title>Dziękujemy! - {{ $webinar->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-    <div class="max-w-lg mx-auto px-4 text-center">
+<body class="min-h-screen bg-gray-900 text-white py-12">
+    <div class="max-w-2xl mx-auto px-4 text-center">
         <div class="bg-green-500/20 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
             <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -73,6 +73,14 @@
                 </a>
             </div>
         @endif
+
+        <!-- Custom thank-you sections -->
+        <div class="mt-12">
+            @include('webinar.partials.content-sections', ['sections' => $webinar->thankYouSections()])
+        </div>
+
+        <!-- Calendly booking widget -->
+        @include('webinar.partials.calendly', ['webinar' => $webinar, 'registration' => $registration])
     </div>
 </body>
 </html>

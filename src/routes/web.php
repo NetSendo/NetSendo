@@ -923,6 +923,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 Route::prefix('webinar')->name('webinar.')->group(function () {
     Route::get('/{slug}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'register'])->name('register');
     Route::post('/{slug}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'submitRegistration'])->name('register.submit');
+    Route::get('/{slug}/thank-you', [\App\Http\Controllers\Public\PublicWebinarController::class, 'thankYou'])->name('thankyou');
     Route::get('/{slug}/watch/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'watch'])->name('watch');
     Route::get('/{slug}/replay/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'replay'])->name('replay');
     Route::get('/{slug}/calendar/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'calendar'])->name('calendar');

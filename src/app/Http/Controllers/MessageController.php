@@ -2065,7 +2065,8 @@ class MessageController extends Controller
             ], 422);
         }
 
-        $stats = $message->getQueueScheduleStats();
+        // No limit — process ALL missed subscribers, not just the first 100
+        $stats = $message->getQueueScheduleStats(null);
         $missedSubscribers = $stats['missed_subscribers'] ?? [];
 
         if (empty($missedSubscribers)) {
@@ -2090,6 +2091,7 @@ class MessageController extends Controller
                     $existing->update([
                         'status' => MessageQueueEntry::STATUS_PLANNED,
                         'planned_at' => now(),
+                        'scheduled_for' => now(),
                         'error_message' => null,
                     ]);
                     $created++;
@@ -2097,11 +2099,12 @@ class MessageController extends Controller
                     $alreadyExists++;
                 }
             } else {
-                // Create new entry
+                // Create new entry, due immediately
                 $message->queueEntries()->create([
                     'subscriber_id' => $subscriberData['id'],
                     'status' => MessageQueueEntry::STATUS_PLANNED,
                     'planned_at' => now(),
+                    'scheduled_for' => now(),
                 ]);
                 $created++;
             }
