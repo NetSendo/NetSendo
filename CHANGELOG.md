@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **Autoresponder queue never actually scheduled anyone the signup listener didn't catch — future sends silently became "missed":** queue entries were created *only* at signup time by the `SubscriberSignedUp` listener; `syncPlannedRecipients()` explicitly refused to add autoresponder recipients. So for every subscriber who was on the list **before** the queue message was created/activated (or whose signup path didn't fire the event), no entry ever existed: the queue-stats modal *projected* them as "tomorrow / in 3 days", but when the time arrived CRON had nothing to send and the subscriber silently rolled over into "missed" — producing sequences with `sent = 0` and an ever-growing missed count (as observed in production even after the 2.1.1 signup-path fixes). The CRON sync now **backfills** planned entries (with their computed `scheduled_for`) for all current recipients who lack one and whose expected send time is still in the future; recipients whose time already passed intentionally stay "missed" (explicit "Send to missed" action) so activating an old sequence can't unexpectedly dump historical messages. Backfill is race-safe against the signup listener (unique-constraint tolerant) and applies to both the email and SMS queue processors.
+
 ## [2.1.1] – Short Description
 
 **Release date:** 2026-07-24

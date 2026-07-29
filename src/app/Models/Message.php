@@ -505,11 +505,13 @@ class Message extends Model
             ->pluck('subscriber_id')
             ->toArray();
 
-        // For autoresponders: DON'T add new subscribers automatically
-        // Queue entries are created:
-        // 1. When subscriber joins the list (in SubscriberController)
-        // 2. Manually via "Send to missed" button
-        // This ensures we don't add subscribers whose send time has already passed
+        // For autoresponders: entries are created when a subscriber joins the
+        // list (SubscriberSignedUp listener). The CRON backfill below is the
+        // safety net for everyone the listener could not cover — subscribers
+        // who were on the list before the message existed / was activated, or
+        // whose signup path failed to fire the event. Only recipients whose
+        // expected send time is still in the FUTURE are backfilled; past ones
+        // stay "missed" and require the explicit "Send to missed" action.
         if ($this->isQueueType()) {
             // Only mark removed/unsubscribed subscribers as skipped
             $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
@@ -522,6 +524,58 @@ class Message extends Model
                         'error_message' => 'Subscriber removed from list or unsubscribed',
                     ]);
                 $result['skipped'] = $skipped;
+            }
+
+            // Backfill: schedule recipients that have NO queue entry yet and
+            // whose send time has not passed. Without this, a subscriber only
+            // "projected" for tomorrow would silently become "missed" when the
+            // time arrived, because nothing ever created their entry.
+            $missingSubscriberIds = array_diff($currentSubscriberIds, $existingEntryIds);
+            if (!empty($missingSubscriberIds)) {
+                $listIds = $this->contactLists->pluck('id')->toArray();
+
+                // Bulk-load active pivot rows for the missing subscribers
+                $pivotRows = DB::table('contact_list_subscriber')
+                    ->whereIn('subscriber_id', $missingSubscriberIds)
+                    ->whereIn('contact_list_id', $listIds)
+                    ->where('status', 'active')
+                    ->whereNotNull('subscribed_at')
+                    ->get()
+                    ->groupBy('subscriber_id');
+
+                $recipientsById = $currentRecipients->keyBy('id');
+                $now = now('UTC');
+
+                foreach ($missingSubscriberIds as $subscriberId) {
+                    $rows = $pivotRows->get($subscriberId);
+                    if (!$rows || $rows->isEmpty()) {
+                        continue;
+                    }
+
+                    // Most recent signup among the message's lists is the anchor
+                    $subscribedAt = \Carbon\Carbon::parse($rows->max('subscribed_at'));
+                    $expectedSendAt = $this->calculateExpectedSendAt(
+                        $subscribedAt,
+                        $recipientsById->get($subscriberId)
+                    );
+
+                    if ($expectedSendAt->lt($now)) {
+                        continue; // Time already passed — stays "missed" (manual action)
+                    }
+
+                    try {
+                        $this->queueEntries()->create([
+                            'subscriber_id' => $subscriberId,
+                            'status' => MessageQueueEntry::STATUS_PLANNED,
+                            'planned_at' => now(),
+                            'scheduled_for' => $expectedSendAt,
+                        ]);
+                        $result['added']++;
+                    } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                        // Entry created concurrently (signup listener) — fine
+                        continue;
+                    }
+                }
             }
 
             // Refresh the stored recipients count for autoresponders too, so list
