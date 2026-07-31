@@ -42,11 +42,30 @@ class SendEmailJob implements ShouldQueue
             // Get the mailbox to use (explicit mailbox, message's mailbox, or user's default)
             $mailbox = $this->resolveMailbox($providerService);
 
-            // Validate mailbox can send this message type
-            if ($mailbox && !$providerService->validateMailboxForType($mailbox, $this->message->type ?? 'broadcast')) {
-                Log::warning("Mailbox {$mailbox->id} cannot send message type: {$this->message->type}");
-                // Fall back to default Laravel mailer
-                $mailbox = null;
+            // Validate mailbox can send this message type. A mailbox whose
+            // "allowed types" exclude this type (e.g. broadcast-only mailbox vs
+            // an autoresponder message) must not be used — but rather than
+            // giving up, fall back to any active mailbox of this user that IS
+            // allowed to send the type. Without that fallback the send failed
+            // with a misleading "no mailbox configured" error, which silently
+            // blocked entire autoresponder queues while broadcasts kept working.
+            $messageType = $this->message->type ?? 'broadcast';
+            if ($mailbox && !$providerService->validateMailboxForType($mailbox, $messageType)) {
+                Log::warning("Mailbox {$mailbox->id} cannot send message type: {$messageType}", [
+                    'mailbox_allowed_types' => $mailbox->allowed_types,
+                    'message_id' => $this->message->id,
+                ]);
+
+                $fallback = $providerService->getBestMailbox($this->message->user_id, $messageType);
+
+                if ($fallback) {
+                    Log::info("Falling back to mailbox allowed for type {$messageType}", [
+                        'from_mailbox_id' => $mailbox->id,
+                        'to_mailbox_id' => $fallback->id,
+                    ]);
+                }
+
+                $mailbox = $fallback;
             }
 
             $content = $this->message->content;
@@ -221,10 +240,16 @@ class SendEmailJob implements ShouldQueue
                 'mime_type' => $a->mime_type,
             ])->filter(fn($a) => file_exists($a['path']))->values()->toArray();
 
-            // Mailbox is required - throw exception if not available
+            // Mailbox is required - throw exception if not available.
+            // Name the actual cause: "no mailbox at all" and "no mailbox that is
+            // allowed to send this type" are different configuration problems.
             if (!$mailbox) {
+                $hasAnyMailbox = Mailbox::forUser($this->message->user_id)->active()->exists();
+
                 throw new \RuntimeException(
-                    "Brak skonfigurowanej skrzynki pocztowej. Skonfiguruj skrzynkę w ustawieniach przed wysyłką wiadomości."
+                    $hasAnyMailbox
+                        ? "Żadna aktywna skrzynka pocztowa nie ma włączonego typu wysyłki \"{$messageType}\". Włącz ten typ w ustawieniach skrzynki (Ustawienia > Skrzynki pocztowe > Dozwolone typy)."
+                        : "Brak skonfigurowanej skrzynki pocztowej. Skonfiguruj skrzynkę w ustawieniach przed wysyłką wiadomości."
                 );
             }
 
@@ -375,6 +400,28 @@ class SendEmailJob implements ShouldQueue
         if ($entry) {
             $entry->markAsFailed($errorMessage);
         }
+    }
+
+    /**
+     * Handle a permanent job failure (retries exhausted, worker killed the job).
+     *
+     * Without this the entry would stay `queued` forever: only this job can
+     * move it out of that state, and the cron loop only picks up `planned`
+     * entries — so the recipient would silently never be sent to and never
+     * show up as failed in the stats.
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        $this->markQueueEntryAsFailed(
+            'Job failed permanently: ' . ($exception?->getMessage() ?? 'unknown error')
+        );
+
+        Log::error('SendEmailJob failed permanently', [
+            'message_id' => $this->message->id ?? null,
+            'subscriber_id' => $this->subscriber->id ?? null,
+            'entry_id' => $this->queueEntryId,
+            'error' => $exception?->getMessage(),
+        ]);
     }
 
     /**

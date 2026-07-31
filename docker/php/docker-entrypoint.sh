@@ -164,17 +164,30 @@ if [ $attempt -lt $max_attempts ]; then
     php artisan netsendo:seed-lead-scoring-rules 2>/dev/null || echo "⚠️ Lead Scoring rules seeding skipped"
     
     # =============================================================================
-    # CLEANUP STALE DATABASE QUEUE JOBS
+    # CLEANUP ORPHANED DATABASE QUEUE JOBS
     # =============================================================================
-    # Jobs may have accumulated in the database queue before switching to Redis.
-    # These jobs (scoring, notifications, default) will never be processed since
-    # the queue worker now uses Redis. Clean them up to prevent confusion.
-    
-    STALE_JOBS=$(php artisan tinker --execute="echo DB::table('jobs')->count();" 2>/dev/null | tail -1)
-    if [ -n "$STALE_JOBS" ] && [ "$STALE_JOBS" != "0" ]; then
-        echo "🧹 Cleaning up $STALE_JOBS stale job(s) from database queue..."
-        php artisan tinker --execute="DB::table('jobs')->truncate();" 2>/dev/null || true
-        echo "✅ Stale jobs cleaned up (queue now uses Redis)"
+    # Jobs may have accumulated in the `jobs` table before an installation
+    # switched its queue driver to Redis. Those rows will never be processed and
+    # are safe to drop.
+    #
+    # CRITICAL: this must NOT run when the queue driver actually IS `database`
+    # (which is the default — see config/queue.php). There the `jobs` table is
+    # the live queue: truncating it on every container start silently deleted
+    # all pending sends, and because their queue entries were already marked
+    # `queued` (a state the cron never re-processes) those recipients were never
+    # sent to at all. The driver is therefore read from the app config first.
+
+    QUEUE_DRIVER=$(php artisan tinker --execute="echo config('queue.default');" 2>/dev/null | tail -1)
+
+    if [ "$QUEUE_DRIVER" = "database" ]; then
+        echo "ℹ️  Queue driver is 'database' - keeping pending jobs (live queue)"
+    else
+        STALE_JOBS=$(php artisan tinker --execute="echo DB::table('jobs')->count();" 2>/dev/null | tail -1)
+        if [ -n "$STALE_JOBS" ] && [ "$STALE_JOBS" != "0" ]; then
+            echo "🧹 Cleaning up $STALE_JOBS orphaned job(s) from database queue (driver: ${QUEUE_DRIVER:-unknown})..."
+            php artisan tinker --execute="DB::table('jobs')->truncate();" 2>/dev/null || true
+            echo "✅ Orphaned jobs cleaned up"
+        fi
     fi
 fi
 

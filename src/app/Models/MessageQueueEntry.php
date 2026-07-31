@@ -95,7 +95,7 @@ class MessageQueueEntry extends Model
     /**
      * Mark as skipped (e.g., subscriber unsubscribed).
      */
-    public function markAsSkipped(string $reason = null): self
+    public function markAsSkipped(?string $reason = null): self
     {
         $this->update([
             'status' => self::STATUS_SKIPPED,

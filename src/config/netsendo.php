@@ -165,6 +165,20 @@ return [
         'stagger_window_seconds' => env('EMAIL_STAGGER_WINDOW', 55),
 
         /*
+        | Stuck "queued" recovery.
+        | A queue entry is marked `queued` the moment its send job is dispatched;
+        | only the job itself can move it to `sent`/`failed`. If the job never
+        | runs — worker down, container restarted while jobs were still pending,
+        | job lost — the entry would sit in `queued` forever, because the cron
+        | only ever picks up `planned` entries. Entries queued longer than this
+        | many minutes without being sent are reset to `planned` and dispatched
+        | again. Keep it comfortably above the worst-case dispatch delay
+        | (stagger window + transient retries) so a send that is merely slow is
+        | not duplicated; set to 0 to disable the recovery entirely.
+        */
+        'stuck_queued_minutes' => env('EMAIL_STUCK_QUEUED_MINUTES', 30),
+
+        /*
         | Master HTML layout (issue #22 — HTML_MIME_NO_HTML_TAG).
         | Fragment content produced by the editor/API (e.g. starting straight
         | with a <div> or preheader) is wrapped in a full HTML document

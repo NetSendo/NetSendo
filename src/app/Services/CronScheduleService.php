@@ -225,6 +225,9 @@ class CronScheduleService
                 }
             }
 
+            // 1b. Odzyskaj wpisy "zawieszone" w statusie queued
+            $stats['recovered'] = $this->recoverStuckQueuedEntries('email');
+
             // 2. Przetwórz kolejkę używając chunków, aby ominąć zablokowane listy
             // (Zapobiega "Head-of-Line Blocking")
 
@@ -506,6 +509,59 @@ class CronScheduleService
     }
 
     /**
+     * Odzyskaj wpisy zawieszone w statusie "queued".
+     *
+     * Wpis dostaje status queued w momencie zlecenia joba wysyłkowego — tylko
+     * ten job potrafi przestawić go na sent/failed. Jeśli job nigdy się nie
+     * wykona (worker nie działa, kontener zrestartowany z oczekującymi jobami,
+     * job usunięty), wpis zostawał w queued na zawsze, bo pętla CRON-a pobiera
+     * wyłącznie wpisy planned. Takie wpisy wracają do planned i zostaną
+     * wysłane w kolejnym przebiegu.
+     *
+     * @param string $channel email|sms
+     * @return int liczba odzyskanych wpisów
+     */
+    protected function recoverStuckQueuedEntries(string $channel): int
+    {
+        $minutes = (int) config('netsendo.email.stuck_queued_minutes', 30);
+
+        if ($minutes <= 0) {
+            return 0; // Recovery wyłączone
+        }
+
+        $cutoff = now()->subMinutes($minutes);
+
+        $recovered = MessageQueueEntry::where('status', MessageQueueEntry::STATUS_QUEUED)
+            ->whereNull('sent_at')
+            ->where(function ($q) use ($cutoff) {
+                // Starsze niż próg; wpisy bez queued_at (dane sprzed tej zmiany)
+                // rozpoznajemy po dacie aktualizacji
+                $q->where('queued_at', '<', $cutoff)
+                    ->orWhere(function ($sub) use ($cutoff) {
+                        $sub->whereNull('queued_at')->where('updated_at', '<', $cutoff);
+                    });
+            })
+            ->whereHas('message', function ($query) use ($channel) {
+                $query->where('channel', $channel)
+                    ->where('status', 'scheduled');
+            })
+            ->update([
+                'status' => MessageQueueEntry::STATUS_PLANNED,
+                'queued_at' => null,
+            ]);
+
+        if ($recovered > 0) {
+            Log::warning('CronScheduleService: Recovered stuck queued entries', [
+                'channel' => $channel,
+                'count' => $recovered,
+                'stuck_longer_than_minutes' => $minutes,
+            ]);
+        }
+
+        return $recovered;
+    }
+
+    /**
      * Przetwórz kolejkę wiadomości SMS zgodnie z harmonogramami
      */
     public function processSmsQueue(): array
@@ -566,6 +622,9 @@ class CronScheduleService
                     }
                 }
             }
+
+            // 1b. Odzyskaj wpisy "zawieszone" w statusie queued
+            $stats['recovered'] = $this->recoverStuckQueuedEntries('sms');
 
             // 2. Przetwórz kolejkę SMS używając chunków
             $lastId = 0;
