@@ -2660,7 +2660,12 @@
         },
         "edit_title": "Abonnenten bearbeiten",
         "items_per_page": "{count} pro Seite",
-        "stats_total": "{total} Abonnenten ({current} auf der Seite) • {lists} Listen"
+        "stats_total": "{total} Abonnenten ({current} auf der Seite) • {lists} Listen",
+        "lists_visible_count": "Angezeigt: {shown} von {total}",
+        "lists_selected_count": "Ausgewählt: {count}",
+        "select_visible_lists": "Sichtbare auswählen",
+        "deselect_visible_lists": "Auswahl aufheben",
+        "no_lists_found": "Keine Listen für diese Suche gefunden"
     },
     "groups": {
         "title": "Mailinglisten-Gruppen",

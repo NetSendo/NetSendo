@@ -2,6 +2,10 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
 import { computed, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
+import ContactListPicker from "@/Components/ContactListPicker.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
     lists: Array,
@@ -201,6 +205,16 @@ watch(
 );
 
 const submit = () => {
+    // The list picker is no longer a native <select required>, so guard here
+    // instead of relying on browser validation.
+    if (!form.contact_list_id) {
+        form.setError(
+            "contact_list_id",
+            t("messages.validation.list_required"),
+        );
+        return;
+    }
+    form.clearErrors("contact_list_id");
     form.has_header = hasHeader.value;
     form.column_mapping = hasMapping.value ? { ...columnMapping } : {};
     form.post(route("subscribers.import.store"), {
@@ -339,38 +353,20 @@ const submit = () => {
                     <form @submit.prevent="submit" class="space-y-6">
                         <!-- List Selection -->
                         <div>
-                            <label
-                                for="contact_list_id"
+                            <p
                                 class="mb-2 block text-sm font-medium text-slate-900 dark:text-white"
                             >
                                 {{
                                     $t("subscribers.import.fields.target_list")
                                 }}
                                 <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="contact_list_id"
-                                v-model="form.contact_list_id"
-                                class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
-                                required
-                            >
-                                <option value="" disabled>
-                                    {{ $t("subscribers.fields.select_list") }}
-                                </option>
-                                <option
-                                    v-for="list in lists"
-                                    :key="list.id"
-                                    :value="list.id"
-                                >
-                                    {{ list.name }}
-                                </option>
-                            </select>
-                            <p
-                                v-if="form.errors.contact_list_id"
-                                class="mt-2 text-sm text-red-600 dark:text-red-400"
-                            >
-                                {{ form.errors.contact_list_id }}
                             </p>
+                            <ContactListPicker
+                                v-model="form.contact_list_id"
+                                :lists="lists"
+                                :multiple="false"
+                                :error="form.errors.contact_list_id"
+                            />
                         </div>
 
                         <div class="grid gap-6 sm:grid-cols-2">

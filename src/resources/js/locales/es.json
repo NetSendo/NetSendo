@@ -2615,7 +2615,12 @@
             "title": "Reputación del dominio",
             "unchecked": "No verificado",
             "warning": "Advertencia"
-        }
+        },
+        "lists_visible_count": "Mostrando: {shown} de {total}",
+        "lists_selected_count": "Seleccionadas: {count}",
+        "select_visible_lists": "Seleccionar visibles",
+        "deselect_visible_lists": "Deseleccionar visibles",
+        "no_lists_found": "No se encontraron listas para tu búsqueda"
     },
     "groups": {
         "title": "Grupos de listas de correo",

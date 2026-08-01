@@ -2189,7 +2189,12 @@
             "title": "Reputacja domeny",
             "unchecked": "Niesprawdzona",
             "warning": "Ostrzeżenie"
-        }
+        },
+        "lists_visible_count": "Widoczne: {shown} z {total}",
+        "lists_selected_count": "Wybrano: {count}",
+        "select_visible_lists": "Zaznacz widoczne",
+        "deselect_visible_lists": "Odznacz widoczne",
+        "no_lists_found": "Nie znaleziono list pasujących do wyszukiwania"
     },
     "subscriber_card": {
         "title": "Karta Subskrybenta",

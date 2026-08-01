@@ -1,8 +1,12 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import PhoneInput from "@/Components/PhoneInput.vue";
+import ContactListPicker from "@/Components/ContactListPicker.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
     subscriber: {
@@ -19,15 +23,6 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-});
-
-// Filter for list type
-const listTypeFilter = ref("all");
-
-// Filtered lists based on selected type
-const filteredLists = computed(() => {
-    if (listTypeFilter.value === "all") return props.lists;
-    return props.lists.filter((list) => list.type === listTypeFilter.value);
 });
 
 // Check which types are selected
@@ -65,6 +60,16 @@ const form = useForm({
 });
 
 const submit = () => {
+    // The list picker is no longer a native <select required>, so guard here
+    // instead of relying on browser validation.
+    if (form.contact_list_ids.length === 0) {
+        form.setError(
+            "contact_list_ids",
+            t("messages.validation.list_required"),
+        );
+        return;
+    }
+    form.clearErrors("contact_list_ids");
     form.put(route("subscribers.update", props.subscriber.id));
 };
 </script>
@@ -120,86 +125,18 @@ const submit = () => {
             >
                 <form @submit.prevent="submit" class="space-y-6">
                     <div>
-                        <label
-                            for="contact_list_ids"
+                        <p
                             class="mb-2 block text-sm font-medium text-slate-900 dark:text-white"
                         >
                             {{ $t("subscribers.fields.list") }}
                             <span class="text-red-500">*</span>
-                        </label>
+                        </p>
 
-                        <!-- List Type Filter Buttons -->
-                        <div class="mb-3 flex gap-2">
-                            <button
-                                type="button"
-                                @click="listTypeFilter = 'all'"
-                                :class="[
-                                    'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                                    listTypeFilter === 'all'
-                                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-                                ]"
-                            >
-                                {{ $t("common.all") || "Wszystkie" }}
-                            </button>
-                            <button
-                                type="button"
-                                @click="listTypeFilter = 'email'"
-                                :class="[
-                                    'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                                    listTypeFilter === 'email'
-                                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-                                ]"
-                            >
-                                📧 Email
-                            </button>
-                            <button
-                                type="button"
-                                @click="listTypeFilter = 'sms'"
-                                :class="[
-                                    'rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                                    listTypeFilter === 'sms'
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700',
-                                ]"
-                            >
-                                📱 SMS
-                            </button>
-                        </div>
-
-                        <select
-                            id="contact_list_ids"
+                        <ContactListPicker
                             v-model="form.contact_list_ids"
-                            multiple
-                            class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800 min-h-[120px]"
-                            required
-                        >
-                            <option
-                                v-for="list in filteredLists"
-                                :key="list.id"
-                                :value="list.id"
-                            >
-                                {{ list.name }} ({{
-                                    list.type === "sms" ? "SMS" : "Email"
-                                }})
-                            </option>
-                        </select>
-                        <p
-                            class="mt-1 text-xs text-slate-500 dark:text-slate-400"
-                        >
-                            {{
-                                $t(
-                                    "subscribers.hold_ctrl_to_select_multiple",
-                                ) || "Przytrzymaj Ctrl/Cmd aby wybrać wiele"
-                            }}
-                        </p>
-                        <p
-                            v-if="form.errors.contact_list_ids"
-                            class="mt-2 text-sm text-red-600 dark:text-red-400"
-                        >
-                            {{ form.errors.contact_list_ids }}
-                        </p>
+                            :lists="lists"
+                            :error="form.errors.contact_list_ids"
+                        />
                     </div>
 
                     <!-- Info about required fields -->

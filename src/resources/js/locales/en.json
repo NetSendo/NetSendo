@@ -2189,7 +2189,12 @@
             "title": "Domain Reputation",
             "unchecked": "Unchecked",
             "warning": "Warning"
-        }
+        },
+        "lists_visible_count": "Shown: {shown} of {total}",
+        "lists_selected_count": "Selected: {count}",
+        "select_visible_lists": "Select visible",
+        "deselect_visible_lists": "Deselect visible",
+        "no_lists_found": "No lists match your search"
     },
     "subscriber_card": {
         "title": "Subscriber Card",

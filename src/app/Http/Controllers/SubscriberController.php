@@ -160,7 +160,7 @@ class SubscriberController extends Controller
     public function create()
     {
         return Inertia::render('Subscriber/Create', [
-            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->orderBy('name')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
             'availableLanguages' => config('netsendo.languages'),
             'timezones' => \DateTimeZone::listIdentifiers(),
@@ -654,7 +654,7 @@ class SubscriberController extends Controller
                 'contact_list_ids' => $subscriber->contactLists->pluck('id'),
                 'custom_fields' => $subscriber->fieldValues->mapWithKeys(fn($val) => [$val->custom_field_id => $val->value]),
             ],
-            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->orderBy('name')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())->get(),
             'availableLanguages' => config('netsendo.languages'),
             'timezones' => \DateTimeZone::listIdentifiers(),
@@ -989,7 +989,7 @@ class SubscriberController extends Controller
     public function importForm()
     {
         return Inertia::render('Subscriber/Import', [
-            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
+            'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->orderBy('name')->get(),
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())
                 ->orderBy('sort_order')
                 ->get(['id', 'name', 'label', 'type']),
