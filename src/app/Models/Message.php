@@ -222,6 +222,30 @@ class Message extends Model
     }
 
     /**
+     * Resolve the signup moment a sequence should be counted from: the latest
+     * active membership among this message's lists.
+     *
+     * Legacy rows (imported or migrated from older versions) can carry an empty
+     * pivot subscribed_at. Those used to be dropped silently — never scheduled,
+     * never reported as missed, yet still counted as recipients — so the pivot's
+     * created_at is used as a fallback.
+     *
+     * @param \Illuminate\Support\Collection $lists lists with a loaded pivot
+     */
+    protected function resolveSignupAnchor($lists): ?\Carbon\Carbon
+    {
+        $dates = collect($lists)
+            ->filter(fn ($list) => ($list->pivot->status ?? null) === 'active')
+            ->map(fn ($list) => $list->pivot->subscribed_at ?: $list->pivot->created_at)
+            ->filter()
+            ->map(fn ($date) => \Carbon\Carbon::parse($date))
+            ->sort()
+            ->values();
+
+        return $dates->last();
+    }
+
+    /**
      * Calculate the expected send datetime (UTC) for this autoresponder message,
      * anchored at the given base time (usually the subscription/re-signup moment).
      *
@@ -364,7 +388,8 @@ class Message extends Model
                 $query->whereNotIn('email', $excludedEmails);
             })
             ->with(['contactLists' => function ($query) use ($includedListIds) {
-                $query->whereIn('contact_lists.id', $includedListIds);
+                $query->whereIn('contact_lists.id', $includedListIds)
+                    ->where('contact_list_subscriber.status', 'active');
             }])
             ->get()
             ->unique('email'); // Deduplicate by email before counting
@@ -409,9 +434,12 @@ class Message extends Model
 
             $isPending = array_key_exists($subscriber->email, $pendingByEmail);
 
-            // Get subscribed_at from the first matching list's pivot
-            $pivot = $subscriber->contactLists->first()?->pivot;
-            $subscribedAt = $pivot?->subscribed_at ? \Carbon\Carbon::parse($pivot->subscribed_at) : null;
+            // Anchor date = latest active signup among this message's lists.
+            // Must match the anchor used when scheduling entries (see
+            // syncPlannedRecipients), otherwise a subscriber on two lists could
+            // be reported as "missed" here while actually being scheduled — the
+            // arbitrary first() used before produced exactly that mismatch.
+            $subscribedAt = $this->resolveSignupAnchor($subscriber->contactLists);
 
             if (!$subscribedAt && !$isPending) {
                 continue;
@@ -535,11 +563,13 @@ class Message extends Model
                 $listIds = $this->contactLists->pluck('id')->toArray();
 
                 // Bulk-load active pivot rows for the missing subscribers
+                // Legacy rows may have an empty subscribed_at — fall back to the
+                // pivot's created_at so those subscribers are scheduled instead
+                // of being silently skipped (old lists / imported data).
                 $pivotRows = DB::table('contact_list_subscriber')
                     ->whereIn('subscriber_id', $missingSubscriberIds)
                     ->whereIn('contact_list_id', $listIds)
                     ->where('status', 'active')
-                    ->whereNotNull('subscribed_at')
                     ->get()
                     ->groupBy('subscriber_id');
 
@@ -553,9 +583,19 @@ class Message extends Model
                     }
 
                     // Most recent signup among the message's lists is the anchor
-                    $subscribedAt = \Carbon\Carbon::parse($rows->max('subscribed_at'));
+                    $anchor = $rows
+                        ->map(fn ($row) => $row->subscribed_at ?: $row->created_at)
+                        ->filter()
+                        ->map(fn ($date) => \Carbon\Carbon::parse($date))
+                        ->sort()
+                        ->last();
+
+                    if (!$anchor) {
+                        continue; // No usable date at all — nothing to anchor on
+                    }
+
                     $expectedSendAt = $this->calculateExpectedSendAt(
-                        $subscribedAt,
+                        $anchor,
                         $recipientsById->get($subscriberId)
                     );
 
