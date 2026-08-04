@@ -157,7 +157,7 @@ Best for hosted NetSendo (e.g., `https://app.mycompany.com`).
 
 ---
 
-## Available Tools (37+)
+## Available Tools (73)
 
 ### Subscriber Management
 
@@ -172,13 +172,78 @@ Best for hosted NetSendo (e.g., `https://app.mycompany.com`).
 
 ### Contact Lists & Tags
 
-| Tool                   | Description                  |
-| ---------------------- | ---------------------------- |
-| `list_contact_lists`   | Get all contact lists        |
-| `get_contact_list`     | Get list details             |
-| `get_list_subscribers` | Get subscribers in a list    |
-| `list_tags`            | Get all available tags       |
-| `list_custom_fields`   | Get custom field definitions |
+| Tool                   | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `list_contact_lists`   | Get all contact lists                                           |
+| `get_contact_list`     | Get list details                                                |
+| `get_list_stats`       | Membership breakdown, engagement share, 30-day growth, config    |
+| `create_contact_list`  | Create a list (`type`: email or sms)                            |
+| `update_contact_list`  | Update list settings (partial; untouched settings preserved)     |
+| `delete_contact_list`  | Delete a list (`confirm: true` required when it has members)     |
+| `get_list_subscribers` | Get subscribers in a list                                       |
+| `list_tags`            | Get all available tags                                          |
+| `list_custom_fields`   | Get custom field definitions                                    |
+
+### List Import & Export
+
+| Tool                    | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `preview_list_import`   | Dry run: detected column mapping, per-action counts, problem rows    |
+| `import_subscribers`    | Import CSV / TSV / JSON records / plain address list (≤5000 rows)   |
+| `export_list`           | Inline export, filtered and cursor-paged (`json`, `csv`, `ndjson`)  |
+| `get_export_fields`     | Available columns including the account's custom fields             |
+| `queue_list_export`     | Queue the classic full CSV export (download link to the owner)      |
+
+Import accepts four payload shapes — `csv` and `tsv` (raw text in `data`, delimiter
+and header auto-detected), `json` (objects in `records`, with optional
+`custom_fields` and `tags` per record) and `emails` (one address per line, also
+`Anna Kowalska <anna@example.com>`). Column mapping is automatic for common PL/EN/DE/ES
+headers and can be overridden with `column_mapping`. Duplicates fold by real mailbox,
+so `JAN@x.pl`, `jan@x.pl` and `j.an+news@gmail.com` collapse onto one contact.
+
+### List Hygiene
+
+| Tool                  | Description                                                          |
+| --------------------- | -------------------------------------------------------------------- |
+| `analyze_list_health` | Health score 0–100, per-category counts with samples, recommendations |
+| `clean_list`          | Act on matched categories (dry run by default)                        |
+| `dedupe_list`         | Merge contacts sharing one real mailbox (dry run by default)          |
+| `verify_list_emails`  | Syntax + MX/DNS deliverability check, per domain                      |
+| `get_hygiene_options` | Exact category and action names accepted by `clean_list`              |
+
+Categories: `invalid_syntax`, `typo_domain`, `disposable_domain`, `role_address`,
+`missing_contact`, `duplicate`, `hard_bounced`, `soft_bounce_risk`, `suppressed`,
+`unsubscribed`, `unconfirmed`, `globally_inactive`, `never_engaged`, `dormant`.
+Actions: `unsubscribe`, `remove`, `tag`, plus the irreversible `delete` and `suppress`.
+
+### List Membership
+
+| Tool                  | Description                                                     |
+| --------------------- | --------------------------------------------------------------- |
+| `add_list_members`    | Attach existing contacts to a list                              |
+| `remove_list_members` | Detach from a list (contacts and other lists untouched)         |
+| `set_member_status`   | Bulk status change: active / inactive / unsubscribed / bounced  |
+| `copy_list_members`   | Copy to another list of the same channel                        |
+| `move_list_members`   | Move to another list of the same channel                        |
+| `tag_list_members`    | Add or remove tags across a segment                             |
+
+All six share one selection block — `subscriber_ids`, `emails`, or a `filter` such as
+`{"status":"active","never_opened":true,"subscribed_before":"2025-01-01","limit":500}` —
+capped at 5000 contacts per call. `trigger_automations: false` migrates an audience
+without restarting the target list's welcome sequence.
+
+### Activity, Suppression & Notifications
+
+| Tool                      | Description                                                        |
+| ------------------------- | ------------------------------------------------------------------ |
+| `get_list_activity`       | Event feed: signups, confirmations, unsubscribes, bounces, sends, opens, clicks |
+| `get_list_engagement`     | Growth, churn, open/click/CTOR, top messages and links, most engaged |
+| `get_subscriber_activity` | One contact's timeline, memberships, tags and queued messages       |
+| `list_suppressions`       | The account-wide do-not-mail list                                  |
+| `suppress_emails`         | Suppress addresses and unsubscribe them everywhere                 |
+| `unsuppress_emails`       | Lift suppression (does not resubscribe anyone)                     |
+| `send_notification`       | Report back to the account owner's notification centre             |
+| `list_notifications`      | Read recent notifications and the unread count                     |
 
 ### Campaigns
 
@@ -244,11 +309,13 @@ Best for hosted NetSendo (e.g., `https://app.mycompany.com`).
 
 MCP server includes pre-built prompts for common workflows:
 
-| Prompt                | Description                        |
-| --------------------- | ---------------------------------- |
-| `analyze_subscribers` | Analyze subscriber list quality    |
-| `send_newsletter`     | Help compose and send a newsletter |
-| `cleanup_list`        | Identify problematic subscribers   |
+| Prompt                | Description                                                       |
+| --------------------- | ----------------------------------------------------------------- |
+| `analyze_subscribers` | Analyze subscriber list quality                                   |
+| `send_newsletter`     | Help compose and send a newsletter                                |
+| `import_contacts`     | Import contacts safely, with a preview before anything is written |
+| `cleanup_list`        | Audit a list and propose an approved-only clean-up plan           |
+| `list_report`         | Performance report with prioritised next steps                    |
 
 ---
 
@@ -256,10 +323,11 @@ MCP server includes pre-built prompts for common workflows:
 
 MCP provides read-only resources for AI context:
 
-| Resource URI       | Description                                 |
-| ------------------ | ------------------------------------------- |
-| `netsendo://info`  | Instance information and capabilities       |
-| `netsendo://stats` | Quick statistics (lists, subscribers, tags) |
+| Resource URI       | Description                                    |
+| ------------------ | ---------------------------------------------- |
+| `netsendo://info`  | Instance information and capabilities          |
+| `netsendo://stats` | Quick statistics (lists, subscribers, tags)    |
+| `netsendo://lists` | Contact list directory with sizes and channels |
 
 ---
 

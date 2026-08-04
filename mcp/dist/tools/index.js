@@ -5,6 +5,13 @@
  */
 import { registerSubscriberTools } from './subscribers.js';
 import { registerListTools } from './lists.js';
+import { registerListImportTools } from './list-import.js';
+import { registerListExportTools } from './list-export.js';
+import { registerListHygieneTools } from './list-hygiene.js';
+import { registerListMemberTools } from './list-members.js';
+import { registerListActivityTools } from './list-activity.js';
+import { registerSuppressionTools } from './suppressions.js';
+import { registerNotificationTools } from './notifications.js';
 import { registerMessagingTools } from './messaging.js';
 import { registerCampaignTools } from './campaigns.js';
 import { registerAbTestTools } from './ab-tests.js';
@@ -16,8 +23,22 @@ import { registerPlaceholderTools } from './placeholders.js';
 export function registerAllTools(server, api) {
     // Subscriber management tools
     registerSubscriberTools(server, api);
-    // Contact lists and tags tools
+    // Contact lists, tags and list CRUD
     registerListTools(server, api);
+    // List import (CSV / TSV / JSON / plain addresses)
+    registerListImportTools(server, api);
+    // List export (inline data and queued CSV)
+    registerListExportTools(server, api);
+    // List hygiene: analyse, clean, deduplicate, verify deliverability
+    registerListHygieneTools(server, api);
+    // Bulk membership operations
+    registerListMemberTools(server, api);
+    // Activity feed and engagement analytics
+    registerListActivityTools(server, api);
+    // Account-wide suppression list
+    registerSuppressionTools(server, api);
+    // Notifications to the account owner
+    registerNotificationTools(server, api);
     // Email and SMS messaging tools (single sends)
     registerMessagingTools(server, api);
     // Campaign management tools (bulk campaigns)
@@ -68,6 +89,13 @@ export function registerAllTools(server, api) {
 }
 export { registerSubscriberTools } from './subscribers.js';
 export { registerListTools } from './lists.js';
+export { registerListImportTools } from './list-import.js';
+export { registerListExportTools } from './list-export.js';
+export { registerListHygieneTools } from './list-hygiene.js';
+export { registerListMemberTools } from './list-members.js';
+export { registerListActivityTools } from './list-activity.js';
+export { registerSuppressionTools } from './suppressions.js';
+export { registerNotificationTools } from './notifications.js';
 export { registerMessagingTools } from './messaging.js';
 export { registerCampaignTools } from './campaigns.js';
 export { registerAbTestTools } from './ab-tests.js';

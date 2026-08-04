@@ -6,7 +6,14 @@ use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SubscriberController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\ExportController;
+use App\Http\Controllers\Api\V1\ListActivityController;
+use App\Http\Controllers\Api\V1\ListExportController;
+use App\Http\Controllers\Api\V1\ListHygieneController;
+use App\Http\Controllers\Api\V1\ListImportController;
+use App\Http\Controllers\Api\V1\ListMembershipController;
 use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\SuppressionController;
 use App\Http\Controllers\Api\V1\AbTestController;
 use App\Http\Controllers\Api\V1\FunnelController;
 use App\Http\Controllers\Api\McpController;
@@ -46,23 +53,99 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
             'destroy' => 'api.v1.subscribers.destroy',
         ]);
 
-    // Contact Lists (read-only)
+    // ------------------------------------------------------------------
+    // Contact Lists — full management surface (used by the MCP server)
+    // ------------------------------------------------------------------
+
+    // Hygiene vocabulary (static; must precede lists/{list} style routes)
+    Route::get('lists/hygiene-options', [ListHygieneController::class, 'options'])
+        ->name('api.v1.lists.hygiene-options');
+
+    // Read
     Route::get('lists', [ContactListController::class, 'index'])
         ->name('api.v1.lists.index');
     Route::get('lists/{list}', [ContactListController::class, 'show'])
         ->name('api.v1.lists.show');
+    Route::get('lists/{list}/stats', [ContactListController::class, 'stats'])
+        ->name('api.v1.lists.stats');
     Route::get('lists/{list}/subscribers', [ContactListController::class, 'subscribers'])
         ->name('api.v1.lists.subscribers');
+
+    // Write
+    Route::post('lists', [ContactListController::class, 'store'])
+        ->name('api.v1.lists.store');
+    Route::put('lists/{list}', [ContactListController::class, 'update'])
+        ->name('api.v1.lists.update');
+    Route::patch('lists/{list}', [ContactListController::class, 'update'])
+        ->name('api.v1.lists.patch');
+    Route::delete('lists/{list}', [ContactListController::class, 'destroy'])
+        ->name('api.v1.lists.destroy');
+
+    // Import (inline CSV / TSV / JSON / plain address list)
+    Route::post('lists/{list}/import/preview', [ListImportController::class, 'preview'])
+        ->name('api.v1.lists.import.preview');
+    Route::post('lists/{list}/import', [ListImportController::class, 'store'])
+        ->name('api.v1.lists.import');
+
+    // Export — queued CSV (existing) and inline, cursor-paged data
+    Route::post('lists/{list}/export', [ExportController::class, 'export'])
+        ->name('api.v1.lists.export');
+    Route::get('lists/{list}/export', [ListExportController::class, 'data'])
+        ->name('api.v1.lists.export.data');
+    Route::get('lists/{list}/export/fields', [ListExportController::class, 'fields'])
+        ->name('api.v1.lists.export.fields');
+
+    // Hygiene — analyse, clean, deduplicate, verify deliverability
+    Route::get('lists/{list}/hygiene', [ListHygieneController::class, 'analyze'])
+        ->name('api.v1.lists.hygiene');
+    Route::post('lists/{list}/hygiene/clean', [ListHygieneController::class, 'clean'])
+        ->name('api.v1.lists.hygiene.clean');
+    Route::post('lists/{list}/hygiene/dedupe', [ListHygieneController::class, 'dedupe'])
+        ->name('api.v1.lists.hygiene.dedupe');
+    Route::post('lists/{list}/hygiene/verify', [ListHygieneController::class, 'verify'])
+        ->name('api.v1.lists.hygiene.verify');
+
+    // Membership — bulk add / remove / status / move / copy / tags
+    Route::post('lists/{list}/members', [ListMembershipController::class, 'add'])
+        ->name('api.v1.lists.members.add');
+    Route::post('lists/{list}/members/remove', [ListMembershipController::class, 'remove'])
+        ->name('api.v1.lists.members.remove');
+    Route::post('lists/{list}/members/status', [ListMembershipController::class, 'status'])
+        ->name('api.v1.lists.members.status');
+    Route::post('lists/{list}/members/move', [ListMembershipController::class, 'move'])
+        ->name('api.v1.lists.members.move');
+    Route::post('lists/{list}/members/copy', [ListMembershipController::class, 'copy'])
+        ->name('api.v1.lists.members.copy');
+    Route::post('lists/{list}/members/tags', [ListMembershipController::class, 'tags'])
+        ->name('api.v1.lists.members.tags');
+
+    // Activity & engagement
+    Route::get('lists/{list}/activity', [ListActivityController::class, 'feed'])
+        ->name('api.v1.lists.activity');
+    Route::get('lists/{list}/engagement', [ListActivityController::class, 'engagement'])
+        ->name('api.v1.lists.engagement');
+    Route::get('subscribers/{subscriber}/activity', [ListActivityController::class, 'subscriber'])
+        ->name('api.v1.subscribers.activity');
+
+    // Suppression list (account-wide do-not-mail)
+    Route::get('suppressions', [SuppressionController::class, 'index'])
+        ->name('api.v1.suppressions.index');
+    Route::post('suppressions', [SuppressionController::class, 'store'])
+        ->name('api.v1.suppressions.store');
+    Route::delete('suppressions', [SuppressionController::class, 'destroy'])
+        ->name('api.v1.suppressions.destroy');
+
+    // Notifications to the account owner
+    Route::get('notifications', [NotificationController::class, 'index'])
+        ->name('api.v1.notifications.index');
+    Route::post('notifications', [NotificationController::class, 'store'])
+        ->name('api.v1.notifications.store');
 
     // Tags (read-only)
     Route::get('tags', [TagController::class, 'index'])
         ->name('api.v1.tags.index');
     Route::get('tags/{tag}', [TagController::class, 'show'])
         ->name('api.v1.tags.show');
-
-    // Export
-    Route::post('lists/{list}/export', [ExportController::class, 'export'])
-        ->name('api.v1.lists.export');
 
     // Custom Fields
     Route::get('custom-fields', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'index'])

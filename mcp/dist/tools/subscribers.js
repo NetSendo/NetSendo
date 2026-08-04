@@ -100,7 +100,7 @@ export function registerSubscriberTools(server, api) {
         first_name: z.string().optional().describe('First name'),
         last_name: z.string().optional().describe('Last name'),
         phone: z.string().optional().describe('Phone number'),
-        lists: z.array(z.number()).optional().describe('Array of contact list IDs to subscribe to'),
+        lists: z.array(z.number()).min(1).describe('Contact list IDs to subscribe to (at least one required)'),
         tags: z.array(z.union([z.number(), z.string()])).optional().describe('Array of tag IDs or names'),
         source: z.string().optional().describe('Subscription source (e.g., "mcp", "api")'),
         custom_fields: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().describe('Custom field values'),

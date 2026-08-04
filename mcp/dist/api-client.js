@@ -60,8 +60,23 @@ export class NetSendoApiClient {
         return response.data.data;
     }
     async createSubscriber(data) {
-        const response = await this.client.post('/subscribers', data);
-        return response.data.data;
+        const { lists, ...rest } = data;
+        const listIds = lists ?? [];
+        if (listIds.length === 0) {
+            throw new Error('At least one contact list ID is required (lists parameter)');
+        }
+        // The REST endpoint accepts a single contact_list_id — call it once per
+        // list: the first call creates (or finds) the subscriber, subsequent calls
+        // attach the remaining lists (each attach starts that list's sequences).
+        let subscriber;
+        for (const listId of listIds) {
+            const response = await this.client.post('/subscribers', {
+                ...rest,
+                contact_list_id: listId,
+            });
+            subscriber = response.data.data;
+        }
+        return subscriber;
     }
     async updateSubscriber(id, data) {
         const response = await this.client.put(`/subscribers/${id}`, data);
@@ -87,6 +102,146 @@ export class NetSendoApiClient {
     }
     async getListSubscribers(listId, params) {
         const response = await this.client.get(`/lists/${listId}/subscribers`, { params });
+        return response.data;
+    }
+    async createContactList(data) {
+        const response = await this.client.post('/lists', data);
+        return response.data.data;
+    }
+    async updateContactList(id, data) {
+        const response = await this.client.put(`/lists/${id}`, data);
+        return response.data.data;
+    }
+    async deleteContactList(id, confirm = false) {
+        const response = await this.client.delete(`/lists/${id}`, { params: { confirm: confirm ? 1 : 0 } });
+        return response.data;
+    }
+    async getListStats(id) {
+        const response = await this.client.get(`/lists/${id}/stats`);
+        return response.data.data;
+    }
+    // ============================================================================
+    // List Import
+    // ============================================================================
+    async previewListImport(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/import/preview`, payload);
+        return response.data.data;
+    }
+    async importToList(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/import`, payload);
+        return response.data;
+    }
+    // ============================================================================
+    // List Export
+    // ============================================================================
+    async exportList(listId, options = {}) {
+        const response = await this.client.get(`/lists/${listId}/export`, {
+            params: options,
+            // PHP only builds an array from bracketed keys (fields[]=a&fields[]=b);
+            // without the brackets each repeat overwrites the last. axios emits the
+            // bracketed form with indexes: false.
+            paramsSerializer: { indexes: false },
+        });
+        return response.data.data;
+    }
+    async getExportFields(listId) {
+        const response = await this.client.get(`/lists/${listId}/export/fields`);
+        return response.data.data;
+    }
+    /** Queue the classic CSV export; the account owner receives a download link. */
+    async queueListExport(listId) {
+        const response = await this.client.post(`/lists/${listId}/export`);
+        return response.data;
+    }
+    // ============================================================================
+    // List Hygiene
+    // ============================================================================
+    async analyzeListHygiene(listId, params) {
+        const response = await this.client.get(`/lists/${listId}/hygiene`, { params });
+        return response.data.data;
+    }
+    async cleanList(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/hygiene/clean`, payload);
+        return response.data;
+    }
+    async dedupeList(listId, payload = {}) {
+        const response = await this.client.post(`/lists/${listId}/hygiene/dedupe`, payload);
+        return response.data;
+    }
+    async verifyListEmails(listId, payload = {}) {
+        const response = await this.client.post(`/lists/${listId}/hygiene/verify`, payload);
+        return response.data.data;
+    }
+    async getHygieneOptions() {
+        const response = await this.client.get('/lists/hygiene-options');
+        return response.data.data;
+    }
+    // ============================================================================
+    // List Membership
+    // ============================================================================
+    async addListMembers(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/members`, payload);
+        return response.data;
+    }
+    async removeListMembers(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/members/remove`, payload);
+        return response.data;
+    }
+    async setListMemberStatus(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/members/status`, payload);
+        return response.data;
+    }
+    async transferListMembers(listId, mode, payload) {
+        const response = await this.client.post(`/lists/${listId}/members/${mode}`, payload);
+        return response.data;
+    }
+    async tagListMembers(listId, payload) {
+        const response = await this.client.post(`/lists/${listId}/members/tags`, payload);
+        return response.data;
+    }
+    // ============================================================================
+    // Activity & Engagement
+    // ============================================================================
+    async getListActivity(listId, params) {
+        const response = await this.client.get(`/lists/${listId}/activity`, {
+            params,
+            // Bracketed array keys — see exportList().
+            paramsSerializer: { indexes: false },
+        });
+        return response.data.data;
+    }
+    async getListEngagement(listId, params) {
+        const response = await this.client.get(`/lists/${listId}/engagement`, { params });
+        return response.data.data;
+    }
+    async getSubscriberActivity(subscriberId, params) {
+        const response = await this.client.get(`/subscribers/${subscriberId}/activity`, { params });
+        return response.data.data;
+    }
+    // ============================================================================
+    // Suppression List
+    // ============================================================================
+    async listSuppressions(params) {
+        const response = await this.client.get('/suppressions', { params });
+        return response.data;
+    }
+    async addSuppressions(payload) {
+        const response = await this.client.post('/suppressions', payload);
+        return response.data;
+    }
+    async removeSuppressions(emails) {
+        const response = await this.client.delete('/suppressions', { data: { emails } });
+        return response.data;
+    }
+    // ============================================================================
+    // Notifications
+    // ============================================================================
+    async listNotifications(params) {
+        const response = await this.client.get('/notifications', { params });
+        return response.data;
+    }
+    async createNotification(payload) {
+        const response = await this.client.post('/notifications', payload);
         return response.data;
     }
     // ============================================================================

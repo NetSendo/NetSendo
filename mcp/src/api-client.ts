@@ -46,6 +46,27 @@ import type {
   FunnelStep,
   FunnelStepInput,
   FunnelStats,
+  // List management types
+  ContactListCreateInput,
+  ContactListUpdateInput,
+  ListStats,
+  ListImportPayload,
+  ListImportPreview,
+  ListImportResult,
+  ListExportOptions,
+  ListExportResult,
+  ListHygieneReport,
+  ListCleanResult,
+  ListDedupeResult,
+  ListVerifyResult,
+  HygieneCategory,
+  HygieneAction,
+  MemberSelection,
+  ListActivityFeed,
+  ListEngagement,
+  SubscriberActivity,
+  SuppressionEntry,
+  NotificationInput,
 } from './types.js';
 
 export class NetSendoApiError extends Error {
@@ -185,8 +206,259 @@ export class NetSendoApiClient {
   async getListSubscribers(listId: number, params?: {
     page?: number;
     per_page?: number;
+    status?: string;
   }): Promise<PaginatedResponse<Subscriber>> {
     const response = await this.client.get(`/lists/${listId}/subscribers`, { params });
+    return response.data;
+  }
+
+  async createContactList(data: ContactListCreateInput): Promise<ContactList> {
+    const response = await this.client.post('/lists', data);
+    return response.data.data;
+  }
+
+  async updateContactList(id: number, data: ContactListUpdateInput): Promise<ContactList> {
+    const response = await this.client.put(`/lists/${id}`, data);
+    return response.data.data;
+  }
+
+  async deleteContactList(id: number, confirm = false): Promise<{ message: string; list_id: number }> {
+    const response = await this.client.delete(`/lists/${id}`, { params: { confirm: confirm ? 1 : 0 } });
+    return response.data;
+  }
+
+  async getListStats(id: number): Promise<ListStats> {
+    const response = await this.client.get(`/lists/${id}/stats`);
+    return response.data.data;
+  }
+
+  // ============================================================================
+  // List Import
+  // ============================================================================
+
+  async previewListImport(listId: number, payload: ListImportPayload): Promise<ListImportPreview> {
+    const response = await this.client.post(`/lists/${listId}/import/preview`, payload);
+    return response.data.data;
+  }
+
+  async importToList(
+    listId: number,
+    payload: ListImportPayload
+  ): Promise<{ data: ListImportResult | ListImportPreview; message?: string }> {
+    const response = await this.client.post(`/lists/${listId}/import`, payload);
+    return response.data;
+  }
+
+  // ============================================================================
+  // List Export
+  // ============================================================================
+
+  async exportList(listId: number, options: ListExportOptions = {}): Promise<ListExportResult> {
+    const response = await this.client.get(`/lists/${listId}/export`, {
+      params: options,
+      // PHP only builds an array from bracketed keys (fields[]=a&fields[]=b);
+      // without the brackets each repeat overwrites the last. axios emits the
+      // bracketed form with indexes: false.
+      paramsSerializer: { indexes: false },
+    });
+    return response.data.data;
+  }
+
+  async getExportFields(listId: number): Promise<{
+    standard: string[];
+    custom_fields: Array<{ id: number; name: string; label: string; type: string }>;
+  }> {
+    const response = await this.client.get(`/lists/${listId}/export/fields`);
+    return response.data.data;
+  }
+
+  /** Queue the classic CSV export; the account owner receives a download link. */
+  async queueListExport(listId: number): Promise<{ message: string; list_id: number }> {
+    const response = await this.client.post(`/lists/${listId}/export`);
+    return response.data;
+  }
+
+  // ============================================================================
+  // List Hygiene
+  // ============================================================================
+
+  async analyzeListHygiene(listId: number, params?: {
+    unconfirmed_after_days?: number;
+    never_engaged_after_days?: number;
+    dormant_after_days?: number;
+    soft_bounce_threshold?: number;
+    sample_size?: number;
+    max_scan?: number;
+  }): Promise<ListHygieneReport> {
+    const response = await this.client.get(`/lists/${listId}/hygiene`, { params });
+    return response.data.data;
+  }
+
+  async cleanList(listId: number, payload: {
+    categories: HygieneCategory[];
+    action: HygieneAction;
+    tag?: string;
+    dry_run?: boolean;
+    confirm?: boolean;
+    limit?: number;
+    reason?: string;
+    unconfirmed_after_days?: number;
+    never_engaged_after_days?: number;
+    dormant_after_days?: number;
+    soft_bounce_threshold?: number;
+  }): Promise<{ data: ListCleanResult; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/hygiene/clean`, payload);
+    return response.data;
+  }
+
+  async dedupeList(listId: number, payload: {
+    dry_run?: boolean;
+    confirm?: boolean;
+    limit?: number;
+    keep?: 'oldest' | 'most_engaged';
+  } = {}): Promise<{ data: ListDedupeResult; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/hygiene/dedupe`, payload);
+    return response.data;
+  }
+
+  async verifyListEmails(listId: number, payload: {
+    limit?: number;
+    status?: string;
+    check_mx?: boolean;
+    max_domains?: number;
+  } = {}): Promise<ListVerifyResult> {
+    const response = await this.client.post(`/lists/${listId}/hygiene/verify`, payload);
+    return response.data.data;
+  }
+
+  async getHygieneOptions(): Promise<{
+    categories: string[];
+    actions: string[];
+    destructive_actions: string[];
+    max_scan: number;
+  }> {
+    const response = await this.client.get('/lists/hygiene-options');
+    return response.data.data;
+  }
+
+  // ============================================================================
+  // List Membership
+  // ============================================================================
+
+  async addListMembers(listId: number, payload: MemberSelection & {
+    source_list_id?: number;
+    source?: string;
+    trigger_automations?: boolean;
+  }): Promise<{ data: Record<string, number>; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/members`, payload);
+    return response.data;
+  }
+
+  async removeListMembers(listId: number, payload: MemberSelection & { confirm?: boolean }): Promise<{
+    data: Record<string, number>;
+    message: string;
+  }> {
+    const response = await this.client.post(`/lists/${listId}/members/remove`, payload);
+    return response.data;
+  }
+
+  async setListMemberStatus(listId: number, payload: MemberSelection & {
+    status: 'active' | 'inactive' | 'unsubscribed' | 'bounced';
+    reason?: string;
+    trigger_automations?: boolean;
+  }): Promise<{ data: Record<string, unknown>; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/members/status`, payload);
+    return response.data;
+  }
+
+  async transferListMembers(listId: number, mode: 'move' | 'copy', payload: MemberSelection & {
+    target_list_id: number;
+    source?: string;
+    trigger_automations?: boolean;
+  }): Promise<{ data: Record<string, unknown>; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/members/${mode}`, payload);
+    return response.data;
+  }
+
+  async tagListMembers(listId: number, payload: MemberSelection & {
+    add?: string[];
+    remove?: string[];
+  }): Promise<{ data: Record<string, unknown>; message: string }> {
+    const response = await this.client.post(`/lists/${listId}/members/tags`, payload);
+    return response.data;
+  }
+
+  // ============================================================================
+  // Activity & Engagement
+  // ============================================================================
+
+  async getListActivity(listId: number, params?: {
+    days?: number;
+    limit?: number;
+    types?: string[];
+  }): Promise<ListActivityFeed> {
+    const response = await this.client.get(`/lists/${listId}/activity`, {
+      params,
+      // Bracketed array keys — see exportList().
+      paramsSerializer: { indexes: false },
+    });
+    return response.data.data;
+  }
+
+  async getListEngagement(listId: number, params?: { days?: number }): Promise<ListEngagement> {
+    const response = await this.client.get(`/lists/${listId}/engagement`, { params });
+    return response.data.data;
+  }
+
+  async getSubscriberActivity(subscriberId: number, params?: {
+    days?: number;
+    limit?: number;
+  }): Promise<SubscriberActivity> {
+    const response = await this.client.get(`/subscribers/${subscriberId}/activity`, { params });
+    return response.data.data;
+  }
+
+  // ============================================================================
+  // Suppression List
+  // ============================================================================
+
+  async listSuppressions(params?: {
+    search?: string;
+    reason?: string;
+    per_page?: number;
+  }): Promise<{ data: SuppressionEntry[]; meta: { total: number; current_page: number; last_page: number } }> {
+    const response = await this.client.get('/suppressions', { params });
+    return response.data;
+  }
+
+  async addSuppressions(payload: {
+    emails: string[];
+    reason?: string;
+    unsubscribe_existing?: boolean;
+  }): Promise<{ data: { suppressed: number; memberships_unsubscribed: number; reason: string }; message: string }> {
+    const response = await this.client.post('/suppressions', payload);
+    return response.data;
+  }
+
+  async removeSuppressions(emails: string[]): Promise<{ data: { removed: number }; message: string }> {
+    const response = await this.client.delete('/suppressions', { data: { emails } });
+    return response.data;
+  }
+
+  // ============================================================================
+  // Notifications
+  // ============================================================================
+
+  async listNotifications(params?: { unread_only?: boolean; limit?: number }): Promise<{
+    data: Array<Record<string, unknown>>;
+    meta: { unread: number };
+  }> {
+    const response = await this.client.get('/notifications', { params });
+    return response.data;
+  }
+
+  async createNotification(payload: NotificationInput): Promise<{ data: Record<string, unknown>; message: string }> {
+    const response = await this.client.post('/notifications', payload);
     return response.data;
   }
 

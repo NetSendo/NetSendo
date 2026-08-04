@@ -311,13 +311,20 @@ class Subscriber extends Model
     }
 
     /**
-     * Remove a tag from subscriber and dispatch event
+     * Remove a tag from subscriber and dispatch event.
+     *
+     * The pivot is queried directly rather than read through `$this->tags`:
+     * `subscribers.tags` is a legacy JSON column, and an attribute always wins
+     * over a relation of the same name, so `$this->tags` yields the (null)
+     * column instead of the loaded tags. Reading it made the membership check
+     * always fail, so detaching silently did nothing. `detach()` reports how
+     * many rows it removed, which is both accurate and idempotent.
      */
     public function removeTag(Tag $tag): void
     {
-        $currentTags = $this->tags ?? collect();
-        if ($currentTags->contains('id', $tag->id)) {
-            $this->tags()->detach($tag->id);
+        $detached = $this->tags()->detach($tag->id);
+
+        if ($detached > 0) {
             $this->load('tags'); // Refresh relationship
 
             event(new TagRemoved($this, $tag));
@@ -325,12 +332,15 @@ class Subscriber extends Model
     }
 
     /**
-     * Sync tags with event dispatching
+     * Sync tags with event dispatching.
+     *
+     * Current tags come from the relation query for the same reason as in
+     * removeTag() — reading `$this->tags` returned the legacy column, so the
+     * "tags to remove" set was always empty and sync only ever added.
      */
     public function syncTagsWithEvents(array $tagIds): void
     {
-        $currentTags = $this->tags ?? collect();
-        $currentTagIds = $currentTags->pluck('id')->toArray();
+        $currentTagIds = $this->tags()->pluck('tags.id')->toArray();
 
         // Find tags to add
         $toAdd = array_diff($tagIds, $currentTagIds);

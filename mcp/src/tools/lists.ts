@@ -7,6 +7,8 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { NetSendoApiClient } from '../api-client.js';
+import type { ContactListCreateInput, ContactListUpdateInput } from '../types.js';
+import { ok, fail, compact } from './helpers.js';
 
 export function registerListTools(server: McpServer, api: NetSendoApiClient) {
 
@@ -183,6 +185,104 @@ Use default_mailbox info when creating campaigns to automatically select the rig
           content: [{ type: 'text' as const, text: `Error: ${(error as Error).message}` }],
           isError: true,
         };
+      }
+    }
+  );
+
+  // Get List Stats
+  server.tool(
+    'get_list_stats',
+    `Operational snapshot of a list: members broken down by status, engagement share (how many have ever opened or clicked), growth over the last 30 days, and the configuration that affects sending — double opt-in, resubscription behaviour, signup limits, default mailbox and webhook.
+
+Use this to answer "how is this list doing?" in one call. For deeper analysis: get_list_engagement for performance over time, analyze_list_health for data-quality problems.`,
+    {
+      list_id: z.number().describe('Contact list ID'),
+    },
+    async ({ list_id }) => {
+      try {
+        return ok(await api.getListStats(list_id));
+      } catch (error) {
+        return fail(error);
+      }
+    }
+  );
+
+  // Create Contact List
+  server.tool(
+    'create_contact_list',
+    `Create a contact list.
+
+Choose the channel with "type": "email" (default) or "sms" — it determines which field is required for members and cannot be changed later by these tools. Contacts can only be moved or copied between lists of the same channel.
+
+Set a default mailbox so campaigns for this list pick the right sender automatically (see list_mailboxes).`,
+    {
+      name: z.string().max(255).describe('List name'),
+      type: z.enum(['email', 'sms']).optional().describe('Channel (default: email)'),
+      description: z.string().max(1000).optional().describe('What this audience is'),
+      contact_list_group_id: z.number().optional().describe('Group to file the list under'),
+      default_mailbox_id: z.number().optional().describe('Default sender mailbox for email campaigns (see list_mailboxes)'),
+      default_sms_provider_id: z.number().optional().describe('Default SMS provider (see list_sms_providers)'),
+      double_opt_in: z.boolean().optional().describe('Require confirmation of the subscription (default: false)'),
+      resubscription_behavior: z.enum(['reset_date', 'keep_original_date']).optional().describe('Whether a returning contact gets a fresh signup date, which also restarts date-based autoresponders (default: reset_date)'),
+      max_subscribers: z.number().min(0).optional().describe('Cap on members; 0 means unlimited'),
+      is_public: z.boolean().optional().describe('Whether the list is publicly selectable in preference centres'),
+      timezone: z.string().optional().describe('List timezone, e.g. "Europe/Warsaw"'),
+    },
+    async (input) => {
+      try {
+        return ok(await api.createContactList(compact(input) as ContactListCreateInput));
+      } catch (error) {
+        return fail(error);
+      }
+    }
+  );
+
+  // Update Contact List
+  server.tool(
+    'update_contact_list',
+    `Update a contact list's settings. Only the fields you pass are changed; the rest of the list configuration is preserved.
+
+Note: changing resubscription_behavior or double_opt_in affects future signups only, never existing members.`,
+    {
+      list_id: z.number().describe('Contact list ID'),
+      name: z.string().max(255).optional().describe('New name'),
+      description: z.string().max(1000).optional().describe('New description'),
+      contact_list_group_id: z.number().optional().describe('Move the list to another group'),
+      default_mailbox_id: z.number().optional().describe('Default sender mailbox'),
+      default_sms_provider_id: z.number().optional().describe('Default SMS provider'),
+      double_opt_in: z.boolean().optional().describe('Require confirmation of the subscription'),
+      resubscription_behavior: z.enum(['reset_date', 'keep_original_date']).optional().describe('Signup-date handling for returning contacts'),
+      max_subscribers: z.number().min(0).optional().describe('Cap on members; 0 means unlimited'),
+      signups_blocked: z.boolean().optional().describe('Stop accepting new signups'),
+      is_public: z.boolean().optional().describe('Publicly selectable in preference centres'),
+      timezone: z.string().optional().describe('List timezone'),
+      webhook_url: z.string().url().optional().describe('URL notified about this list\'s subscriber events'),
+      webhook_events: z.array(z.string()).optional().describe('Events to deliver, e.g. ["subscriber.subscribed","subscriber.unsubscribed","subscriber.bounced"]'),
+    },
+    async ({ list_id, ...input }) => {
+      try {
+        return ok(await api.updateContactList(list_id, compact(input) as ContactListUpdateInput));
+      } catch (error) {
+        return fail(error);
+      }
+    }
+  );
+
+  // Delete Contact List
+  server.tool(
+    'delete_contact_list',
+    `Delete a contact list. The contacts themselves are NOT deleted — they keep their other memberships and stay in the account.
+
+SAFETY: deleting a list that still has members is refused unless confirm=true. Show the user the member count and get explicit approval before setting it.`,
+    {
+      list_id: z.number().describe('Contact list ID'),
+      confirm: z.boolean().optional().describe('Required when the list still has members. Only set after the user approved.'),
+    },
+    async ({ list_id, confirm }) => {
+      try {
+        return ok(await api.deleteContactList(list_id, confirm ?? false));
+      } catch (error) {
+        return fail(error);
       }
     }
   );

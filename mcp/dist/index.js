@@ -23,7 +23,7 @@ import { loadConfig, validateConfig } from './config.js';
 import { NetSendoApiClient } from './api-client.js';
 import { registerAllTools } from './tools/index.js';
 const SERVER_NAME = 'netsendo-mcp';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = '1.4.0';
 // Parse CLI arguments
 program
     .name('netsendo-mcp')
@@ -80,7 +80,14 @@ async function main() {
                             api_url: config.apiUrl,
                             capabilities: [
                                 'Subscriber management',
-                                'Contact lists',
+                                'Contact lists (create, update, delete, stats)',
+                                'List import (CSV, TSV, JSON, plain addresses) with dry-run preview',
+                                'List export (inline JSON/CSV/NDJSON, cursor-paged) and queued CSV',
+                                'List hygiene (health report, cleaning, deduplication, deliverability verification)',
+                                'Bulk membership operations (add, remove, status, move, copy, tag)',
+                                'Activity feed and engagement analytics',
+                                'Suppression list (account-wide do-not-mail)',
+                                'Notifications to the account owner',
                                 'Tags',
                                 'Email campaigns',
                                 'SMS messaging',
@@ -136,6 +143,41 @@ async function main() {
             };
         }
     });
+    // Contact list directory — lets an assistant pick the right list without a
+    // tool round-trip, and see at a glance which ones look neglected.
+    server.resource('netsendo://lists', 'Contact lists with size, channel and growth indicators', async () => {
+        try {
+            const lists = await api.listContactLists({ per_page: 100 });
+            return {
+                contents: [{
+                        uri: 'netsendo://lists',
+                        mimeType: 'application/json',
+                        text: JSON.stringify({
+                            total: lists.meta.total,
+                            lists: lists.data.map(l => ({
+                                id: l.id,
+                                name: l.name,
+                                description: l.description,
+                                subscribers: l.subscribers_count,
+                                double_opt_in: l.double_opt_in,
+                                default_mailbox: l.default_mailbox?.from_email ?? null,
+                                created_at: l.created_at,
+                            })),
+                            hint: 'Use get_list_stats for a single list, analyze_list_health for data-quality problems, get_list_engagement for performance.',
+                        }, null, 2),
+                    }],
+            };
+        }
+        catch (error) {
+            return {
+                contents: [{
+                        uri: 'netsendo://lists',
+                        mimeType: 'text/plain',
+                        text: `Error fetching contact lists: ${error.message}`,
+                    }],
+            };
+        }
+    });
     // Add prompts for common tasks
     server.prompt('analyze_subscribers', 'Analyze subscriber list for quality and engagement patterns', {
         list_id: z.string().optional().describe('Optional: specific list ID to analyze'),
@@ -185,24 +227,77 @@ Requirements:
                 },
             }],
     }));
-    server.prompt('cleanup_list', 'Identify and clean up inactive or problematic subscribers', {}, async () => ({
+    server.prompt('cleanup_list', 'Audit a list for deliverability problems and propose a safe clean-up plan', {
+        list_id: z.string().optional().describe('Optional: specific list ID to clean up'),
+    }, async ({ list_id }) => ({
         messages: [{
                 role: 'user',
                 content: {
                     type: 'text',
-                    text: `Help me clean up my subscriber lists in NetSendo.
+                    text: `Audit and clean up ${list_id ? `contact list ID ${list_id}` : 'my contact lists'} in NetSendo.
 
-Use the available tools to:
-1. List all contact lists and their subscriber counts
-2. Identify subscribers with status 'bounced' or 'complained'
-3. Find subscribers who haven't engaged (if engagement data available)
+Steps:
+1. ${list_id ? `Run analyze_list_health on list ${list_id}` : 'Use list_contact_lists, then analyze_list_health on the largest lists'} to get the health score, per-category counts and recommendations.
+2. Run verify_list_emails to see how much of the audience is actually deliverable.
+3. Run dedupe_list with dry_run=true to see whether duplicates exist.
+4. For every category worth acting on, run clean_list with dry_run=true so we can see exactly who would be affected.
 
-Then provide recommendations for:
-- Subscribers to remove or unsubscribe
-- Lists that might need attention
-- Best practices for maintaining list hygiene
+Then present:
+- The health score and the biggest problems, with numbers
+- A concrete plan: which category, which action, how many contacts
+- What I would lose by acting, and what it costs me to do nothing
 
-Important: Only suggest deletions, don't execute them without my confirmation.`,
+Rules:
+- Never execute a clean-up with dry_run=false until I approve the plan.
+- Never use action "delete" or "suppress" unless I ask for it explicitly — prefer "unsubscribe" or "remove".
+- For never_engaged and dormant contacts, propose tagging them for a win-back campaign before any removal.`,
+                },
+            }],
+    }));
+    server.prompt('import_contacts', 'Import contacts onto a list safely, with a preview before anything is written', {
+        list_id: z.string().optional().describe('Target contact list ID'),
+    }, async ({ list_id }) => ({
+        messages: [{
+                role: 'user',
+                content: {
+                    type: 'text',
+                    text: `Help me import contacts ${list_id ? `into contact list ID ${list_id}` : 'into one of my NetSendo lists'}.
+
+Steps:
+1. ${list_id ? '' : 'Use list_contact_lists to confirm the target list and its channel (email or sms).\n2. '}Take the data I provide in whatever shape it arrives — pasted CSV, a spreadsheet export, JSON records or a bare list of addresses.
+${list_id ? '2' : '3'}. Run preview_list_import FIRST. Show me:
+   - the detected column mapping (so I can catch a wrong column before it lands in the database)
+   - how many contacts would be created, updated, reactivated, skipped and rejected
+   - the problem rows: invalid syntax, typo domains with suggested corrections, disposable and role addresses, duplicates
+${list_id ? '3' : '4'}. Recommend the import options based on what you found — for example fix_typos when there are misspelled provider domains, or skip_role when the file is full of shared inboxes.
+${list_id ? '4' : '5'}. Only after I approve, run import_subscribers and report the final counts.
+
+Also tell me whether the import should trigger the list's welcome sequence (trigger_automations). Default is yes — but for migrating an existing audience it usually should be no.`,
+                },
+            }],
+    }));
+    server.prompt('list_report', 'Report on how a list is performing and what to do next', {
+        list_id: z.string().describe('Contact list ID to report on'),
+        days: z.string().optional().describe('Reporting window in days (default: 30)'),
+    }, async ({ list_id, days }) => ({
+        messages: [{
+                role: 'user',
+                content: {
+                    type: 'text',
+                    text: `Give me a performance report for NetSendo contact list ID ${list_id} over the last ${days ?? 30} days.
+
+Gather:
+1. get_list_stats — audience composition and configuration
+2. get_list_engagement with days=${days ?? 30} — growth, churn, open/click rates, best messages and links, most engaged contacts
+3. get_list_activity — anything unusual in the event stream (spikes in unsubscribes or bounces, failed sends)
+4. analyze_list_health — data-quality problems dragging the numbers down
+
+Then write a short report:
+- How the list is doing, in plain language, with the numbers that matter
+- What changed and what likely caused it
+- The three most valuable things to do next, in priority order
+
+Be direct about bad news: if the list is shrinking, the engagement is collapsing or the bounce rate threatens the sending reputation, say so plainly.`,
                 },
             }],
     }));

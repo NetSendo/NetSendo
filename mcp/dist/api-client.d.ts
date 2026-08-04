@@ -4,7 +4,7 @@
  * HTTP client for communicating with NetSendo REST API v1
  */
 import type { Config } from './config.js';
-import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStats } from './types.js';
+import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStats, ContactListCreateInput, ContactListUpdateInput, ListStats, ListImportPayload, ListImportPreview, ListImportResult, ListExportOptions, ListExportResult, ListHygieneReport, ListCleanResult, ListDedupeResult, ListVerifyResult, HygieneCategory, HygieneAction, MemberSelection, ListActivityFeed, ListEngagement, SubscriberActivity, SuppressionEntry, NotificationInput } from './types.js';
 export declare class NetSendoApiError extends Error {
     statusCode: number;
     errors?: Record<string, string[]> | undefined;
@@ -35,7 +35,172 @@ export declare class NetSendoApiClient {
     getListSubscribers(listId: number, params?: {
         page?: number;
         per_page?: number;
+        status?: string;
     }): Promise<PaginatedResponse<Subscriber>>;
+    createContactList(data: ContactListCreateInput): Promise<ContactList>;
+    updateContactList(id: number, data: ContactListUpdateInput): Promise<ContactList>;
+    deleteContactList(id: number, confirm?: boolean): Promise<{
+        message: string;
+        list_id: number;
+    }>;
+    getListStats(id: number): Promise<ListStats>;
+    previewListImport(listId: number, payload: ListImportPayload): Promise<ListImportPreview>;
+    importToList(listId: number, payload: ListImportPayload): Promise<{
+        data: ListImportResult | ListImportPreview;
+        message?: string;
+    }>;
+    exportList(listId: number, options?: ListExportOptions): Promise<ListExportResult>;
+    getExportFields(listId: number): Promise<{
+        standard: string[];
+        custom_fields: Array<{
+            id: number;
+            name: string;
+            label: string;
+            type: string;
+        }>;
+    }>;
+    /** Queue the classic CSV export; the account owner receives a download link. */
+    queueListExport(listId: number): Promise<{
+        message: string;
+        list_id: number;
+    }>;
+    analyzeListHygiene(listId: number, params?: {
+        unconfirmed_after_days?: number;
+        never_engaged_after_days?: number;
+        dormant_after_days?: number;
+        soft_bounce_threshold?: number;
+        sample_size?: number;
+        max_scan?: number;
+    }): Promise<ListHygieneReport>;
+    cleanList(listId: number, payload: {
+        categories: HygieneCategory[];
+        action: HygieneAction;
+        tag?: string;
+        dry_run?: boolean;
+        confirm?: boolean;
+        limit?: number;
+        reason?: string;
+        unconfirmed_after_days?: number;
+        never_engaged_after_days?: number;
+        dormant_after_days?: number;
+        soft_bounce_threshold?: number;
+    }): Promise<{
+        data: ListCleanResult;
+        message: string;
+    }>;
+    dedupeList(listId: number, payload?: {
+        dry_run?: boolean;
+        confirm?: boolean;
+        limit?: number;
+        keep?: 'oldest' | 'most_engaged';
+    }): Promise<{
+        data: ListDedupeResult;
+        message: string;
+    }>;
+    verifyListEmails(listId: number, payload?: {
+        limit?: number;
+        status?: string;
+        check_mx?: boolean;
+        max_domains?: number;
+    }): Promise<ListVerifyResult>;
+    getHygieneOptions(): Promise<{
+        categories: string[];
+        actions: string[];
+        destructive_actions: string[];
+        max_scan: number;
+    }>;
+    addListMembers(listId: number, payload: MemberSelection & {
+        source_list_id?: number;
+        source?: string;
+        trigger_automations?: boolean;
+    }): Promise<{
+        data: Record<string, number>;
+        message: string;
+    }>;
+    removeListMembers(listId: number, payload: MemberSelection & {
+        confirm?: boolean;
+    }): Promise<{
+        data: Record<string, number>;
+        message: string;
+    }>;
+    setListMemberStatus(listId: number, payload: MemberSelection & {
+        status: 'active' | 'inactive' | 'unsubscribed' | 'bounced';
+        reason?: string;
+        trigger_automations?: boolean;
+    }): Promise<{
+        data: Record<string, unknown>;
+        message: string;
+    }>;
+    transferListMembers(listId: number, mode: 'move' | 'copy', payload: MemberSelection & {
+        target_list_id: number;
+        source?: string;
+        trigger_automations?: boolean;
+    }): Promise<{
+        data: Record<string, unknown>;
+        message: string;
+    }>;
+    tagListMembers(listId: number, payload: MemberSelection & {
+        add?: string[];
+        remove?: string[];
+    }): Promise<{
+        data: Record<string, unknown>;
+        message: string;
+    }>;
+    getListActivity(listId: number, params?: {
+        days?: number;
+        limit?: number;
+        types?: string[];
+    }): Promise<ListActivityFeed>;
+    getListEngagement(listId: number, params?: {
+        days?: number;
+    }): Promise<ListEngagement>;
+    getSubscriberActivity(subscriberId: number, params?: {
+        days?: number;
+        limit?: number;
+    }): Promise<SubscriberActivity>;
+    listSuppressions(params?: {
+        search?: string;
+        reason?: string;
+        per_page?: number;
+    }): Promise<{
+        data: SuppressionEntry[];
+        meta: {
+            total: number;
+            current_page: number;
+            last_page: number;
+        };
+    }>;
+    addSuppressions(payload: {
+        emails: string[];
+        reason?: string;
+        unsubscribe_existing?: boolean;
+    }): Promise<{
+        data: {
+            suppressed: number;
+            memberships_unsubscribed: number;
+            reason: string;
+        };
+        message: string;
+    }>;
+    removeSuppressions(emails: string[]): Promise<{
+        data: {
+            removed: number;
+        };
+        message: string;
+    }>;
+    listNotifications(params?: {
+        unread_only?: boolean;
+        limit?: number;
+    }): Promise<{
+        data: Array<Record<string, unknown>>;
+        meta: {
+            unread: number;
+        };
+    }>;
+    createNotification(payload: NotificationInput): Promise<{
+        data: Record<string, unknown>;
+        message: string;
+    }>;
     listTags(): Promise<Tag[]>;
     getTag(id: number): Promise<Tag>;
     listCustomFields(): Promise<CustomField[]>;

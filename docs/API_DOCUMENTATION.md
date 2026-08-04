@@ -28,7 +28,9 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | `subscribers:read`  | Odczyt subskrybentów                    |
 | `subscribers:write` | Tworzenie/edycja/usuwanie subskrybentów |
 | `lists:read`        | Odczyt list kontaktów                   |
+| `lists:write`       | Tworzenie/edycja/usuwanie list, import, czyszczenie, operacje na członkostwie |
 | `tags:read`         | Odczyt tagów                            |
+| `notifications:write` | Wysyłanie powiadomień do właściciela konta |
 | `webhooks:read`     | Odczyt webhooków                        |
 | `webhooks:write`    | Tworzenie/edycja/usuwanie webhooków     |
 | `email:read`        | Odczyt statusu email i mailboxów        |
@@ -37,6 +39,11 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | `sms:write`         | Wysyłanie SMS                           |
 
 > **Uwaga:** Uprawnienie `subscribers:write` automatycznie obejmuje `subscribers:read`.
+
+> **Migracja:** `lists:write` i `notifications:write` doszły wraz z API zarządzania
+> listami. Klucze utworzone wcześniej dostają je automatycznie, o ile miały już
+> `subscribers:write` — klucze celowo wąskie zachowują swój zakres i trzeba je
+> rozszerzyć ręcznie w panelu (**Klucze API**).
 
 ---
 
@@ -475,6 +482,238 @@ GET /api/v1/lists/{id}/subscribers
 | ---------- | ------- | ------------------- |
 | `status`   | string  | Filtruj po statusie |
 | `per_page` | integer | Wyników na stronę   |
+
+---
+
+### Statystyki listy
+
+```http
+GET /api/v1/lists/{id}/stats
+```
+
+Zwraca podział członków po statusach, udział zaangażowanych (kto kiedykolwiek otworzył
+lub kliknął), przyrost z ostatnich 30 dni oraz konfigurację wpływającą na wysyłkę
+(double opt-in, zachowanie przy ponownym zapisie, limity, domyślna skrzynka, webhook).
+
+---
+
+### Utwórz / zaktualizuj / usuń listę
+
+```http
+POST   /api/v1/lists
+PUT    /api/v1/lists/{id}
+DELETE /api/v1/lists/{id}?confirm=1
+```
+
+**Wymaga `lists:write`.**
+
+| Pole                        | Typ     | Opis                                                                |
+| --------------------------- | ------- | ------------------------------------------------------------------- |
+| `name`                      | string  | Nazwa listy (wymagane przy POST)                                    |
+| `type`                      | string  | `email` (domyślnie) lub `sms` — kanał listy                         |
+| `description`               | string  | Opis                                                                |
+| `contact_list_group_id`     | integer | Grupa                                                               |
+| `default_mailbox_id`        | integer | Domyślna skrzynka nadawcza                                          |
+| `default_sms_provider_id`   | integer | Domyślny provider SMS                                               |
+| `double_opt_in`             | bool    | Potwierdzanie zapisu                                                |
+| `resubscription_behavior`   | string  | `reset_date` lub `keep_original_date`                               |
+| `max_subscribers`           | integer | Limit członków (0 = bez limitu)                                     |
+| `signups_blocked`           | bool    | Wstrzymaj przyjmowanie zapisów (tylko PUT)                          |
+| `webhook_url`               | string  | URL powiadamiany o zdarzeniach subskrybentów (tylko PUT)            |
+| `webhook_events`            | array   | Zdarzenia do wysyłki, np. `["subscriber.subscribed"]` (tylko PUT)   |
+
+`PUT` scala ustawienia — pola, których nie przesłano, zostają bez zmian.
+`DELETE` na liście z członkami zwraca **409** dopóki nie podasz `confirm=1`.
+Subskrybenci nie są usuwani — znika sama lista.
+
+---
+
+### Import subskrybentów
+
+```http
+POST /api/v1/lists/{id}/import/preview
+POST /api/v1/lists/{id}/import
+```
+
+**Wymaga `lists:read` (podgląd) / `lists:write` (import).**
+
+| Pole             | Typ    | Opis                                                                 |
+| ---------------- | ------ | -------------------------------------------------------------------- |
+| `format`         | string | `csv` (domyślnie), `tsv`, `json`, `emails`                           |
+| `data`           | string | Surowy tekst dla `csv`/`tsv`/`emails`                                |
+| `records`        | array  | Tablica obiektów dla `format=json`                                   |
+| `delimiter`      | string | Wymuś separator CSV; domyślnie wykrywany (`,` `;` tab `\|`)          |
+| `has_header`     | bool   | Wymuś obsługę wiersza nagłówka; domyślnie wykrywana                  |
+| `column_mapping` | object | `{"0":"email","1":"first_name","3":"custom:miasto","2":"ignore"}`    |
+| `dry_run`        | bool   | Zwróć podgląd zamiast zapisywać                                      |
+
+**Opcje bezpieczeństwa importu:**
+
+| Pole                  | Domyślnie | Działanie                                                |
+| --------------------- | --------- | -------------------------------------------------------- |
+| `skip_invalid`        | `true`    | Pomiń adresy z błędną składnią                           |
+| `skip_disposable`     | `true`    | Pomiń skrzynki jednorazowe (mailinator.com itp.)         |
+| `skip_suppressed`     | `true`    | Pomiń adresy z listy wykluczeń                           |
+| `skip_role`           | `false`   | Pomiń adresy funkcyjne (`biuro@`, `info@`)               |
+| `fix_typos`           | `false`   | Popraw literówki w domenach (`gmial.com` → `gmail.com`)  |
+| `update_existing`     | `true`    | Uzupełnij braki na istniejących kontaktach               |
+| `trigger_automations` | `true`    | Uruchom sekwencje powitalne i webhooki                   |
+| `detect_gender`       | `true`    | Wykryj płeć z imienia                                    |
+| `status`              | `active`  | Status członkostwa                                       |
+| `source`              | —         | Etykieta źródła zapisana na członkostwie                 |
+| `tags`                | —         | Nazwy tagów dla wszystkich zaimportowanych               |
+
+Limit 5000 wierszy na żądanie. Duplikaty są składane po realnej skrzynce, więc
+`JAN@x.pl`, `jan@x.pl` oraz `j.an+news@gmail.com` trafiają na jeden kontakt.
+
+---
+
+### Eksport inline
+
+```http
+GET /api/v1/lists/{id}/export?format=json&status=active&limit=500
+GET /api/v1/lists/{id}/export/fields
+```
+
+**Wymaga `subscribers:read`.**
+
+| Parametr                                  | Opis                                                       |
+| ----------------------------------------- | ---------------------------------------------------------- |
+| `format`                                  | `json` (domyślnie), `csv`, `ndjson`                        |
+| `fields[]`                                | Kolumny, np. `fields[]=email&fields[]=tags`                |
+| `status`                                  | `active` (domyślnie), `unsubscribed`, `bounced`, `all`     |
+| `tag_ids[]`                               | Tylko kontakty z którymś z tagów                           |
+| `subscribed_after` / `subscribed_before`  | Zakres dat zapisu                                          |
+| `engaged`                                 | `false` = tylko kontakty bez otwarć i kliknięć             |
+| `limit` / `cursor`                        | Max 5000 na wywołanie; przy `has_more` podaj `next_cursor` |
+
+`POST /api/v1/lists/{id}/export` (bez zmian) kolejkuje pełny eksport CSV i wysyła
+właścicielowi konta link do pobrania.
+
+---
+
+### Higiena listy
+
+```http
+GET  /api/v1/lists/hygiene-options
+GET  /api/v1/lists/{id}/hygiene
+POST /api/v1/lists/{id}/hygiene/clean
+POST /api/v1/lists/{id}/hygiene/dedupe
+POST /api/v1/lists/{id}/hygiene/verify
+```
+
+`GET .../hygiene` (wymaga `lists:read`) zwraca ocenę zdrowia 0–100, liczności w
+kategoriach wraz z próbkami, podział zaangażowania i uszeregowane rekomendacje.
+
+**Kategorie:** `invalid_syntax`, `typo_domain`, `disposable_domain`, `role_address`,
+`missing_contact`, `duplicate`, `hard_bounced`, `soft_bounce_risk`, `suppressed`,
+`unsubscribed`, `unconfirmed`, `globally_inactive`, `never_engaged`, `dormant`.
+
+**Akcje `clean`:** `unsubscribe`, `remove`, `tag` (wymaga pola `tag`) oraz
+nieodwracalne `delete` i `suppress`.
+
+| Pole         | Domyślnie | Opis                                                        |
+| ------------ | --------- | ----------------------------------------------------------- |
+| `categories` | —         | Wymagane; kategorie do przetworzenia                        |
+| `action`     | —         | Wymagane                                                    |
+| `dry_run`    | `true`    | Bez tego flagi ustawionej na `false` nic nie jest zapisywane |
+| `confirm`    | `false`   | Wymagane dla `delete` i `suppress` przy `dry_run=false`      |
+| `limit`      | `1000`    | Maksimum przetworzonych członków                            |
+
+Progi (`unconfirmed_after_days` 14, `never_engaged_after_days` 90,
+`dormant_after_days` 180, `soft_bounce_threshold` z ustawień listy lub 3) można
+nadpisać w każdym wywołaniu.
+
+`dedupe` scala kontakty wskazujące na tę samą skrzynkę — rekord, który zostaje,
+przejmuje członkostwa, tagi, pola własne i wyższe liczniki zaangażowania; również
+domyślnie `dry_run=true` i wymaga `confirm=true` do zapisu.
+
+`verify` sprawdza składnię oraz rekordy MX (zapytania DNS per domena, cache 24 h)
+i zwraca podział na `deliverable` / `risky` / `undeliverable`.
+
+---
+
+### Operacje na członkostwie
+
+```http
+POST /api/v1/lists/{id}/members          # dodaj istniejące kontakty
+POST /api/v1/lists/{id}/members/remove   # odłącz od listy
+POST /api/v1/lists/{id}/members/status   # masowa zmiana statusu
+POST /api/v1/lists/{id}/members/move     # przenieś na inną listę
+POST /api/v1/lists/{id}/members/copy     # skopiuj na inną listę
+POST /api/v1/lists/{id}/members/tags     # dodaj/usuń tagi na segmencie
+```
+
+**Wymaga `lists:write`.** Wszystkie przyjmują ten sam blok wyboru (max 5000 kontaktów):
+
+```json
+{
+  "subscriber_ids": [12, 44],
+  "emails": ["anna@example.com"],
+  "filter": {
+    "status": "active",
+    "tag_ids": [3],
+    "engaged": false,
+    "never_opened": true,
+    "subscribed_before": "2025-01-01",
+    "limit": 500
+  }
+}
+```
+
+`trigger_automations: false` przenosi audytorium bez ponownego uruchamiania sekwencji
+powitalnej. `move`/`copy` wymagają list tego samego kanału. Usuwanie wybrane przez
+`filter` wymaga `confirm=true`.
+
+---
+
+### Aktywność i zaangażowanie
+
+```http
+GET /api/v1/lists/{id}/activity?days=30&limit=50&types[]=unsubscribed&types[]=bounced
+GET /api/v1/lists/{id}/engagement?days=30
+GET /api/v1/subscribers/{id}/activity
+```
+
+`activity` scala zdarzenia z członkostw (zapisy, potwierdzenia, wypisy), z trackingu
+(otwarcia, kliknięcia) i z kolejki wysyłki (`sent`, `failed`) w jeden strumień.
+
+`engagement` zwraca skład audytorium, przyrost i churn z serią dzienną, metryki
+dostarczalności (open rate, click rate, CTOR), najlepsze wiadomości i linki, najbardziej
+zaangażowane kontakty oraz rozmiar nieaktywnej części listy.
+
+`subscribers/{id}/activity` daje pełną historię jednego kontaktu wraz z listami,
+tagami i liczbą wiadomości wciąż zakolejkowanych.
+
+---
+
+## 🚫 Lista wykluczeń (Suppressions)
+
+```http
+GET    /api/v1/suppressions
+POST   /api/v1/suppressions
+DELETE /api/v1/suppressions
+```
+
+`POST` (`subscribers:write`) przyjmuje `emails[]`, opcjonalnie `reason` oraz
+`unsubscribe_existing` (domyślnie `true` — wypisuje adres ze wszystkich list).
+Wykluczenie działa na całe konto i jest respektowane przy każdym imporcie.
+`DELETE` zdejmuje blokadę, ale **nikogo nie zapisuje ponownie** — zgodę trzeba zebrać
+normalną ścieżką.
+
+---
+
+## 🔔 Powiadomienia (Notifications)
+
+```http
+GET  /api/v1/notifications
+POST /api/v1/notifications
+```
+
+`POST` (`notifications:write`) tworzy powiadomienie w centrum powiadomień właściciela
+konta: `title` (wymagane), `message`, `type` (`info`/`success`/`warning`/`error`),
+`list_id` (podlinkowuje listę) lub `action_url`, oraz `data` z dowolnym ładunkiem.
+Endpoint nie wysyła niczego do subskrybentów ani na zewnątrz konta.
 
 ---
 

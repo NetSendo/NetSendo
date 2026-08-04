@@ -445,4 +445,435 @@ export interface ApiErrorResponse {
     message: string;
     errors?: Record<string, string[]>;
 }
+export type ImportFormat = 'csv' | 'tsv' | 'json' | 'emails';
+export interface ListImportPayload {
+    format?: ImportFormat;
+    /** Raw text for csv/tsv/emails */
+    data?: string;
+    /** Array of objects for format=json */
+    records?: Array<Record<string, unknown>>;
+    delimiter?: string;
+    has_header?: boolean;
+    /** Column index (or header/key name) → field name, 'custom:<name>' or 'ignore' */
+    column_mapping?: Record<string, string>;
+    dry_run?: boolean;
+    update_existing?: boolean;
+    skip_invalid?: boolean;
+    skip_role?: boolean;
+    skip_disposable?: boolean;
+    skip_suppressed?: boolean;
+    fix_typos?: boolean;
+    trigger_automations?: boolean;
+    detect_gender?: boolean;
+    status?: 'active' | 'inactive' | 'unsubscribed';
+    source?: string;
+    tags?: Array<string | number>;
+    sample_size?: number;
+}
+export interface ImportPlanSummary {
+    total: number;
+    create: number;
+    update: number;
+    reactivate: number;
+    already_active: number;
+    skipped: number;
+    invalid: number;
+    duplicate_in_payload: number;
+    issues: Record<string, number>;
+}
+export interface ListImportPreview {
+    list: {
+        id: number;
+        name: string;
+        type: string;
+    };
+    detected: {
+        columns: string[];
+        header: string[] | null;
+        delimiter: string | null;
+        mapping: Record<string, string>;
+    };
+    summary: ImportPlanSummary;
+    warnings: string[];
+    sample: Array<{
+        row: number;
+        email: string | null;
+        phone: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        action: string;
+        reason: string | null;
+        issues: string[];
+        suggestion: string | null;
+    }>;
+    problem_rows: Array<{
+        row: number;
+        email: string | null;
+        action: string;
+        reason: string | null;
+        issues: string[];
+        suggestion: string | null;
+    }>;
+}
+export interface ListImportResult {
+    created: number;
+    updated: number;
+    reactivated: number;
+    already_active: number;
+    skipped: number;
+    invalid: number;
+    failed: number;
+    errors: Array<{
+        row: number;
+        email: string | null;
+        error: string;
+    }>;
+    subscriber_ids: number[];
+    plan_summary: ImportPlanSummary;
+    warnings: string[];
+}
+export interface ListExportOptions {
+    format?: 'json' | 'csv' | 'ndjson';
+    fields?: string[];
+    status?: 'active' | 'inactive' | 'unsubscribed' | 'bounced' | 'all';
+    tag_ids?: number[];
+    subscribed_after?: string;
+    subscribed_before?: string;
+    engaged?: boolean;
+    limit?: number;
+    cursor?: number;
+    delimiter?: string;
+}
+export interface ListExportResult {
+    list: {
+        id: number;
+        name: string;
+        type: string;
+    };
+    format: string;
+    fields: string[];
+    filters: Record<string, unknown>;
+    count: number;
+    has_more: boolean;
+    next_cursor: number | null;
+    /** Present when format=json */
+    records?: Array<Record<string, unknown>>;
+    /** Present when format=csv or ndjson */
+    data?: string;
+}
+export type HygieneCategory = 'missing_contact' | 'invalid_syntax' | 'typo_domain' | 'disposable_domain' | 'role_address' | 'duplicate' | 'hard_bounced' | 'soft_bounce_risk' | 'unsubscribed' | 'unconfirmed' | 'suppressed' | 'globally_inactive' | 'never_engaged' | 'dormant';
+export type HygieneAction = 'unsubscribe' | 'remove' | 'delete' | 'tag' | 'suppress';
+export interface ListHygieneReport {
+    list: {
+        id: number;
+        name: string;
+        type: string;
+        double_opt_in: boolean;
+    };
+    scanned: number;
+    truncated: boolean;
+    totals: {
+        members: number;
+        active: number;
+        unsubscribed: number;
+        bounced: number;
+        other_status: number;
+        confirmed: number;
+    };
+    engagement: {
+        engaged: number;
+        never_engaged: number;
+        dormant: number;
+        engagement_rate: number;
+    };
+    issues: Record<HygieneCategory, {
+        count: number;
+        sample: Array<{
+            subscriber_id: number;
+            email: string | null;
+            status: string;
+            detail: string | null;
+        }>;
+    }>;
+    health_score: number;
+    thresholds: Record<string, number>;
+    recommendations: Array<{
+        category: HygieneCategory;
+        count: number;
+        share_percent: number;
+        suggested_action: HygieneAction;
+        severity: 'critical' | 'high' | 'medium' | 'low';
+        description: string;
+    }>;
+}
+export interface ListCleanResult {
+    list: {
+        id: number;
+        name: string;
+    };
+    action: HygieneAction;
+    categories: HygieneCategory[];
+    dry_run: boolean;
+    matched: number;
+    limited_to: number;
+    affected: number;
+    failed: number;
+    by_category: Record<string, number>;
+    sample: Array<{
+        subscriber_id: number;
+        email: string | null;
+        categories: string[];
+    }>;
+    errors: Array<{
+        subscriber_id: number;
+        error: string;
+    }>;
+}
+export interface ListDedupeResult {
+    list: {
+        id: number;
+        name: string;
+    };
+    dry_run: boolean;
+    duplicate_groups: number;
+    duplicate_records: number;
+    merged: number;
+    failed: number;
+    keep_strategy: string;
+    groups: Array<{
+        canonical_email: string;
+        keep: {
+            id: number;
+            email: string;
+        };
+        merge: Array<{
+            id: number;
+            email: string;
+        }>;
+    }>;
+    errors: Array<{
+        subscriber_id: number;
+        error: string;
+    }>;
+}
+export interface ListVerifyResult {
+    list: {
+        id: number;
+        name: string;
+    };
+    checked: number;
+    status_filter: string;
+    verdicts: {
+        deliverable: number;
+        risky: number;
+        undeliverable: number;
+        unknown: number;
+    };
+    deliverable_rate: number;
+    domains: Array<{
+        domain: string;
+        addresses: number;
+        has_mx: boolean;
+    }>;
+    domains_without_mx: Array<{
+        domain: string;
+        addresses: number;
+        has_mx: boolean;
+    }>;
+    problems: Array<{
+        subscriber_id: number;
+        email: string | null;
+        verdict: string;
+        issues: string[];
+        suggestion: string | null;
+    }>;
+}
+export interface MemberSelection {
+    subscriber_ids?: number[];
+    emails?: string[];
+    filter?: {
+        status?: 'active' | 'inactive' | 'unsubscribed' | 'bounced' | 'all';
+        tag_ids?: number[];
+        engaged?: boolean;
+        subscribed_before?: string;
+        subscribed_after?: string;
+        never_opened?: boolean;
+        limit?: number;
+    };
+}
+export interface ListActivityFeed {
+    list: {
+        id: number;
+        name: string;
+    };
+    window_days: number;
+    since: string;
+    event_counts: Record<string, number>;
+    events: Array<{
+        type: string;
+        occurred_at: string;
+        subscriber_id: number;
+        email: string | null;
+        name: string | null;
+        detail: Record<string, unknown> | null;
+    }>;
+    note: string | null;
+}
+export interface ListEngagement {
+    list: {
+        id: number;
+        name: string;
+        type: string;
+    };
+    window_days: number;
+    since: string;
+    audience: {
+        members: number;
+        active: number;
+        unsubscribed: number;
+        bounced: number;
+        by_status: Record<string, number>;
+    };
+    growth: {
+        added: number;
+        lost: number;
+        net: number;
+        churn_rate: number;
+        daily: Array<{
+            date: string;
+            added: number;
+            lost: number;
+        }>;
+    };
+    delivery: {
+        sent: number;
+        total_opens: number;
+        unique_openers: number;
+        total_clicks: number;
+        unique_clickers: number;
+        open_rate: number;
+        click_rate: number;
+        click_to_open_rate: number;
+    };
+    top_messages: Array<{
+        message_id: number;
+        subject: string;
+        opens: number;
+        unique_openers: number;
+    }>;
+    top_links: Array<{
+        url: string;
+        clicks: number;
+        unique_clickers: number;
+    }>;
+    most_engaged: Array<{
+        subscriber_id: number;
+        email: string | null;
+        name: string | null;
+        opens: number;
+        clicks: number;
+        last_opened_at: string | null;
+        last_clicked_at: string | null;
+    }>;
+    inactive: {
+        never_engaged: number;
+        no_activity_90_days: number;
+    };
+}
+export interface SubscriberActivity {
+    subscriber: {
+        id: number;
+        email: string | null;
+        phone: string | null;
+        name: string | null;
+        is_active_global: boolean;
+        source: string | null;
+        language: string | null;
+        opens_count: number;
+        clicks_count: number;
+        last_opened_at: string | null;
+        last_clicked_at: string | null;
+        created_at: string | null;
+    };
+    tags: Array<{
+        id: number;
+        name: string;
+    }>;
+    lists: Array<{
+        id: number;
+        name: string;
+        status: string;
+        source: string | null;
+        subscribed_at: string | null;
+        confirmed_at: string | null;
+        unsubscribed_at: string | null;
+    }>;
+    pending_messages: number;
+    window_days: number;
+    events: Array<{
+        type: string;
+        occurred_at: string;
+        detail: Record<string, unknown>;
+    }>;
+}
+export interface ListStats {
+    id: number;
+    name: string;
+    type: string;
+    description: string | null;
+    group: string | null;
+    members: {
+        total: number;
+        active: number;
+        unsubscribed: number;
+        bounced: number;
+        by_status: Record<string, number>;
+    };
+    engagement: {
+        openers: number;
+        clickers: number;
+        confirmed: number;
+        open_share_percent: number;
+        click_share_percent: number;
+    };
+    last_30_days: {
+        added: number;
+        lost: number;
+        net: number;
+    };
+    configuration: Record<string, unknown>;
+    created_at: string | null;
+}
+export interface ContactListCreateInput {
+    name: string;
+    type?: 'email' | 'sms';
+    description?: string;
+    contact_list_group_id?: number;
+    default_mailbox_id?: number;
+    default_sms_provider_id?: number;
+    is_public?: boolean;
+    timezone?: string;
+    double_opt_in?: boolean;
+    resubscription_behavior?: 'reset_date' | 'keep_original_date';
+    max_subscribers?: number;
+}
+export interface ContactListUpdateInput extends Partial<ContactListCreateInput> {
+    signups_blocked?: boolean;
+    webhook_url?: string;
+    webhook_events?: string[];
+}
+export interface SuppressionEntry {
+    id: number;
+    email: string;
+    reason: string;
+    suppressed_at: string;
+}
+export interface NotificationInput {
+    type?: 'info' | 'success' | 'warning' | 'error';
+    title: string;
+    message?: string;
+    action_url?: string;
+    list_id?: number;
+    data?: Record<string, unknown>;
+}
 //# sourceMappingURL=types.d.ts.map
