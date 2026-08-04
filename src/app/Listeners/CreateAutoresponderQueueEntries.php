@@ -92,10 +92,18 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                 }
             }
 
-            // Expected send datetime (UTC), anchored to this (re-)signup.
+            // Expected send datetime (UTC). A message can target several lists
+            // and the subscriber may already sit on another of them — the
+            // sequence is then counted from that OLDEST membership, so joining
+            // a second list never restarts a sequence already received.
             // Stored on the entry so CRON does not have to re-derive it from the
             // pivot (whose date may later change or be intentionally stale).
-            $expectedSendDateTime = $message->calculateExpectedSendAt($anchor, $subscriber);
+            $messageAnchor = $message->resolveAnchorMembershipFor($subscriber->id)?->anchor_at;
+
+            $expectedSendDateTime = $message->calculateExpectedSendAt(
+                $messageAnchor && $messageAnchor->lt($anchor) ? $messageAnchor : $anchor,
+                $subscriber
+            );
 
             // Always add to queue regardless of whether time has passed
             // The cron job will catch up on missed operations (e.g., after container restart)

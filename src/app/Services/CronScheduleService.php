@@ -284,6 +284,12 @@ class CronScheduleService
                         continue;
                     }
 
+                    // Członkostwo rozliczeniowe: najstarsza aktywna lista tego
+                    // subskrybenta spośród list wiadomości (patrz Message)
+                    $anchorMembership = $message->type === 'autoresponder'
+                        ? $message->resolveAnchorMembershipFor($subscriber->id)
+                        : null;
+
                     // Dla autoresponderów: sprawdź czy nadszedł termin wysyłki
                     if ($message->type === 'autoresponder' && $message->day !== null) {
                         // Preferred: explicit schedule stored on the entry (anchored
@@ -291,19 +297,12 @@ class CronScheduleService
                         $expectedSendDateTime = $entry->scheduled_for;
 
                         // Legacy entries (created before scheduled_for existed):
-                        // derive from the pivot subscribed_at
-                        if (!$expectedSendDateTime) {
-                            $listIds = $message->contactLists->pluck('id')->toArray();
-                            $pivot = $subscriber->contactLists()
-                                ->whereIn('contact_lists.id', $listIds)
-                                ->first()?->pivot;
-
-                            if ($pivot && $pivot->subscribed_at) {
-                                $expectedSendDateTime = $message->calculateExpectedSendAt(
-                                    Carbon::parse($pivot->subscribed_at),
-                                    $subscriber
-                                );
-                            }
+                        // derive from the anchor membership
+                        if (!$expectedSendDateTime && $anchorMembership?->anchor_at) {
+                            $expectedSendDateTime = $message->calculateExpectedSendAt(
+                                $anchorMembership->anchor_at,
+                                $subscriber
+                            );
                         }
 
                         // If the expected send datetime is in the future, skip for now
@@ -350,8 +349,13 @@ class CronScheduleService
                         }
                     }
 
-                    // Pobierz listę (pierwszą jeśli wiele)
-                    $listId = $message->contactLists->first()?->id;
+                    // Lista, według której rozliczamy tego odbiorcę: najstarsze
+                    // aktywne członkostwo spośród list wiadomości. Wcześniej brana
+                    // była zawsze PIERWSZA lista wiadomości — przy wielu listach
+                    // harmonogram i limit obcej listy blokowały wysyłkę do
+                    // subskrybentów z pozostałych list (cicho, bez śladu w bazie).
+                    $listId = $anchorMembership?->contact_list_id
+                        ?? $message->contactLists->first()?->id;
 
                     // Effective per-minute rate used to stagger this send (issue #21).
                     // Defaults to the global limit; overridden by the list limit below.
@@ -677,24 +681,23 @@ class CronScheduleService
                         continue;
                     }
 
+                    // Członkostwo rozliczeniowe: najstarsza aktywna lista tego
+                    // subskrybenta spośród list wiadomości
+                    $anchorMembership = $message->type === 'autoresponder'
+                        ? $message->resolveAnchorMembershipFor($subscriber->id)
+                        : null;
+
                     // Dla autoresponderów SMS: sprawdź czy nadszedł termin wysyłki
                     if ($message->type === 'autoresponder' && $message->day !== null) {
                         // Preferred: explicit schedule stored on the entry
                         $expectedSendDateTime = $entry->scheduled_for;
 
-                        // Legacy entries: derive from the pivot subscribed_at
-                        if (!$expectedSendDateTime) {
-                            $listIds = $message->contactLists->pluck('id')->toArray();
-                            $pivot = $subscriber->contactLists()
-                                ->whereIn('contact_lists.id', $listIds)
-                                ->first()?->pivot;
-
-                            if ($pivot && $pivot->subscribed_at) {
-                                $expectedSendDateTime = $message->calculateExpectedSendAt(
-                                    Carbon::parse($pivot->subscribed_at),
-                                    $subscriber
-                                );
-                            }
+                        // Legacy entries: derive from the anchor membership
+                        if (!$expectedSendDateTime && $anchorMembership?->anchor_at) {
+                            $expectedSendDateTime = $message->calculateExpectedSendAt(
+                                $anchorMembership->anchor_at,
+                                $subscriber
+                            );
                         }
 
                         // If the expected send datetime is in the future, skip for now
@@ -703,7 +706,9 @@ class CronScheduleService
                         }
                     }
 
-                    $listId = $message->contactLists->first()?->id;
+                    // Harmonogram/limit z listy subskrybenta, nie z pierwszej listy
+                    $listId = $anchorMembership?->contact_list_id
+                        ?? $message->contactLists->first()?->id;
 
                     if ($listId) {
                         if (!$this->isDispatchAllowed($listId)) {

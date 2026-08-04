@@ -222,8 +222,13 @@ class Message extends Model
     }
 
     /**
-     * Resolve the signup moment a sequence should be counted from: the latest
+     * Resolve the signup moment a sequence should be counted from: the OLDEST
      * active membership among this message's lists.
+     *
+     * A message can target several lists and a subscriber can sit on more than
+     * one of them. They must receive it once, counted from when they first
+     * joined any of those lists — otherwise being added to a second list would
+     * restart a sequence they already went through.
      *
      * Legacy rows (imported or migrated from older versions) can carry an empty
      * pivot subscribed_at. Those used to be dropped silently — never scheduled,
@@ -234,15 +239,48 @@ class Message extends Model
      */
     protected function resolveSignupAnchor($lists): ?\Carbon\Carbon
     {
-        $dates = collect($lists)
+        return collect($lists)
             ->filter(fn ($list) => ($list->pivot->status ?? null) === 'active')
             ->map(fn ($list) => $list->pivot->subscribed_at ?: $list->pivot->created_at)
             ->filter()
             ->map(fn ($date) => \Carbon\Carbon::parse($date))
             ->sort()
-            ->values();
+            ->values()
+            ->first();
+    }
 
-        return $dates->last();
+    /**
+     * Resolve the anchor membership for a single subscriber straight from the
+     * pivot table: the oldest active membership among this message's lists.
+     *
+     * Returns the pivot row (contact_list_id + date) so callers can both time
+     * the send and apply that list's own sending schedule and rate limit.
+     */
+    public function resolveAnchorMembershipFor(int $subscriberId): ?object
+    {
+        $listIds = $this->contactLists->pluck('id')->toArray();
+
+        if (empty($listIds)) {
+            return null;
+        }
+
+        $row = DB::table('contact_list_subscriber')
+            ->where('subscriber_id', $subscriberId)
+            ->whereIn('contact_list_id', $listIds)
+            ->where('status', 'active')
+            ->orderByRaw('COALESCE(subscribed_at, created_at) ASC')
+            ->first();
+
+        if (!$row) {
+            return null;
+        }
+
+        $date = $row->subscribed_at ?: $row->created_at;
+
+        return (object) [
+            'contact_list_id' => $row->contact_list_id,
+            'anchor_at' => $date ? \Carbon\Carbon::parse($date) : null,
+        ];
     }
 
     /**
@@ -582,13 +620,15 @@ class Message extends Model
                         continue;
                     }
 
-                    // Most recent signup among the message's lists is the anchor
+                    // Oldest signup among the message's lists is the anchor, so a
+                    // subscriber added to a second list does not restart a
+                    // sequence they already received
                     $anchor = $rows
                         ->map(fn ($row) => $row->subscribed_at ?: $row->created_at)
                         ->filter()
                         ->map(fn ($date) => \Carbon\Carbon::parse($date))
                         ->sort()
-                        ->last();
+                        ->first();
 
                     if (!$anchor) {
                         continue; // No usable date at all — nothing to anchor on
