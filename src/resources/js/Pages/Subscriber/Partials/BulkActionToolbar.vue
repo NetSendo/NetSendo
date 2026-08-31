@@ -26,6 +26,7 @@ defineEmits([
     "delete",
     "move",
     "copy",
+    "export",
     "change-status",
     "clear-selection",
     "delete-from-list",
@@ -108,6 +109,28 @@ defineEmits([
                     />
                 </svg>
                 {{ t("subscribers.bulk.copy") }}
+            </button>
+
+            <!-- Export selection button -->
+            <button
+                @click="$emit('export')"
+                :disabled="processing"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+                <svg
+                    class="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
+                </svg>
+                {{ t("subscribers.export.export_button") }}
             </button>
 
             <!-- Change status dropdown -->

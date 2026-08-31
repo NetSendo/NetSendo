@@ -57,6 +57,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Subscribers
     Route::get('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'importForm'])->name('subscribers.import');
     Route::post('subscribers/import', [\App\Http\Controllers\SubscriberController::class, 'import'])->name('subscribers.import.store');
+    Route::post('subscribers/import/preview', [\App\Http\Controllers\SubscriberController::class, 'importPreview'])->name('subscribers.import.preview');
+
+    // Export of the subscriber table. POST because "select all in list" can
+    // hand over more ids than a query string holds.
+    Route::post('subscribers/export', [\App\Http\Controllers\SubscriberExportController::class, 'export'])->name('subscribers.export');
 
     // Get all subscriber IDs from a list (for Select All functionality)
     Route::get('subscribers/list-ids', [\App\Http\Controllers\SubscriberController::class, 'getListSubscriberIds'])->name('subscribers.list-ids');
@@ -148,6 +153,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('messages/{message}/send-to-missed', [\App\Http\Controllers\MessageController::class, 'sendToMissedRecipients'])->name('messages.send-to-missed');
     Route::post('messages/search-sent', [\App\Http\Controllers\MessageController::class, 'searchSentMessages'])->name('messages.search-sent');
     Route::get('messages/search-crm-contacts', [\App\Http\Controllers\MessageController::class, 'searchCrmContacts'])->name('messages.search-crm-contacts');
+
+    // Custom-field audience builder (available fields, stored values, live estimate)
+    Route::get('messages/audience/fields', [\App\Http\Controllers\MessageAudienceController::class, 'fields'])->name('messages.audience.fields');
+    Route::get('messages/audience/field-values', [\App\Http\Controllers\MessageAudienceController::class, 'fieldValues'])->name('messages.audience.field-values');
+    Route::post('messages/audience/estimate', [\App\Http\Controllers\MessageAudienceController::class, 'estimate'])->name('messages.audience.estimate');
     Route::get('templates/{template}/compiled', [\App\Http\Controllers\TemplateController::class, 'compiled'])->name('templates.compiled');
     Route::resource('messages', \App\Http\Controllers\MessageController::class);
     Route::post('sms/{sms}/toggle-active', [\App\Http\Controllers\SmsController::class, 'toggleActive'])->name('sms.toggle-active');

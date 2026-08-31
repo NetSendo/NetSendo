@@ -16,7 +16,10 @@ return new class extends Migration
     public function up(): void
     {
         // Use raw SQL for MySQL to change column type without dropping
-        DB::statement('ALTER TABLE crm_tasks MODIFY zoom_meeting_link TEXT NULL');
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE crm_tasks MODIFY zoom_meeting_link TEXT NULL');
+        }
     }
 
     /**
@@ -25,6 +28,9 @@ return new class extends Migration
     public function down(): void
     {
         // Note: This might truncate data if URLs are longer than 500 chars
-        DB::statement('ALTER TABLE crm_tasks MODIFY zoom_meeting_link VARCHAR(500) NULL');
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE crm_tasks MODIFY zoom_meeting_link VARCHAR(500) NULL');
+        }
     }
 };

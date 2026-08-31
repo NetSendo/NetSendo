@@ -15,7 +15,9 @@ import ResponsiveTabs from "@/Components/ResponsiveTabs.vue";
 import TrackedLinksSection from "@/Components/TrackedLinksSection.vue";
 import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
 import CrmContactSelector from "@/Components/CrmContactSelector.vue";
+import FieldFilterBuilder from "@/Components/FieldFilterBuilder.vue";
 import { computed, ref, watch, nextTick } from "vue";
+import { debounce } from "lodash";
 import { useI18n } from "vue-i18n";
 import mjml2html from "mjml-browser";
 
@@ -252,6 +254,13 @@ const form = useForm({
         props.message?.contact_list_ids ||
         (props.preselectedListId ? [props.preselectedListId] : []),
     excluded_list_ids: props.message?.excluded_list_ids || [],
+    // Custom-field audience filters
+    include_field_filters: props.message?.include_field_filters || [],
+    exclude_field_filters: props.message?.exclude_field_filters || [],
+    include_field_filter_match:
+        props.message?.include_field_filter_match || "all",
+    exclude_field_filter_match:
+        props.message?.exclude_field_filter_match || "all",
     status: props.message?.status || "draft",
     content: props.message?.content || "",
     send_at: props.message?.send_at || null,
@@ -735,6 +744,8 @@ const fieldToTabMap = {
     type: "content",
     contact_list_ids: "settings",
     excluded_list_ids: "settings",
+    include_field_filters: "settings",
+    exclude_field_filters: "settings",
     mailbox_id: "settings",
     tag_ids: "settings",
     day: "settings",
@@ -1270,6 +1281,64 @@ watch(
 if (form.contact_list_ids.length > 0) {
     fetchPreviewSubscribers();
 }
+
+// ===== Custom-field audience filters =====
+
+// Exclusion conditions read their fields and values from the excluded lists;
+// with no excluded list picked they apply to the audience itself, so the
+// selected lists are the right source then.
+const excludeFilterListIds = computed(() =>
+    form.excluded_list_ids.length > 0
+        ? form.excluded_list_ids
+        : form.contact_list_ids,
+);
+
+const hasFieldFilters = computed(
+    () =>
+        form.include_field_filters.length > 0 ||
+        form.exclude_field_filters.length > 0,
+);
+
+// Live "how many people will this reach" counter for the current selection
+const audienceEstimate = ref(null);
+const isEstimating = ref(false);
+
+const fetchAudienceEstimate = debounce(async () => {
+    if (form.contact_list_ids.length === 0) {
+        audienceEstimate.value = null;
+        return;
+    }
+
+    isEstimating.value = true;
+    try {
+        const response = await axios.post(route("messages.audience.estimate"), {
+            contact_list_ids: form.contact_list_ids,
+            excluded_list_ids: form.excluded_list_ids,
+            include_field_filters: form.include_field_filters,
+            exclude_field_filters: form.exclude_field_filters,
+            include_field_filter_match: form.include_field_filter_match,
+            exclude_field_filter_match: form.exclude_field_filter_match,
+        });
+        audienceEstimate.value = response.data;
+    } catch (error) {
+        audienceEstimate.value = null;
+    } finally {
+        isEstimating.value = false;
+    }
+}, 400);
+
+watch(
+    () => [
+        form.contact_list_ids,
+        form.excluded_list_ids,
+        form.include_field_filters,
+        form.exclude_field_filters,
+        form.include_field_filter_match,
+        form.exclude_field_filter_match,
+    ],
+    fetchAudienceEstimate,
+    { deep: true, immediate: true },
+);
 </script>
 
 <template>
@@ -3029,6 +3098,48 @@ if (form.contact_list_ids.length > 0) {
                             />
                         </div>
 
+                        <!-- Narrow the audience by custom fields -->
+                        <div
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <div class="mb-3 flex items-center gap-2">
+                                <svg
+                                    class="h-4 w-4 text-indigo-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                    />
+                                </svg>
+                                <InputLabel
+                                    :value="$t('messages.field_filters.include_title')"
+                                />
+                                <span
+                                    v-if="form.include_field_filters.length > 0"
+                                    class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                >
+                                    {{ form.include_field_filters.length }}
+                                </span>
+                            </div>
+
+                            <FieldFilterBuilder
+                                v-model="form.include_field_filters"
+                                v-model:match="form.include_field_filter_match"
+                                :list-ids="form.contact_list_ids"
+                                mode="include"
+                            />
+
+                            <InputError
+                                class="mt-2"
+                                :message="form.errors.include_field_filters"
+                            />
+                        </div>
+
                         <!-- Excluded Lists -->
                         <div
                             class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
@@ -3144,6 +3255,82 @@ if (form.contact_list_ids.length > 0) {
                                 class="mt-2"
                                 :message="form.errors.excluded_list_ids"
                             />
+
+                            <!-- Narrow the exclusion by custom fields -->
+                            <div
+                                class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700"
+                            >
+                                <div class="mb-2 flex items-center gap-2">
+                                    <InputLabel
+                                        :value="$t('messages.field_filters.exclude_title')"
+                                    />
+                                    <span
+                                        v-if="form.exclude_field_filters.length > 0"
+                                        class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                                    >
+                                        {{ form.exclude_field_filters.length }}
+                                    </span>
+                                </div>
+
+                                <FieldFilterBuilder
+                                    v-model="form.exclude_field_filters"
+                                    v-model:match="form.exclude_field_filter_match"
+                                    :list-ids="excludeFilterListIds"
+                                    mode="exclude"
+                                />
+
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.exclude_field_filters"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Estimated reach of the current selection -->
+                        <div
+                            v-if="form.contact_list_ids.length > 0"
+                            class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50"
+                        >
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p
+                                        class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{ $t("messages.field_filters.estimate_title") }}
+                                    </p>
+                                    <p
+                                        class="mt-1 text-2xl font-bold text-slate-900 dark:text-white"
+                                    >
+                                        <span v-if="isEstimating" class="text-slate-400">…</span>
+                                        <span v-else>{{ audienceEstimate?.total ?? 0 }}</span>
+                                    </p>
+                                </div>
+                                <div
+                                    v-if="audienceEstimate && audienceEstimate.excluded > 0"
+                                    class="text-right text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    <p>
+                                        {{
+                                            $t("messages.field_filters.estimate_base", {
+                                                count: audienceEstimate.base,
+                                            })
+                                        }}
+                                    </p>
+                                    <p class="text-red-600 dark:text-red-400">
+                                        {{
+                                            $t("messages.field_filters.estimate_removed", {
+                                                count: audienceEstimate.excluded,
+                                            })
+                                        }}
+                                    </p>
+                                </div>
+                            </div>
+                            <p
+                                v-if="hasFieldFilters"
+                                class="mt-2 text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("messages.field_filters.estimate_help") }}
+                            </p>
                         </div>
 
                         <!-- CRM Contacts Selection -->

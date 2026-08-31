@@ -27,7 +27,9 @@ return new class extends Migration
 
             $table->index(['user_id', 'category']);
             $table->index(['user_id', 'is_active']);
-            $table->fullText(['title', 'content']);
+            if (Schema::getConnection()->getDriverName() === 'mysql') {
+                $table->fullText(['title', 'content']);
+            }
         });
     }
 

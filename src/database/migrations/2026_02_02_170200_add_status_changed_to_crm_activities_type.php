@@ -13,20 +13,22 @@ return new class extends Migration
     public function up(): void
     {
         // Add 'status_changed' to the enum type
-        DB::statement("ALTER TABLE crm_activities MODIFY COLUMN type ENUM(
-            'note',
-            'call',
-            'email',
-            'meeting',
-            'task_completed',
-            'stage_changed',
-            'deal_created',
-            'deal_won',
-            'deal_lost',
-            'contact_created',
-            'system',
-            'status_changed'
-        )");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE crm_activities MODIFY COLUMN type ENUM(
+                'note',
+                'call',
+                'email',
+                'meeting',
+                'task_completed',
+                'stage_changed',
+                'deal_created',
+                'deal_won',
+                'deal_lost',
+                'contact_created',
+                'system',
+                'status_changed'
+            )");
+        }
     }
 
     /**
@@ -34,18 +36,20 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE crm_activities MODIFY COLUMN type ENUM(
-            'note',
-            'call',
-            'email',
-            'meeting',
-            'task_completed',
-            'stage_changed',
-            'deal_created',
-            'deal_won',
-            'deal_lost',
-            'contact_created',
-            'system'
-        )");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE crm_activities MODIFY COLUMN type ENUM(
+                'note',
+                'call',
+                'email',
+                'meeting',
+                'task_completed',
+                'stage_changed',
+                'deal_created',
+                'deal_won',
+                'deal_lost',
+                'contact_created',
+                'system'
+            )");
+        }
     }
 };

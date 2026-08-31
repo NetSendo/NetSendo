@@ -4,7 +4,9 @@ namespace App\Listeners;
 
 use App\Events\SubscriberSignedUp;
 use App\Models\Message;
+use App\Models\MessageFieldFilter;
 use App\Models\MessageQueueEntry;
+use App\Services\Segmentation\SubscriberFieldFilterService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -44,6 +46,7 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             ->whereHas('contactLists', function ($query) use ($list) {
                 $query->where('contact_lists.id', $list->id);
             })
+            ->with(['excludedLists', 'fieldFilters.customField'])
             ->get();
 
         if ($autoresponders->isEmpty()) {
@@ -76,13 +79,44 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
 
         $created = 0;
 
+        $filterService = app(SubscriberFieldFilterService::class);
+
         foreach ($autoresponders as $message) {
-            // Check if subscriber is excluded from this message
+            // Include-side custom-field conditions: the message only goes to
+            // subscribers whose fields match (e.g. city = Oświęcim).
+            $includeFilters = $message->getIncludeFieldFilters();
+            if ($includeFilters->isNotEmpty() && !$filterService->matchesSubscriber(
+                $subscriber->id,
+                $includeFilters,
+                $message->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+            )) {
+                Log::info('CreateAutoresponderQueueEntries: Subscriber does not match field filters', [
+                    'subscriber_id' => $subscriber->id,
+                    'message_id' => $message->id,
+                ]);
+                continue;
+            }
+
+            // Check if subscriber is excluded from this message. Exclude-side
+            // field filters narrow the exclusion: with them set, only the people
+            // on the excluded lists who ALSO match get dropped. Filters without
+            // any excluded list apply to the audience itself.
             $excludedListIds = $message->excludedLists->pluck('id')->toArray();
-            if (!empty($excludedListIds)) {
-                $isExcluded = $subscriber->contactLists()
+            $excludeFilters = $message->getExcludeFieldFilters();
+
+            if (!empty($excludedListIds) || $excludeFilters->isNotEmpty()) {
+                $isExcluded = empty($excludedListIds) || $subscriber->contactLists()
                     ->whereIn('contact_lists.id', $excludedListIds)
                     ->exists();
+
+                if ($isExcluded && $excludeFilters->isNotEmpty()) {
+                    $isExcluded = $filterService->matchesSubscriber(
+                        $subscriber->id,
+                        $excludeFilters,
+                        $message->exclude_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                    );
+                }
+
                 if ($isExcluded) {
                     Log::info('CreateAutoresponderQueueEntries: Subscriber excluded', [
                         'subscriber_id' => $subscriber->id,

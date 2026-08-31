@@ -10,6 +10,7 @@ import MoveToListModal from "./Partials/MoveToListModal.vue";
 import CopyToListModal from "./Partials/CopyToListModal.vue";
 import DeleteFromListModal from "./Partials/DeleteFromListModal.vue";
 import ColumnSettingsDropdown from "./Partials/ColumnSettingsDropdown.vue";
+import ExportModal from "./Partials/ExportModal.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
 
 const { t } = useI18n();
@@ -20,6 +21,7 @@ const props = defineProps({
     customFields: Array,
     statistics: Object,
     filters: Object,
+    exportColumns: { type: Object, default: () => ({}) },
 });
 
 // Search and filter state
@@ -76,6 +78,14 @@ const showMoveModal = ref(false);
 
 // Copy/Add modal state
 const showCopyModal = ref(false);
+
+// Export modal state
+const showExportModal = ref(false);
+
+// Rows the export would cover when no explicit selection is made. The
+// paginator total already reflects the search and list filters, so it is the
+// honest number here — the statistics block counts the whole list.
+const exportTotal = computed(() => props.subscribers?.total ?? 0);
 
 // Confirmation modal state
 const showDeleteConfirm = ref(false);
@@ -706,6 +716,26 @@ const getSortIcon = (column) => {
                 </div>
             </div>
             <div class="flex w-full items-center gap-2 sm:w-auto">
+                <button
+                    type="button"
+                    @click="showExportModal = true"
+                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:flex-none"
+                >
+                    <svg
+                        class="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                    </svg>
+                    {{ $t("subscribers.export.export_button") }}
+                </button>
                 <Link
                     :href="route('subscribers.import')"
                     class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:flex-none"
@@ -935,6 +965,7 @@ const getSortIcon = (column) => {
             @delete="bulkDelete"
             @move="showMoveModal = true"
             @copy="bulkCopy"
+            @export="showExportModal = true"
             @delete-from-list="bulkDeleteFromList"
             @change-status="bulkChangeStatus"
             @clear-selection="clearSelection"
@@ -1295,6 +1326,18 @@ const getSortIcon = (column) => {
             :processing="processing"
             @close="showMoveModal = false"
             @move="bulkMove"
+        />
+
+        <!-- Export Modal -->
+        <ExportModal
+            :show="showExportModal"
+            :filters="filters"
+            :selected-ids="selectedIds"
+            :lists="lists"
+            :export-columns="exportColumns"
+            :export-url="route('subscribers.export')"
+            :total-count="exportTotal"
+            @close="showExportModal = false"
         />
 
         <!-- Copy To List Modal -->

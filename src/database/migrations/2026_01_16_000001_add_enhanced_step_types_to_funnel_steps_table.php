@@ -13,7 +13,10 @@ return new class extends Migration
     public function up(): void
     {
         // Add new step types to enum
-        DB::statement("ALTER TABLE funnel_steps MODIFY COLUMN type ENUM('start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end') DEFAULT 'email'");
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE funnel_steps MODIFY COLUMN type ENUM('start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end') DEFAULT 'email'");
+        }
 
         // Add new columns for enhanced step functionality
         Schema::table('funnel_steps', function (Blueprint $table) {
@@ -64,6 +67,9 @@ return new class extends Migration
         });
 
         // Revert enum to original types
-        DB::statement("ALTER TABLE funnel_steps MODIFY COLUMN type ENUM('start', 'email', 'delay', 'condition', 'action', 'end') DEFAULT 'email'");
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE funnel_steps MODIFY COLUMN type ENUM('start', 'email', 'delay', 'condition', 'action', 'end') DEFAULT 'email'");
+        }
     }
 };

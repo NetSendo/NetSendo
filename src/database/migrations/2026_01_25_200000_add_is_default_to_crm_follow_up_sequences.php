@@ -21,7 +21,9 @@ return new class extends Migration
         });
 
         // Add index using Laravel 11 compatible approach (raw SQL check)
-        $indexExists = \DB::select("SHOW INDEX FROM crm_follow_up_sequences WHERE Key_name = 'crm_follow_up_sequences_user_id_default_key_index'");
+        $indexExists = \DB::getDriverName() === 'mysql'
+            ? \DB::select("SHOW INDEX FROM crm_follow_up_sequences WHERE Key_name = 'crm_follow_up_sequences_user_id_default_key_index'")
+            : [];
         if (empty($indexExists)) {
             Schema::table('crm_follow_up_sequences', function (Blueprint $table) {
                 $table->index(['user_id', 'default_key']);

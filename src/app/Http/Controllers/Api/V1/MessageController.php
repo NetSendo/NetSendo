@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\ContactList;
+use App\Models\MessageFieldFilter;
+use App\Services\Segmentation\SubscriberFieldFilterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -149,7 +151,7 @@ class MessageController extends Controller
                 'integer',
                 Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
             ],
-        ]);
+        ] + $this->fieldFilterRules($user->id));
 
         // Create message
         $message = Message::create([
@@ -166,6 +168,8 @@ class MessageController extends Controller
             'timezone' => $validated['timezone'] ?? null,
             'status' => 'draft',
             'is_active' => false,
+            'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
         ]);
 
         // Attach contact lists
@@ -178,7 +182,9 @@ class MessageController extends Controller
             $message->excludedLists()->attach($validated['excluded_list_ids']);
         }
 
-        $message->load(['mailbox', 'contactLists', 'excludedLists']);
+        $this->syncFieldFilters($message, $validated);
+
+        $message->load(['mailbox', 'contactLists', 'excludedLists', 'fieldFilters']);
 
         return response()->json([
             'data' => $message,
@@ -237,10 +243,14 @@ class MessageController extends Controller
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|timezone',
             'is_active' => 'sometimes|boolean',
-        ]);
+        ] + $this->fieldFilterRules($user->id));
 
-        $message->update($validated);
-        $message->load(['mailbox', 'contactLists', 'excludedLists']);
+        // Filter rows are stored in their own table, not as message columns
+        $message->update(collect($validated)
+            ->except(['include_field_filters', 'exclude_field_filters'])
+            ->all());
+        $this->syncFieldFilters($message, $validated);
+        $message->load(['mailbox', 'contactLists', 'excludedLists', 'fieldFilters']);
 
         return response()->json([
             'data' => $message,
@@ -289,6 +299,53 @@ class MessageController extends Controller
     }
 
     /**
+     * Validation rules for the custom-field audience filters, shared by every
+     * endpoint that can set them.
+     *
+     * @return array<string, mixed>
+     */
+    protected function fieldFilterRules(int $userId): array
+    {
+        $fieldRule = [
+            'integer',
+            Rule::exists('custom_fields', 'id')->where('user_id', $userId),
+        ];
+        $operatorRule = 'required|string|in:' . implode(',', MessageFieldFilter::OPERATORS);
+
+        return [
+            'include_field_filters' => 'nullable|array|max:20',
+            'include_field_filters.*.custom_field_id' => array_merge(['required'], $fieldRule),
+            'include_field_filters.*.operator' => $operatorRule,
+            'include_field_filters.*.values' => 'nullable|array|max:200',
+            'include_field_filters.*.values.*' => 'nullable|string|max:255',
+            'exclude_field_filters' => 'nullable|array|max:20',
+            'exclude_field_filters.*.custom_field_id' => array_merge(['required'], $fieldRule),
+            'exclude_field_filters.*.operator' => $operatorRule,
+            'exclude_field_filters.*.values' => 'nullable|array|max:200',
+            'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
+            'include_field_filter_match' => 'nullable|in:all,any',
+            'exclude_field_filter_match' => 'nullable|in:all,any',
+        ];
+    }
+
+    /**
+     * Persist whichever side of the filters the caller sent. An absent key
+     * leaves the stored filters untouched; an empty array clears that side.
+     */
+    protected function syncFieldFilters(Message $message, array $validated): void
+    {
+        $service = app(SubscriberFieldFilterService::class);
+
+        if (array_key_exists('include_field_filters', $validated)) {
+            $service->syncFilters($message, MessageFieldFilter::MODE_INCLUDE, $validated['include_field_filters'] ?? []);
+        }
+
+        if (array_key_exists('exclude_field_filters', $validated)) {
+            $service->syncFilters($message, MessageFieldFilter::MODE_EXCLUDE, $validated['exclude_field_filters'] ?? []);
+        }
+    }
+
+    /**
      * Set recipient lists for a campaign
      */
     public function setLists(Request $request, int $id): JsonResponse
@@ -319,10 +376,11 @@ class MessageController extends Controller
                 'integer',
                 Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
             ],
-        ]);
+        ] + $this->fieldFilterRules($user->id));
 
         $message->contactLists()->sync($validated['contact_list_ids']);
-        $message->load(['contactLists']);
+        $this->syncFieldFilters($message, $validated);
+        $message->load(['contactLists', 'fieldFilters']);
 
         // Update planned recipients count
         $message->update([
@@ -368,10 +426,11 @@ class MessageController extends Controller
                 'integer',
                 Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
             ],
-        ]);
+        ] + $this->fieldFilterRules($user->id));
 
         $message->excludedLists()->sync($validated['excluded_list_ids']);
-        $message->load(['excludedLists']);
+        $this->syncFieldFilters($message, $validated);
+        $message->load(['excludedLists', 'fieldFilters']);
 
         // Update planned recipients count (exclusions affect count)
         $message->update([

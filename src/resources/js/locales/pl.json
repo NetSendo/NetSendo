@@ -1415,6 +1415,49 @@
         }
     },
     "messages": {
+        "field_filters": {
+            "include_title": "Zawężenie po polach dodatkowych",
+            "exclude_title": "Zawężenie wykluczenia po polach dodatkowych",
+            "include_help": "Wyślij tylko do osób, których pola dodatkowe spełniają poniższe warunki. Bez warunków wysyłka obejmuje wszystkich z wybranych list.",
+            "exclude_help": "Wyklucz tylko te osoby z list wykluczeń, które spełniają poniższe warunki. Gdy nie wybrano żadnej listy wykluczeń, warunki działają na odbiorcach z list docelowych.",
+            "match_label": "Dopasowanie:",
+            "match_all": "Wszystkie warunki",
+            "match_any": "Dowolny warunek",
+            "select_field": "Wybierz pole",
+            "global_fields": "Pola globalne",
+            "list_fields": "Pola list",
+            "unknown_field": "Pole niedostępne",
+            "field_unavailable": "To pole nie jest przypisane do żadnej z wybranych list. Warunek nadal zadziała, ale podpowiedzi wartości mogą być niepełne.",
+            "add_condition": "Dodaj warunek",
+            "remove": "Usuń warunek",
+            "loading_fields": "Wczytywanie pól…",
+            "no_fields": "Brak pól dodatkowych dla wybranych list.",
+            "value_placeholder": "Wpisz lub wyszukaj wartość…",
+            "add_value": "Dodaj „{value}”",
+            "loading_values": "Szukam wartości…",
+            "no_values": "Brak zapisanych wartości.",
+            "no_value_needed": "Ten warunek nie wymaga wartości.",
+            "incomplete_warning": "Warunki bez wartości zostaną pominięte przy wysyłce.",
+            "estimate_title": "Szacowana liczba odbiorców",
+            "estimate_base": "Z list: {count}",
+            "estimate_removed": "Odfiltrowano: {count}",
+            "estimate_help": "Liczba dotyczy odbiorców pochodzących z list — pojedynczo wybrane kontakty CRM dochodzą osobno.",
+            "operators": {
+                "any_of": "jest jedną z",
+                "none_of": "nie jest żadną z",
+                "contains": "zawiera",
+                "not_contains": "nie zawiera",
+                "starts_with": "zaczyna się od",
+                "ends_with": "kończy się na",
+                "is_set": "jest uzupełnione",
+                "is_empty": "jest puste",
+                "gt": "większe niż",
+                "gte": "większe lub równe",
+                "lt": "mniejsze niż",
+                "lte": "mniejsze lub równe",
+                "between": "pomiędzy"
+            }
+        },
         "title": "Wiadomości",
         "subtitle": "Przeglądaj i zarządzaj kampaniami email",
         "new_message": "Nowa wiadomość",
@@ -1936,7 +1979,8 @@
                 "required_columns": "Wymagane kolumny (w dowolnej kolejności):",
                 "email": "Email (wymagane)",
                 "first_name": "Imię (opcjonalne)",
-                "last_name": "Nazwisko (opcjonalne)"
+                "last_name": "Nazwisko (opcjonalne)",
+                "round_trip": "Najprościej: wyeksportuj kontakty wariantem „NetSendo”, popraw je w arkuszu i wgraj ten sam plik tutaj. Kolumna netsendo_id sprawia, że zmiany trafią w te same kontakty. Limit {limit} wierszy na plik."
             },
             "fields": {
                 "target_list": "Lista docelowa",
@@ -1948,7 +1992,10 @@
                 "choose_file": "Wybierz plik",
                 "or_drag_drop": "lub przeciągnij i upuść",
                 "max_size": "CSV do 10MB",
-                "selected": "Wybrano: {name}"
+                "selected": "Wybrano: {name}",
+                "pipe": "Pionowa kreska (|)",
+                "accepted": "CSV, TSV, JSON lub NDJSON do {size} MB",
+                "target_list_optional": "Możesz zostawić puste — przypisania zostaną odtworzone z kolumny „lists”."
             },
             "mapping": {
                 "title": "Mapowanie kolumn",
@@ -1963,10 +2010,71 @@
                 "first_name": "Imię",
                 "last_name": "Nazwisko",
                 "custom_field": "Pole niestandardowe: {name}",
-                "language": "Język"
+                "language": "Język",
+                "netsendo_id": "ID NetSendo",
+                "gender": "Płeć",
+                "timezone": "Strefa czasowa",
+                "source": "Źródło",
+                "status": "Status globalny",
+                "list_status": "Status na liście docelowej",
+                "lists": "Listy (nazwa:status)",
+                "tags": "Tagi",
+                "subscribed_at": "Data zapisu",
+                "confirmed_at": "Data potwierdzenia",
+                "unsubscribed_at": "Data wypisania",
+                "json_auto": "Plik JSON — kolumny są dopasowywane automatycznie po nazwach pól, mapowanie nie jest potrzebne."
             },
             "importing": "Importowanie...",
-            "import_button": "Importuj"
+            "import_button": "Importuj",
+            "detected": {
+                "title": "Rozpoznano plik wyeksportowany z NetSendo",
+                "desc": "Kolumny zostały zmapowane automatycznie, a opcje ustawione tak, aby plik nadpisał dane i odtworzył przypisania do list."
+            },
+            "options": {
+                "title": "Zachowanie importu",
+                "subtitle": "Decyduje o tym, co się stanie z kontaktami, które już masz w bazie.",
+                "update_mode": "Istniejące kontakty",
+                "update_modes": {
+                    "fill_empty": "Uzupełnij tylko puste pola",
+                    "overwrite": "Nadpisz danymi z pliku",
+                    "skip": "Nie zmieniaj danych"
+                },
+                "signup_events": "Autorespondery i automatyzacje",
+                "signup_modes": {
+                    "new_only": "Tylko dla nowych zapisów (zalecane)",
+                    "all": "Dla każdego wiersza — restartuj sekwencje",
+                    "none": "Nie uruchamiaj wcale (cicha migracja)"
+                },
+                "restore_memberships": "Odtwórz przypisania do list z kolumny „lists”",
+                "create_missing_lists": "Utwórz listy, których jeszcze nie ma",
+                "apply_tags": "Przypisz tagi z kolumny „tags”",
+                "replace_tags": "Zastąp dotychczasowe tagi zamiast dopisywać",
+                "apply_dates": "Użyj dat z pliku zamiast bieżącej daty",
+                "detect_gender": "Rozpoznaj płeć po imieniu, jeśli nie podano"
+            },
+            "preview": {
+                "title": "Wynik sprawdzenia",
+                "button": "Sprawdź plik",
+                "checking": "Sprawdzam…",
+                "failed": "Nie udało się sprawdzić pliku.",
+                "inspected": "Sprawdzono {inspected} z {total} wierszy. Nic nie zostało zapisane.",
+                "problems": "Wiersze, które zostaną pominięte:",
+                "row": "Wiersz",
+                "actions": {
+                    "create": "Nowe",
+                    "update": "Aktualizacja",
+                    "reactivate": "Przywrócone",
+                    "unchanged": "Bez zmian",
+                    "invalid": "Pominięte"
+                },
+                "reasons": {
+                    "missing_email": "brak adresu email",
+                    "missing_phone": "brak numeru telefonu",
+                    "invalid_email": "niepoprawny adres email",
+                    "duplicate_in_file": "duplikat w pliku",
+                    "exception": "błąd zapisu"
+                }
+            }
         },
         "add_subscriber": "Dodaj subskrybenta",
         "search_placeholder": "Szukaj po emailu lub nazwisku...",
@@ -2194,7 +2302,100 @@
         "lists_selected_count": "Wybrano: {count}",
         "select_visible_lists": "Zaznacz widoczne",
         "deselect_visible_lists": "Odznacz widoczne",
-        "no_lists_found": "Nie znaleziono list pasujących do wyszukiwania"
+        "no_lists_found": "Nie znaleziono list pasujących do wyszukiwania",
+        "export": {
+            "export_button": "Eksportuj",
+            "title": "Eksport subskrybentów",
+            "subtitle": "Pobierz kontakty do pliku — w formacie, który wgrasz z powrotem.",
+            "scope": {
+                "label": "Co eksportować",
+                "selected": "Zaznaczone kontakty",
+                "selected_count": "{count} zaznaczonych",
+                "filtered": "Wyniki bieżących filtrów",
+                "filtered_count": "{count} kontaktów",
+                "filtered_all": "Wszystkie widoczne kontakty",
+                "from_list": "Lista: {list}",
+                "all_lists": "Wszystkie dostępne listy"
+            },
+            "variant": {
+                "label": "Wariant eksportu",
+                "recommended": "Zalecany",
+                "netsendo": {
+                    "name": "NetSendo (edytuj i wgraj z powrotem)",
+                    "desc": "ID, dane kontaktowe, listy, tagi i pola własne — plik wraca bez strat."
+                },
+                "basic": {
+                    "name": "Podstawowy",
+                    "desc": "Email, imię, nazwisko. Do szybkiej wysyłki gdzie indziej."
+                },
+                "contact": {
+                    "name": "Kontaktowy",
+                    "desc": "Dane kontaktowe: email, telefon, imię, nazwisko, płeć, język."
+                },
+                "marketing": {
+                    "name": "Marketingowy",
+                    "desc": "Listy, tagi i zaangażowanie — otwarcia, kliknięcia, daty."
+                },
+                "full": {
+                    "name": "Pełny",
+                    "desc": "Wszystkie kolumny łącznie ze statystykami i adresem IP."
+                },
+                "custom": {
+                    "name": "Własny",
+                    "desc": "Sam wybierasz kolumny, które mają trafić do pliku."
+                }
+            },
+            "columns_label": "Kolumny w pliku",
+            "select_all": "Zaznacz wszystkie",
+            "pick_one_column": "Wybierz przynajmniej jedną kolumnę.",
+            "format": {
+                "label": "Format pliku",
+                "csv": "CSV (przecinek)",
+                "csv_excel": "CSV dla Excela (średnik, UTF-8)",
+                "tsv": "TSV (tabulator)",
+                "json": "JSON",
+                "ndjson": "NDJSON (wiersz = kontakt)"
+            },
+            "membership": {
+                "label": "Które kontakty",
+                "active": "Tylko aktywni",
+                "all": "Wszyscy (także wypisani)",
+                "unsubscribed": "Tylko wypisani i odbici"
+            },
+            "dates": {
+                "label": "Format dat",
+                "iso": "ISO 8601 (do ponownego importu)",
+                "local": "Czytelny (RRRR-MM-DD GG:MM:SS)"
+            },
+            "round_trip_ok": "Ten wariant zawiera kolumnę netsendo_id, więc po edycji w arkuszu wgrasz plik z powrotem i trafi w te same kontakty — bez duplikatów.",
+            "round_trip_partial": "Ten wariant nie zawiera kolumny netsendo_id. Import takiego pliku dopasuje kontakty po adresie email, więc zmiana adresu utworzy nowy kontakt.",
+            "download": "Pobierz plik",
+            "preparing": "Przygotowuję…",
+            "columns": {
+                "netsendo_id": "ID NetSendo",
+                "email": "Email",
+                "phone": "Telefon",
+                "first_name": "Imię",
+                "last_name": "Nazwisko",
+                "gender": "Płeć",
+                "language": "Język",
+                "timezone": "Strefa czasowa",
+                "source": "Źródło",
+                "status": "Status globalny",
+                "list_status": "Status na liście",
+                "lists": "Listy",
+                "tags": "Tagi",
+                "subscribed_at": "Data zapisu",
+                "confirmed_at": "Data potwierdzenia",
+                "unsubscribed_at": "Data wypisania",
+                "opens_count": "Liczba otwarć",
+                "clicks_count": "Liczba kliknięć",
+                "last_opened_at": "Ostatnie otwarcie",
+                "last_clicked_at": "Ostatnie kliknięcie",
+                "ip_address": "Adres IP",
+                "created_at": "Data dodania"
+            }
+        }
     },
     "subscriber_card": {
         "title": "Karta Subskrybenta",

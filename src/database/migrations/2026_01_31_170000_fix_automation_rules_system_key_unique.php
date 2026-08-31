@@ -44,6 +44,11 @@ return new class extends Migration
     protected function indexExists(string $table, string $indexName): bool
     {
         $connection = Schema::getConnection();
+
+        if ($connection->getDriverName() !== 'mysql') {
+            return false;
+        }
+
         $databaseName = $connection->getDatabaseName();
 
         $result = DB::select("

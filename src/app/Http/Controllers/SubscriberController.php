@@ -154,6 +154,10 @@ class SubscriberController extends Controller
             'customFields' => $customFields,
             'statistics' => $statistics,
             'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order', 'per_page']),
+            // Columns the export dialog can offer, including this account's
+            // custom fields.
+            'exportColumns' => app(\App\Services\Lists\SubscriberExportService::class)
+                ->columnCatalogue(auth()->user()),
         ]);
     }
 
@@ -993,267 +997,68 @@ class SubscriberController extends Controller
             'customFields' => \App\Models\CustomField::where('user_id', auth()->id())
                 ->orderBy('sort_order')
                 ->get(['id', 'name', 'label', 'type']),
+            'mappableFields' => \App\Services\Lists\SubscriberFileImportService::MAPPABLE_FIELDS,
+            'limits' => [
+                'max_rows' => \App\Services\Lists\SubscriberFileImportService::MAX_ROWS,
+                'max_file_mb' => 20,
+            ],
         ]);
     }
 
-    public function import(\App\Http\Requests\SubscriberImportRequest $request)
+    /**
+     * Dry run: report what the file would do without writing anything.
+     *
+     * The importer used to be all-or-nothing — a wrong separator or a shifted
+     * column was only discovered once the contacts were already in the list.
+     */
+    public function importPreview(\App\Http\Requests\SubscriberImportRequest $request, \App\Services\Lists\SubscriberFileImportService $importer)
     {
-        $file = $request->file('file');
-        $listId = $request->contact_list_id;
-        $separator = $request->separator === 'tab' ? "\t" : $request->separator;
+        $list = $request->filled('contact_list_id')
+            ? ContactList::find($request->input('contact_list_id'))
+            : null;
 
-        $list = ContactList::where('id', $listId)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
-
-        $path = $file->getRealPath();
-        $content = file_get_contents($path);
-        $bom = pack('H*', 'EFBBBF');
-        $content = preg_replace("/^$bom/", '', $content);
-
-        $lines = explode("\n", $content);
-        $imported = 0;
-
-        // Extended map to include phone for SMS lists
-        $map = [
-            'email' => ['email', 'e-mail', 'mail'],
-            'phone' => ['phone', 'telefon', 'tel', 'mobile', 'phone_number', 'numer_telefonu', 'numer'],
-            'first_name' => ['first_name', 'firstname', 'imie', 'imię', 'name'],
-            'last_name' => ['last_name', 'lastname', 'nazwisko', 'surname'],
-            'language' => ['language', 'lang', 'język', 'jezyk', 'locale'],
-        ];
-
-        $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1, 'language' => -1];
-        $startRow = 0;
-        $customFieldColumns = [];
-        $columnMapping = $request->input('column_mapping', []);
-        $hasHeader = $request->has('has_header') ? $request->boolean('has_header') : null;
-        $detectedStartRow = 0;
-        $detectedColIndices = $colIndices;
-
-        if (count($lines) > 0) {
-            $firstRow = str_getcsv(trim($lines[0]), $separator);
-            if (!empty($firstRow)) {
-                // Check if first row contains data or headers
-                $isDataRow = strpos($firstRow[0], '@') !== false || preg_match('/^\+?[0-9]{9,15}$/', trim($firstRow[0]));
-
-                if ($isDataRow) {
-                    // First row is data, guess columns based on content
-                    if (strpos($firstRow[0], '@') !== false) {
-                        $detectedColIndices['email'] = 0;
-                    } elseif (preg_match('/^\+?[0-9]{9,15}$/', trim($firstRow[0]))) {
-                        $detectedColIndices['phone'] = 0;
-                    }
-                    $detectedColIndices['first_name'] = count($firstRow) > 1 ? 1 : -1;
-                    $detectedColIndices['last_name'] = count($firstRow) > 2 ? 2 : -1;
-                    $detectedStartRow = 0;
-                } else {
-                    // First row is headers
-                    $headers = array_map('strtolower', array_map('trim', $firstRow));
-                    foreach ($map as $dbCol => $possibleNames) {
-                        foreach ($headers as $index => $header) {
-                            if (in_array($header, $possibleNames)) {
-                                $detectedColIndices[$dbCol] = $index;
-                                break;
-                            }
-                        }
-                    }
-                    // Fallback if no email/phone found
-                    if ($detectedColIndices['email'] === -1 && $detectedColIndices['phone'] === -1) {
-                        $detectedColIndices['email'] = 0;
-                    }
-                    $detectedStartRow = 1;
-                }
-            }
+        try {
+            $parsed = $importer->parse($request->file('file'), $request->user(), $request->parseOptions());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        $colIndices = $detectedColIndices;
-        $startRow = $detectedStartRow;
+        return response()->json(
+            $importer->preview($request->user(), $list, $parsed, $request->importOptions())
+        );
+    }
 
-        if (!empty($columnMapping) && is_array($columnMapping)) {
-            $colIndices = ['email' => -1, 'phone' => -1, 'first_name' => -1, 'last_name' => -1, 'language' => -1];
-            foreach ($columnMapping as $index => $field) {
-                if (blank($field) || $field === 'ignore') {
-                    continue;
-                }
+    public function import(\App\Http\Requests\SubscriberImportRequest $request, \App\Services\Lists\SubscriberFileImportService $importer)
+    {
+        $list = $request->filled('contact_list_id')
+            ? ContactList::find($request->input('contact_list_id'))
+            : null;
 
-                $columnIndex = (int) $index;
-                if (in_array($field, ['email', 'phone', 'first_name', 'last_name', 'language'], true)) {
-                    $colIndices[$field] = $columnIndex;
-                    continue;
-                }
-
-                if (str_starts_with($field, 'custom_field:')) {
-                    $fieldId = (int) substr($field, strlen('custom_field:'));
-                    $customFieldColumns[$fieldId] = $columnIndex;
-                }
-            }
-
-            if ($hasHeader !== null) {
-                $startRow = $hasHeader ? 1 : 0;
-            }
+        try {
+            $parsed = $importer->parse($request->file('file'), $request->user(), $request->parseOptions());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['file' => $e->getMessage()]);
         }
 
-        // Determine which field is primary based on list type
-        $isSmsOnlyList = $list->type === 'sms';
-
-        for ($i = $startRow; $i < count($lines); $i++) {
-            $line = trim($lines[$i]);
-            if (empty($line)) continue;
-
-            $data = str_getcsv($line, $separator);
-            $email = $colIndices['email'] !== -1 && isset($data[$colIndices['email']]) ? trim($data[$colIndices['email']]) : null;
-            $phone = $colIndices['phone'] !== -1 && isset($data[$colIndices['phone']]) ? trim($data[$colIndices['phone']]) : null;
-            $firstName = $colIndices['first_name'] !== -1 && isset($data[$colIndices['first_name']]) ? trim($data[$colIndices['first_name']]) : null;
-            $lastName = $colIndices['last_name'] !== -1 && isset($data[$colIndices['last_name']]) ? trim($data[$colIndices['last_name']]) : null;
-            $language = $colIndices['language'] !== -1 && isset($data[$colIndices['language']]) ? strtolower(trim($data[$colIndices['language']])) : null;
-
-            // Validate based on list type
-            if ($list->type === 'sms') {
-                // For SMS lists, phone is required
-                if (!$phone) continue;
-            } else {
-                // For email lists, email is required
-                if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
-            }
-
-            // Find existing subscriber by email or phone
-            // Include soft-deleted subscribers to avoid unique constraint violations
-            $subscriber = null;
-
-            if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $subscriber = Subscriber::withTrashed()
-                    ->where('user_id', auth()->id())
-                    ->where('email', $email)
-                    ->first();
-            }
-
-            // For SMS lists, also try to find by phone
-            if (!$subscriber && $phone && $list->type === 'sms') {
-                $subscriber = Subscriber::withTrashed()
-                    ->where('user_id', auth()->id())
-                    ->where('phone', $phone)
-                    ->first();
-            }
-
-            if ($subscriber) {
-                // If subscriber was soft-deleted, restore it and reset
-                if ($subscriber->trashed()) {
-                    $subscriber->restore();
-
-                    // Completely reset the subscriber - detach ALL existing contact lists
-                    // This prevents the subscriber from being silently re-added to old lists
-                    $subscriber->contactLists()->detach();
-
-                    // Delete all message queue entries to allow fresh autoresponder sequences
-                    MessageQueueEntry::where('subscriber_id', $subscriber->id)->delete();
-
-                    Log::info('Restored and reset soft-deleted subscriber during import', [
-                        'subscriber_id' => $subscriber->id,
-                        'email' => $subscriber->email,
-                    ]);
-                }
-
-                // Update existing subscriber with new data (if provided)
-                $updateData = [];
-                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL) && !$subscriber->email) {
-                    $updateData['email'] = $email;
-                }
-                if ($phone && !$subscriber->phone) {
-                    $updateData['phone'] = $phone;
-                }
-                if ($firstName && !$subscriber->first_name) {
-                    $updateData['first_name'] = $firstName;
-                }
-                if ($lastName && !$subscriber->last_name) {
-                    $updateData['last_name'] = $lastName;
-                }
-                if ($language && !$subscriber->language) {
-                    $updateData['language'] = $language;
-                }
-                if (!empty($updateData)) {
-                    $subscriber->update($updateData);
-                }
-            } else {
-                // Create new subscriber
-                $subscriber = Subscriber::create([
-                    'user_id' => auth()->id(),
-                    'email' => $email && filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null,
-                    'phone' => $phone,
-                    'first_name' => $firstName,
-                    'last_name' => $lastName,
-                    'language' => $language,
-                    'is_active_global' => true,
-                ]);
-            }
-
-            if (!empty($customFieldColumns)) {
-                foreach ($customFieldColumns as $fieldId => $columnIndex) {
-                    if (!isset($data[$columnIndex])) {
-                        continue;
-                    }
-
-                    $value = trim($data[$columnIndex]);
-                    if ($value === '') {
-                        continue;
-                    }
-
-                    $subscriber->fieldValues()->updateOrCreate(
-                        ['custom_field_id' => $fieldId],
-                        ['value' => $value]
-                    );
-                }
-            }
-
-            // Auto-detect gender from first name if not set
-            if (empty($subscriber->gender) && !empty($subscriber->first_name)) {
-                $genderService = app(GenderService::class);
-                $detectedGender = $genderService->detectGender(
-                    $subscriber->first_name,
-                    'PL',
-                    auth()->id()
-                );
-                if ($detectedGender) {
-                    $subscriber->gender = $detectedGender;
-                    $subscriber->save();
-                }
-            }
-
-            // Attach to list with reactivation, respecting resubscription_behavior setting
-            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $list->id)->first();
-
-            if ($existingPivot) {
-                $wasActive = $existingPivot->pivot->status === 'active';
-
-                // Former subscribers always get date reset, active subscribers follow list setting
-                $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-                $pivotData = [
-                    'status' => 'active',
-                    'unsubscribed_at' => null,
-                ];
-
-                if ($shouldResetDate) {
-                    $pivotData['subscribed_at'] = now();
-                }
-
-                $subscriber->contactLists()->updateExistingPivot($list->id, $pivotData);
-            } else {
-                // New subscription - always set subscribed_at
-                $subscriber->contactLists()->attach($list->id, [
-                    'status' => 'active',
-                    'subscribed_at' => now(),
-                ]);
-            }
-
-            // Dispatch event for autoresponder queue entries
-            event(new SubscriberSignedUp($subscriber, $list, null, 'import'));
-
-            $imported++;
+        if ($list === null && !$request->boolean('restore_memberships')) {
+            return back()->withErrors(['contact_list_id' => __('subscribers.import.errors.list_required')]);
         }
 
-        return redirect()->route('subscribers.index')
-            ->with('success', "Zaimportowano {$imported} subskrybentów.");
+        $results = $importer->import($request->user(), $list, $parsed, $request->importOptions());
+
+        Log::info('Subscriber file import finished', [
+            'user_id' => $request->user()->id,
+            'list_id' => $list?->id,
+            'results' => \Illuminate\Support\Arr::except($results, ['errors']),
+        ]);
+
+        return redirect()->route('subscribers.index', $list ? ['list_id' => $list->id] : [])
+            ->with('success', __('subscribers.import.result', [
+                'created' => $results['created'],
+                'updated' => $results['updated'] + $results['reactivated'],
+                'skipped' => $results['invalid'] + $results['failed'] + $results['unchanged'],
+            ]))
+            ->with('import_result', $results);
     }
 
     public function unsubscribe(Request $request, Subscriber $subscriber)

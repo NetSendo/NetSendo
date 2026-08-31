@@ -1415,6 +1415,49 @@
         }
     },
     "messages": {
+        "field_filters": {
+            "include_title": "Narrow by custom fields",
+            "exclude_title": "Narrow the exclusion by custom fields",
+            "include_help": "Send only to people whose custom fields match the conditions below. With no conditions, everyone on the selected lists is included.",
+            "exclude_help": "Drop only the people on the excluded lists who match the conditions below. With no excluded list selected, the conditions apply to the recipients of the target lists.",
+            "match_label": "Match:",
+            "match_all": "All conditions",
+            "match_any": "Any condition",
+            "select_field": "Select a field",
+            "global_fields": "Global fields",
+            "list_fields": "List fields",
+            "unknown_field": "Unavailable field",
+            "field_unavailable": "This field is not tied to any of the selected lists. The condition still applies, but value suggestions may be incomplete.",
+            "add_condition": "Add condition",
+            "remove": "Remove condition",
+            "loading_fields": "Loading fields…",
+            "no_fields": "No custom fields for the selected lists.",
+            "value_placeholder": "Type or search for a value…",
+            "add_value": "Add \"{value}\"",
+            "loading_values": "Searching values…",
+            "no_values": "No stored values.",
+            "no_value_needed": "This condition takes no value.",
+            "incomplete_warning": "Conditions with no value are skipped when sending.",
+            "estimate_title": "Estimated recipients",
+            "estimate_base": "On lists: {count}",
+            "estimate_removed": "Filtered out: {count}",
+            "estimate_help": "Counts recipients coming from lists — individually picked CRM contacts are added on top.",
+            "operators": {
+                "any_of": "is any of",
+                "none_of": "is none of",
+                "contains": "contains",
+                "not_contains": "does not contain",
+                "starts_with": "starts with",
+                "ends_with": "ends with",
+                "is_set": "is filled in",
+                "is_empty": "is empty",
+                "gt": "greater than",
+                "gte": "greater or equal",
+                "lt": "less than",
+                "lte": "less or equal",
+                "between": "between"
+            }
+        },
         "title": "Messages",
         "subtitle": "Browse and manage your email campaigns",
         "new_message": "New Message",
@@ -1936,7 +1979,8 @@
                 "required_columns": "Required columns (in any order):",
                 "email": "Email (required)",
                 "first_name": "First Name (optional)",
-                "last_name": "Last Name (optional)"
+                "last_name": "Last Name (optional)",
+                "round_trip": "The simple path: export with the “NetSendo” variant, fix the rows in a spreadsheet and upload the same file here. The netsendo_id column makes the edits land on the same contacts. Limit {limit} rows per file."
             },
             "fields": {
                 "target_list": "Target List",
@@ -1948,7 +1992,10 @@
                 "choose_file": "Choose file",
                 "or_drag_drop": "or drag and drop",
                 "max_size": "CSV up to 10MB",
-                "selected": "Selected: {name}"
+                "selected": "Selected: {name}",
+                "pipe": "Pipe (|)",
+                "accepted": "CSV, TSV, JSON or NDJSON up to {size} MB",
+                "target_list_optional": "You may leave this empty — memberships will be restored from the “lists” column."
             },
             "mapping": {
                 "title": "Column mapping",
@@ -1963,10 +2010,71 @@
                 "first_name": "First Name",
                 "last_name": "Last Name",
                 "custom_field": "Custom field: {name}",
-                "language": "Language"
+                "language": "Language",
+                "netsendo_id": "NetSendo ID",
+                "gender": "Gender",
+                "timezone": "Timezone",
+                "source": "Source",
+                "status": "Global status",
+                "list_status": "Status on the target list",
+                "lists": "Lists (name:status)",
+                "tags": "Tags",
+                "subscribed_at": "Signup date",
+                "confirmed_at": "Confirmation date",
+                "unsubscribed_at": "Unsubscribe date",
+                "json_auto": "JSON file — columns are matched automatically by field name, no mapping needed."
             },
             "importing": "Importing...",
-            "import_button": "Import"
+            "import_button": "Import",
+            "detected": {
+                "title": "Recognised a file exported from NetSendo",
+                "desc": "Columns were mapped automatically and the options set so the file overwrites the data and restores list memberships."
+            },
+            "options": {
+                "title": "Import behaviour",
+                "subtitle": "Decides what happens to contacts you already have.",
+                "update_mode": "Existing contacts",
+                "update_modes": {
+                    "fill_empty": "Fill empty fields only",
+                    "overwrite": "Overwrite with the file's data",
+                    "skip": "Leave their data alone"
+                },
+                "signup_events": "Autoresponders and automations",
+                "signup_modes": {
+                    "new_only": "Only for new signups (recommended)",
+                    "all": "For every row — restart sequences",
+                    "none": "Do not trigger at all (silent migration)"
+                },
+                "restore_memberships": "Restore list memberships from the “lists” column",
+                "create_missing_lists": "Create lists that do not exist yet",
+                "apply_tags": "Apply tags from the “tags” column",
+                "replace_tags": "Replace existing tags instead of adding to them",
+                "apply_dates": "Use the dates from the file instead of today",
+                "detect_gender": "Detect gender from the first name when not given"
+            },
+            "preview": {
+                "title": "Check result",
+                "button": "Check the file",
+                "checking": "Checking…",
+                "failed": "The file could not be checked.",
+                "inspected": "Checked {inspected} of {total} rows. Nothing was written.",
+                "problems": "Rows that will be skipped:",
+                "row": "Row",
+                "actions": {
+                    "create": "New",
+                    "update": "Updated",
+                    "reactivate": "Restored",
+                    "unchanged": "Unchanged",
+                    "invalid": "Skipped"
+                },
+                "reasons": {
+                    "missing_email": "no email address",
+                    "missing_phone": "no phone number",
+                    "invalid_email": "invalid email address",
+                    "duplicate_in_file": "duplicate in the file",
+                    "exception": "write error"
+                }
+            }
         },
         "add_subscriber": "Add Subscriber",
         "search_placeholder": "Search by email or last name...",
@@ -2194,7 +2302,100 @@
         "lists_selected_count": "Selected: {count}",
         "select_visible_lists": "Select visible",
         "deselect_visible_lists": "Deselect visible",
-        "no_lists_found": "No lists match your search"
+        "no_lists_found": "No lists match your search",
+        "export": {
+            "export_button": "Export",
+            "title": "Export subscribers",
+            "subtitle": "Download your contacts in a format you can upload back.",
+            "scope": {
+                "label": "What to export",
+                "selected": "Selected contacts",
+                "selected_count": "{count} selected",
+                "filtered": "Current filter results",
+                "filtered_count": "{count} contacts",
+                "filtered_all": "All visible contacts",
+                "from_list": "List: {list}",
+                "all_lists": "All accessible lists"
+            },
+            "variant": {
+                "label": "Export variant",
+                "recommended": "Recommended",
+                "netsendo": {
+                    "name": "NetSendo (edit and upload back)",
+                    "desc": "Id, contact data, lists, tags and custom fields — the file returns intact."
+                },
+                "basic": {
+                    "name": "Basic",
+                    "desc": "Email, first name, last name. For a quick send elsewhere."
+                },
+                "contact": {
+                    "name": "Contact",
+                    "desc": "Contact data: email, phone, first name, last name, gender, language."
+                },
+                "marketing": {
+                    "name": "Marketing",
+                    "desc": "Lists, tags and engagement — opens, clicks, dates."
+                },
+                "full": {
+                    "name": "Full",
+                    "desc": "Every column, including engagement counters and IP address."
+                },
+                "custom": {
+                    "name": "Custom",
+                    "desc": "Pick exactly the columns the file should contain."
+                }
+            },
+            "columns_label": "Columns in the file",
+            "select_all": "Select all",
+            "pick_one_column": "Pick at least one column.",
+            "format": {
+                "label": "File format",
+                "csv": "CSV (comma)",
+                "csv_excel": "CSV for Excel (semicolon, UTF-8)",
+                "tsv": "TSV (tab)",
+                "json": "JSON",
+                "ndjson": "NDJSON (one contact per line)"
+            },
+            "membership": {
+                "label": "Which contacts",
+                "active": "Active only",
+                "all": "Everyone (including unsubscribed)",
+                "unsubscribed": "Unsubscribed and bounced only"
+            },
+            "dates": {
+                "label": "Date format",
+                "iso": "ISO 8601 (for re-import)",
+                "local": "Readable (YYYY-MM-DD HH:MM:SS)"
+            },
+            "round_trip_ok": "This variant carries the netsendo_id column, so after editing in a spreadsheet the file uploads back onto the same contacts — no duplicates.",
+            "round_trip_partial": "This variant has no netsendo_id column. Importing it matches contacts by email address, so a changed address creates a new contact.",
+            "download": "Download file",
+            "preparing": "Preparing…",
+            "columns": {
+                "netsendo_id": "NetSendo ID",
+                "email": "Email",
+                "phone": "Phone",
+                "first_name": "First name",
+                "last_name": "Last name",
+                "gender": "Gender",
+                "language": "Language",
+                "timezone": "Timezone",
+                "source": "Source",
+                "status": "Global status",
+                "list_status": "Status on list",
+                "lists": "Lists",
+                "tags": "Tags",
+                "subscribed_at": "Signup date",
+                "confirmed_at": "Confirmation date",
+                "unsubscribed_at": "Unsubscribe date",
+                "opens_count": "Opens",
+                "clicks_count": "Clicks",
+                "last_opened_at": "Last open",
+                "last_clicked_at": "Last click",
+                "ip_address": "IP address",
+                "created_at": "Added on"
+            }
+        }
     },
     "subscriber_card": {
         "title": "Subscriber Card",

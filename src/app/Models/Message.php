@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use App\Traits\LogsActivity;
 use App\Models\CrmContact;
+use App\Services\Segmentation\SubscriberFieldFilterService;
 
 class Message extends Model
 {
@@ -47,6 +48,9 @@ class Message extends Model
         // Triggers
         'trigger_type',
         'trigger_config',
+        // Custom-field audience filters (rows live in message_field_filters)
+        'include_field_filter_match',
+        'exclude_field_filter_match',
         // Queue status
         'is_active',
         'sent_count',
@@ -150,6 +154,57 @@ class Message extends Model
     public function excludedLists()
     {
         return $this->belongsToMany(ContactList::class, 'excluded_contact_list_message');
+    }
+
+    /**
+     * Custom-field conditions narrowing the audience (mode = include) and the
+     * exclusions (mode = exclude).
+     */
+    public function fieldFilters()
+    {
+        return $this->hasMany(MessageFieldFilter::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Include-side conditions: only subscribers matching these are recipients.
+     */
+    public function getIncludeFieldFilters(): \Illuminate\Support\Collection
+    {
+        $this->loadMissing('fieldFilters.customField');
+
+        return $this->fieldFilters->where('mode', MessageFieldFilter::MODE_INCLUDE)->values();
+    }
+
+    /**
+     * Exclude-side conditions: they narrow *who gets dropped*, not who is kept.
+     */
+    public function getExcludeFieldFilters(): \Illuminate\Support\Collection
+    {
+        $this->loadMissing('fieldFilters.customField');
+
+        return $this->fieldFilters->where('mode', MessageFieldFilter::MODE_EXCLUDE)->values();
+    }
+
+    /**
+     * Emails to drop from the audience.
+     *
+     * Excluded lists alone drop everybody on them. Combined with exclude-side
+     * field filters they drop only the people on those lists who also match the
+     * filters ("everyone from list X, but only the ones from Kraków"). Filters
+     * with no excluded list at all are applied to the audience itself, so they
+     * still never reach beyond this message's own lists.
+     *
+     * Returns an empty array when nothing is excluded — callers must not treat
+     * that as "exclude everyone".
+     */
+    protected function resolveExcludedEmails(array $includedListIds, array $excludedListIds): array
+    {
+        return app(SubscriberFieldFilterService::class)->excludedEmails(
+            $includedListIds,
+            $excludedListIds,
+            $this->getExcludeFieldFilters(),
+            $this->exclude_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+        );
     }
 
     /**
@@ -414,16 +469,27 @@ class Message extends Model
             ];
         }
 
+        // Same audience rules as getUniqueRecipients(): excluded lists, exclude-side
+        // field filters and include-side field filters all apply here too, so the
+        // schedule never promises sends the queue will not make.
+        $excludedEmails = $this->resolveExcludedEmails($includedListIds, $excludedListIds);
+        $includeFilters = $this->getIncludeFieldFilters();
+        $filterService = app(SubscriberFieldFilterService::class);
+
         // Get subscribers with their subscribed_at from pivot
         $subscribers = Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
                 $query->whereIn('contact_lists.id', $includedListIds)
                     ->where('contact_list_subscriber.status', 'active');
             })
-            ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
-                $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
-                    $q->whereIn('contact_lists.id', $excludedListIds);
-                })->pluck('email')->toArray();
+            ->when(!empty($excludedEmails), function ($query) use ($excludedEmails) {
                 $query->whereNotIn('email', $excludedEmails);
+            })
+            ->when($includeFilters->isNotEmpty(), function ($query) use ($filterService, $includeFilters) {
+                $filterService->applyFilters(
+                    $query,
+                    $includeFilters,
+                    $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                );
             })
             ->with(['contactLists' => function ($query) use ($includedListIds) {
                 $query->whereIn('contact_lists.id', $includedListIds)
@@ -733,6 +799,19 @@ class Message extends Model
             return collect();
         }
 
+        // Emails dropped by excluded lists and/or exclude-side field filters.
+        // Only list-based recipients can be dropped this way, so a CRM-only
+        // message never pays for the lookup.
+        $excludedEmails = !empty($includedListIds)
+            ? $this->resolveExcludedEmails($includedListIds, $excludedListIds)
+            : [];
+
+        // Custom-field conditions narrowing the audience. They apply to the
+        // list-based recipients only — CRM contacts are picked one by one, so
+        // an explicit pick stays a pick.
+        $includeFilters = $this->getIncludeFieldFilters();
+        $filterService = app(SubscriberFieldFilterService::class);
+
         // Base query for list-based subscribers
         $listSubscribers = collect();
         if (!empty($includedListIds)) {
@@ -740,12 +819,15 @@ class Message extends Model
                     $query->whereIn('contact_lists.id', $includedListIds)
                         ->where('contact_list_subscriber.status', 'active');
                 })
-                ->when(!empty($excludedListIds), function ($query) use ($excludedListIds) {
-                    // Exclude subscribers that are on any of the excluded lists
-                    $excludedEmails = Subscriber::whereHas('contactLists', function ($q) use ($excludedListIds) {
-                        $q->whereIn('contact_lists.id', $excludedListIds);
-                    })->pluck('email')->toArray();
+                ->when(!empty($excludedEmails), function ($query) use ($excludedEmails) {
                     $query->whereNotIn('email', $excludedEmails);
+                })
+                ->when($includeFilters->isNotEmpty(), function ($query) use ($filterService, $includeFilters) {
+                    $filterService->applyFilters(
+                        $query,
+                        $includeFilters,
+                        $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                    );
                 })
                 ->when(!empty($excludedCrmSubscriberIds), function ($query) use ($excludedCrmSubscriberIds) {
                     // Exclude CRM contacts from list recipients

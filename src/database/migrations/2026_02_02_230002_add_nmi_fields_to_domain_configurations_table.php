@@ -32,7 +32,10 @@ return new class extends Migration
         });
 
         // Add 'nmi' to the provider enum
-        \DB::statement("ALTER TABLE mailboxes MODIFY COLUMN provider ENUM('smtp', 'sendgrid', 'gmail', 'nmi') DEFAULT 'smtp'");
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (\DB::getDriverName() === 'mysql') {
+            \DB::statement("ALTER TABLE mailboxes MODIFY COLUMN provider ENUM('smtp', 'sendgrid', 'gmail', 'nmi') DEFAULT 'smtp'");
+        }
     }
 
     /**
@@ -51,6 +54,9 @@ return new class extends Migration
             ]);
         });
 
-        \DB::statement("ALTER TABLE mailboxes MODIFY COLUMN provider ENUM('smtp', 'sendgrid', 'gmail') DEFAULT 'smtp'");
+        // Raw MySQL DDL: skipped on other drivers so the schema still builds (e.g. the sqlite test database).
+        if (\DB::getDriverName() === 'mysql') {
+            \DB::statement("ALTER TABLE mailboxes MODIFY COLUMN provider ENUM('smtp', 'sendgrid', 'gmail') DEFAULT 'smtp'");
+        }
     }
 };

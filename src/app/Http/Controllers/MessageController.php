@@ -11,9 +11,11 @@ use App\Models\EmailReadSession;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\MessageAttachment;
+use App\Models\MessageFieldFilter;
 use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Template;
+use App\Services\Segmentation\SubscriberFieldFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -297,6 +299,19 @@ class MessageController extends Controller
             'contact_list_ids.*' => 'exists:contact_lists,id',
             'excluded_list_ids' => 'nullable|array',
             'excluded_list_ids.*' => 'exists:contact_lists,id',
+            // Custom-field audience filters
+            'include_field_filters' => 'nullable|array|max:20',
+            'include_field_filters.*.custom_field_id' => 'required|integer|exists:custom_fields,id',
+            'include_field_filters.*.operator' => 'required|string|in:' . implode(',', MessageFieldFilter::OPERATORS),
+            'include_field_filters.*.values' => 'nullable|array|max:200',
+            'include_field_filters.*.values.*' => 'nullable|string|max:255',
+            'exclude_field_filters' => 'nullable|array|max:20',
+            'exclude_field_filters.*.custom_field_id' => 'required|integer|exists:custom_fields,id',
+            'exclude_field_filters.*.operator' => 'required|string|in:' . implode(',', MessageFieldFilter::OPERATORS),
+            'exclude_field_filters.*.values' => 'nullable|array|max:200',
+            'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
+            'include_field_filter_match' => 'nullable|in:all,any',
+            'exclude_field_filter_match' => 'nullable|in:all,any',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
@@ -420,6 +435,8 @@ class MessageController extends Controller
             'ab_split_percentage' => $validated['ab_split_percentage'] ?? 50,
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
+            'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             // Queue messages: active only when not a draft
             'is_active' => $validated['status'] !== 'draft',
         ]);
@@ -432,6 +449,9 @@ class MessageController extends Controller
         if (!empty($validated['excluded_list_ids'])) {
             $message->excludedLists()->sync($validated['excluded_list_ids']);
         }
+
+        // Sync custom-field audience filters (before any recipient calculation)
+        $this->syncFieldFilters($message, $validated);
 
         // Sync CRM contacts
         if (array_key_exists('crm_contact_ids', $validated)) {
@@ -520,7 +540,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags', 'translations']);
+        $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'template', 'mailbox', 'attachments', 'trackedLinks', 'tags', 'translations', 'fieldFilters.customField']);
         $defaultMailbox = Mailbox::getDefaultFor(auth()->id());
         $insertController = new InsertController();
 
@@ -550,6 +570,11 @@ class MessageController extends Controller
                 'ab_split_percentage' => $message->ab_split_percentage,
                 'trigger_type' => $message->trigger_type,
                 'trigger_config' => $message->trigger_config,
+                // Custom-field audience filters
+                'include_field_filters' => $this->formatFieldFilters($message, MessageFieldFilter::MODE_INCLUDE),
+                'exclude_field_filters' => $this->formatFieldFilters($message, MessageFieldFilter::MODE_EXCLUDE),
+                'include_field_filter_match' => $message->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
+                'exclude_field_filter_match' => $message->exclude_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
                 // Attachments
                 'attachments' => $message->attachments->map(fn($a) => [
                     'id' => $a->id,
@@ -666,6 +691,19 @@ class MessageController extends Controller
             'contact_list_ids.*' => 'exists:contact_lists,id',
             'excluded_list_ids' => 'nullable|array',
             'excluded_list_ids.*' => 'exists:contact_lists,id',
+            // Custom-field audience filters
+            'include_field_filters' => 'nullable|array|max:20',
+            'include_field_filters.*.custom_field_id' => 'required|integer|exists:custom_fields,id',
+            'include_field_filters.*.operator' => 'required|string|in:' . implode(',', MessageFieldFilter::OPERATORS),
+            'include_field_filters.*.values' => 'nullable|array|max:200',
+            'include_field_filters.*.values.*' => 'nullable|string|max:255',
+            'exclude_field_filters' => 'nullable|array|max:20',
+            'exclude_field_filters.*.custom_field_id' => 'required|integer|exists:custom_fields,id',
+            'exclude_field_filters.*.operator' => 'required|string|in:' . implode(',', MessageFieldFilter::OPERATORS),
+            'exclude_field_filters.*.values' => 'nullable|array|max:200',
+            'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
+            'include_field_filter_match' => 'nullable|in:all,any',
+            'exclude_field_filter_match' => 'nullable|in:all,any',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
             'timezone' => 'nullable|string',
@@ -789,6 +827,8 @@ class MessageController extends Controller
             'ab_split_percentage' => $validated['ab_split_percentage'] ?? 50,
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
+            'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             // Queue messages: active only when not a draft
             'is_active' => $validated['status'] !== 'draft',
         ]);
@@ -801,6 +841,9 @@ class MessageController extends Controller
         if (array_key_exists('excluded_list_ids', $validated)) {
             $message->excludedLists()->sync($validated['excluded_list_ids'] ?? []);
         }
+
+        // Sync custom-field audience filters (before any recipient calculation)
+        $this->syncFieldFilters($message, $validated);
 
         // Sync CRM contacts
         if (array_key_exists('crm_contact_ids', $validated)) {
@@ -924,6 +967,17 @@ class MessageController extends Controller
 
         // Copy excluded list associations
         $newMessage->excludedLists()->sync($message->excludedLists->pluck('id'));
+
+        // Copy custom-field audience filters (both sides)
+        foreach ($message->fieldFilters as $filter) {
+            $newMessage->fieldFilters()->create([
+                'custom_field_id' => $filter->custom_field_id,
+                'mode' => $filter->mode,
+                'operator' => $filter->operator,
+                'values' => $filter->values,
+                'sort_order' => $filter->sort_order,
+            ]);
+        }
 
         // Copy tracked links configuration (preserve all settings)
         foreach ($message->trackedLinks as $trackedLink) {
@@ -1795,6 +1849,45 @@ class MessageController extends Controller
      * Sync tracked links configuration for the message.
      * Creates/updates/deletes MessageTrackedLink records based on form data.
      */
+    /**
+     * Persist the custom-field audience filters for both sides of the message.
+     *
+     * Absent keys leave the stored filters alone (partial updates from the API),
+     * an empty array clears that side.
+     */
+    /**
+     * Shape stored filters for the form, carrying the field label so the row can
+     * render before the available-fields request comes back.
+     */
+    protected function formatFieldFilters(Message $message, string $mode): array
+    {
+        return $message->fieldFilters
+            ->where('mode', $mode)
+            ->sortBy('sort_order')
+            ->map(fn (MessageFieldFilter $filter) => [
+                'custom_field_id' => $filter->custom_field_id,
+                'operator' => $filter->operator,
+                'values' => $filter->values ?? [],
+                'field_label' => $filter->customField?->label,
+                'field_type' => $filter->customField?->type,
+            ])
+            ->values()
+            ->all();
+    }
+
+    protected function syncFieldFilters(Message $message, array $validated): void
+    {
+        $service = app(SubscriberFieldFilterService::class);
+
+        if (array_key_exists('include_field_filters', $validated)) {
+            $service->syncFilters($message, MessageFieldFilter::MODE_INCLUDE, $validated['include_field_filters'] ?? []);
+        }
+
+        if (array_key_exists('exclude_field_filters', $validated)) {
+            $service->syncFilters($message, MessageFieldFilter::MODE_EXCLUDE, $validated['exclude_field_filters'] ?? []);
+        }
+    }
+
     protected function syncTrackedLinks(Message $message, array $trackedLinks): void
     {
         // Get existing tracked links for this message (by URL hash for comparison)

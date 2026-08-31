@@ -1886,6 +1886,49 @@
         }
     },
     "messages": {
+        "field_filters": {
+            "include_title": "Nach Zusatzfeldern eingrenzen",
+            "exclude_title": "Ausschluss nach Zusatzfeldern eingrenzen",
+            "include_help": "Nur an Personen senden, deren Zusatzfelder die folgenden Bedingungen erfüllen. Ohne Bedingungen werden alle Kontakte der ausgewählten Listen einbezogen.",
+            "exclude_help": "Nur die Personen aus den Ausschlusslisten entfernen, die die folgenden Bedingungen erfüllen. Ohne ausgewählte Ausschlussliste gelten die Bedingungen für die Empfänger der Ziellisten.",
+            "match_label": "Verknüpfung:",
+            "match_all": "Alle Bedingungen",
+            "match_any": "Beliebige Bedingung",
+            "select_field": "Feld auswählen",
+            "global_fields": "Globale Felder",
+            "list_fields": "Listenfelder",
+            "unknown_field": "Nicht verfügbares Feld",
+            "field_unavailable": "Dieses Feld gehört zu keiner der ausgewählten Listen. Die Bedingung greift weiterhin, Wertvorschläge können jedoch unvollständig sein.",
+            "add_condition": "Bedingung hinzufügen",
+            "remove": "Bedingung entfernen",
+            "loading_fields": "Felder werden geladen…",
+            "no_fields": "Keine Zusatzfelder für die ausgewählten Listen.",
+            "value_placeholder": "Wert eingeben oder suchen…",
+            "add_value": "„{value}“ hinzufügen",
+            "loading_values": "Werte werden gesucht…",
+            "no_values": "Keine gespeicherten Werte.",
+            "no_value_needed": "Diese Bedingung benötigt keinen Wert.",
+            "incomplete_warning": "Bedingungen ohne Wert werden beim Versand übersprungen.",
+            "estimate_title": "Geschätzte Empfänger",
+            "estimate_base": "Aus Listen: {count}",
+            "estimate_removed": "Herausgefiltert: {count}",
+            "estimate_help": "Gezählt werden Empfänger aus Listen – einzeln ausgewählte CRM-Kontakte kommen zusätzlich hinzu.",
+            "operators": {
+                "any_of": "ist eines von",
+                "none_of": "ist keines von",
+                "contains": "enthält",
+                "not_contains": "enthält nicht",
+                "starts_with": "beginnt mit",
+                "ends_with": "endet mit",
+                "is_set": "ist ausgefüllt",
+                "is_empty": "ist leer",
+                "gt": "größer als",
+                "gte": "größer oder gleich",
+                "lt": "kleiner als",
+                "lte": "kleiner oder gleich",
+                "between": "zwischen"
+            }
+        },
         "title": "Nachrichten",
         "subtitle": "E-Mail-Kampagnen durchsuchen und verwalten",
         "new_message": "Neue Nachricht",
@@ -2454,7 +2497,8 @@
                 "required_columns": "Erforderliche Spalten (in beliebiger Reihenfolge):",
                 "email": "E-Mail (erforderlich)",
                 "first_name": "Vorname (optional)",
-                "last_name": "Nachname (optional)"
+                "last_name": "Nachname (optional)",
+                "round_trip": "Der einfachste Weg: mit der Variante „NetSendo“ exportieren, die Zeilen in der Tabelle korrigieren und dieselbe Datei hier hochladen. Die Spalte netsendo_id sorgt dafür, dass die Änderungen dieselben Kontakte treffen. Limit {limit} Zeilen pro Datei."
             },
             "fields": {
                 "target_list": "Zielliste",
@@ -2466,7 +2510,10 @@
                 "choose_file": "Datei auswählen",
                 "or_drag_drop": "oder per Drag & Drop verschieben",
                 "max_size": "CSV bis zu 10MB",
-                "selected": "Ausgewählt: {name}"
+                "selected": "Ausgewählt: {name}",
+                "pipe": "Senkrechter Strich (|)",
+                "accepted": "CSV, TSV, JSON oder NDJSON bis {size} MB",
+                "target_list_optional": "Kann leer bleiben — die Zugehörigkeiten werden aus der Spalte „lists“ wiederhergestellt."
             },
             "mapping": {
                 "title": "Spaltenzuordnung",
@@ -2481,10 +2528,71 @@
                 "first_name": "Vorname",
                 "last_name": "Nachname",
                 "custom_field": "Benutzerdefiniertes Feld: {name}",
-                "language": "Sprache"
+                "language": "Sprache",
+                "netsendo_id": "NetSendo-ID",
+                "gender": "Geschlecht",
+                "timezone": "Zeitzone",
+                "source": "Quelle",
+                "status": "Globaler Status",
+                "list_status": "Status in der Zielliste",
+                "lists": "Listen (Name:Status)",
+                "tags": "Tags",
+                "subscribed_at": "Anmeldedatum",
+                "confirmed_at": "Bestätigungsdatum",
+                "unsubscribed_at": "Abmeldedatum",
+                "json_auto": "JSON-Datei — die Spalten werden automatisch über die Feldnamen zugeordnet, eine Zuordnung ist nicht nötig."
             },
             "importing": "Importieren...",
-            "import_button": "Importieren"
+            "import_button": "Importieren",
+            "detected": {
+                "title": "Aus NetSendo exportierte Datei erkannt",
+                "desc": "Die Spalten wurden automatisch zugeordnet und die Optionen so gesetzt, dass die Datei die Daten überschreibt und die Listenzugehörigkeiten wiederherstellt."
+            },
+            "options": {
+                "title": "Import-Verhalten",
+                "subtitle": "Bestimmt, was mit bereits vorhandenen Kontakten geschieht.",
+                "update_mode": "Vorhandene Kontakte",
+                "update_modes": {
+                    "fill_empty": "Nur leere Felder füllen",
+                    "overwrite": "Mit den Daten der Datei überschreiben",
+                    "skip": "Daten unverändert lassen"
+                },
+                "signup_events": "Autoresponder und Automationen",
+                "signup_modes": {
+                    "new_only": "Nur bei neuen Anmeldungen (empfohlen)",
+                    "all": "Bei jeder Zeile — Sequenzen neu starten",
+                    "none": "Gar nicht auslösen (stille Migration)"
+                },
+                "restore_memberships": "Listenzugehörigkeiten aus der Spalte „lists“ wiederherstellen",
+                "create_missing_lists": "Noch nicht vorhandene Listen anlegen",
+                "apply_tags": "Tags aus der Spalte „tags“ zuweisen",
+                "replace_tags": "Bestehende Tags ersetzen statt ergänzen",
+                "apply_dates": "Die Daten aus der Datei statt des heutigen Datums verwenden",
+                "detect_gender": "Geschlecht aus dem Vornamen erkennen, wenn nicht angegeben"
+            },
+            "preview": {
+                "title": "Ergebnis der Prüfung",
+                "button": "Datei prüfen",
+                "checking": "Wird geprüft…",
+                "failed": "Die Datei konnte nicht geprüft werden.",
+                "inspected": "{inspected} von {total} Zeilen geprüft. Es wurde nichts geschrieben.",
+                "problems": "Zeilen, die übersprungen werden:",
+                "row": "Zeile",
+                "actions": {
+                    "create": "Neu",
+                    "update": "Aktualisiert",
+                    "reactivate": "Wiederhergestellt",
+                    "unchanged": "Unverändert",
+                    "invalid": "Übersprungen"
+                },
+                "reasons": {
+                    "missing_email": "keine E-Mail-Adresse",
+                    "missing_phone": "keine Telefonnummer",
+                    "invalid_email": "ungültige E-Mail-Adresse",
+                    "duplicate_in_file": "Dublette in der Datei",
+                    "exception": "Schreibfehler"
+                }
+            }
         },
         "add_subscriber": "Abonnent hinzufügen",
         "search_placeholder": "Suche nach E-Mail oder Nachnamen...",
@@ -2665,7 +2773,100 @@
         "lists_selected_count": "Ausgewählt: {count}",
         "select_visible_lists": "Sichtbare auswählen",
         "deselect_visible_lists": "Auswahl aufheben",
-        "no_lists_found": "Keine Listen für diese Suche gefunden"
+        "no_lists_found": "Keine Listen für diese Suche gefunden",
+        "export": {
+            "export_button": "Exportieren",
+            "title": "Abonnenten exportieren",
+            "subtitle": "Laden Sie Ihre Kontakte in einem Format herunter, das Sie wieder hochladen können.",
+            "scope": {
+                "label": "Was exportieren",
+                "selected": "Ausgewählte Kontakte",
+                "selected_count": "{count} ausgewählt",
+                "filtered": "Ergebnisse der aktuellen Filter",
+                "filtered_count": "{count} Kontakte",
+                "filtered_all": "Alle sichtbaren Kontakte",
+                "from_list": "Liste: {list}",
+                "all_lists": "Alle zugänglichen Listen"
+            },
+            "variant": {
+                "label": "Export-Variante",
+                "recommended": "Empfohlen",
+                "netsendo": {
+                    "name": "NetSendo (bearbeiten und zurückspielen)",
+                    "desc": "ID, Kontaktdaten, Listen, Tags und eigene Felder — die Datei kommt verlustfrei zurück."
+                },
+                "basic": {
+                    "name": "Basis",
+                    "desc": "E-Mail, Vorname, Nachname. Für einen schnellen Versand anderswo."
+                },
+                "contact": {
+                    "name": "Kontakt",
+                    "desc": "Kontaktdaten: E-Mail, Telefon, Vorname, Nachname, Geschlecht, Sprache."
+                },
+                "marketing": {
+                    "name": "Marketing",
+                    "desc": "Listen, Tags und Engagement — Öffnungen, Klicks, Daten."
+                },
+                "full": {
+                    "name": "Vollständig",
+                    "desc": "Alle Spalten inklusive Engagement-Zähler und IP-Adresse."
+                },
+                "custom": {
+                    "name": "Eigene Auswahl",
+                    "desc": "Sie bestimmen selbst, welche Spalten in die Datei kommen."
+                }
+            },
+            "columns_label": "Spalten in der Datei",
+            "select_all": "Alle auswählen",
+            "pick_one_column": "Wählen Sie mindestens eine Spalte.",
+            "format": {
+                "label": "Dateiformat",
+                "csv": "CSV (Komma)",
+                "csv_excel": "CSV für Excel (Semikolon, UTF-8)",
+                "tsv": "TSV (Tabulator)",
+                "json": "JSON",
+                "ndjson": "NDJSON (ein Kontakt pro Zeile)"
+            },
+            "membership": {
+                "label": "Welche Kontakte",
+                "active": "Nur aktive",
+                "all": "Alle (auch abgemeldete)",
+                "unsubscribed": "Nur abgemeldete und unzustellbare"
+            },
+            "dates": {
+                "label": "Datumsformat",
+                "iso": "ISO 8601 (für den Re-Import)",
+                "local": "Lesbar (JJJJ-MM-TT HH:MM:SS)"
+            },
+            "round_trip_ok": "Diese Variante enthält die Spalte netsendo_id: Nach der Bearbeitung in der Tabelle landet die Datei wieder auf denselben Kontakten — ohne Dubletten.",
+            "round_trip_partial": "Diese Variante enthält keine netsendo_id-Spalte. Beim Import werden Kontakte über die E-Mail-Adresse zugeordnet; eine geänderte Adresse legt einen neuen Kontakt an.",
+            "download": "Datei herunterladen",
+            "preparing": "Wird vorbereitet…",
+            "columns": {
+                "netsendo_id": "NetSendo-ID",
+                "email": "E-Mail",
+                "phone": "Telefon",
+                "first_name": "Vorname",
+                "last_name": "Nachname",
+                "gender": "Geschlecht",
+                "language": "Sprache",
+                "timezone": "Zeitzone",
+                "source": "Quelle",
+                "status": "Globaler Status",
+                "list_status": "Status in der Liste",
+                "lists": "Listen",
+                "tags": "Tags",
+                "subscribed_at": "Anmeldedatum",
+                "confirmed_at": "Bestätigungsdatum",
+                "unsubscribed_at": "Abmeldedatum",
+                "opens_count": "Öffnungen",
+                "clicks_count": "Klicks",
+                "last_opened_at": "Letzte Öffnung",
+                "last_clicked_at": "Letzter Klick",
+                "ip_address": "IP-Adresse",
+                "created_at": "Hinzugefügt am"
+            }
+        }
     },
     "groups": {
         "title": "Mailinglisten-Gruppen",
