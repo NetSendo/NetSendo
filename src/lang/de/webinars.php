@@ -40,8 +40,11 @@ return [
             'benefits' => 'Was Sie lernen werden?',
             'timezone' => 'Ihre Zeitzone',
             'times_in_timezone' => 'Zeiten in :timezone angegeben',
+            'phone' => 'Telefon',
+            'starting_now' => 'Es geht los!',
         ],
         'registered' => [
+            'title' => 'Danke',
             'success_title' => 'Herzlichen Glückwunsch, :name Sie sind angemeldet!',
             'confirmation_sent' => 'Wir haben eine Bestätigung gesendet an',
             'starts_at' => 'Webinar beginnt am',
@@ -224,9 +227,26 @@ return [
     ],
 
     'countdown' => [
+        'days' => 'Tage',
+        'hours' => 'Std.',
+        'minutes' => 'Min.',
+        'seconds' => 'Sek.',
         'limited_offer' => 'Begrenztes Angebot',
         'promotion_ended' => 'Aktion beendet',
         'remaining' => 'Verbleibend: :count',
     ],
+    'builder' => [
+        'saved' => 'Seite gespeichert.',
+        'reset_done' => 'Die klassische Seitenvorlage wurde wiederhergestellt.',
+        'player_placeholder' => 'Hier erscheint der Webinar-Player',
+        'presets' => [
+            'thankyou_headline' => 'Du bist angemeldet!',
+            'thankyou_message' => 'Wir haben dir den Link zum Webinar per E-Mail geschickt.',
+        ],
+        'blocks' => [
+            'countdown' => [
+                'default_title' => 'Das Webinar startet in',
+            ],
+        ],
+    ],
 ];
-

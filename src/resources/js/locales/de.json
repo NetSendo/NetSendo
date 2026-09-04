@@ -5788,6 +5788,351 @@
                 "testimonial": "Referenz",
                 "excitement": "Begeisterung"
             }
+        },
+        "builder": {
+            "title": "Seiten-Builder",
+            "promo_title": "Webinar-Seiten-Builder",
+            "promo_desc": "Baue die Anmelde- und Danke-Seite aus Blöcken: Spalten, Farben, Video, Countdown, Stimmen, FAQ.",
+            "pages": {
+                "register": "Anmeldeseite",
+                "thankyou": "Danke-Seite",
+                "purchase": "Nach dem Kauf",
+                "watch": "Warteraum",
+                "replay": "Aufzeichnung"
+            },
+            "tabs": {
+                "blocks": "Blöcke",
+                "theme": "Design",
+                "presets": "Vorlagen"
+            },
+            "groups": {
+                "basic": "Basis",
+                "conversion": "Conversion",
+                "content": "Inhalt"
+            },
+            "layouts": {
+                "1": "1 Spalte",
+                "1-1": "2 Spalten",
+                "1-2": "1 : 2",
+                "2-1": "2 : 1",
+                "1-1-1": "3 Spalten"
+            },
+            "row": "Abschnitt",
+            "theme": {
+                "background_type": "Hintergrundart",
+                "background_angle": "Gradientenwinkel",
+                "background_image": "Hintergrundbild (URL)",
+                "colors": "Farben",
+                "background": "Hintergrund",
+                "background_to": "Hintergrund (Ende)",
+                "surface": "Karten",
+                "surface_border": "Kartenrahmen",
+                "text": "Text",
+                "muted": "Sekundärer Text",
+                "heading": "Überschriften",
+                "primary": "Primärfarbe",
+                "primary_to": "Primär (Ende)",
+                "primary_text": "Button-Text",
+                "card_background": "Formularhintergrund",
+                "card_text": "Formulartext",
+                "font": "Textschrift",
+                "heading_font": "Überschriftenschrift",
+                "radius": "Eckenradius",
+                "container": "Seitenbreite",
+                "button_style": "Button-Stil",
+                "shadow": "Schlagschatten"
+            },
+            "presets": {
+                "hint": "Wähle ein fertiges Design. „Alles übernehmen“ erstellt auch Abschnitte aus den Webinar-Inhalten.",
+                "apply_full": "Alles übernehmen",
+                "apply_theme": "Nur Farben",
+                "applying": "Wird angewendet…",
+                "midnight": "Violett (Standard)",
+                "aurora": "Marine & Türkis",
+                "minimal": "Hell & minimal",
+                "corporate": "Corporate",
+                "urgency": "Verkaufsstark",
+                "editorial": "Elegante Serife"
+            },
+            "row_settings": "Abschnittseinstellungen",
+            "add_row": "Abschnitt hinzufügen:",
+            "add_item": "Eintrag hinzufügen",
+            "drop_here": "Block hierher ziehen",
+            "nothing_selected": "Wähle einen Block oder Abschnitt aus, um Einstellungen zu bearbeiten.",
+            "duplicate": "Duplizieren",
+            "remove": "Entfernen",
+            "enabled": "Builder verwenden",
+            "canvas": "Editor",
+            "preview": "Vorschau",
+            "open_public": "Seite öffnen",
+            "reset": "Klassische Vorlage",
+            "reset_confirm": "Gebaute Seite löschen und zur klassischen Vorlage zurückkehren?",
+            "unsaved_confirm": "Es gibt ungespeicherte Änderungen. Trotzdem verlassen?",
+            "save_changes": "Änderungen speichern",
+            "saving": "Speichern…",
+            "saved_label": "Gespeichert",
+            "desktop": "Desktop",
+            "mobile": "Mobil",
+            "refresh": "Aktualisieren",
+            "refreshing": "Wird aktualisiert…",
+            "on": "An",
+            "off": "Aus",
+            "tokens_hint": "Platzhalter funktionieren in Texten (in doppelten geschweiften Klammern): webinar_name, webinar_date, webinar_time, first_name, watch_url, register_url.",
+            "sections_only_hint": "Auf dieser Seite bleiben Player und Chat unverändert — deine Blöcke erscheinen unter dem Player.",
+            "values": {
+                "sm": "Klein",
+                "md": "Mittel",
+                "lg": "Groß",
+                "xl": "Sehr groß",
+                "none": "Keine",
+                "left": "Links",
+                "center": "Zentriert",
+                "right": "Rechts",
+                "top": "Oben",
+                "middle": "Mitte",
+                "bottom": "Unten",
+                "solid": "Einfarbig",
+                "gradient": "Verlauf",
+                "outline": "Umriss",
+                "image": "Bild",
+                "surface": "Karte",
+                "primary": "Primärfarbe",
+                "custom": "Eigene",
+                "text": "Text",
+                "muted": "Gedämpft",
+                "heading": "Überschrift",
+                "auto": "Automatisch",
+                "check": "Haken",
+                "star": "Stern",
+                "arrow": "Pfeil",
+                "line": "Linie",
+                "space": "Abstand",
+                "side": "Nebeneinander",
+                "stacked": "Untereinander",
+                "narrow": "Schmal",
+                "normal": "Normal",
+                "wide": "Breit",
+                "full": "Voll",
+                "system": "System",
+                "inter": "Inter",
+                "poppins": "Poppins",
+                "montserrat": "Montserrat",
+                "lato": "Lato",
+                "playfair": "Playfair Display",
+                "source-serif": "Source Serif",
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "4": "4"
+            },
+            "blocks": {
+                "heading": {
+                    "label": "Überschrift",
+                    "help": "Abschnittstitel oder Seitenüberschrift.",
+                    "props": {
+                        "text": "Text",
+                        "level": "Überschriftebene",
+                        "size": "Größe",
+                        "align": "Ausrichtung",
+                        "color": "Farbe"
+                    }
+                },
+                "text": {
+                    "label": "Absatz",
+                    "help": "Fließtext, Zeilenumbrüche bleiben erhalten.",
+                    "props": {
+                        "body": "Inhalt",
+                        "size": "Größe",
+                        "align": "Ausrichtung",
+                        "color": "Farbe"
+                    }
+                },
+                "image": {
+                    "label": "Bild",
+                    "help": "Foto, Cover oder Logo.",
+                    "props": {
+                        "url": "URL",
+                        "alt": "Alt-Text",
+                        "link": "Klick-Link",
+                        "width": "Breite",
+                        "radius": "Eckenradius",
+                        "align": "Ausrichtung"
+                    }
+                },
+                "video": {
+                    "label": "Video",
+                    "help": "YouTube- oder Vimeo-Video.",
+                    "props": {
+                        "url": "URL",
+                        "caption": "Bildunterschrift"
+                    }
+                },
+                "button": {
+                    "label": "Button",
+                    "help": "Call-to-Action-Button, z. B. zum Formular.",
+                    "props": {
+                        "label": "Button-Beschriftung",
+                        "url": "URL",
+                        "style": "Stil",
+                        "size": "Größe",
+                        "align": "Ausrichtung",
+                        "full_width": "Volle Breite"
+                    }
+                },
+                "divider": {
+                    "label": "Trennlinie",
+                    "help": "Trennlinie oder Leerraum.",
+                    "props": {
+                        "style": "Stil",
+                        "size": "Größe"
+                    }
+                },
+                "spacer": {
+                    "label": "Abstand",
+                    "help": "Leerraum zwischen Blöcken.",
+                    "props": {
+                        "size": "Größe"
+                    }
+                },
+                "html": {
+                    "label": "Eigenes HTML",
+                    "help": "Eigenen Code einfügen, z. B. Widget oder Pixel.",
+                    "props": {
+                        "code": "HTML-Code"
+                    }
+                },
+                "form": {
+                    "label": "Anmeldeformular",
+                    "help": "Das Anmeldeformular. Einmal pro Seite.",
+                    "props": {
+                        "title": "Überschrift",
+                        "button_label": "Button-Beschriftung",
+                        "consent": "Einwilligungstext",
+                        "show_first_name": "Feld „Vorname“",
+                        "show_last_name": "Feld „Nachname“",
+                        "show_phone": "Feld „Telefon“",
+                        "show_timezone": "Zeitzonen-Auswahl",
+                        "require_name": "Name erforderlich"
+                    }
+                },
+                "sessions": {
+                    "label": "Terminauswahl",
+                    "help": "Die nächsten Auto-Webinar-Termine.",
+                    "props": {
+                        "title": "Überschrift",
+                        "subtitle": "Untertitel"
+                    }
+                },
+                "date_card": {
+                    "label": "Webinar-Termin",
+                    "help": "Karte mit Datum und Uhrzeit in der Zeitzone des Besuchers.",
+                    "props": {
+                        "title": "Überschrift"
+                    }
+                },
+                "countdown": {
+                    "label": "Countdown",
+                    "help": "Zählt bis zum Webinarstart oder einem eigenen Datum.",
+                    "props": {
+                        "title": "Überschrift",
+                        "target": "Countdown bis",
+                        "custom_at": "Eigenes Datum",
+                        "expired_text": "Text nach dem Start"
+                    }
+                },
+                "registration_details": {
+                    "label": "Anmeldedetails",
+                    "help": "Termin, persönlicher Link und Kalender-Buttons.",
+                    "props": {
+                        "show_time": "Termin anzeigen",
+                        "show_link": "Webinar-Link anzeigen",
+                        "show_calendar": "Kalender-Buttons"
+                    }
+                },
+                "calendly": {
+                    "label": "Calendly",
+                    "help": "Buchungs-Widget. Leere URL = Einstellung des Webinars.",
+                    "props": {
+                        "url": "URL",
+                        "title": "Überschrift",
+                        "description": "Beschreibung"
+                    }
+                },
+                "benefits": {
+                    "label": "Vorteilsliste",
+                    "help": "Checkliste der Vorteile.",
+                    "props": {
+                        "title": "Überschrift",
+                        "icon": "Symbol",
+                        "columns": "Spalten",
+                        "items": "Einträge"
+                    },
+                    "items": {
+                        "text": "Text"
+                    }
+                },
+                "steps": {
+                    "label": "Schritte",
+                    "help": "Nummerierte Schritte oder Agenda.",
+                    "props": {
+                        "title": "Überschrift",
+                        "items": "Einträge"
+                    },
+                    "items": {
+                        "title": "Überschrift",
+                        "body": "Inhalt"
+                    }
+                },
+                "testimonials": {
+                    "label": "Stimmen",
+                    "help": "Teilnehmerzitate mit Namen.",
+                    "props": {
+                        "title": "Überschrift",
+                        "columns": "Spalten",
+                        "items": "Einträge"
+                    },
+                    "items": {
+                        "quote": "Zitat",
+                        "author": "Autor",
+                        "role": "Rolle",
+                        "avatar": "Foto (URL)"
+                    }
+                },
+                "faq": {
+                    "label": "FAQ",
+                    "help": "Aufklappbare Fragen und Antworten.",
+                    "props": {
+                        "title": "Überschrift",
+                        "items": "Einträge"
+                    },
+                    "items": {
+                        "question": "Frage",
+                        "answer": "Antwort"
+                    }
+                },
+                "speaker": {
+                    "label": "Referent",
+                    "help": "Foto und Bio des Hosts.",
+                    "props": {
+                        "name": "Name",
+                        "role": "Rolle",
+                        "bio": "Bio",
+                        "avatar": "Foto (URL)",
+                        "layout": "Layout"
+                    }
+                },
+                "stats": {
+                    "label": "Zahlen",
+                    "help": "Hervorgehobene Zahlen, z. B. Teilnehmerzahl.",
+                    "props": {
+                        "items": "Einträge"
+                    },
+                    "items": {
+                        "value": "Wert",
+                        "label": "Button-Beschriftung"
+                    }
+                }
+            }
         }
     },
     "sms_providers": {

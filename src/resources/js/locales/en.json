@@ -6287,6 +6287,351 @@
                 "testimonial": "Testimonial",
                 "excitement": "Excitement"
             }
+        },
+        "builder": {
+            "title": "Page builder",
+            "promo_title": "Webinar page builder",
+            "promo_desc": "Build the registration and thank-you pages from blocks: columns, colours, video, countdown, testimonials, FAQ.",
+            "pages": {
+                "register": "Registration page",
+                "thankyou": "Thank-you screen",
+                "purchase": "After purchase",
+                "watch": "Waiting room",
+                "replay": "Replay"
+            },
+            "tabs": {
+                "blocks": "Blocks",
+                "theme": "Theme",
+                "presets": "Templates"
+            },
+            "groups": {
+                "basic": "Basic",
+                "conversion": "Conversion",
+                "content": "Content"
+            },
+            "layouts": {
+                "1": "1 column",
+                "1-1": "2 columns",
+                "1-2": "1 : 2",
+                "2-1": "2 : 1",
+                "1-1-1": "3 columns"
+            },
+            "row": "Section",
+            "theme": {
+                "background_type": "Background type",
+                "background_angle": "Gradient angle",
+                "background_image": "Background image (URL)",
+                "colors": "Colours",
+                "background": "Background",
+                "background_to": "Background (end)",
+                "surface": "Cards",
+                "surface_border": "Card border",
+                "text": "Text",
+                "muted": "Secondary text",
+                "heading": "Headings",
+                "primary": "Primary colour",
+                "primary_to": "Primary (end)",
+                "primary_text": "Button text",
+                "card_background": "Form background",
+                "card_text": "Form text",
+                "font": "Body font",
+                "heading_font": "Heading font",
+                "radius": "Corner radius",
+                "container": "Page width",
+                "button_style": "Button style",
+                "shadow": "Drop shadows"
+            },
+            "presets": {
+                "hint": "Pick a ready-made look. “Apply everything” also lays out sections from the webinar content.",
+                "apply_full": "Apply everything",
+                "apply_theme": "Colours only",
+                "applying": "Applying…",
+                "midnight": "Violet (default)",
+                "aurora": "Navy & teal",
+                "minimal": "Light minimal",
+                "corporate": "Corporate",
+                "urgency": "High-urgency sales",
+                "editorial": "Elegant serif"
+            },
+            "row_settings": "Section settings",
+            "add_row": "Add a section:",
+            "add_item": "Add entry",
+            "drop_here": "Drop a block here",
+            "nothing_selected": "Select a block or a section on the canvas to edit its settings.",
+            "duplicate": "Duplicate",
+            "remove": "Remove",
+            "enabled": "Use the builder",
+            "canvas": "Editor",
+            "preview": "Preview",
+            "open_public": "Open page",
+            "reset": "Classic template",
+            "reset_confirm": "Delete the built page and go back to the classic template?",
+            "unsaved_confirm": "You have unsaved changes. Leave and discard them?",
+            "save_changes": "Save changes",
+            "saving": "Saving…",
+            "saved_label": "Saved",
+            "desktop": "Desktop",
+            "mobile": "Mobile",
+            "refresh": "Refresh",
+            "refreshing": "Refreshing…",
+            "on": "On",
+            "off": "Off",
+            "tokens_hint": "Tokens work in any copy (wrap them in double braces): webinar_name, webinar_date, webinar_time, first_name, watch_url, register_url.",
+            "sections_only_hint": "On this page the player and chat stay as they are — your blocks appear under the player and the theme colours that area.",
+            "values": {
+                "sm": "Small",
+                "md": "Medium",
+                "lg": "Large",
+                "xl": "Extra large",
+                "none": "None",
+                "left": "Left",
+                "center": "Centre",
+                "right": "Right",
+                "top": "Top",
+                "middle": "Middle",
+                "bottom": "Bottom",
+                "solid": "Solid",
+                "gradient": "Gradient",
+                "outline": "Outline",
+                "image": "Image",
+                "surface": "Card",
+                "primary": "Primary",
+                "custom": "Custom",
+                "text": "Text",
+                "muted": "Muted",
+                "heading": "Heading",
+                "auto": "Automatic",
+                "check": "Check",
+                "star": "Star",
+                "arrow": "Arrow",
+                "line": "Line",
+                "space": "Space",
+                "side": "Side by side",
+                "stacked": "Stacked",
+                "narrow": "Narrow",
+                "normal": "Normal",
+                "wide": "Wide",
+                "full": "Full",
+                "system": "System",
+                "inter": "Inter",
+                "poppins": "Poppins",
+                "montserrat": "Montserrat",
+                "lato": "Lato",
+                "playfair": "Playfair Display",
+                "source-serif": "Source Serif",
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "4": "4"
+            },
+            "blocks": {
+                "heading": {
+                    "label": "Heading",
+                    "help": "A section title or page headline.",
+                    "props": {
+                        "text": "Text",
+                        "level": "Heading level",
+                        "size": "Size",
+                        "align": "Alignment",
+                        "color": "Colour"
+                    }
+                },
+                "text": {
+                    "label": "Paragraph",
+                    "help": "Plain copy; line breaks are preserved.",
+                    "props": {
+                        "body": "Body",
+                        "size": "Size",
+                        "align": "Alignment",
+                        "color": "Colour"
+                    }
+                },
+                "image": {
+                    "label": "Image",
+                    "help": "A photo, cover or logo.",
+                    "props": {
+                        "url": "URL",
+                        "alt": "Alt text",
+                        "link": "Click-through link",
+                        "width": "Width",
+                        "radius": "Corner radius",
+                        "align": "Alignment"
+                    }
+                },
+                "video": {
+                    "label": "Video",
+                    "help": "A YouTube or Vimeo video.",
+                    "props": {
+                        "url": "URL",
+                        "caption": "Caption"
+                    }
+                },
+                "button": {
+                    "label": "Button",
+                    "help": "A call-to-action button, e.g. jump to the form.",
+                    "props": {
+                        "label": "Button label",
+                        "url": "URL",
+                        "style": "Style",
+                        "size": "Size",
+                        "align": "Alignment",
+                        "full_width": "Full width"
+                    }
+                },
+                "divider": {
+                    "label": "Divider",
+                    "help": "A horizontal rule or blank space.",
+                    "props": {
+                        "style": "Style",
+                        "size": "Size"
+                    }
+                },
+                "spacer": {
+                    "label": "Spacer",
+                    "help": "Empty space between blocks.",
+                    "props": {
+                        "size": "Size"
+                    }
+                },
+                "html": {
+                    "label": "Custom HTML",
+                    "help": "Insert your own markup, e.g. a widget or pixel.",
+                    "props": {
+                        "code": "HTML code"
+                    }
+                },
+                "form": {
+                    "label": "Signup form",
+                    "help": "The webinar registration form. One per page.",
+                    "props": {
+                        "title": "Heading",
+                        "button_label": "Button label",
+                        "consent": "Consent note",
+                        "show_first_name": "First name field",
+                        "show_last_name": "Last name field",
+                        "show_phone": "Phone field",
+                        "show_timezone": "Timezone selector",
+                        "require_name": "Require the name"
+                    }
+                },
+                "sessions": {
+                    "label": "Session picker",
+                    "help": "The next available auto-webinar sessions.",
+                    "props": {
+                        "title": "Heading",
+                        "subtitle": "Subtitle"
+                    }
+                },
+                "date_card": {
+                    "label": "Webinar date",
+                    "help": "A card with the date and time in the visitor’s timezone.",
+                    "props": {
+                        "title": "Heading"
+                    }
+                },
+                "countdown": {
+                    "label": "Countdown",
+                    "help": "Counts down to the webinar start or a custom date.",
+                    "props": {
+                        "title": "Heading",
+                        "target": "Count down to",
+                        "custom_at": "Custom date",
+                        "expired_text": "Text after the start"
+                    }
+                },
+                "registration_details": {
+                    "label": "Registration summary",
+                    "help": "The session time, the personal watch link and calendar buttons.",
+                    "props": {
+                        "show_time": "Show the date",
+                        "show_link": "Show the webinar link",
+                        "show_calendar": "Calendar buttons"
+                    }
+                },
+                "calendly": {
+                    "label": "Calendly",
+                    "help": "Booking widget. Leave the URL empty to use the webinar setting.",
+                    "props": {
+                        "url": "URL",
+                        "title": "Heading",
+                        "description": "Description"
+                    }
+                },
+                "benefits": {
+                    "label": "Benefit list",
+                    "help": "A checklist of what attendees get.",
+                    "props": {
+                        "title": "Heading",
+                        "icon": "Icon",
+                        "columns": "Columns",
+                        "items": "Entries"
+                    },
+                    "items": {
+                        "text": "Text"
+                    }
+                },
+                "steps": {
+                    "label": "Steps",
+                    "help": "A numbered list of steps or an agenda.",
+                    "props": {
+                        "title": "Heading",
+                        "items": "Entries"
+                    },
+                    "items": {
+                        "title": "Heading",
+                        "body": "Body"
+                    }
+                },
+                "testimonials": {
+                    "label": "Testimonials",
+                    "help": "Attendee quotes with attribution.",
+                    "props": {
+                        "title": "Heading",
+                        "columns": "Columns",
+                        "items": "Entries"
+                    },
+                    "items": {
+                        "quote": "Quote",
+                        "author": "Author",
+                        "role": "Role",
+                        "avatar": "Photo (URL)"
+                    }
+                },
+                "faq": {
+                    "label": "FAQ",
+                    "help": "Collapsible questions and answers.",
+                    "props": {
+                        "title": "Heading",
+                        "items": "Entries"
+                    },
+                    "items": {
+                        "question": "Question",
+                        "answer": "Answer"
+                    }
+                },
+                "speaker": {
+                    "label": "Speaker",
+                    "help": "The host’s photo and bio.",
+                    "props": {
+                        "name": "Full name",
+                        "role": "Role",
+                        "bio": "Bio",
+                        "avatar": "Photo (URL)",
+                        "layout": "Layout"
+                    }
+                },
+                "stats": {
+                    "label": "Stats",
+                    "help": "Highlighted numbers, e.g. attendee count.",
+                    "props": {
+                        "items": "Entries"
+                    },
+                    "items": {
+                        "value": "Value",
+                        "label": "Button label"
+                    }
+                }
+            }
         }
     },
     "sms_providers": {

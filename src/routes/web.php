@@ -793,6 +793,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/host/bulk-delete', [\App\Http\Controllers\WebinarHostController::class, 'bulkDelete'])->name('host.bulk-delete');
 
         // Scenario Builder API
+        // Funnel page builder (registration / thank-you / waiting room / replay)
+        Route::get('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'edit'])->name('pages.edit');
+        Route::put('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'update'])->name('pages.update');
+        Route::delete('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'destroy'])->name('pages.destroy');
+        Route::post('/{webinar}/pages/{page}/preset', [\App\Http\Controllers\WebinarPageBuilderController::class, 'preset'])->name('pages.preset');
+        Route::post('/{webinar}/pages/{page}/preview', [\App\Http\Controllers\WebinarPageBuilderController::class, 'preview'])->name('pages.preview');
+
         Route::get('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'index'])->name('scripts.index');
         Route::get('/{webinar}/scripts/builder', [\App\Http\Controllers\AutoWebinarScriptController::class, 'builder'])->name('scripts.builder');
         Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store');

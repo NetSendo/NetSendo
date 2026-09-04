@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Webinar;
 use App\Models\WebinarRegistration;
 use App\Models\WebinarAnalytic;
+use App\Services\Webinar\WebinarPageRenderer;
+use App\Services\Webinar\WebinarPageService;
 use App\Services\Webinar\WebinarService;
 use Carbon\Carbon;
 use DateTimeZone;
@@ -41,14 +43,26 @@ class PublicWebinarController extends Controller
         // Schedule timezone for displaying session times
         $scheduleTimezone = $webinar->schedule?->timezone ?? $webinar->timezone ?? $webinar->user->timezone ?? 'UTC';
 
-        return view('webinar.register', [
-            'webinar' => $webinar,
-            'nextSessions' => $nextSessions,
+        $context = [
+            'title' => $webinar->name,
+            'sessions' => $nextSessions,
             'canRegister' => $webinar->canRegister(),
             'timezones' => $timezones,
             'defaultTimezone' => $defaultTimezone,
             'scheduleTimezone' => $scheduleTimezone,
-        ]);
+            'start_at' => $webinar->scheduled_at ?? ($nextSessions[0] ?? null),
+            'tokens' => WebinarPageRenderer::tokens($webinar),
+        ];
+
+        return $this->builderView($webinar, WebinarPageService::PAGE_REGISTER, $context)
+            ?? view('webinar.register', [
+                'webinar' => $webinar,
+                'nextSessions' => $nextSessions,
+                'canRegister' => $webinar->canRegister(),
+                'timezones' => $timezones,
+                'defaultTimezone' => $defaultTimezone,
+                'scheduleTimezone' => $scheduleTimezone,
+            ]);
     }
 
     public function submitRegistration(Request $request, string $slug)
@@ -81,10 +95,25 @@ class PublicWebinarController extends Controller
         // Load session relationship for display
         $registration->load('session');
 
-        return view('webinar.registered', [
-            'webinar' => $webinar,
+        $context = [
+            'title' => __('webinars.public.registered.title') . ' - ' . $webinar->name,
+            'noindex' => true,
             'registration' => $registration,
-        ]);
+            'displayTimezone' => $registration->timezone ?? $webinar->timezone ?? 'UTC',
+            'start_at' => $registration->scheduledStart(),
+            'tokens' => WebinarPageRenderer::tokens($webinar, [
+                'first_name' => $registration->first_name,
+                'last_name' => $registration->last_name,
+                'email' => $registration->email,
+                'watch_url' => $registration->watch_url,
+            ]),
+        ];
+
+        return $this->builderView($webinar, WebinarPageService::PAGE_THANKYOU, $context)
+            ?? view('webinar.registered', [
+                'webinar' => $webinar,
+                'registration' => $registration,
+            ]);
     }
 
     /**
@@ -98,9 +127,17 @@ class PublicWebinarController extends Controller
             ->whereIn('status', [Webinar::STATUS_SCHEDULED, Webinar::STATUS_LIVE, Webinar::STATUS_PUBLISHED, Webinar::STATUS_ENDED])
             ->firstOrFail();
 
-        return view('webinar.thankyou', [
-            'webinar' => $webinar,
-        ]);
+        $context = [
+            'title' => __('webinars.public.thankyou.title') . ' - ' . $webinar->name,
+            'noindex' => true,
+            'start_at' => $webinar->scheduled_at,
+            'tokens' => WebinarPageRenderer::tokens($webinar),
+        ];
+
+        return $this->builderView($webinar, WebinarPageService::PAGE_PURCHASE, $context)
+            ?? view('webinar.thankyou', [
+                'webinar' => $webinar,
+            ]);
     }
 
     public function watch(string $slug, string $token): View
@@ -173,6 +210,15 @@ class PublicWebinarController extends Controller
         $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
 
         return view('webinar.watch', [
+            'builderPage' => $this->builderSections($webinar, WebinarPageService::PAGE_WATCH, [
+                'registration' => $registration,
+                'displayTimezone' => $registrationTimezone,
+                'start_at' => $sessionStartTime,
+                'tokens' => WebinarPageRenderer::tokens($webinar, [
+                    'first_name' => $registration->first_name,
+                    'watch_url' => $registration->watch_url,
+                ]),
+            ]),
             'webinar' => $webinar,
             'registration' => $registration,
             'session' => $session,
@@ -207,6 +253,14 @@ class PublicWebinarController extends Controller
             'webinar' => $webinar,
             'registration' => $registration,
             'products' => $webinar->products()->active()->get(),
+            'builderPage' => $this->builderSections($webinar, WebinarPageService::PAGE_REPLAY, [
+                'registration' => $registration,
+                'displayTimezone' => $registration->timezone ?? $webinar->timezone ?? 'UTC',
+                'tokens' => WebinarPageRenderer::tokens($webinar, [
+                    'first_name' => $registration->first_name,
+                    'watch_url' => $registration->watch_url,
+                ]),
+            ]),
         ]);
     }
 
@@ -281,6 +335,44 @@ class PublicWebinarController extends Controller
     /**
      * Get common timezones for dropdown.
      */
+    /**
+     * Render a funnel page from the block builder, or null when the webinar
+     * still uses the legacy template for that page.
+     */
+    protected function builderView(Webinar $webinar, string $page, array $context): ?View
+    {
+        if (!WebinarPageService::isBuilt($webinar, $page)) {
+            return null;
+        }
+
+        return view('webinar.builder.page', [
+            'webinar' => $webinar,
+            'definition' => WebinarPageService::definitionFor($webinar, $page),
+            'ctx' => $context,
+        ]);
+    }
+
+    /**
+     * Theme + blocks for a page that keeps its own player chrome (waiting
+     * room, replay). Null when the webinar has not built that page.
+     *
+     * @return array{theme: array, rows: array, ctx: array}|null
+     */
+    protected function builderSections(Webinar $webinar, string $page, array $context): ?array
+    {
+        if (!WebinarPageService::isBuilt($webinar, $page)) {
+            return null;
+        }
+
+        $definition = WebinarPageService::definitionFor($webinar, $page);
+
+        return [
+            'theme' => $definition['theme'],
+            'rows' => $definition['rows'],
+            'ctx' => $context,
+        ];
+    }
+
     protected function getCommonTimezones(): array
     {
         return [

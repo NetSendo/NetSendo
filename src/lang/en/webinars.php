@@ -40,8 +40,11 @@ return [
             'benefits' => 'What you will learn?',
             'timezone' => 'Your timezone',
             'times_in_timezone' => 'Times shown in :timezone',
+            'phone' => 'Phone',
+            'starting_now' => 'Starting now!',
         ],
         'registered' => [
+            'title' => 'Thank you',
             'success_title' => 'Congratulations, :name you are registered!',
             'confirmation_sent' => 'We sent a confirmation to',
             'starts_at' => 'Webinar starts at',
@@ -226,9 +229,26 @@ return [
     ],
 
     'countdown' => [
+        'days' => 'days',
+        'hours' => 'hours',
+        'minutes' => 'min',
+        'seconds' => 'sec',
         'limited_offer' => 'Limited offer',
         'promotion_ended' => 'Promotion ended',
         'remaining' => 'Remaining: :count',
     ],
+    'builder' => [
+        'saved' => 'Page saved.',
+        'reset_done' => 'The classic page template has been restored.',
+        'player_placeholder' => 'The webinar player appears here',
+        'presets' => [
+            'thankyou_headline' => "You're registered!",
+            'thankyou_message' => 'We have emailed you the link to the webinar.',
+        ],
+        'blocks' => [
+            'countdown' => [
+                'default_title' => 'The webinar starts in',
+            ],
+        ],
+    ],
 ];
-

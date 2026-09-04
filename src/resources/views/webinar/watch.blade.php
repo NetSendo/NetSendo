@@ -246,6 +246,8 @@
         </div>
     </div>
 
+    @include('webinar.builder.embed')
+
     @if($rendersVimeo)
         <script src="https://player.vimeo.com/api/player.js"></script>
     @endif

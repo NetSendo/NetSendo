@@ -6334,6 +6334,351 @@
                 "testimonial": "Referencja",
                 "excitement": "Entuzjazm"
             }
+        },
+        "builder": {
+            "title": "Kreator stron",
+            "promo_title": "Kreator stron webinaru",
+            "promo_desc": "Zbuduj stronę zapisu i stronę z podziękowaniem z bloków: kolumny, kolory, wideo, licznik, opinie, FAQ.",
+            "pages": {
+                "register": "Strona zapisu",
+                "thankyou": "Podziękowanie",
+                "purchase": "Po zakupie",
+                "watch": "Poczekalnia",
+                "replay": "Powtórka"
+            },
+            "tabs": {
+                "blocks": "Bloki",
+                "theme": "Motyw",
+                "presets": "Szablony"
+            },
+            "groups": {
+                "basic": "Podstawowe",
+                "conversion": "Konwersja",
+                "content": "Treść"
+            },
+            "layouts": {
+                "1": "1 kolumna",
+                "1-1": "2 kolumny",
+                "1-2": "1 : 2",
+                "2-1": "2 : 1",
+                "1-1-1": "3 kolumny"
+            },
+            "row": "Sekcja",
+            "theme": {
+                "background_type": "Rodzaj tła",
+                "background_angle": "Kąt gradientu",
+                "background_image": "Obraz tła (URL)",
+                "colors": "Kolory",
+                "background": "Tło",
+                "background_to": "Tło — koniec",
+                "surface": "Kafelki",
+                "surface_border": "Obramowanie kafelków",
+                "text": "Tekst",
+                "muted": "Tekst drugorzędny",
+                "heading": "Nagłówki",
+                "primary": "Kolor główny",
+                "primary_to": "Kolor główny — koniec",
+                "primary_text": "Tekst na przycisku",
+                "card_background": "Tło formularza",
+                "card_text": "Tekst formularza",
+                "font": "Czcionka tekstu",
+                "heading_font": "Czcionka nagłówków",
+                "radius": "Zaokrąglenia",
+                "container": "Szerokość strony",
+                "button_style": "Styl przycisku",
+                "shadow": "Cienie pod elementami"
+            },
+            "presets": {
+                "hint": "Wybierz gotowy wygląd. „Zastosuj całość” ułoży też sekcje na podstawie treści webinaru.",
+                "apply_full": "Zastosuj całość",
+                "apply_theme": "Tylko kolory",
+                "applying": "Stosuję…",
+                "midnight": "Fiolet (domyślny)",
+                "aurora": "Granat i turkus",
+                "minimal": "Jasny minimal",
+                "corporate": "Korporacyjny",
+                "urgency": "Sprzedażowy",
+                "editorial": "Elegancki serif"
+            },
+            "row_settings": "Ustawienia sekcji",
+            "add_row": "Dodaj sekcję:",
+            "add_item": "Dodaj pozycję",
+            "drop_here": "Przeciągnij blok tutaj",
+            "nothing_selected": "Kliknij blok lub sekcję na kanwie, aby edytować jej ustawienia.",
+            "duplicate": "Duplikuj",
+            "remove": "Usuń",
+            "enabled": "Używaj kreatora",
+            "canvas": "Edycja",
+            "preview": "Podgląd",
+            "open_public": "Otwórz stronę",
+            "reset": "Klasyczny szablon",
+            "reset_confirm": "Usunąć zbudowaną stronę i wrócić do klasycznego szablonu?",
+            "unsaved_confirm": "Masz niezapisane zmiany. Przejść dalej i je porzucić?",
+            "save_changes": "Zapisz zmiany",
+            "saving": "Zapisuję…",
+            "saved_label": "Zapisane",
+            "desktop": "Komputer",
+            "mobile": "Telefon",
+            "refresh": "Odśwież",
+            "refreshing": "Odświeżam…",
+            "on": "Włączone",
+            "off": "Wyłączone",
+            "tokens_hint": "W tekstach zadziałają znaczniki (w podwójnych klamrach): webinar_name, webinar_date, webinar_time, first_name, watch_url, register_url.",
+            "sections_only_hint": "Na tej stronie odtwarzacz i czat zostają bez zmian — bloki pojawią się pod odtwarzaczem, a motyw pokoloruje tę część strony.",
+            "values": {
+                "sm": "Mały",
+                "md": "Średni",
+                "lg": "Duży",
+                "xl": "Bardzo duży",
+                "none": "Brak",
+                "left": "Do lewej",
+                "center": "Wyśrodkuj",
+                "right": "Do prawej",
+                "top": "Góra",
+                "middle": "Środek",
+                "bottom": "Dół",
+                "solid": "Jednolity",
+                "gradient": "Gradient",
+                "outline": "Obrys",
+                "image": "Obraz",
+                "surface": "Kafelek",
+                "primary": "Kolor główny",
+                "custom": "Własny",
+                "text": "Tekst",
+                "muted": "Przygaszony",
+                "heading": "Nagłówkowy",
+                "auto": "Automatycznie",
+                "check": "Ptaszek",
+                "star": "Gwiazdka",
+                "arrow": "Strzałka",
+                "line": "Linia",
+                "space": "Odstęp",
+                "side": "Obok siebie",
+                "stacked": "Jeden pod drugim",
+                "narrow": "Wąska",
+                "normal": "Standardowa",
+                "wide": "Szeroka",
+                "full": "Pełna",
+                "system": "Systemowa",
+                "inter": "Inter",
+                "poppins": "Poppins",
+                "montserrat": "Montserrat",
+                "lato": "Lato (font)",
+                "playfair": "Playfair Display",
+                "source-serif": "Source Serif",
+                "1": "1",
+                "2": "2",
+                "3": "3",
+                "4": "4"
+            },
+            "blocks": {
+                "heading": {
+                    "label": "Nagłówek",
+                    "help": "Tytuł sekcji lub hasło strony.",
+                    "props": {
+                        "text": "Tekst",
+                        "level": "Poziom nagłówka",
+                        "size": "Rozmiar",
+                        "align": "Wyrównanie",
+                        "color": "Kolor"
+                    }
+                },
+                "text": {
+                    "label": "Akapit",
+                    "help": "Zwykły tekst z zachowaniem podziału linii.",
+                    "props": {
+                        "body": "Treść",
+                        "size": "Rozmiar",
+                        "align": "Wyrównanie",
+                        "color": "Kolor"
+                    }
+                },
+                "image": {
+                    "label": "Obraz",
+                    "help": "Zdjęcie, okładka lub logo.",
+                    "props": {
+                        "url": "Adres URL",
+                        "alt": "Opis alternatywny",
+                        "link": "Link po kliknięciu",
+                        "width": "Szerokość",
+                        "radius": "Zaokrąglenie",
+                        "align": "Wyrównanie"
+                    }
+                },
+                "video": {
+                    "label": "Wideo",
+                    "help": "Film z YouTube lub Vimeo.",
+                    "props": {
+                        "url": "Adres URL",
+                        "caption": "Podpis"
+                    }
+                },
+                "button": {
+                    "label": "Przycisk",
+                    "help": "Przycisk akcji — np. przewinięcie do formularza.",
+                    "props": {
+                        "label": "Napis na przycisku",
+                        "url": "Adres URL",
+                        "style": "Styl",
+                        "size": "Rozmiar",
+                        "align": "Wyrównanie",
+                        "full_width": "Na całą szerokość"
+                    }
+                },
+                "divider": {
+                    "label": "Linia",
+                    "help": "Pozioma linia lub pusty odstęp.",
+                    "props": {
+                        "style": "Styl",
+                        "size": "Rozmiar"
+                    }
+                },
+                "spacer": {
+                    "label": "Odstęp",
+                    "help": "Pusta przestrzeń między blokami.",
+                    "props": {
+                        "size": "Rozmiar"
+                    }
+                },
+                "html": {
+                    "label": "Własny HTML",
+                    "help": "Wstaw własny kod, np. widget lub piksel.",
+                    "props": {
+                        "code": "Kod HTML"
+                    }
+                },
+                "form": {
+                    "label": "Formularz zapisu",
+                    "help": "Formularz rejestracji na webinar. Może wystąpić raz na stronie.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "button_label": "Napis na przycisku",
+                        "consent": "Klauzula zgody",
+                        "show_first_name": "Pole „Imię”",
+                        "show_last_name": "Pole „Nazwisko”",
+                        "show_phone": "Pole „Telefon”",
+                        "show_timezone": "Wybór strefy czasowej",
+                        "require_name": "Imię wymagane"
+                    }
+                },
+                "sessions": {
+                    "label": "Wybór terminu",
+                    "help": "Lista najbliższych terminów autowebinaru.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "subtitle": "Podtytuł"
+                    }
+                },
+                "date_card": {
+                    "label": "Termin webinaru",
+                    "help": "Kafelek z datą i godziną w strefie uczestnika.",
+                    "props": {
+                        "title": "Nagłówek"
+                    }
+                },
+                "countdown": {
+                    "label": "Licznik",
+                    "help": "Odliczanie do startu webinaru lub własnej daty.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "target": "Odliczaj do",
+                        "custom_at": "Własna data",
+                        "expired_text": "Tekst po starcie"
+                    }
+                },
+                "registration_details": {
+                    "label": "Dane zapisu",
+                    "help": "Termin, osobisty link do webinaru i przyciski kalendarza.",
+                    "props": {
+                        "show_time": "Pokaż termin",
+                        "show_link": "Pokaż link do webinaru",
+                        "show_calendar": "Przyciski kalendarza"
+                    }
+                },
+                "calendly": {
+                    "label": "Calendly",
+                    "help": "Widget rezerwacji rozmowy. Puste pole URL = ustawienie z webinaru.",
+                    "props": {
+                        "url": "Adres URL",
+                        "title": "Nagłówek",
+                        "description": "Opis"
+                    }
+                },
+                "benefits": {
+                    "label": "Lista korzyści",
+                    "help": "Punktowana lista „co zyskasz”.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "icon": "Ikona",
+                        "columns": "Liczba kolumn",
+                        "items": "Pozycje"
+                    },
+                    "items": {
+                        "text": "Tekst"
+                    }
+                },
+                "steps": {
+                    "label": "Kroki",
+                    "help": "Numerowana lista kroków lub agenda.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "items": "Pozycje"
+                    },
+                    "items": {
+                        "title": "Nagłówek",
+                        "body": "Treść"
+                    }
+                },
+                "testimonials": {
+                    "label": "Opinie",
+                    "help": "Cytaty uczestników z podpisem.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "columns": "Liczba kolumn",
+                        "items": "Pozycje"
+                    },
+                    "items": {
+                        "quote": "Cytat",
+                        "author": "Autor",
+                        "role": "Rola / stanowisko",
+                        "avatar": "Zdjęcie (URL)"
+                    }
+                },
+                "faq": {
+                    "label": "FAQ",
+                    "help": "Rozwijane pytania i odpowiedzi.",
+                    "props": {
+                        "title": "Nagłówek",
+                        "items": "Pozycje"
+                    },
+                    "items": {
+                        "question": "Pytanie",
+                        "answer": "Odpowiedź"
+                    }
+                },
+                "speaker": {
+                    "label": "Prelegent",
+                    "help": "Zdjęcie i bio prowadzącego.",
+                    "props": {
+                        "name": "Imię i nazwisko",
+                        "role": "Rola / stanowisko",
+                        "bio": "Bio",
+                        "avatar": "Zdjęcie (URL)",
+                        "layout": "Układ"
+                    }
+                },
+                "stats": {
+                    "label": "Liczby",
+                    "help": "Wyróżnione liczby, np. liczba uczestników.",
+                    "props": {
+                        "items": "Pozycje"
+                    },
+                    "items": {
+                        "value": "Wartość",
+                        "label": "Napis na przycisku"
+                    }
+                }
+            }
         }
     },
     "external_pages": {

@@ -408,6 +408,26 @@ const getStatusColor = (status) => {
                         </div>
                     </div>
 
+                    <!-- Visual page builder -->
+                    <div class="overflow-hidden rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 p-6 shadow-sm">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="min-w-0 flex-1 text-white">
+                                <h3 class="text-lg font-semibold">{{ $t('webinars.builder.promo_title') }}</h3>
+                                <p class="mt-1 text-sm text-indigo-100">{{ $t('webinars.builder.promo_desc') }}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <Link
+                                    v-for="page in ['register', 'thankyou', 'purchase', 'watch', 'replay']"
+                                    :key="page"
+                                    :href="route('webinars.pages.edit', [webinar.id, page])"
+                                    class="rounded-lg bg-white/15 px-3 py-2 text-xs font-semibold text-white backdrop-blur transition hover:bg-white/25"
+                                >
+                                    {{ $t(`webinars.builder.pages.${page}`) }}
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Funnel Page Content (issue #25) -->
                     <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ $t('webinars.content.section') }}</h3>

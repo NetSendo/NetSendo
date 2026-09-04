@@ -84,5 +84,7 @@
             </section>
         @endif
     </div>
+
+    @include('webinar.builder.embed')
 </body>
 </html>

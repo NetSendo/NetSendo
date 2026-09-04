@@ -40,8 +40,11 @@ return [
             'benefits' => '¿Qué aprenderás?',
             'timezone' => 'Tu zona horaria',
             'times_in_timezone' => 'Horarios en zona horaria :timezone',
+            'phone' => 'Teléfono',
+            'starting_now' => '¡Empezamos!',
         ],
         'registered' => [
+            'title' => 'Gracias',
             'success_title' => '¡Felicidades, :name estás registrado/a!',
             'confirmation_sent' => 'Enviamos una confirmación a',
             'starts_at' => 'El seminario web comienza el',
@@ -226,9 +229,26 @@ return [
     ],
 
     'countdown' => [
+        'days' => 'días',
+        'hours' => 'horas',
+        'minutes' => 'min',
+        'seconds' => 'seg',
         'limited_offer' => 'Oferta limitada',
         'promotion_ended' => 'Promoción finalizada',
         'remaining' => 'Quedan: :count',
     ],
+    'builder' => [
+        'saved' => 'Página guardada.',
+        'reset_done' => 'Se ha restaurado la plantilla clásica de la página.',
+        'player_placeholder' => 'Aquí aparece el reproductor del webinar',
+        'presets' => [
+            'thankyou_headline' => '¡Estás registrado!',
+            'thankyou_message' => 'Te hemos enviado por correo el enlace al webinar.',
+        ],
+        'blocks' => [
+            'countdown' => [
+                'default_title' => 'El webinar empieza en',
+            ],
+        ],
+    ],
 ];
-
