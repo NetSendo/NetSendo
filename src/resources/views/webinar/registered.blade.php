@@ -16,7 +16,9 @@
 
         <h1 class="text-3xl font-bold mb-4">{{ $webinar->pageContent('thankyou_headline', __('webinars.public.registered.success_title', ['name' => $registration->first_name ?? ''])) }}</h1>
 
-        @php($thankYouMessage = $webinar->pageContent('thankyou_message'))
+        @php
+            $thankYouMessage = $webinar->pageContent('thankyou_message');
+        @endphp
         @if($thankYouMessage)
             <p class="text-lg opacity-80 mb-8">{{ $thankYouMessage }}</p>
         @else

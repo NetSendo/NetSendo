@@ -149,7 +149,10 @@ class WebinarAnalytic extends Model
         $browser = 'unknown';
 
         if (!$userAgent) {
-            return compact('device_type', 'browser');
+            // compact() with names that do not exist raises a warning, which
+            // Laravel turns into an exception — a request without a
+            // User-Agent header used to 500 here.
+            return ['device_type' => $deviceType, 'browser' => $browser];
         }
 
         // Simple device detection

@@ -1,6 +1,8 @@
 {{-- Embedded Calendly booking widget for the thank-you pages.
      Expects $webinar; optional $registration prefills the invitee's name/email. --}}
-@php($calendly = $webinar->calendlySettings())
+@php
+    $calendly = $webinar->calendlySettings();
+@endphp
 @if($calendly)
     @php
         $prefill = [];
