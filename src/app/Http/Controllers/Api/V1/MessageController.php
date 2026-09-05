@@ -217,8 +217,14 @@ class MessageController extends Controller
             ], 404);
         }
 
-        // Prevent editing sent campaigns
-        if (in_array($message->status, ['sending', 'sent'])) {
+        // Prevent editing campaigns that are already going out. 'sending' is a
+        // legacy status: broadcasts used to be queued with it instead of
+        // 'scheduled', which stopped cron from ever dispatching them.
+        $isDispatching = $message->type === 'broadcast'
+            && $message->status === 'scheduled'
+            && (int) $message->sent_count > 0;
+
+        if ($isDispatching || in_array($message->status, ['sending', 'sent'])) {
             return response()->json([
                 'error' => 'Conflict',
                 'message' => 'Cannot edit a campaign that is sending or already sent',
@@ -564,22 +570,38 @@ class MessageController extends Controller
         }
 
         if ($message->isQueueType()) {
-            // Activate autoresponder
+            // Activate the autoresponder.
+            //
+            // `scheduled` is the only status the send pipeline recognises: both
+            // the signup listener (CreateAutoresponderQueueEntries) and the cron
+            // processor filter on it. Writing 'active' here left the message
+            // permanently invisible to them - no queue entry was created when
+            // somebody subscribed, cron never backfilled or dispatched one, and
+            // every recipient silently rolled into "missed".
             $message->update([
                 'is_active' => true,
-                'status' => 'active',
+                'status' => 'scheduled',
+                'scheduled_at' => $message->scheduled_at ?? now(),
             ]);
+
+            // Schedule the recipients already on the list whose send time is
+            // still ahead, so activation shows up in the stats immediately
+            // instead of only after the next cron run.
+            $syncResult = $message->syncPlannedRecipients();
 
             return response()->json([
                 'data' => $message->fresh(['mailbox', 'contactLists', 'excludedLists']),
                 'message' => 'Autoresponder activated',
+                'recipients_added' => $syncResult['added'],
             ]);
         }
 
-        // For broadcasts, queue for immediate sending
+        // For broadcasts, queue for immediate sending. Same rule as above: cron
+        // dispatches `scheduled` messages only, so 'sending' stranded the
+        // campaign with its recipients queued but nothing ever sending them.
         $message->update([
             'scheduled_at' => now(),
-            'status' => 'sending',
+            'status' => 'scheduled',
         ]);
 
         // Sync planned recipients

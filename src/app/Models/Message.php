@@ -680,6 +680,17 @@ class Message extends Model
                 $recipientsById = $currentRecipients->keyBy('id');
                 $now = now('UTC');
 
+                // Grace window for just-passed send times. A day-0 message is
+                // due the second somebody signs up, so by the time cron runs it
+                // is always slightly overdue — without a grace period such a
+                // recipient could never be backfilled and went straight to
+                // "missed" whenever the signup listener had not created their
+                // entry. Older due dates still stay missed, so activating a
+                // sequence on an existing list never blasts it.
+                $backfillFloor = $now->copy()->subMinutes(
+                    max((int) config('netsendo.email.autoresponder_backfill_grace_minutes', 60), 0)
+                );
+
                 foreach ($missingSubscriberIds as $subscriberId) {
                     $rows = $pivotRows->get($subscriberId);
                     if (!$rows || $rows->isEmpty()) {
@@ -705,8 +716,8 @@ class Message extends Model
                         $recipientsById->get($subscriberId)
                     );
 
-                    if ($expectedSendAt->lt($now)) {
-                        continue; // Time already passed — stays "missed" (manual action)
+                    if ($expectedSendAt->lt($backfillFloor)) {
+                        continue; // Long past due — stays "missed" (manual action)
                     }
 
                     try {

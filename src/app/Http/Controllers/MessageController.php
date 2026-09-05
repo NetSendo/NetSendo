@@ -1776,11 +1776,22 @@ class MessageController extends Controller
         }
 
         $message->is_active = !($message->is_active ?? true);
+
+        // The send pipeline (signup listener + cron) only looks at messages
+        // with status `scheduled`. Flipping is_active alone left a draft queue
+        // message labelled "Active" in the UI while nothing was ever scheduled
+        // or sent for it, so activation promotes the draft as well.
+        if ($message->is_active && $message->status === 'draft') {
+            $message->status = 'scheduled';
+            $message->scheduled_at = $message->scheduled_at ?? now();
+        }
+
         $message->save();
 
         return response()->json([
             'success' => true,
             'is_active' => $message->is_active,
+            'status' => $message->status,
             'message' => $message->is_active ? 'Wiadomość została aktywowana.' : 'Wiadomość została dezaktywowana.'
         ]);
     }

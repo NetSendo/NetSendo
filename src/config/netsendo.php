@@ -179,6 +179,19 @@ return [
         'stuck_queued_minutes' => env('EMAIL_STUCK_QUEUED_MINUTES', 30),
 
         /*
+        | Autoresponder backfill grace window (minutes).
+        | Queue entries are normally created the moment somebody subscribes; the
+        | cron backfill is the safety net for recipients that never got one. A
+        | day-0 message is due at the signup instant, so it is already overdue by
+        | the time cron runs — without a grace window those recipients could
+        | never be backfilled and were reported as "skipped". Entries are
+        | backfilled when their send time passed no longer than this many minutes
+        | ago; anything older stays "missed" and needs the explicit "Send to
+        | missed" action, so activating a sequence on an old list never blasts it.
+        */
+        'autoresponder_backfill_grace_minutes' => env('EMAIL_AUTORESPONDER_BACKFILL_GRACE_MINUTES', 60),
+
+        /*
         | Master HTML layout (issue #22 — HTML_MIME_NO_HTML_TAG).
         | Fragment content produced by the editor/API (e.g. starting straight
         | with a <div> or preheader) is wrapped in a full HTML document
