@@ -32,12 +32,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/netsendo/netsendo.git",
+    "url": "https://github.com/NetSendo/NetSendo.git",
     "directory": "mcp"
   },
   "homepage": "https://netsendo.com",
   "bugs": {
-    "url": "https://github.com/netsendo/netsendo/issues"
+    "url": "https://github.com/NetSendo/NetSendo/issues"
   },
   "publishConfig": {
     "access": "public"
