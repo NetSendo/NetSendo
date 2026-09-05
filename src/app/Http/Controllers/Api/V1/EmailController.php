@@ -408,6 +408,10 @@ class EmailController extends Controller
                 'from_email' => $m->from_email,
                 'from_name' => $m->from_name,
                 'is_default' => $m->is_default,
+                // allowed_types is an allow-list: a mailbox that does not list
+                // the campaign type refuses to send it, so a caller picking a
+                // sender needs to see it.
+                'allowed_types' => $m->allowed_types,
             ]);
 
         return response()->json([

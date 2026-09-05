@@ -362,9 +362,11 @@ export interface EmailStatus {
 export interface Mailbox {
     id: number;
     name: string;
-    email: string;
+    provider?: string;
+    from_email?: string;
+    from_name?: string;
     is_default: boolean;
-    is_verified: boolean;
+    allowed_types?: string[];
 }
 export interface SmsSendInput {
     subscriber_id?: number;

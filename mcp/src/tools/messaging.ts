@@ -28,9 +28,11 @@ PRIORITY ORDER:
 
 TIPS:
 - Mailbox with is_default: true is the user's preferred sender
-- Each contact list can have its own default_mailbox
-- Always use a verified mailbox (is_verified: true)
-- Use mailbox from_email and from_name for display purposes`,
+- Each contact list can have its own default_mailbox (set it with update_contact_list)
+- from_email/from_name are the address the recipient actually sees - several
+  mailboxes often share one display name, so pick by from_email, not by name
+- allowed_types is an allow-list: a mailbox that does not list the campaign
+  type ("broadcast", "autoresponder", "system") refuses to send it`,
     {},
     async () => {
       try {
@@ -46,15 +48,17 @@ TIPS:
               mailboxes: mailboxes.map(m => ({
                 id: m.id,
                 name: m.name,
-                email: m.email,
+                from_email: m.from_email,
+                from_name: m.from_name,
+                provider: m.provider,
                 is_default: m.is_default,
-                is_verified: m.is_verified,
+                allowed_types: m.allowed_types,
               })),
               total: mailboxes.length,
               default_mailbox_id: defaultMailbox?.id ?? null,
               tip: defaultMailbox 
-                ? `Use mailbox_id: ${defaultMailbox.id} (${defaultMailbox.name}) as the global default`
-                : 'No default mailbox set. Choose any verified mailbox.',
+                ? `Use mailbox_id: ${defaultMailbox.id} (${defaultMailbox.from_email ?? defaultMailbox.name}) as the global default`
+                : 'No default mailbox set. Choose one by its from_email.',
             }, null, 2),
           }],
         };
