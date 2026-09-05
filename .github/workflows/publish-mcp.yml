@@ -1,0 +1,116 @@
+# Publishes the MCP client (mcp/ → @netsendo/mcp-client) to npm.
+#
+# Triggered by a tag of its own, `mcp-v<version>`, so releasing the client is
+# independent of the application: the app's own release flow reacts to the
+# VERSION file on main (release.yml) and tags `v<version>`, and neither that
+# workflow nor the image build reacts to tags at all.
+#
+# ─── AUTHENTICATION: OIDC Trusted Publishing, no token stored ─────────────────
+#
+# Same mechanism as n8n-nodes-netsendo: GitHub Actions proves its identity to
+# npm, npm returns a short-lived credential and attaches a provenance
+# statement. An automation token is not an alternative — with 2FA on the
+# account npm answers EOTP and a workflow cannot supply a one-time password.
+#
+# ─── ONE-TIME SETUP (until this is done, publishing fails with a 404) ─────────
+#
+#   1. npmjs.com → package `@netsendo/mcp-client` → Settings
+#   2. "Publish access" → "Trusted Publishers" → "Add a publisher"
+#   3. GitHub Actions, filled in EXACTLY:
+#        Organization or user: NetSendo
+#        Repository:           NetSendo
+#        Workflow filename:    publish-mcp.yml
+#        Environment name:     NPM_TOKEN
+#        Allowed actions:      tick "Allow npm publish"
+#
+# ─── RELEASING ───────────────────────────────────────────────────────────────
+#
+#   1. Bump mcp/package.json AND SERVER_VERSION in mcp/src/index.ts (same value)
+#      — mcp/.npmrc makes `npm version` inside mcp/ tag as `mcp-v<version>`
+#   2. npm run build in mcp/ and commit dist/ (it is tracked, unlike the n8n node)
+#   3. Update config/netsendo.php → plugins.mcp.version to match
+#   4. git push --follow-tags
+
+name: Publish MCP client
+
+on:
+  push:
+    tags:
+      - 'mcp-v*'
+
+jobs:
+  publish:
+    name: Publish @netsendo/mcp-client to npm
+    runs-on: ubuntu-latest
+
+    # Scopes the trusted-publisher entry. Configuring the publisher WITHOUT an
+    # environment means this line must go — a mismatch is rejected as untrusted.
+    environment: NPM_TOKEN
+
+    permissions:
+      id-token: write
+      contents: read
+
+    defaults:
+      run:
+        working-directory: mcp
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: mcp/package-lock.json
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted Publishing needs npm >= 11.5.1; Node LTS still ships npm 10.x,
+      # which ignores OIDC and looks for a token instead.
+      - name: Upgrade npm for OIDC support
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      # The tag carries the version a human meant to release; package.json
+      # carries the one that would actually be published. A mismatch means the
+      # bump was forgotten, and publishing the wrong number is not fixable
+      # afterwards — npm never lets a version be reused.
+      - name: Verify the tag matches package.json
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "tag=$TAG_VERSION package.json=$PKG_VERSION"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match mcp/package.json ($PKG_VERSION)."
+            exit 1
+          fi
+
+      # A re-run on an already-published tag would otherwise fail on a version
+      # conflict and look like a broken pipeline.
+      - name: Check whether this version is already published
+        id: check
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "@netsendo/mcp-client@$VERSION" version >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@netsendo/mcp-client@$VERSION is already on npm — skipping publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # No NODE_AUTH_TOKEN on purpose: npm exchanges the GitHub OIDC token for a
+      # short-lived credential and attaches provenance itself.
+      - name: Publish to npm
+        if: steps.check.outputs.already == 'false'
+        run: npm publish --access public
