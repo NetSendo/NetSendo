@@ -57,6 +57,8 @@ class Webhook extends Model
         'subscriber.bounced',
         'subscriber.tag_added',
         'subscriber.tag_removed',
+        // Email events
+        'email.queued',
         // SMS events
         'sms.queued',
         'sms.sent',

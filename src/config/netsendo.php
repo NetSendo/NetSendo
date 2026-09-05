@@ -114,6 +114,21 @@ return [
             'min_wc_version' => '5.0',
             'min_php_version' => '7.4',
         ],
+        /*
+        | Integrations distributed through npm rather than as a downloadable
+        | archive. They report in through plugin/heartbeat like the WordPress
+        | plugins do, so the account owner can see which version each n8n
+        | instance or MCP client is running; download_url points at the
+        | registry page (an absolute URL passes through url() untouched).
+        */
+        'n8n' => [
+            'version' => '1.3.2',
+            'download_url' => 'https://www.npmjs.com/package/n8n-nodes-netsendo',
+        ],
+        'mcp' => [
+            'version' => '1.4.1',
+            'download_url' => 'https://www.npmjs.com/package/@netsendo/mcp-client',
+        ],
     ],
 
     /*

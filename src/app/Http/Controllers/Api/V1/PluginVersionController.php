@@ -7,6 +7,7 @@ use App\Models\PluginConnection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class PluginVersionController extends Controller
 {
@@ -65,7 +66,10 @@ class PluginVersionController extends Controller
     public function heartbeat(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'plugin_type' => 'required|in:wordpress,woocommerce',
+            // Accepted types come from the plugin registry itself, so an
+            // integration added there (n8n node, MCP client) can report in
+            // without a second place to edit.
+            'plugin_type' => ['required', Rule::in(array_keys(config('netsendo.plugins', [])))],
             'site_url' => 'required|url|max:500',
             'site_name' => 'nullable|string|max:255',
             'plugin_version' => 'required|string|max:20',
@@ -168,13 +172,17 @@ class PluginVersionController extends Controller
                 ];
             });
 
-        $stats = [
-            'total' => $connections->count(),
-            'wordpress' => $connections->where('plugin_type', 'wordpress')->count(),
-            'woocommerce' => $connections->where('plugin_type', 'woocommerce')->count(),
-            'needs_update' => $connections->where('update_available', true)->count(),
-            'stale' => $connections->where('is_stale', true)->count(),
-        ];
+        // One counter per registered integration type — wordpress and
+        // woocommerce keep their keys, npm-distributed ones (n8n, mcp) appear
+        // alongside them instead of being invisible in the summary.
+        $stats = ['total' => $connections->count()];
+
+        foreach (array_keys(config('netsendo.plugins', [])) as $pluginType) {
+            $stats[$pluginType] = $connections->where('plugin_type', $pluginType)->count();
+        }
+
+        $stats['needs_update'] = $connections->where('update_available', true)->count();
+        $stats['stale'] = $connections->where('is_stale', true)->count();
 
         return response()->json([
             'connections' => $connections->values(),
