@@ -1808,7 +1808,11 @@
             "send": "Wyślij test",
             "sending": "Wysyłanie...",
             "no_subject_preview": "(brak tematu)",
-            "no_mailbox_preview": "Brak skrzynki"
+            "no_mailbox_preview": "Brak skrzynki",
+            "success": "Test wysłany na {email}",
+            "error": "Nie udało się wysłać testowej wiadomości.",
+            "no_mailbox": "Brak skonfigurowanej skrzynki. Skonfiguruj ją przed wysłaniem testu.",
+            "network_error": "Brak odpowiedzi serwera. Sprawdź połączenie i spróbuj ponownie."
         },
         "deliverability": {
             "check_button": "Sprawdź dostarczalność",

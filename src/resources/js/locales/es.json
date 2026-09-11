@@ -2202,7 +2202,11 @@
             "send": "Enviar prueba",
             "sending": "Enviando...",
             "no_subject_preview": "(sin asunto)",
-            "no_mailbox_preview": "Ningún buzón configurado"
+            "no_mailbox_preview": "Ningún buzón configurado",
+            "success": "Correo de prueba enviado a {email}",
+            "error": "No se pudo enviar el correo de prueba.",
+            "no_mailbox": "No hay ningún buzón configurado. Configure uno antes de enviar una prueba.",
+            "network_error": "El servidor no respondió. Compruebe su conexión e inténtelo de nuevo."
         },
         "deliverability": {
             "check_button": "Verificar entregabilidad",

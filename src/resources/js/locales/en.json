@@ -1807,7 +1807,11 @@
             "send": "Send test",
             "sending": "Sending...",
             "no_subject_preview": "(no subject)",
-            "no_mailbox_preview": "No mailbox configured"
+            "no_mailbox_preview": "No mailbox configured",
+            "success": "Test email sent to {email}",
+            "error": "Failed to send the test email.",
+            "no_mailbox": "No mailbox is configured. Set one up before sending a test.",
+            "network_error": "No response from the server. Check your connection and try again."
         },
         "deliverability": {
             "check_button": "Check Deliverability",

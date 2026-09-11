@@ -2247,7 +2247,11 @@
             "send": "Test senden",
             "sending": "Senden...",
             "no_subject_preview": "(kein Betreff)",
-            "no_mailbox_preview": "Kein Postfach konfiguriert"
+            "no_mailbox_preview": "Kein Postfach konfiguriert",
+            "success": "Test-E-Mail an {email} gesendet",
+            "error": "Test-E-Mail konnte nicht gesendet werden.",
+            "no_mailbox": "Kein Postfach konfiguriert. Richten Sie eines ein, bevor Sie einen Test senden.",
+            "network_error": "Keine Antwort vom Server. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut."
         },
         "deliverability": {
             "check_button": "Zustellbarkeit prüfen",

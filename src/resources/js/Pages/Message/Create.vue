@@ -1032,6 +1032,12 @@ const showTestModal = ref(false);
 const showScheduleModal = ref(false);
 const testEmail = ref("");
 const sendingTest = ref(false);
+const testError = ref("");
+
+const openTestModal = () => {
+    testError.value = "";
+    showTestModal.value = true;
+};
 
 // Deliverability check modal
 const showDeliverabilityModal = ref(false);
@@ -1081,6 +1087,7 @@ const sendTestEmail = async () => {
     if (!testEmail.value) return;
 
     sendingTest.value = true;
+    testError.value = "";
     try {
         // Use wrapped content for proper width/alignment
         const contentToSend =
@@ -1098,13 +1105,39 @@ const sendTestEmail = async () => {
                 form.mailbox_id || effectiveMailboxInfo.value.mailbox?.id,
             contact_list_ids: form.contact_list_ids,
         });
+        const sentTo = testEmail.value;
         showTestModal.value = false;
         testEmail.value = "";
+        showToast(t("messages.test.success", { email: sentTo }), true);
     } catch (error) {
         console.error("Test send failed:", error);
+        testError.value = testErrorMessage(error);
     } finally {
         sendingTest.value = false;
     }
+};
+
+// Turn an axios failure into something the user can act on
+const testErrorMessage = (error) => {
+    const data = error.response?.data;
+
+    if (!error.response) {
+        return t("messages.test.network_error");
+    }
+
+    // Laravel validation errors (422 with an `errors` bag)
+    const firstValidation = Object.values(data?.errors ?? {})[0];
+    if (firstValidation) {
+        return Array.isArray(firstValidation)
+            ? firstValidation[0]
+            : firstValidation;
+    }
+
+    if (data?.error === "No mailbox configured") {
+        return t("messages.test.no_mailbox");
+    }
+
+    return data?.error || data?.message || t("messages.test.error");
 };
 
 // Provider icons
@@ -4232,7 +4265,7 @@ watch(
                         <!-- Test Button -->
                         <button
                             type="button"
-                            @click="showTestModal = true"
+                            @click="openTestModal"
                             class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             <svg
@@ -4512,6 +4545,26 @@ watch(
                                 $t("messages.test.no_mailbox_preview")
                             }}
                         </p>
+                    </div>
+
+                    <div
+                        v-if="testError"
+                        class="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                    >
+                        <svg
+                            class="mt-0.5 h-4 w-4 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                        </svg>
+                        <span>{{ testError }}</span>
                     </div>
                 </div>
 
