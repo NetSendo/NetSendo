@@ -628,6 +628,23 @@ class Message extends Model
 
         $result = ['added' => 0, 'skipped' => 0];
 
+        // A broadcast with no contact list and no CRM contact attached has no
+        // audience to sync against — its recipients are exactly its queue
+        // entries. That is how the API addresses mail: POST /api/v1/email/send
+        // always, /email/batch when it targets subscriber_ids or tag_ids only.
+        // getUniqueRecipients() is empty for such a message, so the steps below
+        // marked every entry "skipped" (and zeroed the planned count) in the
+        // very CRON run that was about to dispatch it; the broadcast was then
+        // auto-completed as sent with nothing delivered. Leave the entries
+        // alone. Soft-deleted lists and contacts still define the audience, so
+        // their broadcasts keep dropping pending recipients as before.
+        if ($this->type === 'broadcast'
+            && !$this->contactLists()->withTrashed()->exists()
+            && !$this->crmContacts()->withTrashed()->exists()
+        ) {
+            return $result;
+        }
+
         // Get current active subscribers
         $currentRecipients = $this->getUniqueRecipients();
         $currentSubscriberIds = $currentRecipients->pluck('id')->toArray();
