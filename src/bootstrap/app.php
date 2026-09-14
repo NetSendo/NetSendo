@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
+    // Listeners are mapped explicitly in App\Providers\EventServiceProvider.
+    // Discovery would register every typed handle*() in app/Listeners again.
+    ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware): void {
         // Trust all proxies for HTTPS behind reverse proxy (nginx, Cloudflare, etc.)
         $middleware->trustProxies(at: '*');
