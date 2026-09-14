@@ -6,6 +6,7 @@ use App\Models\Mailbox;
 use App\Services\Mail\BounceMailboxService;
 use App\Services\Mail\MailProviderService;
 use App\Services\Mail\MailboxReputationService;
+use App\Services\Mail\ReplyMailboxService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -18,7 +19,8 @@ class MailboxController extends Controller
     public function __construct(
         private MailProviderService $providerService,
         private BounceMailboxService $bounceService,
-        private MailboxReputationService $reputationService
+        private MailboxReputationService $reputationService,
+        private ReplyMailboxService $replyService
     ) {}
 
     /**
@@ -67,6 +69,15 @@ class MailboxController extends Controller
                     'bounce_imap_folder' => $mailbox->bounce_imap_folder,
                     'bounce_last_scanned_at' => $mailbox->bounce_last_scanned_at?->toIso8601String(),
                     'bounce_last_scan_count' => $mailbox->bounce_last_scan_count,
+                    // Reply inbox monitoring
+                    'reply_enabled' => $mailbox->reply_enabled,
+                    'reply_imap_host' => $mailbox->reply_imap_host,
+                    'reply_imap_port' => $mailbox->reply_imap_port,
+                    'reply_imap_encryption' => $mailbox->reply_imap_encryption,
+                    'reply_imap_folder' => $mailbox->reply_imap_folder,
+                    'reply_imap_username' => $mailbox->getDecryptedReplyCredentials()['username'] ?? null,
+                    'reply_last_scanned_at' => $mailbox->reply_last_scanned_at?->toIso8601String(),
+                    'reply_last_scan_count' => $mailbox->reply_last_scan_count,
                     // Custom headers
                     'custom_headers' => $mailbox->custom_headers ?? [],
                     // Reputation monitoring
@@ -232,6 +243,16 @@ class MailboxController extends Controller
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
 
+        $replyValidated = $request->has('reply_enabled') ? $request->validate([
+            'reply_enabled' => ['boolean'],
+            'reply_imap_host' => ['nullable', 'required_if:reply_enabled,true', 'string', 'max:255'],
+            'reply_imap_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'reply_imap_encryption' => ['nullable', Rule::in(['ssl', 'tls', 'none'])],
+            'reply_imap_folder' => ['nullable', 'string', 'max:100'],
+            'reply_imap_username' => ['nullable', 'string', 'max:255'],
+            'reply_imap_password' => ['nullable', 'string', 'max:1024'],
+        ]) : null;
+
         $updateData = [
             'name' => $validated['name'],
             'provider' => $validated['provider'],
@@ -295,6 +316,43 @@ class MailboxController extends Controller
             }
 
             $mailbox->update($bounceData);
+        }
+
+        // Handle reply inbox configuration separately
+        if ($replyValidated !== null) {
+            $replyData = [
+                'reply_enabled' => $request->boolean('reply_enabled'),
+                'reply_imap_host' => $replyValidated['reply_imap_host'] ?? null,
+                'reply_imap_port' => $replyValidated['reply_imap_port'] ?? 993,
+                'reply_imap_encryption' => $replyValidated['reply_imap_encryption'] ?? 'ssl',
+                'reply_imap_folder' => $replyValidated['reply_imap_folder'] ?? 'INBOX',
+            ];
+
+            // Another server or folder has other UIDs: start over from recent messages
+            if ($replyData['reply_imap_host'] !== $mailbox->reply_imap_host
+                || $replyData['reply_imap_folder'] !== $mailbox->reply_imap_folder) {
+                $replyData['reply_last_uid'] = null;
+                $replyData['reply_uid_validity'] = null;
+            }
+
+            // Handle reply IMAP credentials (merge with existing if password not provided)
+            $replyUsername = $replyValidated['reply_imap_username'] ?? null;
+            $replyPassword = $replyValidated['reply_imap_password'] ?? null;
+
+            if ($replyUsername || $replyPassword) {
+                $currentReplyCreds = $mailbox->getDecryptedReplyCredentials();
+                $replyData['reply_imap_credentials'] = [
+                    'username' => $replyUsername ?: ($currentReplyCreds['username'] ?? ''),
+                    'password' => $replyPassword ?: ($currentReplyCreds['password'] ?? ''),
+                ];
+
+                if ($replyData['reply_imap_credentials']['username'] !== ($currentReplyCreds['username'] ?? '')) {
+                    $replyData['reply_last_uid'] = null;
+                    $replyData['reply_uid_validity'] = null;
+                }
+            }
+
+            $mailbox->update($replyData);
         }
 
         return back()->with('success', __('mailboxes.updated'));
@@ -379,6 +437,31 @@ class MailboxController extends Controller
             'message' => $result['success']
                 ? __('mailboxes.bounce.test_success')
                 : __('mailboxes.bounce.test_failed') . ': ' . $result['message'],
+            'folder_count' => $result['folder_count'] ?? null,
+        ]);
+    }
+
+    /**
+     * Test reply inbox IMAP connection
+     */
+    public function testReply(Mailbox $mailbox)
+    {
+        $this->authorize('update', $mailbox);
+
+        if (!$mailbox->reply_enabled || !$mailbox->reply_imap_host) {
+            return response()->json([
+                'success' => false,
+                'message' => __('mailboxes.replies.test_failed') . ': ' . __('mailboxes.replies.not_configured'),
+            ]);
+        }
+
+        $result = $this->replyService->testConnection($mailbox);
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['success']
+                ? __('mailboxes.replies.test_success')
+                : __('mailboxes.replies.test_failed') . ': ' . $result['message'],
             'folder_count' => $result['folder_count'] ?? null,
         ]);
     }

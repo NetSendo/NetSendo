@@ -224,6 +224,22 @@ Schedule::command('bounce:process-mailboxes')
 
 /*
 |--------------------------------------------------------------------------
+| Reply Inbox Monitoring
+|--------------------------------------------------------------------------
+| Skanowanie skrzynek IMAP, na które przychodzą odpowiedzi od subskrybentów.
+| Odpowiedź trafia do historii kontaktu CRM, uruchamia automatyzacje
+| „Kontakt odpowiedział” i scoring. Wiadomości nie są oznaczane jako przeczytane.
+*/
+
+// Reply Inbox Scanner - co 5 minut
+Schedule::command('replies:process-mailboxes')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/reply-mailbox.log'));
+
+/*
+|--------------------------------------------------------------------------
 | Brain AI Orchestration
 |--------------------------------------------------------------------------
 | Automatyczne uruchamianie Mózgu AI wg ustawień CRON per-user.

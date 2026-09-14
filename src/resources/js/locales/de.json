@@ -8398,6 +8398,22 @@
             "not_connected": "Nicht verbunden",
             "save_first": "Speichern Sie das Postfach, um es mit einem Gmail-Konto verknüpfen zu können."
         },
+        "replies": {
+            "section_title": "Antworterkennung",
+            "section_desc": "Antworten von Abonnenten erkennen und im CRM speichern.",
+            "info": "Geben Sie das Postfach an, in dem Antworten eingehen (Absender- oder Reply-To-Adresse). Alle 5 Minuten liest NetSendo neue Nachrichten: Sie werden nicht als gelesen markiert, verschoben oder gelöscht. Die Antwort eines Abonnenten wird im Verlauf des CRM-Kontakts gespeichert (Personen, die noch nicht im CRM sind, werden als Lead angelegt), löst Automatisierungen „Kontakt hat geantwortet“ aus und vergibt Lead-Scoring-Punkte. Autoresponder, Newsletter und Zustellberichte werden ignoriert.",
+            "imap_host": "IMAP Host",
+            "imap_port": "IMAP Port",
+            "imap_encryption": "Verschlüsselung",
+            "imap_username": "IMAP Benutzername",
+            "imap_password": "IMAP Passwort",
+            "imap_folder": "IMAP Ordner",
+            "test_connection": "IMAP-Verbindung testen",
+            "test_hint": "Der Test verwendet die gespeicherten Einstellungen – speichern Sie zuerst Ihre Änderungen.",
+            "last_scanned": "Zuletzt gescannt",
+            "last_scan_count": "Antworten im letzten Scan",
+            "never_scanned": "Noch nicht gescannt"
+        },
         "reputation": {
             "blacklist_name": "Blacklist",
             "check_now": "Reputation prüfen",

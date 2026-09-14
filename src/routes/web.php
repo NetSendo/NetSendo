@@ -408,6 +408,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{mailbox}', [\App\Http\Controllers\MailboxController::class, 'destroy'])->name('destroy');
         Route::post('/{mailbox}/test', [\App\Http\Controllers\MailboxController::class, 'test'])->name('test');
         Route::post('/{mailbox}/test-bounce', [\App\Http\Controllers\MailboxController::class, 'testBounce'])->name('test-bounce');
+        Route::post('/{mailbox}/test-reply', [\App\Http\Controllers\MailboxController::class, 'testReply'])->name('test-reply');
         Route::post('/{mailbox}/check-reputation', [\App\Http\Controllers\MailboxController::class, 'checkReputation'])->name('check-reputation');
         Route::post('/{mailbox}/default', [\App\Http\Controllers\MailboxController::class, 'setDefault'])->name('default');
     });

@@ -4232,6 +4232,22 @@
         "error_details": {
             "title": "Connection Error Details"
         },
+        "replies": {
+            "section_title": "Reply detection",
+            "section_desc": "Detect replies from subscribers and record them in the CRM.",
+            "info": "Enter the mailbox that receives replies (the sender or Reply-To address). Every 5 minutes NetSendo reads new messages: it does not mark them as read, move or delete anything. A subscriber's reply is added to the CRM contact's history (people not yet in the CRM are added as leads), runs \"Contact replied\" automations and adds lead scoring points. Autoresponders, newsletters and delivery reports are ignored.",
+            "imap_host": "IMAP Host",
+            "imap_port": "IMAP Port",
+            "imap_encryption": "Encryption",
+            "imap_username": "IMAP Username",
+            "imap_password": "IMAP Password",
+            "imap_folder": "IMAP Folder",
+            "test_connection": "Test IMAP Connection",
+            "test_hint": "The test uses the saved settings – save your changes first.",
+            "last_scanned": "Last scanned",
+            "last_scan_count": "Replies found in last scan",
+            "never_scanned": "Not scanned yet"
+        },
         "reputation": {
             "title": "Domain Reputation",
             "subtitle": "Sender domain status on DNS blacklists",

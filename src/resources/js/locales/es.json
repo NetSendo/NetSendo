@@ -4684,6 +4684,22 @@
         "error_details": {
             "title": "Detalles del Error de Conexión"
         },
+        "replies": {
+            "section_title": "Detección de respuestas",
+            "section_desc": "Detecta las respuestas de los suscriptores y guárdalas en el CRM.",
+            "info": "Indica el buzón que recibe las respuestas (la dirección del remitente o Reply-To). Cada 5 minutos NetSendo lee los mensajes nuevos: no los marca como leídos, ni los mueve ni los elimina. La respuesta de un suscriptor se añade al historial del contacto en el CRM (quien aún no esté en el CRM se añade como lead), ejecuta las automatizaciones «El contacto respondió» y suma puntos de lead scoring. Se ignoran las respuestas automáticas, los boletines y los informes de entrega.",
+            "imap_host": "Host IMAP",
+            "imap_port": "Puerto IMAP",
+            "imap_encryption": "Cifrado",
+            "imap_username": "Usuario IMAP",
+            "imap_password": "Contraseña IMAP",
+            "imap_folder": "Carpeta IMAP",
+            "test_connection": "Probar conexión IMAP",
+            "test_hint": "La prueba usa la configuración guardada: guarda primero los cambios.",
+            "last_scanned": "Último escaneo",
+            "last_scan_count": "Respuestas en el último escaneo",
+            "never_scanned": "Aún no escaneado"
+        },
         "reputation": {
             "title": "Reputación del dominio",
             "subtitle": "Estado del dominio del remitente en listas negras DNS",

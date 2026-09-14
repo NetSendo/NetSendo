@@ -32,6 +32,12 @@ return [
         'processed' => ':count rebote(s) procesado(s)',
     ],
 
+    'replies' => [
+        'test_success' => 'Conexión exitosa al buzón de respuestas',
+        'test_failed' => 'Error al conectar con el buzón de respuestas',
+        'not_configured' => 'La detección de respuestas no está configurada. Guarda la configuración del buzón e inténtalo de nuevo.',
+    ],
+
     'custom_headers' => [
         'section_title' => 'Encabezados SMTP personalizados',
         'section_desc' => 'Agrega encabezados personalizados a todos los correos enviados desde este servidor (ej. Feedback-ID para Google Postmaster Tools).',

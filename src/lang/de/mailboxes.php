@@ -32,6 +32,12 @@ return [
         'processed' => ':count Bounce(s) verarbeitet',
     ],
 
+    'replies' => [
+        'test_success' => 'Verbindung zum Antwort-Postfach erfolgreich',
+        'test_failed' => 'Verbindung zum Antwort-Postfach fehlgeschlagen',
+        'not_configured' => 'Die Antworterkennung ist nicht eingerichtet. Speichern Sie die Postfach-Einstellungen und versuchen Sie es erneut.',
+    ],
+
     'custom_headers' => [
         'section_title' => 'Benutzerdefinierte SMTP-Header',
         'section_desc' => 'Fügen Sie benutzerdefinierte Header zu allen E-Mails hinzu, die von diesem Sendeserver gesendet werden (z.B. Feedback-ID für Google Postmaster Tools).',

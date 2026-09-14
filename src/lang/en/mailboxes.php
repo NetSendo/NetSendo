@@ -32,6 +32,12 @@ return [
         'processed' => ':count bounce(s) processed',
     ],
 
+    'replies' => [
+        'test_success' => 'Successfully connected to the reply mailbox',
+        'test_failed' => 'Failed to connect to the reply mailbox',
+        'not_configured' => 'Reply detection is not configured. Save the mailbox settings and try again.',
+    ],
+
     'custom_headers' => [
         'section_title' => 'Custom SMTP Headers',
         'section_desc' => 'Add custom headers to all emails sent from this sending server (e.g. Feedback-ID for Google Postmaster Tools).',

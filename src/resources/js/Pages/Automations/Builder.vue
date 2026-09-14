@@ -75,6 +75,7 @@ const icons = {
     crm_contact_status_changed: "🔄",
     crm_score_threshold: "📊",
     crm_activity_logged: "📝",
+    crm_contact_replied: "↩️",
 };
 
 const addAction = () => form.actions.push({ type: "add_tag", config: {} });

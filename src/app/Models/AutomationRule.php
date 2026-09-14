@@ -86,6 +86,7 @@ class AutomationRule extends Model
         'crm_contact_status_changed' => '💼 CRM: Zmiana statusu kontaktu',
         'crm_score_threshold' => '💼 CRM: Próg lead score',
         'crm_activity_logged' => '💼 CRM: Nowa aktywność',
+        'crm_contact_replied' => '💼 CRM: Kontakt odpowiedział',
     ];
 
     /**

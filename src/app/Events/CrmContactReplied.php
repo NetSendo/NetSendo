@@ -16,7 +16,9 @@ class CrmContactReplied
         public CrmContact $contact,
         public ?Subscriber $subscriber = null,
         public string $channel = 'email', // email, sms, form
-        public ?string $messageId = null
+        public ?string $messageId = null, // for email: the reply's Message-ID header
+        public ?string $subject = null,
+        public ?string $excerpt = null // start of the reply, without the quoted conversation
     ) {}
 
     /**
@@ -32,6 +34,7 @@ class CrmContactReplied
             'subscriber_id' => $this->subscriber?->id,
             'channel' => $this->channel,
             'message_id' => $this->messageId,
+            'subject' => $this->subject,
             'company_id' => $this->contact->crm_company_id,
         ];
     }

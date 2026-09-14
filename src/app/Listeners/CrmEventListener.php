@@ -80,10 +80,12 @@ class CrmEventListener
             'user_id' => $event->contact->user_id,
             'created_by_id' => null, // System generated
             'type' => 'email_reply',
-            'content' => "Kontakt odpowiedział przez {$event->channel}",
+            'content' => implode("\n\n", array_filter([$event->subject, $event->excerpt]))
+                ?: "Kontakt odpowiedział przez {$event->channel}",
             'metadata' => [
                 'channel' => $event->channel,
                 'message_id' => $event->messageId,
+                'subject' => $event->subject,
             ],
         ]);
     }

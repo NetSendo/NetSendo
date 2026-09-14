@@ -164,10 +164,15 @@ const formatDate = (date) => {
     });
 };
 
+// Icons of activity types the system records (not offered in the form)
+const systemActivityIcons = {
+    email_reply: "M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6",
+};
+
 // Get activity icon
 const getActivityIcon = (type) => {
     const found = activityTypes.find((t) => t.value === type);
-    return found?.icon || activityTypes[0].icon;
+    return found?.icon || systemActivityIcons[type] || activityTypes[0].icon;
 };
 </script>
 
@@ -887,7 +892,7 @@ const getActivityIcon = (type) => {
                                 </div>
                                 <p
                                     v-if="activity.content"
-                                    class="mt-2 text-slate-700 dark:text-slate-300"
+                                    class="mt-2 whitespace-pre-line break-words text-slate-700 dark:text-slate-300"
                                 >
                                     {{ activity.content }}
                                 </p>

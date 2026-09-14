@@ -3919,6 +3919,22 @@
         "error_details": {
             "title": "Szczegóły błędu połączenia"
         },
+        "replies": {
+            "section_title": "Odczyt odpowiedzi",
+            "section_desc": "Wykrywaj odpowiedzi subskrybentów i zapisuj je w CRM.",
+            "info": "Podaj skrzynkę, na którą przychodzą odpowiedzi (adres nadawcy lub Reply-To). Co 5 minut NetSendo czyta nowe wiadomości: nie oznacza ich jako przeczytane, niczego nie przenosi ani nie usuwa. Odpowiedź subskrybenta trafia do historii kontaktu w CRM (osoba spoza CRM zostaje dodana jako lead), uruchamia automatyzacje „Kontakt odpowiedział” i nalicza punkty scoringu. Autorespondery, newslettery i raporty o niedoręczeniu są pomijane.",
+            "imap_host": "Host IMAP",
+            "imap_port": "Port IMAP",
+            "imap_encryption": "Szyfrowanie",
+            "imap_username": "Użytkownik IMAP",
+            "imap_password": "Hasło IMAP",
+            "imap_folder": "Folder IMAP",
+            "test_connection": "Testuj połączenie IMAP",
+            "test_hint": "Test używa zapisanych ustawień – najpierw zapisz zmiany.",
+            "last_scanned": "Ostatnie skanowanie",
+            "last_scan_count": "Odpowiedzi w ostatnim skanie",
+            "never_scanned": "Jeszcze nie skanowano"
+        },
         "reputation": {
             "title": "Reputacja domeny",
             "subtitle": "Status domeny nadawcy na czarnych listach DNS",

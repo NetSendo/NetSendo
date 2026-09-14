@@ -32,6 +32,12 @@ return [
         'processed' => 'Przetworzono :count bounce(ów)',
     ],
 
+    'replies' => [
+        'test_success' => 'Połączenie ze skrzynką odpowiedzi nawiązane poprawnie',
+        'test_failed' => 'Nie udało się połączyć ze skrzynką odpowiedzi',
+        'not_configured' => 'Odczyt odpowiedzi nie jest skonfigurowany. Zapisz ustawienia skrzynki i spróbuj ponownie.',
+    ],
+
     'custom_headers' => [
         'section_title' => 'Niestandardowe nagłówki SMTP',
         'section_desc' => 'Dodaj niestandardowe nagłówki do wszystkich e-maili wysyłanych z tego serwera (np. Feedback-ID dla Google Postmaster Tools).',

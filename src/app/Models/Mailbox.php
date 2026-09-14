@@ -39,6 +39,17 @@ class Mailbox extends Model
         'bounce_imap_folder',
         'bounce_last_scanned_at',
         'bounce_last_scan_count',
+        // Reply inbox IMAP monitoring
+        'reply_enabled',
+        'reply_imap_host',
+        'reply_imap_port',
+        'reply_imap_encryption',
+        'reply_imap_credentials',
+        'reply_imap_folder',
+        'reply_last_uid',
+        'reply_uid_validity',
+        'reply_last_scanned_at',
+        'reply_last_scan_count',
         // Custom SMTP headers
         'custom_headers',
         // Reputation monitoring
@@ -60,6 +71,12 @@ class Mailbox extends Model
         'bounce_imap_port' => 'integer',
         'bounce_last_scanned_at' => 'datetime',
         'bounce_last_scan_count' => 'integer',
+        'reply_enabled' => 'boolean',
+        'reply_imap_port' => 'integer',
+        'reply_last_uid' => 'integer',
+        'reply_uid_validity' => 'integer',
+        'reply_last_scanned_at' => 'datetime',
+        'reply_last_scan_count' => 'integer',
         'custom_headers' => 'array',
         'reputation_status' => 'array',
         'reputation_checked_at' => 'datetime',
@@ -68,6 +85,7 @@ class Mailbox extends Model
     protected $hidden = [
         'credentials',
         'bounce_imap_credentials',
+        'reply_imap_credentials',
     ];
 
     /**
@@ -222,6 +240,35 @@ class Mailbox extends Model
     }
 
     /**
+     * Set reply IMAP credentials (auto-encrypt)
+     */
+    public function setReplyImapCredentialsAttribute($value): void
+    {
+        if ($value === null) {
+            $this->attributes['reply_imap_credentials'] = null;
+            return;
+        }
+        $this->attributes['reply_imap_credentials'] = Crypt::encryptString(
+            is_array($value) ? json_encode($value) : $value
+        );
+    }
+
+    /**
+     * Get decrypted reply IMAP credentials as array
+     */
+    public function getDecryptedReplyCredentials(): array
+    {
+        try {
+            if (empty($this->attributes['reply_imap_credentials'])) {
+                return [];
+            }
+            return json_decode(Crypt::decryptString($this->attributes['reply_imap_credentials']), true) ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
      * Check if this mailbox can send a specific message type
      */
     public function canSendType(string $type): bool
@@ -321,6 +368,16 @@ class Mailbox extends Model
         return $query->where('bounce_enabled', true)
             ->whereNotNull('bounce_imap_host')
             ->whereNotNull('bounce_imap_credentials');
+    }
+
+    /**
+     * Scope: Reply-monitoring-enabled mailboxes
+     */
+    public function scopeReplyEnabled($query)
+    {
+        return $query->where('reply_enabled', true)
+            ->whereNotNull('reply_imap_host')
+            ->whereNotNull('reply_imap_credentials');
     }
 
     /**
