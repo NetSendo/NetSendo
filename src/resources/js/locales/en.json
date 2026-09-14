@@ -4565,6 +4565,14 @@
             "add_action": "Add action",
             "add_action_hint": "Add at least one action",
             "activate_immediately": "Activate immediately",
+            "field_condition": {
+                "choose_field": "Choose a field",
+                "standard_fields_group": "Standard fields",
+                "custom_fields_group": "Custom fields",
+                "unlisted_field": "{field} (not in the field list)",
+                "value": "Value",
+                "comparison_help": "Field conditions compare text ignoring letter case and leading or trailing spaces."
+            },
             "crm": {
                 "pipeline": "Pipeline",
                 "all_pipelines": "All pipelines",

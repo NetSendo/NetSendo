@@ -4065,6 +4065,14 @@
             "add_action": "Añadir acción",
             "add_action_hint": "Añadir al menos una acción",
             "activate_immediately": "Activar inmediatamente",
+            "field_condition": {
+                "choose_field": "Elige un campo",
+                "standard_fields_group": "Campos estándar",
+                "custom_fields_group": "Campos personalizados",
+                "unlisted_field": "{field} (fuera de la lista de campos)",
+                "value": "Valor",
+                "comparison_help": "Las condiciones de campo comparan el texto sin distinguir mayúsculas y minúsculas ni espacios al principio o al final."
+            },
             "crm": {
                 "pipeline": "Pipeline",
                 "all_pipelines": "Todos los pipelines",

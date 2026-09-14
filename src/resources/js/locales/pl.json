@@ -4724,6 +4724,14 @@
             "add_action": "Dodaj akcję",
             "add_action_hint": "Dodaj co najmniej jedną akcję",
             "activate_immediately": "Aktywuj od razu",
+            "field_condition": {
+                "choose_field": "Wybierz pole",
+                "standard_fields_group": "Pola standardowe",
+                "custom_fields_group": "Pola własne",
+                "unlisted_field": "{field} (spoza listy pól)",
+                "value": "Wartość",
+                "comparison_help": "Warunki pól porównują tekst bez względu na wielkość liter i spacje na początku i końcu."
+            },
             "crm": {
                 "pipeline": "Pipeline",
                 "all_pipelines": "Wszystkie pipeline",

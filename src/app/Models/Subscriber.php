@@ -384,6 +384,72 @@ class Subscriber extends Model
     }
 
     /**
+     * Whether a field condition is met — a funnel's "field has value" and an
+     * automation rule's field_* conditions. The field is read by name
+     * (getFieldValue()); both sides compare as text, trimmed and
+     * case-insensitive — the way a message's field filters match on MySQL
+     * (SubscriberFieldFilterService):
+     *
+     * - `equals`: the same text; an empty `value` equals an empty field
+     * - `not_equals`: the opposite, so a field with no value is "not equal"
+     * - `contains`: holds the text; never met while `value` is empty, so a
+     *   half-filled condition does not match everyone
+     * - `not_empty` / `empty`: has any text besides whitespace ("0" does)
+     *
+     * A condition without a field, or with another operator, is not met.
+     */
+    public function matchesFieldCondition(mixed $field, mixed $operator, mixed $value = null): bool
+    {
+        $field = is_scalar($field) ? trim((string) $field) : '';
+
+        if ($field === '') {
+            return false;
+        }
+
+        $actual = self::comparableFieldText($this->getFieldValue($field));
+        $expected = self::comparableFieldText($value);
+
+        return match ($operator) {
+            'equals' => $actual === $expected,
+            'not_equals' => $actual !== $expected,
+            'contains' => $expected !== '' && str_contains($actual, $expected),
+            'not_empty' => $actual !== '',
+            'empty' => $actual === '',
+            default => false,
+        };
+    }
+
+    private static function comparableFieldText(mixed $value): string
+    {
+        return is_scalar($value) ? mb_strtolower(trim((string) $value)) : '';
+    }
+
+    /**
+     * Fields a condition can test, by name, for a builder to offer: the
+     * standard fields and the account's custom fields. A name defined for
+     * several lists is one choice, and a custom field hides the standard field
+     * of the same name, since it is the one evaluated (getFieldValue()).
+     *
+     * @return array{standard: array<int, string>, custom: array<int, array{name: string, label: string}>}
+     */
+    public static function conditionFields(int $userId): array
+    {
+        $custom = CustomField::where('user_id', $userId)
+            ->orderBy('scope') // 'global' sorts before 'list'
+            ->orderBy('sort_order')
+            ->orderBy('label')
+            ->get(['name', 'label'])
+            ->unique('name')
+            ->map(fn (CustomField $field) => ['name' => $field->name, 'label' => $field->label])
+            ->values();
+
+        return [
+            'standard' => array_values(array_diff(self::STANDARD_FIELDS, $custom->pluck('name')->all())),
+            'custom' => $custom->all(),
+        ];
+    }
+
+    /**
      * Value of a custom field by name: the subscriber's own value, or else the
      * field's default. Only the subscriber's account's fields count, and of
      * those the ones that apply to the subscriber (see customFieldsNamed()) —

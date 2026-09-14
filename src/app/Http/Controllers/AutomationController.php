@@ -9,6 +9,7 @@ use App\Models\Message;
 use App\Models\Funnel;
 use App\Models\SubscriptionForm;
 use App\Models\CustomField;
+use App\Models\Subscriber;
 use App\Models\CrmPipeline;
 use App\Models\CrmStage;
 use App\Models\User;
@@ -84,6 +85,7 @@ class AutomationController extends Controller
             'funnels' => Funnel::forUser(Auth::id())->select('id', 'name')->get(),
             'forms' => SubscriptionForm::where('user_id', Auth::id())->select('id', 'name')->get(),
             'customFields' => CustomField::where('user_id', Auth::id())->select('id', 'name', 'label')->get(),
+            'conditionFields' => Subscriber::conditionFields(Auth::id()),
             // CRM resources
             'pipelines' => CrmPipeline::where('user_id', Auth::id())->select('id', 'name')->get(),
             'stages' => CrmStage::whereHas('pipeline', fn($q) => $q->where('user_id', Auth::id()))->select('id', 'name', 'crm_pipeline_id')->get(),
@@ -155,6 +157,7 @@ class AutomationController extends Controller
             'funnels' => Funnel::forUser(Auth::id())->select('id', 'name')->get(),
             'forms' => SubscriptionForm::where('user_id', Auth::id())->select('id', 'name')->get(),
             'customFields' => CustomField::where('user_id', Auth::id())->select('id', 'name', 'label')->get(),
+            'conditionFields' => Subscriber::conditionFields(Auth::id()),
             // CRM resources
             'pipelines' => CrmPipeline::where('user_id', Auth::id())->select('id', 'name')->get(),
             'stages' => CrmStage::whereHas('pipeline', fn($q) => $q->where('user_id', Auth::id()))->select('id', 'name', 'crm_pipeline_id')->get(),

@@ -9,6 +9,17 @@ use Illuminate\Support\Facades\Log;
 
 class AutomationService
 {
+    /**
+     * Operator of each field condition (Subscriber::matchesFieldCondition()).
+     */
+    protected const FIELD_CONDITION_OPERATORS = [
+        'field_equals' => 'equals',
+        'field_not_equals' => 'not_equals',
+        'field_contains' => 'contains',
+        'field_is_empty' => 'empty',
+        'field_is_not_empty' => 'not_empty',
+    ];
+
     protected AutomationActionExecutor $actionExecutor;
 
     public function __construct(AutomationActionExecutor $actionExecutor)
@@ -373,6 +384,9 @@ class AutomationService
 
     /**
      * Evaluate a single condition.
+     *
+     * A field condition names the field in `field`: a custom field of the
+     * subscriber's account or a standard field (Subscriber::getFieldValue()).
      */
     protected function evaluateSingleCondition(array $condition, Subscriber $subscriber, array $context): bool
     {
@@ -384,65 +398,14 @@ class AutomationService
             'list_is_not' => ($context['list_id'] ?? null) != $value,
             'tag_exists' => $subscriber->tags()->where('tags.id', $value)->exists(),
             'tag_not_exists' => !$subscriber->tags()->where('tags.id', $value)->exists(),
-            'field_equals' => $this->checkFieldEquals($subscriber, $condition),
-            'field_not_equals' => !$this->checkFieldEquals($subscriber, $condition),
-            'field_contains' => $this->checkFieldContains($subscriber, $condition),
-            'field_is_empty' => $this->checkFieldEmpty($subscriber, $condition),
-            'field_is_not_empty' => !$this->checkFieldEmpty($subscriber, $condition),
+            'field_equals', 'field_not_equals', 'field_contains', 'field_is_empty', 'field_is_not_empty'
+                => $subscriber->matchesFieldCondition($condition['field'] ?? null, self::FIELD_CONDITION_OPERATORS[$type], $value),
             'email_opened_message' => $this->checkEmailOpened($subscriber, $value),
             'email_clicked_message' => $this->checkEmailClicked($subscriber, $value),
             'subscribed_days_ago' => $this->checkSubscribedDaysAgo($subscriber, $value, $context),
             'source_is' => ($context['source'] ?? null) === $value,
             default => true,
         };
-    }
-
-    protected function checkFieldEquals(Subscriber $subscriber, array $condition): bool
-    {
-        $field = $condition['field'] ?? '';
-        $value = $condition['value'] ?? '';
-
-        if (in_array($field, ['email', 'first_name', 'last_name', 'phone'])) {
-            return ($subscriber->{$field} ?? '') === $value;
-        }
-
-        // Custom field
-        $fieldValue = $subscriber->fieldValues()
-            ->whereHas('customField', fn($q) => $q->where('slug', $field))
-            ->first();
-
-        return ($fieldValue?->value ?? '') === $value;
-    }
-
-    protected function checkFieldContains(Subscriber $subscriber, array $condition): bool
-    {
-        $field = $condition['field'] ?? '';
-        $value = $condition['value'] ?? '';
-
-        if (in_array($field, ['email', 'first_name', 'last_name', 'phone'])) {
-            return str_contains($subscriber->{$field} ?? '', $value);
-        }
-
-        $fieldValue = $subscriber->fieldValues()
-            ->whereHas('customField', fn($q) => $q->where('slug', $field))
-            ->first();
-
-        return str_contains($fieldValue?->value ?? '', $value);
-    }
-
-    protected function checkFieldEmpty(Subscriber $subscriber, array $condition): bool
-    {
-        $field = $condition['field'] ?? '';
-
-        if (in_array($field, ['email', 'first_name', 'last_name', 'phone'])) {
-            return empty($subscriber->{$field});
-        }
-
-        $fieldValue = $subscriber->fieldValues()
-            ->whereHas('customField', fn($q) => $q->where('slug', $field))
-            ->first();
-
-        return empty($fieldValue?->value);
     }
 
     protected function checkEmailOpened(Subscriber $subscriber, $messageId): bool

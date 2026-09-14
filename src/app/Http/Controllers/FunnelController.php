@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Funnel;
 use App\Models\FunnelStep;
+use App\Models\Subscriber;
 use App\Services\Funnels\FunnelService;
 use App\Services\Funnels\FunnelExecutionService;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class FunnelController extends Controller
             'actionTypes' => FunnelStep::getActionTypes(),
             'goalTypes' => FunnelStep::getGoalTypes(),
             'waitUntilTypes' => FunnelStep::getWaitUntilTypes(),
-            'conditionFields' => $this->funnelService->getAvailableConditionFields(Auth::id()),
+            'conditionFields' => Subscriber::conditionFields(Auth::id()),
             'triggerTypes' => Funnel::getTriggerTypes(),
             'nodes' => [],
             'edges' => [],
@@ -135,7 +136,7 @@ class FunnelController extends Controller
             'actionTypes' => FunnelStep::getActionTypes(),
             'goalTypes' => FunnelStep::getGoalTypes(),
             'waitUntilTypes' => FunnelStep::getWaitUntilTypes(),
-            'conditionFields' => $this->funnelService->getAvailableConditionFields(Auth::id()),
+            'conditionFields' => Subscriber::conditionFields(Auth::id()),
             'triggerTypes' => Funnel::getTriggerTypes(),
             'nodes' => $builderData['nodes'],
             'edges' => $builderData['edges'],

@@ -392,40 +392,11 @@ class FunnelExecutionService
 
     /**
      * "Field has value" on a standard field or a custom field of the
-     * subscriber's account (Subscriber::getFieldValue()). Both sides compare as
-     * text, trimmed and case-insensitive — the way a message's field filters
-     * match on MySQL (SubscriberFieldFilterService):
-     *
-     * - `equals`: the same text; an empty `value` equals an empty field
-     * - `not_equals`: the opposite, so a field with no value is "not equal"
-     * - `contains`: holds the text; never met while `value` is empty, so a
-     *   half-filled condition does not send everyone down YES
-     * - `not_empty` / `empty`: has any text besides whitespace ("0" does)
+     * subscriber's account (Subscriber::matchesFieldCondition()).
      */
     protected function checkFieldValue(Subscriber $subscriber, array $config): bool
     {
-        $field = trim((string) ($config['field'] ?? ''));
-
-        if ($field === '') {
-            return false;
-        }
-
-        $actual = $this->comparableFieldText($subscriber->getFieldValue($field));
-        $expected = $this->comparableFieldText($config['value'] ?? null);
-
-        return match ($config['operator'] ?? 'equals') {
-            'equals' => $actual === $expected,
-            'not_equals' => $actual !== $expected,
-            'contains' => $expected !== '' && str_contains($actual, $expected),
-            'not_empty' => $actual !== '',
-            'empty' => $actual === '',
-            default => false,
-        };
-    }
-
-    protected function comparableFieldText(mixed $value): string
-    {
-        return is_scalar($value) ? mb_strtolower(trim((string) $value)) : '';
+        return $subscriber->matchesFieldCondition($config['field'] ?? null, $config['operator'] ?? 'equals', $config['value'] ?? null);
     }
 
     /**

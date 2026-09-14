@@ -17,6 +17,11 @@ const props = defineProps({
     funnels: Array,
     forms: Array,
     customFields: Array,
+    // Fields a field condition can test: { standard: [name], custom: [{ name, label }] }
+    conditionFields: {
+        type: Object,
+        default: () => ({ standard: [], custom: [] }),
+    },
     pipelines: Array,
     stages: Array,
     users: Array,
@@ -77,6 +82,43 @@ const removeAction = (i) => form.actions.splice(i, 1);
 const addCondition = () =>
     form.conditions.push({ type: "tag_exists", value: "" });
 const removeCondition = (i) => form.conditions.splice(i, 1);
+
+const fieldConditionTypes = [
+    "field_equals",
+    "field_not_equals",
+    "field_contains",
+    "field_is_empty",
+    "field_is_not_empty",
+];
+const valuelessFieldConditionTypes = ["field_is_empty", "field_is_not_empty"];
+const isFieldCondition = (c) => fieldConditionTypes.includes(c.type);
+
+// A field saved outside the builder (e.g. by Brain) or since deleted stays
+// selectable instead of being silently replaced
+const unlistedConditionField = (c) => {
+    if (!c.field) return null;
+
+    const listed =
+        (props.conditionFields?.standard ?? []).includes(c.field) ||
+        (props.conditionFields?.custom ?? []).some(
+            (field) => field.name === c.field,
+        );
+
+    return listed ? null : c.field;
+};
+
+// What a standard field holds, where the value to type is not obvious
+const conditionValueHint = (c) => {
+    if (!(props.conditionFields?.standard ?? []).includes(c.field)) return null;
+
+    if (["subscribed_at", "confirmed_at"].includes(c.field)) {
+        return t("funnels.builder.condition_config.value_hints.date");
+    }
+
+    return ["gender", "language"].includes(c.field)
+        ? t(`funnels.builder.condition_config.value_hints.${c.field}`)
+        : null;
+};
 const submit = () =>
     isEditing.value
         ? form.put(route("automations.update", props.rule.id))
@@ -616,46 +658,142 @@ const submit = () =>
                         <div
                             v-for="(c, i) in form.conditions"
                             :key="i"
-                            class="mb-2 flex gap-2 items-center bg-gray-50 dark:bg-gray-700 p-3 rounded"
+                            class="mb-2 bg-gray-50 dark:bg-gray-700 p-3 rounded"
                         >
-                            <select
-                                v-model="c.type"
-                                class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
-                            >
-                                <option
-                                    v-for="(l, k) in conditionTypes"
-                                    :key="k"
-                                    :value="k"
+                            <div class="flex gap-2 items-center">
+                                <select
+                                    v-model="c.type"
+                                    class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
                                 >
-                                    {{ l }}
-                                </option>
-                            </select>
-                            <select
-                                v-if="c.type.includes('tag')"
-                                v-model="c.value"
-                                class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
-                            >
-                                <option
-                                    v-for="t in tags"
-                                    :key="t.id"
-                                    :value="t.id"
+                                    <option
+                                        v-for="(l, k) in conditionTypes"
+                                        :key="k"
+                                        :value="k"
+                                    >
+                                        {{ l }}
+                                    </option>
+                                </select>
+                                <select
+                                    v-if="c.type.includes('tag')"
+                                    v-model="c.value"
+                                    class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
                                 >
-                                    {{ t.name }}
-                                </option>
-                            </select>
-                            <input
-                                v-else
-                                v-model="c.value"
-                                class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
-                            />
-                            <button
-                                type="button"
-                                @click="removeCondition(i)"
-                                class="text-red-500"
+                                    <option
+                                        v-for="t in tags"
+                                        :key="t.id"
+                                        :value="t.id"
+                                    >
+                                        {{ t.name }}
+                                    </option>
+                                </select>
+                                <template v-else-if="isFieldCondition(c)">
+                                    <select
+                                        :value="c.field || ''"
+                                        @change="(e) => (c.field = e.target.value)"
+                                        class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
+                                    >
+                                        <option value="">
+                                            {{
+                                                $t(
+                                                    "automations.builder.field_condition.choose_field",
+                                                )
+                                            }}
+                                        </option>
+                                        <option
+                                            v-if="unlistedConditionField(c)"
+                                            :value="c.field"
+                                        >
+                                            {{
+                                                $t(
+                                                    "automations.builder.field_condition.unlisted_field",
+                                                    { field: c.field },
+                                                )
+                                            }}
+                                        </option>
+                                        <optgroup
+                                            v-if="conditionFields.standard?.length"
+                                            :label="
+                                                $t(
+                                                    'automations.builder.field_condition.standard_fields_group',
+                                                )
+                                            "
+                                        >
+                                            <option
+                                                v-for="name in conditionFields.standard"
+                                                :key="name"
+                                                :value="name"
+                                            >
+                                                {{
+                                                    $t(
+                                                        `funnels.builder.condition_config.standard_fields.${name}`,
+                                                    )
+                                                }}
+                                            </option>
+                                        </optgroup>
+                                        <optgroup
+                                            v-if="conditionFields.custom?.length"
+                                            :label="
+                                                $t(
+                                                    'automations.builder.field_condition.custom_fields_group',
+                                                )
+                                            "
+                                        >
+                                            <option
+                                                v-for="field in conditionFields.custom"
+                                                :key="field.name"
+                                                :value="field.name"
+                                            >
+                                                {{ field.label }} ({{
+                                                    field.name
+                                                }})
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                    <input
+                                        v-if="
+                                            !valuelessFieldConditionTypes.includes(
+                                                c.type,
+                                            )
+                                        "
+                                        v-model="c.value"
+                                        :placeholder="
+                                            $t(
+                                                'automations.builder.field_condition.value',
+                                            )
+                                        "
+                                        class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
+                                    />
+                                </template>
+                                <input
+                                    v-else
+                                    v-model="c.value"
+                                    class="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-200"
+                                />
+                                <button
+                                    type="button"
+                                    @click="removeCondition(i)"
+                                    class="text-red-500"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <p
+                                v-if="isFieldCondition(c) && conditionValueHint(c)"
+                                class="mt-1 text-xs text-gray-500 dark:text-gray-400"
                             >
-                                ✕
-                            </button>
+                                {{ conditionValueHint(c) }}
+                            </p>
                         </div>
+                        <p
+                            v-if="form.conditions.some(isFieldCondition)"
+                            class="text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            {{
+                                $t(
+                                    "automations.builder.field_condition.comparison_help",
+                                )
+                            }}
+                        </p>
                     </div>
                     <!-- Actions -->
                     <div
