@@ -1173,56 +1173,98 @@ class SubscriberController extends Controller
         ]);
 
         // Verify ownership of both lists
-        $validLists = ContactList::whereIn('id', [$validated['source_list_id'], $validated['target_list_id']])
+        $lists = ContactList::whereIn('id', [$validated['source_list_id'], $validated['target_list_id']])
             ->where('user_id', auth()->id())
-            ->count();
+            ->get()
+            ->keyBy('id');
 
-        if ($validLists !== 2) {
+        if ($lists->count() !== 2) {
             abort(403, 'Brak dostępu do jednej z list.');
         }
+
+        $sourceList = $lists[$validated['source_list_id']];
+        $targetList = $lists[$validated['target_list_id']];
 
         $subscribers = Subscriber::where('user_id', auth()->id())
             ->whereIn('id', $validated['ids'])
             ->get();
 
-        $targetList = ContactList::find($validated['target_list_id']);
+        // Subscribers moved onto the target list as a new or reactivated
+        // membership — these get a SubscriberSignedUp event after the commit
+        $moved = 0;
+        $signedUp = [];
 
-        foreach ($subscribers as $subscriber) {
-            // Remove from source list
-            $subscriber->contactLists()->detach($validated['source_list_id']);
+        DB::transaction(function () use ($subscribers, $sourceList, $targetList, &$moved, &$signedUp) {
+            foreach ($subscribers as $subscriber) {
+                // Only an active membership is moved. Unsubscribed, bounced and
+                // unconfirmed ones keep their row (opt-out history, per-list
+                // bounce record, pending double opt-in), and the subscriber is
+                // not signed up to the target list in their place
+                $detached = $subscriber->contactLists()
+                    ->wherePivot('status', 'active')
+                    ->detach($sourceList->id);
 
-            // Add to target list with resubscription behavior
-            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
-
-            if ($existingPivot) {
-                $wasActive = $existingPivot->pivot->status === 'active';
-                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-                $pivotData = [
-                    'status' => 'active',
-                    'unsubscribed_at' => null,
-                ];
-
-                if ($shouldResetDate) {
-                    $pivotData['subscribed_at'] = now();
+                if (!$detached) {
+                    continue;
                 }
 
-                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
-            } else {
-                $subscriber->contactLists()->attach($validated['target_list_id'], [
-                    'status' => 'active',
-                    'subscribed_at' => now(),
-                ]);
-            }
+                $moved++;
 
-            // Dispatch event for automations
-            if ($targetList) {
-                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_move'));
+                // Add to target list with resubscription behavior
+                $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetList->id)->first();
+
+                if ($existingPivot) {
+                    $wasActive = $existingPivot->pivot->status === 'active';
+                    $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+                    $pivotData = [
+                        'status' => 'active',
+                        'unsubscribed_at' => null,
+                    ];
+
+                    if ($shouldResetDate) {
+                        $pivotData['subscribed_at'] = now();
+                    }
+
+                    // A membership bounced on this list starts counting afresh
+                    if ($existingPivot->pivot->status === Subscriber::STATUS_BOUNCED) {
+                        $pivotData['soft_bounce_count'] = 0;
+                    }
+
+                    $subscriber->contactLists()->updateExistingPivot($targetList->id, $pivotData);
+
+                    // Already active on the target: sequences must not restart
+                    if (!$wasActive) {
+                        $signedUp[] = $subscriber;
+                    }
+                } else {
+                    $subscriber->contactLists()->attach($targetList->id, [
+                        'status' => 'active',
+                        'subscribed_at' => now(),
+                    ]);
+
+                    $signedUp[] = $subscriber;
+                }
             }
+        });
+
+        // Dispatch event for automations (after the transaction has committed)
+        foreach ($signedUp as $subscriber) {
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_move'));
         }
 
-        $count = count($subscribers);
-        return back()->with('success', "Przeniesiono {$count} subskrybentów.");
+        $skipped = count($subscribers) - $moved;
+
+        if ($moved === 0) {
+            return back()->with('error', "Nie przeniesiono żadnego subskrybenta — zaznaczeni nie są aktywni na liście \"{$sourceList->name}\".");
+        }
+
+        $message = "Przeniesiono {$moved} subskrybentów.";
+        if ($skipped > 0) {
+            $message .= " Pominięto {$skipped} — nie są aktywni na liście \"{$sourceList->name}\".";
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -1387,16 +1429,19 @@ class SubscriberController extends Controller
             abort(403, 'Brak dostępu do listy.');
         }
 
-        $subscribers = Subscriber::where('user_id', auth()->id())
+        $subscriberIds = Subscriber::where('user_id', auth()->id())
             ->whereIn('id', $validated['ids'])
-            ->get();
+            ->pluck('id')
+            ->all();
 
-        foreach ($subscribers as $subscriber) {
-            // Detach from specific list only
-            $subscriber->contactLists()->detach($validated['list_id']);
-        }
+        // Detach from this list only, and only active memberships — the ones
+        // the filtered index lets you select. Unsubscribed, bounced and
+        // unconfirmed rows carry the opt-out history, per-list bounce records
+        // and pending double opt-ins
+        $count = $list->subscribers()
+            ->wherePivot('status', 'active')
+            ->detach($subscriberIds);
 
-        $count = count($subscribers);
         return back()->with('success', "Usunięto {$count} subskrybentów z listy \"{$list->name}\".");
     }
 }
