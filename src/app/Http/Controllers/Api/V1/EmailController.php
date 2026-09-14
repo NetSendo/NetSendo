@@ -237,6 +237,7 @@ class EmailController extends Controller
             $effectiveListIds = [$validated['list_id']];
         }
 
+        $lists = collect();
         if (!empty($effectiveListIds)) {
             $lists = ContactList::forUser($user->id)->email()->whereIn('id', $effectiveListIds)->get();
             if ($lists->isEmpty()) {
@@ -277,6 +278,12 @@ class EmailController extends Controller
             ? \Carbon\Carbon::parse($validated['schedule_at'])->setTimezone('UTC')
             : now();
 
+        // Tags and individual subscribers narrow the audience in a way the
+        // message cannot store — it keeps only lists and exclusions. The CRON
+        // sync plans every due broadcast from those, so without the snapshot
+        // flag it would widen this batch to everyone on its lists.
+        $isSnapshot = !empty($validated['tag_ids']) || !empty($validated['subscriber_ids']);
+
         // Create message
         $message = Message::create([
             'user_id' => $user->id,
@@ -289,11 +296,22 @@ class EmailController extends Controller
             'status' => 'scheduled',
             'scheduled_at' => $scheduledAt,
             'custom_headers' => $validated['headers'] ?? null,
+            'recipients_snapshot' => $isSnapshot,
         ]);
 
-        // Attach contact lists if provided
-        if (!empty($effectiveListIds)) {
-            $message->contactLists()->attach($effectiveListIds);
+        // Record the audience on the message: its lists scope the unsubscribe
+        // link, the list's sending limits and the CRON sync, and its exclusions
+        // keep that sync from planning anybody this request excluded. Only
+        // lists this account owns — a raw ID could name an SMS list or another
+        // account's list, whose members the sync would then plan.
+        if ($lists->isNotEmpty()) {
+            $message->contactLists()->attach($lists->pluck('id'));
+        }
+
+        if (!empty($validated['excluded_list_ids'])) {
+            $message->excludedLists()->attach(
+                ContactList::forUser($user->id)->whereIn('id', $validated['excluded_list_ids'])->pluck('id')
+            );
         }
 
         // Create queue entries

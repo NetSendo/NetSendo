@@ -958,6 +958,7 @@ class MessageController extends Controller
         $newMessage->sent_count = 0; // Critical: reset sent counter so queue can be populated
         $newMessage->planned_recipients_count = null; // Reset - will be calculated when activated
         $newMessage->recipients_calculated_at = null; // Reset - needs fresh calculation
+        $newMessage->recipients_snapshot = false; // A copy has no queue entries - it targets its lists
         $newMessage->created_at = now();
         $newMessage->updated_at = now();
         $newMessage->save();

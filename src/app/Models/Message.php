@@ -56,6 +56,7 @@ class Message extends Model
         'sent_count',
         'planned_recipients_count',
         'recipients_calculated_at',
+        'recipients_snapshot',
     ];
 
     protected $casts = [
@@ -70,6 +71,7 @@ class Message extends Model
         'sent_count' => 'integer',
         'planned_recipients_count' => 'integer',
         'recipients_calculated_at' => 'datetime',
+        'recipients_snapshot' => 'boolean',
         'webinar_auto_register' => 'boolean',
     ];
 
@@ -609,6 +611,7 @@ class Message extends Model
     /**
      * Synchronize planned recipients with current active subscribers.
      * This adds new subscribers and marks unsubscribed ones as skipped.
+     * A broadcast marked recipients_snapshot is never given new recipients.
      *
      * For autoresponders: Does NOT add all subscribers automatically.
      * Queue entries are created when subscribers join (SubscriberController)
@@ -765,14 +768,21 @@ class Message extends Model
             return $result;
         }
 
-        // For broadcasts: add all new subscribers as planned.
+        // For broadcasts: add all new subscribers as planned — unless the
+        // message is a snapshot. Its recipients were resolved once, by a
+        // selection its lists alone do not describe (an API batch narrowing a
+        // list by tag or subscriber), so planning everyone on those lists here
+        // would reach people nobody selected. It still loses recipients who leave
+        // its audience (unsubscribed, moved onto an excluded list) below.
         // The same message can be synced by two processes at once — saving it
         // in the editor sets it due and syncs, while the per-minute CRON picks
         // it up and syncs too. Both read the same $existingEntryIds, so a plain
         // create() per row lost that race on the (message_id, subscriber_id)
         // unique index and the save crashed with SQL 1062 (issue #30).
         // insertOrIgnore makes the step idempotent and counts only real inserts.
-        $newSubscriberIds = array_values(array_diff($currentSubscriberIds, $existingEntryIds));
+        $newSubscriberIds = $this->recipients_snapshot
+            ? []
+            : array_values(array_diff($currentSubscriberIds, $existingEntryIds));
         $plannedAt = now();
         foreach (array_chunk($newSubscriberIds, 1000) as $chunk) {
             $result['added'] += MessageQueueEntry::insertOrIgnore(array_map(fn ($subscriberId) => [
@@ -798,9 +808,12 @@ class Message extends Model
             $result['skipped'] = $skipped;
         }
 
-        // Update message stats
+        // Update message stats — a snapshot reaches only the recipients it
+        // planned that are still in its audience, not the audience itself
         $this->update([
-            'planned_recipients_count' => count($currentSubscriberIds),
+            'planned_recipients_count' => $this->recipients_snapshot
+                ? count(array_intersect($existingEntryIds, $currentSubscriberIds))
+                : count($currentSubscriberIds),
             'recipients_calculated_at' => now(),
         ]);
 
