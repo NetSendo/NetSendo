@@ -399,8 +399,13 @@ class MailingListController extends Controller
                 // then add to target). addToList() handles subscribers already present
                 // on the target list and fires SubscriberSignedUp so the target
                 // list's autoresponder sequences start.
-                $subscribers = $mailingList->subscribers()->get();
-                $mailingList->subscribers()->detach($subscribers->pluck('id')->toArray());
+                //
+                // Only active members are transferred. Unsubscribed, bounced and
+                // unconfirmed memberships stay with the deleted list (it is soft-deleted,
+                // so their opt-out history and bounce records are kept) and are not
+                // signed up to the target list in their place.
+                $subscribers = $mailingList->subscribers()->wherePivot('status', 'active')->get();
+                $mailingList->subscribers()->wherePivot('status', 'active')->detach($subscribers->pluck('id')->toArray());
                 foreach ($subscribers as $transferredSubscriber) {
                     $transferredSubscriber->addToList($targetList->id, 'list_transfer');
                 }

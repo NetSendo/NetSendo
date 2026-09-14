@@ -665,6 +665,13 @@ POST /api/v1/lists/{id}/members/tags     # dodaj/usuń tagi na segmencie
 powitalnej. `move`/`copy` wymagają list tego samego kanału. Usuwanie wybrane przez
 `filter` wymaga `confirm=true`.
 
+`move`/`copy` przenoszą tylko kontakty **aktywne** na liście źródłowej. Kontakty wypisane
+z niej, odbite, niepotwierdzone (double opt-in) lub spoza listy zostają bez zmian — także
+gdy wskazano je w `subscriber_ids`, `emails` albo `filter.status` — i są liczone w
+`not_active_on_source`. Odpowiedź podaje też `transferred` (nowe lub reaktywowane
+członkostwa na liście docelowej) i `already_on_target` (już aktywni na docelowej — ich
+sekwencje nie startują od nowa).
+
 ---
 
 ### Aktywność i zaangażowanie

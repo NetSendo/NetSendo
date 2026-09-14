@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Events\SubscriberSignedUp;
 use App\Events\SubscriberUnsubscribed;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Api\V1\Concerns\ManagesContactLists;
@@ -241,6 +242,8 @@ class ListMembershipController extends Controller
 
     /**
      * Copy members to another list (source membership untouched).
+     *
+     * Only active members of the source list are copied — see transfer().
      */
     public function copy(Request $request, int $id): JsonResponse
     {
@@ -248,13 +251,23 @@ class ListMembershipController extends Controller
     }
 
     /**
-     * Move members to another list (detached from the source afterwards).
+     * Move members to another list (detached from the source).
+     *
+     * Only active members of the source list are moved — see transfer().
      */
     public function move(Request $request, int $id): JsonResponse
     {
         return $this->transfer($request, $id, keepSource: false);
     }
 
+    /**
+     * A transfer acts on active memberships of the source list only. The
+     * selection can name any contact (subscriber_ids, emails, filter.status),
+     * but someone who unsubscribed from the source list, bounced on it, has
+     * not confirmed a double opt-in or is not on it at all is left untouched
+     * and reported in not_active_on_source: moving or copying them would turn
+     * an opt-out into an active subscription on the target list.
+     */
     private function transfer(Request $request, int $id, bool $keepSource): JsonResponse
     {
         if ($denied = $this->requirePermission($request, 'lists:write')) {
@@ -300,23 +313,48 @@ class ListMembershipController extends Controller
 
         $transferred = 0;
         $alreadyOnTarget = 0;
+        $notActiveOnSource = 0;
 
         foreach ($this->eachSubscriber($request, $subscriberIds) as $subscriber) {
-            $existing = $subscriber->contactLists()->where('contact_list_id', $target->id)->first();
+            $outcome = DB::transaction(function () use ($subscriber, $list, $target, $keepSource, $triggerAutomations, $source) {
+                $sourceMembership = $subscriber->contactLists()->wherePivot('status', 'active');
 
-            if ($existing && $existing->pivot->status === 'active') {
-                $alreadyOnTarget++;
-            } else {
+                // For a move the conditional detach is the check itself
+                $isActiveOnSource = $keepSource
+                    ? $sourceMembership->wherePivot('contact_list_id', $list->id)->exists()
+                    : $sourceMembership->detach($list->id) > 0;
+
+                if (!$isActiveOnSource) {
+                    return 'not_active_on_source';
+                }
+
+                if (!$keepSource) {
+                    $this->cancelPlannedMessages([$subscriber->id], $list);
+                }
+
+                $existing = $subscriber->contactLists()->where('contact_list_id', $target->id)->first();
+
+                if ($existing && $existing->pivot->status === 'active') {
+                    return 'already_on_target';
+                }
+
                 $triggerAutomations
-                    ? $subscriber->addToList($target->id, $source)
+                    ? $subscriber->activateListMembership($target, $source)
                     : $this->attachQuietly($subscriber, $target, $source);
 
-                $transferred++;
-            }
+                return 'transferred';
+            });
 
-            if (!$keepSource) {
-                $this->cancelPlannedMessages([$subscriber->id], $list);
-                $subscriber->contactLists()->detach($list->id);
+            match ($outcome) {
+                'not_active_on_source' => $notActiveOnSource++,
+                'already_on_target' => $alreadyOnTarget++,
+                'transferred' => $transferred++,
+            };
+
+            // SubscriberSignedUp starts sequences and webhooks — fired after
+            // the commit, and only for a new or reactivated membership
+            if ($outcome === 'transferred' && $triggerAutomations) {
+                event(new SubscriberSignedUp($subscriber, $target, null, $source));
             }
         }
 
@@ -325,6 +363,7 @@ class ListMembershipController extends Controller
             'to_list_id' => $target->id,
             'keep_source' => $keepSource,
             'transferred' => $transferred,
+            'not_active_on_source' => $notActiveOnSource,
         ]);
 
         return response()->json([
@@ -335,12 +374,15 @@ class ListMembershipController extends Controller
                 'selected' => count($subscriberIds),
                 'transferred' => $transferred,
                 'already_on_target' => $alreadyOnTarget,
+                'not_active_on_source' => $notActiveOnSource,
             ],
             'message' => sprintf(
-                '%d member(s) %s to list "%s".',
+                '%d member(s) %s to list "%s", %d already active there, %d skipped as not active on the source list.',
                 $transferred,
                 $keepSource ? 'copied' : 'moved',
-                $target->name
+                $target->name,
+                $alreadyOnTarget,
+                $notActiveOnSource
             ),
         ]);
     }
@@ -569,6 +611,12 @@ class ListMembershipController extends Controller
 
         if (!$wasActive) {
             $pivot['resubscribed_at'] = now();
+        }
+
+        // A membership bounced on this list starts counting afresh, as in
+        // Subscriber::activateListMembership()
+        if ($existing->pivot->status === Subscriber::STATUS_BOUNCED) {
+            $pivot['soft_bounce_count'] = 0;
         }
 
         $subscriber->contactLists()->updateExistingPivot($list->id, $pivot);

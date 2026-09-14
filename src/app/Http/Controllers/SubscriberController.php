@@ -1210,39 +1210,9 @@ class SubscriberController extends Controller
 
                 $moved++;
 
-                // Add to target list with resubscription behavior
-                $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetList->id)->first();
-
-                if ($existingPivot) {
-                    $wasActive = $existingPivot->pivot->status === 'active';
-                    $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-                    $pivotData = [
-                        'status' => 'active',
-                        'unsubscribed_at' => null,
-                    ];
-
-                    if ($shouldResetDate) {
-                        $pivotData['subscribed_at'] = now();
-                    }
-
-                    // A membership bounced on this list starts counting afresh
-                    if ($existingPivot->pivot->status === Subscriber::STATUS_BOUNCED) {
-                        $pivotData['soft_bounce_count'] = 0;
-                    }
-
-                    $subscriber->contactLists()->updateExistingPivot($targetList->id, $pivotData);
-
-                    // Already active on the target: sequences must not restart
-                    if (!$wasActive) {
-                        $signedUp[] = $subscriber;
-                    }
-                } else {
-                    $subscriber->contactLists()->attach($targetList->id, [
-                        'status' => 'active',
-                        'subscribed_at' => now(),
-                    ]);
-
+                // Add to target list with resubscription behavior. Already
+                // active on the target: sequences must not restart
+                if ($subscriber->activateListMembership($targetList)) {
                     $signedUp[] = $subscriber;
                 }
             }
@@ -1320,32 +1290,12 @@ class SubscriberController extends Controller
             ->get();
 
         foreach ($subscribers as $subscriber) {
-            // Add to target list with resubscription behavior
-            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
-
-            if ($existingPivot) {
-                $wasActive = $existingPivot->pivot->status === 'active';
-                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-                $pivotData = [
-                    'status' => 'active',
-                    'unsubscribed_at' => null,
-                ];
-
-                if ($shouldResetDate) {
-                    $pivotData['subscribed_at'] = now();
-                }
-
-                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
-            } else {
-                $subscriber->contactLists()->attach($validated['target_list_id'], [
-                    'status' => 'active',
-                    'subscribed_at' => now(),
-                ]);
+            // Add to target list with resubscription behavior, and dispatch
+            // the event for automations only for a new or reactivated
+            // membership — sequences already running must not restart
+            if ($subscriber->activateListMembership($targetList)) {
+                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy'));
             }
-
-            // Dispatch event for automations
-            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy'));
         }
 
         $count = count($subscribers);
@@ -1377,32 +1327,12 @@ class SubscriberController extends Controller
             ->get();
 
         foreach ($subscribers as $subscriber) {
-            // Add to target list with resubscription behavior
-            $existingPivot = $subscriber->contactLists()->where('contact_list_id', $validated['target_list_id'])->first();
-
-            if ($existingPivot) {
-                $wasActive = $existingPivot->pivot->status === 'active';
-                $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-                $pivotData = [
-                    'status' => 'active',
-                    'unsubscribed_at' => null,
-                ];
-
-                if ($shouldResetDate) {
-                    $pivotData['subscribed_at'] = now();
-                }
-
-                $subscriber->contactLists()->updateExistingPivot($validated['target_list_id'], $pivotData);
-            } else {
-                $subscriber->contactLists()->attach($validated['target_list_id'], [
-                    'status' => 'active',
-                    'subscribed_at' => now(),
-                ]);
+            // Add to target list with resubscription behavior, and dispatch
+            // the event for automations only for a new or reactivated
+            // membership — sequences already running must not restart
+            if ($subscriber->activateListMembership($targetList)) {
+                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add'));
             }
-
-            // Dispatch event for automations
-            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add'));
         }
 
         $count = count($subscribers);

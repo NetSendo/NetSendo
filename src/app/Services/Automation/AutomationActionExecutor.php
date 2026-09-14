@@ -10,6 +10,7 @@ use App\Models\Message;
 use App\Events\SubscriberSignedUp;
 use App\Jobs\SendEmailJob;
 use App\Services\Funnels\FunnelExecutionService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -152,6 +153,11 @@ class AutomationActionExecutor
 
     /**
      * Move subscriber to another list (unsubscribe from current, subscribe to new).
+     *
+     * The list the trigger came from is the source. Only an active membership
+     * of it is moved: someone who unsubscribed, bounced or has not confirmed a
+     * double opt-in there keeps that status and is not signed up to the target
+     * list in its place.
      */
     protected function moveToList(array $config, ?Subscriber $subscriber, array $context): array
     {
@@ -171,45 +177,41 @@ class AutomationActionExecutor
             throw new \InvalidArgumentException("Target list not found: {$targetListId}");
         }
 
-        // Unsubscribe from source list
-        if ($sourceListId) {
-            $subscriber->contactLists()->updateExistingPivot($sourceListId, [
-                'status' => 'unsubscribed',
-                'unsubscribed_at' => now(),
-            ]);
-        }
+        $signedUp = DB::transaction(function () use ($subscriber, $sourceListId, $targetList) {
+            // Unsubscribe from source list — an active membership only
+            if ($sourceListId) {
+                $left = $subscriber->contactLists()
+                    ->wherePivot('status', Subscriber::STATUS_ACTIVE)
+                    ->updateExistingPivot($sourceListId, [
+                        'status' => 'unsubscribed',
+                        'unsubscribed_at' => now(),
+                    ]);
 
-        // Subscribe to target list with resubscription behavior
-        $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetListId)->first();
-
-        if ($existingPivot) {
-            $wasActive = $existingPivot->pivot->status === 'active';
-            $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-            $pivotData = [
-                'status' => 'active',
-                'unsubscribed_at' => null,
-            ];
-
-            if ($shouldResetDate) {
-                $pivotData['subscribed_at'] = now();
+                if (!$left) {
+                    return null;
+                }
             }
 
-            $subscriber->contactLists()->updateExistingPivot($targetListId, $pivotData);
-        } else {
-            $subscriber->contactLists()->attach($targetListId, [
-                'status' => 'active',
-                'subscribed_at' => now(),
-            ]);
-        }
+            return $subscriber->activateListMembership($targetList);
+        });
 
-        // Dispatch event for autoresponder queue entries
-        event(new SubscriberSignedUp($subscriber, $targetList, null, 'automation_move'));
-
-        return [
+        $result = [
             'source_list_id' => $sourceListId,
             'target_list_id' => $targetListId,
+            'moved' => $signedUp !== null,
         ];
+
+        if ($signedUp === null) {
+            return $result + ['skipped' => 'Subscriber is not active on the source list'];
+        }
+
+        // Dispatch event for autoresponder queue entries — only for a new or
+        // reactivated membership, so sequences already running do not restart
+        if ($signedUp) {
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'automation_move'));
+        }
+
+        return $result;
     }
 
     /**
@@ -232,32 +234,11 @@ class AutomationActionExecutor
             throw new \InvalidArgumentException("Target list not found: {$targetListId}");
         }
 
-        // Subscribe to target list with resubscription behavior
-        $existingPivot = $subscriber->contactLists()->where('contact_list_id', $targetListId)->first();
-
-        if ($existingPivot) {
-            $wasActive = $existingPivot->pivot->status === 'active';
-            $shouldResetDate = !$wasActive || ($targetList->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-            $pivotData = [
-                'status' => 'active',
-                'unsubscribed_at' => null,
-            ];
-
-            if ($shouldResetDate) {
-                $pivotData['subscribed_at'] = now();
-            }
-
-            $subscriber->contactLists()->updateExistingPivot($targetListId, $pivotData);
-        } else {
-            $subscriber->contactLists()->attach($targetListId, [
-                'status' => 'active',
-                'subscribed_at' => now(),
-            ]);
+        // Dispatch event for autoresponder queue entries — only for a new or
+        // reactivated membership, so sequences already running do not restart
+        if ($subscriber->activateListMembership($targetList)) {
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'automation_copy'));
         }
-
-        // Dispatch event for autoresponder queue entries
-        event(new SubscriberSignedUp($subscriber, $targetList, null, 'automation_copy'));
 
         return ['target_list_id' => $targetListId, 'copied' => true];
     }

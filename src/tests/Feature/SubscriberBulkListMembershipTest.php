@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -17,6 +18,10 @@ use Tests\TestCase;
  * of that list — unsubscribed, bounced and unconfirmed ones carry the
  * unsubscribe history, the per-list bounce records and pending double opt-ins,
  * and moving them must not sign the person up to another list.
+ *
+ * Every action that lands subscribers on a target list — move, copy, add —
+ * starts its sequences only for a new or reactivated membership, and a
+ * membership that had bounced there starts with a fresh bounce count.
  */
 class SubscriberBulkListMembershipTest extends TestCase
 {
@@ -222,5 +227,69 @@ class SubscriberBulkListMembershipTest extends TestCase
 
         // Memberships on other lists are never touched
         $this->assertSame('active', $this->pivot($this->unsubscribed, $this->other)?->status);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}> route name, event source
+     */
+    public static function addingActions(): array
+    {
+        return [
+            'copy' => ['subscribers.bulk-copy', 'bulk_copy'],
+            'add to list' => ['subscribers.bulk-add-to-list', 'bulk_add'],
+        ];
+    }
+
+    private function addToTarget(string $route, array $ids)
+    {
+        return $this->actingAs($this->user)
+            ->from(route('subscribers.index'))
+            ->post(route($route), [
+                'ids' => $ids,
+                'target_list_id' => $this->target->id,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+    }
+
+    #[DataProvider('addingActions')]
+    public function test_copy_and_add_sign_up_only_new_or_reactivated_target_memberships(string $route, string $source): void
+    {
+        $alreadyActive = $this->active;
+        $alreadyActive->contactLists()->attach($this->target->id, [
+            'status' => 'active',
+            'subscribed_at' => now()->subDays(30),
+        ]);
+
+        $bouncedOnTarget = $this->bounced;
+        $bouncedOnTarget->contactLists()->attach($this->target->id, [
+            'status' => 'bounced',
+            'subscribed_at' => now()->subDays(30),
+            'soft_bounce_count' => 3,
+        ]);
+
+        $newOnTarget = $this->pending;
+
+        $this->addToTarget($route, [$alreadyActive->id, $bouncedOnTarget->id, $newOnTarget->id]);
+
+        $this->assertSame('active', $this->pivot($alreadyActive, $this->target)?->status);
+        $this->assertSame('active', $this->pivot($newOnTarget, $this->target)?->status);
+
+        $bounced = $this->pivot($bouncedOnTarget, $this->target);
+        $this->assertSame('active', $bounced?->status);
+        $this->assertSame(0, (int) $bounced->soft_bounce_count);
+
+        // The source list is not involved
+        $this->assertSame(3, (int) $this->pivot($bouncedOnTarget, $this->source)->soft_bounce_count);
+
+        Event::assertDispatchedTimes(SubscriberSignedUp::class, 2);
+        Event::assertNotDispatched(SubscriberSignedUp::class, fn (SubscriberSignedUp $event) =>
+            $event->subscriber->is($alreadyActive));
+        foreach ([$bouncedOnTarget, $newOnTarget] as $subscriber) {
+            Event::assertDispatched(SubscriberSignedUp::class, fn (SubscriberSignedUp $event) =>
+                $event->subscriber->is($subscriber)
+                && $event->list->is($this->target)
+                && $event->source === $source);
+        }
     }
 }

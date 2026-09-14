@@ -195,6 +195,53 @@ class Subscriber extends Model
     // Removed old contactList relationship to avoid confusion
 
     /**
+     * Make this subscriber an active member of a list — attach a new
+     * membership or reactivate an existing one, honoring the list's
+     * resubscription_behavior. Fires no event.
+     *
+     * Returns true when the membership is new or was reactivated, the cases
+     * that count as a signup and should start the list's sequences; false
+     * when it was already active.
+     */
+    public function activateListMembership(ContactList $list, ?string $source = null): bool
+    {
+        $existingPivot = $this->contactLists()->where('contact_list_id', $list->id)->first();
+
+        if (!$existingPivot) {
+            $this->contactLists()->attach($list->id, [
+                'status' => 'active',
+                'subscribed_at' => now(),
+                'source' => $source,
+            ]);
+
+            return true;
+        }
+
+        $wasActive = $existingPivot->pivot->status === self::STATUS_ACTIVE;
+        $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
+
+        $pivotData = [
+            'status' => 'active',
+            'unsubscribed_at' => null,
+        ];
+
+        if ($shouldResetDate) {
+            $pivotData['subscribed_at'] = now();
+        }
+
+        // A membership bounced on this list starts counting afresh — a counter
+        // left at the threshold would mark it bounced again on the next
+        // temporary failure
+        if ($existingPivot->pivot->status === self::STATUS_BOUNCED) {
+            $pivotData['soft_bounce_count'] = 0;
+        }
+
+        $this->contactLists()->updateExistingPivot($list->id, $pivotData);
+
+        return !$wasActive;
+    }
+
+    /**
      * Add (or reactivate) this subscriber on a list, honoring the list's
      * resubscription_behavior, and fire SubscriberSignedUp so autoresponder
      * sequences and automations start. Used by funnel/system actions.
@@ -210,45 +257,35 @@ class Subscriber extends Model
             return false;
         }
 
-        $existingPivot = $this->contactLists()->where('contact_list_id', $listId)->first();
-
-        if ($existingPivot) {
-            $wasActive = $existingPivot->pivot->status === 'active';
-            $shouldResetDate = !$wasActive || ($list->resubscription_behavior ?? 'reset_date') === 'reset_date';
-
-            $pivotData = [
-                'status' => 'active',
-                'unsubscribed_at' => null,
-            ];
-
-            if ($shouldResetDate) {
-                $pivotData['subscribed_at'] = now();
-            }
-
-            $this->contactLists()->updateExistingPivot($listId, $pivotData);
-
-            if ($wasActive) {
-                return true;
-            }
-        } else {
-            $this->contactLists()->attach($listId, [
-                'status' => 'active',
-                'subscribed_at' => now(),
-                'source' => $source,
-            ]);
+        if ($this->activateListMembership($list, $source)) {
+            event(new \App\Events\SubscriberSignedUp($this, $list, null, $source));
         }
-
-        event(new \App\Events\SubscriberSignedUp($this, $list, null, $source));
 
         return true;
     }
 
     /**
      * Move this subscriber from one list to another (detach + addToList).
+     *
+     * Only an active membership of the source list is moved. Unsubscribed,
+     * bounced and unconfirmed ones keep their row — the opt-out history, the
+     * per-list bounce record, the pending double opt-in — and the subscriber
+     * is not signed up to the target list in their place. Returns false when
+     * nothing was moved.
      */
     public function moveToList(int $fromListId, int $toListId, string $source = 'system'): bool
     {
-        $this->contactLists()->detach($fromListId);
+        if (!ContactList::whereKey($toListId)->exists()) {
+            return false;
+        }
+
+        $detached = $this->contactLists()
+            ->wherePivot('status', self::STATUS_ACTIVE)
+            ->detach($fromListId);
+
+        if (!$detached) {
+            return false;
+        }
 
         return $this->addToList($toListId, $source);
     }
