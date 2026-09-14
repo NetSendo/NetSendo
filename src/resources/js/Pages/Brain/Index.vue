@@ -4,18 +4,10 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
-import { marked } from "marked";
+import { createSafeMarkdown } from "@/utils/safeMarkdown";
 
-// Configure marked for safe rendering
-marked.setOptions({
-    breaks: true,
-    gfm: true,
-});
-
-const renderMarkdown = (content) => {
-    if (!content) return "";
-    return marked.parse(content);
-};
+// Replies can echo untrusted content (emails, web research, subscriber data)
+const renderMarkdown = createSafeMarkdown({ breaks: true });
 
 const { t } = useI18n();
 

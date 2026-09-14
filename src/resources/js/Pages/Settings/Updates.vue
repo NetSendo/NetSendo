@@ -3,7 +3,7 @@ import { ref, reactive, onMounted, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
-import { Marked } from 'marked';
+import { createSafeMarkdown } from '@/utils/safeMarkdown';
 
 const { t, locale } = useI18n();
 const page = usePage();
@@ -118,38 +118,9 @@ const formatDate = (dateString) => {
     }
 };
 
-const escapeHtml = (text) => String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-const isSafeUrl = (url) => /^(https?:|mailto:)/i.test(url.trim());
-
-// Release notes come from GitHub and end up in v-html: raw HTML is shown as
-// text (notes mention tags like <select> outside code spans) and only
-// http(s)/mailto links and images are kept.
-const releaseNotesMarkdown = new Marked({
-    gfm: true,
-    renderer: {
-        html({ text }) {
-            return escapeHtml(text);
-        },
-        link({ href, title, tokens }) {
-            const label = this.parser.parseInline(tokens);
-            if (!isSafeUrl(href)) return label;
-            const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
-            return `<a href="${escapeHtml(href)}"${titleAttr} target="_blank" rel="noopener noreferrer">${label}</a>`;
-        },
-        image({ href, text }) {
-            if (!isSafeUrl(href)) return escapeHtml(text);
-            return `<img src="${escapeHtml(href)}" alt="${escapeHtml(text)}" loading="lazy">`;
-        },
-    },
-});
-
-const renderReleaseNotes = (body) => (body ? releaseNotesMarkdown.parse(body) : '');
+// Release notes come from GitHub and end up in v-html (notes mention tags like
+// <select> outside code spans, which must show as text)
+const renderReleaseNotes = createSafeMarkdown();
 
 // Release names are "v2.1.3" or "v2.1.3 – Title"; the version is already the card heading
 const releaseTitle = (name, version) => {
