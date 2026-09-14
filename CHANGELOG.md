@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **The changelog on the Updates page showed release notes as raw Markdown:** *Settings → Updates → Changelog* kept only the lines of a release body that started with `-` or `*`, cut them to ten and printed them as plain text — `**`, backticks and `[#31](…)` stayed visible, `**Release date:**` lost one asterisk as if it were a bullet, `### Added` / `### Fixed` headings disappeared, nested points were flattened into the main list, and everything after the tenth point of a 30,000-character release was dropped without a hint.
+  - **Release notes are rendered as Markdown** with `marked` (headings, bold, italics, code, links, nested lists, tables). The body comes from GitHub and is inserted as HTML, so raw HTML in it is shown as text — notes mention tags like `<select>` outside code spans — and only `http(s)` and `mailto` links and images are kept; links open in a new tab.
+  - **Long notes are collapsed** to a fixed height with a *Show full release notes* / *Show less* toggle, shown only when the notes do not fit.
+  - The card no longer repeats the version under its heading (release names are just `vX.Y.Z`), and the release date follows the interface language instead of always being in English.
+
 ## [2.1.3] – Short Description
 
 **Release date:** 2026-09-14

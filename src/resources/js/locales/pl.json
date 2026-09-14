@@ -5126,6 +5126,8 @@
             "refresh": "Odśwież",
             "view_on_github": "Zobacz na GitHub",
             "view_all_releases": "Zobacz wszystkie wydania na GitHub",
+            "show_more": "Pokaż pełne informacje o wydaniu",
+            "show_less": "Zwiń",
             "docker_update": {
                 "title": "🐳 Aktualizacja Docker (Zalecana)",
                 "description": "Jeśli uruchamiasz NetSendo przez Docker, aktualizacja jest prosta:",

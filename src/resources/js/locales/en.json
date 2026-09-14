@@ -4728,6 +4728,8 @@
             "refresh": "Refresh",
             "view_on_github": "View on GitHub",
             "view_all_releases": "View all releases on GitHub",
+            "show_more": "Show full release notes",
+            "show_less": "Show less",
             "docker_update": {
                 "title": "🐳 Docker Update (Recommended)",
                 "description": "If you're running NetSendo with Docker, updating is simple:",

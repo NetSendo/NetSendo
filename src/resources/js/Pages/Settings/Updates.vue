@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { useI18n } from 'vue-i18n';
+import { Marked } from 'marked';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const page = usePage();
 const isLoading = ref(true);
 const isLoadingChangelog = ref(true);
@@ -107,7 +108,7 @@ const refreshVersionInfo = async () => {
 const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-        return new Date(dateString).toLocaleDateString('en-US', {
+        return new Date(dateString).toLocaleDateString(locale.value, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -117,11 +118,59 @@ const formatDate = (dateString) => {
     }
 };
 
-// Parse changelog body from GitHub (markdown to array)
-const parseChangelog = (body) => {
-    if (!body) return [];
-    const lines = body.split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('*'));
-    return lines.map(line => line.replace(/^[-*]\s*/, '').trim()).slice(0, 10);
+const escapeHtml = (text) => String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const isSafeUrl = (url) => /^(https?:|mailto:)/i.test(url.trim());
+
+// Release notes come from GitHub and end up in v-html: raw HTML is shown as
+// text (notes mention tags like <select> outside code spans) and only
+// http(s)/mailto links and images are kept.
+const releaseNotesMarkdown = new Marked({
+    gfm: true,
+    renderer: {
+        html({ text }) {
+            return escapeHtml(text);
+        },
+        link({ href, title, tokens }) {
+            const label = this.parser.parseInline(tokens);
+            if (!isSafeUrl(href)) return label;
+            const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
+            return `<a href="${escapeHtml(href)}"${titleAttr} target="_blank" rel="noopener noreferrer">${label}</a>`;
+        },
+        image({ href, text }) {
+            if (!isSafeUrl(href)) return escapeHtml(text);
+            return `<img src="${escapeHtml(href)}" alt="${escapeHtml(text)}" loading="lazy">`;
+        },
+    },
+});
+
+const renderReleaseNotes = (body) => (body ? releaseNotesMarkdown.parse(body) : '');
+
+// Release names are "v2.1.3" or "v2.1.3 – Title"; the version is already the card heading
+const releaseTitle = (name, version) => {
+    const title = (name || '').replace(new RegExp(`^v?${version.replace(/\./g, '\\.')}\\s*[–—-]?\\s*`), '');
+    return title.trim();
+};
+
+// Long notes are collapsed; a note only gets the toggle when it actually overflows
+const expandedNotes = reactive(new Set());
+const overflowingNotes = reactive(new Set());
+
+const measureNotes = (version, el) => {
+    if (!el || expandedNotes.has(version)) return;
+    const overflows = el.scrollHeight > el.clientHeight + 1;
+    if (overflows !== overflowingNotes.has(version)) {
+        overflows ? overflowingNotes.add(version) : overflowingNotes.delete(version);
+    }
+};
+
+const toggleNotes = (version) => {
+    expandedNotes.has(version) ? expandedNotes.delete(version) : expandedNotes.add(version);
 };
 
 const getTypeFromVersion = (version) => {
@@ -162,8 +211,8 @@ const changelog = computed(() => {
                 version: r.version,
                 date: r.published_at,
                 type: getTypeFromVersion(r.version),
-                title: r.name || `Version ${r.version}`,
-                changes: parseChangelog(r.body),
+                title: releaseTitle(r.name, r.version),
+                notesHtml: renderReleaseNotes(r.body),
                 url: r.url,
                 source: 'github',
             });
@@ -184,6 +233,7 @@ const changelog = computed(() => {
         if (!addedVersions.has(fallbackEntry.version)) {
             mergedChangelog.push({
                 ...fallbackEntry,
+                notesHtml: renderReleaseNotes(fallbackEntry.changes.map(change => `- ${change}`).join('\n')),
                 source: 'local',
             });
             addedVersions.add(fallbackEntry.version);
@@ -380,20 +430,27 @@ onMounted(() => {
                                     </a>
                                 </div>
 
-                                <h4 class="mt-2 text-base font-medium text-slate-300">{{ entry.title }}</h4>
+                                <h4 v-if="entry.title" class="mt-2 text-base font-medium text-slate-300">{{ entry.title }}</h4>
 
-                                <ul v-if="entry.changes?.length > 0" class="mt-4 space-y-2">
-                                    <li
-                                        v-for="(change, index) in entry.changes"
-                                        :key="index"
-                                        class="flex items-start gap-2 text-sm text-slate-400"
+                                <template v-if="entry.notesHtml">
+                                    <div
+                                        :ref="el => measureNotes(entry.version, el)"
+                                        class="release-notes mt-4 text-sm text-slate-400"
+                                        :class="{
+                                            'max-h-96 overflow-hidden': !expandedNotes.has(entry.version),
+                                            'is-faded': overflowingNotes.has(entry.version) && !expandedNotes.has(entry.version),
+                                        }"
+                                        v-html="entry.notesHtml"
+                                    ></div>
+                                    <button
+                                        v-if="overflowingNotes.has(entry.version)"
+                                        type="button"
+                                        @click="toggleNotes(entry.version)"
+                                        class="mt-3 text-xs font-medium text-indigo-400 hover:text-indigo-300"
                                     >
-                                        <svg class="mt-0.5 h-4 w-4 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        {{ change }}
-                                    </li>
-                                </ul>
+                                        {{ expandedNotes.has(entry.version) ? t('settings.updates.show_less') : t('settings.updates.show_more') }}
+                                    </button>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -472,3 +529,113 @@ onMounted(() => {
         </div>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+.release-notes.is-faded {
+    mask-image: linear-gradient(to bottom, black calc(100% - 4rem), transparent);
+}
+.release-notes :deep(> :first-child) {
+    margin-top: 0;
+}
+.release-notes :deep(p),
+.release-notes :deep(ul),
+.release-notes :deep(ol),
+.release-notes :deep(pre),
+.release-notes :deep(blockquote) {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+.release-notes :deep(h1),
+.release-notes :deep(h2),
+.release-notes :deep(h3),
+.release-notes :deep(h4),
+.release-notes :deep(h5),
+.release-notes :deep(h6) {
+    margin: 1.25rem 0 0.5rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+.release-notes :deep(h1),
+.release-notes :deep(h2) {
+    font-size: 1rem;
+}
+.release-notes :deep(h3) {
+    font-size: 0.9375rem;
+}
+.release-notes :deep(ul) {
+    list-style: disc;
+    padding-left: 1.25rem;
+}
+.release-notes :deep(ol) {
+    list-style: decimal;
+    padding-left: 1.25rem;
+}
+.release-notes :deep(li) {
+    margin: 0.375rem 0;
+}
+.release-notes :deep(li::marker) {
+    color: #818cf8;
+}
+.release-notes :deep(li > ul),
+.release-notes :deep(li > ol) {
+    margin: 0.25rem 0;
+}
+.release-notes :deep(strong) {
+    font-weight: 600;
+    color: #e2e8f0;
+}
+.release-notes :deep(em) {
+    font-style: italic;
+}
+.release-notes :deep(a) {
+    color: #818cf8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.release-notes :deep(a:hover) {
+    color: #a5b4fc;
+}
+.release-notes :deep(code) {
+    border-radius: 0.25rem;
+    background: rgb(255 255 255 / 0.08);
+    padding: 0.1em 0.35em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+    color: #cbd5e1;
+    overflow-wrap: anywhere;
+}
+.release-notes :deep(pre) {
+    overflow-x: auto;
+    border-radius: 0.5rem;
+    background: #0f172a;
+    padding: 0.75rem 1rem;
+}
+.release-notes :deep(pre code) {
+    background: none;
+    padding: 0;
+    overflow-wrap: normal;
+}
+.release-notes :deep(blockquote) {
+    border-left: 3px solid #475569;
+    padding-left: 0.75rem;
+    color: #94a3b8;
+}
+.release-notes :deep(hr) {
+    margin: 1rem 0;
+    border-color: #334155;
+}
+.release-notes :deep(img) {
+    max-width: 100%;
+    border-radius: 0.5rem;
+}
+.release-notes :deep(table) {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+.release-notes :deep(th),
+.release-notes :deep(td) {
+    border: 1px solid #334155;
+    padding: 0.25rem 0.5rem;
+}
+</style>
