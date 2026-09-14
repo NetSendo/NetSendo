@@ -62,9 +62,9 @@ class Subscriber extends Model
     ];
 
     /**
-     * Global statuses. `status` is the column every send checks
-     * (CronScheduleService skips anyone who is not `active`); `inactive` is not
-     * stored there — it is an `active` row whose `is_active_global` flag is off.
+     * Global statuses. `inactive` is not stored in `status` — it is an `active`
+     * row whose `is_active_global` flag is off. CronScheduleService skips a
+     * queue entry unless the subscriber is both `active` and flagged active.
      */
     public const STATUS_ACTIVE = 'active';
     public const STATUS_INACTIVE = 'inactive';

@@ -374,8 +374,19 @@ class SubscriberController extends Controller
             }
         }
 
-        // Update subscriber
-        $subscriber->update(collect($validated)->except('custom_fields')->toArray());
+        // Update subscriber. `active` and `inactive` mean what they mean in the
+        // interface: both drive `is_active_global`, which queued sends check —
+        // writing only `status` left an inactive contact skipped after
+        // "reactivation" and stored a value the status filters never match.
+        $attributes = collect($validated)->except(['custom_fields', 'status'])->toArray();
+
+        if (isset($validated['status'])) {
+            $attributes += in_array($validated['status'], [Subscriber::STATUS_ACTIVE, Subscriber::STATUS_INACTIVE], true)
+                ? Subscriber::adminStatusAttributes($validated['status'])
+                : ['status' => $validated['status']];
+        }
+
+        $subscriber->update($attributes);
 
         // Handle custom fields
         if (!empty($validated['custom_fields'])) {

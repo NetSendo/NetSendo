@@ -17,6 +17,11 @@ use Illuminate\Support\Facades\Log;
 class CronScheduleService
 {
     /**
+     * Skip reason for a subscriber whose global `is_active_global` flag is off.
+     */
+    public const SKIP_REASON_INACTIVE = 'Subscriber is marked inactive';
+
+    /**
      * Pobierz wszystkie ustawienia globalne
      */
     public function getGlobalSettings(): array
@@ -347,6 +352,17 @@ class CronScheduleService
                             ]);
                             continue;
                         }
+                    }
+
+                    // "Inactive" (set by an admin, the API or an import) lowers
+                    // only this flag. Checked once the entry is due, so a contact
+                    // reactivated before then still gets the rest of a sequence.
+                    // The reason must not contain "unsubscri": Brain's
+                    // PerformanceTracker counts those as unsubscribes.
+                    if (!$subscriber->is_active_global) {
+                        $entry->markAsSkipped(self::SKIP_REASON_INACTIVE);
+                        $stats['skipped']++;
+                        continue;
                     }
 
                     // Lista, według której rozliczamy tego odbiorcę: najstarsze
@@ -704,6 +720,13 @@ class CronScheduleService
                         if ($expectedSendDateTime && $expectedSendDateTime->gt(now('UTC'))) {
                             continue; // Will be processed at the appropriate time
                         }
+                    }
+
+                    // Inactive: skipped once due, as for email above
+                    if (!$subscriber->is_active_global) {
+                        $entry->markAsSkipped(self::SKIP_REASON_INACTIVE);
+                        $stats['skipped']++;
+                        continue;
                     }
 
                     // Harmonogram/limit z listy subskrybenta, nie z pierwszej listy
