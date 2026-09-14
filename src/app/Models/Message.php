@@ -471,28 +471,18 @@ class Message extends Model
             ];
         }
 
-        // Same audience rules as getUniqueRecipients(): excluded lists, exclude-side
-        // field filters and include-side field filters all apply here too, so the
-        // schedule never promises sends the queue will not make.
+        // Same audience as getUniqueRecipients() — one query builds both — so
+        // the schedule never promises sends the queue will not make.
         $excludedEmails = $this->resolveExcludedEmails($includedListIds, $excludedListIds);
-        $includeFilters = $this->getIncludeFieldFilters();
-        $filterService = app(SubscriberFieldFilterService::class);
 
         // Get subscribers with their subscribed_at from pivot
-        $subscribers = Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
-                $query->whereIn('contact_lists.id', $includedListIds)
-                    ->where('contact_list_subscriber.status', 'active');
-            })
-            ->when(!empty($excludedEmails), function ($query) use ($excludedEmails) {
-                $query->whereNotIn('email', $excludedEmails);
-            })
-            ->when($includeFilters->isNotEmpty(), function ($query) use ($filterService, $includeFilters) {
-                $filterService->applyFilters(
-                    $query,
-                    $includeFilters,
-                    $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
-                );
-            })
+        $subscribers = app(SubscriberFieldFilterService::class)
+            ->audienceQuery(
+                $includedListIds,
+                $excludedEmails,
+                $this->getIncludeFieldFilters(),
+                $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+            )
             ->with(['contactLists' => function ($query) use ($includedListIds) {
                 $query->whereIn('contact_lists.id', $includedListIds)
                     ->where('contact_list_subscriber.status', 'active');
@@ -511,8 +501,11 @@ class Message extends Model
         // Emails that have queue entries waiting to be processed (PLANNED or QUEUED)
         // These are NOT missed - they are waiting for CRON to process them.
         // Keep their stored scheduled_for so they can be bucketed by send date.
+        // An inactive subscriber's entry waits too (see skipDroppedRecipients),
+        // but they are no recipient until reactivated, so it is not counted.
         $pendingByEmail = $this->queueEntries()
             ->join('subscribers', 'message_queue_entries.subscriber_id', '=', 'subscribers.id')
+            ->where('subscribers.is_active_global', true)
             ->whereIn('message_queue_entries.status', [
                 MessageQueueEntry::STATUS_PLANNED,
                 MessageQueueEntry::STATUS_QUEUED
@@ -666,17 +659,9 @@ class Message extends Model
         // stay "missed" and require the explicit "Send to missed" action.
         if ($this->isQueueType()) {
             // Only mark removed/unsubscribed subscribers as skipped
-            $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
-            if (!empty($removedSubscriberIds)) {
-                $skipped = $this->queueEntries()
-                    ->whereIn('subscriber_id', $removedSubscriberIds)
-                    ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
-                    ->update([
-                        'status' => MessageQueueEntry::STATUS_SKIPPED,
-                        'error_message' => 'Subscriber removed from list or unsubscribed',
-                    ]);
-                $result['skipped'] = $skipped;
-            }
+            $result['skipped'] = $this->skipDroppedRecipients(
+                array_diff($existingEntryIds, $currentSubscriberIds)
+            );
 
             // Backfill: schedule recipients that have NO queue entry yet and
             // whose send time has not passed. Without this, a subscriber only
@@ -796,17 +781,9 @@ class Message extends Model
         }
 
         // Mark removed/unsubscribed subscribers as skipped (only if still pending)
-        $removedSubscriberIds = array_diff($existingEntryIds, $currentSubscriberIds);
-        if (!empty($removedSubscriberIds)) {
-            $skipped = $this->queueEntries()
-                ->whereIn('subscriber_id', $removedSubscriberIds)
-                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
-                ->update([
-                    'status' => MessageQueueEntry::STATUS_SKIPPED,
-                    'error_message' => 'Subscriber removed from list or unsubscribed',
-                ]);
-            $result['skipped'] = $skipped;
-        }
+        $result['skipped'] = $this->skipDroppedRecipients(
+            array_diff($existingEntryIds, $currentSubscriberIds)
+        );
 
         // Update message stats — a snapshot reaches only the recipients it
         // planned that are still in its audience, not the audience itself
@@ -818,6 +795,37 @@ class Message extends Model
         ]);
 
         return $result;
+    }
+
+    /**
+     * Mark the pending entries of subscribers who left the audience as skipped.
+     *
+     * A subscriber who is only marked inactive left the audience too, but their
+     * entry stays planned: the CRON send gate skips it once it is due (reason
+     * CronScheduleService::SKIP_REASON_INACTIVE), so a contact reactivated
+     * before then still gets it — the next step of an autoresponder, say. The
+     * reason written here would also count them as unsubscribes in Brain's
+     * PerformanceTracker.
+     *
+     * @return int entries skipped
+     */
+    protected function skipDroppedRecipients(array $subscriberIds): int
+    {
+        if (empty($subscriberIds)) {
+            return 0;
+        }
+
+        return $this->queueEntries()
+            ->whereIn('subscriber_id', $subscriberIds)
+            ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+            ->whereNotIn('subscriber_id', DB::table('subscribers')
+                ->select('id')
+                ->where('is_active_global', false)
+                ->whereNull('deleted_at'))
+            ->update([
+                'status' => MessageQueueEntry::STATUS_SKIPPED,
+                'error_message' => 'Subscriber removed from list or unsubscribed',
+            ]);
     }
 
     /**
@@ -856,29 +864,20 @@ class Message extends Model
             ? $this->resolveExcludedEmails($includedListIds, $excludedListIds)
             : [];
 
-        // Custom-field conditions narrowing the audience. They apply to the
-        // list-based recipients only — CRM contacts are picked one by one, so
-        // an explicit pick stays a pick.
-        $includeFilters = $this->getIncludeFieldFilters();
-        $filterService = app(SubscriberFieldFilterService::class);
-
-        // Base query for list-based subscribers
+        // Base query for list-based subscribers: the shared audience definition
+        // (active memberships, globally active subscribers, exclusions and the
+        // custom-field conditions). Field conditions apply to the list-based
+        // recipients only — CRM contacts are picked one by one, so an explicit
+        // pick stays a pick.
         $listSubscribers = collect();
         if (!empty($includedListIds)) {
-            $listSubscribers = Subscriber::whereHas('contactLists', function ($query) use ($includedListIds) {
-                    $query->whereIn('contact_lists.id', $includedListIds)
-                        ->where('contact_list_subscriber.status', 'active');
-                })
-                ->when(!empty($excludedEmails), function ($query) use ($excludedEmails) {
-                    $query->whereNotIn('email', $excludedEmails);
-                })
-                ->when($includeFilters->isNotEmpty(), function ($query) use ($filterService, $includeFilters) {
-                    $filterService->applyFilters(
-                        $query,
-                        $includeFilters,
-                        $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
-                    );
-                })
+            $listSubscribers = app(SubscriberFieldFilterService::class)
+                ->audienceQuery(
+                    $includedListIds,
+                    $excludedEmails,
+                    $this->getIncludeFieldFilters(),
+                    $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                )
                 ->when(!empty($excludedCrmSubscriberIds), function ($query) use ($excludedCrmSubscriberIds) {
                     // Exclude CRM contacts from list recipients
                     $query->whereNotIn('id', $excludedCrmSubscriberIds);
@@ -911,12 +910,14 @@ class Message extends Model
                 ->get();
         }
 
-        // Get individually selected CRM contact subscribers (not excluded)
+        // Get individually selected CRM contact subscribers (not excluded).
+        // A pick does not override a global deactivation, just as it does not
+        // override a bounce.
         $crmSubscribers = collect();
         if (!empty($crmContactSubscriberIds)) {
             $includableCrmIds = array_diff($crmContactSubscriberIds, $excludedCrmSubscriberIds);
             if (!empty($includableCrmIds)) {
-                $crmSubscribers = Subscriber::whereIn('id', $includableCrmIds)->get();
+                $crmSubscribers = Subscriber::active()->whereIn('id', $includableCrmIds)->get();
             }
         }
 

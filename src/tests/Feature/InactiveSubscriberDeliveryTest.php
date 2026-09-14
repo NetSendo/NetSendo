@@ -98,17 +98,41 @@ class InactiveSubscriberDeliveryTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('unsubscri', $entry->error_message);
     }
 
+    private function assertNotPlanned(Message $message, Subscriber $subscriber): void
+    {
+        $this->assertFalse(
+            $message->queueEntries()->where('subscriber_id', $subscriber->id)->exists(),
+            'An inactive subscriber is no recipient and must not be planned'
+        );
+    }
+
+    /**
+     * An entry planned while the subscriber was still active.
+     */
+    private function plannedEntryFor(Message $message, Subscriber $subscriber): MessageQueueEntry
+    {
+        return $message->queueEntries()->create([
+            'subscriber_id' => $subscriber->id,
+            'status' => MessageQueueEntry::STATUS_PLANNED,
+            'planned_at' => now()->subHour(),
+        ]);
+    }
+
     public function test_email_broadcast_skips_an_inactive_subscriber(): void
     {
         $active = $this->subscriber('active@example.com');
         $inactive = $this->subscriber('inactive@example.com', activeGlobal: false);
+        $deactivated = $this->subscriber('deactivated@example.com', activeGlobal: false);
         $message = $this->message();
+        $planned = $this->plannedEntryFor($message, $deactivated);
 
         $stats = app(CronScheduleService::class)->processQueue();
 
         $this->assertSame(1, $stats['dispatched']);
         $this->assertSame(MessageQueueEntry::STATUS_QUEUED, $this->entryFor($message, $active)->status);
-        $this->assertSkippedAsInactive($this->entryFor($message, $inactive));
+        $this->assertNotPlanned($message, $inactive);
+        $this->assertSkippedAsInactive($planned);
+        $this->assertSame(1, $message->fresh()->planned_recipients_count);
         Queue::assertPushed(SendEmailJob::class, 1);
         Queue::assertPushed(SendEmailJob::class, fn ($job) => $job->subscriber->is($active));
     }
@@ -171,13 +195,16 @@ class InactiveSubscriberDeliveryTest extends TestCase
 
         $active = $this->subscriber('active@example.com');
         $inactive = $this->subscriber('inactive@example.com', activeGlobal: false);
+        $deactivated = $this->subscriber('deactivated@example.com', activeGlobal: false);
         $message = $this->message(['channel' => 'sms', 'subject' => 'SMS campaign', 'content' => 'Hello']);
+        $planned = $this->plannedEntryFor($message, $deactivated);
 
         $stats = app(CronScheduleService::class)->processSmsQueue();
 
         $this->assertSame(1, $stats['dispatched']);
         $this->assertSame(MessageQueueEntry::STATUS_QUEUED, $this->entryFor($message, $active)->status);
-        $this->assertSkippedAsInactive($this->entryFor($message, $inactive));
+        $this->assertNotPlanned($message, $inactive);
+        $this->assertSkippedAsInactive($planned);
         Queue::assertPushed(SendSmsJob::class, 1);
     }
 
@@ -192,7 +219,7 @@ class InactiveSubscriberDeliveryTest extends TestCase
         $first = $this->message();
         app(CronScheduleService::class)->processQueue();
 
-        $this->assertSkippedAsInactive($this->entryFor($first, $subscriber));
+        $this->assertNotPlanned($first, $subscriber);
         Queue::assertNotPushed(SendEmailJob::class);
 
         $this->actingAs($this->user)

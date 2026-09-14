@@ -64,7 +64,9 @@ class Subscriber extends Model
     /**
      * Global statuses. `inactive` is not stored in `status` — it is an `active`
      * row whose `is_active_global` flag is off. CronScheduleService skips a
-     * queue entry unless the subscriber is both `active` and flagged active.
+     * queue entry unless the subscriber is both `active` and flagged active,
+     * and an inactive subscriber is left out of every list and CRM audience
+     * (SubscriberFieldFilterService::audienceQuery).
      */
     public const STATUS_ACTIVE = 'active';
     public const STATUS_INACTIVE = 'inactive';

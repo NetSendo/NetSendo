@@ -126,7 +126,12 @@ class SubscriberFieldFilterService
     /**
      * Active subscribers of the given lists, minus the excluded emails, narrowed
      * by the include-side filters. The single definition of a list audience,
-     * shared by the send path and the "how many will this reach" estimate.
+     * shared by the send path (Message::getUniqueRecipients() and the queue
+     * schedule) and the "how many will this reach" estimate.
+     *
+     * A subscriber deactivated account-wide (`is_active_global = false` — the
+     * "Inactive" status of the admin interface, of imports and of the API) is
+     * no audience, whatever their memberships still say.
      *
      * @param  Collection<int, MessageFieldFilter>|iterable  $includeFilters
      */
@@ -136,7 +141,7 @@ class SubscriberFieldFilterService
         $includeFilters,
         string $match = MessageFieldFilter::MATCH_ALL
     ): Builder {
-        $query = Subscriber::whereHas('contactLists', function ($q) use ($includedListIds) {
+        $query = Subscriber::active()->whereHas('contactLists', function ($q) use ($includedListIds) {
             $q->whereIn('contact_lists.id', $includedListIds)
                 ->where('contact_list_subscriber.status', 'active');
         });
