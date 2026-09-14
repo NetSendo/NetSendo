@@ -748,15 +748,24 @@ class Message extends Model
             return $result;
         }
 
-        // For broadcasts: add all new subscribers as planned
-        $newSubscriberIds = array_diff($currentSubscriberIds, $existingEntryIds);
-        foreach ($newSubscriberIds as $subscriberId) {
-            $this->queueEntries()->create([
+        // For broadcasts: add all new subscribers as planned.
+        // The same message can be synced by two processes at once — saving it
+        // in the editor sets it due and syncs, while the per-minute CRON picks
+        // it up and syncs too. Both read the same $existingEntryIds, so a plain
+        // create() per row lost that race on the (message_id, subscriber_id)
+        // unique index and the save crashed with SQL 1062 (issue #30).
+        // insertOrIgnore makes the step idempotent and counts only real inserts.
+        $newSubscriberIds = array_values(array_diff($currentSubscriberIds, $existingEntryIds));
+        $plannedAt = now();
+        foreach (array_chunk($newSubscriberIds, 1000) as $chunk) {
+            $result['added'] += MessageQueueEntry::insertOrIgnore(array_map(fn ($subscriberId) => [
+                'message_id' => $this->id,
                 'subscriber_id' => $subscriberId,
                 'status' => MessageQueueEntry::STATUS_PLANNED,
-                'planned_at' => now(),
-            ]);
-            $result['added']++;
+                'planned_at' => $plannedAt,
+                'created_at' => $plannedAt,
+                'updated_at' => $plannedAt,
+            ], $chunk));
         }
 
         // Mark removed/unsubscribed subscribers as skipped (only if still pending)

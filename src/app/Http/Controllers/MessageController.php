@@ -1074,12 +1074,17 @@ class MessageController extends Controller
                     ]);
                 }
             } else {
-                // Create new entry
-                $message->queueEntries()->create([
-                    'subscriber_id' => $subscriber->id,
-                    'status' => MessageQueueEntry::STATUS_PLANNED,
-                    'planned_at' => now(),
-                ]);
+                // Create new entry. The message is already due, so CRON may
+                // sync the same recipient in between (issue #30).
+                try {
+                    $message->queueEntries()->create([
+                        'subscriber_id' => $subscriber->id,
+                        'status' => MessageQueueEntry::STATUS_PLANNED,
+                        'planned_at' => now(),
+                    ]);
+                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                    // Planned concurrently by CRON — nothing left to do
+                }
             }
         }
 
@@ -2204,13 +2209,18 @@ class MessageController extends Controller
                 }
             } else {
                 // Create new entry, due immediately
-                $message->queueEntries()->create([
-                    'subscriber_id' => $subscriberData['id'],
-                    'status' => MessageQueueEntry::STATUS_PLANNED,
-                    'planned_at' => now(),
-                    'scheduled_for' => now(),
-                ]);
-                $created++;
+                try {
+                    $message->queueEntries()->create([
+                        'subscriber_id' => $subscriberData['id'],
+                        'status' => MessageQueueEntry::STATUS_PLANNED,
+                        'planned_at' => now(),
+                        'scheduled_for' => now(),
+                    ]);
+                    $created++;
+                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                    // Backfilled concurrently by CRON or the signup listener (issue #30)
+                    $alreadyExists++;
+                }
             }
         }
 

@@ -185,12 +185,22 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
             }
 
             // Create queue entry
-            $message->queueEntries()->create([
-                'subscriber_id' => $subscriber->id,
-                'status' => MessageQueueEntry::STATUS_PLANNED,
-                'planned_at' => now(),
-                'scheduled_for' => $expectedSendDateTime,
-            ]);
+            try {
+                $message->queueEntries()->create([
+                    'subscriber_id' => $subscriber->id,
+                    'status' => MessageQueueEntry::STATUS_PLANNED,
+                    'planned_at' => now(),
+                    'scheduled_for' => $expectedSendDateTime,
+                ]);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                // Backfilled concurrently by the CRON sync (issue #30) — without
+                // this the queued job failed and was retried for nothing
+                Log::info('CreateAutoresponderQueueEntries: Entry created concurrently, skipping', [
+                    'subscriber_id' => $subscriber->id,
+                    'message_id' => $message->id,
+                ]);
+                continue;
+            }
 
             Log::info('CreateAutoresponderQueueEntries: Queue entry created', [
                 'subscriber_id' => $subscriber->id,

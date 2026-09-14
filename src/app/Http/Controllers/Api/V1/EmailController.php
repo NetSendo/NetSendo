@@ -299,11 +299,16 @@ class EmailController extends Controller
         // Create queue entries
         $queuedCount = 0;
         foreach ($subscribers as $subscriber) {
-            $message->queueEntries()->create([
-                'subscriber_id' => $subscriber->id,
-                'status' => MessageQueueEntry::STATUS_PLANNED,
-                'planned_at' => $scheduledAt,
-            ]);
+            try {
+                $message->queueEntries()->create([
+                    'subscriber_id' => $subscriber->id,
+                    'status' => MessageQueueEntry::STATUS_PLANNED,
+                    'planned_at' => $scheduledAt,
+                ]);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                // The lists are attached and the message is due, so CRON may
+                // have planned this recipient already (issue #30) — still queued
+            }
             $queuedCount++;
         }
 
