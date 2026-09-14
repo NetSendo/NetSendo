@@ -1,174 +1,120 @@
-# Publikacja @netsendo/mcp-client na npm
+# Wydanie @netsendo/mcp-client
 
 ## TL;DR
 
-Publikujesz to **TY JEDEN RAZ**. Potem każdy użytkownik NetSendo może użyć `npx @netsendo/mcp-client` bez żadnych dodatkowych kroków.
+Paczkę publikuje **GitHub Actions** (`.github/workflows/publish-mcp.yml`) po wypchnięciu
+taga `mcp-v<wersja>`. Nie publikuj `npm publish` z własnego komputera: paczka nie dostanie
+atestacji provenance, a do tego ścigasz się z workflow o ten sam numer wersji, którego npm
+nigdy nie pozwoli użyć ponownie.
+
+Użytkownicy instalują klienta przez `npx @netsendo/mcp-client`; instalacje Dockerowe
+dostają nową wersję przy przebudowie usługi `mcp` (budowanej z katalogu `mcp/`).
 
 ---
 
-## Wymagania
+## Warunek wstępny (jednorazowo, w UI npm)
 
-1. **Konto npm** - [npmjs.com/signup](https://www.npmjs.com/signup)
-2. **Organizacja npm** (opcjonalne) - dla `@netsendo/` namespace
-3. **Node.js 18+** zainstalowany
+npmjs.com → paczka `@netsendo/mcp-client` → Settings → Publish access → Trusted Publishers →
+GitHub Actions:
 
----
+| Pole | Wartość |
+|---|---|
+| Organization or user | `NetSendo` |
+| Repository | `NetSendo` |
+| Workflow filename | `publish-mcp.yml` |
+| Environment name | `NPM_TOKEN` |
+| Allowed actions | zaznaczone „Allow npm publish" |
 
-## Krok po kroku
-
-### 1. Zaloguj się do npm
-
-```bash
-npm login
-# Podaj: username, password, email, OTP (jeśli masz 2FA)
-```
-
-### 2. Utwórz organizację (jednorazowo)
-
-Jeśli chcesz używać `@netsendo/mcp-client` (zalecane):
-
-1. Idź na [npmjs.com/org/create](https://www.npmjs.com/org/create)
-2. Utwórz organizację `netsendo`
-3. Wybierz plan (darmowy wystarczy dla publicznych pakietów)
-
-### 3. Zaktualizuj package.json
-
-```bash
-cd mcp
-```
-
-Edytuj `package.json`:
-
-```json
-{
-  "name": "@netsendo/mcp-client",
-  "version": "1.0.0",
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  }
-}
-```
-
-### 4. Zbuduj pakiet
-
-```bash
-npm run build
-```
-
-### 5. Przetestuj lokalnie (opcjonalne)
-
-```bash
-# Symuluj instalację
-npm pack
-
-# Powinno utworzyć: netsendo-mcp-client-1.0.0.tgz
-# Przetestuj:
-npx ./netsendo-mcp-client-1.0.0.tgz --help
-```
-
-### 6. Opublikuj
-
-```bash
-npm publish --access public
-```
-
-Gotowe! Pakiet jest teraz dostępny dla wszystkich.
+Bez tego publikacja kończy się błędem **404** — tak npm maskuje brak uprawnień. Token npm
+nie jest nigdzie przechowywany; workflow wymienia tożsamość GitHub na krótkotrwałe
+poświadczenie.
 
 ---
 
-## Aktualizacje
+## Wydanie krok po kroku
 
-Przy każdej nowej wersji NetSendo z zmianami MCP:
+Numer: nowe narzędzia lub parametry → `minor`, same poprawki → `patch`.
 
-```bash
-# 1. Zaktualizuj wersję
-npm version patch  # lub minor/major
+1. **Backend najpierw.** Jeśli narzędzie potrzebuje nowej trasy lub pola w API, zmień
+   `src/` (z testami) — klient tylko przekazuje to, co API przyjmuje.
+2. **Kod klienta** w `mcp/src/`, sprawdzenie typów:
+   ```bash
+   cd mcp && npx tsc --noEmit
+   ```
+3. **Wersja** — `npm version` w `mcp/` **nie tworzy commita ani taga** (katalog paczki nie
+   jest korzeniem repozytorium), tylko podbija `package.json` i `package-lock.json`:
+   ```bash
+   npm version minor --no-git-tag-version   # albo patch
+   ```
+4. Ta sama wersja w `SERVER_VERSION` (`mcp/src/index.ts`) i w
+   `src/config/netsendo.php → plugins.mcp.version` (z niej aplikacja liczy
+   `update_available`).
+5. **Build** — `dist/` jest śledzony w gicie i zawiera `SERVER_VERSION`, więc buduj po
+   kroku 4:
+   ```bash
+   npm run build
+   ```
+6. **Dokumentacja**, jeśli zmieniły się narzędzia: `mcp/README.md`, `docs/mcp-server.md`,
+   `docs/MCP_INTEGRATION.md`, lista na stronie `src/resources/js/Pages/Marketplace/MCP.vue`
+   (opisy `mcp.tools.*`) i lista narzędzi w podpowiadanym prompcie (`MCP.vue` oraz
+   `mcp.agent_prompt_content`) — we wszystkich czterech plikach
+   `src/resources/js/locales/*.json`.
+7. **Commit i tag:**
+   ```bash
+   git commit -am "chore(mcp): release 1.5.0"
+   git tag -a mcp-v1.5.0 -m "chore(mcp): release 1.5.0"
+   ```
+8. **Push** — najpierw kod, potem tag (tag uruchamia publikację; wersja w
+   `config/netsendo.php` powinna trafić na `main` razem z nim):
+   ```bash
+   git push origin HEAD:main
+   git push origin mcp-v1.5.0
+   ```
 
-# 2. Zbuduj
-npm run build
-
-# 3. Opublikuj
-npm publish
-```
+Workflow przerywa, jeśli wersja z taga nie zgadza się z `mcp/package.json`, i pomija
+publikację, jeśli ta wersja jest już na npm.
 
 ---
 
 ## Weryfikacja
 
-Po publikacji sprawdź:
-
-1. **Na npmjs.com:** https://www.npmjs.com/package/@netsendo/mcp-client
-2. **Instalacja:**
-   ```bash
-   npx @netsendo/mcp-client --help
-   ```
+```bash
+gh run list --workflow publish-mcp.yml --limit 3
+npm view @netsendo/mcp-client version
+npm view @netsendo/mcp-client@1.5.0 dist.attestations.provenance.predicateType
+# oczekiwane: https://slsa.dev/provenance/v1
+```
 
 ---
 
-## Alternatywa: Bez publikacji na npm
+## Test end-to-end przed wydaniem
 
-Jeśli nie chcesz (jeszcze) publikować, użytkownicy mogą:
+Gdy zmieniają się narzędzia, sprawdź je na prawdziwym API:
 
-### A) Użyć Dockera (obecna metoda)
+1. Lokalna instancja na SQLite: z `src/` `php artisan migrate --force` z
+   `DB_CONNECTION=sqlite DB_DATABASE=<plik>`, potem skryptem użytkownik i
+   `ApiKey::generate($userId, 'MCP', [...uprawnienia])`.
+2. Serwer (katalog roboczy musi być `public/`):
+   ```bash
+   cd src/public && php -S 127.0.0.1:8765 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php
+   ```
+3. Skrypt Node z `Client` i `StdioClientTransport` z `@modelcontextprotocol/sdk`, który
+   uruchamia `node mcp/dist/index.js` ze zmiennymi `NETSENDO_API_URL` i `NETSENDO_API_KEY`,
+   wywołuje `listTools()` i narzędzia przez `callTool()`.
+
+---
+
+## Bez npm
+
+Instalacje Dockerowe mogą uruchamiać klienta z własnego obrazu:
 
 ```json
 {
   "mcpServers": {
     "netsendo": {
       "command": "docker",
-      "args": [
-        "compose",
-        "-f",
-        "/path/to/docker-compose.yml",
-        "run",
-        "--rm",
-        "-i",
-        "mcp"
-      ]
+      "args": ["compose", "-f", "/path/to/docker-compose.yml", "run", "--rm", "-i", "mcp"]
     }
   }
 }
-```
-
-### B) Zainstalować z GitHub
-
-```json
-{
-  "mcpServers": {
-    "netsendo": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "github:netsendo/netsendo#mcp",
-        "--url",
-        "https://...",
-        "--api-key",
-        "..."
-      ]
-    }
-  }
-}
-```
-
----
-
-## FAQ
-
-### Czy każdy użytkownik musi coś publikować?
-
-**NIE.** Publikujesz TY raz, użytkownicy tylko wpisują `npx @netsendo/mcp-client`.
-
-### Czy mogę używać innej nazwy?
-
-Tak, np. `netsendo-mcp-client` zamiast `@netsendo/mcp-client` (nie wymaga organizacji).
-
-### Ile kosztuje?
-
-Publikacja publicznych pakietów na npm jest **darmowa**.
-
-### Jak zaktualizować pakiet?
-
-```bash
-npm version patch && npm publish
 ```

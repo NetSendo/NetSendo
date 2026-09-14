@@ -25,11 +25,15 @@
 #
 # ─── RELEASING ───────────────────────────────────────────────────────────────
 #
-#   1. Bump mcp/package.json AND SERVER_VERSION in mcp/src/index.ts (same value)
-#      — mcp/.npmrc makes `npm version` inside mcp/ tag as `mcp-v<version>`
-#   2. npm run build in mcp/ and commit dist/ (it is tracked, unlike the n8n node)
-#   3. Update config/netsendo.php → plugins.mcp.version to match
-#   4. git push --follow-tags
+#   1. In mcp/: `npm version minor --no-git-tag-version` (or patch) — npm neither
+#      commits nor tags here, the package is not at the repository root
+#   2. Same version in SERVER_VERSION (mcp/src/index.ts) and in
+#      src/config/netsendo.php → plugins.mcp.version
+#   3. npm run build in mcp/ and commit dist/ (it is tracked, unlike the n8n node)
+#   4. git tag -a mcp-v<version> -m 'chore(mcp): release <version>'
+#   5. git push origin HEAD:main, then git push origin mcp-v<version>
+#
+#   Full checklist: mcp/PUBLISHING.md
 
 name: Publish MCP client
 
