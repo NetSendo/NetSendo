@@ -214,6 +214,28 @@ const updateNodeData = (key, value) => {
     }
 };
 
+// Merge changes into the selected action's config; an emptied key is removed
+const updateActionConfig = (changes) => {
+    if (!selectedNode.value) return;
+
+    const config = { ...selectedNode.value.data.action_config, ...changes };
+    Object.keys(changes).forEach((key) => {
+        if (config[key] === '' || config[key] === null) {
+            delete config[key];
+        }
+    });
+
+    updateNodeData('action_config', config);
+};
+
+// A "move to list" step without its own source list moves from this list — only a
+// list signup funnel has one (a trigger list kept after switching the type is ignored)
+const signupListName = computed(() => {
+    if (formData.trigger_type !== 'list_signup' || !formData.trigger_list_id) return null;
+
+    return props.lists?.find((list) => String(list.id) === String(formData.trigger_list_id))?.name ?? null;
+});
+
 // Connect nodes
 const connectNodes = (sourceId, targetId, handleId = 'default') => {
     // Check if edge already exists
@@ -894,14 +916,40 @@ const getNodeValidationStatus = (node) => {
                             />
                         </div>
 
-                        <!-- List selector for move/copy -->
+                        <!-- Source list for move: empty means the trigger list of a list signup funnel -->
+                        <div v-if="selectedNode.data.action_type === 'move_to_list'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.source_list') }}
+                            </label>
+                            <select
+                                :value="selectedNode.data.action_config?.from_list_id || ''"
+                                @change="(e) => updateActionConfig({ from_list_id: e.target.value })"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                                <option value="">
+                                    {{ signupListName ? t('funnels.builder.source_list_trigger', { list: signupListName }) : t('common.select') }}
+                                </option>
+                                <option v-for="list in lists" :key="list.id" :value="list.id">{{ list.name }}</option>
+                            </select>
+                            <p
+                                v-if="!signupListName && !selectedNode.data.action_config?.from_list_id"
+                                class="text-xs text-amber-600 dark:text-amber-400 mt-1"
+                            >
+                                {{ t('funnels.builder.source_list_required') }}
+                            </p>
+                            <p v-else class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {{ t('funnels.builder.source_list_help') }}
+                            </p>
+                        </div>
+
+                        <!-- Target list for move/copy -->
                         <div v-if="['move_to_list', 'copy_to_list'].includes(selectedNode.data.action_type)">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 {{ t('funnels.builder.target_list') }}
                             </label>
                             <select
-                                :value="selectedNode.data.action_config?.list_id"
-                                @change="(e) => updateNodeData('action_config', { ...selectedNode.data.action_config, list_id: e.target.value })"
+                                :value="selectedNode.data.action_config?.list_id || selectedNode.data.action_config?.to_list_id || ''"
+                                @change="(e) => updateActionConfig({ list_id: e.target.value, to_list_id: null })"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             >
                                 <option value="">{{ t('common.select') }}</option>

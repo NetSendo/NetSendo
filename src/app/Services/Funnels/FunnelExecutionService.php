@@ -2,6 +2,7 @@
 
 namespace App\Services\Funnels;
 
+use App\Models\ContactList;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
@@ -289,7 +290,7 @@ class FunnelExecutionService
         match ($step->action_type) {
             FunnelStep::ACTION_ADD_TAG => $this->actionAddTag($subscriber, $config),
             FunnelStep::ACTION_REMOVE_TAG => $this->actionRemoveTag($subscriber, $config),
-            FunnelStep::ACTION_MOVE_TO_LIST => $this->actionMoveToList($subscriber, $config),
+            FunnelStep::ACTION_MOVE_TO_LIST => $this->actionMoveToList($enrollment, $config),
             FunnelStep::ACTION_COPY_TO_LIST => $this->actionCopyToList($subscriber, $config),
             FunnelStep::ACTION_WEBHOOK => $this->actionWebhook($enrollment, $config),
             FunnelStep::ACTION_UNSUBSCRIBE => $this->actionUnsubscribe($subscriber, $config),
@@ -322,14 +323,58 @@ class FunnelExecutionService
         }
     }
 
-    protected function actionMoveToList(Subscriber $subscriber, array $config): void
+    /**
+     * Move the subscriber from one list to another.
+     *
+     * The builder stores the target as `list_id`, the key "copy to list" uses
+     * too, and the source as `from_list_id`; without one the source is the
+     * list a "list signup" funnel is triggered by. `to_list_id` is still read
+     * for steps saved with the older from/to keys. Only an active membership
+     * of the source list is moved (see Subscriber::moveToList()); a step that
+     * moves nobody records why in the enrollment history.
+     */
+    protected function actionMoveToList(FunnelSubscriber $enrollment, array $config): void
     {
-        $fromListId = $config['from_list_id'] ?? null;
-        $toListId = $config['to_list_id'] ?? null;
+        $subscriber = $enrollment->subscriber;
+        $toListId = (int) (($config['list_id'] ?? null) ?: ($config['to_list_id'] ?? null));
+        $fromListId = (int) (($config['from_list_id'] ?? null) ?: $this->signupListId($enrollment->funnel));
 
-        if ($fromListId && $toListId) {
-            $subscriber->moveToList($fromListId, $toListId, 'funnel_move');
+        $reason = null;
+
+        if (!$toListId || !ContactList::whereKey($toListId)->exists()) {
+            $reason = 'Target list not found';
+        } elseif (!$fromListId) {
+            $reason = 'No source list: the step names none and the funnel is not triggered by a list signup';
+        } elseif ($fromListId === $toListId) {
+            // Re-adding would restart the list's sequences for someone already on it
+            $reason = 'Source and target list are the same';
+        } elseif (!$subscriber->moveToList($fromListId, $toListId, 'funnel_move')) {
+            $reason = 'Subscriber is not active on the source list';
         }
+
+        $details = [
+            'from_list_id' => $fromListId ?: null,
+            'to_list_id' => $toListId ?: null,
+        ];
+
+        if ($reason === null) {
+            $enrollment->addToHistory('list_moved', $details);
+            return;
+        }
+
+        $enrollment->addToHistory('list_move_skipped', $details + ['reason' => $reason]);
+
+        Log::info("Funnel move to list skipped for subscriber {$subscriber->id} in funnel {$enrollment->funnel_id}: {$reason}");
+    }
+
+    /**
+     * The list a "list signup" funnel is triggered by. Other trigger types have
+     * none: switching the trigger type keeps the old trigger_list_id, which the
+     * builder no longer shows, so it must not decide where anyone is moved from.
+     */
+    protected function signupListId(Funnel $funnel): ?int
+    {
+        return $funnel->trigger_type === Funnel::TRIGGER_LIST_SIGNUP ? $funnel->trigger_list_id : null;
     }
 
     protected function actionCopyToList(Subscriber $subscriber, array $config): void
