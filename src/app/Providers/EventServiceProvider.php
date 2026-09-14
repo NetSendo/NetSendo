@@ -111,7 +111,8 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\UserTimezoneUpdated::class => [
             \App\Listeners\SyncWebinarTimezonesOnUserUpdate::class,
         ],
-        // CRM Events
+        // CRM Events — TriggerAutomationsListener is the only listener that runs
+        // automation rules for them, crm_deal_won / crm_deal_lost included.
         CrmDealStageChanged::class => [
             TriggerAutomationsListener::class,
         ],
@@ -151,7 +152,6 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $subscribe = [
         CrmEventListener::class,
-        \App\Listeners\CrmAutomationListener::class,
         \App\Listeners\FollowUpSequenceListener::class,
         \App\Listeners\LeadScoringListener::class,
     ];

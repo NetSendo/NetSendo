@@ -49,16 +49,18 @@ class TriggerAutomationsListener
         try {
             $automationService = app(AutomationService::class);
 
-            $triggerEvent = $this->mapEventToTrigger($event);
+            $triggerEvents = $this->mapEventToTriggers($event);
             $context = $this->getEventContext($event);
 
             Log::info('TriggerAutomationsListener: Processing', [
-                'trigger_event' => $triggerEvent,
+                'trigger_events' => $triggerEvents,
                 'has_context' => !empty($context),
             ]);
 
-            if ($triggerEvent && $context) {
-                $automationService->processEvent($triggerEvent, $context);
+            if ($context) {
+                foreach ($triggerEvents as $triggerEvent) {
+                    $automationService->processEvent($triggerEvent, $context);
+                }
             }
         } catch (\Exception $e) {
             Log::error('TriggerAutomationsListener error: ' . $e->getMessage(), [
@@ -66,6 +68,34 @@ class TriggerAutomationsListener
                 'exception' => $e,
             ]);
         }
+    }
+
+    /**
+     * Map event to every trigger type it fires, in order.
+     *
+     * This listener is the only place that runs automation rules for CRM
+     * events, so each trigger reaches AutomationService once per event.
+     *
+     * @return list<string>
+     */
+    protected function mapEventToTriggers(object $event): array
+    {
+        $trigger = $this->mapEventToTrigger($event);
+
+        if ($trigger === null) {
+            return [];
+        }
+
+        // A move into a closing stage is also a won or lost deal.
+        if ($event instanceof CrmDealStageChanged) {
+            return array_values(array_filter([
+                $trigger,
+                $event->newStage->is_won ? 'crm_deal_won' : null,
+                $event->newStage->is_lost ? 'crm_deal_lost' : null,
+            ]));
+        }
+
+        return [$trigger];
     }
 
     /**

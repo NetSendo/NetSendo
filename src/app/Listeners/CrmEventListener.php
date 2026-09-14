@@ -5,19 +5,18 @@ namespace App\Listeners;
 use App\Events\CrmDealStageChanged;
 use App\Events\CrmTaskOverdue;
 use App\Events\CrmContactReplied;
-use App\Services\Automation\AutomationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\DealStageChangedNotification;
 use App\Notifications\TaskOverdueNotification;
 use App\Notifications\ContactRepliedNotification;
 
+/**
+ * Logs, notifications and activity records for CRM events. Automation rules
+ * for these events run in TriggerAutomationsListener.
+ */
 class CrmEventListener
 {
-    public function __construct(
-        protected AutomationService $automationService
-    ) {}
-
     /**
      * Handle deal stage changed event.
      */
@@ -28,18 +27,6 @@ class CrmEventListener
             'from' => $event->oldStage->name,
             'to' => $event->newStage->name,
         ]);
-
-        // Trigger automations if service available
-        try {
-            $this->automationService->processEvent(
-                'crm_deal_stage_changed',
-                $event->getContext()
-            );
-        } catch (\Exception $e) {
-            Log::error('CRM: Failed to trigger automations for deal stage change', [
-                'error' => $e->getMessage(),
-            ]);
-        }
 
         // Send notification to deal owner if configured
         if ($event->deal->owner && $event->newStage->is_won) {
@@ -62,18 +49,6 @@ class CrmEventListener
             'title' => $event->task->title,
             'due_date' => $event->task->due_date,
         ]);
-
-        // Trigger automations
-        try {
-            $this->automationService->processEvent(
-                'crm_task_overdue',
-                $event->getContext()
-            );
-        } catch (\Exception $e) {
-            Log::error('CRM: Failed to trigger automations for task overdue', [
-                'error' => $e->getMessage(),
-            ]);
-        }
 
         // Notify task owner
         if ($event->task->owner) {
@@ -111,18 +86,6 @@ class CrmEventListener
                 'message_id' => $event->messageId,
             ],
         ]);
-
-        // Trigger automations
-        try {
-            $this->automationService->processEvent(
-                'crm_contact_replied',
-                $event->getContext()
-            );
-        } catch (\Exception $e) {
-            Log::error('CRM: Failed to trigger automations for contact reply', [
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**
