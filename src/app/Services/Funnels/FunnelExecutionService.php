@@ -390,26 +390,42 @@ class FunnelExecutionService
         return $name === '' ? null : $query->where('name', $name)->first();
     }
 
+    /**
+     * "Field has value" on a standard field or a custom field of the
+     * subscriber's account (Subscriber::getFieldValue()). Both sides compare as
+     * text, trimmed and case-insensitive — the way a message's field filters
+     * match on MySQL (SubscriberFieldFilterService):
+     *
+     * - `equals`: the same text; an empty `value` equals an empty field
+     * - `not_equals`: the opposite, so a field with no value is "not equal"
+     * - `contains`: holds the text; never met while `value` is empty, so a
+     *   half-filled condition does not send everyone down YES
+     * - `not_empty` / `empty`: has any text besides whitespace ("0" does)
+     */
     protected function checkFieldValue(Subscriber $subscriber, array $config): bool
     {
-        $field = $config['field'] ?? null;
-        $operator = $config['operator'] ?? 'equals';
-        $value = $config['value'] ?? null;
+        $field = trim((string) ($config['field'] ?? ''));
 
-        if (!$field) {
+        if ($field === '') {
             return false;
         }
 
-        $subscriberValue = $subscriber->getCustomFieldValue($field);
+        $actual = $this->comparableFieldText($subscriber->getFieldValue($field));
+        $expected = $this->comparableFieldText($config['value'] ?? null);
 
-        return match ($operator) {
-            'equals' => $subscriberValue == $value,
-            'not_equals' => $subscriberValue != $value,
-            'contains' => str_contains($subscriberValue ?? '', $value ?? ''),
-            'not_empty' => !empty($subscriberValue),
-            'empty' => empty($subscriberValue),
+        return match ($config['operator'] ?? 'equals') {
+            'equals' => $actual === $expected,
+            'not_equals' => $actual !== $expected,
+            'contains' => $expected !== '' && str_contains($actual, $expected),
+            'not_empty' => $actual !== '',
+            'empty' => $actual === '',
             default => false,
         };
+    }
+
+    protected function comparableFieldText(mixed $value): string
+    {
+        return is_scalar($value) ? mb_strtolower(trim((string) $value)) : '';
     }
 
     /**

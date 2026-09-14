@@ -2,10 +2,12 @@
 
 namespace App\Services\Funnels;
 
+use App\Models\CustomField;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\Message;
 use App\Models\ContactList;
+use App\Models\Subscriber;
 use App\Models\SubscriptionForm;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -195,6 +197,32 @@ class FunnelService
         return ContactList::where('user_id', $userId)
             ->orderBy('name')
             ->get(['id', 'name']);
+    }
+
+    /**
+     * Fields a "field has value" condition can test, by name: the subscriber's
+     * standard fields and the account's custom fields. A name defined for
+     * several lists is one choice, and a custom field hides the standard field
+     * of the same name, since it is the one evaluated
+     * (Subscriber::getFieldValue()).
+     *
+     * @return array{standard: array<int, string>, custom: array<int, array{name: string, label: string}>}
+     */
+    public function getAvailableConditionFields(int $userId): array
+    {
+        $custom = CustomField::where('user_id', $userId)
+            ->orderBy('scope') // 'global' sorts before 'list'
+            ->orderBy('sort_order')
+            ->orderBy('label')
+            ->get(['name', 'label'])
+            ->unique('name')
+            ->map(fn (CustomField $field) => ['name' => $field->name, 'label' => $field->label])
+            ->values();
+
+        return [
+            'standard' => array_values(array_diff(Subscriber::STANDARD_FIELDS, $custom->pluck('name')->all())),
+            'custom' => $custom->all(),
+        ];
     }
 
     /**

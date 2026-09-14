@@ -4611,7 +4611,24 @@
                 "any_message": "Dowolna wiadomość",
                 "url": "Adres linku",
                 "field": "Pole",
-                "field_help": "Nazwa pola własnego, np. miasto",
+                "field_help": "Pole standardowe subskrybenta albo pole własne Twojego konta",
+                "choose_field": "Wybierz pole",
+                "standard_fields_group": "Pola standardowe",
+                "standard_fields": {
+                    "email": "Email",
+                    "first_name": "Imię",
+                    "last_name": "Nazwisko",
+                    "phone": "Telefon",
+                    "gender": "Płeć",
+                    "language": "Język",
+                    "source": "Źródło",
+                    "device": "Urządzenie",
+                    "ip_address": "Adres IP",
+                    "subscribed_at": "Data zapisu",
+                    "confirmed_at": "Data potwierdzenia"
+                },
+                "custom_fields_group": "Pola własne",
+                "unlisted_field": "{field} (spoza listy pól)",
                 "operator": "Warunek pola",
                 "operators": {
                     "equals": "jest równe",
@@ -4621,6 +4638,12 @@
                     "empty": "jest puste"
                 },
                 "value": "Wartość",
+                "value_hints": {
+                    "gender": "Zapisywana jako male, female lub other",
+                    "language": "Kod języka, np. pl lub en",
+                    "date": "Format RRRR-MM-DD GG:MM:SS — np. „zawiera” 2026-09 sprawdza miesiąc"
+                },
+                "comparison_help": "Tekst jest porównywany bez względu na wielkość liter i spacje na początku i końcu.",
                 "branches_help": "Połącz ścieżki „Tak” (✓) i „Nie” (✗) — bez połączonej ścieżki zapis kończy lejek w tym miejscu."
             },
             "notify": {

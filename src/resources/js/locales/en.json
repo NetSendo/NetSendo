@@ -4452,7 +4452,24 @@
                 "any_message": "Any email",
                 "url": "Link URL",
                 "field": "Field",
-                "field_help": "Name of a custom field, e.g. city",
+                "field_help": "A standard subscriber field or a custom field of your account",
+                "choose_field": "Choose a field",
+                "standard_fields_group": "Standard fields",
+                "standard_fields": {
+                    "email": "Email",
+                    "first_name": "First name",
+                    "last_name": "Last name",
+                    "phone": "Phone",
+                    "gender": "Gender",
+                    "language": "Language",
+                    "source": "Source",
+                    "device": "Device",
+                    "ip_address": "IP address",
+                    "subscribed_at": "Signup date",
+                    "confirmed_at": "Confirmation date"
+                },
+                "custom_fields_group": "Custom fields",
+                "unlisted_field": "{field} (not in the field list)",
                 "operator": "Field condition",
                 "operators": {
                     "equals": "equals",
@@ -4462,6 +4479,12 @@
                     "empty": "is empty"
                 },
                 "value": "Value",
+                "value_hints": {
+                    "gender": "Stored as male, female or other",
+                    "language": "Language code, e.g. pl or en",
+                    "date": "Format YYYY-MM-DD HH:MM:SS — e.g. \"contains\" 2026-09 checks the month"
+                },
+                "comparison_help": "Text is compared ignoring letter case and leading or trailing spaces.",
                 "branches_help": "Connect the \"Yes\" (✓) and \"No\" (✗) paths — without a connected path the enrollment ends the funnel here."
             },
             "notify": {

@@ -84,6 +84,21 @@ class Subscriber extends Model
     ];
 
     /**
+     * Columns a condition can test by name (getFieldValue()), next to the
+     * account's custom fields.
+     */
+    public const STANDARD_FIELDS = [
+        'email', 'first_name', 'last_name', 'phone', 'gender', 'language',
+        'source', 'device', 'ip_address', 'subscribed_at', 'confirmed_at',
+    ];
+
+    /** Placeholder names that stand for a standard field */
+    public const STANDARD_FIELD_ALIASES = [
+        'fname' => 'first_name',
+        'lname' => 'last_name',
+    ];
+
+    /**
      * Scope a query to only include active subscribers.
      */
     public function scopeActive($query)
@@ -342,31 +357,99 @@ class Subscriber extends Model
     }
 
     /**
-     * Get value of a specific custom field by name
+     * Value of a field by name, as a condition reads it: a custom field of the
+     * subscriber's account (getCustomFieldValue()), or else one of
+     * STANDARD_FIELDS, dates as `Y-m-d H:i:s` like their placeholders. The
+     * custom field wins: `gender` and `language` are no reserved names, so an
+     * account may have a field of its own called so, which conditions saved
+     * before standard fields counted already read.
      */
-    public function getCustomFieldValue(string $fieldName): ?string
+    public function getFieldValue(string $name): ?string
     {
-        $value = $this->fieldValues()
-            ->whereHas('customField', function ($query) use ($fieldName) {
-                $query->where('name', $fieldName);
-            })
-            ->first();
+        $fields = $this->customFieldsNamed($name);
 
-        if ($value) {
-            return $value->value;
+        if ($fields->isNotEmpty()) {
+            return $this->customFieldValue($fields);
         }
 
-        // Return default value from field definition if no value set
-        $field = CustomField::where('name', $fieldName)->first();
-        return $field?->default_value;
+        $column = self::STANDARD_FIELD_ALIASES[$name] ?? $name;
+
+        if (!in_array($column, self::STANDARD_FIELDS, true)) {
+            return null;
+        }
+
+        $value = $this->getAttribute($column);
+
+        return $value instanceof \DateTimeInterface ? $value->format('Y-m-d H:i:s') : ($value === null ? null : (string) $value);
     }
 
     /**
-     * Set value for a custom field
+     * Value of a custom field by name: the subscriber's own value, or else the
+     * field's default. Only the subscriber's account's fields count, and of
+     * those the ones that apply to the subscriber (see customFieldsNamed()) —
+     * another account's field of the same name, or its default, never does.
+     */
+    public function getCustomFieldValue(string $fieldName): ?string
+    {
+        return $this->customFieldValue($this->customFieldsNamed($fieldName));
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, CustomField>  $fields
+     */
+    protected function customFieldValue($fields): ?string
+    {
+        if ($fields->isEmpty()) {
+            return null;
+        }
+
+        $values = $this->fieldValues()
+            ->whereIn('custom_field_id', $fields->modelKeys())
+            ->pluck('value', 'custom_field_id');
+
+        foreach ($fields as $field) {
+            if (isset($values[$field->id])) {
+                return $values[$field->id];
+            }
+        }
+
+        return $fields->whereNotNull('default_value')->first()?->default_value;
+    }
+
+    /**
+     * The account's custom fields of this name that apply to the subscriber:
+     * global ones, those of a list the subscriber is on and any the subscriber
+     * holds a value for. A name may be defined once globally and once per list;
+     * the global field comes first.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, CustomField>
+     */
+    protected function customFieldsNamed(string $name)
+    {
+        return CustomField::where('user_id', $this->user_id)
+            ->where('name', $name)
+            ->where(function ($query) {
+                $query->where('scope', 'global')
+                    ->orWhereIn('contact_list_id', DB::table('contact_list_subscriber')
+                        ->select('contact_list_id')
+                        ->where('subscriber_id', $this->id))
+                    ->orWhereIn('id', DB::table('subscriber_field_values')
+                        ->select('custom_field_id')
+                        ->where('subscriber_id', $this->id));
+            })
+            ->orderBy('scope') // 'global' sorts before 'list'
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * Set value for a custom field of the subscriber's account — preferably one
+     * that applies to the subscriber, as getCustomFieldValue() reads it.
      */
     public function setCustomFieldValue(string $fieldName, ?string $value): void
     {
-        $field = CustomField::where('name', $fieldName)->first();
+        $field = $this->customFieldsNamed($fieldName)->first()
+            ?? CustomField::where('user_id', $this->user_id)->where('name', $fieldName)->orderBy('id')->first();
 
         if (!$field) {
             return;

@@ -3859,7 +3859,24 @@
                 "any_message": "Cualquier email",
                 "url": "URL del enlace",
                 "field": "Campo",
-                "field_help": "Nombre de un campo personalizado, p. ej. ciudad",
+                "field_help": "Un campo estándar del suscriptor o un campo personalizado de tu cuenta",
+                "choose_field": "Elige un campo",
+                "standard_fields_group": "Campos estándar",
+                "standard_fields": {
+                    "email": "Email",
+                    "first_name": "Nombre",
+                    "last_name": "Apellido",
+                    "phone": "Teléfono",
+                    "gender": "Género",
+                    "language": "Idioma",
+                    "source": "Origen",
+                    "device": "Dispositivo",
+                    "ip_address": "Dirección IP",
+                    "subscribed_at": "Fecha de alta",
+                    "confirmed_at": "Fecha de confirmación"
+                },
+                "custom_fields_group": "Campos personalizados",
+                "unlisted_field": "{field} (fuera de la lista de campos)",
                 "operator": "Condición del campo",
                 "operators": {
                     "equals": "es igual a",
@@ -3869,6 +3886,12 @@
                     "empty": "está vacío"
                 },
                 "value": "Valor",
+                "value_hints": {
+                    "gender": "Se guarda como male, female u other",
+                    "language": "Código de idioma, p. ej. pl o en",
+                    "date": "Formato AAAA-MM-DD HH:MM:SS — p. ej. «contiene» 2026-09 comprueba el mes"
+                },
+                "comparison_help": "El texto se compara sin distinguir mayúsculas y minúsculas ni espacios al principio o al final.",
                 "branches_help": "Conecta las rutas «Sí» (✓) y «No» (✗): sin una ruta conectada, el suscriptor termina el embudo aquí."
             },
             "notify": {

@@ -3945,7 +3945,24 @@
                 "any_message": "Beliebige E-Mail",
                 "url": "Link-URL",
                 "field": "Feld",
-                "field_help": "Name eines benutzerdefinierten Felds, z. B. stadt",
+                "field_help": "Ein Standardfeld des Abonnenten oder ein benutzerdefiniertes Feld Ihres Kontos",
+                "choose_field": "Feld auswählen",
+                "standard_fields_group": "Standardfelder",
+                "standard_fields": {
+                    "email": "E-Mail",
+                    "first_name": "Vorname",
+                    "last_name": "Nachname",
+                    "phone": "Telefon",
+                    "gender": "Geschlecht",
+                    "language": "Sprache",
+                    "source": "Quelle",
+                    "device": "Gerät",
+                    "ip_address": "IP-Adresse",
+                    "subscribed_at": "Anmeldedatum",
+                    "confirmed_at": "Bestätigungsdatum"
+                },
+                "custom_fields_group": "Benutzerdefinierte Felder",
+                "unlisted_field": "{field} (nicht in der Feldliste)",
                 "operator": "Feldbedingung",
                 "operators": {
                     "equals": "ist gleich",
@@ -3955,6 +3972,12 @@
                     "empty": "ist leer"
                 },
                 "value": "Wert",
+                "value_hints": {
+                    "gender": "Gespeichert als male, female oder other",
+                    "language": "Sprachcode, z. B. pl oder en",
+                    "date": "Format JJJJ-MM-TT HH:MM:SS — z. B. prüft „enthält“ 2026-09 den Monat"
+                },
+                "comparison_help": "Texte werden ohne Beachtung der Groß- und Kleinschreibung sowie von Leerzeichen am Anfang und Ende verglichen.",
                 "branches_help": "Verbinden Sie den „Ja“- (✓) und den „Nein“-Pfad (✗) — ohne verbundenen Pfad endet der Funnel für den Abonnenten hier."
             },
             "notify": {

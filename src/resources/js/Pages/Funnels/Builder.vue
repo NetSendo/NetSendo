@@ -17,6 +17,11 @@ const props = defineProps({
     actionTypes: Object,
     goalTypes: Object,
     waitUntilTypes: Object,
+    // Fields a "field has value" condition can test: { standard: [name], custom: [{ name, label }] }
+    conditionFields: {
+        type: Object,
+        default: () => ({ standard: [], custom: [] }),
+    },
     triggerTypes: Object,
     nodes: {
         type: Array,
@@ -253,6 +258,33 @@ const updateConditionConfig = (changes) => {
 
 const notifyPlaceholders = ['{{subscriber_email}}', '{{subscriber_name}}', '{{funnel_name}}'].join(', ');
 const fieldOperators = ['equals', 'not_equals', 'contains', 'not_empty', 'empty'];
+const valuelessFieldOperators = ['empty', 'not_empty'];
+
+// A field saved before the builder offered a list (typed by hand, or since deleted)
+// stays selectable instead of being silently replaced
+const unlistedConditionField = computed(() => {
+    const field = selectedNode.value?.data?.condition_config?.field;
+    if (!field) return null;
+
+    const listed = (props.conditionFields?.standard ?? []).includes(field)
+        || (props.conditionFields?.custom ?? []).some((custom) => custom.name === field);
+
+    return listed ? null : field;
+});
+
+// What a standard field holds, where the value to type is not obvious
+const conditionValueHint = computed(() => {
+    const config = selectedNode.value?.data?.condition_config ?? {};
+    if (!(props.conditionFields?.standard ?? []).includes(config.field)) return null;
+
+    if (['subscribed_at', 'confirmed_at'].includes(config.field)) {
+        return t('funnels.builder.condition_config.value_hints.date');
+    }
+
+    return ['gender', 'language'].includes(config.field)
+        ? t(`funnels.builder.condition_config.value_hints.${config.field}`)
+        : null;
+});
 const weekdays = [1, 2, 3, 4, 5, 6, 7];
 
 // A "move to list" step without its own source list moves from this list — only a
@@ -1025,12 +1057,26 @@ const getNodeValidationStatus = (node) => {
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     {{ t('funnels.builder.condition_config.field') }}
                                 </label>
-                                <input
-                                    :value="selectedNode.data.condition_config?.field"
-                                    @input="(e) => updateConditionConfig({ field: e.target.value })"
-                                    type="text"
+                                <select
+                                    :value="selectedNode.data.condition_config?.field || ''"
+                                    @change="(e) => updateConditionConfig({ field: e.target.value })"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                                />
+                                >
+                                    <option value="">{{ t('funnels.builder.condition_config.choose_field') }}</option>
+                                    <option v-if="unlistedConditionField" :value="unlistedConditionField">
+                                        {{ t('funnels.builder.condition_config.unlisted_field', { field: unlistedConditionField }) }}
+                                    </option>
+                                    <optgroup v-if="conditionFields.standard?.length" :label="t('funnels.builder.condition_config.standard_fields_group')">
+                                        <option v-for="name in conditionFields.standard" :key="name" :value="name">
+                                            {{ t(`funnels.builder.condition_config.standard_fields.${name}`) }}
+                                        </option>
+                                    </optgroup>
+                                    <optgroup v-if="conditionFields.custom?.length" :label="t('funnels.builder.condition_config.custom_fields_group')">
+                                        <option v-for="field in conditionFields.custom" :key="field.name" :value="field.name">
+                                            {{ field.label }} ({{ field.name }})
+                                        </option>
+                                    </optgroup>
+                                </select>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('funnels.builder.condition_config.field_help') }}</p>
                             </div>
                             <div>
@@ -1047,7 +1093,7 @@ const getNodeValidationStatus = (node) => {
                                     </option>
                                 </select>
                             </div>
-                            <div v-if="!['empty', 'not_empty'].includes(selectedNode.data.condition_config?.operator)">
+                            <div v-if="!valuelessFieldOperators.includes(selectedNode.data.condition_config?.operator)">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     {{ t('funnels.builder.condition_config.value') }}
                                 </label>
@@ -1057,7 +1103,9 @@ const getNodeValidationStatus = (node) => {
                                     type="text"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 />
+                                <p v-if="conditionValueHint" class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ conditionValueHint }}</p>
                             </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('funnels.builder.condition_config.comparison_help') }}</p>
                         </template>
 
                         <div v-if="selectedNode.data.condition_type === 'task_completed'">
