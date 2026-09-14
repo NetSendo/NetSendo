@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **Funnels can be built, changed and started over the API:** `POST /api/v1/funnels/{id}/steps` accepted only a few settings, so most of a step could not be configured without the builder. It now takes every setting of the step types the engine runs — SMS text, delays in weeks, *wait until* (date, weekday, time, time zone), a condition's *wait for condition* and reminders, action settings, goals — and adds `wait_until` and `goal` steps as well. New `PUT /api/v1/funnels/{id}/steps/{stepId}` changes a step's settings and connections (`next_step_id`, and `next_step_yes_id`/`next_step_no_id` for a condition; only to steps of the same funnel, `null` disconnects). New `DELETE /api/v1/funnels/{id}/steps/{stepId}` deletes a step: steps that led to it lead to its next step, and enrollments on it continue there; the start step cannot be deleted. New `POST /api/v1/funnels/{id}/subscribers` enrolls a subscriber of the account (`subscriber_id` or `email`) in an active funnel and runs it up to the first wait — until now nothing could start a funnel with the *manual* trigger. All require `funnels:write`. Covered by `tests/Feature/Api/FunnelApiTest.php`.
+
 ### Changed
 
 - **Inactive subscribers are no longer recipients at all — neither planned nor counted:** since 2.1.3 the CRON send gate skips a subscriber marked *Inactive* (`is_active_global = false`). The recipient sync still planned them for every broadcast of their lists, though, so every audience figure counted them: a message's planned recipients, the editor's *Estimated recipients*, the autoresponder schedule and *Send to missed*, and the A/B test split. The 2.1.3 note "Contacts are still planned as recipients, so audience counts do not change" no longer holds.

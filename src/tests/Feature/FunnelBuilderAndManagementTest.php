@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendEmailJob;
-use App\Models\ApiKey;
-use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
 use App\Models\Message;
@@ -18,7 +16,7 @@ use Tests\TestCase;
 /**
  * What the builder, the enrollment list and the API save and do with a funnel:
  * settings the engine reads but nothing stored, connections that could not be
- * removed, a resume that left the enrollment stuck, API steps never connected.
+ * removed, a resume that left the enrollment stuck.
  */
 class FunnelBuilderAndManagementTest extends TestCase
 {
@@ -171,40 +169,5 @@ class FunnelBuilderAndManagementTest extends TestCase
         $this->postJson(route('funnels.subscribers.resume', [$funnel, $enrollment]))->assertOk();
 
         $this->assertSame(FunnelSubscriber::STATUS_WAITING_CONDITION, $enrollment->fresh()->status);
-    }
-
-    // ===== API =====
-
-    public function test_steps_added_over_the_api_are_connected_and_run(): void
-    {
-        $key = ApiKey::generate($this->user->id, 'Funnels', ['funnels:read', 'funnels:write'])['key'];
-        $funnel = app(FunnelService::class)->create(['user_id' => $this->user->id, 'name' => 'API funnel']);
-        $start = $funnel->steps()->first();
-        $message = $this->makeEmail();
-
-        $add = fn (array $payload) => $this->withHeaders(['Authorization' => "Bearer {$key}"])
-            ->postJson("/api/v1/funnels/{$funnel->id}/steps", $payload)
-            ->assertCreated()
-            ->json('data.id');
-
-        $conditionId = $add(['type' => 'condition', 'name' => 'Has tag', 'condition_type' => 'tag_exists', 'condition_config' => ['tag' => 'vip']]);
-        $vipEmailId = $add(['type' => 'email', 'name' => 'VIP email', 'message_id' => $message->id]);
-        $tagId = $add(['type' => 'action', 'name' => 'Tag', 'after_step_id' => $conditionId, 'branch' => 'no', 'action_type' => 'add_tag', 'action_config' => ['tag' => 'not-vip']]);
-        // Inserted between the start and the condition
-        $smsId = $add(['type' => 'sms', 'name' => 'Welcome SMS', 'after_step_id' => $start->id, 'sms_content' => 'Hi']);
-
-        $this->assertSame($smsId, $start->fresh()->next_step_id);
-        $this->assertSame($conditionId, FunnelStep::find($smsId)->next_step_id);
-        $this->assertSame($vipEmailId, FunnelStep::find($conditionId)->next_step_yes_id);
-        $this->assertSame($tagId, FunnelStep::find($conditionId)->next_step_no_id);
-        $this->assertSame('add_tag', FunnelStep::find($tagId)->action_type);
-
-        $funnel->update(['status' => Funnel::STATUS_ACTIVE]);
-        $subscriber = $this->makeSubscriber();
-        $enrollment = $this->enroll($funnel, $subscriber);
-
-        $this->assertSame(FunnelSubscriber::STATUS_COMPLETED, $enrollment->status);
-        $this->assertSame(['not-vip'], $subscriber->tags()->pluck('name')->all());
-        Queue::assertNotPushed(SendEmailJob::class);
     }
 }

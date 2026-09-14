@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
+use App\Models\FunnelSubscriber;
+use App\Models\Subscriber;
+use App\Services\Funnels\FunnelExecutionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +23,9 @@ use Illuminate\Validation\Rule;
  * - PUT    /api/v1/funnels/{id}         - Update funnel
  * - DELETE /api/v1/funnels/{id}         - Delete funnel
  * - POST   /api/v1/funnels/{id}/steps   - Add step to funnel
+ * - PUT    /api/v1/funnels/{id}/steps/{stepId} - Update a step
+ * - DELETE /api/v1/funnels/{id}/steps/{stepId} - Delete a step
+ * - POST   /api/v1/funnels/{id}/subscribers - Enroll a subscriber
  * - POST   /api/v1/funnels/{id}/activate - Activate funnel
  * - POST   /api/v1/funnels/{id}/pause   - Pause funnel
  * - GET    /api/v1/funnels/{id}/stats   - Get funnel statistics
@@ -207,55 +213,20 @@ class FunnelController extends Controller
     }
 
     /**
-     * Add a step to a funnel
+     * Add a step to a funnel.
+     *
+     * The step is connected after `after_step_id`, else after the last step,
+     * and continues where that step did; after a condition it goes on the
+     * `yes` path unless `branch` is `no`.
      */
     public function addStep(Request $request, int $id): JsonResponse
     {
-        $user = $request->user();
-
-        // Verify permission
-        $apiKey = $request->get('api_key');
-        if (!$apiKey->hasPermission('funnels:write')) {
-            return response()->json([
-                'error' => 'Forbidden',
-                'message' => 'API key does not have funnels:write permission',
-            ], 403);
+        [$funnel, $error] = $this->writableFunnel($request, $id);
+        if ($error) {
+            return $error;
         }
 
-        $funnel = Funnel::where('user_id', $user->id)->find($id);
-
-        if (!$funnel) {
-            return response()->json([
-                'error' => 'Not Found',
-                'message' => 'Funnel not found',
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'type' => 'required|in:email,sms,delay,condition,action,end',
-            // After a condition step: the path the new step goes on (default: yes)
-            'branch' => 'nullable|in:yes,no',
-            'name' => 'required|string|max:255',
-            'after_step_id' => 'nullable|integer', // Insert after this step
-            'config' => 'nullable|array',
-            // For email/sms steps
-            'message_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('messages', 'id')->where('user_id', $user->id),
-            ],
-            // For delay steps
-            'delay_value' => 'nullable|integer|min:1',
-            'delay_unit' => 'nullable|in:minutes,hours,days',
-            // For condition steps
-            'condition_type' => ['nullable', Rule::in(array_keys(FunnelStep::getConditionTypes()))],
-            'condition_config' => 'nullable|array',
-            // For action steps
-            'action_type' => ['nullable', Rule::in(array_keys(FunnelStep::getActionTypes()))],
-            'action_config' => 'nullable|array',
-            // For SMS steps
-            'sms_content' => 'nullable|string|max:1600',
-        ]);
+        $validated = $request->validate($this->stepRules($request, $funnel, creating: true));
 
         // The engine follows the steps' connections, not their order: a step
         // added without being connected was never reached, so a funnel built over
@@ -282,18 +253,8 @@ class FunnelController extends Controller
                 default => 'next_step_id',
             };
 
-            $step = $funnel->steps()->create([
-                'type' => $validated['type'],
-                'name' => $validated['name'],
+            $step = $funnel->steps()->create($this->stepAttributes($validated) + [
                 'order' => $order,
-                'message_id' => $validated['message_id'] ?? null,
-                'delay_value' => $validated['delay_value'] ?? null,
-                'delay_unit' => $validated['delay_unit'] ?? null,
-                'condition_type' => $validated['condition_type'] ?? null,
-                'condition_config' => $validated['condition_config'] ?? null,
-                'action_type' => $validated['action_type'] ?? null,
-                'action_config' => $validated['action_config'] ?? null,
-                'sms_content' => $validated['sms_content'] ?? null,
                 // Inserted into the chain: it continues where the previous step did
                 'next_step_id' => $link ? $previous->{$link} : null,
             ]);
@@ -306,9 +267,250 @@ class FunnelController extends Controller
         });
 
         return response()->json([
-            'data' => $step,
+            'data' => $step->fresh(),
             'message' => 'Step added successfully',
         ], 201);
+    }
+
+    /**
+     * Update a step: its settings and, with `next_step_id`, `next_step_yes_id`
+     * or `next_step_no_id`, its connections (null disconnects).
+     */
+    public function updateStep(Request $request, int $id, int $stepId): JsonResponse
+    {
+        [$funnel, $error] = $this->writableFunnel($request, $id);
+        if ($error) {
+            return $error;
+        }
+
+        $step = $funnel->steps()->find($stepId);
+        if (!$step) {
+            return response()->json(['error' => 'Not Found', 'message' => 'Step not found'], 404);
+        }
+
+        $validated = $request->validate($this->stepRules($request, $funnel, creating: false, step: $step));
+
+        if ($step->type === FunnelStep::TYPE_START && isset($validated['type']) && $validated['type'] !== FunnelStep::TYPE_START) {
+            return response()->json(['error' => 'Unprocessable Entity', 'message' => 'The start step cannot change its type'], 422);
+        }
+
+        $step->update($this->stepAttributes($validated) + array_intersect_key($validated, array_flip(['next_step_id', 'next_step_yes_id', 'next_step_no_id'])));
+
+        return response()->json([
+            'data' => $step->fresh(),
+            'message' => 'Step updated successfully',
+        ]);
+    }
+
+    /**
+     * Delete a step. Steps that led to it lead to its next step instead, and
+     * enrollments on it move there too, so nobody drops out of the funnel.
+     */
+    public function destroyStep(Request $request, int $id, int $stepId): JsonResponse
+    {
+        [$funnel, $error] = $this->writableFunnel($request, $id);
+        if ($error) {
+            return $error;
+        }
+
+        $step = $funnel->steps()->find($stepId);
+        if (!$step) {
+            return response()->json(['error' => 'Not Found', 'message' => 'Step not found'], 404);
+        }
+
+        if ($step->type === FunnelStep::TYPE_START) {
+            return response()->json(['error' => 'Unprocessable Entity', 'message' => 'The start step cannot be deleted'], 422);
+        }
+
+        DB::transaction(function () use ($funnel, $step) {
+            $next = $step->next_step_id;
+
+            foreach (['next_step_id', 'next_step_yes_id', 'next_step_no_id'] as $column) {
+                $funnel->steps()->where($column, $step->id)->update([$column => $next]);
+            }
+
+            // Waiting for this step's condition, or left active on it: the
+            // scheduled processor picks them up and runs the next step
+            FunnelSubscriber::where('current_step_id', $step->id)
+                ->whereIn('status', [FunnelSubscriber::STATUS_ACTIVE, FunnelSubscriber::STATUS_WAITING_CONDITION])
+                ->update(['current_step_id' => $next, 'status' => FunnelSubscriber::STATUS_WAITING, 'next_action_at' => now()]);
+
+            FunnelSubscriber::where('current_step_id', $step->id)->update(['current_step_id' => $next]);
+
+            $step->delete();
+        });
+
+        return response()->json(['message' => 'Step deleted successfully']);
+    }
+
+    /**
+     * Enroll a subscriber in an active funnel — the way to start a funnel with
+     * the `manual` trigger. The funnel runs its steps up to the first wait at once.
+     */
+    public function enrollSubscriber(Request $request, int $id): JsonResponse
+    {
+        [$funnel, $error] = $this->writableFunnel($request, $id);
+        if ($error) {
+            return $error;
+        }
+
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'subscriber_id' => ['required_without:email', 'nullable', 'integer', Rule::exists('subscribers', 'id')->where('user_id', $user->id)->whereNull('deleted_at')],
+            'email' => ['required_without:subscriber_id', 'nullable', 'email'],
+        ]);
+
+        $subscriber = !empty($validated['subscriber_id'])
+            ? Subscriber::find($validated['subscriber_id'])
+            : Subscriber::where('user_id', $user->id)->where('email', $validated['email'])->first();
+
+        if (!$subscriber) {
+            return response()->json(['error' => 'Not Found', 'message' => 'Subscriber not found'], 404);
+        }
+
+        if (!$funnel->isActive()) {
+            return response()->json(['error' => 'Conflict', 'message' => 'The funnel is not active. Activate it first.'], 409);
+        }
+
+        $existing = FunnelSubscriber::where('funnel_id', $funnel->id)->where('subscriber_id', $subscriber->id)->first();
+        if ($existing) {
+            return response()->json([
+                'error' => 'Conflict',
+                'message' => 'The subscriber is already enrolled in this funnel',
+                'data' => $this->enrollmentData($existing),
+            ], 409);
+        }
+
+        $enrollment = app(FunnelExecutionService::class)->enrollSubscriber($funnel, $subscriber);
+
+        return response()->json([
+            'data' => $this->enrollmentData($enrollment->fresh()),
+            'message' => 'Subscriber enrolled',
+        ], 201);
+    }
+
+    /**
+     * The funnel of the API key's account, if the key may write funnels.
+     *
+     * @return array{0: ?Funnel, 1: ?JsonResponse}
+     */
+    private function writableFunnel(Request $request, int $id): array
+    {
+        if (!$request->get('api_key')->hasPermission('funnels:write')) {
+            return [null, response()->json([
+                'error' => 'Forbidden',
+                'message' => 'API key does not have funnels:write permission',
+            ], 403)];
+        }
+
+        $funnel = Funnel::where('user_id', $request->user()->id)->find($id);
+
+        if (!$funnel) {
+            return [null, response()->json([
+                'error' => 'Not Found',
+                'message' => 'Funnel not found',
+            ], 404)];
+        }
+
+        return [$funnel, null];
+    }
+
+    /**
+     * Validation of a step's settings, shared by adding and updating one.
+     */
+    private function stepRules(Request $request, Funnel $funnel, bool $creating, ?FunnelStep $step = null): array
+    {
+        $userId = $request->user()->id;
+        $types = $creating
+            ? ['email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end']
+            : ['start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end'];
+        $ownMessage = Rule::exists('messages', 'id')->where('user_id', $userId);
+
+        $rules = [
+            'type' => [$creating ? 'required' : 'sometimes', Rule::in($types)],
+            'name' => [$creating ? 'required' : 'sometimes', 'string', 'max:255'],
+            // Email steps
+            'message_id' => ['nullable', 'integer', $ownMessage],
+            // SMS steps
+            'sms_content' => 'nullable|string|max:1600',
+            // Delay steps
+            'delay_value' => 'nullable|integer|min:1',
+            'delay_unit' => ['nullable', Rule::in(array_keys(FunnelStep::getDelayUnits()))],
+            // Wait-until steps
+            'wait_until_type' => ['nullable', Rule::in(array_keys(FunnelStep::getWaitUntilTypes()))],
+            'wait_until_date' => 'nullable|date_format:Y-m-d',
+            'wait_until_time' => 'nullable|date_format:H:i',
+            'wait_until_day' => 'nullable|integer|between:1,7',
+            'wait_until_timezone' => 'nullable|timezone:all',
+            // Condition steps
+            'condition_type' => ['nullable', Rule::in(array_keys(FunnelStep::getConditionTypes()))],
+            'condition_config' => 'nullable|array',
+            'wait_for_condition' => 'sometimes|boolean',
+            'retry_enabled' => 'sometimes|boolean',
+            'retry_max_attempts' => 'sometimes|integer|between:1,10',
+            'retry_interval_value' => 'sometimes|integer|min:1',
+            'retry_interval_unit' => ['sometimes', Rule::in(array_keys(FunnelStep::getRetryIntervalUnits()))],
+            'retry_message_id' => ['nullable', 'integer', $ownMessage],
+            'retry_exhausted_action' => ['sometimes', Rule::in(array_keys(FunnelStep::getRetryExhaustedActions()))],
+            // Action steps
+            'action_type' => ['nullable', Rule::in(array_keys(FunnelStep::getActionTypes()))],
+            'action_config' => 'nullable|array',
+            // Goal steps
+            'goal_name' => 'nullable|string|max:255',
+            'goal_type' => ['nullable', Rule::in(array_keys(FunnelStep::getGoalTypes()))],
+            'goal_value' => 'nullable|numeric|min:0',
+            'goal_config' => 'nullable|array',
+        ];
+
+        if ($creating) {
+            return $rules + [
+                'after_step_id' => 'nullable|integer',
+                // After a condition step: the path the new step goes on (default: yes)
+                'branch' => 'nullable|in:yes,no',
+            ];
+        }
+
+        $sibling = Rule::exists('funnel_steps', 'id')
+            ->where('funnel_id', $funnel->id)
+            ->whereNot('id', $step?->id);
+
+        return $rules + [
+            'next_step_id' => ['nullable', 'integer', $sibling],
+            'next_step_yes_id' => ['nullable', 'integer', $sibling],
+            'next_step_no_id' => ['nullable', 'integer', $sibling],
+        ];
+    }
+
+    /**
+     * The step columns a validated request sets.
+     */
+    private function stepAttributes(array $validated): array
+    {
+        return array_intersect_key($validated, array_flip([
+            'type', 'name', 'message_id', 'sms_content',
+            'delay_value', 'delay_unit',
+            'wait_until_type', 'wait_until_date', 'wait_until_time', 'wait_until_day', 'wait_until_timezone',
+            'condition_type', 'condition_config',
+            'wait_for_condition', 'retry_enabled', 'retry_max_attempts', 'retry_interval_value',
+            'retry_interval_unit', 'retry_message_id', 'retry_exhausted_action',
+            'action_type', 'action_config',
+            'goal_name', 'goal_type', 'goal_value', 'goal_config',
+        ]));
+    }
+
+    private function enrollmentData(FunnelSubscriber $enrollment): array
+    {
+        return [
+            'id' => $enrollment->id,
+            'funnel_id' => $enrollment->funnel_id,
+            'subscriber_id' => $enrollment->subscriber_id,
+            'status' => $enrollment->status,
+            'current_step_id' => $enrollment->current_step_id,
+            'next_action_at' => $enrollment->next_action_at?->toIso8601String(),
+            'entered_at' => $enrollment->entered_at?->toIso8601String(),
+            'completed_at' => $enrollment->completed_at?->toIso8601String(),
+        ];
     }
 
     /**

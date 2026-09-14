@@ -237,6 +237,12 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
     // Funnels (Automation Sequences)
     Route::post('funnels/{funnel}/steps', [FunnelController::class, 'addStep'])
         ->name('api.v1.funnels.steps');
+    Route::put('funnels/{funnel}/steps/{step}', [FunnelController::class, 'updateStep'])
+        ->name('api.v1.funnels.steps.update');
+    Route::delete('funnels/{funnel}/steps/{step}', [FunnelController::class, 'destroyStep'])
+        ->name('api.v1.funnels.steps.destroy');
+    Route::post('funnels/{funnel}/subscribers', [FunnelController::class, 'enrollSubscriber'])
+        ->name('api.v1.funnels.subscribers.store');
     Route::post('funnels/{funnel}/activate', [FunnelController::class, 'activate'])
         ->name('api.v1.funnels.activate');
     Route::post('funnels/{funnel}/pause', [FunnelController::class, 'pause'])
