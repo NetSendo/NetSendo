@@ -239,6 +239,13 @@ class Funnel extends Model
                 $step->next_step_no_id = $stepMapping[$step->next_step_no_id];
                 $updated = true;
             }
+            // Each A/B variant's own path; one to a step not copied is dropped
+            foreach ($step->isSplit() ? $step->getSplitVariants() : [] as $variant) {
+                if ($variant['next_step_id']) {
+                    $step->setSplitVariantTarget($variant['key'], $stepMapping[$variant['next_step_id']] ?? null);
+                    $updated = true;
+                }
+            }
             if ($updated) {
                 $step->save();
             }

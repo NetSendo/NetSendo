@@ -31,23 +31,91 @@ class ABTestService
                 'settings' => $data['settings'] ?? [],
             ]);
 
-            // Create variants from split step configuration
-            $variants = $splitStep->split_variants ?? [
+            // Variants from the split step configuration
+            $variants = $splitStep->getSplitVariants() ?: FunnelStep::normalizeSplitVariants([
                 ['name' => 'Wariant A', 'weight' => 50],
                 ['name' => 'Wariant B', 'weight' => 50],
-            ];
+            ]);
 
-            foreach ($variants as $index => $variantData) {
-                FunnelAbVariant::create([
-                    'ab_test_id' => $test->id,
-                    'name' => $variantData['name'] ?? 'Wariant ' . chr(65 + $index),
-                    'weight' => $variantData['weight'] ?? 50,
-                    'next_step_id' => $variantData['next_step_id'] ?? null,
+            return $this->syncVariantRows($test, $splitStep->funnel_id, $variants);
+        });
+    }
+
+    /**
+     * Bring a test's variants in line with its split step, matched by variant
+     * key so results stay with their variant: a variant added on the step gets
+     * one, a renamed, reweighted or reconnected one is updated, a removed one is
+     * deleted with its enrollments. Removing the declared winner reopens the
+     * test for the variants left, which would otherwise have no path to follow.
+     */
+    public function syncVariants(FunnelAbTest $test, FunnelStep $splitStep): FunnelAbTest
+    {
+        return $this->syncVariantRows($test, $splitStep->funnel_id, $splitStep->getSplitVariants());
+    }
+
+    /**
+     * After a split step is saved: its test, once it has one, follows the change.
+     */
+    public function syncTestForStep(FunnelStep $splitStep): void
+    {
+        $test = $this->getTestForStep($splitStep);
+
+        if ($test) {
+            $this->syncVariants($test, $splitStep);
+        }
+    }
+
+    /**
+     * @param  array  $variants  normalized (FunnelStep::normalizeSplitVariants())
+     */
+    protected function syncVariantRows(FunnelAbTest $test, int $funnelId, array $variants): FunnelAbTest
+    {
+        if ($variants === []) {
+            return $test->loadMissing('variants');
+        }
+
+        // Variants created before they had keys follow the step's by position
+        $rows = $test->variants()->orderBy('id')->get()
+            ->keyBy(fn (FunnelAbVariant $row, int $index) => $row->variant_key ?? 'v' . ($index + 1));
+
+        // The foreign key admits existing steps only, and a variant path must stay in the funnel
+        $targetIds = array_filter(array_column($variants, 'next_step_id'));
+        $targetIds = $targetIds ? FunnelStep::where('funnel_id', $funnelId)->whereIn('id', $targetIds)->pluck('id')->all() : [];
+
+        $changed = false;
+
+        foreach ($variants as $variant) {
+            $row = $rows->pull($variant['key']) ?? new FunnelAbVariant(['ab_test_id' => $test->id]);
+
+            $row->fill([
+                'name' => $variant['name'],
+                'weight' => $variant['weight'],
+                'next_step_id' => in_array($variant['next_step_id'], $targetIds) ? $variant['next_step_id'] : null,
+                'metadata' => array_merge($row->metadata ?? [], ['key' => $variant['key']]),
+            ]);
+
+            if (!$row->exists || $row->isDirty()) {
+                $row->save();
+                $changed = true;
+            }
+        }
+
+        foreach ($rows as $removed) {
+            if ($test->isCompleted() && (int) $test->winner_variant_id === $removed->id) {
+                $test->update([
+                    'status' => FunnelAbTest::STATUS_RUNNING,
+                    'winner_variant_id' => null,
+                    'winner_declared_at' => null,
                 ]);
+
+                Log::info("A/B test {$test->id} reopened: its winner {$removed->name} was removed from the step");
             }
 
-            return $test->load('variants');
-        });
+            $removed->delete();
+            $changed = true;
+        }
+
+        return $changed ? $test->load('variants') : $test->loadMissing('variants');
     }
 
     /**
@@ -282,18 +350,20 @@ class ABTestService
     }
 
     /**
-     * Create or get test for a split step (lazy initialization).
+     * Create or get test for a split step (lazy initialization), its variants
+     * in line with the step's.
      */
     public function getOrCreateTest(FunnelStep $splitStep): FunnelAbTest
     {
         $test = $this->getTestForStep($splitStep);
 
         if (!$test) {
-            $test = $this->create($splitStep, [
+            return $this->create($splitStep, [
                 'name' => $splitStep->name ?? 'Test A/B',
             ]);
         }
 
-        return $test;
+        // The step may have changed since (the builder syncs on save, other paths do not)
+        return $this->syncVariants($test, $splitStep);
     }
 }

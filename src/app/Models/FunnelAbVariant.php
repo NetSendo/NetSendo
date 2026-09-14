@@ -55,6 +55,15 @@ class FunnelAbVariant extends Model
         return $this->hasMany(FunnelAbEnrollment::class, 'variant_id');
     }
 
+    /**
+     * The key of the A/B step variant this one counts results for (see
+     * FunnelStep::normalizeSplitVariants()); null until the test is synced.
+     */
+    public function getVariantKeyAttribute(): ?string
+    {
+        return $this->metadata['key'] ?? null;
+    }
+
     // =====================================
     // Rate calculations
     // =====================================

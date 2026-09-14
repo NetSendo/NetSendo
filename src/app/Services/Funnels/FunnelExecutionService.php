@@ -657,11 +657,23 @@ class FunnelExecutionService
     }
 
     /**
-     * Execute split step - enroll in A/B test and route to selected variant.
+     * Execute split step - draw the subscriber into a variant of the step's A/B
+     * test by weight and continue on that variant's path.
+     *
+     * A variant without a path of its own continues on the step's default one.
+     * Once a winner is declared (see ABTestService::checkForWinner()) everyone
+     * takes the winner's path without being counted in the finished test.
      */
     protected function executeSplitStep(FunnelSubscriber $enrollment, FunnelStep $step): void
     {
-        // Get or create the A/B test for this split step
+        if ($step->getSplitVariants() === []) {
+            Log::warning("Funnel split step {$step->id} has no variants, moving on");
+            $enrollment->addToHistory('ab_test_skipped', ['reason' => 'The step has no variants']);
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
+        // Get or create the A/B test for this split step, its variants in line with the step's
         $abTest = $this->abTestService->getOrCreateTest($step);
 
         // If test isn't running yet, start it automatically when first subscriber arrives
@@ -669,8 +681,10 @@ class FunnelExecutionService
             $abTest->start();
         }
 
+        $winner = $abTest->isCompleted() ? $abTest->winnerVariant : null;
+
         // Enroll subscriber and get the selected variant
-        $variant = $this->abTestService->enrollSubscriber($abTest, $enrollment);
+        $variant = $winner ?? $this->abTestService->enrollSubscriber($abTest, $enrollment);
 
         if (!$variant) {
             Log::warning("Failed to enroll subscriber {$enrollment->id} in A/B test {$abTest->id}");
@@ -679,18 +693,18 @@ class FunnelExecutionService
             return;
         }
 
-        $enrollment->addToHistory('ab_test_enrolled', [
+        $enrollment->addToHistory($winner ? 'ab_test_winner_followed' : 'ab_test_enrolled', [
             'test_id' => $abTest->id,
             'test_name' => $abTest->name,
             'variant_id' => $variant->id,
+            'variant_key' => $variant->variant_key,
             'variant_name' => $variant->name,
         ]);
 
         $enrollment->incrementStepsCompleted();
 
         // Route to the variant's next step
-        $nextStep = $variant->nextStep ?? $step->nextStep;
-        $this->moveToNextStep($enrollment, $nextStep);
+        $this->moveToNextStep($enrollment, $step->getNextStepForVariant($variant->variant_key));
     }
 
     /**

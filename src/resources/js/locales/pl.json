@@ -4652,7 +4652,11 @@
                 "subject": "Temat",
                 "message": "Treść",
                 "placeholders_help": "Możesz użyć: {placeholders}."
-            }
+            },
+            "variant_default_name": "Wariant {letter}",
+            "split_default_path": "Ścieżka domyślna",
+            "split_path_ends": "Koniec lejka",
+            "split_paths_hint": "Każdy wariant prowadzi własną ścieżką: połącz go uchwytem z jego literą na bloku. Warianty bez własnej ścieżki idą ścieżką domyślną (+). Po wyłonieniu zwycięzcy wszyscy kolejni subskrybenci idą jego ścieżką."
         },
         "table": {
             "name": "Nazwa",

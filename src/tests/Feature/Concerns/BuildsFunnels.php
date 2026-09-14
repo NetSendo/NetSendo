@@ -53,6 +53,26 @@ trait BuildsFunnels
     }
 
     /**
+     * An A/B (split) step; each variant as the builder stores it: `key`, `name`,
+     * `weight` and optionally `next_step_id`, the variant's own path.
+     */
+    protected function makeSplit(Funnel $funnel, array $variants, array $attributes = []): FunnelStep
+    {
+        return $this->makeStep($funnel, FunnelStep::TYPE_SPLIT, $attributes + ['split_variants' => $variants]);
+    }
+
+    /**
+     * An action step adding the tag `$tag`: shows which path a subscriber took.
+     */
+    protected function makeTagStep(Funnel $funnel, string $tag, array $attributes = []): FunnelStep
+    {
+        return $this->makeStep($funnel, FunnelStep::TYPE_ACTION, $attributes + [
+            'action_type' => FunnelStep::ACTION_ADD_TAG,
+            'action_config' => ['tag' => $tag],
+        ]);
+    }
+
+    /**
      * start → the given steps, each connected to the next on `next_step_id`.
      */
     protected function makeChain(Funnel $funnel, FunnelStep ...$steps): FunnelStep

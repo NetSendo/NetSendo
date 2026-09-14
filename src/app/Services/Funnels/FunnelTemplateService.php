@@ -57,7 +57,10 @@ class FunnelTemplateService
                     'wait_until_type' => $step->wait_until_type,
                     'goal_type' => $step->goal_type,
                     'goal_name' => $step->goal_name,
-                    'split_variants' => $step->split_variants,
+                    // Variant paths are stored as edges, the step ids mean nothing in another funnel
+                    'split_variants' => $step->isSplit()
+                        ? array_map(fn (array $variant) => array_diff_key($variant, ['next_step_id' => null]), $step->getSplitVariants())
+                        : $step->split_variants,
                     // Note: message_id is NOT included - user must select their own emails
                 ],
             ];
@@ -86,6 +89,18 @@ class FunnelTemplateService
                     'target' => 'step-' . $step->next_step_no_id,
                     'sourceHandle' => 'no',
                 ];
+            }
+            foreach ($step->isSplit() ? $step->getSplitVariants() : [] as $variant) {
+                if ($variant['next_step_id']) {
+                    $handle = FunnelStep::splitHandle($variant['key']);
+
+                    $edges[] = [
+                        'id' => "e-{$step->id}-{$variant['next_step_id']}-{$handle}",
+                        'source' => 'step-' . $step->id,
+                        'target' => 'step-' . $variant['next_step_id'],
+                        'sourceHandle' => $handle,
+                    ];
+                }
             }
         }
 
@@ -152,7 +167,13 @@ class FunnelTemplateService
                 'wait_until_type' => $node['data']['wait_until_type'] ?? null,
                 'goal_type' => $node['data']['goal_type'] ?? null,
                 'goal_name' => $node['data']['goal_name'] ?? null,
-                'split_variants' => $node['data']['split_variants'] ?? null,
+                // Variant paths come from the edges below
+                'split_variants' => $node['type'] === FunnelStep::TYPE_SPLIT
+                    ? array_map(
+                        fn (array $variant) => array_merge($variant, ['next_step_id' => null]),
+                        FunnelStep::normalizeSplitVariants($node['data']['split_variants'] ?? null)
+                    ) ?: null
+                    : $node['data']['split_variants'] ?? null,
             ]);
 
             $idMapping[$node['id']] = $step->id;
@@ -174,6 +195,10 @@ class FunnelTemplateService
                 $sourceStep->next_step_yes_id = $targetStepId;
             } elseif ($handle === 'no') {
                 $sourceStep->next_step_no_id = $targetStepId;
+            } elseif (FunnelStep::splitHandleKey($handle) !== null) {
+                if ($sourceStep->isSplit()) {
+                    $sourceStep->setSplitVariantTarget(FunnelStep::splitHandleKey($handle), $targetStepId);
+                }
             } else {
                 $sourceStep->next_step_id = $targetStepId;
             }

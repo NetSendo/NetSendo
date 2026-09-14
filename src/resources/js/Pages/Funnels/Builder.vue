@@ -78,6 +78,17 @@ const nodeConfig = {
     end: { icon: '🏁', color: 'bg-gray-500', label: 'funnels.builder.nodes.end', gradient: 'from-gray-400 to-gray-600' },
 };
 
+// A/B variants: a stable key names each one's handle (`variant-<key>`) and the
+// test results kept for it, so renaming or removing another variant keeps both
+const newVariantKey = () => `v${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+const variantLetter = (index) => String.fromCharCode(65 + (index % 26));
+const variantHandle = (variant) => `variant-${variant.key}`;
+const newVariant = (index, weight) => ({
+    key: newVariantKey(),
+    name: t('funnels.builder.variant_default_name', { letter: variantLetter(index) }),
+    weight,
+});
+
 // Undo/Redo history
 const history = ref([]);
 const historyIndex = ref(-1);
@@ -174,10 +185,7 @@ const addNode = (type, x = null, y = null) => {
         goal_value: null,
         goal_config: {},
         // Split (A/B) defaults
-        split_variants: type === 'split' ? [
-            { name: 'Wariant A', weight: 50 },
-            { name: 'Wariant B', weight: 50 },
-        ] : null,
+        split_variants: type === 'split' ? [newVariant(0, 50), newVariant(1, 50)] : null,
     };
 
     const newNode = {
@@ -254,6 +262,41 @@ const updateConditionConfig = (changes) => {
     });
 
     updateNodeData('condition_config', config);
+};
+
+// Split (A/B) variants of the selected node
+const addVariant = () => {
+    const variants = selectedNode.value?.data.split_variants || [];
+    if (variants.length >= 5) return;
+
+    updateNodeData('split_variants', [...variants, newVariant(variants.length, Math.floor(100 / (variants.length + 1)))]);
+};
+
+const updateVariant = (index, changes) => {
+    const variants = [...selectedNode.value.data.split_variants];
+    variants[index] = { ...variants[index], ...changes };
+    updateNodeData('split_variants', variants);
+};
+
+// A removed variant takes its path along
+const removeVariant = (index) => {
+    const node = selectedNode.value;
+    const handle = variantHandle(node.data.split_variants[index]);
+
+    saveHistory();
+    edges.value = edges.value.filter((e) => !(e.source === node.id && e.sourceHandle === handle));
+    updateNodeData('split_variants', node.data.split_variants.filter((_, i) => i !== index));
+};
+
+// Where a variant's subscribers go: its own path, else the default one
+const getVariantPath = (node, variant) => {
+    const own = edges.value.find((e) => e.source === node.id && e.sourceHandle === variantHandle(variant));
+    if (own) return getTargetName(own.target);
+
+    const fallback = edges.value.find((e) => e.source === node.id && (e.sourceHandle || 'default') === 'default');
+    if (fallback) return `${t('funnels.builder.split_default_path')}: ${getTargetName(fallback.target)}`;
+
+    return t('funnels.builder.split_path_ends');
 };
 
 const notifyPlaceholders = ['{{subscriber_email}}', '{{subscriber_name}}', '{{funnel_name}}'].join(', ');
@@ -417,7 +460,45 @@ const getNodeEdges = (nodeId) => {
 const getEdgeLabel = (edge) => {
     if (edge.sourceHandle === 'yes') return `${t('common.yes')}: `;
     if (edge.sourceHandle === 'no') return `${t('common.no')}: `;
-    return '';
+
+    const source = nodes.value.find((n) => n.id === edge.source);
+    if (source?.type !== 'split') return '';
+
+    const variant = (source.data.split_variants || []).find((v) => variantHandle(v) === edge.sourceHandle);
+    return `${variant ? variant.name : t('funnels.builder.split_default_path')}: `;
+};
+
+// A node's connection handles. Each leads one path, so a new connection on a
+// handle replaces its previous one: a condition has "yes" and "no", an A/B test
+// one per variant plus the default path taken by variants without their own
+const getNodeHandles = (node) => {
+    if (node.type === 'end') return [];
+
+    if (node.type === 'condition') {
+        return [
+            { id: 'yes', symbol: '✓', title: t('common.yes'), color: 'bg-green-500 hover:bg-green-600', offsetX: -120 },
+            { id: 'no', symbol: '✗', title: t('common.no'), color: 'bg-red-500 hover:bg-red-600', offsetX: 120 },
+        ];
+    }
+
+    const defaultHandle = { id: 'default', symbol: '+', title: null, color: 'bg-indigo-500 hover:bg-indigo-600', offsetX: 0 };
+
+    if (node.type === 'split') {
+        const variants = node.data.split_variants || [];
+
+        return [
+            ...variants.map((variant, index) => ({
+                id: variantHandle(variant),
+                symbol: variantLetter(index),
+                title: variant.name,
+                color: 'bg-pink-500 hover:bg-pink-600',
+                offsetX: (index - (variants.length - 1) / 2) * 180,
+            })),
+            { ...defaultHandle, title: t('funnels.builder.split_default_path') },
+        ];
+    }
+
+    return [defaultHandle];
 };
 
 // Get connected target for display
@@ -549,8 +630,13 @@ const getNodeValidationStatus = (node) => {
         }
         case 'goal':
             return node.data.goal_type ? 'valid' : 'warning';
-        case 'split':
-            return node.data.split_variants?.length >= 2 ? 'valid' : 'warning';
+        case 'split': {
+            // Every variant needs somewhere to go: its own path or the default one
+            const variants = node.data.split_variants || [];
+            const handles = edges.value.filter((e) => e.source === node.id).map((e) => e.sourceHandle || 'default');
+            const routed = handles.includes('default') || variants.every((v) => handles.includes(variantHandle(v)));
+            return variants.length >= 2 && routed ? 'valid' : 'warning';
+        }
         default:
             return 'valid';
     }
@@ -804,72 +890,40 @@ const getNodeValidationStatus = (node) => {
                         <template v-else-if="node.type === 'action'">
                             {{ actionTypes[node.data?.action_type] || t('funnels.builder.action') }}
                         </template>
+                        <template v-else-if="node.type === 'split'">
+                            {{ (node.data?.split_variants || []).map((variant, index) => `${variantLetter(index)} ${variant.weight || 0}%`).join(' · ') }}
+                        </template>
                         <template v-else>
                             {{ t('funnels.builder.click_to_configure') }}
                         </template>
                     </div>
 
-                    <!-- Connection handles -->
-                    <div v-if="node.type !== 'end' && node.type !== 'condition'" class="absolute -bottom-3 left-1/2 -translate-x-1/2">
-                        <button
-                            @click.stop="toggleConnectDropdown(node.id)"
-                            class="w-6 h-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white flex items-center justify-center text-xs shadow"
-                        >
-                            +
-                        </button>
-
-                        <!-- Connect dropdown -->
-                        <div
-                            v-if="showConnectDropdown === node.id"
-                            class="absolute top-8 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[150px] z-50"
-                        >
-                            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">
-                                {{ t('funnels.builder.connect_to') }}
-                            </div>
+                    <!-- Connection handles: one path each (condition: yes/no, A/B test: one per variant and the default path) -->
+                    <div
+                        v-if="getNodeHandles(node).length"
+                        :class="['absolute -bottom-3 flex left-1/2 -translate-x-1/2', node.type === 'condition' ? 'gap-8' : 'gap-1']"
+                    >
+                        <div v-for="handle in getNodeHandles(node)" :key="handle.id" class="relative">
                             <button
-                                v-for="targetNode in nodes.filter(n => n.id !== node.id && n.type !== 'start')"
-                                :key="targetNode.id"
-                                @click="quickConnect(node.id, targetNode.id)"
-                                class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
+                                @click.stop="toggleConnectDropdown(`${node.id}-${handle.id}`)"
+                                :class="['w-6 h-6 rounded-full text-white flex items-center justify-center text-xs shadow', handle.color]"
+                                :title="handle.title"
                             >
-                                 {{ nodeConfig[targetNode.type]?.icon }} {{ targetNode.data?.name || t(nodeConfig[targetNode.type]?.label) }}
-                            </button>
-                            <div class="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
-                                <template v-for="(config, type) in nodeConfig" :key="type">
-                                    <button
-                                        v-if="type !== 'start'"
-                                        @click="() => { const newId = addNode(type, node.position.x, node.position.y + 120); quickConnect(node.id, newId); }"
-                                        class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {{ config.icon }} {{ t('funnels.builder.new') }} {{ t(config.label) }}
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Condition handles (yes/no): each branch connects on its own handle -->
-                    <div v-if="node.type === 'condition'" class="absolute -bottom-3 flex gap-8 left-1/2 -translate-x-1/2">
-                        <div v-for="branch in ['yes', 'no']" :key="branch" class="relative">
-                            <button
-                                @click.stop="toggleConnectDropdown(`${node.id}-${branch}`)"
-                                :class="['w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] shadow', branch === 'yes' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600']"
-                                :title="t(`common.${branch}`)"
-                            >
-                                {{ branch === 'yes' ? '✓' : '✗' }}
+                                {{ handle.symbol }}
                             </button>
 
+                            <!-- Connect dropdown -->
                             <div
-                                v-if="showConnectDropdown === `${node.id}-${branch}`"
+                                v-if="showConnectDropdown === `${node.id}-${handle.id}`"
                                 class="absolute top-8 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[150px] z-50"
                             >
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">
-                                    {{ t(`common.${branch}`) }} — {{ t('funnels.builder.connect_to') }}
+                                    {{ handle.title ? `${handle.title} — ` : '' }}{{ t('funnels.builder.connect_to') }}
                                 </div>
                                 <button
                                     v-for="targetNode in nodes.filter(n => n.id !== node.id && n.type !== 'start')"
                                     :key="targetNode.id"
-                                    @click="quickConnect(node.id, targetNode.id, branch)"
+                                    @click="quickConnect(node.id, targetNode.id, handle.id)"
                                     class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
                                 >
                                     {{ nodeConfig[targetNode.type]?.icon }} {{ targetNode.data?.name || t(nodeConfig[targetNode.type]?.label) }}
@@ -878,7 +932,7 @@ const getNodeValidationStatus = (node) => {
                                     <template v-for="(config, type) in nodeConfig" :key="type">
                                         <button
                                             v-if="type !== 'start'"
-                                            @click="() => { const newId = addNode(type, node.position.x + (branch === 'yes' ? -120 : 120), node.position.y + 120); quickConnect(node.id, newId, branch); }"
+                                            @click="() => { const newId = addNode(type, node.position.x + handle.offsetX, node.position.y + 120); quickConnect(node.id, newId, handle.id); }"
                                             class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
                                         >
                                             {{ config.icon }} {{ t('funnels.builder.new') }} {{ t(config.label) }}
@@ -1527,12 +1581,8 @@ const getNodeValidationStatus = (node) => {
                                     {{ t('funnels.builder.variants') }}
                                 </label>
                                 <button
-                                    @click="() => {
-                                        const variants = selectedNode.data.split_variants || [];
-                                        if (variants.length < 5) {
-                                            updateNodeData('split_variants', [...variants, { name: `Wariant ${String.fromCharCode(65 + variants.length)}`, weight: Math.floor(100 / (variants.length + 1)) }]);
-                                        }
-                                    }"
+                                    v-if="(selectedNode.data.split_variants?.length || 0) < 5"
+                                    @click="addVariant"
                                     class="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                                 >
                                     + {{ t('funnels.builder.add_variant') }}
@@ -1541,48 +1591,48 @@ const getNodeValidationStatus = (node) => {
                             <div class="space-y-2">
                                 <div
                                     v-for="(variant, index) in (selectedNode.data.split_variants || [])"
-                                    :key="index"
-                                    class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                    :key="variant.key"
+                                    class="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
                                 >
-                                    <input
-                                        :value="variant.name"
-                                        @input="(e) => {
-                                            const variants = [...selectedNode.data.split_variants];
-                                            variants[index].name = e.target.value;
-                                            updateNodeData('split_variants', variants);
-                                        }"
-                                        type="text"
-                                        class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                    />
-                                    <input
-                                        :value="variant.weight"
-                                        @input="(e) => {
-                                            const variants = [...selectedNode.data.split_variants];
-                                            variants[index].weight = parseInt(e.target.value) || 0;
-                                            updateNodeData('split_variants', variants);
-                                        }"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center"
-                                    />
-                                    <span class="text-sm text-gray-500">%</span>
-                                    <button
-                                        v-if="(selectedNode.data.split_variants?.length || 0) > 2"
-                                        @click="() => {
-                                            const variants = selectedNode.data.split_variants.filter((_, i) => i !== index);
-                                            updateNodeData('split_variants', variants);
-                                        }"
-                                        class="p-1 text-red-500 hover:text-red-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 flex-shrink-0 rounded-full bg-pink-500 text-white flex items-center justify-center text-xs">
+                                            {{ variantLetter(index) }}
+                                        </span>
+                                        <input
+                                            :value="variant.name"
+                                            @input="(e) => updateVariant(index, { name: e.target.value })"
+                                            type="text"
+                                            class="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                        />
+                                        <input
+                                            :value="variant.weight"
+                                            @input="(e) => updateVariant(index, { weight: parseInt(e.target.value) || 0 })"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center"
+                                        />
+                                        <span class="text-sm text-gray-500">%</span>
+                                        <button
+                                            v-if="(selectedNode.data.split_variants?.length || 0) > 2"
+                                            @click="removeVariant(index)"
+                                            class="p-1 text-red-500 hover:text-red-600"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p class="mt-1 ml-8 text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        → {{ getVariantPath(selectedNode, variant) }}
+                                    </p>
                                 </div>
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
                                 {{ t('funnels.builder.total_weight') }}: {{ (selectedNode.data.split_variants || []).reduce((sum, v) => sum + (v.weight || 0), 0) }}%
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ t('funnels.builder.split_paths_hint') }}
                             </p>
                         </div>
                     </template>

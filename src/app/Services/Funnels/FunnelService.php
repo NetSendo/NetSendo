@@ -5,6 +5,7 @@ namespace App\Services\Funnels;
 use App\Models\CustomField;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
+use App\Models\FunnelSubscriber;
 use App\Models\Message;
 use App\Models\ContactList;
 use App\Models\Subscriber;
@@ -14,6 +15,10 @@ use Illuminate\Support\Str;
 
 class FunnelService
 {
+    public function __construct(protected ABTestService $abTestService)
+    {
+    }
+
     /**
      * Create a new funnel.
      */
@@ -112,7 +117,13 @@ class FunnelService
                     'goal_type' => $node['data']['goal_type'] ?? null,
                     'goal_value' => $node['data']['goal_value'] ?? null,
                     'goal_config' => $node['data']['goal_config'] ?? null,
-                    'split_variants' => $node['data']['split_variants'] ?? null,
+                    // Variant paths are set again from the edges below, as the other connections
+                    'split_variants' => ($node['type'] ?? null) === FunnelStep::TYPE_SPLIT
+                        ? array_map(
+                            fn (array $variant) => array_merge($variant, ['next_step_id' => null]),
+                            FunnelStep::normalizeSplitVariants($node['data']['split_variants'] ?? null)
+                        ) ?: null
+                        : null,
                     'position_x' => (int) ($node['position']['x'] ?? 250),
                     'position_y' => (int) ($node['position']['y'] ?? 100),
                     'order' => $index,
@@ -155,6 +166,8 @@ class FunnelService
                     continue;
                 }
 
+                $variantKey = FunnelStep::splitHandleKey($handleId);
+
                 // Determine which connection field to update
                 if ($sourceStep->isCondition()) {
                     if ($handleId === 'yes' || $handleId === 'true') {
@@ -164,12 +177,22 @@ class FunnelService
                     } else {
                         $sourceStep->next_step_id = $targetId;
                     }
+                } elseif ($sourceStep->isSplit() && $variantKey !== null) {
+                    // A handle of a variant no longer on the step connects nothing
+                    $sourceStep->setSplitVariantTarget($variantKey, $targetId);
                 } else {
                     $sourceStep->next_step_id = $targetId;
                 }
 
                 $sourceStep->save();
             }
+
+            // A test already running for a split step follows its renamed,
+            // reweighted, added or removed variants
+            $funnel->steps()
+                ->where('type', FunnelStep::TYPE_SPLIT)
+                ->get()
+                ->each(fn (FunnelStep $step) => $this->abTestService->syncTestForStep($step));
 
             return $funnel->fresh('steps');
         });
@@ -281,7 +304,10 @@ class FunnelService
                     'goal_type' => $step->goal_type,
                     'goal_value' => $step->goal_value,
                     'goal_config' => $step->goal_config,
-                    'split_variants' => $step->split_variants,
+                    // Their paths are the edges below
+                    'split_variants' => $step->isSplit()
+                        ? array_map(fn (array $variant) => array_diff_key($variant, ['next_step_id' => null]), $step->getSplitVariants())
+                        : $step->split_variants,
                 ],
             ];
 
@@ -311,6 +337,20 @@ class FunnelService
                     'sourceHandle' => 'no',
                     'label' => 'Nie',
                 ];
+            }
+            foreach ($step->isSplit() ? $step->getSplitVariants() : [] as $variant) {
+                // A path to a step no longer in the funnel is left out, as the engine ignores it
+                if ($variant['next_step_id'] && $funnel->steps->contains('id', $variant['next_step_id'])) {
+                    $handle = FunnelStep::splitHandle($variant['key']);
+
+                    $edges[] = [
+                        'id' => "e{$step->id}-{$variant['next_step_id']}-{$handle}",
+                        'source' => (string) $step->id,
+                        'target' => (string) $variant['next_step_id'],
+                        'sourceHandle' => $handle,
+                        'label' => $variant['name'],
+                    ];
+                }
             }
         }
 
@@ -429,7 +469,8 @@ class FunnelService
         $completedSubscribers = $funnel->subscribers()
             ->where('status', FunnelSubscriber::STATUS_COMPLETED)
             ->whereNotNull('completed_at')
-            ->whereNotNull('enrolled_at')
+            // `entered_at`: there is no `enrolled_at`, so the stats page failed
+            ->whereNotNull('entered_at')
             ->get();
 
         if ($completedSubscribers->isEmpty()) {
@@ -442,7 +483,7 @@ class FunnelService
         }
 
         $completionTimes = $completedSubscribers->map(function ($sub) {
-            return $sub->enrolled_at->diffInMinutes($sub->completed_at);
+            return $sub->entered_at->diffInMinutes($sub->completed_at);
         })->filter()->values();
 
         if ($completionTimes->isEmpty()) {

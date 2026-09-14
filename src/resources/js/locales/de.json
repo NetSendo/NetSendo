@@ -3986,7 +3986,11 @@
                 "subject": "Betreff",
                 "message": "Nachricht",
                 "placeholders_help": "Verfügbare Platzhalter: {placeholders}."
-            }
+            },
+            "variant_default_name": "Variante {letter}",
+            "split_default_path": "Standardpfad",
+            "split_path_ends": "Funnel endet",
+            "split_paths_hint": "Jede Variante führt über ihren eigenen Pfad: Verbinden Sie sie über den Anschluss mit ihrem Buchstaben am Block. Varianten ohne eigenen Pfad folgen dem Standardpfad (+). Sobald ein Gewinner feststeht, folgen alle weiteren Abonnenten seinem Pfad."
         },
         "stats_title": "Trichter-Statistiken",
         "stats_btn": "Statistiken",

@@ -4493,7 +4493,11 @@
                 "subject": "Subject",
                 "message": "Message",
                 "placeholders_help": "You can use: {placeholders}."
-            }
+            },
+            "variant_default_name": "Variant {letter}",
+            "split_default_path": "Default path",
+            "split_path_ends": "Funnel ends",
+            "split_paths_hint": "Each variant leads down its own path: connect it with the handle marked with its letter on the block. Variants without a path of their own take the default path (+). Once a winner is declared, all further subscribers take its path."
         },
         "table": {
             "name": "Name",

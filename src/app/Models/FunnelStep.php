@@ -69,6 +69,10 @@ class FunnelStep extends Model
     public const ACTION_UNSUBSCRIBE = 'unsubscribe';
     public const ACTION_NOTIFY = 'notify';
 
+    // A/B (split) step: each variant connects on its own handle, `variant-<key>`
+    public const SPLIT_HANDLE_PREFIX = 'variant-';
+    public const SPLIT_VARIANT_KEY_PATTERN = '/^[A-Za-z0-9_-]{1,40}$/';
+
     protected $fillable = [
         'funnel_id',
         'type',
@@ -381,6 +385,123 @@ class FunnelStep extends Model
         }
 
         return $conditionMet ? $this->nextStepYes : $this->nextStepNo;
+    }
+
+    /**
+     * The A/B step's variants, normalized (see normalizeSplitVariants()).
+     */
+    public function getSplitVariants(): array
+    {
+        return self::normalizeSplitVariants($this->split_variants);
+    }
+
+    /**
+     * A variant of this A/B step by its key or, failing that, its name.
+     */
+    public function findSplitVariant(string $keyOrName): ?array
+    {
+        $variants = collect($this->getSplitVariants());
+
+        return $variants->firstWhere('key', $keyOrName)
+            ?? $variants->first(fn (array $variant) => mb_strtolower($variant['name']) === mb_strtolower(trim($keyOrName)));
+    }
+
+    /**
+     * Point a variant at its own path (null: it follows the step's default one).
+     */
+    public function setSplitVariantTarget(string $key, ?int $stepId): void
+    {
+        $this->split_variants = array_map(
+            fn (array $variant) => $variant['key'] === $key ? array_merge($variant, ['next_step_id' => $stepId]) : $variant,
+            $this->getSplitVariants()
+        );
+    }
+
+    /**
+     * Where a subscriber drawn into a variant goes: the variant's own path, else
+     * the step's default one, as for a variant no longer on the step.
+     */
+    public function getNextStepForVariant(?string $key): ?FunnelStep
+    {
+        $variant = $key === null ? null : collect($this->getSplitVariants())->firstWhere('key', $key);
+        $targetId = $variant['next_step_id'] ?? null;
+
+        // Only a step of this funnel: the target is kept in JSON, no foreign key
+        // clears it when that step goes
+        $target = $targetId ? static::where('funnel_id', $this->funnel_id)->find($targetId) : null;
+
+        return $target ?? $this->nextStep;
+    }
+
+    /**
+     * An A/B step's variants as the builder, the API and the engine use them:
+     *
+     * - `key`: stable id; names the variant's handle (`variant-<key>`) and the
+     *   test variant its results are counted on, so renaming, reordering or
+     *   removing another variant keeps both
+     * - `name`, `weight` (a relative share; 0 is never drawn, none given splits evenly)
+     * - `next_step_id`: the variant's own path; null follows the step's `next_step_id`
+     *
+     * Variants saved before they had keys get `v1`, `v2`... by position, the
+     * order their test variants were created in.
+     */
+    public static function normalizeSplitVariants(?array $variants): array
+    {
+        $variants = array_values(array_filter($variants ?? [], 'is_array'));
+        $count = count($variants);
+
+        $keys = array_map(function (array $variant) {
+            $key = (string) ($variant['key'] ?? '');
+
+            return preg_match(self::SPLIT_VARIANT_KEY_PATTERN, $key) ? $key : null;
+        }, $variants);
+
+        // A duplicate keeps its key on the first variant only
+        foreach ($keys as $index => $key) {
+            if ($key !== null && array_search($key, $keys, true) !== $index) {
+                $keys[$index] = null;
+            }
+        }
+
+        foreach ($keys as $index => $key) {
+            if ($key === null) {
+                $number = $index + 1;
+
+                while (in_array("v{$number}", $keys, true)) {
+                    $number++;
+                }
+
+                $keys[$index] = "v{$number}";
+            }
+        }
+
+        return array_map(function (array $variant, int $index) use ($keys, $count) {
+            $name = trim((string) ($variant['name'] ?? ''));
+            $weight = $variant['weight'] ?? null;
+            $nextStepId = $variant['next_step_id'] ?? null;
+
+            return [
+                'key' => $keys[$index],
+                'name' => $name !== '' ? $name : 'Wariant ' . chr(65 + $index % 26),
+                'weight' => is_numeric($weight) ? max(0, (int) $weight) : intdiv(100, $count),
+                'next_step_id' => is_numeric($nextStepId) && $nextStepId > 0 ? (int) $nextStepId : null,
+            ];
+        }, $variants, array_keys($variants));
+    }
+
+    public static function splitHandle(string $key): string
+    {
+        return self::SPLIT_HANDLE_PREFIX . $key;
+    }
+
+    /**
+     * The variant key a connection handle stands for, or null for another handle.
+     */
+    public static function splitHandleKey(?string $handle): ?string
+    {
+        return $handle !== null && str_starts_with($handle, self::SPLIT_HANDLE_PREFIX)
+            ? substr($handle, strlen(self::SPLIT_HANDLE_PREFIX))
+            : null;
     }
 
     protected function getConditionDisplayName(): string

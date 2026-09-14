@@ -3900,7 +3900,11 @@
                 "subject": "Asunto",
                 "message": "Mensaje",
                 "placeholders_help": "Puedes usar: {placeholders}."
-            }
+            },
+            "variant_default_name": "Variante {letter}",
+            "split_default_path": "Ruta predeterminada",
+            "split_path_ends": "Fin del embudo",
+            "split_paths_hint": "Cada variante sigue su propia ruta: conéctala con el conector marcado con su letra en el bloque. Las variantes sin ruta propia siguen la ruta predeterminada (+). Una vez declarado un ganador, todos los suscriptores siguientes siguen su ruta."
         },
         "table": {
             "name": "Nombre",

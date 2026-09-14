@@ -7,6 +7,7 @@ use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
 use App\Models\Subscriber;
+use App\Services\Funnels\ABTestService;
 use App\Services\Funnels\FunnelExecutionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -217,7 +218,8 @@ class FunnelController extends Controller
      *
      * The step is connected after `after_step_id`, else after the last step,
      * and continues where that step did; after a condition it goes on the
-     * `yes` path unless `branch` is `no`.
+     * `yes` path unless `branch` is `no`, after a split (A/B) step on the path of
+     * `variant` (its key or name), else on the split's default path.
      */
     public function addStep(Request $request, int $id): JsonResponse
     {
@@ -228,38 +230,63 @@ class FunnelController extends Controller
 
         $validated = $request->validate($this->stepRules($request, $funnel, creating: true));
 
+        $after = isset($validated['after_step_id'])
+            ? $funnel->steps()->find($validated['after_step_id'])
+            : null;
+        $previous = $after ?? $funnel->steps()->reorder()->orderByDesc('order')->orderByDesc('id')->first();
+
+        $variant = null;
+
+        if ($previous?->isSplit() && isset($validated['variant'])) {
+            $variant = $previous->findSplitVariant($validated['variant']);
+
+            if (!$variant) {
+                return response()->json([
+                    'error' => 'Unprocessable Entity',
+                    'message' => "Step {$previous->id} has no variant \"{$validated['variant']}\". Its variants: "
+                        . collect($previous->getSplitVariants())->map(fn (array $v) => "{$v['key']} ({$v['name']})")->implode(', '),
+                ], 422);
+            }
+        }
+
         // The engine follows the steps' connections, not their order: a step
         // added without being connected was never reached, so a funnel built over
         // the API completed right after its start step
-        $step = DB::transaction(function () use ($funnel, $validated) {
-            $previous = isset($validated['after_step_id'])
-                ? $funnel->steps()->find($validated['after_step_id'])
-                : null;
-
-            if ($previous) {
-                $order = $previous->order + 1;
+        $step = DB::transaction(function () use ($funnel, $validated, $after, $previous, $variant) {
+            if ($after) {
+                $order = $after->order + 1;
                 // Shift subsequent steps
                 $funnel->steps()
                     ->where('order', '>=', $order)
                     ->increment('order');
             } else {
-                $previous = $funnel->steps()->reorder()->orderByDesc('order')->orderByDesc('id')->first();
                 $order = ($previous?->order ?? -1) + 1;
             }
 
             $link = match (true) {
                 !$previous => null,
                 $previous->isCondition() => ($validated['branch'] ?? 'yes') === 'no' ? 'next_step_no_id' : 'next_step_yes_id',
+                $variant !== null => 'variant',
                 default => 'next_step_id',
             };
 
-            $step = $funnel->steps()->create($this->stepAttributes($validated) + [
+            $continues = match ($link) {
+                null => null,
+                // Where the variant went: its own path, else the split's default one
+                'variant' => $previous->getNextStepForVariant($variant['key'])?->id,
+                default => $previous->{$link},
+            };
+
+            $step = $funnel->steps()->create($this->stepAttributes($validated) + $this->splitVariantAttributes($validated) + [
                 'order' => $order,
                 // Inserted into the chain: it continues where the previous step did
-                'next_step_id' => $link ? $previous->{$link} : null,
+                'next_step_id' => $continues,
             ]);
 
-            if ($link) {
+            if ($link === 'variant') {
+                $previous->setSplitVariantTarget($variant['key'], $step->id);
+                $previous->save();
+            } elseif ($link) {
                 $previous->update([$link => $step->id]);
             }
 
@@ -274,7 +301,9 @@ class FunnelController extends Controller
 
     /**
      * Update a step: its settings and, with `next_step_id`, `next_step_yes_id`
-     * or `next_step_no_id`, its connections (null disconnects).
+     * or `next_step_no_id`, its connections (null disconnects). A split step's
+     * `split_variants` replace its variants; a variant keeps its path unless it
+     * is given a `next_step_id` of its own (null: the default path).
      */
     public function updateStep(Request $request, int $id, int $stepId): JsonResponse
     {
@@ -294,7 +323,16 @@ class FunnelController extends Controller
             return response()->json(['error' => 'Unprocessable Entity', 'message' => 'The start step cannot change its type'], 422);
         }
 
-        $step->update($this->stepAttributes($validated) + array_intersect_key($validated, array_flip(['next_step_id', 'next_step_yes_id', 'next_step_no_id'])));
+        $step->update(
+            $this->stepAttributes($validated)
+            + $this->splitVariantAttributes($validated, $step)
+            + array_intersect_key($validated, array_flip(['next_step_id', 'next_step_yes_id', 'next_step_no_id']))
+        );
+
+        // A test already running for the step follows its variants
+        if ($step->isSplit()) {
+            app(ABTestService::class)->syncTestForStep($step);
+        }
 
         return response()->json([
             'data' => $step->fresh(),
@@ -328,6 +366,19 @@ class FunnelController extends Controller
             foreach (['next_step_id', 'next_step_yes_id', 'next_step_no_id'] as $column) {
                 $funnel->steps()->where($column, $step->id)->update([$column => $next]);
             }
+
+            // A/B variant paths are kept in JSON, no foreign key clears them
+            $funnel->steps()->where('type', FunnelStep::TYPE_SPLIT)->get()->each(function (FunnelStep $split) use ($step, $next) {
+                $leadHere = array_filter($split->getSplitVariants(), fn (array $variant) => $variant['next_step_id'] === $step->id);
+
+                foreach ($leadHere as $variant) {
+                    $split->setSplitVariantTarget($variant['key'], $next);
+                }
+
+                if ($leadHere) {
+                    $split->save();
+                }
+            });
 
             // Waiting for this step's condition, or left active on it: the
             // scheduled processor picks them up and runs the next step
@@ -423,8 +474,8 @@ class FunnelController extends Controller
     {
         $userId = $request->user()->id;
         $types = $creating
-            ? ['email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end']
-            : ['start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end'];
+            ? ['email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end']
+            : ['start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end'];
         $ownMessage = Rule::exists('messages', 'id')->where('user_id', $userId);
 
         $rules = [
@@ -461,6 +512,13 @@ class FunnelController extends Controller
             'goal_type' => ['nullable', Rule::in(array_keys(FunnelStep::getGoalTypes()))],
             'goal_value' => 'nullable|numeric|min:0',
             'goal_config' => 'nullable|array',
+            // Split (A/B) steps: 2-5 variants (default when adding: A and B, 50/50).
+            // A weight is a relative share; without weights the split is even
+            'split_variants' => 'nullable|array|min:2|max:5',
+            'split_variants.*' => 'array',
+            'split_variants.*.key' => ['nullable', 'string', 'distinct', 'regex:' . FunnelStep::SPLIT_VARIANT_KEY_PATTERN],
+            'split_variants.*.name' => 'nullable|string|max:255',
+            'split_variants.*.weight' => 'nullable|integer|min:0|max:100',
         ];
 
         if ($creating) {
@@ -468,6 +526,9 @@ class FunnelController extends Controller
                 'after_step_id' => 'nullable|integer',
                 // After a condition step: the path the new step goes on (default: yes)
                 'branch' => 'nullable|in:yes,no',
+                // After a split step: the variant whose path the new step goes on,
+                // by key or name (default: the split's default path)
+                'variant' => 'nullable|string|max:255',
             ];
         }
 
@@ -479,6 +540,7 @@ class FunnelController extends Controller
             'next_step_id' => ['nullable', 'integer', $sibling],
             'next_step_yes_id' => ['nullable', 'integer', $sibling],
             'next_step_no_id' => ['nullable', 'integer', $sibling],
+            'split_variants.*.next_step_id' => ['nullable', 'integer', $sibling],
         ];
     }
 
@@ -497,6 +559,38 @@ class FunnelController extends Controller
             'action_type', 'action_config',
             'goal_name', 'goal_type', 'goal_value', 'goal_config',
         ]));
+    }
+
+    /**
+     * The `split_variants` a validated request sets on a split step, normalized
+     * (FunnelStep::normalizeSplitVariants()). A new split step (added, or
+     * another step turned into one) without variants gets A and B. Paths are
+     * set on an update only: a variant naming no `next_step_id` keeps the path
+     * of the variant with its key.
+     */
+    private function splitVariantAttributes(array $validated, ?FunnelStep $step = null): array
+    {
+        if (($validated['type'] ?? $step?->type) !== FunnelStep::TYPE_SPLIT) {
+            return [];
+        }
+
+        if (!isset($validated['split_variants'])) {
+            return $step?->isSplit() ? [] : ['split_variants' => FunnelStep::normalizeSplitVariants([['name' => 'Wariant A'], ['name' => 'Wariant B']])];
+        }
+
+        // Validated data lists a variant first when it has more fields validated: back in order
+        $given = collect($validated['split_variants'])->sortKeys()->values()->all();
+        $paths = collect($step?->getSplitVariants() ?? [])->pluck('next_step_id', 'key');
+
+        return ['split_variants' => array_map(
+            fn (array $variant, array $input) => array_merge($variant, [
+                'next_step_id' => $step && array_key_exists('next_step_id', $input)
+                    ? $variant['next_step_id']
+                    : $paths->get($variant['key']),
+            ]),
+            FunnelStep::normalizeSplitVariants($given),
+            $given
+        )];
     }
 
     private function enrollmentData(FunnelSubscriber $enrollment): array
