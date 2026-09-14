@@ -7,7 +7,7 @@ import axios from "axios";
 import { createSafeMarkdown } from "@/utils/safeMarkdown";
 
 // Replies can echo untrusted content (emails, web research, subscriber data)
-const renderMarkdown = createSafeMarkdown({ breaks: true });
+const renderMarkdown = createSafeMarkdown({ breaks: true, images: false });
 
 const { t } = useI18n();
 
