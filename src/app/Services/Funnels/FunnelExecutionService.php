@@ -145,11 +145,11 @@ class FunnelExecutionService
         // Schedule next action
         $enrollment->scheduleNextAction($delaySeconds);
 
-        // Update current step to next
-        if ($step->nextStep) {
-            $enrollment->current_step_id = $step->next_step_id;
-            $enrollment->save();
-        }
+        // Resuming runs the current step, so it already points past the delay.
+        // A delay that ends the funnel leaves none: kept on the delay itself,
+        // every resume started the same delay again and it never completed
+        $enrollment->current_step_id = $step->next_step_id;
+        $enrollment->save();
     }
 
     /**
@@ -570,22 +570,26 @@ class FunnelExecutionService
     {
         $processed = 0;
 
-        $enrollments = FunnelSubscriber::readyToProcess()
+        // Enrollments of a paused funnel are left out in the query, not skipped
+        // in the loop: skipped ones stayed ready and filled every batch
+        FunnelSubscriber::readyToProcess()
+            ->whereHas('funnel', fn ($query) => $query->where('status', Funnel::STATUS_ACTIVE))
             ->with(['funnel', 'currentStep', 'subscriber'])
-            ->limit(100)
-            ->get();
+            ->chunkById(100, function ($enrollments) use (&$processed) {
+                foreach ($enrollments as $enrollment) {
+                    try {
+                        $enrollment->status = FunnelSubscriber::STATUS_ACTIVE;
+                        $enrollment->save();
 
-        foreach ($enrollments as $enrollment) {
-            if (!$enrollment->funnel->isActive()) {
-                continue;
-            }
-
-            $enrollment->status = FunnelSubscriber::STATUS_ACTIVE;
-            $enrollment->save();
-
-            $this->processNextStep($enrollment);
-            $processed++;
-        }
+                        $this->processNextStep($enrollment);
+                        $processed++;
+                    } catch (\Throwable $e) {
+                        Log::error("Funnel enrollment {$enrollment->id} failed to resume: {$e->getMessage()}", [
+                            'exception' => $e,
+                        ]);
+                    }
+                }
+            });
 
         return $processed;
     }

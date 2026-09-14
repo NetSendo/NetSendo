@@ -130,6 +130,13 @@ Schedule::command('crm:process-score-decay')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/crm-score-decay.log'));
 
+// Lejki - wznawianie zapisów po opóźnieniu, oczekiwanie na warunek i przypomnienia - co minutę
+Schedule::command('funnels:process')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/cron-funnels.log'));
+
 // Google Calendar - Czyszczenie osieroconych wydarzeń (wydarzenia dla usuniętych zadań)
 Schedule::command('calendar:sync-orphaned-events')
     ->hourly()

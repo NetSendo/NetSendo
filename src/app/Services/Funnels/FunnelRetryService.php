@@ -2,6 +2,7 @@
 
 namespace App\Services\Funnels;
 
+use App\Models\Funnel;
 use App\Models\FunnelSubscriber;
 use App\Models\FunnelStep;
 use App\Models\FunnelStepRetry;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Log;
 
 class FunnelRetryService
 {
+    public function __construct(protected FunnelExecutionService $executionService)
+    {
+    }
+
     /**
      * Check if a retry should be sent for an enrollment waiting on a condition.
      */
@@ -176,7 +181,17 @@ class FunnelRetryService
         }
 
         $retryCount = FunnelStepRetry::getAttemptCount($enrollment->id, $step->id);
-        return $retryCount >= $step->retry_max_attempts;
+
+        if ($retryCount < $step->retry_max_attempts) {
+            return false;
+        }
+
+        // The last reminder gets its interval too: without this the exhausted
+        // action (exit, unsubscribe) followed it on the very next run
+        $lastRetry = FunnelStepRetry::getLatestAttempt($enrollment->id, $step->id);
+
+        return !$lastRetry
+            || now()->gte($lastRetry->sent_at->addSeconds($step->retry_interval_in_seconds));
     }
 
     /**
@@ -186,41 +201,57 @@ class FunnelRetryService
     {
         $processed = 0;
 
-        $enrollments = FunnelSubscriber::where('status', FunnelSubscriber::STATUS_WAITING_CONDITION)
+        // Walked by id rather than taking the first 100: an enrollment still
+        // waiting stays in the set, so the same 100 were checked on every run
+        // and the rest never were
+        FunnelSubscriber::where('status', FunnelSubscriber::STATUS_WAITING_CONDITION)
+            ->whereHas('funnel', fn ($query) => $query->where('status', Funnel::STATUS_ACTIVE))
             ->with(['funnel', 'currentStep', 'subscriber'])
-            ->limit(100)
-            ->get();
-
-        foreach ($enrollments as $enrollment) {
-            $step = $enrollment->currentStep;
-
-            if (!$step || !$enrollment->funnel->isActive()) {
-                continue;
-            }
-
-            // Check if condition is now met
-            if ($this->isConditionMet($enrollment, $step)) {
-                $this->markConditionMet($enrollment, $step);
-                $this->proceedFromConditionStep($enrollment, $step, true);
-                $processed++;
-                continue;
-            }
-
-            // Check if we should send a retry
-            if ($this->shouldSendRetry($enrollment, $step)) {
-                $this->sendRetry($enrollment, $step);
-                $processed++;
-                continue;
-            }
-
-            // Check if retries are exhausted
-            if ($this->isRetryExhausted($enrollment, $step)) {
-                $this->handleRetryExhausted($enrollment, $step);
-                $processed++;
-            }
-        }
+            ->chunkById(100, function ($enrollments) use (&$processed) {
+                foreach ($enrollments as $enrollment) {
+                    try {
+                        if ($this->processWaitingEnrollment($enrollment)) {
+                            $processed++;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("Funnel enrollment {$enrollment->id} failed while waiting for a condition: {$e->getMessage()}", [
+                            'exception' => $e,
+                        ]);
+                    }
+                }
+            });
 
         return $processed;
+    }
+
+    protected function processWaitingEnrollment(FunnelSubscriber $enrollment): bool
+    {
+        $step = $enrollment->currentStep;
+
+        if (!$step) {
+            return false;
+        }
+
+        // Check if condition is now met
+        if ($this->isConditionMet($enrollment, $step)) {
+            $this->markConditionMet($enrollment, $step);
+            $this->proceedFromConditionStep($enrollment, $step, true);
+            return true;
+        }
+
+        // Check if we should send a retry
+        if ($this->shouldSendRetry($enrollment, $step)) {
+            $this->sendRetry($enrollment, $step);
+            return true;
+        }
+
+        // Check if retries are exhausted
+        if ($this->isRetryExhausted($enrollment, $step)) {
+            $this->handleRetryExhausted($enrollment, $step);
+            return true;
+        }
+
+        return false;
     }
 
     // =====================================
@@ -304,25 +335,27 @@ class FunnelRetryService
         // Move to the "NO" branch if this is a condition step
         $nextStep = $step->nextStepNo ?? $step->nextStep;
 
-        if ($nextStep) {
-            $enrollment->moveToStep($nextStep);
-            $enrollment->status = FunnelSubscriber::STATUS_ACTIVE;
-            $enrollment->save();
-        } else {
-            $enrollment->markCompleted();
-        }
+        $this->runStep($enrollment, $nextStep);
     }
 
     protected function proceedFromConditionStep(FunnelSubscriber $enrollment, FunnelStep $step, bool $conditionMet): void
     {
         $nextStep = $conditionMet ? $step->nextStepYes : $step->nextStepNo;
 
-        if ($nextStep) {
-            $enrollment->moveToStep($nextStep);
-            $enrollment->status = FunnelSubscriber::STATUS_ACTIVE;
-            $enrollment->save();
-        } else {
+        $this->runStep($enrollment, $nextStep);
+    }
+
+    protected function runStep(FunnelSubscriber $enrollment, ?FunnelStep $nextStep): void
+    {
+        if (!$nextStep) {
             $enrollment->markCompleted();
+            return;
         }
+
+        $enrollment->moveToStep($nextStep);
+
+        // Run it now, like a step reached during enrollment: nothing picks up
+        // an active enrollment later, so it stayed on this step for good
+        $this->executionService->processNextStep($enrollment);
     }
 }
