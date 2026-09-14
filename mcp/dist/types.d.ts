@@ -222,6 +222,17 @@ export type FunnelActionType = 'add_tag' | 'remove_tag' | 'move_to_list' | 'copy
  * (`next_step_id`, and `next_step_yes_id`/`next_step_no_id` for conditions),
  * not `order`.
  */
+/**
+ * A variant of a split (A/B test) step. `key` identifies it (its path and
+ * results stay with it); a variant without `next_step_id` follows the step's
+ * own next_step_id.
+ */
+export interface FunnelSplitVariant {
+    key: string;
+    name: string;
+    weight: number;
+    next_step_id: number | null;
+}
 export interface FunnelStep {
     id: number;
     funnel_id: number;
@@ -252,6 +263,7 @@ export interface FunnelStep {
     goal_type: 'purchase' | 'signup' | 'page_visit' | 'tag_added' | 'custom' | 'webhook' | null;
     goal_value: string | null;
     goal_config: Record<string, unknown> | null;
+    split_variants: FunnelSplitVariant[] | null;
     next_step_id: number | null;
     next_step_yes_id: number | null;
     next_step_no_id: number | null;
@@ -293,17 +305,21 @@ export interface FunnelStepSettings {
     goal_type?: 'purchase' | 'signup' | 'page_visit' | 'tag_added' | 'custom' | 'webhook' | null;
     goal_value?: number | null;
     goal_config?: Record<string, unknown> | null;
+    /** Split steps: 2-5 variants; next_step_id is taken on an update only */
+    split_variants?: Array<Partial<FunnelSplitVariant>>;
 }
 export interface FunnelStepInput extends FunnelStepSettings {
-    type: Exclude<FunnelStepType, 'start' | 'split'>;
+    type: Exclude<FunnelStepType, 'start'>;
     name: string;
     /** Connect after this step (default: the last step) */
     after_step_id?: number;
     /** After a condition step: the path the new step goes on (default: yes) */
     branch?: 'yes' | 'no';
+    /** After a split step: the variant (key or name) whose path the new step goes on (default: the split's default path) */
+    variant?: string;
 }
 export interface FunnelStepUpdateInput extends FunnelStepSettings {
-    type?: Exclude<FunnelStepType, 'split'>;
+    type?: FunnelStepType;
     next_step_id?: number | null;
     next_step_yes_id?: number | null;
     next_step_no_id?: number | null;

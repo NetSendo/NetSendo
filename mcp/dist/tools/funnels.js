@@ -40,6 +40,15 @@ const stepSettings = {
     goal_type: z.enum(['purchase', 'signup', 'page_visit', 'tag_added', 'custom', 'webhook']).nullable().optional().describe('goal: kind of conversion'),
     goal_value: z.number().min(0).nullable().optional().describe('goal: value recorded with the conversion'),
     goal_config: z.record(z.unknown()).nullable().optional().describe('goal: extra settings'),
+    split_variants: z.array(z.object({
+        key: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).optional()
+            .describe('Stable ID of the variant (default: v1, v2... by position). Keep it when changing a variant so its path and results stay with it'),
+        name: z.string().max(255).optional().describe('Variant name (default: Wariant A, B...)'),
+        weight: z.number().int().min(0).max(100).optional().describe('Relative share of subscribers drawn into it; 0 is never drawn (default: an even split)'),
+        next_step_id: z.number().nullable().optional()
+            .describe('update_funnel_step only: the step this variant leads to (null: the default path; omitted: the variant keeps its path)'),
+    })).min(2).max(5).optional()
+        .describe('split (A/B test): 2-5 variants. Each subscriber is drawn into one by weight and continues on that variant\'s path; a variant without a path of its own continues on the step\'s next_step_id. Once a winner is declared, everyone takes the winner\'s path. A split added without variants gets A and B, 50/50. Connect a variant\'s path with add_funnel_step (variant) or here (next_step_id)'),
 };
 /**
  * A step with the settings of its type and its connections, without the
@@ -57,6 +66,7 @@ function describeStep(step) {
         ],
         action: ['action_type', 'action_config'],
         goal: ['goal_name', 'goal_type', 'goal_value', 'goal_config'],
+        split: ['split_variants'],
     };
     const settings = Object.fromEntries((byType[step.type] ?? []).map((key) => [key, step[key]]));
     return {
@@ -208,12 +218,14 @@ export function registerFunnelTools(server, api) {
         }
     });
     // Add Funnel Step
-    server.tool('add_funnel_step', 'Add a step to a funnel and connect it: after after_step_id, or else after the last step, continuing where that step led. After a condition step the new step goes on its "yes" path unless branch is "no". Set the settings of the step type (see each parameter). Use get_funnel to see step IDs and connections.', {
+    server.tool('add_funnel_step', 'Add a step to a funnel and connect it: after after_step_id, or else after the last step, continuing where that step led. After a condition step the new step goes on its "yes" path unless branch is "no"; after a split (A/B test) step on the path of variant, else on the split\'s default path. Set the settings of the step type (see each parameter). Use get_funnel to see step IDs, variant keys and connections.', {
         funnel_id: z.number().describe('Funnel ID'),
-        type: z.enum(['email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end']).describe('Step type'),
+        type: z.enum(['email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end']).describe('Step type'),
         name: z.string().max(255).describe('Step name for reference'),
         after_step_id: z.number().optional().describe('Connect the new step after this step ID (default: the last step)'),
         branch: z.enum(['yes', 'no']).optional().describe('When after_step_id (or the last step) is a condition: its path to continue on (default: yes)'),
+        variant: z.string().max(255).optional()
+            .describe('When after_step_id (or the last step) is a split step: the variant, by key or name, whose path the new step goes on (default: the split\'s default path)'),
         ...stepSettings,
     }, async ({ funnel_id, ...input }) => {
         try {
@@ -229,10 +241,10 @@ export function registerFunnelTools(server, api) {
         }
     });
     // Update Funnel Step
-    server.tool('update_funnel_step', 'Change a funnel step: any of its settings, and its connections. next_step_id is where the step leads; a condition uses next_step_yes_id and next_step_no_id. Pass null to disconnect. Connected steps must belong to the same funnel.', {
+    server.tool('update_funnel_step', 'Change a funnel step: any of its settings, and its connections. next_step_id is where the step leads; a condition uses next_step_yes_id and next_step_no_id, a split step\'s variants split_variants[].next_step_id (next_step_id is then the default path). Pass null to disconnect. Connected steps must belong to the same funnel.', {
         funnel_id: z.number().describe('Funnel ID'),
         step_id: z.number().describe('Step ID'),
-        type: z.enum(['start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'goal', 'end']).optional().describe('New step type (the start step keeps its type)'),
+        type: z.enum(['start', 'email', 'sms', 'delay', 'wait_until', 'condition', 'action', 'split', 'goal', 'end']).optional().describe('New step type (the start step keeps its type)'),
         name: z.string().max(255).optional().describe('New step name'),
         next_step_id: z.number().nullable().optional().describe('Step this one leads to'),
         next_step_yes_id: z.number().nullable().optional().describe('condition: step for "yes"'),
@@ -252,7 +264,7 @@ export function registerFunnelTools(server, api) {
         }
     });
     // Delete Funnel Step
-    server.tool('delete_funnel_step', 'Delete a funnel step. Steps that led to it lead to its next step instead, and subscribers on it move on to that step. The start step cannot be deleted.', {
+    server.tool('delete_funnel_step', 'Delete a funnel step. Steps (and split variants) that led to it lead to its next step instead, and subscribers on it move on to that step. The start step cannot be deleted.', {
         funnel_id: z.number().describe('Funnel ID'),
         step_id: z.number().describe('Step ID to delete'),
     }, async ({ funnel_id, step_id }) => {
