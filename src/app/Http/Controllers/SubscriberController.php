@@ -763,8 +763,13 @@ class SubscriberController extends Controller
                 Subscriber::resetSoftBounceCounts([$subscriber->id]);
             }
 
-            // Get current list IDs
-            $currentListIds = $subscriber->contactLists()->pluck('contact_list_id')->toArray();
+            // Only active memberships are shown on the form (see edit()), so
+            // only those can be removed by leaving them unticked — unsubscribed,
+            // bounced and unconfirmed memberships keep their history
+            $currentListIds = $subscriber->contactLists()
+                ->wherePivot('status', 'active')
+                ->pluck('contact_list_id')
+                ->toArray();
             $newListIds = $validated['contact_list_ids'];
 
             // Lists to remove (detach)
