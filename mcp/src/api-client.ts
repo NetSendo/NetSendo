@@ -45,6 +45,8 @@ import type {
   FunnelCreateInput,
   FunnelStep,
   FunnelStepInput,
+  FunnelStepUpdateInput,
+  FunnelEnrollment,
   FunnelStats,
   // List management types
   ContactListCreateInput,
@@ -677,6 +679,20 @@ export class NetSendoApiClient {
 
   async addFunnelStep(funnelId: number, data: FunnelStepInput): Promise<FunnelStep> {
     const response = await this.client.post(`/funnels/${funnelId}/steps`, data);
+    return response.data.data;
+  }
+
+  async updateFunnelStep(funnelId: number, stepId: number, data: FunnelStepUpdateInput): Promise<FunnelStep> {
+    const response = await this.client.put(`/funnels/${funnelId}/steps/${stepId}`, data);
+    return response.data.data;
+  }
+
+  async deleteFunnelStep(funnelId: number, stepId: number): Promise<void> {
+    await this.client.delete(`/funnels/${funnelId}/steps/${stepId}`);
+  }
+
+  async enrollInFunnel(funnelId: number, subscriber: { subscriber_id?: number; email?: string }): Promise<FunnelEnrollment> {
+    const response = await this.client.post(`/funnels/${funnelId}/subscribers`, subscriber);
     return response.data.data;
   }
 

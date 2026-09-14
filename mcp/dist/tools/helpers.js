@@ -14,9 +14,10 @@ export function ok(data) {
 /**
  * Turn an error into a message the model can act on: field-level validation
  * details are flattened, and the HTTP status is kept so a 409 (confirmation
- * required) is distinguishable from a genuine failure.
+ * required) is distinguishable from a genuine failure. Tools whose 409 means
+ * something else pass their own `conflictHint`.
  */
-export function fail(error) {
+export function fail(error, conflictHint) {
     if (error instanceof NetSendoApiError) {
         const details = error.errors
             ? Object.entries(error.errors)
@@ -24,7 +25,7 @@ export function fail(error) {
                 .join('\n')
             : null;
         const hint = error.statusCode === 409
-            ? '\nThis operation needs explicit confirmation. Re-run with confirm=true once the user has approved it.'
+            ? `\n${conflictHint ?? 'This operation needs explicit confirmation. Re-run with confirm=true once the user has approved it.'}`
             : error.statusCode === 403
                 ? '\nThe API key is missing a permission. Ask the user to enable it in NetSendo → API keys.'
                 : '';

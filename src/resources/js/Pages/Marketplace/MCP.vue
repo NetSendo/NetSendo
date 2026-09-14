@@ -46,7 +46,7 @@ DOSTĘPNE NARZĘDZIA:
 - list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign
 - set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
-- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
+- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel
 - send_email, send_sms (pojedyncze wiadomości)
 - list_placeholders, list_mailboxes, test_connection, get_account_info
 
@@ -89,7 +89,7 @@ AVAILABLE TOOLS:
 - list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign
 - set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
-- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
+- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel
 - send_email, send_sms (for single messages)
 - list_placeholders, list_mailboxes, test_connection, get_account_info
 
@@ -239,7 +239,11 @@ const toolCategories = [
             { name: "list_funnels", description: "mcp.tools.list_funnels" },
             { name: "get_funnel", description: "mcp.tools.get_funnel" },
             { name: "create_funnel", description: "mcp.tools.create_funnel" },
+            { name: "update_funnel", description: "mcp.tools.update_funnel" },
             { name: "add_funnel_step", description: "mcp.tools.add_funnel_step" },
+            { name: "update_funnel_step", description: "mcp.tools.update_funnel_step" },
+            { name: "delete_funnel_step", description: "mcp.tools.delete_funnel_step" },
+            { name: "enroll_subscriber_in_funnel", description: "mcp.tools.enroll_subscriber_in_funnel" },
             { name: "activate_funnel", description: "mcp.tools.activate_funnel" },
             { name: "pause_funnel", description: "mcp.tools.pause_funnel" },
             { name: "get_funnel_stats", description: "mcp.tools.get_funnel_stats" },

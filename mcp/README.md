@@ -280,15 +280,20 @@ Suppression outranks every list: suppressed addresses are skipped by future impo
 
 ### Funnels (Automation)
 
-| Tool               | Description             |
-| ------------------ | ----------------------- |
-| `list_funnels`     | List automation funnels |
-| `get_funnel`       | Get funnel details      |
-| `create_funnel`    | Create new funnel       |
-| `add_funnel_step`  | Add step to funnel      |
-| `activate_funnel`  | Activate funnel         |
-| `pause_funnel`     | Pause funnel            |
-| `get_funnel_stats` | Get funnel statistics   |
+| Tool                          | Description                                                             |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `list_funnels`                | List automation funnels                                                 |
+| `get_funnel`                  | Get funnel details, steps with their settings and connections           |
+| `create_funnel`               | Create new funnel                                                       |
+| `update_funnel`               | Rename a funnel or change its trigger                                   |
+| `add_funnel_step`             | Add a step of any type, connected after a step (or a condition's path)  |
+| `update_funnel_step`          | Change a step's settings and connections                                |
+| `delete_funnel_step`          | Delete a step and reconnect the funnel around it                        |
+| `enroll_subscriber_in_funnel` | Put a subscriber into an active funnel (starts `manual` funnels)        |
+| `activate_funnel`             | Activate funnel                                                         |
+| `pause_funnel`                | Pause funnel                                                            |
+| `get_funnel_stats`            | Get funnel statistics                                                   |
+| `delete_funnel`               | Delete a funnel                                                         |
 
 ### Account
 

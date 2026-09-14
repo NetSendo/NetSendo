@@ -4,7 +4,7 @@
  * HTTP client for communicating with NetSendo REST API v1
  */
 import type { Config } from './config.js';
-import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStats, ContactListCreateInput, ContactListUpdateInput, ListStats, ListImportPayload, ListImportPreview, ListImportResult, ListExportOptions, ListExportResult, ListHygieneReport, ListCleanResult, ListDedupeResult, ListVerifyResult, HygieneCategory, HygieneAction, MemberSelection, ListActivityFeed, ListEngagement, SubscriberActivity, SuppressionEntry, NotificationInput } from './types.js';
+import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStepUpdateInput, FunnelEnrollment, FunnelStats, ContactListCreateInput, ContactListUpdateInput, ListStats, ListImportPayload, ListImportPreview, ListImportResult, ListExportOptions, ListExportResult, ListHygieneReport, ListCleanResult, ListDedupeResult, ListVerifyResult, HygieneCategory, HygieneAction, MemberSelection, ListActivityFeed, ListEngagement, SubscriberActivity, SuppressionEntry, NotificationInput } from './types.js';
 export declare class NetSendoApiError extends Error {
     statusCode: number;
     errors?: Record<string, string[]> | undefined;
@@ -290,6 +290,12 @@ export declare class NetSendoApiClient {
     createFunnel(data: FunnelCreateInput): Promise<Funnel>;
     updateFunnel(id: number, data: Partial<FunnelCreateInput>): Promise<Funnel>;
     addFunnelStep(funnelId: number, data: FunnelStepInput): Promise<FunnelStep>;
+    updateFunnelStep(funnelId: number, stepId: number, data: FunnelStepUpdateInput): Promise<FunnelStep>;
+    deleteFunnelStep(funnelId: number, stepId: number): Promise<void>;
+    enrollInFunnel(funnelId: number, subscriber: {
+        subscriber_id?: number;
+        email?: string;
+    }): Promise<FunnelEnrollment>;
     activateFunnel(id: number): Promise<Funnel>;
     pauseFunnel(id: number): Promise<Funnel>;
     getFunnelStats(id: number): Promise<{

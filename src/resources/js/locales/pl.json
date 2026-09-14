@@ -3159,7 +3159,11 @@
             "send_sms": "Wyślij wiadomość SMS",
             "test_connection": "Testuj połączenie z API",
             "get_account_info": "Pobierz informacje o koncie",
-            "list_placeholders": "Listuj dostępne placeholdery"
+            "list_placeholders": "Listuj dostępne placeholdery",
+            "update_funnel": "Zmień nazwę lub wyzwalacz lejka",
+            "update_funnel_step": "Zmień ustawienia i połączenia kroku",
+            "delete_funnel_step": "Usuń krok lejka",
+            "enroll_subscriber_in_funnel": "Zapisz subskrybenta do lejka"
         },
         "examples_title": "Przykładowe komendy",
         "examples": {
@@ -3211,7 +3215,7 @@
         "agent_prompt_title": "Prompt dla Agenta AI",
         "agent_prompt_description": "Skopiuj ten prompt do swojego agenta AI, aby mógł efektywnie korzystać z NetSendo MCP. Prompt zawiera instrukcje obsługi, listę dostępnych narzędzi i przykłady użycia.",
         "agent_prompt_label": "Prompt techniczny",
-        "agent_prompt_content": "Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.\n\nDOSTĘPNE NARZĘDZIA:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERY W TREŚCI:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta\n- [[!fname]] - imię w wołaczu (polski)\n- [[unsubscribe_link]] - WYMAGANY w każdym emailu\n- [[manage]] - link zarządzania preferencjami\n- {'{'}{'{'}męska|żeńska{'}'}{'}'}  - odmiana przez płeć, np. {'{'}{'{'}Drogi|Droga{'}'}{'}'} \n\nWORKFLOW KAMPANII:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWAŻNE:\n- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery\n- Każdy email MUSI zawierać [[unsubscribe_link]]\n- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)"
+        "agent_prompt_content": "Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.\n\nDOSTĘPNE NARZĘDZIA:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERY W TREŚCI:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta\n- [[!fname]] - imię w wołaczu (polski)\n- [[unsubscribe_link]] - WYMAGANY w każdym emailu\n- [[manage]] - link zarządzania preferencjami\n- {'{'}{'{'}męska|żeńska{'}'}{'}'}  - odmiana przez płeć, np. {'{'}{'{'}Drogi|Droga{'}'}{'}'} \n\nWORKFLOW KAMPANII:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWAŻNE:\n- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery\n- Każdy email MUSI zawierać [[unsubscribe_link]]\n- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)"
     },
     "mcp_status": {
         "title": "Status serwera MCP",

@@ -16,9 +16,10 @@ export declare function ok(data: unknown): ToolResult;
 /**
  * Turn an error into a message the model can act on: field-level validation
  * details are flattened, and the HTTP status is kept so a 409 (confirmation
- * required) is distinguishable from a genuine failure.
+ * required) is distinguishable from a genuine failure. Tools whose 409 means
+ * something else pass their own `conflictHint`.
  */
-export declare function fail(error: unknown): ToolResult;
+export declare function fail(error: unknown, conflictHint?: string): ToolResult;
 /**
  * Drop undefined keys so optional MCP arguments never travel to the API as
  * explicit nulls, which Laravel's validators would reject.

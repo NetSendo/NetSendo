@@ -395,6 +395,17 @@ export class NetSendoApiClient {
         const response = await this.client.post(`/funnels/${funnelId}/steps`, data);
         return response.data.data;
     }
+    async updateFunnelStep(funnelId, stepId, data) {
+        const response = await this.client.put(`/funnels/${funnelId}/steps/${stepId}`, data);
+        return response.data.data;
+    }
+    async deleteFunnelStep(funnelId, stepId) {
+        await this.client.delete(`/funnels/${funnelId}/steps/${stepId}`);
+    }
+    async enrollInFunnel(funnelId, subscriber) {
+        const response = await this.client.post(`/funnels/${funnelId}/subscribers`, subscriber);
+        return response.data.data;
+    }
     async activateFunnel(id) {
         const response = await this.client.post(`/funnels/${id}/activate`);
         return response.data.data;

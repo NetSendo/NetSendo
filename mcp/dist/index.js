@@ -23,7 +23,7 @@ import { loadConfig, validateConfig } from './config.js';
 import { NetSendoApiClient } from './api-client.js';
 import { registerAllTools } from './tools/index.js';
 const SERVER_NAME = 'netsendo-mcp';
-const SERVER_VERSION = '1.4.1';
+const SERVER_VERSION = '1.5.0';
 // Parse CLI arguments
 program
     .name('netsendo-mcp')

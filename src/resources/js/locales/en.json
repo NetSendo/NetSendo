@@ -3789,7 +3789,11 @@
             "send_sms": "Send SMS message",
             "test_connection": "Test API connection",
             "get_account_info": "Get account info",
-            "list_placeholders": "List available placeholders"
+            "list_placeholders": "List available placeholders",
+            "update_funnel": "Rename a funnel or change its trigger",
+            "update_funnel_step": "Change a step's settings and connections",
+            "delete_funnel_step": "Delete a funnel step",
+            "enroll_subscriber_in_funnel": "Enroll a subscriber in a funnel"
         },
         "examples_title": "Example commands",
         "examples": {
@@ -3841,7 +3845,7 @@
         "agent_prompt_title": "AI Agent Prompt",
         "agent_prompt_description": "Copy this prompt to your AI agent so it can effectively use NetSendo MCP. The prompt contains usage instructions, available tools list, and examples.",
         "agent_prompt_label": "Technical Prompt",
-        "agent_prompt_content": "You are an AI assistant with access to NetSendo — an email/SMS marketing platform.\n\nAVAILABLE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS IN CONTENT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data\n- [[!fname]] - first name in vocative case (Polish)\n- [[unsubscribe_link]] - REQUIRED in every email\n- [[manage]] - manage preferences link\n- {'{'}{'{'}male|female{'}'}{'}'} - gender variation\n\nCAMPAIGN WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANT:\n- Always use list_placeholders first to learn available placeholders\n- Every email MUST contain [[unsubscribe_link]]\n- Before sending a campaign you MUST assign lists (set_campaign_lists)"
+        "agent_prompt_content": "You are an AI assistant with access to NetSendo — an email/SMS marketing platform.\n\nAVAILABLE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS IN CONTENT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data\n- [[!fname]] - first name in vocative case (Polish)\n- [[unsubscribe_link]] - REQUIRED in every email\n- [[manage]] - manage preferences link\n- {'{'}{'{'}male|female{'}'}{'}'} - gender variation\n\nCAMPAIGN WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANT:\n- Always use list_placeholders first to learn available placeholders\n- Every email MUST contain [[unsubscribe_link]]\n- Before sending a campaign you MUST assign lists (set_campaign_lists)"
     },
     "mcp_status": {
         "title": "MCP Server Status",

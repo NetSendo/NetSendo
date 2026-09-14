@@ -274,15 +274,20 @@ without restarting the target list's welcome sequence.
 
 ### Funnels (Automation)
 
-| Tool               | Description             |
-| ------------------ | ----------------------- |
-| `list_funnels`     | List automation funnels |
-| `get_funnel`       | Get funnel details      |
-| `create_funnel`    | Create new funnel       |
-| `add_funnel_step`  | Add step to funnel      |
-| `activate_funnel`  | Activate funnel         |
-| `pause_funnel`     | Pause funnel            |
-| `get_funnel_stats` | Get funnel statistics   |
+| Tool                          | Description                                                             |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `list_funnels`                | List automation funnels                                                 |
+| `get_funnel`                  | Get funnel details, steps with their settings and connections           |
+| `create_funnel`               | Create new funnel                                                       |
+| `update_funnel`               | Rename a funnel or change its trigger                                   |
+| `add_funnel_step`             | Add a step of any type, connected after a step (or a condition's path)  |
+| `update_funnel_step`          | Change a step's settings and connections                                |
+| `delete_funnel_step`          | Delete a step and reconnect the funnel around it                        |
+| `enroll_subscriber_in_funnel` | Put a subscriber into an active funnel (starts `manual` funnels)        |
+| `activate_funnel`             | Activate funnel                                                         |
+| `pause_funnel`                | Pause funnel                                                            |
+| `get_funnel_stats`            | Get funnel statistics                                                   |
+| `delete_funnel`               | Delete a funnel                                                         |
 
 ### Messaging
 
@@ -438,7 +443,7 @@ AVAILABLE TOOLS:
 - list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign
 - set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
-- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel
+- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel
 - send_email, send_sms (for single messages)
 - list_placeholders, list_mailboxes, test_connection, get_account_info
 

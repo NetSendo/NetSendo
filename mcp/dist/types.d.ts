@@ -214,19 +214,47 @@ export interface Funnel {
     steps?: FunnelStep[];
     trigger_list?: ContactList;
 }
+export type FunnelStepType = 'start' | 'email' | 'sms' | 'delay' | 'wait_until' | 'condition' | 'action' | 'split' | 'goal' | 'end';
+export type FunnelConditionType = 'email_opened' | 'email_clicked' | 'link_clicked' | 'tag_exists' | 'field_value' | 'task_completed';
+export type FunnelActionType = 'add_tag' | 'remove_tag' | 'move_to_list' | 'copy_to_list' | 'webhook' | 'unsubscribe' | 'notify';
+/**
+ * A funnel step as the API returns it. The engine follows the connections
+ * (`next_step_id`, and `next_step_yes_id`/`next_step_no_id` for conditions),
+ * not `order`.
+ */
 export interface FunnelStep {
     id: number;
     funnel_id: number;
-    type: 'start' | 'email' | 'sms' | 'delay' | 'condition' | 'action' | 'end';
-    name: string;
+    type: FunnelStepType;
+    name: string | null;
     order: number;
-    config: Record<string, unknown>;
     message_id: number | null;
+    sms_content: string | null;
     delay_value: number | null;
-    delay_unit: 'minutes' | 'hours' | 'days' | null;
-    condition_type: string | null;
+    delay_unit: 'minutes' | 'hours' | 'days' | 'weeks' | null;
+    wait_until_type: 'specific_date' | 'day_of_week' | 'business_hours' | null;
+    wait_until_date: string | null;
+    wait_until_time: string | null;
+    wait_until_day: number | null;
+    wait_until_timezone: string | null;
+    condition_type: FunnelConditionType | null;
     condition_config: Record<string, unknown> | null;
+    wait_for_condition: boolean;
+    retry_enabled: boolean;
+    retry_max_attempts: number;
+    retry_interval_value: number;
+    retry_interval_unit: 'hours' | 'days';
+    retry_message_id: number | null;
+    retry_exhausted_action: 'continue' | 'exit' | 'unsubscribe';
+    action_type: FunnelActionType | null;
+    action_config: Record<string, unknown> | null;
+    goal_name: string | null;
+    goal_type: 'purchase' | 'signup' | 'page_visit' | 'tag_added' | 'custom' | 'webhook' | null;
+    goal_value: string | null;
+    goal_config: Record<string, unknown> | null;
     next_step_id: number | null;
+    next_step_yes_id: number | null;
+    next_step_no_id: number | null;
 }
 export interface FunnelCreateInput {
     name: string;
@@ -236,16 +264,59 @@ export interface FunnelCreateInput {
     trigger_tag?: string;
     settings?: Record<string, unknown>;
 }
-export interface FunnelStepInput {
-    type: 'email' | 'sms' | 'delay' | 'condition' | 'action' | 'end';
+/**
+ * The settings a step can be created or updated with.
+ */
+export interface FunnelStepSettings {
+    name?: string;
+    message_id?: number | null;
+    sms_content?: string | null;
+    delay_value?: number | null;
+    delay_unit?: 'minutes' | 'hours' | 'days' | 'weeks' | null;
+    wait_until_type?: 'specific_date' | 'day_of_week' | 'business_hours' | null;
+    wait_until_date?: string | null;
+    wait_until_time?: string | null;
+    wait_until_day?: number | null;
+    wait_until_timezone?: string | null;
+    condition_type?: FunnelConditionType | null;
+    condition_config?: Record<string, unknown> | null;
+    wait_for_condition?: boolean;
+    retry_enabled?: boolean;
+    retry_max_attempts?: number;
+    retry_interval_value?: number;
+    retry_interval_unit?: 'hours' | 'days';
+    retry_message_id?: number | null;
+    retry_exhausted_action?: 'continue' | 'exit' | 'unsubscribe';
+    action_type?: FunnelActionType | null;
+    action_config?: Record<string, unknown> | null;
+    goal_name?: string | null;
+    goal_type?: 'purchase' | 'signup' | 'page_visit' | 'tag_added' | 'custom' | 'webhook' | null;
+    goal_value?: number | null;
+    goal_config?: Record<string, unknown> | null;
+}
+export interface FunnelStepInput extends FunnelStepSettings {
+    type: Exclude<FunnelStepType, 'start' | 'split'>;
     name: string;
+    /** Connect after this step (default: the last step) */
     after_step_id?: number;
-    config?: Record<string, unknown>;
-    message_id?: number;
-    delay_value?: number;
-    delay_unit?: 'minutes' | 'hours' | 'days';
-    condition_type?: string;
-    condition_config?: Record<string, unknown>;
+    /** After a condition step: the path the new step goes on (default: yes) */
+    branch?: 'yes' | 'no';
+}
+export interface FunnelStepUpdateInput extends FunnelStepSettings {
+    type?: Exclude<FunnelStepType, 'split'>;
+    next_step_id?: number | null;
+    next_step_yes_id?: number | null;
+    next_step_no_id?: number | null;
+}
+export interface FunnelEnrollment {
+    id: number;
+    funnel_id: number;
+    subscriber_id: number;
+    status: 'active' | 'waiting' | 'waiting_condition' | 'completed' | 'paused' | 'exited';
+    current_step_id: number | null;
+    next_action_at: string | null;
+    entered_at: string | null;
+    completed_at: string | null;
 }
 export interface FunnelStats {
     total_subscribers: number;

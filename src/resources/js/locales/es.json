@@ -8476,7 +8476,7 @@
         "edit_title": "Editar título"
     },
     "mcp": {
-        "agent_prompt_content": "Eres un asistente de IA con acceso a NetSendo — una plataforma de marketing por email/SMS.\n\nHERRAMIENTAS DISPONIBLES:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS EN EL CONTENIDO:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - datos del suscriptor\n- [[!fname]] - nombre en vocativo (polaco)\n- [[unsubscribe_link]] - OBLIGATORIO en cada email\n- [[manage]] - enlace de gestión de preferencias\n- {'{'}{'{'}masculino|femenino{'}'}{'}'}  - flexión por género, p. ej. {'{'}{'{'}Estimado|Estimada{'}'}{'}'} \n\nFLUJO DE CAMPAÑA:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANTE:\n- Usa siempre list_placeholders al principio para conocer los placeholders disponibles\n- Cada email DEBE contener [[unsubscribe_link]]\n- Antes de enviar una campaña DEBES asignar las listas (set_campaign_lists)",
+        "agent_prompt_content": "Eres un asistente de IA con acceso a NetSendo — una plataforma de marketing por email/SMS.\n\nHERRAMIENTAS DISPONIBLES:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS EN EL CONTENIDO:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - datos del suscriptor\n- [[!fname]] - nombre en vocativo (polaco)\n- [[unsubscribe_link]] - OBLIGATORIO en cada email\n- [[manage]] - enlace de gestión de preferencias\n- {'{'}{'{'}masculino|femenino{'}'}{'}'}  - flexión por género, p. ej. {'{'}{'{'}Estimado|Estimada{'}'}{'}'} \n\nFLUJO DE CAMPAÑA:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANTE:\n- Usa siempre list_placeholders al principio para conocer los placeholders disponibles\n- Cada email DEBE contener [[unsubscribe_link]]\n- Antes de enviar una campaña DEBES asignar las listas (set_campaign_lists)",
         "agent_prompt_description": "Copie este prompt en su agente de IA para que pueda usar NetSendo MCP de forma eficaz. El prompt incluye instrucciones de uso, la lista de herramientas disponibles y ejemplos de uso.",
         "agent_prompt_label": "Prompt técnico",
         "agent_prompt_title": "Prompt para el Agente de IA",
@@ -8656,7 +8656,11 @@
             "sync_subscriber_tags": "Sincronizar etiquetas del suscriptor",
             "test_connection": "Probar conexión con la API",
             "update_campaign": "Actualizar campaña",
-            "update_subscriber": "Actualizar datos del suscriptor"
+            "update_subscriber": "Actualizar datos del suscriptor",
+            "update_funnel": "Renombrar un embudo o cambiar su disparador",
+            "update_funnel_step": "Cambiar ajustes y conexiones de un paso",
+            "delete_funnel_step": "Eliminar paso del embudo",
+            "enroll_subscriber_in_funnel": "Inscribir a un suscriptor en un embudo"
         },
         "tools_count": "{count} herramientas disponibles a través de IA",
         "tools_title": "Herramientas disponibles"
