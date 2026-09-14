@@ -172,6 +172,7 @@ const submit = () => {
         append("search", props.filters?.search);
         append("list_id", props.filters?.list_id);
         append("list_type", props.filters?.list_type);
+        append("status", props.filters?.status);
     }
 
     if (preset.value === "custom") {

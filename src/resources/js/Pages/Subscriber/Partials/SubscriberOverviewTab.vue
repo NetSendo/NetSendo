@@ -43,11 +43,18 @@ const genderLabel = computed(() => {
     return genders[props.subscriber.gender] || null;
 });
 
-// Status badge class
+// Status badge class — same colours as the subscriber table
 const statusClass = computed(() => {
-    return props.subscriber.status === "active"
-        ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-        : "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300";
+    return (
+        {
+            active: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
+            inactive:
+                "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+            bounced:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+        }[props.subscriber.status] ??
+        "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300"
+    );
 });
 
 // Engagement score color
@@ -119,11 +126,7 @@ const { t } = useI18n();
                                 statusClass,
                             ]"
                         >
-                            {{
-                                subscriber.status === "active"
-                                    ? $t("subscribers.statuses.active")
-                                    : $t("subscribers.statuses.inactive")
-                            }}
+                            {{ $t(`subscribers.statuses.${subscriber.status}`) }}
                         </span>
                     </div>
                 </div>

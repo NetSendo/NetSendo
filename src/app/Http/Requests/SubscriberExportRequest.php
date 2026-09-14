@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Subscriber;
 use App\Services\Lists\SubscriberExportService;
 use App\Services\Lists\SubscriberFileImportService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,6 +34,7 @@ class SubscriberExportRequest extends FormRequest
 
             'list_id' => ['nullable', 'integer', 'min:1'],
             'list_type' => ['nullable', Rule::in(['email', 'sms'])],
+            'status' => ['nullable', Rule::in(Subscriber::DISPLAY_STATUSES)],
             'search' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -52,6 +54,7 @@ class SubscriberExportRequest extends FormRequest
             'ids' => $this->input('ids', []),
             'list_id' => $this->input('list_id'),
             'list_type' => $this->input('list_type'),
+            'status' => $this->input('status'),
             'search' => $this->input('search'),
         ];
     }

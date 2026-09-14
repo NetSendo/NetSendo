@@ -2085,6 +2085,7 @@
         "all_lists": "All Lists",
         "search_list_placeholder": "Search list by name or ID...",
         "all_list_types": "All List Types",
+        "all_statuses": "All statuses",
         "list_type_email": "Email Lists",
         "list_type_sms": "SMS Lists",
         "send_welcome_email": "Send welcome email",
@@ -2120,6 +2121,11 @@
             "inactive": "Inactive",
             "unsubscribed": "Unsubscribed",
             "bounced": "Bounced"
+        },
+        "status_help": {
+            "bounced": "This address bounced, so every send skips it. Choose \"Active\" to reactivate it once the address is fixed.",
+            "unsubscribed": "This contact is unsubscribed, so every send skips it. Choose \"Active\" only if they agreed to receive messages again.",
+            "reactivate": "Saving reactivates this contact: sends resume and its soft-bounce counters are reset."
         },
         "empty_state": "No subscribers found matching your criteria.",
         "confirm_delete": "Are you sure you want to delete subscriber {email}?",

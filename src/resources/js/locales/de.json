@@ -2603,6 +2603,7 @@
         "all_lists": "Alle Listen",
         "search_list_placeholder": "Liste nach Name oder ID suchen...",
         "all_list_types": "Alle Listentypen",
+        "all_statuses": "Alle Status",
         "list_type_email": "E-Mail-Listen",
         "list_type_sms": "SMS-Listen",
         "api_keys": {
@@ -2750,6 +2751,11 @@
             "inactive": "Inaktiv",
             "unsubscribed": "Abgemeldet",
             "bounced": "Unzustellbar"
+        },
+        "status_help": {
+            "bounced": "Diese Adresse ist unzustellbar, daher wird sie bei jedem Versand übersprungen. Wählen Sie „Aktiv“, um sie zu reaktivieren, sobald die Adresse korrigiert ist.",
+            "unsubscribed": "Dieser Kontakt ist abgemeldet, daher wird er bei jedem Versand übersprungen. Wählen Sie „Aktiv“ nur, wenn er erneut zugestimmt hat, Nachrichten zu erhalten.",
+            "reactivate": "Beim Speichern wird dieser Kontakt reaktiviert: Der Versand wird fortgesetzt und die Soft-Bounce-Zähler werden zurückgesetzt."
         },
         "empty_state": "Keine Abonnenten gefunden, die den Kriterien entsprechen.",
         "confirm_delete": "Sind Sie sicher, dass Sie den Abonnenten {email} löschen möchten?",

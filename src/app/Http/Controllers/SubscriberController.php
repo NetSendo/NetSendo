@@ -64,6 +64,10 @@ class SubscriberController extends Controller
             });
         }
 
+        if (in_array($request->status, Subscriber::DISPLAY_STATUSES, true)) {
+            Subscriber::applyStatusFilter($query, $request->status);
+        }
+
         // Sorting
         $sortBy = $request->sort_by ?? 'created_at';
         $sortOrder = $request->sort_order ?? 'desc';
@@ -136,7 +140,7 @@ class SubscriberController extends Controller
                     'last_name' => $sub->last_name,
                     'phone' => $sub->phone,
                     'language' => $sub->language,
-                    'status' => $sub->is_active_global ? 'active' : 'inactive',
+                    'status' => $sub->display_status,
                     'lists' => $sub->contactLists->pluck('name'),
                     'list_ids' => $sub->contactLists->pluck('id'),
                     'subscriber_lists' => $sub->contactLists->map(fn($list) => [
@@ -153,7 +157,7 @@ class SubscriberController extends Controller
             'lists' => auth()->user()->accessibleLists()->select('id', 'name', 'type')->get(),
             'customFields' => $customFields,
             'statistics' => $statistics,
-            'filters' => $request->only(['search', 'list_id', 'list_type', 'sort_by', 'sort_order', 'per_page']),
+            'filters' => $request->only(['search', 'list_id', 'list_type', 'status', 'sort_by', 'sort_order', 'per_page']),
             // Columns the export dialog can offer, including this account's
             // custom fields.
             'exportColumns' => app(\App\Services\Lists\SubscriberExportService::class)
@@ -403,7 +407,7 @@ class SubscriberController extends Controller
                 'last_name' => $subscriber->last_name,
                 'gender' => $subscriber->gender,
                 'language' => $subscriber->language,
-                'status' => $subscriber->is_active_global ? 'active' : 'inactive',
+                'status' => $subscriber->display_status,
                 'source' => $subscriber->source,
                 'device' => $subscriber->device,
                 'ip_address' => $subscriber->ip_address,
@@ -654,7 +658,7 @@ class SubscriberController extends Controller
                 'gender' => $subscriber->gender,
                 'language' => $subscriber->language,
                 'timezone' => $subscriber->timezone,
-                'status' => $subscriber->is_active_global ? 'active' : 'inactive',
+                'status' => $subscriber->display_status,
                 'contact_list_ids' => $subscriber->contactLists->pluck('id'),
                 'custom_fields' => $subscriber->fieldValues->mapWithKeys(fn($val) => [$val->custom_field_id => $val->value]),
             ],
@@ -718,7 +722,13 @@ class SubscriberController extends Controller
             'timezone' => 'nullable|string|max:64',
             'contact_list_ids' => 'required|array|min:1',
             'contact_list_ids.*' => 'exists:contact_lists,id',
-            'status' => 'required|in:active,inactive',
+            // A bounced or unsubscribed subscriber may keep that status; it
+            // cannot be set by hand
+            'status' => ['required', Rule::in(array_unique([
+                Subscriber::STATUS_ACTIVE,
+                Subscriber::STATUS_INACTIVE,
+                $subscriber->display_status,
+            ]))],
         ]);
 
         // Verify access to lists (including shared lists for team members)
@@ -736,6 +746,9 @@ class SubscriberController extends Controller
         $signedUpListIds = [];
 
         DB::transaction(function () use ($validated, $subscriber, $request, &$signedUpListIds) {
+            $reactivated = $validated['status'] === Subscriber::STATUS_ACTIVE
+                && $subscriber->status !== Subscriber::STATUS_ACTIVE;
+
             $subscriber->update([
                 'email' => $validated['email'],
                 'first_name' => $validated['first_name'],
@@ -744,8 +757,11 @@ class SubscriberController extends Controller
                 'gender' => $validated['gender'],
                 'language' => $validated['language'] ?? null,
                 'timezone' => $validated['timezone'] ?? null,
-                'is_active_global' => $validated['status'] === 'active',
-            ]);
+            ] + Subscriber::adminStatusAttributes($validated['status']));
+
+            if ($reactivated) {
+                Subscriber::resetSoftBounceCounts([$subscriber->id]);
+            }
 
             // Get current list IDs
             $currentListIds = $subscriber->contactLists()->pluck('contact_list_id')->toArray();
@@ -779,6 +795,11 @@ class SubscriberController extends Controller
 
                     if ($shouldResetDate) {
                         $pivotData['subscribed_at'] = now();
+                    }
+
+                    // A membership bounced on this list starts counting afresh
+                    if ($existingPivot->pivot->status === Subscriber::STATUS_BOUNCED) {
+                        $pivotData['soft_bounce_count'] = 0;
                     }
 
                     $subscriber->contactLists()->updateExistingPivot($listId, $pivotData);
@@ -1210,9 +1231,18 @@ class SubscriberController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        $count = Subscriber::where('user_id', auth()->id())
-            ->whereIn('id', $validated['ids'])
-            ->update(['is_active_global' => $validated['status'] === 'active']);
+        $query = Subscriber::where('user_id', auth()->id())
+            ->whereIn('id', $validated['ids']);
+
+        // Same meaning as the edit form: "active" also brings back bounced and
+        // unsubscribed addresses, so their bounce counters start afresh
+        $reactivatedIds = $validated['status'] === Subscriber::STATUS_ACTIVE
+            ? (clone $query)->where('status', '!=', Subscriber::STATUS_ACTIVE)->pluck('id')->all()
+            : [];
+
+        $count = $query->update(Subscriber::adminStatusAttributes($validated['status']));
+
+        Subscriber::resetSoftBounceCounts($reactivatedIds);
 
         $statusLabel = $validated['status'] === 'active' ? 'aktywnych' : 'nieaktywnych';
         return back()->with('success', "Zmieniono status {$count} subskrybentów na {$statusLabel}.");

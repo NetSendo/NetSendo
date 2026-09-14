@@ -4,6 +4,7 @@ namespace App\Services\Lists;
 
 use App\Models\ContactList;
 use App\Models\CustomField;
+use App\Models\Subscriber;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -120,6 +121,7 @@ class SubscriberExportService
      *     scope: filtered|selected,
      *     ids: int[]                  scope=selected,
      *     search: ?string, list_id: ?int, list_type: ?string,   scope=filtered
+     *     status: ?string             a Subscriber::DISPLAY_STATUSES value, scope=filtered
      *     membership: active|all|unsubscribed,
      *     date_format: iso|local,
      *     sort_by: ?string, sort_order: ?string
@@ -206,6 +208,7 @@ class SubscriberExportService
                 'scope' => $options['scope'] ?? 'filtered',
                 'search' => $options['search'] ?? null,
                 'list_type' => $options['list_type'] ?? null,
+                'status' => $options['status'] ?? null,
                 'membership' => $options['membership'] ?? 'active',
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ",\n  \"subscribers\": [");
@@ -349,6 +352,10 @@ class SubscriberExportService
             });
         }
 
+        if (in_array($options['status'] ?? null, Subscriber::DISPLAY_STATUSES, true)) {
+            Subscriber::applyStatusFilter($query, $options['status']);
+        }
+
         return $query;
     }
 
@@ -372,7 +379,9 @@ class SubscriberExportService
 
             $record[$field] = match ($field) {
                 'netsendo_id' => $row->id,
-                'status' => $row->is_active_global ? 'active' : 'inactive',
+                // bounced/unsubscribed are not read back by the importer, so a
+                // round trip leaves them as they are
+                'status' => Subscriber::displayStatusFor($row->status, (bool) $row->is_active_global),
                 'list_status' => $membership?->status ?? '',
                 'lists' => $this->encodeLists($lists),
                 'tags' => implode('|', $tags),

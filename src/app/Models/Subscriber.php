@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 use App\Events\TagAdded;
 use App\Events\TagRemoved;
 use App\Traits\LogsActivity;
@@ -61,11 +62,107 @@ class Subscriber extends Model
     ];
 
     /**
+     * Global statuses. `status` is the column every send checks
+     * (CronScheduleService skips anyone who is not `active`); `inactive` is not
+     * stored there — it is an `active` row whose `is_active_global` flag is off.
+     */
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_UNSUBSCRIBED = 'unsubscribed';
+    public const STATUS_BOUNCED = 'bounced';
+
+    /**
+     * Statuses the admin interface shows and filters by.
+     */
+    public const DISPLAY_STATUSES = [
+        self::STATUS_ACTIVE,
+        self::STATUS_INACTIVE,
+        self::STATUS_UNSUBSCRIBED,
+        self::STATUS_BOUNCED,
+    ];
+
+    /**
      * Scope a query to only include active subscribers.
      */
     public function scopeActive($query)
     {
         return $query->where('is_active_global', true);
+    }
+
+    /**
+     * The one status to show for this subscriber.
+     *
+     * A bounced or unsubscribed `status` wins over the boolean flag: that
+     * column is what stops delivery, so reporting such an address as "active"
+     * (issue #31) hid exactly why it received nothing.
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        return self::displayStatusFor($this->status, (bool) $this->is_active_global);
+    }
+
+    /**
+     * The same rule for a raw `subscribers` row that never became a model.
+     */
+    public static function displayStatusFor(?string $status, bool $isActiveGlobal): string
+    {
+        $status = $status ?: self::STATUS_ACTIVE;
+
+        if ($status !== self::STATUS_ACTIVE) {
+            return $status;
+        }
+
+        return $isActiveGlobal ? self::STATUS_ACTIVE : self::STATUS_INACTIVE;
+    }
+
+    /**
+     * Narrow a subscriber query to one display status. Works on an Eloquent
+     * builder and on a plain query builder over `subscribers`.
+     */
+    public static function applyStatusFilter($query, string $status)
+    {
+        return match ($status) {
+            self::STATUS_ACTIVE => $query->where('subscribers.status', self::STATUS_ACTIVE)
+                ->where('subscribers.is_active_global', true),
+            self::STATUS_INACTIVE => $query->where('subscribers.status', self::STATUS_ACTIVE)
+                ->where('subscribers.is_active_global', false),
+            default => $query->where('subscribers.status', $status),
+        };
+    }
+
+    /**
+     * Attributes that apply a status an admin picked in the interface.
+     *
+     * `active` is an explicit reactivation and clears a bounced or unsubscribed
+     * marker too — updating the flag alone left such an address skipped by
+     * every send, with no way back. `inactive` only lowers the flag and never
+     * clears the marker, so it cannot quietly resume delivery to an address
+     * that bounced. Anything else keeps what is stored.
+     */
+    public static function adminStatusAttributes(string $status): array
+    {
+        return match ($status) {
+            self::STATUS_ACTIVE => ['status' => self::STATUS_ACTIVE, 'is_active_global' => true],
+            self::STATUS_INACTIVE => ['is_active_global' => false],
+            default => [],
+        };
+    }
+
+    /**
+     * Zero the soft-bounce counters of reactivated subscribers. A counter left
+     * at the list's threshold would mark the address bounced again on the very
+     * next temporary failure.
+     */
+    public static function resetSoftBounceCounts(array $subscriberIds): void
+    {
+        if (empty($subscriberIds)) {
+            return;
+        }
+
+        DB::table('contact_list_subscriber')
+            ->whereIn('subscriber_id', $subscriberIds)
+            ->where('soft_bounce_count', '>', 0)
+            ->update(['soft_bounce_count' => 0]);
     }
 
     /**

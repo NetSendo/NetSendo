@@ -2085,6 +2085,7 @@
         "all_lists": "Wszystkie listy",
         "search_list_placeholder": "Szukaj listy po nazwie lub ID...",
         "all_list_types": "Wszystkie typy list",
+        "all_statuses": "Wszystkie statusy",
         "list_type_email": "Listy Email",
         "list_type_sms": "Listy SMS",
         "send_welcome_email": "Wyślij wiadomość powitalną",
@@ -2120,6 +2121,11 @@
             "inactive": "Nieaktywny",
             "unsubscribed": "Wypisany",
             "bounced": "Odbity"
+        },
+        "status_help": {
+            "bounced": "Ten adres został odbity, więc każda wysyłka go pomija. Wybierz „Aktywny”, aby go przywrócić, gdy adres jest już poprawny.",
+            "unsubscribed": "Ten kontakt jest wypisany, więc każda wysyłka go pomija. Wybierz „Aktywny” tylko wtedy, gdy zgodził się ponownie otrzymywać wiadomości.",
+            "reactivate": "Zapisanie przywróci ten kontakt: wysyłki zostaną wznowione, a liczniki miękkich odbić wyzerowane."
         },
         "empty_state": "Brak subskrybentów spełniających kryteria.",
         "confirm_delete": "Czy na pewno chcesz usunąć subskrybenta {email}?",

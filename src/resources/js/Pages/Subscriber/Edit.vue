@@ -41,6 +41,15 @@ const isEmailRequired = computed(() => {
     return selectedListTypes.value.has("email");
 });
 
+// Bounced and unsubscribed come from the stored status, which every send
+// checks. The form can keep such a status or reactivate the contact, but not
+// set it by hand.
+const heldStatus = computed(() =>
+    ["bounced", "unsubscribed"].includes(props.subscriber.status)
+        ? props.subscriber.status
+        : null,
+);
+
 const isPhoneRequired = computed(() => {
     if (form.contact_list_ids.length === 0) return false;
     return selectedListTypes.value.has("sms");
@@ -404,16 +413,35 @@ const submit = () => {
                             v-model="form.status"
                             class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                         >
+                            <option v-if="heldStatus" :value="heldStatus">
+                                {{ $t(`subscribers.statuses.${heldStatus}`) }}
+                            </option>
                             <option value="active">
                                 {{ $t("subscribers.statuses.active") }}
                             </option>
-                            <option value="inactive">
+                            <option v-if="!heldStatus" value="inactive">
                                 {{
                                     $t("subscribers.statuses.inactive") ||
                                     "Nieaktywny"
                                 }}
                             </option>
                         </select>
+                        <p
+                            v-if="heldStatus"
+                            class="mt-2 text-sm text-amber-700 dark:text-amber-400"
+                        >
+                            {{
+                                form.status === "active"
+                                    ? $t("subscribers.status_help.reactivate")
+                                    : $t(`subscribers.status_help.${heldStatus}`)
+                            }}
+                        </p>
+                        <p
+                            v-if="form.errors.status"
+                            class="mt-2 text-sm text-red-600 dark:text-red-400"
+                        >
+                            {{ form.errors.status }}
+                        </p>
                     </div>
 
                     <div

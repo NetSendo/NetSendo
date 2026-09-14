@@ -28,6 +28,7 @@ const props = defineProps({
 const search = ref(props.filters.search || "");
 const listId = ref(props.filters.list_id || "");
 const listType = ref(props.filters.list_type || "");
+const statusFilter = ref(props.filters.status || "");
 
 // Searchable list dropdown state
 const listSearch = ref("");
@@ -465,6 +466,7 @@ const applyFilters = () => {
             search: search.value,
             list_id: listId.value,
             list_type: listType.value,
+            status: statusFilter.value,
             sort_by: sortBy.value,
             sort_order: sortOrder.value,
             per_page: perPage.value,
@@ -485,7 +487,7 @@ const updatePerPage = (value) => {
 
 // Watch for search/filter changes
 watch(
-    [search, listId, listType],
+    [search, listId, listType, statusFilter],
     debounce(() => {
         applyFilters();
     }, 300),
@@ -801,7 +803,7 @@ const getSortIcon = (column) => {
 
         <!-- Filters -->
         <div
-            class="mb-6 grid gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-5"
+            class="mb-6 grid gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-6"
         >
             <div class="lg:col-span-2">
                 <div class="relative">
@@ -843,6 +845,28 @@ const getSortIcon = (column) => {
                     </option>
                     <option value="sms">
                         {{ $t("subscribers.list_type_sms") }}
+                    </option>
+                </select>
+            </div>
+            <div>
+                <select
+                    v-model="statusFilter"
+                    class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                    <option value="">
+                        {{ $t("subscribers.all_statuses") }}
+                    </option>
+                    <option
+                        v-for="status in [
+                            'active',
+                            'inactive',
+                            'bounced',
+                            'unsubscribed',
+                        ]"
+                        :key="status"
+                        :value="status"
+                    >
+                        {{ $t(`subscribers.statuses.${status}`) }}
                     </option>
                 </select>
             </div>

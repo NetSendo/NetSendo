@@ -2559,6 +2559,7 @@
         "all_lists": "Todas las listas",
         "search_list_placeholder": "Buscar lista por nombre o ID...",
         "all_list_types": "Todos los tipos de lista",
+        "all_statuses": "Todos los estados",
         "list_type_email": "Listas de Email",
         "list_type_sms": "Listas de SMS",
         "send_welcome_email": "Enviar correo de bienvenida",
@@ -2594,6 +2595,11 @@
             "inactive": "Inactivo",
             "unsubscribed": "Dado de baja",
             "bounced": "Rebotado"
+        },
+        "status_help": {
+            "bounced": "Esta dirección ha rebotado, por lo que todos los envíos la omiten. Elija «Activo» para reactivarla una vez corregida la dirección.",
+            "unsubscribed": "Este contacto se ha dado de baja, por lo que todos los envíos lo omiten. Elija «Activo» solo si ha aceptado volver a recibir mensajes.",
+            "reactivate": "Al guardar se reactivará este contacto: los envíos se reanudan y sus contadores de rebotes leves se ponen a cero."
         },
         "empty_state": "No se encontraron suscriptores que coincidan con sus criterios.",
         "confirm_delete": "¿Está seguro de que desea eliminar al suscriptor {email}?",
