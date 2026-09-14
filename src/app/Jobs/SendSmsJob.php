@@ -58,10 +58,9 @@ class SendSmsJob implements ShouldQueue
 
         try {
             // Process message content with placeholders
-            $content = $placeholderService->process(
-                $this->message->content,
-                $this->subscriber,
-                $this->message
+            $content = $placeholderService->replacePlaceholders(
+                (string) $this->message->content,
+                $this->subscriber
             );
 
             // Get the actual provider instance
