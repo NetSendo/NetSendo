@@ -309,7 +309,9 @@
         "status": "Status",
         "name": "Nazwa",
         "characters": "znaków",
-        "source_placeholder": "Wpisz lub wklej kod HTML..."
+        "source_placeholder": "Wpisz lub wklej kod HTML...",
+        "undo": "Cofnij",
+        "redo": "Ponów"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -4530,7 +4532,11 @@
                 "delay": "Opóźnienie",
                 "condition": "Warunek",
                 "action": "Akcja",
-                "end": "Koniec"
+                "end": "Koniec",
+                "sms": "SMS",
+                "wait_until": "Czekaj do",
+                "split": "Test A/B",
+                "goal": "Cel"
             },
             "retry": {
                 "title": "Czekaj i Przypominaj",
@@ -4565,6 +4571,60 @@
                 "task_id": "ID zadania",
                 "task_id_placeholder": "np. quiz-1, onboarding-step-2",
                 "task_id_help": "Używane przez zewnętrzny system do oznaczania zaliczenia"
+            },
+            "add_variant": "Dodaj wariant",
+            "characters": "znaków",
+            "date": "Data",
+            "time": "Godzina",
+            "fit_to_view": "Dopasuj do widoku",
+            "zoom_in": "Powiększ",
+            "zoom_out": "Pomniejsz",
+            "goal_name": "Nazwa celu",
+            "goal_name_placeholder": "np. Zakup kursu",
+            "goal_type": "Typ celu",
+            "goal_value": "Wartość celu",
+            "sms_content": "Treść SMS",
+            "sms_placeholder": "Treść wiadomości SMS...",
+            "total_weight": "Suma wag",
+            "variants": "Warianty",
+            "wait_until_type": "Czekaj do",
+            "weekday": "Dzień tygodnia",
+            "weekdays": {
+                "1": "Poniedziałek",
+                "2": "Wtorek",
+                "3": "Środa",
+                "4": "Czwartek",
+                "5": "Piątek",
+                "6": "Sobota",
+                "7": "Niedziela"
+            },
+            "business_hours_help": "Subskrybent przejdzie dalej w godzinach pracy: od poniedziałku do piątku, 9:00–17:00 (strefa czasowa kroku). W tych godzinach przechodzi od razu.",
+            "unsubscribe_list": "Wypisz z listy",
+            "unsubscribe_list_required": "Wybierz listę — ten lejek nie startuje po zapisie na listę.",
+            "condition_config": {
+                "message": "Wiadomość",
+                "last_message": "Ostatni email wysłany w tym lejku",
+                "any_message": "Dowolna wiadomość",
+                "url": "Adres linku",
+                "field": "Pole",
+                "field_help": "Nazwa pola własnego, np. miasto",
+                "operator": "Warunek pola",
+                "operators": {
+                    "equals": "jest równe",
+                    "not_equals": "jest różne od",
+                    "contains": "zawiera",
+                    "not_empty": "jest wypełnione",
+                    "empty": "jest puste"
+                },
+                "value": "Wartość",
+                "branches_help": "Połącz ścieżki „Tak” (✓) i „Nie” (✗) — bez połączonej ścieżki zapis kończy lejek w tym miejscu."
+            },
+            "notify": {
+                "email": "Adres odbiorcy",
+                "email_placeholder": "Domyślnie: właściciel lejka",
+                "subject": "Temat",
+                "message": "Treść",
+                "placeholders_help": "Możesz użyć: {placeholders}."
             }
         },
         "table": {
@@ -4594,6 +4654,10 @@
             "active": "Aktywny",
             "draft": "Szkic",
             "paused": "Wstrzymany"
+        },
+        "notifications": {
+            "saved": "Lejek został zapisany.",
+            "created": "Lejek został utworzony."
         }
     },
     "automations": {

@@ -6,7 +6,6 @@ use App\Models\Funnel;
 use App\Models\FunnelSubscriber;
 use App\Models\FunnelStep;
 use App\Models\FunnelStepRetry;
-use App\Models\FunnelTask;
 use App\Jobs\SendEmailJob;
 use Illuminate\Support\Facades\Log;
 
@@ -70,14 +69,27 @@ class FunnelRetryService
      */
     public function sendRetry(FunnelSubscriber $enrollment, FunnelStep $step): bool
     {
-        $message = $step->retryMessage ?? $step->message;
-
-        if (!$message) {
-            Log::warning("Funnel step {$step->id} has no retry message configured");
-            return false;
-        }
+        // Without a reminder of its own, the email the condition is about. A
+        // condition step has no email itself, so the reminder used to be missing:
+        // nothing was counted and the exhausted action never applied
+        $message = $step->retryMessage
+            ?? $step->message
+            ?? $this->executionService->conditionMessage($enrollment, $step);
 
         $subscriber = $enrollment->subscriber;
+
+        if (!$message) {
+            $retry = FunnelStepRetry::createAttempt($enrollment->id, $step->id);
+
+            $enrollment->addToHistory('retry_skipped', [
+                'attempt_number' => $retry->attempt_number,
+                'reason' => 'No reminder email: none is chosen and the condition is about no email',
+            ]);
+
+            Log::warning("Funnel step {$step->id} has no reminder email, retry #{$retry->attempt_number} counted as skipped");
+
+            return false;
+        }
 
         // Not sent, but counted: otherwise the reminder would be retried on
         // every run, and the step's exhausted action would never apply
@@ -140,16 +152,9 @@ class FunnelRetryService
             return true;
         }
 
-        $subscriber = $enrollment->subscriber;
-        $config = $step->condition_config ?? [];
-
-        return match ($step->condition_type) {
-            FunnelStep::CONDITION_EMAIL_OPENED => $this->checkEmailOpened($subscriber, $config),
-            FunnelStep::CONDITION_EMAIL_CLICKED => $this->checkEmailClicked($subscriber, $config),
-            FunnelStep::CONDITION_TASK_COMPLETED => $this->checkTaskCompleted($enrollment, $config),
-            FunnelStep::CONDITION_TAG_EXISTS => $subscriber->hasTag($config['tag'] ?? ''),
-            default => false,
-        };
+        // The same evaluation as when the step was reached: a separate copy here
+        // knew fewer condition types, so a waiting `field_value` was never met
+        return $this->executionService->evaluateCondition($enrollment, $step);
     }
 
     /**
@@ -258,46 +263,6 @@ class FunnelRetryService
     // Private helpers
     // =====================================
 
-    protected function checkEmailOpened($subscriber, array $config): bool
-    {
-        $messageId = $config['message_id'] ?? null;
-        if (!$messageId) {
-            return false;
-        }
-
-        return $subscriber->trackingEvents()
-            ->where('message_id', $messageId)
-            ->where('event_type', 'open')
-            ->exists();
-    }
-
-    protected function checkEmailClicked($subscriber, array $config): bool
-    {
-        $messageId = $config['message_id'] ?? null;
-        if (!$messageId) {
-            return false;
-        }
-
-        return $subscriber->trackingEvents()
-            ->where('message_id', $messageId)
-            ->where('event_type', 'click')
-            ->exists();
-    }
-
-    protected function checkTaskCompleted(FunnelSubscriber $enrollment, array $config): bool
-    {
-        $taskId = $config['task_id'] ?? null;
-        if (!$taskId) {
-            return false;
-        }
-
-        return FunnelTask::hasCompleted(
-            $enrollment->funnel_id,
-            $enrollment->subscriber_id,
-            $taskId
-        );
-    }
-
     protected function getStepEntryTime(FunnelSubscriber $enrollment, FunnelStep $step): ?\Carbon\Carbon
     {
         $history = $enrollment->getHistory();
@@ -320,11 +285,12 @@ class FunnelRetryService
 
     protected function unsubscribeAndExit(FunnelSubscriber $enrollment): void
     {
-        $subscriber = $enrollment->subscriber;
+        // From the list a "list signup" funnel is triggered by; a trigger list
+        // kept after switching the trigger type is not one
+        $listId = $this->executionService->signupListId($enrollment->funnel);
 
-        // Unsubscribe from the funnel's trigger list if applicable
-        if ($enrollment->funnel->trigger_list_id) {
-            $subscriber->unsubscribeFromList($enrollment->funnel->trigger_list_id);
+        if ($listId) {
+            $enrollment->subscriber->unsubscribeFromList($listId, 'funnel_retry_exhausted');
         }
 
         $enrollment->markExited('unsubscribed_after_retry_exhausted');

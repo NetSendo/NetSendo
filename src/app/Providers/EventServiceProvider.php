@@ -51,6 +51,7 @@ class EventServiceProvider extends ServiceProvider
             SendNewSubscriberNotification::class,
             \App\Listeners\CreateAutoresponderQueueEntries::class,
             DispatchWebhooksListener::class,
+            \App\Listeners\EnrollInTriggeredFunnels::class,
         ],
         EmailOpened::class => [
             TriggerAutomationsListener::class,
@@ -73,6 +74,7 @@ class EventServiceProvider extends ServiceProvider
         TagAdded::class => [
             TriggerAutomationsListener::class,
             DispatchWebhooksListener::class,
+            \App\Listeners\EnrollInTriggeredFunnels::class,
         ],
         TagRemoved::class => [
             TriggerAutomationsListener::class,

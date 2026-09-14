@@ -107,6 +107,7 @@ const getStatusBadge = (status) => {
     const badges = {
         active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
         waiting: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        waiting_condition: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400',
         paused: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
         completed: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
         exited: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
@@ -117,6 +118,7 @@ const getStatusBadge = (status) => {
 const statusLabels = {
     active: 'Aktywny',
     waiting: 'Oczekuje',
+    waiting_condition: 'Oczekuje na warunek',
     paused: 'Wstrzymany',
     completed: 'Ukończony',
     exited: 'Opuścił',
@@ -662,6 +664,7 @@ const getDropOffColor = (dropOff, total) => {
                             <option value="">{{ t('common.all_statuses') || 'Wszystkie statusy' }}</option>
                             <option value="active">Aktywny</option>
                             <option value="waiting">Oczekuje</option>
+                            <option value="waiting_condition">Oczekuje na warunek</option>
                             <option value="paused">Wstrzymany</option>
                             <option value="completed">Ukończony</option>
                             <option value="exited">Opuścił</option>
@@ -720,7 +723,7 @@ const getDropOffColor = (dropOff, total) => {
                                         <div class="flex items-center justify-end gap-2">
                                             <!-- Pause/Resume -->
                                             <button
-                                                v-if="sub.status === 'active' || sub.status === 'waiting'"
+                                                v-if="['active', 'waiting', 'waiting_condition'].includes(sub.status)"
                                                 @click="pauseSubscriber(sub)"
                                                 :disabled="actionLoading[sub.id]"
                                                 class="p-1.5 text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded-lg transition-colors"

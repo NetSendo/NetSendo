@@ -292,6 +292,46 @@ class Subscriber extends Model
         return $this->addToList($toListId, $source);
     }
 
+    /**
+     * Unsubscribe this subscriber from a list, as the unsubscribe link does:
+     * the membership keeps its row with status `unsubscribed`, what is still
+     * planned for the list's messages is dropped, and SubscriberUnsubscribed
+     * fires. Only an active membership is changed — a bounced or unconfirmed
+     * one keeps its status. Returns false when nothing was changed.
+     */
+    public function unsubscribeFromList(int $listId, string $source = 'system'): bool
+    {
+        $list = ContactList::find($listId);
+
+        if (!$list) {
+            return false;
+        }
+
+        $updated = $this->contactLists()
+            ->wherePivot('status', self::STATUS_ACTIVE)
+            ->updateExistingPivot($list->id, [
+                'status' => self::STATUS_UNSUBSCRIBED,
+                'unsubscribed_at' => now(),
+            ]);
+
+        if (!$updated) {
+            return false;
+        }
+
+        MessageQueueEntry::where('subscriber_id', $this->id)
+            ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
+            ->whereIn('message_id', function ($query) use ($list) {
+                $query->select('message_id')
+                    ->from('contact_list_message')
+                    ->where('contact_list_id', $list->id);
+            })
+            ->delete();
+
+        event(new \App\Events\SubscriberUnsubscribed($this, $list, $source));
+
+        return true;
+    }
+
 
     /**
      * Get all custom field values for this subscriber

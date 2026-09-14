@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,6 +98,7 @@ class FunnelStep extends Model
         'sms_content',
         'wait_until_date',
         'wait_until_time',
+        'wait_until_day',
         'wait_until_timezone',
         'wait_until_type',
         'goal_name',
@@ -123,6 +125,7 @@ class FunnelStep extends Model
         'split_variants' => 'array',
         'goal_value' => 'decimal:2',
         'wait_until_date' => 'datetime',
+        'wait_until_day' => 'integer',
     ];
 
     // =====================================
@@ -243,6 +246,73 @@ class FunnelStep extends Model
             self::DELAY_WEEKS => $this->delay_value * 604800,
             default => null,
         };
+    }
+
+    /**
+     * When a "wait until" step lets the enrollment continue, seen from `$now`:
+     *
+     * - `specific_date`: `wait_until_date` at `wait_until_time` (midnight without one)
+     * - `day_of_week`: the next `wait_until_day` (ISO, 1 = Monday) at `wait_until_time`;
+     *   today if that time is still ahead
+     * - `business_hours`: Monday to Friday, 09:00-17:00; `$now` itself inside them
+     *
+     * Times are read in `wait_until_timezone`, else `$fallbackTimezone` (the funnel
+     * owner's), else the app's. Returns null for a step missing its date or day.
+     */
+    public function getWaitUntilMoment(Carbon $now, ?string $fallbackTimezone = null): ?Carbon
+    {
+        $timezone = collect([$this->wait_until_timezone, $fallbackTimezone, config('app.timezone')])
+            ->first(fn ($candidate) => $candidate && in_array($candidate, timezone_identifiers_list(), true)) ?? 'UTC';
+
+        $local = $now->copy()->setTimezone($timezone);
+        [$hour, $minute] = array_map('intval', array_pad(explode(':', (string) $this->wait_until_time), 2, 0));
+
+        $moment = match ($this->wait_until_type) {
+            self::WAIT_UNTIL_SPECIFIC_DATE => $this->wait_until_date
+                ? Carbon::createFromFormat('Y-m-d', $this->wait_until_date->format('Y-m-d'), $timezone)->setTime($hour, $minute)
+                : null,
+            self::WAIT_UNTIL_DAY_OF_WEEK => $this->nextWeekday($local, $hour, $minute),
+            self::WAIT_UNTIL_BUSINESS_HOURS => $this->nextBusinessHour($local),
+            default => null,
+        };
+
+        return $moment?->setTimezone(config('app.timezone'));
+    }
+
+    protected function nextWeekday(Carbon $local, int $hour, int $minute): ?Carbon
+    {
+        $day = (int) $this->wait_until_day;
+
+        if ($day < 1 || $day > 7) {
+            return null;
+        }
+
+        $moment = $local->copy()->setTime($hour, $minute);
+        $daysAhead = ($day - $moment->dayOfWeekIso + 7) % 7;
+
+        if ($daysAhead === 0 && $moment->lte($local)) {
+            $daysAhead = 7;
+        }
+
+        return $moment->addDays($daysAhead);
+    }
+
+    protected function nextBusinessHour(Carbon $local): Carbon
+    {
+        $opens = $local->copy()->setTime(9, 0);
+        $closes = $local->copy()->setTime(17, 0);
+
+        if ($local->isWeekday() && $local->gte($opens) && $local->lt($closes)) {
+            return $local->copy();
+        }
+
+        $next = $local->lt($opens) ? $opens : $opens->addDay();
+
+        while ($next->isWeekend()) {
+            $next->addDay();
+        }
+
+        return $next;
     }
 
     public function getDelayDisplayAttribute(): ?string

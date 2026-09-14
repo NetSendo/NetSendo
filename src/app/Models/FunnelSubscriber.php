@@ -114,6 +114,11 @@ class FunnelSubscriber extends Model
         return $this->status === self::STATUS_WAITING;
     }
 
+    public function isWaitingForCondition(): bool
+    {
+        return $this->status === self::STATUS_WAITING_CONDITION;
+    }
+
     public function isCompleted(): bool
     {
         return $this->status === self::STATUS_COMPLETED;
@@ -212,9 +217,22 @@ class FunnelSubscriber extends Model
         return $this;
     }
 
+    /**
+     * Put a paused enrollment back where it was paused: waiting for its delay
+     * (resumed by the scheduled processor once due, at once if overdue), or
+     * waiting for its condition. Otherwise it is active and its current step
+     * still has to be run — FunnelExecutionService::processNextStep(); nothing
+     * picks up an active enrollment on its own.
+     */
     public function resume(): self
     {
-        $this->status = self::STATUS_ACTIVE;
+        $step = $this->currentStep;
+
+        $this->status = match (true) {
+            $this->next_action_at !== null => self::STATUS_WAITING,
+            $step?->isCondition() && $step->wait_for_condition => self::STATUS_WAITING_CONDITION,
+            default => self::STATUS_ACTIVE,
+        };
         $this->save();
 
         return $this;
@@ -269,6 +287,7 @@ class FunnelSubscriber extends Model
         return [
             self::STATUS_ACTIVE => 'Aktywny',
             self::STATUS_WAITING => 'Oczekuje',
+            self::STATUS_WAITING_CONDITION => 'Oczekuje na warunek',
             self::STATUS_COMPLETED => 'Ukończony',
             self::STATUS_PAUSED => 'Wstrzymany',
             self::STATUS_EXITED => 'Opuścił',

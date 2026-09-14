@@ -354,7 +354,9 @@
         "show": "Anzeigen",
         "soon": "Demnächst",
         "view_all": "Alle anzeigen",
-        "source_placeholder": "HTML-Code eingeben oder einfügen..."
+        "source_placeholder": "HTML-Code eingeben oder einfügen...",
+        "undo": "Rückgängig",
+        "redo": "Wiederholen"
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -3868,7 +3870,11 @@
                 "delay": "Verzögerung",
                 "condition": "Bedingung",
                 "action": "Aktion",
-                "end": "Ende"
+                "end": "Ende",
+                "sms": "SMS",
+                "wait_until": "Warten bis",
+                "split": "A/B-Test",
+                "goal": "Ziel"
             },
             "retry": {
                 "title": "Warten & Wiederholen",
@@ -3903,6 +3909,60 @@
                 "task_id": "Aufgaben-ID",
                 "task_id_placeholder": "z.B. quiz-1, onboarding-schritt-2",
                 "task_id_help": "Wird vom externen System zum Markieren des Abschlusses verwendet"
+            },
+            "add_variant": "Variante hinzufügen",
+            "characters": "Zeichen",
+            "date": "Datum",
+            "time": "Uhrzeit",
+            "fit_to_view": "An Ansicht anpassen",
+            "zoom_in": "Vergrößern",
+            "zoom_out": "Verkleinern",
+            "goal_name": "Name des Ziels",
+            "goal_name_placeholder": "z. B. Kurskauf",
+            "goal_type": "Zieltyp",
+            "goal_value": "Zielwert",
+            "sms_content": "SMS-Text",
+            "sms_placeholder": "Text der SMS...",
+            "total_weight": "Gesamtgewichtung",
+            "variants": "Varianten",
+            "wait_until_type": "Warten bis",
+            "weekday": "Wochentag",
+            "weekdays": {
+                "1": "Montag",
+                "2": "Dienstag",
+                "3": "Mittwoch",
+                "4": "Donnerstag",
+                "5": "Freitag",
+                "6": "Samstag",
+                "7": "Sonntag"
+            },
+            "business_hours_help": "Der Abonnent geht während der Geschäftszeiten weiter: Montag bis Freitag, 9:00–17:00 (Zeitzone des Schritts). Innerhalb dieser Zeiten geht er sofort weiter.",
+            "unsubscribe_list": "Von Liste abmelden",
+            "unsubscribe_list_required": "Wählen Sie eine Liste — dieser Funnel startet nicht mit einer Listenanmeldung.",
+            "condition_config": {
+                "message": "E-Mail",
+                "last_message": "Die zuletzt in diesem Funnel gesendete E-Mail",
+                "any_message": "Beliebige E-Mail",
+                "url": "Link-URL",
+                "field": "Feld",
+                "field_help": "Name eines benutzerdefinierten Felds, z. B. stadt",
+                "operator": "Feldbedingung",
+                "operators": {
+                    "equals": "ist gleich",
+                    "not_equals": "ist ungleich",
+                    "contains": "enthält",
+                    "not_empty": "ist ausgefüllt",
+                    "empty": "ist leer"
+                },
+                "value": "Wert",
+                "branches_help": "Verbinden Sie den „Ja“- (✓) und den „Nein“-Pfad (✗) — ohne verbundenen Pfad endet der Funnel für den Abonnenten hier."
+            },
+            "notify": {
+                "email": "Empfängeradresse",
+                "email_placeholder": "Standard: Inhaber des Funnels",
+                "subject": "Betreff",
+                "message": "Nachricht",
+                "placeholders_help": "Verfügbare Platzhalter: {placeholders}."
             }
         },
         "stats_title": "Trichter-Statistiken",
@@ -3939,6 +3999,10 @@
             "no_data_desc": "Statistiken erscheinen, sobald Abonnenten den Trichter durchlaufen.",
             "info": "Daten der letzten 30 Tage",
             "steps_count": "Anzahl der Schritte"
+        },
+        "notifications": {
+            "saved": "Funnel gespeichert.",
+            "created": "Funnel erstellt."
         }
     },
     "automations": {

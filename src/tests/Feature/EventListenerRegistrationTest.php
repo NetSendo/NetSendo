@@ -62,6 +62,7 @@ class EventListenerRegistrationTest extends TestCase
 
         $this->assertSame([
             'CreateAutoresponderQueueEntries@handle' => 1,
+            'EnrollInTriggeredFunnels@handle' => 1,
             'SendNewSubscriberNotification@handle' => 1,
         ], $this->queuedListenerCounts());
     }
@@ -73,6 +74,7 @@ class EventListenerRegistrationTest extends TestCase
         event(new TagAdded($this->subscriber, $tag));
 
         $this->assertSame([
+            'EnrollInTriggeredFunnels@handle' => 1,
             'LeadScoringListener@handleTagAdded' => 1,
         ], $this->queuedListenerCounts());
     }

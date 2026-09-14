@@ -309,7 +309,9 @@
         "search_placeholder": "Buscar...",
         "selected_of": "seleccionados de",
         "show": "Mostrar",
-        "view_all": "Ver todo"
+        "view_all": "Ver todo",
+        "undo": "Deshacer",
+        "redo": "Rehacer"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -3782,7 +3784,11 @@
                 "delay": "Retraso",
                 "condition": "Condición",
                 "action": "Acción",
-                "end": "Fin"
+                "end": "Fin",
+                "sms": "SMS",
+                "wait_until": "Esperar hasta",
+                "split": "Test A/B",
+                "goal": "Objetivo"
             },
             "retry": {
                 "title": "Esperar y Reintentar",
@@ -3817,6 +3823,60 @@
                 "task_id": "ID de la tarea",
                 "task_id_placeholder": "ej. quiz-1, onboarding-paso-2",
                 "task_id_help": "Usado por el sistema externo para marcar la finalización"
+            },
+            "add_variant": "Añadir variante",
+            "characters": "caracteres",
+            "date": "Fecha",
+            "time": "Hora",
+            "fit_to_view": "Ajustar a la vista",
+            "zoom_in": "Acercar",
+            "zoom_out": "Alejar",
+            "goal_name": "Nombre del objetivo",
+            "goal_name_placeholder": "p. ej. Compra del curso",
+            "goal_type": "Tipo de objetivo",
+            "goal_value": "Valor del objetivo",
+            "sms_content": "Texto del SMS",
+            "sms_placeholder": "Texto del mensaje SMS...",
+            "total_weight": "Peso total",
+            "variants": "Variantes",
+            "wait_until_type": "Esperar hasta",
+            "weekday": "Día de la semana",
+            "weekdays": {
+                "1": "Lunes",
+                "2": "Martes",
+                "3": "Miércoles",
+                "4": "Jueves",
+                "5": "Viernes",
+                "6": "Sábado",
+                "7": "Domingo"
+            },
+            "business_hours_help": "El suscriptor continúa en horario laboral: de lunes a viernes, 9:00–17:00 (zona horaria del paso). Dentro de ese horario continúa de inmediato.",
+            "unsubscribe_list": "Dar de baja de la lista",
+            "unsubscribe_list_required": "Elige una lista: este embudo no se inicia con una suscripción a una lista.",
+            "condition_config": {
+                "message": "Email",
+                "last_message": "El último email enviado en este embudo",
+                "any_message": "Cualquier email",
+                "url": "URL del enlace",
+                "field": "Campo",
+                "field_help": "Nombre de un campo personalizado, p. ej. ciudad",
+                "operator": "Condición del campo",
+                "operators": {
+                    "equals": "es igual a",
+                    "not_equals": "es distinto de",
+                    "contains": "contiene",
+                    "not_empty": "está rellenado",
+                    "empty": "está vacío"
+                },
+                "value": "Valor",
+                "branches_help": "Conecta las rutas «Sí» (✓) y «No» (✗): sin una ruta conectada, el suscriptor termina el embudo aquí."
+            },
+            "notify": {
+                "email": "Dirección del destinatario",
+                "email_placeholder": "Por defecto: el propietario del embudo",
+                "subject": "Asunto",
+                "message": "Mensaje",
+                "placeholders_help": "Puedes usar: {placeholders}."
             }
         },
         "table": {
@@ -3846,6 +3906,10 @@
             "active": "Activo",
             "draft": "Borrador",
             "paused": "Pausado"
+        },
+        "notifications": {
+            "saved": "Embudo guardado.",
+            "created": "Embudo creado."
         }
     },
     "campaign_architect": {

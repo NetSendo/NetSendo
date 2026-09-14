@@ -3,14 +3,20 @@
 namespace App\Services\Funnels;
 
 use App\Models\ContactList;
+use App\Models\EmailClick;
+use App\Models\EmailOpen;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
 use App\Models\FunnelTask;
+use App\Models\Message;
 use App\Models\Subscriber;
+use App\Models\Tag;
 use App\Jobs\SendEmailJob;
+use App\Jobs\SendFunnelSmsJob;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 
 class FunnelExecutionService
 {
@@ -60,7 +66,9 @@ class FunnelExecutionService
         match ($step->type) {
             FunnelStep::TYPE_START => $this->executeStartStep($enrollment, $step),
             FunnelStep::TYPE_EMAIL => $this->executeEmailStep($enrollment, $step),
+            FunnelStep::TYPE_SMS => $this->executeSmsStep($enrollment, $step),
             FunnelStep::TYPE_DELAY => $this->executeDelayStep($enrollment, $step),
+            FunnelStep::TYPE_WAIT_UNTIL => $this->executeWaitUntilStep($enrollment, $step),
             FunnelStep::TYPE_CONDITION => $this->executeConditionStep($enrollment, $step),
             FunnelStep::TYPE_ACTION => $this->executeActionStep($enrollment, $step),
             FunnelStep::TYPE_SPLIT => $this->executeSplitStep($enrollment, $step),
@@ -123,6 +131,42 @@ class FunnelExecutionService
     }
 
     /**
+     * Execute SMS step - queue the text and move to next.
+     *
+     * The step carries its own text (`sms_content`), so it is sent without a
+     * message record; like the email step, it is skipped for a subscriber who
+     * cannot receive it and the funnel moves on.
+     */
+    protected function executeSmsStep(FunnelSubscriber $enrollment, FunnelStep $step): void
+    {
+        $subscriber = $enrollment->subscriber;
+        $content = trim((string) $step->sms_content);
+
+        $reason = match (true) {
+            $content === '' => 'The step has no text',
+            !$subscriber->isDeliverable() => "Subscriber is {$subscriber->display_status}",
+            blank($subscriber->phone) => 'Subscriber has no phone number',
+            default => null,
+        };
+
+        if ($reason !== null) {
+            $enrollment->addToHistory('sms_skipped', ['reason' => $reason]);
+
+            Log::info("Funnel SMS step {$step->id} skipped for subscriber {$subscriber->id}: {$reason}");
+
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
+        SendFunnelSmsJob::dispatch($subscriber, $content, $enrollment->funnel->user_id, $step->id);
+
+        $enrollment->addToHistory('sms_queued', ['length' => mb_strlen($content)]);
+
+        $enrollment->incrementStepsCompleted();
+        $this->moveToNextStep($enrollment, $step->nextStep);
+    }
+
+    /**
      * Execute delay step - schedule next action.
      */
     protected function executeDelayStep(FunnelSubscriber $enrollment, FunnelStep $step): void
@@ -142,12 +186,49 @@ class FunnelExecutionService
 
         $enrollment->incrementStepsCompleted();
 
-        // Schedule next action
-        $enrollment->scheduleNextAction($delaySeconds);
+        $this->resumeAfter($enrollment, $step, now()->addSeconds($delaySeconds));
+    }
 
-        // Resuming runs the current step, so it already points past the delay.
-        // A delay that ends the funnel leaves none: kept on the delay itself,
-        // every resume started the same delay again and it never completed
+    /**
+     * Execute "wait until" step - hold the enrollment until a date, a weekday
+     * or business hours (see FunnelStep::getWaitUntilMoment()).
+     */
+    protected function executeWaitUntilStep(FunnelSubscriber $enrollment, FunnelStep $step): void
+    {
+        $until = $step->getWaitUntilMoment(now(), $enrollment->funnel->user?->timezone);
+
+        if (!$until) {
+            Log::warning("Funnel wait-until step {$step->id} is not configured, moving on");
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
+        // Already there (a past date, or within business hours): no wait
+        if ($until->lte(now())) {
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
+        $enrollment->addToHistory('wait_until_started', [
+            'type' => $step->wait_until_type,
+            'until' => $until->toIso8601String(),
+        ]);
+
+        $enrollment->incrementStepsCompleted();
+
+        $this->resumeAfter($enrollment, $step, $until);
+    }
+
+    /**
+     * Park the enrollment until `$at`; the scheduled processor then resumes it.
+     */
+    protected function resumeAfter(FunnelSubscriber $enrollment, FunnelStep $step, Carbon $at): void
+    {
+        $enrollment->scheduleNextActionAt($at);
+
+        // Resuming runs the current step, so it already points past the wait.
+        // A wait that ends the funnel leaves none: kept on the wait itself,
+        // every resume started the same wait again and it never completed
         $enrollment->current_step_id = $step->next_step_id;
         $enrollment->save();
     }
@@ -188,16 +269,22 @@ class FunnelExecutionService
     }
 
     /**
-     * Evaluate a condition.
+     * Evaluate a condition step for an enrollment. Shared with FunnelRetryService,
+     * which re-checks waiting conditions.
+     *
+     * Config keys: `message_id` (opened/clicked; without one, the last email this
+     * funnel queued for the subscriber), `url` (link clicked, optionally within
+     * `message_id`), `tag` or `tag_id`, `field`/`operator`/`value`, `task_id`.
      */
-    protected function evaluateCondition(FunnelSubscriber $enrollment, FunnelStep $step): bool
+    public function evaluateCondition(FunnelSubscriber $enrollment, FunnelStep $step): bool
     {
         $subscriber = $enrollment->subscriber;
         $config = $step->condition_config ?? [];
 
         return match ($step->condition_type) {
-            FunnelStep::CONDITION_EMAIL_OPENED => $this->checkEmailOpened($subscriber, $config),
-            FunnelStep::CONDITION_EMAIL_CLICKED => $this->checkEmailClicked($subscriber, $config),
+            FunnelStep::CONDITION_EMAIL_OPENED => $this->checkEmailOpened($enrollment, $config),
+            FunnelStep::CONDITION_EMAIL_CLICKED => $this->checkEmailClicked($enrollment, $config),
+            FunnelStep::CONDITION_LINK_CLICKED => $this->checkLinkClicked($subscriber, $config),
             FunnelStep::CONDITION_TAG_EXISTS => $this->checkTagExists($subscriber, $config),
             FunnelStep::CONDITION_FIELD_VALUE => $this->checkFieldValue($subscriber, $config),
             FunnelStep::CONDITION_TASK_COMPLETED => $this->checkTaskCompleted($enrollment, $config),
@@ -205,32 +292,64 @@ class FunnelExecutionService
         };
     }
 
-    protected function checkEmailOpened(Subscriber $subscriber, array $config): bool
+    protected function checkEmailOpened(FunnelSubscriber $enrollment, array $config): bool
     {
-        $messageId = $config['message_id'] ?? null;
-        if (!$messageId) {
-            return false;
-        }
+        $messageId = $this->conditionMessageId($enrollment, $config);
 
-        // Check if subscriber has opened this message
-        // This would need integration with tracking system
-        return $subscriber->trackingEvents()
+        return $messageId && EmailOpen::where('subscriber_id', $enrollment->subscriber_id)
             ->where('message_id', $messageId)
-            ->where('event_type', 'open')
             ->exists();
     }
 
-    protected function checkEmailClicked(Subscriber $subscriber, array $config): bool
+    protected function checkEmailClicked(FunnelSubscriber $enrollment, array $config): bool
     {
-        $messageId = $config['message_id'] ?? null;
-        if (!$messageId) {
+        $messageId = $this->conditionMessageId($enrollment, $config);
+
+        return $messageId && EmailClick::where('subscriber_id', $enrollment->subscriber_id)
+            ->where('message_id', $messageId)
+            ->exists();
+    }
+
+    protected function checkLinkClicked(Subscriber $subscriber, array $config): bool
+    {
+        $url = trim((string) ($config['url'] ?? ''));
+
+        if ($url === '') {
             return false;
         }
 
-        return $subscriber->trackingEvents()
-            ->where('message_id', $messageId)
-            ->where('event_type', 'click')
+        return EmailClick::where('subscriber_id', $subscriber->id)
+            ->when($config['message_id'] ?? null, fn ($query, $messageId) => $query->where('message_id', $messageId))
+            ->where('url', $url)
             ->exists();
+    }
+
+    /**
+     * The email a condition step is about (see conditionMessageId()), for a
+     * reminder that has none of its own.
+     */
+    public function conditionMessage(FunnelSubscriber $enrollment, FunnelStep $step): ?Message
+    {
+        $messageId = $this->conditionMessageId($enrollment, $step->condition_config ?? []);
+
+        return $messageId ? Message::find($messageId) : null;
+    }
+
+    /**
+     * The email an opened/clicked condition is about: the chosen one, or else
+     * the last one this funnel queued for the subscriber.
+     */
+    protected function conditionMessageId(FunnelSubscriber $enrollment, array $config): ?int
+    {
+        if (!empty($config['message_id'])) {
+            return (int) $config['message_id'];
+        }
+
+        $queued = collect($enrollment->getHistory())
+            ->where('action', 'email_queued')
+            ->last();
+
+        return isset($queued['details']['message_id']) ? (int) $queued['details']['message_id'] : null;
     }
 
     protected function checkTaskCompleted(FunnelSubscriber $enrollment, array $config): bool
@@ -249,12 +368,26 @@ class FunnelExecutionService
 
     protected function checkTagExists(Subscriber $subscriber, array $config): bool
     {
-        $tag = $config['tag'] ?? null;
-        if (!$tag) {
-            return false;
+        $tag = $this->findTag($subscriber, $config);
+
+        return $tag && $subscriber->tags()->whereKey($tag->id)->exists();
+    }
+
+    /**
+     * The subscriber owner's tag named in a step config, by `tag_id` or by name
+     * (`tag`, as the builder stores it).
+     */
+    protected function findTag(Subscriber $subscriber, array $config): ?Tag
+    {
+        $query = Tag::where('user_id', $subscriber->user_id);
+
+        if (!empty($config['tag_id'])) {
+            return $query->whereKey($config['tag_id'])->first();
         }
 
-        return $subscriber->hasTag($tag);
+        $name = trim((string) ($config['tag'] ?? ''));
+
+        return $name === '' ? null : $query->where('name', $name)->first();
     }
 
     protected function checkFieldValue(Subscriber $subscriber, array $config): bool
@@ -288,12 +421,12 @@ class FunnelExecutionService
         $config = $step->action_config ?? [];
 
         match ($step->action_type) {
-            FunnelStep::ACTION_ADD_TAG => $this->actionAddTag($subscriber, $config),
-            FunnelStep::ACTION_REMOVE_TAG => $this->actionRemoveTag($subscriber, $config),
+            FunnelStep::ACTION_ADD_TAG => $this->actionAddTag($enrollment, $config),
+            FunnelStep::ACTION_REMOVE_TAG => $this->actionRemoveTag($enrollment, $config),
             FunnelStep::ACTION_MOVE_TO_LIST => $this->actionMoveToList($enrollment, $config),
             FunnelStep::ACTION_COPY_TO_LIST => $this->actionCopyToList($subscriber, $config),
             FunnelStep::ACTION_WEBHOOK => $this->actionWebhook($enrollment, $config),
-            FunnelStep::ACTION_UNSUBSCRIBE => $this->actionUnsubscribe($subscriber, $config),
+            FunnelStep::ACTION_UNSUBSCRIBE => $this->actionUnsubscribe($enrollment, $config),
             FunnelStep::ACTION_NOTIFY => $this->actionNotify($enrollment, $config),
             default => null,
         };
@@ -307,20 +440,38 @@ class FunnelExecutionService
         $this->moveToNextStep($enrollment, $step->nextStep);
     }
 
-    protected function actionAddTag(Subscriber $subscriber, array $config): void
+    /**
+     * Add a tag, by `tag_id` or by name; a name the account has no tag for yet
+     * creates it, as the automation action does.
+     */
+    protected function actionAddTag(FunnelSubscriber $enrollment, array $config): void
     {
-        $tag = $config['tag'] ?? null;
-        if ($tag) {
-            $subscriber->addTag($tag);
+        $subscriber = $enrollment->subscriber;
+        $tag = $this->findTag($subscriber, $config);
+        $name = trim((string) ($config['tag'] ?? ''));
+
+        if (!$tag && empty($config['tag_id']) && $name !== '') {
+            $tag = Tag::firstOrCreate(['user_id' => $subscriber->user_id, 'name' => $name]);
         }
+
+        if (!$tag) {
+            $enrollment->addToHistory('tag_skipped', ['reason' => 'Tag not found']);
+            return;
+        }
+
+        $subscriber->addTag($tag);
     }
 
-    protected function actionRemoveTag(Subscriber $subscriber, array $config): void
+    protected function actionRemoveTag(FunnelSubscriber $enrollment, array $config): void
     {
-        $tag = $config['tag'] ?? null;
-        if ($tag) {
-            $subscriber->removeTag($tag);
+        $tag = $this->findTag($enrollment->subscriber, $config);
+
+        if (!$tag) {
+            $enrollment->addToHistory('tag_skipped', ['reason' => 'Tag not found']);
+            return;
         }
+
+        $enrollment->subscriber->removeTag($tag);
     }
 
     /**
@@ -372,7 +523,7 @@ class FunnelExecutionService
      * none: switching the trigger type keeps the old trigger_list_id, which the
      * builder no longer shows, so it must not decide where anyone is moved from.
      */
-    protected function signupListId(Funnel $funnel): ?int
+    public function signupListId(Funnel $funnel): ?int
     {
         return $funnel->trigger_type === Funnel::TRIGGER_LIST_SIGNUP ? $funnel->trigger_list_id : null;
     }
@@ -435,22 +586,58 @@ class FunnelExecutionService
         }
     }
 
-    protected function actionUnsubscribe(Subscriber $subscriber, array $config): void
+    /**
+     * Unsubscribe from `list_id`, or without one from the list a "list signup"
+     * funnel is triggered by. Only an active membership is changed.
+     */
+    protected function actionUnsubscribe(FunnelSubscriber $enrollment, array $config): void
     {
-        $listId = $config['list_id'] ?? null;
-        if ($listId) {
-            $subscriber->unsubscribeFromList($listId);
-        }
+        $listId = (int) (($config['list_id'] ?? null) ?: $this->signupListId($enrollment->funnel));
+
+        $reason = match (true) {
+            !$listId => 'No list: the step names none and the funnel is not triggered by a list signup',
+            !$enrollment->subscriber->unsubscribeFromList($listId, 'funnel') => 'Subscriber is not active on the list',
+            default => null,
+        };
+
+        $enrollment->addToHistory($reason === null ? 'unsubscribed' : 'unsubscribe_skipped', array_filter([
+            'list_id' => $listId ?: null,
+            'reason' => $reason,
+        ]));
     }
 
+    /**
+     * Email the funnel owner (or `email`) that a subscriber reached this step.
+     * `subject` and `message` accept {{subscriber_email}}, {{subscriber_name}}
+     * and {{funnel_name}}. A mail failure is logged, the funnel carries on.
+     */
     protected function actionNotify(FunnelSubscriber $enrollment, array $config): void
     {
-        // Send notification to funnel owner
-        $email = $config['email'] ?? $enrollment->funnel->user->email;
-        $message = $config['message'] ?? 'Subscriber completed funnel action';
+        $subscriber = $enrollment->subscriber;
+        $funnel = $enrollment->funnel;
+        $email = trim((string) ($config['email'] ?? '')) ?: $funnel->user?->email;
 
-        // Could use notification system here
-        Log::info("Funnel notification: {$message} for {$enrollment->subscriber->email}");
+        if (!$email) {
+            $enrollment->addToHistory('notification_skipped', ['reason' => 'No recipient']);
+            return;
+        }
+
+        $replacements = [
+            '{{subscriber_email}}' => $subscriber->email,
+            '{{subscriber_name}}' => trim("{$subscriber->first_name} {$subscriber->last_name}") ?: $subscriber->email,
+            '{{funnel_name}}' => $funnel->name,
+        ];
+
+        $subject = strtr(trim((string) ($config['subject'] ?? '')) ?: 'Lejek „{{funnel_name}}”: {{subscriber_email}}', $replacements);
+        $body = strtr(trim((string) ($config['message'] ?? '')) ?: 'Subskrybent {{subscriber_name}} ({{subscriber_email}}) jest na kroku powiadomienia w lejku „{{funnel_name}}”.', $replacements);
+
+        try {
+            Mail::raw($body, fn ($mail) => $mail->to($email)->subject($subject));
+            $enrollment->addToHistory('notification_sent', ['email' => $email]);
+        } catch (\Throwable $e) {
+            $enrollment->addToHistory('notification_failed', ['email' => $email, 'error' => $e->getMessage()]);
+            Log::warning("Funnel notification to {$email} failed: {$e->getMessage()}");
+        }
     }
 
     /**

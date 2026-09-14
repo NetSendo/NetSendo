@@ -309,7 +309,9 @@
         "status": "Status",
         "name": "Name",
         "characters": "characters",
-        "source_placeholder": "Type or paste HTML code..."
+        "source_placeholder": "Type or paste HTML code...",
+        "undo": "Undo",
+        "redo": "Redo"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -4371,7 +4373,11 @@
                 "delay": "Delay",
                 "condition": "Condition",
                 "action": "Action",
-                "end": "End"
+                "end": "End",
+                "sms": "SMS",
+                "wait_until": "Wait until",
+                "split": "A/B test",
+                "goal": "Goal"
             },
             "retry": {
                 "title": "Wait & Retry",
@@ -4406,6 +4412,60 @@
                 "task_id": "Task ID",
                 "task_id_placeholder": "e.g. quiz-1, onboarding-step-2",
                 "task_id_help": "Used by external system to mark completion"
+            },
+            "add_variant": "Add variant",
+            "characters": "characters",
+            "date": "Date",
+            "time": "Time",
+            "fit_to_view": "Fit to view",
+            "zoom_in": "Zoom in",
+            "zoom_out": "Zoom out",
+            "goal_name": "Goal name",
+            "goal_name_placeholder": "e.g. Course purchase",
+            "goal_type": "Goal type",
+            "goal_value": "Goal value",
+            "sms_content": "SMS text",
+            "sms_placeholder": "SMS message text...",
+            "total_weight": "Total weight",
+            "variants": "Variants",
+            "wait_until_type": "Wait until",
+            "weekday": "Day of the week",
+            "weekdays": {
+                "1": "Monday",
+                "2": "Tuesday",
+                "3": "Wednesday",
+                "4": "Thursday",
+                "5": "Friday",
+                "6": "Saturday",
+                "7": "Sunday"
+            },
+            "business_hours_help": "The subscriber continues during business hours: Monday to Friday, 9:00–17:00 (the step's time zone). Within those hours they continue straight away.",
+            "unsubscribe_list": "Unsubscribe from list",
+            "unsubscribe_list_required": "Choose a list — this funnel is not triggered by a list signup.",
+            "condition_config": {
+                "message": "Email",
+                "last_message": "The last email sent in this funnel",
+                "any_message": "Any email",
+                "url": "Link URL",
+                "field": "Field",
+                "field_help": "Name of a custom field, e.g. city",
+                "operator": "Field condition",
+                "operators": {
+                    "equals": "equals",
+                    "not_equals": "does not equal",
+                    "contains": "contains",
+                    "not_empty": "is filled in",
+                    "empty": "is empty"
+                },
+                "value": "Value",
+                "branches_help": "Connect the \"Yes\" (✓) and \"No\" (✗) paths — without a connected path the enrollment ends the funnel here."
+            },
+            "notify": {
+                "email": "Recipient address",
+                "email_placeholder": "Default: the funnel owner",
+                "subject": "Subject",
+                "message": "Message",
+                "placeholders_help": "You can use: {placeholders}."
             }
         },
         "table": {
@@ -4435,6 +4495,10 @@
             "active": "Active",
             "draft": "Draft",
             "paused": "Paused"
+        },
+        "notifications": {
+            "saved": "Funnel saved.",
+            "created": "Funnel created."
         }
     },
     "automations": {

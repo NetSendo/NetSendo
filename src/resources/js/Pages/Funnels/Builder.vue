@@ -144,6 +144,14 @@ const addNode = (type, x = null, y = null) => {
         // Condition defaults
         condition_type: type === 'condition' ? 'email_opened' : null,
         condition_config: {},
+        // Wait & retry defaults (condition steps)
+        wait_for_condition: false,
+        retry_enabled: false,
+        retry_max_attempts: 3,
+        retry_interval_value: 24,
+        retry_interval_unit: 'hours',
+        retry_message_id: null,
+        retry_exhausted_action: 'continue',
         // Action defaults
         action_type: type === 'action' ? 'add_tag' : null,
         action_config: {},
@@ -153,6 +161,7 @@ const addNode = (type, x = null, y = null) => {
         wait_until_type: type === 'wait_until' ? 'specific_date' : null,
         wait_until_date: null,
         wait_until_time: null,
+        wait_until_day: null,
         wait_until_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         // Goal defaults
         goal_name: type === 'goal' ? '' : null,
@@ -228,6 +237,24 @@ const updateActionConfig = (changes) => {
     updateNodeData('action_config', config);
 };
 
+// Merge changes into the selected condition's config; an emptied key is removed
+const updateConditionConfig = (changes) => {
+    if (!selectedNode.value) return;
+
+    const config = { ...selectedNode.value.data.condition_config, ...changes };
+    Object.keys(changes).forEach((key) => {
+        if (config[key] === '' || config[key] === null) {
+            delete config[key];
+        }
+    });
+
+    updateNodeData('condition_config', config);
+};
+
+const notifyPlaceholders = ['{{subscriber_email}}', '{{subscriber_name}}', '{{funnel_name}}'].join(', ');
+const fieldOperators = ['equals', 'not_equals', 'contains', 'not_empty', 'empty'];
+const weekdays = [1, 2, 3, 4, 5, 6, 7];
+
 // A "move to list" step without its own source list moves from this list — only a
 // list signup funnel has one (a trigger list kept after switching the type is ignored)
 const signupListName = computed(() => {
@@ -236,15 +263,15 @@ const signupListName = computed(() => {
     return props.lists?.find((list) => String(list.id) === String(formData.trigger_list_id))?.name ?? null;
 });
 
-// Connect nodes
+// Connect nodes. A step follows one path per handle (a condition has "yes" and
+// "no"), so a new connection replaces the one it had on that handle
 const connectNodes = (sourceId, targetId, handleId = 'default') => {
-    // Check if edge already exists
-    const exists = edges.value.find(
-        e => e.source === sourceId && e.target === targetId
-    );
-    if (exists) return;
+    const sameHandle = (e) => e.source === sourceId && (e.sourceHandle || 'default') === handleId;
+
+    if (edges.value.some((e) => sameHandle(e) && e.target === targetId)) return;
 
     saveHistory();
+    edges.value = edges.value.filter((e) => !sameHandle(e));
     edges.value.push({
         id: `e${sourceId}-${targetId}-${handleId}`,
         source: sourceId,
@@ -355,6 +382,12 @@ const getNodeEdges = (nodeId) => {
     return edges.value.filter(e => e.source === nodeId);
 };
 
+const getEdgeLabel = (edge) => {
+    if (edge.sourceHandle === 'yes') return `${t('common.yes')}: `;
+    if (edge.sourceHandle === 'no') return `${t('common.no')}: `;
+    return '';
+};
+
 // Get connected target for display
 const getTargetName = (targetId) => {
     const node = nodes.value.find(n => n.id === targetId);
@@ -451,10 +484,37 @@ const getNodeValidationStatus = (node) => {
             return node.data.sms_content?.trim() ? 'valid' : 'warning';
         case 'delay':
             return node.data.delay_value && node.data.delay_unit ? 'valid' : 'warning';
-        case 'condition':
-            return node.data.condition_type ? 'valid' : 'warning';
-        case 'action':
-            return node.data.action_type ? 'valid' : 'warning';
+        case 'condition': {
+            const config = node.data.condition_config || {};
+            const configured = {
+                link_clicked: config.url,
+                tag_exists: config.tag,
+                field_value: config.field,
+                task_completed: config.task_id,
+            };
+            const hasBranch = edges.value.some((e) => e.source === node.id && ['yes', 'no'].includes(e.sourceHandle));
+            if (!node.data.condition_type || !hasBranch) return 'warning';
+            return node.data.condition_type in configured && !configured[node.data.condition_type] ? 'warning' : 'valid';
+        }
+        case 'wait_until':
+            if (node.data.wait_until_type === 'specific_date') return node.data.wait_until_date ? 'valid' : 'warning';
+            if (node.data.wait_until_type === 'day_of_week') return node.data.wait_until_day ? 'valid' : 'warning';
+            return 'valid';
+        case 'action': {
+            const config = node.data.action_config || {};
+            switch (node.data.action_type) {
+                case 'add_tag':
+                case 'remove_tag':
+                    return config.tag ? 'valid' : 'warning';
+                case 'copy_to_list':
+                case 'move_to_list':
+                    return config.list_id || config.to_list_id ? 'valid' : 'warning';
+                case 'webhook':
+                    return config.url ? 'valid' : 'warning';
+                default:
+                    return node.data.action_type ? 'valid' : 'warning';
+            }
+        }
         case 'goal':
             return node.data.goal_type ? 'valid' : 'warning';
         case 'split':
@@ -718,7 +778,7 @@ const getNodeValidationStatus = (node) => {
                     </div>
 
                     <!-- Connection handles -->
-                    <div v-if="node.type !== 'end'" class="absolute -bottom-3 left-1/2 -translate-x-1/2">
+                    <div v-if="node.type !== 'end' && node.type !== 'condition'" class="absolute -bottom-3 left-1/2 -translate-x-1/2">
                         <button
                             @click.stop="toggleConnectDropdown(node.id)"
                             class="w-6 h-6 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white flex items-center justify-center text-xs shadow"
@@ -743,27 +803,58 @@ const getNodeValidationStatus = (node) => {
                                  {{ nodeConfig[targetNode.type]?.icon }} {{ targetNode.data?.name || t(nodeConfig[targetNode.type]?.label) }}
                             </button>
                             <div class="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
-                                <button
-                                    v-for="(config, type) in nodeConfig"
-                                    v-if="type !== 'start'"
-                                    :key="type"
-                                    @click="() => { const newId = addNode(type, node.position.x, node.position.y + 120); quickConnect(node.id, newId); }"
-                                    class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
-                                >
-                                    {{ config.icon }} {{ t('funnels.builder.new') }} {{ t(config.label) }}
-                                </button>
+                                <template v-for="(config, type) in nodeConfig" :key="type">
+                                    <button
+                                        v-if="type !== 'start'"
+                                        @click="() => { const newId = addNode(type, node.position.x, node.position.y + 120); quickConnect(node.id, newId); }"
+                                        class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {{ config.icon }} {{ t('funnels.builder.new') }} {{ t(config.label) }}
+                                    </button>
+                                </template>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Condition handles (yes/no) -->
+                    <!-- Condition handles (yes/no): each branch connects on its own handle -->
                     <div v-if="node.type === 'condition'" class="absolute -bottom-3 flex gap-8 left-1/2 -translate-x-1/2">
-                        <button @click.stop="toggleConnectDropdown(node.id + '-yes')" class="w-6 h-6 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center text-[10px] shadow" :title="t('common.yes')">
-                            ✓
-                        </button>
-                        <button @click.stop="toggleConnectDropdown(node.id + '-no')" class="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-[10px] shadow" :title="t('common.no')">
-                            ✗
-                        </button>
+                        <div v-for="branch in ['yes', 'no']" :key="branch" class="relative">
+                            <button
+                                @click.stop="toggleConnectDropdown(`${node.id}-${branch}`)"
+                                :class="['w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] shadow', branch === 'yes' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600']"
+                                :title="t(`common.${branch}`)"
+                            >
+                                {{ branch === 'yes' ? '✓' : '✗' }}
+                            </button>
+
+                            <div
+                                v-if="showConnectDropdown === `${node.id}-${branch}`"
+                                class="absolute top-8 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[150px] z-50"
+                            >
+                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">
+                                    {{ t(`common.${branch}`) }} — {{ t('funnels.builder.connect_to') }}
+                                </div>
+                                <button
+                                    v-for="targetNode in nodes.filter(n => n.id !== node.id && n.type !== 'start')"
+                                    :key="targetNode.id"
+                                    @click="quickConnect(node.id, targetNode.id, branch)"
+                                    class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
+                                >
+                                    {{ nodeConfig[targetNode.type]?.icon }} {{ targetNode.data?.name || t(nodeConfig[targetNode.type]?.label) }}
+                                </button>
+                                <div class="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                                    <template v-for="(config, type) in nodeConfig" :key="type">
+                                        <button
+                                            v-if="type !== 'start'"
+                                            @click="() => { const newId = addNode(type, node.position.x + (branch === 'yes' ? -120 : 120), node.position.y + 120); quickConnect(node.id, newId, branch); }"
+                                            class="w-full text-left px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300"
+                                        >
+                                            {{ config.icon }} {{ t('funnels.builder.new') }} {{ t(config.label) }}
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Delete button -->
@@ -886,6 +977,214 @@ const getNodeValidationStatus = (node) => {
                                 <option v-for="(label, key) in conditionTypes" :key="key" :value="key">{{ label }}</option>
                             </select>
                         </div>
+
+                        <!-- Email the condition is about: empty means the last one this funnel sent -->
+                        <div v-if="['email_opened', 'email_clicked', 'link_clicked'].includes(selectedNode.data.condition_type)">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.condition_config.message') }}
+                            </label>
+                            <select
+                                :value="selectedNode.data.condition_config?.message_id || ''"
+                                @change="(e) => updateConditionConfig({ message_id: e.target.value })"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                                <option value="">
+                                    {{ selectedNode.data.condition_type === 'link_clicked' ? t('funnels.builder.condition_config.any_message') : t('funnels.builder.condition_config.last_message') }}
+                                </option>
+                                <option v-for="msg in messages" :key="msg.id" :value="msg.id">{{ msg.subject }}</option>
+                            </select>
+                        </div>
+
+                        <div v-if="selectedNode.data.condition_type === 'link_clicked'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.condition_config.url') }}
+                            </label>
+                            <input
+                                :value="selectedNode.data.condition_config?.url"
+                                @input="(e) => updateConditionConfig({ url: e.target.value })"
+                                type="url"
+                                placeholder="https://..."
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                        </div>
+
+                        <div v-if="selectedNode.data.condition_type === 'tag_exists'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.tag') }}
+                            </label>
+                            <input
+                                :value="selectedNode.data.condition_config?.tag"
+                                @input="(e) => updateConditionConfig({ tag: e.target.value })"
+                                type="text"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                        </div>
+
+                        <template v-if="selectedNode.data.condition_type === 'field_value'">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.condition_config.field') }}
+                                </label>
+                                <input
+                                    :value="selectedNode.data.condition_config?.field"
+                                    @input="(e) => updateConditionConfig({ field: e.target.value })"
+                                    type="text"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                />
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('funnels.builder.condition_config.field_help') }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.condition_config.operator') }}
+                                </label>
+                                <select
+                                    :value="selectedNode.data.condition_config?.operator || 'equals'"
+                                    @change="(e) => updateConditionConfig({ operator: e.target.value })"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                >
+                                    <option v-for="operator in fieldOperators" :key="operator" :value="operator">
+                                        {{ t(`funnels.builder.condition_config.operators.${operator}`) }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div v-if="!['empty', 'not_empty'].includes(selectedNode.data.condition_config?.operator)">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.condition_config.value') }}
+                                </label>
+                                <input
+                                    :value="selectedNode.data.condition_config?.value"
+                                    @input="(e) => updateConditionConfig({ value: e.target.value })"
+                                    type="text"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                />
+                            </div>
+                        </template>
+
+                        <div v-if="selectedNode.data.condition_type === 'task_completed'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.task_config.task_id') }}
+                            </label>
+                            <input
+                                :value="selectedNode.data.condition_config?.task_id"
+                                @input="(e) => updateConditionConfig({ task_id: e.target.value })"
+                                type="text"
+                                :placeholder="t('funnels.builder.task_config.task_id_placeholder')"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('funnels.builder.task_config.task_id_help') }}</p>
+                        </div>
+
+                        <p class="text-xs text-amber-600 dark:text-amber-400">
+                            {{ t('funnels.builder.condition_config.branches_help') }}
+                        </p>
+
+                        <!-- Wait & retry -->
+                        <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {{ t('funnels.builder.retry.title') }}
+                            </h4>
+                            <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <input
+                                    type="checkbox"
+                                    :checked="selectedNode.data.wait_for_condition"
+                                    @change="(e) => updateNodeData('wait_for_condition', e.target.checked)"
+                                    class="mt-0.5 rounded border-gray-300 dark:border-gray-600"
+                                />
+                                <span>
+                                    {{ t('funnels.builder.retry.wait_for_condition') }}
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400">{{ t('funnels.builder.retry.wait_for_condition_desc') }}</span>
+                                </span>
+                            </label>
+
+                            <template v-if="selectedNode.data.wait_for_condition">
+                                <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <input
+                                        type="checkbox"
+                                        :checked="selectedNode.data.retry_enabled"
+                                        @change="(e) => updateNodeData('retry_enabled', e.target.checked)"
+                                        class="mt-0.5 rounded border-gray-300 dark:border-gray-600"
+                                    />
+                                    <span>
+                                        {{ t('funnels.builder.retry.enabled') }}
+                                        <span class="block text-xs text-gray-500 dark:text-gray-400">{{ t('funnels.builder.retry.enabled_desc') }}</span>
+                                    </span>
+                                </label>
+
+                                <template v-if="selectedNode.data.retry_enabled">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ t('funnels.builder.retry.max_attempts') }}
+                                        </label>
+                                        <input
+                                            :value="selectedNode.data.retry_max_attempts"
+                                            @input="(e) => updateNodeData('retry_max_attempts', parseInt(e.target.value) || 1)"
+                                            type="number"
+                                            min="1"
+                                            max="10"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                        />
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('funnels.builder.retry.max_attempts_help') }}</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                {{ t('funnels.builder.retry.interval') }}
+                                            </label>
+                                            <input
+                                                :value="selectedNode.data.retry_interval_value"
+                                                @input="(e) => updateNodeData('retry_interval_value', parseInt(e.target.value) || 1)"
+                                                type="number"
+                                                min="1"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                {{ t('funnels.builder.retry.interval_unit') }}
+                                            </label>
+                                            <select
+                                                :value="selectedNode.data.retry_interval_unit || 'hours'"
+                                                @change="(e) => updateNodeData('retry_interval_unit', e.target.value)"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                            >
+                                                <option value="hours">{{ t('funnels.builder.retry.interval_hours') }}</option>
+                                                <option value="days">{{ t('funnels.builder.retry.interval_days') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ t('funnels.builder.retry.reminder_message') }}
+                                        </label>
+                                        <select
+                                            :value="selectedNode.data.retry_message_id || ''"
+                                            @change="(e) => updateNodeData('retry_message_id', e.target.value || null)"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                        >
+                                            <option value="">{{ t('funnels.builder.retry.same_as_original') }}</option>
+                                            <option v-for="msg in messages" :key="msg.id" :value="msg.id">{{ msg.subject }}</option>
+                                        </select>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            {{ t('funnels.builder.retry.reminder_message_help') }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            {{ t('funnels.builder.retry.exhausted_action') }}
+                                        </label>
+                                        <select
+                                            :value="selectedNode.data.retry_exhausted_action || 'continue'"
+                                            @change="(e) => updateNodeData('retry_exhausted_action', e.target.value)"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                        >
+                                            <option value="continue">{{ t('funnels.builder.retry.exhausted_continue') }}</option>
+                                            <option value="exit">{{ t('funnels.builder.retry.exhausted_exit') }}</option>
+                                            <option value="unsubscribe">{{ t('funnels.builder.retry.exhausted_unsubscribe') }}</option>
+                                        </select>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
                     </template>
 
                     <!-- Action step -->
@@ -970,6 +1269,68 @@ const getNodeValidationStatus = (node) => {
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             />
                         </div>
+
+                        <!-- Unsubscribe: empty means the trigger list of a list signup funnel -->
+                        <div v-if="selectedNode.data.action_type === 'unsubscribe'">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                {{ t('funnels.builder.unsubscribe_list') }}
+                            </label>
+                            <select
+                                :value="selectedNode.data.action_config?.list_id || ''"
+                                @change="(e) => updateActionConfig({ list_id: e.target.value })"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            >
+                                <option value="">
+                                    {{ signupListName ? t('funnels.builder.source_list_trigger', { list: signupListName }) : t('common.select') }}
+                                </option>
+                                <option v-for="list in lists" :key="list.id" :value="list.id">{{ list.name }}</option>
+                            </select>
+                            <p
+                                v-if="!signupListName && !selectedNode.data.action_config?.list_id"
+                                class="text-xs text-amber-600 dark:text-amber-400 mt-1"
+                            >
+                                {{ t('funnels.builder.unsubscribe_list_required') }}
+                            </p>
+                        </div>
+
+                        <!-- Notification: empty recipient means the funnel owner -->
+                        <template v-if="selectedNode.data.action_type === 'notify'">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.notify.email') }}
+                                </label>
+                                <input
+                                    :value="selectedNode.data.action_config?.email"
+                                    @input="(e) => updateActionConfig({ email: e.target.value })"
+                                    type="email"
+                                    :placeholder="t('funnels.builder.notify.email_placeholder')"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.notify.subject') }}
+                                </label>
+                                <input
+                                    :value="selectedNode.data.action_config?.subject"
+                                    @input="(e) => updateActionConfig({ subject: e.target.value })"
+                                    type="text"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {{ t('funnels.builder.notify.message') }}
+                                </label>
+                                <textarea
+                                    :value="selectedNode.data.action_config?.message"
+                                    @input="(e) => updateActionConfig({ message: e.target.value })"
+                                    rows="3"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                ></textarea>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ t('funnels.builder.notify.placeholders_help', { placeholders: notifyPlaceholders }) }}</p>
+                            </div>
+                        </template>
                     </template>
 
                     <!-- SMS step -->
@@ -1007,6 +1368,37 @@ const getNodeValidationStatus = (node) => {
                                     <option v-for="(label, key) in waitUntilTypes" :key="key" :value="key">{{ label }}</option>
                                 </select>
                             </div>
+
+                            <div v-if="selectedNode.data.wait_until_type === 'day_of_week'" class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {{ t('funnels.builder.weekday') }}
+                                    </label>
+                                    <select
+                                        :value="selectedNode.data.wait_until_day || ''"
+                                        @change="(e) => updateNodeData('wait_until_day', parseInt(e.target.value) || null)"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    >
+                                        <option value="">{{ t('common.select') }}</option>
+                                        <option v-for="day in weekdays" :key="day" :value="day">{{ t(`funnels.builder.weekdays.${day}`) }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        {{ t('funnels.builder.time') }}
+                                    </label>
+                                    <input
+                                        :value="selectedNode.data.wait_until_time"
+                                        @input="(e) => updateNodeData('wait_until_time', e.target.value)"
+                                        type="time"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                                    />
+                                </div>
+                            </div>
+
+                            <p v-if="selectedNode.data.wait_until_type === 'business_hours'" class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ t('funnels.builder.business_hours_help') }}
+                            </p>
 
                             <div v-if="selectedNode.data.wait_until_type === 'specific_date'" class="grid grid-cols-2 gap-3">
                                 <div>
@@ -1159,7 +1551,7 @@ const getNodeValidationStatus = (node) => {
                                 class="flex items-center justify-between text-sm bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2"
                             >
                                 <span class="text-gray-600 dark:text-gray-300">
-                                    → {{ getTargetName(edge.target) }}
+                                    → {{ getEdgeLabel(edge) }}{{ getTargetName(edge.target) }}
                                 </span>
                                 <button @click="disconnectEdge(edge.id)" class="text-red-500 hover:text-red-600">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -144,7 +144,7 @@ class FunnelSubscribersController extends Controller
             abort(404);
         }
 
-        if (!$subscriber->isActive() && !$subscriber->isWaiting()) {
+        if (!$subscriber->isActive() && !$subscriber->isWaiting() && !$subscriber->isWaitingForCondition()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Subskrybent nie może być wstrzymany w tym stanie.',
@@ -181,6 +181,11 @@ class FunnelSubscribersController extends Controller
 
         $subscriber->resume();
         $subscriber->addToHistory('resumed', ['by' => Auth::user()->name]);
+
+        // Paused before its step ran: run it now, or it stays active for good
+        if ($subscriber->isActive()) {
+            $this->executionService->processNextStep($subscriber->fresh());
+        }
 
         return response()->json([
             'success' => true,

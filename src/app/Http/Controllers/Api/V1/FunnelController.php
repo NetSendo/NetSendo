@@ -7,6 +7,7 @@ use App\Models\Funnel;
 use App\Models\FunnelStep;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -232,6 +233,8 @@ class FunnelController extends Controller
 
         $validated = $request->validate([
             'type' => 'required|in:email,sms,delay,condition,action,end',
+            // After a condition step: the path the new step goes on (default: yes)
+            'branch' => 'nullable|in:yes,no',
             'name' => 'required|string|max:255',
             'after_step_id' => 'nullable|integer', // Insert after this step
             'config' => 'nullable|array',
@@ -245,34 +248,62 @@ class FunnelController extends Controller
             'delay_value' => 'nullable|integer|min:1',
             'delay_unit' => 'nullable|in:minutes,hours,days',
             // For condition steps
-            'condition_type' => 'nullable|string',
+            'condition_type' => ['nullable', Rule::in(array_keys(FunnelStep::getConditionTypes()))],
             'condition_config' => 'nullable|array',
+            // For action steps
+            'action_type' => ['nullable', Rule::in(array_keys(FunnelStep::getActionTypes()))],
+            'action_config' => 'nullable|array',
+            // For SMS steps
+            'sms_content' => 'nullable|string|max:1600',
         ]);
 
-        // Calculate order
-        $order = $funnel->steps()->max('order') + 1;
-        if (isset($validated['after_step_id'])) {
-            $afterStep = $funnel->steps()->find($validated['after_step_id']);
-            if ($afterStep) {
-                $order = $afterStep->order + 1;
+        // The engine follows the steps' connections, not their order: a step
+        // added without being connected was never reached, so a funnel built over
+        // the API completed right after its start step
+        $step = DB::transaction(function () use ($funnel, $validated) {
+            $previous = isset($validated['after_step_id'])
+                ? $funnel->steps()->find($validated['after_step_id'])
+                : null;
+
+            if ($previous) {
+                $order = $previous->order + 1;
                 // Shift subsequent steps
                 $funnel->steps()
                     ->where('order', '>=', $order)
                     ->increment('order');
+            } else {
+                $previous = $funnel->steps()->reorder()->orderByDesc('order')->orderByDesc('id')->first();
+                $order = ($previous?->order ?? -1) + 1;
             }
-        }
 
-        $step = $funnel->steps()->create([
-            'type' => $validated['type'],
-            'name' => $validated['name'],
-            'order' => $order,
-            'config' => $validated['config'] ?? [],
-            'message_id' => $validated['message_id'] ?? null,
-            'delay_value' => $validated['delay_value'] ?? null,
-            'delay_unit' => $validated['delay_unit'] ?? null,
-            'condition_type' => $validated['condition_type'] ?? null,
-            'condition_config' => $validated['condition_config'] ?? null,
-        ]);
+            $link = match (true) {
+                !$previous => null,
+                $previous->isCondition() => ($validated['branch'] ?? 'yes') === 'no' ? 'next_step_no_id' : 'next_step_yes_id',
+                default => 'next_step_id',
+            };
+
+            $step = $funnel->steps()->create([
+                'type' => $validated['type'],
+                'name' => $validated['name'],
+                'order' => $order,
+                'message_id' => $validated['message_id'] ?? null,
+                'delay_value' => $validated['delay_value'] ?? null,
+                'delay_unit' => $validated['delay_unit'] ?? null,
+                'condition_type' => $validated['condition_type'] ?? null,
+                'condition_config' => $validated['condition_config'] ?? null,
+                'action_type' => $validated['action_type'] ?? null,
+                'action_config' => $validated['action_config'] ?? null,
+                'sms_content' => $validated['sms_content'] ?? null,
+                // Inserted into the chain: it continues where the previous step did
+                'next_step_id' => $link ? $previous->{$link} : null,
+            ]);
+
+            if ($link) {
+                $previous->update([$link => $step->id]);
+            }
+
+            return $step;
+        });
 
         return response()->json([
             'data' => $step,

@@ -85,6 +85,18 @@ class FunnelService
                     'delay_unit' => $node['data']['delay_unit'] ?? null,
                     'condition_type' => $node['data']['condition_type'] ?? null,
                     'condition_config' => $node['data']['condition_config'] ?? null,
+                    // Wait & retry: the column defaults when the builder sends none
+                    'wait_for_condition' => (bool) ($node['data']['wait_for_condition'] ?? false),
+                    'retry_enabled' => (bool) ($node['data']['retry_enabled'] ?? false),
+                    'retry_max_attempts' => max(1, (int) ($node['data']['retry_max_attempts'] ?? 3)),
+                    'retry_interval_value' => max(1, (int) ($node['data']['retry_interval_value'] ?? 24)),
+                    'retry_interval_unit' => in_array($node['data']['retry_interval_unit'] ?? null, [FunnelStep::RETRY_UNIT_HOURS, FunnelStep::RETRY_UNIT_DAYS], true)
+                        ? $node['data']['retry_interval_unit']
+                        : FunnelStep::RETRY_UNIT_HOURS,
+                    'retry_message_id' => ($node['data']['retry_message_id'] ?? null) ?: null,
+                    'retry_exhausted_action' => array_key_exists($node['data']['retry_exhausted_action'] ?? '', FunnelStep::getRetryExhaustedActions())
+                        ? $node['data']['retry_exhausted_action']
+                        : FunnelStep::RETRY_ACTION_CONTINUE,
                     'action_type' => $node['data']['action_type'] ?? null,
                     'action_config' => $node['data']['action_config'] ?? null,
                     // New enhanced fields
@@ -92,6 +104,7 @@ class FunnelService
                     'wait_until_type' => $node['data']['wait_until_type'] ?? null,
                     'wait_until_date' => $node['data']['wait_until_date'] ?? null,
                     'wait_until_time' => $node['data']['wait_until_time'] ?? null,
+                    'wait_until_day' => ($node['data']['wait_until_day'] ?? null) ?: null,
                     'wait_until_timezone' => $node['data']['wait_until_timezone'] ?? null,
                     'goal_name' => $node['data']['goal_name'] ?? null,
                     'goal_type' => $node['data']['goal_type'] ?? null,
@@ -101,6 +114,11 @@ class FunnelService
                     'position_x' => (int) ($node['position']['x'] ?? 250),
                     'position_y' => (int) ($node['position']['y'] ?? 100),
                     'order' => $index,
+                    // Set again from the edges below: a connection removed in the
+                    // builder was otherwise kept
+                    'next_step_id' => null,
+                    'next_step_yes_id' => null,
+                    'next_step_no_id' => null,
                 ];
 
                 if ($isNew) {
@@ -160,10 +178,13 @@ class FunnelService
      */
     public function getAvailableMessages(int $userId): \Illuminate\Database\Eloquent\Collection
     {
+        // Any email of the account: drafts are what is written for a funnel in
+        // the editor, `ready` is what Brain writes. Only `ready` was offered, so
+        // an email written by hand could not be picked
         return Message::where('user_id', $userId)
-            ->where('status', 'ready')
-            ->orderBy('subject')
-            ->get(['id', 'subject', 'created_at']);
+            ->where('channel', 'email')
+            ->orderByDesc('created_at')
+            ->get(['id', 'subject', 'status', 'type', 'created_at']);
     }
 
     /**
@@ -212,6 +233,13 @@ class FunnelService
                     'delay_display' => $step->delay_display,
                     'condition_type' => $step->condition_type,
                     'condition_config' => $step->condition_config,
+                    'wait_for_condition' => $step->wait_for_condition,
+                    'retry_enabled' => $step->retry_enabled,
+                    'retry_max_attempts' => $step->retry_max_attempts,
+                    'retry_interval_value' => $step->retry_interval_value,
+                    'retry_interval_unit' => $step->retry_interval_unit,
+                    'retry_message_id' => $step->retry_message_id,
+                    'retry_exhausted_action' => $step->retry_exhausted_action,
                     'action_type' => $step->action_type,
                     'action_config' => $step->action_config,
                     // New enhanced fields
@@ -219,6 +247,7 @@ class FunnelService
                     'wait_until_type' => $step->wait_until_type,
                     'wait_until_date' => $step->wait_until_date?->format('Y-m-d'),
                     'wait_until_time' => $step->wait_until_time,
+                    'wait_until_day' => $step->wait_until_day,
                     'wait_until_timezone' => $step->wait_until_timezone,
                     'goal_name' => $step->goal_name,
                     'goal_type' => $step->goal_type,
