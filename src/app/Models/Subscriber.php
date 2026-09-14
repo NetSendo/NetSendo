@@ -116,6 +116,16 @@ class Subscriber extends Model
     }
 
     /**
+     * Whether a send may reach this subscriber: bounced, unsubscribed and
+     * inactive addresses get nothing. For paths that dispatch a send directly
+     * (automations, funnels) instead of through the CRON queue gate.
+     */
+    public function isDeliverable(): bool
+    {
+        return $this->display_status === self::STATUS_ACTIVE;
+    }
+
+    /**
      * Narrow a subscriber query to one display status. Works on an Eloquent
      * builder and on a plain query builder over `subscribers`.
      */

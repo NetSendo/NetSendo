@@ -72,6 +72,20 @@ class AutomationActionExecutor
             throw new \InvalidArgumentException("Message not found: {$messageId}");
         }
 
+        // Dispatched outside the CRON queue gate, so the same rule is applied
+        // here. Not an error: the rule's other actions still run.
+        if (!$subscriber->isDeliverable()) {
+            $reason = "Subscriber is {$subscriber->display_status}";
+
+            Log::info('Automation email skipped', [
+                'message_id' => $messageId,
+                'subscriber_id' => $subscriber->id,
+                'reason' => $reason,
+            ]);
+
+            return ['message_id' => $messageId, 'queued' => false, 'skipped' => $reason];
+        }
+
         // Queue the email
         SendEmailJob::dispatch(
             $message,

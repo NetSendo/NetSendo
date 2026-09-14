@@ -92,6 +92,23 @@ class FunnelExecutionService
             return;
         }
 
+        // Skipped once due and the funnel moves on, as the CRON queue does for
+        // autoresponders: a subscriber reactivated before a later email step
+        // still gets that one
+        if (!$subscriber->isDeliverable()) {
+            $reason = "Subscriber is {$subscriber->display_status}";
+
+            $enrollment->addToHistory('email_skipped', [
+                'message_id' => $message->id,
+                'reason' => $reason,
+            ]);
+
+            Log::info("Funnel email step {$step->id} skipped for subscriber {$subscriber->id}: {$reason}");
+
+            $this->moveToNextStep($enrollment, $step->nextStep);
+            return;
+        }
+
         // Queue the email
         SendEmailJob::dispatch($message, $subscriber);
 

@@ -74,6 +74,23 @@ class FunnelRetryService
 
         $subscriber = $enrollment->subscriber;
 
+        // Not sent, but counted: otherwise the reminder would be retried on
+        // every run, and the step's exhausted action would never apply
+        if (!$subscriber->isDeliverable()) {
+            $reason = "Subscriber is {$subscriber->display_status}";
+            $retry = FunnelStepRetry::createAttempt($enrollment->id, $step->id);
+
+            $enrollment->addToHistory('retry_skipped', [
+                'attempt_number' => $retry->attempt_number,
+                'message_id' => $message->id,
+                'reason' => $reason,
+            ]);
+
+            Log::info("Skipped retry #{$retry->attempt_number} for subscriber {$subscriber->id} on step {$step->id}: {$reason}");
+
+            return false;
+        }
+
         // Queue the reminder email
         SendEmailJob::dispatch($message, $subscriber);
 

@@ -140,6 +140,11 @@ class FunnelSubscriber extends Model
         $this->next_action_at = null;
         $this->save();
 
+        // A loaded relation is not refreshed when the key changes: without this
+        // `currentStep` kept returning the previous step, and processing
+        // re-ran that step forever
+        $this->setRelation('currentStep', $step);
+
         return $this;
     }
 
