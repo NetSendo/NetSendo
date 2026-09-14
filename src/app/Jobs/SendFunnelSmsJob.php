@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\DispatchesSmsWebhooks;
 use App\Models\Subscriber;
 use App\Services\PlaceholderService;
 use App\Services\Sms\SmsProviderService;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 class SendFunnelSmsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DispatchesSmsWebhooks;
 
     public $tries = 3;
     public $backoff = [60, 300, 900];
@@ -37,6 +39,7 @@ class SendFunnelSmsJob implements ShouldQueue
 
         if (blank($this->subscriber->phone)) {
             Log::warning('Funnel SMS not sent: subscriber has no phone number', $context);
+            $this->dispatchSmsFailed(null, 'Subscriber has no phone number', 'NO_PHONE');
             return;
         }
 
@@ -44,11 +47,13 @@ class SendFunnelSmsJob implements ShouldQueue
 
         if (!$provider) {
             Log::warning('Funnel SMS not sent: no active SMS provider', $context);
+            $this->dispatchSmsFailed(null, 'No active SMS provider', 'NO_PROVIDER');
             return;
         }
 
         if ($provider->hasReachedDailyLimit()) {
             Log::warning('Funnel SMS not sent: the provider reached its daily limit', $context);
+            $this->dispatchSmsFailed($provider, 'The provider reached its daily limit', 'DAILY_LIMIT');
             return;
         }
 
@@ -60,11 +65,43 @@ class SendFunnelSmsJob implements ShouldQueue
                 'reason' => $result->errorMessage ?? 'Unknown error',
                 'code' => $result->errorCode,
             ]);
+            $this->dispatchSmsFailed($provider, $result->errorMessage ?? 'Unknown error', $result->errorCode);
             return;
         }
 
         $provider->incrementSentCount();
 
         Log::info('Funnel SMS sent', $context + ['sms_message_id' => $result->messageId]);
+
+        $this->dispatchSmsSent($provider, $content, $result);
+    }
+
+    /**
+     * An exception is retried; after the last attempt the SMS is not sent.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('Funnel SMS permanently failed', [
+            'subscriber_id' => $this->subscriber->id,
+            'funnel_step_id' => $this->stepId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        try {
+            $provider = app(SmsProviderService::class)->getBestProvider($this->userId);
+        } catch (\Throwable) {
+            $provider = null;
+        }
+
+        $this->dispatchSmsFailed($provider, $exception->getMessage(), 'EXCEPTION');
+    }
+
+    protected function smsWebhookOrigin(): array
+    {
+        return [
+            'user_id' => $this->userId,
+            'message_id' => null,
+            'funnel_step_id' => $this->stepId,
+        ];
     }
 }

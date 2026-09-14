@@ -429,15 +429,21 @@ export async function executeSmsOperations(
 
 ### sms.sent
 
+Wysyłany, gdy dostawca przyjął SMS — z kampanii, autorespondera, API (`SendSmsJob`) i z kroku SMS lejka (`SendFunnelSmsJob`). SMS z kampanii lub API ma `message_id`, SMS z lejka `funnel_step_id`; drugie pole jest `null`. `credits` i `parts` są `null`, jeśli dostawca ich nie podaje.
+
 ```json
 {
   "event": "sms.sent",
   "timestamp": "2025-12-24T21:10:05Z",
   "data": {
     "message_id": 123,
+    "funnel_step_id": null,
+    "subscriber_id": 456,
     "phone": "+48123456789",
-    "external_id": "SM1234567890",
-    "credits_used": 1,
+    "provider": "SMS API (Polska)",
+    "content": "Cześć Jan!",
+    "provider_message_id": "SM1234567890",
+    "credits": 0.16,
     "parts": 1
   }
 }
@@ -445,15 +451,20 @@ export async function executeSmsOperations(
 
 ### sms.failed
 
+Wysyłany raz, gdy SMS na pewno nie wyjdzie: dostawca go odrzucił albo nie ma numeru, dostawcy lub dziennego limitu — od razu; wyjątek (np. timeout bramki) jest ponawiany i `sms.failed` przychodzi dopiero po ostatniej, trzeciej próbie. `error_code`: kod dostawcy albo `NO_PHONE`, `NO_PROVIDER`, `DAILY_LIMIT`, `EXCEPTION`. `provider` jest `null`, gdy żadnego nie znaleziono.
+
 ```json
 {
   "event": "sms.failed",
   "timestamp": "2025-12-24T21:10:05Z",
   "data": {
-    "message_id": 123,
+    "message_id": null,
+    "funnel_step_id": 42,
+    "subscriber_id": 456,
     "phone": "+48123456789",
-    "error_code": "INVALID_NUMBER",
-    "error_message": "Phone number is not valid"
+    "provider": "SMS API (Polska)",
+    "error": "Phone number is not valid",
+    "error_code": "INVALID_NUMBER"
   }
 }
 ```

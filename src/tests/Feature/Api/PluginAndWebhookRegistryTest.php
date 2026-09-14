@@ -59,7 +59,7 @@ class PluginAndWebhookRegistryTest extends TestCase
             ->assertStatus(200)
             ->json('events');
 
-        foreach (['email.queued', 'subscriber.resubscribed', 'subscriber.tag_added'] as $event) {
+        foreach (['email.queued', 'subscriber.resubscribed', 'subscriber.tag_added', 'sms.sent', 'sms.failed'] as $event) {
             $this->assertContains($event, $events);
         }
     }

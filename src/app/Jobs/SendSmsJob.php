@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\DispatchesSmsWebhooks;
 use App\Models\Message;
 use App\Models\Subscriber;
 use App\Models\SmsProvider;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 class SendSmsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use DispatchesSmsWebhooks;
 
     public $tries = 3;
     public $backoff = [60, 300, 900]; // 1min, 5min, 15min
@@ -34,25 +36,19 @@ class SendSmsJob implements ShouldQueue
         // Get phone number
         $phone = $this->subscriber->phone;
         if (!$phone) {
-            $this->failWithReason('Subskrybent nie ma numeru telefonu');
+            $this->failWithReason('Subskrybent nie ma numeru telefonu', 'NO_PHONE');
             return;
         }
 
-        // Get or find the best SMS provider using hierarchical resolution
-        // Priority: Explicit -> Message -> List -> Global Default
-        $provider = $this->smsProvider ?? $this->message->getEffectiveSmsProvider();
+        $provider = $this->resolveProvider($smsProviderService);
         if (!$provider) {
-            // Fallback to service's best provider method
-            $provider = $smsProviderService->getBestProvider($this->message->user_id);
-        }
-        if (!$provider) {
-            $this->failWithReason('Brak aktywnego dostawcy SMS');
+            $this->failWithReason('Brak aktywnego dostawcy SMS', 'NO_PROVIDER');
             return;
         }
 
         // Check provider limits
         if ($provider->hasReachedDailyLimit()) {
-            $this->failWithReason('Osiągnięto dzienny limit wysyłek');
+            $this->failWithReason('Osiągnięto dzienny limit wysyłek', 'DAILY_LIMIT', $provider);
             return;
         }
 
@@ -85,8 +81,10 @@ class SendSmsJob implements ShouldQueue
                     'subscriber_id' => $this->subscriber->id,
                     'sms_message_id' => $result->messageId,
                 ]);
+
+                $this->dispatchSmsSent($provider, $content, $result);
             } else {
-                $this->failWithReason($result->errorMessage ?? 'Unknown error', $result->errorCode);
+                $this->failWithReason($result->errorMessage ?? 'Unknown error', $result->errorCode, $provider);
             }
         } catch (\Exception $e) {
             Log::error('SendSmsJob failed', [
@@ -95,17 +93,47 @@ class SendSmsJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            $this->failWithReason($e->getMessage(), 'EXCEPTION');
+            $this->recordFailure($e->getMessage(), 'EXCEPTION');
 
-            // Re-throw to trigger retry
+            // Re-throw to trigger retry; failed() reports sms.failed after the last attempt
             throw $e;
         }
     }
 
     /**
-     * Mark as failed with reason.
+     * Get or find the best SMS provider using hierarchical resolution.
+     * Priority: Explicit -> Message -> List -> Global Default -> any active provider
      */
-    private function failWithReason(string $reason, ?string $code = null): void
+    private function resolveProvider(SmsProviderService $smsProviderService): ?SmsProvider
+    {
+        return $this->smsProvider
+            ?? $this->message->getEffectiveSmsProvider()
+            ?? $smsProviderService->getBestProvider($this->message->user_id);
+    }
+
+    protected function smsWebhookOrigin(): array
+    {
+        return [
+            'user_id' => $this->message->user_id,
+            'message_id' => $this->message->id,
+            'funnel_step_id' => null,
+        ];
+    }
+
+    /**
+     * Mark as failed with reason. The job is not retried, so sms.failed goes out.
+     */
+    private function failWithReason(string $reason, ?string $code = null, ?SmsProvider $provider = null): void
+    {
+        $this->recordFailure($reason, $code);
+
+        $this->dispatchSmsFailed($provider, $reason, $code);
+    }
+
+    /**
+     * Log the failure and mark the queue entry as failed.
+     */
+    private function recordFailure(string $reason, ?string $code): void
     {
         Log::warning('SMS sending failed', [
             'message_id' => $this->message->id,
@@ -196,5 +224,13 @@ class SendSmsJob implements ShouldQueue
             'error' => $exception->getMessage(),
             'failed_at' => now()->toISOString(),
         ]);
+
+        try {
+            $provider = $this->resolveProvider(app(SmsProviderService::class));
+        } catch (\Throwable) {
+            $provider = null;
+        }
+
+        $this->dispatchSmsFailed($provider, $exception->getMessage(), 'EXCEPTION');
     }
 }
