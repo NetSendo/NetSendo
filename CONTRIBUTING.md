@@ -2,6 +2,8 @@
 
 Thank you for considering contributing to NetSendo! We welcome contributions from developers of all experience levels.
 
+> **Licence:** NetSendo is proprietary, source-available software under the [NetSendo EULA](LICENSE.md). You may fork and modify it only to prepare pull requests to this repository (EULA §6.8); a fork must not be published elsewhere, rebranded or run in production. Contributions are licensed to NetSendo under EULA §8.5. AI coding tools are fine for contributing — see [AGENTS.md](AGENTS.md).
+
 ## 🌟 Ways to Contribute
 
 - ⭐ **Star the repo** — it helps others discover NetSendo

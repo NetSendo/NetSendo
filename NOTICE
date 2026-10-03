@@ -1,0 +1,24 @@
+NetSendo
+Copyright (c) NetSendo PSA. All rights reserved.
+
+This software is proprietary and source-available. It is licensed under the
+NetSendo End User License Agreement (LICENSE.md), not under an open-source
+licence. Making the source code public does not grant any right to copy,
+modify, distribute, rebrand or host it beyond what LICENSE.md permits.
+
+Third-party and open-source components remain under their own licences
+(LICENSE.md, Section 9).
+
+TEXT AND DATA MINING RESERVATION
+tdm-reservation: 1
+tdm-policy: https://github.com/NetSendo/NetSendo/blob/main/LICENSE.md
+
+NetSendo PSA expressly reserves the use of this software, its source code,
+documentation and all other repository content for text and data mining,
+including training, fine-tuning, evaluating or benchmarking AI systems,
+under Article 4(3) of Directive (EU) 2019/790 and the national laws
+implementing it (LICENSE.md, Sections 7.9 and 8.8). This reservation applies
+to every copy, fork and mirror of this repository.
+
+Contributions are welcome through pull requests to
+https://github.com/NetSendo/NetSendo (LICENSE.md, Section 6.8).

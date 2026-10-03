@@ -12,7 +12,7 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-green.svg)](https://vuejs.org)
 [![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8.svg)](https://tailwindcss.com)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vite.dev)
-[![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](LICENSE.md)
 [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/NetSendo/NetSendo?style=social)](https://github.com/NetSendo/NetSendo/stargazers)
 
@@ -551,7 +551,13 @@ We welcome contributions! Whether it's fixing bugs, improving documentation, or 
 
 ## 📄 License
 
-NetSendo is proprietary software. See [LICENSE](LICENSE) for details.
+NetSendo is proprietary, source-available software licensed under the [NetSendo EULA](LICENSE.md). The code is public so you can read it, report issues and contribute — not to copy it.
+
+- ✅ **Allowed:** running a licensed instance for your own business; forking to prepare pull requests to this repository (EULA §6.8).
+- ❌ **Not allowed:** redistributing or republishing the code, rebranding or white-labelling it, offering it as SaaS, bypassing licence checks, building a competing product from it — by hand or with AI tools (EULA §7).
+- 🤖 **AI:** using this repository for AI training or text and data mining is reserved and prohibited (EULA §7.9, §8.8). Notes for AI coding agents are in [AGENTS.md](AGENTS.md).
+
+See also [NOTICE](NOTICE).
 
 ---
 

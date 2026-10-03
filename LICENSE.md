@@ -12,11 +12,17 @@ means, with respect to a party, any entity that directly or indirectly controls,
 **“Agreement”**
 means this End User License Agreement, including any schedules, appendices, or documents expressly incorporated by reference.
 
+**“AI System”**
+means any machine learning model, large language model, generative artificial intelligence system, autonomous or semi-autonomous software agent, code assistant or similar automated tool, together with any datasets, indexes, embeddings or retrieval stores used by or for such a system.
+
 **“Business Day”**
 means any day other than a Saturday, Sunday or public holiday in the Republic of Poland on which banks are open for business.
 
 **“Customer”, “You” or “User”**
 means any natural person or legal entity that downloads, installs, accesses or uses the Software under this EULA.
+
+**“Contribution”**
+means any bug fix, improvement, feature, translation, documentation change or other material that a person submits to NetSendo for inclusion in the official Repository, in particular as a pull request.
 
 **“Documentation”**
 means any official technical documentation, manuals, release notes or usage guidelines made available by NetSendo via its website, GitHub repositories or the Software itself.
@@ -47,6 +53,9 @@ means the NetSendo software, including all executable code, source code (to the 
 
 **“Subscription”**
 means the recurring paid access to the GOLD Licence features for a defined billing period, without long-term commitment, unless expressly stated otherwise.
+
+**“Text and Data Mining”**
+means any automated analytical technique aimed at analysing text and data in digital form in order to generate information, including patterns, trends and correlations, within the meaning of Article 2(2) of Directive (EU) 2019/790, and includes the training, fine-tuning, evaluation and benchmarking of AI Systems.
 
 **“Third-Party Software”**
 means any software, libraries or services developed by third parties and integrated with or used by the Software, including Open-Source Software.
@@ -343,6 +352,22 @@ The Customer may use the Software for backup, disaster recovery testing and inte
 
 The Customer may temporarily suspend access to the Software for security, maintenance or compliance reasons, provided such suspension does not alter the Software or its licensing mechanisms.
 
+### 6.8 Contributions to the Official Repository
+
+NetSendo welcomes Contributions. Notwithstanding Sections 3.6, 6.4 and 10.6, any person may, solely for the purpose of preparing and submitting Contributions to the official Repository:
+
+- a) create a fork of the Repository on the platform hosting the Repository, to the extent permitted by that platform’s terms of service;
+- b) copy, run and modify the Software in development or testing environments under that person’s control;
+- c) use software development tools for that purpose, including AI Systems, subject to Sections 7.9 and 7.10.
+
+A fork or modified version created under this Section shall:
+
+- a) not be used in production or for any purpose other than preparing Contributions;
+- b) not be distributed, published or made available outside the platform hosting the Repository, except by submitting a Contribution to the official Repository;
+- c) retain all NetSendo branding, copyright notices, licence notices and licensing mechanisms.
+
+Each Contribution is provided as Feedback within the meaning of Section 8.5, unless NetSendo and the contributor have agreed separate contribution terms in writing. NetSendo is under no obligation to accept, review or merge any Contribution.
+
 ## 7. Prohibited Use
 
 ### 7.1 No SaaS, Hosting or Managed Services
@@ -399,7 +424,29 @@ The Customer shall not use the Software in a manner that:
 
 The Customer shall not use the Software for any purpose that is unlawful, fraudulent, deceptive or in violation of applicable laws, including but not limited to data protection, electronic communications, marketing or anti-spam regulations.
 
-### 7.9 Consequences of Prohibited Use
+### 7.9 No AI Training or Text and Data Mining
+
+Unless expressly authorized in writing by NetSendo, the Customer shall not, and shall not permit any third party to:
+
+- a) use the Software, its source code, the Documentation or any other content of the Repository for Text and Data Mining;
+- b) use any of the foregoing to train, fine-tune, evaluate or benchmark any AI System;
+- c) include any of the foregoing in any dataset, corpus, index, embedding store or retrieval system used by or for an AI System, except as permitted in the following paragraph.
+
+Transient processing of the Software by an AI System solely to perform a use permitted under this EULA, including preparing a Contribution under Section 6.8, does not breach this Section, provided that the Customer does not knowingly allow such processing to be used for training any AI System.
+
+### 7.10 AI-Assisted Use and Development
+
+The restrictions of this EULA apply irrespective of whether an act is performed manually or with the assistance of an AI System or other automated tool.
+
+In particular, the Customer shall not use, instruct or allow any AI System to:
+
+- a) perform any act prohibited under this Section 7, including removing branding, circumventing licensing mechanisms or developing a competing product;
+- b) rewrite, paraphrase, port or translate the Software or any substantial part of it into another programming language, framework or structure, or produce a functionally equivalent reimplementation of it, for any purpose prohibited under this EULA;
+- c) reproduce or distribute the Software or any substantial part of it in its output, other than in a Contribution under Section 6.8 or within the Customer’s own permitted use.
+
+Output generated by an AI System that reproduces or is derived from the Software remains subject to NetSendo’s Intellectual Property Rights and to this EULA.
+
+### 7.11 Consequences of Prohibited Use
 
 Any use of the Software in violation of this Section shall constitute a material breach of this EULA and may result in immediate suspension or termination of the licence, without prejudice to any other rights or remedies available to NetSendo.
 
@@ -450,6 +497,18 @@ Except for the limited licence expressly granted under this EULA, no other right
 Intellectual Property Rights in Open-Source Software components included in the Software remain governed by their respective open-source licences.
 
 Nothing in this EULA shall limit the Customer’s rights under applicable open-source licences, nor shall it expand such rights beyond what those licences permit.
+
+### 8.8 Reservation of Rights Against Text and Data Mining
+
+NetSendo expressly reserves the use of the Software, its source code, the Documentation and all other content of the Repository for Text and Data Mining, within the meaning of Article 4(3) of Directive (EU) 2019/790 and of the national laws implementing it, including the Polish Act of 4 February 1994 on Copyright and Related Rights.
+
+This reservation:
+
+- a) applies to every copy, fork and mirror of the Repository, wherever hosted;
+- b) is also expressed in machine-readable form in the NOTICE and AGENTS.md files of the Repository and may be expressed by other technical means;
+- c) applies to any person, whether or not that person has accepted this EULA.
+
+This Section is without prejudice to any mandatory exception that cannot be excluded by contract, including Text and Data Mining for the purposes of scientific research under Article 3 of Directive (EU) 2019/790.
 
 ## 9. Open-Source Components
 
