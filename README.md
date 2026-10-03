@@ -180,10 +180,12 @@ NetSendo requires an active license to operate.
 
 ### License Plans
 
-| Plan       | Price  | Features                                                 |
-| ---------- | ------ | -------------------------------------------------------- |
-| **SILVER** | Free   | All basic features, unlimited contacts                   |
-| **GOLD**   | $97/mo | Advanced automations, priority support, API, white-label |
+| Plan       | Price  | Features                                    |
+| ---------- | ------ | ------------------------------------------- |
+| **SILVER** | Free   | All basic features, unlimited contacts      |
+| **GOLD**   | $97/mo | Advanced automations, priority support, API |
+
+No plan includes white-label or rebranding rights (EULA §3.6, §7.3).
 
 ### License Activation
 
