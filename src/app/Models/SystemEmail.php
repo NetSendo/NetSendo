@@ -32,14 +32,15 @@ class SystemEmail extends Model
      */
     public static function getBySlug($slug, $listId = null)
     {
-        // Try to find for specific list first
+        // Try to find for specific list first. A list override switched off
+        // disables the email for that list; it must not fall back to the
+        // (always active) global default.
         if ($listId) {
             $email = self::where('slug', $slug)
                 ->where('contact_list_id', $listId)
-                ->where('is_active', true)
                 ->first();
             if ($email) {
-                return $email;
+                return $email->is_active ? $email : null;
             }
         }
         

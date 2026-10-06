@@ -118,6 +118,9 @@ class SystemPageController extends Controller
             $list = ContactList::where('id', $listId)->where('user_id', auth()->id())->firstOrFail();
         }
 
+        // An existing list override may only be edited by that list's owner
+        $this->authorizeOverride($systemPage);
+
         // "Copy on Write" logic
         if ($listId && $systemPage->contact_list_id === null) {
             // We are customizing a default page for a specific list
@@ -165,10 +168,31 @@ class SystemPageController extends Controller
             return back()->with('error', __('system_pages.cannot_delete_global'));
         }
 
+        $this->authorizeOverride($systemPage);
+
         $listId = $systemPage->contact_list_id;
         $systemPage->delete();
 
         return redirect()->route('settings.system-pages.index', ['list_id' => $listId])
             ->with('success', __('system_pages.reset_to_default'));
+    }
+
+    /**
+     * List overrides belong to one account: refuse rows on lists the current
+     * user does not own (globals have no list and are left to the caller).
+     */
+    private function authorizeOverride(SystemPage $systemPage): void
+    {
+        if ($systemPage->contact_list_id === null) {
+            return;
+        }
+
+        $owns = ContactList::where('id', $systemPage->contact_list_id)
+            ->where('user_id', auth()->id())
+            ->exists();
+
+        if (!$owns) {
+            abort(403);
+        }
     }
 }

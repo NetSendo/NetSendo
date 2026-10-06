@@ -326,6 +326,16 @@ export declare class NetSendoApiClient {
             field_type: string;
         }>;
     }>;
+    /**
+     * Raw call against /api/v1 for the configuration surfaces (system content,
+     * templates, automations, tags, custom fields, webhooks, forms, list
+     * settings). Their tools pass the JSON body through and return the API's
+     * response as-is, so a typed wrapper per endpoint would add nothing.
+     */
+    request<T = unknown>(method: 'get' | 'post' | 'put' | 'patch' | 'delete', path: string, options?: {
+        data?: unknown;
+        params?: Record<string, unknown>;
+    }): Promise<T>;
     getAccountInfo(): Promise<{
         name: string;
         email: string;

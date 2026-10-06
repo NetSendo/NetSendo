@@ -198,6 +198,11 @@ class SubscriptionFormController extends Controller
             'use_list_redirect' => 'nullable|boolean',
         ]);
 
+        // Same list ownership check as store()
+        ContactList::where('id', $validated['contact_list_id'])
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
         // Don't overwrite captcha_secret_key if not provided
         if (empty($validated['captcha_secret_key'])) {
             unset($validated['captcha_secret_key']);
@@ -229,13 +234,7 @@ class SubscriptionFormController extends Controller
     {
         $this->authorize('view', $form);
 
-        $newForm = $form->replicate();
-        $newForm->name = "[KOPIA] " . $form->name;
-        $newForm->slug = SubscriptionForm::generateUniqueSlug();
-        $newForm->status = 'draft';
-        $newForm->submissions_count = 0;
-        $newForm->last_submission_at = null;
-        $newForm->save();
+        $newForm = $form->duplicate();
 
         return redirect()
             ->route('forms.edit', $newForm)

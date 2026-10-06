@@ -118,6 +118,9 @@ class SystemEmailController extends Controller
             $list = ContactList::where('id', $listId)->where('user_id', auth()->id())->firstOrFail();
         }
 
+        // An existing list override may only be edited by that list's owner
+        $this->authorizeOverride($systemEmail);
+
         // "Copy on Write" logic
         if ($listId && $systemEmail->contact_list_id === null) {
             // We are customizing a default email for a specific list
@@ -154,6 +157,8 @@ class SystemEmailController extends Controller
         if ($systemEmail->contact_list_id === null) {
             return back()->with('error', __('system_emails.cannot_delete_global'));
         }
+
+        $this->authorizeOverride($systemEmail);
 
         $listId = $systemEmail->contact_list_id;
         $systemEmail->delete();
@@ -193,6 +198,11 @@ class SystemEmailController extends Controller
                 ->with('success', __('system_emails.toggled'));
         }
 
+        // The override must belong to the list that was checked above
+        if ($systemEmail->contact_list_id !== (int) $list->id) {
+            abort(404);
+        }
+
         // Toggle existing list-specific email
         $systemEmail->update([
             'is_active' => !$systemEmail->is_active,
@@ -200,5 +210,24 @@ class SystemEmailController extends Controller
 
         return redirect()->route('settings.system-emails.index', ['list_id' => $listId])
             ->with('success', __('system_emails.toggled'));
+    }
+
+    /**
+     * List overrides belong to one account: refuse rows on lists the current
+     * user does not own (globals have no list and are left to the caller).
+     */
+    private function authorizeOverride(SystemEmail $systemEmail): void
+    {
+        if ($systemEmail->contact_list_id === null) {
+            return;
+        }
+
+        $owns = ContactList::where('id', $systemEmail->contact_list_id)
+            ->where('user_id', auth()->id())
+            ->exists();
+
+        if (!$owns) {
+            abort(403);
+        }
     }
 }

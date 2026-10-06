@@ -63,9 +63,21 @@ class AutomationService
      */
     public function findMatchingRules(string $triggerEvent, array $context): \Illuminate\Support\Collection
     {
-        // Get rules for this trigger event owned by users who own the relevant resources
+        // A rule only ever runs for events of its own account. Without an
+        // account to attribute the event to, no rule matches.
+        $ownerId = $this->resolveOwnerId($context);
+
+        if ($ownerId === null) {
+            Log::warning('AutomationService: event without an owning account, no rules run', [
+                'trigger_event' => $triggerEvent,
+            ]);
+
+            return collect();
+        }
+
         $rules = AutomationRule::active()
             ->forTrigger($triggerEvent)
+            ->forUser($ownerId)
             ->get();
 
         // Filter by trigger config and conditions
@@ -82,7 +94,18 @@ class AutomationService
     {
         $config = $rule->trigger_config ?? [];
 
-        // No config means match all
+        // Check user_id ownership (security) — before anything else, so a rule
+        // without trigger config does not match other accounts' events.
+        if (!empty($context['user_id']) && (int) $rule->user_id !== (int) $context['user_id']) {
+            Log::debug('AutomationService: user_id ownership mismatch', [
+                'rule_id' => $rule->id,
+                'rule_user_id' => $rule->user_id,
+                'context_user_id' => $context['user_id'],
+            ]);
+            return false;
+        }
+
+        // No config means match all events of the rule's account
         if (empty($config)) {
             return true;
         }
@@ -139,7 +162,8 @@ class AutomationService
 
         // Check specific link URL for specific_link_clicked trigger
         if (!empty($config['link_url'])) {
-            $clickedUrl = $context['url'] ?? '';
+            // EmailClicked sends the link as clicked_url
+            $clickedUrl = $context['clicked_url'] ?? $context['url'] ?? '';
             if (!$this->matchesUrlPattern($clickedUrl, $config['link_url'])) {
                 return false;
             }
@@ -152,16 +176,6 @@ class AutomationService
             if ($readTimeSeconds < $threshold) {
                 return false;
             }
-        }
-
-        // Check user_id ownership (security)
-        if (!empty($context['user_id']) && $rule->user_id !== (int) $context['user_id']) {
-            Log::debug('AutomationService: user_id ownership mismatch', [
-                'rule_id' => $rule->id,
-                'rule_user_id' => $rule->user_id,
-                'context_user_id' => $context['user_id'],
-            ]);
-            return false;
         }
 
         // ===== CRM Trigger Config Matching =====
@@ -496,6 +510,21 @@ class AutomationService
 
         // Update rule stats
         $rule->incrementExecutionCount();
+    }
+
+    /**
+     * Account an event belongs to: the context's user_id, or else the owner of
+     * the event's subscriber (email, tag and form events carry no user_id).
+     */
+    protected function resolveOwnerId(array $context): ?int
+    {
+        if (!empty($context['user_id'])) {
+            return (int) $context['user_id'];
+        }
+
+        $ownerId = $this->getSubscriberFromContext($context)?->user_id;
+
+        return $ownerId ? (int) $ownerId : null;
     }
 
     /**

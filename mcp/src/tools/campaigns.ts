@@ -7,6 +7,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { NetSendoApiClient } from "../api-client.js";
+import { campaignEditorShape, summarizeCampaign } from "./campaign-extras.js";
+import { compact, fail } from "./helpers.js";
 
 export function registerCampaignTools(
   server: McpServer,
@@ -93,47 +95,26 @@ Returns campaign details including:
   // Get Campaign Details
   server.tool(
     "get_campaign",
-    "Get detailed information about a specific campaign including contact lists, exclusions, and configuration.",
+    `Get everything needed to review or edit a campaign: subject, preheader, content (truncated unless content_chars=0), mailbox, template_id, lists/exclusions, CRM contacts, custom-field filters, day/time/timezone, status/is_active, trigger (trigger_type, trigger_config and the automation_rule it created), tag_ids, translations, tracked_links and ab_test_config — the same field names update_campaign accepts.`,
     {
       campaign_id: z.number().describe("Campaign ID"),
+      content_chars: z
+        .number()
+        .optional()
+        .describe("Return at most this many characters of content (default 2000, 0 = full content)"),
     },
-    async ({ campaign_id }) => {
+    async ({ campaign_id, content_chars }) => {
       try {
-        const campaign = await api.getMessage(campaign_id);
-
+        const res = await api.request<{ data: Record<string, unknown> }>(
+          "get",
+          `/messages/${campaign_id}`,
+        );
         return {
           content: [
             {
               type: "text" as const,
               text: JSON.stringify(
-                {
-                  id: campaign.id,
-                  subject: campaign.subject,
-                  preheader: campaign.preheader,
-                  channel: campaign.channel,
-                  type: campaign.type,
-                  status: campaign.status,
-                  mailbox: campaign.mailbox,
-                  content_preview:
-                    campaign.content?.substring(0, 500) +
-                    (campaign.content?.length > 500 ? "..." : ""),
-                  contact_lists: campaign.contact_lists?.map((l) => ({
-                    id: l.id,
-                    name: l.name,
-                    subscribers: l.subscribers_count,
-                  })),
-                  excluded_lists: campaign.excluded_lists?.map((l) => ({
-                    id: l.id,
-                    name: l.name,
-                  })),
-                  scheduled_at: campaign.scheduled_at,
-                  day: campaign.day,
-                  time_of_day: campaign.time_of_day,
-                  sent_count: campaign.sent_count,
-                  planned_recipients: campaign.planned_recipients_count,
-                  is_active: campaign.is_active,
-                  created_at: campaign.created_at,
-                },
+                summarizeCampaign(res.data, content_chars ?? 2000),
                 null,
                 2,
               ),
@@ -141,15 +122,7 @@ Returns campaign details including:
           ],
         };
       } catch (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error: ${(error as Error).message}`,
-            },
-          ],
-          isError: true,
-        };
+        return fail(error);
       }
     },
   );
@@ -172,8 +145,12 @@ OPTIONAL PARAMETERS:
 - mailbox_id: Sender mailbox ID - required for email campaigns (use list_mailboxes to get IDs)
 - contact_list_ids: Array of recipient list IDs (use list_contact_lists to get IDs)
 - excluded_list_ids: Array of list IDs to exclude from sending
-- scheduled_at: ISO datetime to schedule sending (e.g., 2024-12-25T10:00:00Z)
+- scheduled_at: ISO datetime to schedule sending (e.g., 2024-12-25T10:00:00Z) — needs contact_list_ids; the campaign is then scheduled right after creation
 - day, time_of_day, timezone: For autoresponders only
+- template_id: reference only — sending uses \`content\`; copy the template's html (get_template) into content
+- trigger_type + trigger_config, tag_ids, translations, tracked_links, crm_contact_ids, field filters, ab_test_config, send_in_subscriber_timezone (see each field)
+
+AUTORESPONDER (= queue message): type "autoresponder" + day (days after the subscriber joined the list, 0 = right away) + optional time_of_day/timezone. Every list member gets it once, counted from their signup. It is created as an inactive draft: activate it with set_campaign_active (or send_campaign). Build a sequence by creating one autoresponder per step with day 0, 2, 5, ...
 
 🔑 MAILBOX SELECTION WORKFLOW (for email campaigns):
 Before creating an email campaign, determine the correct mailbox_id:
@@ -190,9 +167,10 @@ The system will try to auto-select in this order:
 
 WORKFLOW OPTIONS:
 1. DRAFT: create_campaign → edit later in UI
-2. SEND NOW: create_campaign → set_campaign_lists → send_campaign
+2. SEND NOW: create_campaign → preview_campaign / send_campaign_test → send_campaign
 3. SCHEDULE: create_campaign → set_campaign_lists → schedule_campaign
 4. ONE-STEP SCHEDULE: create_campaign with scheduled_at + contact_list_ids
+5. AUTORESPONDER: create_campaign (type autoresponder, day N) → set_campaign_active
 
 PERSONALIZATION (use list_placeholders for full list):
 - [[first_name]], [[last_name]], [[email]], [[phone]]
@@ -281,6 +259,7 @@ EXAMPLE SMS CAMPAIGN:
         .describe(
           "Timezone for scheduling (e.g., Europe/Warsaw, America/New_York)",
         ),
+      ...campaignEditorShape,
     },
     async ({
       subject,
@@ -295,6 +274,7 @@ EXAMPLE SMS CAMPAIGN:
       day,
       time_of_day,
       timezone,
+      ...editorFields
     }) => {
       try {
         // Additional validation with clear error messages
@@ -328,20 +308,41 @@ EXAMPLE SMS CAMPAIGN:
           );
         }
 
-        const campaign = await api.createMessage({
-          subject,
-          channel,
-          type,
-          content,
-          preheader,
-          mailbox_id,
-          contact_list_ids,
-          excluded_list_ids,
-          scheduled_at,
-          day,
-          time_of_day,
-          timezone,
+        const created = await api.request<{
+          data: Record<string, unknown> & { id: number; status: string };
+          warnings?: string[];
+        }>("post", "/messages", {
+          data: compact({
+            subject,
+            channel,
+            type,
+            content,
+            preheader,
+            mailbox_id,
+            contact_list_ids,
+            excluded_list_ids,
+            day,
+            time_of_day,
+            timezone,
+            ...editorFields,
+          }),
         });
+        let campaign = created.data;
+
+        // The create endpoint always makes a draft; scheduling is its own step
+        let scheduleError: string | undefined;
+        if (scheduled_at) {
+          try {
+            const scheduled = await api.scheduleMessage(
+              campaign.id,
+              scheduled_at,
+              timezone,
+            );
+            campaign = { ...campaign, status: scheduled.status, scheduled_at: scheduled.scheduled_at };
+          } catch (error) {
+            scheduleError = `Created as a draft but scheduling failed: ${(error as Error).message}. Fix it, then call schedule_campaign.`;
+          }
+        }
 
         return {
           content: [
@@ -351,16 +352,16 @@ EXAMPLE SMS CAMPAIGN:
                 {
                   success: true,
                   message: "Campaign created successfully",
-                  campaign: {
-                    id: campaign.id,
-                    subject: campaign.subject,
-                    channel: campaign.channel,
-                    type: campaign.type,
-                    status: campaign.status,
-                  },
+                  campaign: summarizeCampaign(campaign, 0),
+                  warnings: [
+                    ...(created.warnings ?? []),
+                    ...(scheduleError ? [scheduleError] : []),
+                  ],
                   next_steps:
                     campaign.status === "draft"
-                      ? "Campaign is in DRAFT status. Use set_campaign_lists to add recipients, then send_campaign or schedule_campaign to send."
+                      ? type === "autoresponder"
+                        ? "Autoresponder is an inactive DRAFT. Check it with preview_campaign / send_campaign_test, then activate it with set_campaign_active."
+                        : "Campaign is in DRAFT status. Check it with preview_campaign / send_campaign_test, make sure it has lists (set_campaign_lists), then send_campaign or schedule_campaign."
                       : undefined,
                 },
                 null,
@@ -386,49 +387,50 @@ EXAMPLE SMS CAMPAIGN:
   // Update Campaign
   server.tool(
     "update_campaign",
-    `Update an existing campaign (draft or scheduled only).
+    `Update an existing campaign (draft or scheduled; sent/sending campaigns are locked). Only the fields you pass change; for array fields an empty array clears them.
 
 UPDATABLE FIELDS:
-- subject, content, preheader, mailbox_id
-- For autoresponders: day, time_of_day, is_active
+- subject, content, preheader, mailbox_id, template_id (reference only — sending uses content)
+- contact_list_ids / excluded_list_ids (replace the lists; planned recipient count is recalculated)
+- day, time_of_day, timezone, send_in_subscriber_timezone
+- is_active (autoresponders: true activates a draft, like set_campaign_active)
+- trigger_type / trigger_config (synced to the trigger's automation rule; trigger_type null removes it)
+- tag_ids, translations, tracked_links, crm_contact_ids, excluded_crm_contact_ids
+- include/exclude_field_filters (+ _match), ab_test_config
 
-NOTE: Sent campaigns cannot be modified.`,
+Call get_campaign first to see the current values.`,
     {
       campaign_id: z.number().describe("Campaign ID to update"),
       subject: z.string().optional().describe("New subject line"),
-      content: z.string().optional().describe("New content"),
+      content: z.string().optional().describe("New content (full HTML for email)"),
       preheader: z.string().optional().describe("New preheader"),
       mailbox_id: z.number().optional().describe("New mailbox ID"),
+      contact_list_ids: z
+        .array(z.number())
+        .optional()
+        .describe("Replace the recipient lists"),
+      excluded_list_ids: z
+        .array(z.number())
+        .optional()
+        .describe("Replace the excluded lists"),
       day: z.number().optional().describe("New day offset (autoresponders)"),
       time_of_day: z
         .string()
         .optional()
-        .describe("New time of day (autoresponders)"),
+        .describe('New time of day, HH:MM (autoresponders)'),
+      timezone: z.string().optional().describe("Timezone, e.g. Europe/Warsaw"),
       is_active: z
         .boolean()
         .optional()
         .describe("Activate/deactivate autoresponder"),
+      ...campaignEditorShape,
     },
-    async ({
-      campaign_id,
-      subject,
-      content,
-      preheader,
-      mailbox_id,
-      day,
-      time_of_day,
-      is_active,
-    }) => {
+    async ({ campaign_id, ...fields }) => {
       try {
-        const campaign = await api.updateMessage(campaign_id, {
-          subject,
-          content,
-          preheader,
-          mailbox_id,
-          day,
-          time_of_day,
-          is_active,
-        });
+        const res = await api.request<{
+          data: Record<string, unknown>;
+          warnings?: string[];
+        }>("put", `/messages/${campaign_id}`, { data: compact(fields) });
 
         return {
           content: [
@@ -438,11 +440,8 @@ NOTE: Sent campaigns cannot be modified.`,
                 {
                   success: true,
                   message: "Campaign updated successfully",
-                  campaign: {
-                    id: campaign.id,
-                    subject: campaign.subject,
-                    status: campaign.status,
-                  },
+                  campaign: summarizeCampaign(res.data, 0),
+                  warnings: res.warnings,
                 },
                 null,
                 2,
@@ -451,15 +450,7 @@ NOTE: Sent campaigns cannot be modified.`,
           ],
         };
       } catch (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error: ${(error as Error).message}`,
-            },
-          ],
-          isError: true,
-        };
+        return fail(error);
       }
     },
   );

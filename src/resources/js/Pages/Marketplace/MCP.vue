@@ -48,6 +48,12 @@ DOSTĘPNE NARZĘDZIA:
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
 - list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel
 - send_email, send_sms (pojedyncze wiadomości)
+- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)
+- list_templates, get_template, create_template, update_template
+- list_system_emails, update_system_email, list_system_pages, update_system_page
+- get_automation_options, list_automations, create_automation, update_automation
+- list_forms, get_form, create_form, update_form
+- create_tag, create_custom_field, list_webhooks, create_webhook
 - list_placeholders, list_mailboxes, test_connection, get_account_info
 
 ⚠️ WAŻNE - create_campaign WYMAGANE PARAMETRY:
@@ -91,6 +97,12 @@ AVAILABLE TOOLS:
 - list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test
 - list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel
 - send_email, send_sms (for single messages)
+- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)
+- list_templates, get_template, create_template, update_template
+- list_system_emails, update_system_email, list_system_pages, update_system_page
+- get_automation_options, list_automations, create_automation, update_automation
+- list_forms, get_form, create_form, update_form
+- create_tag, create_custom_field, list_webhooks, create_webhook
 - list_placeholders, list_mailboxes, test_connection, get_account_info
 
 ⚠️ CRITICAL - create_campaign REQUIRED PARAMETERS:
@@ -204,6 +216,16 @@ const toolCategories = [
         tools: [
             { name: "list_contact_lists", description: "mcp.tools.list_contact_lists" },
             { name: "list_tags", description: "mcp.tools.list_tags" },
+            { name: "get_list_cron_settings", description: "mcp.tools.get_list_cron_settings" },
+            { name: "update_list_cron_settings", description: "mcp.tools.update_list_cron_settings" },
+            { name: "get_list_defaults", description: "mcp.tools.get_list_defaults" },
+            { name: "update_list_defaults", description: "mcp.tools.update_list_defaults" },
+            { name: "create_tag", description: "mcp.tools.create_tag" },
+            { name: "update_tag", description: "mcp.tools.update_tag" },
+            { name: "delete_tag", description: "mcp.tools.delete_tag" },
+            { name: "create_custom_field", description: "mcp.tools.create_custom_field" },
+            { name: "update_custom_field", description: "mcp.tools.update_custom_field" },
+            { name: "delete_custom_field", description: "mcp.tools.delete_custom_field" },
         ]
     },
     {
@@ -219,6 +241,56 @@ const toolCategories = [
             { name: "send_campaign", description: "mcp.tools.send_campaign" },
             { name: "get_campaign_stats", description: "mcp.tools.get_campaign_stats" },
             { name: "delete_campaign", description: "mcp.tools.delete_campaign" },
+            { name: "send_campaign_test", description: "mcp.tools.send_campaign_test" },
+            { name: "preview_campaign", description: "mcp.tools.preview_campaign" },
+            { name: "duplicate_campaign", description: "mcp.tools.duplicate_campaign" },
+            { name: "set_campaign_active", description: "mcp.tools.set_campaign_active" },
+            { name: "get_campaign_recipient_count", description: "mcp.tools.get_campaign_recipient_count" },
+            { name: "resend_campaign_failed", description: "mcp.tools.resend_campaign_failed" },
+            { name: "send_campaign_to_missed", description: "mcp.tools.send_campaign_to_missed" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.templates",
+        tools: [
+            { name: "list_templates", description: "mcp.tools.list_templates" },
+            { name: "get_template", description: "mcp.tools.get_template" },
+            { name: "create_template", description: "mcp.tools.create_template" },
+            { name: "update_template", description: "mcp.tools.update_template" },
+            { name: "delete_template", description: "mcp.tools.delete_template" },
+            { name: "duplicate_template", description: "mcp.tools.duplicate_template" },
+            { name: "preview_template", description: "mcp.tools.preview_template" },
+            { name: "list_template_categories", description: "mcp.tools.list_template_categories" },
+            { name: "list_template_block_types", description: "mcp.tools.list_template_block_types" },
+            { name: "list_template_blocks", description: "mcp.tools.list_template_blocks" },
+            { name: "create_template_block", description: "mcp.tools.create_template_block" },
+            { name: "update_template_block", description: "mcp.tools.update_template_block" },
+            { name: "delete_template_block", description: "mcp.tools.delete_template_block" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.system_content",
+        tools: [
+            { name: "list_system_emails", description: "mcp.tools.list_system_emails" },
+            { name: "get_system_email", description: "mcp.tools.get_system_email" },
+            { name: "update_system_email", description: "mcp.tools.update_system_email" },
+            { name: "set_system_email_active", description: "mcp.tools.set_system_email_active" },
+            { name: "reset_system_email", description: "mcp.tools.reset_system_email" },
+            { name: "list_system_pages", description: "mcp.tools.list_system_pages" },
+            { name: "get_system_page", description: "mcp.tools.get_system_page" },
+            { name: "update_system_page", description: "mcp.tools.update_system_page" },
+            { name: "reset_system_page", description: "mcp.tools.reset_system_page" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.forms",
+        tools: [
+            { name: "list_forms", description: "mcp.tools.list_forms" },
+            { name: "get_form", description: "mcp.tools.get_form" },
+            { name: "create_form", description: "mcp.tools.create_form" },
+            { name: "update_form", description: "mcp.tools.update_form" },
+            { name: "delete_form", description: "mcp.tools.delete_form" },
+            { name: "duplicate_form", description: "mcp.tools.duplicate_form" },
         ]
     },
     {
@@ -248,6 +320,33 @@ const toolCategories = [
             { name: "pause_funnel", description: "mcp.tools.pause_funnel" },
             { name: "get_funnel_stats", description: "mcp.tools.get_funnel_stats" },
             { name: "delete_funnel", description: "mcp.tools.delete_funnel" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.automations",
+        tools: [
+            { name: "get_automation_options", description: "mcp.tools.get_automation_options" },
+            { name: "list_automations", description: "mcp.tools.list_automations" },
+            { name: "get_automation", description: "mcp.tools.get_automation" },
+            { name: "create_automation", description: "mcp.tools.create_automation" },
+            { name: "update_automation", description: "mcp.tools.update_automation" },
+            { name: "set_automation_active", description: "mcp.tools.set_automation_active" },
+            { name: "duplicate_automation", description: "mcp.tools.duplicate_automation" },
+            { name: "delete_automation", description: "mcp.tools.delete_automation" },
+            { name: "get_automation_logs", description: "mcp.tools.get_automation_logs" },
+        ]
+    },
+    {
+        name: "mcp.tool_categories.webhooks",
+        tools: [
+            { name: "list_webhook_events", description: "mcp.tools.list_webhook_events" },
+            { name: "list_webhooks", description: "mcp.tools.list_webhooks" },
+            { name: "get_webhook", description: "mcp.tools.get_webhook" },
+            { name: "create_webhook", description: "mcp.tools.create_webhook" },
+            { name: "update_webhook", description: "mcp.tools.update_webhook" },
+            { name: "delete_webhook", description: "mcp.tools.delete_webhook" },
+            { name: "test_webhook", description: "mcp.tools.test_webhook" },
+            { name: "regenerate_webhook_secret", description: "mcp.tools.regenerate_webhook_secret" },
         ]
     },
     {
@@ -575,7 +674,7 @@ const exampleQueries = [
                                 🛠️ {{ $t('mcp.tools_title') }}
                             </h2>
                             <p class="text-sm text-gray-600 dark:text-slate-400 mb-6">
-                                {{ $t('mcp.tools_count', { count: 37 }) }}
+                                {{ $t('mcp.tools_count', { count: 140 }) }}
                             </p>
                             <div class="space-y-6">
                                 <div

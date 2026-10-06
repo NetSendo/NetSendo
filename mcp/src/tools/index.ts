@@ -21,6 +21,14 @@ import { registerCampaignTools } from './campaigns.js';
 import { registerAbTestTools } from './ab-tests.js';
 import { registerFunnelTools } from './funnels.js';
 import { registerPlaceholderTools } from './placeholders.js';
+import { registerTagTools } from './tags.js';
+import { registerCustomFieldTools } from './custom-fields.js';
+import { registerWebhookTools } from './webhooks.js';
+import { registerTemplateTools } from './templates.js';
+import { registerSystemContentTools } from './system-content.js';
+import { registerFormTools } from './forms.js';
+import { registerAutomationTools } from './automations.js';
+import { registerCampaignExtraTools } from './campaign-extras.js';
 
 /**
  * Register all tools with the MCP server
@@ -67,6 +75,15 @@ export function registerAllTools(server: McpServer, api: NetSendoApiClient) {
 
   // Placeholder/custom fields tools
   registerPlaceholderTools(server, api);
+
+  registerTagTools(server, api);
+  registerCustomFieldTools(server, api);
+  registerWebhookTools(server, api);
+  registerTemplateTools(server, api);
+  registerSystemContentTools(server, api);
+  registerFormTools(server, api);
+  registerAutomationTools(server, api);
+  registerCampaignExtraTools(server, api);
 
   // Account / Connection test tool
   server.tool(

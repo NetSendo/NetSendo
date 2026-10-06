@@ -85,7 +85,16 @@ class CustomFieldController extends Controller
             'is_public' => 'boolean',
             'is_required' => 'boolean',
             'is_static' => 'boolean',
-            'contact_list_id' => 'nullable|exists:contact_lists,id',
+            'contact_list_id' => [
+                'nullable',
+                'exists:contact_lists,id',
+                // Only lists this user can reach, never another account's
+                function ($attribute, $value, $fail) {
+                    if (!Auth::user()->accessibleLists()->whereKey($value)->exists()) {
+                        $fail(__('validation.exists', ['attribute' => $attribute]));
+                    }
+                },
+            ],
         ]);
 
         // Determine scope based on contact_list_id

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\DateHelper;
 use Illuminate\Http\Request;
 use App\Models\ContactList;
+use App\Services\Lists\ListCronSettingsForm;
 use Inertia\Inertia;
 
 class SmsListController extends Controller
@@ -160,7 +161,8 @@ class SmsListController extends Controller
                 'is_public' => $smsList->is_public,
                 'tags' => $smsList->tags->pluck('id'),
                 'settings' => $smsList->settings ?? [],
-                'cron_settings' => $smsList->cronSettings ?? null,
+                // Per-list sending schedule from contact_list_cron_settings (what the dispatcher reads)
+                'cron_settings' => app(ListCronSettingsForm::class)->forPage($smsList->id),
                 // Integration settings
                 'api_key' => $smsList->api_key,
                 'webhook_url' => $smsList->webhook_url,
@@ -207,10 +209,8 @@ class SmsListController extends Controller
 
             // Settings
             'settings' => 'nullable|array',
-            'settings.cron' => 'nullable|array',
-            'settings.cron.use_custom' => 'boolean',
-            'settings.cron.volume_per_minute' => 'nullable|integer|min:1|max:10000',
-            'settings.cron.schedule' => 'nullable|array',
+            // CRON tab (stored in contact_list_cron_settings, not in the settings JSON)
+            ...ListCronSettingsForm::rules(),
 
             // Integration
             'webhook_url' => 'nullable|url|max:500',
@@ -225,6 +225,17 @@ class SmsListController extends Controller
             'max_subscribers' => 'nullable|integer|min:0',
             'signups_blocked' => 'boolean',
         ]);
+
+        // The CRON tab is persisted to contact_list_cron_settings (read by the
+        // dispatcher); it is not kept as a copy in the list's settings JSON.
+        if (is_array($validated['settings'] ?? null) && array_key_exists('cron', $validated['settings'])) {
+            $cron = $validated['settings']['cron'];
+            unset($validated['settings']['cron']);
+
+            if (is_array($cron)) {
+                app(ListCronSettingsForm::class)->save($smsList->id, $cron);
+            }
+        }
 
         $smsList->update($validated);
 
@@ -400,15 +411,7 @@ class SmsListController extends Controller
         }
 
         // Copy CRON settings if they exist
-        $cronSettings = $sms_list->cronSettings;
-        if ($cronSettings) {
-            \App\Models\ContactListCronSetting::create([
-                'contact_list_id' => $newList->id,
-                'use_custom' => $cronSettings->use_custom,
-                'limit_per_minute' => $cronSettings->limit_per_minute,
-                'schedule' => $cronSettings->schedule,
-            ]);
-        }
+        ListCronSettingsForm::copy($sms_list->id, $newList->id);
 
         return redirect()->route('sms-lists.index')
             ->with('success', __('sms_lists.copy_success'));

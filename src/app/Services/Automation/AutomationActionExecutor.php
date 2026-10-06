@@ -468,14 +468,8 @@ class AutomationActionExecutor
             return ['field' => $field, 'value' => $value, 'updated' => true];
         }
 
-        // Custom field
-        $customField = \App\Models\CustomField::where('slug', $field)->first();
-        if ($customField) {
-            $subscriber->fieldValues()->updateOrCreate(
-                ['custom_field_id' => $customField->id],
-                ['value' => $value]
-            );
-        }
+        // Custom field of the subscriber's account, by name
+        $subscriber->setCustomFieldValue($field, (string) $value);
 
         return ['field' => $field, 'value' => $value, 'updated' => true];
     }
@@ -807,7 +801,7 @@ class AutomationActionExecutor
             'name' => $this->replacePlaceholders($config['name'] ?? 'Nowy deal', $subscriber, $context),
             'value' => (float) ($config['value'] ?? 0),
             'currency' => $config['currency'] ?? 'PLN',
-            'expected_close_date' => $config['expected_close_days']
+            'expected_close_date' => !empty($config['expected_close_days'])
                 ? now()->addDays((int) $config['expected_close_days'])
                 : null,
             'status' => 'open',

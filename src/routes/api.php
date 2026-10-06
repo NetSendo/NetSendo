@@ -186,6 +186,20 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
         ->name('api.v1.messages.send');
     Route::get('messages/{message}/stats', [MessageController::class, 'stats'])
         ->name('api.v1.messages.stats');
+    Route::post('messages/{message}/test', [MessageController::class, 'test'])
+        ->name('api.v1.messages.test');
+    Route::match(['get', 'post'], 'messages/{message}/preview', [MessageController::class, 'preview'])
+        ->name('api.v1.messages.preview');
+    Route::post('messages/{message}/duplicate', [MessageController::class, 'duplicate'])
+        ->name('api.v1.messages.duplicate');
+    Route::post('messages/{message}/toggle-active', [MessageController::class, 'toggleActive'])
+        ->name('api.v1.messages.toggle-active');
+    Route::get('messages/{message}/recipients-count', [MessageController::class, 'recipientsCount'])
+        ->name('api.v1.messages.recipients-count');
+    Route::post('messages/{message}/resend-failed', [MessageController::class, 'resendFailed'])
+        ->name('api.v1.messages.resend-failed');
+    Route::post('messages/{message}/send-to-missed', [MessageController::class, 'sendToMissed'])
+        ->name('api.v1.messages.send-to-missed');
     Route::apiResource('messages', MessageController::class)
         ->names([
             'index' => 'api.v1.messages.index',
@@ -207,6 +221,20 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
         ->name('api.v1.campaigns.send');
     Route::get('campaigns/{campaign}/stats', [MessageController::class, 'stats'])
         ->name('api.v1.campaigns.stats');
+    Route::post('campaigns/{campaign}/test', [MessageController::class, 'test'])
+        ->name('api.v1.campaigns.test');
+    Route::match(['get', 'post'], 'campaigns/{campaign}/preview', [MessageController::class, 'preview'])
+        ->name('api.v1.campaigns.preview');
+    Route::post('campaigns/{campaign}/duplicate', [MessageController::class, 'duplicate'])
+        ->name('api.v1.campaigns.duplicate');
+    Route::post('campaigns/{campaign}/toggle-active', [MessageController::class, 'toggleActive'])
+        ->name('api.v1.campaigns.toggle-active');
+    Route::get('campaigns/{campaign}/recipients-count', [MessageController::class, 'recipientsCount'])
+        ->name('api.v1.campaigns.recipients-count');
+    Route::post('campaigns/{campaign}/resend-failed', [MessageController::class, 'resendFailed'])
+        ->name('api.v1.campaigns.resend-failed');
+    Route::post('campaigns/{campaign}/send-to-missed', [MessageController::class, 'sendToMissed'])
+        ->name('api.v1.campaigns.send-to-missed');
     Route::apiResource('campaigns', MessageController::class)
         ->names([
             'index' => 'api.v1.campaigns.index',
@@ -272,6 +300,123 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
             'update' => 'api.v1.webhooks.update',
             'destroy' => 'api.v1.webhooks.destroy',
         ]);
+
+    // ------------------------------------------------------------------
+    // Configuration surfaces for AI agents (MCP)
+    // ------------------------------------------------------------------
+
+    // System emails and system pages (copy-on-write: global defaults + per-list overrides, addressed by slug)
+    Route::get('system-emails', [\App\Http\Controllers\Api\V1\SystemEmailController::class, 'index'])
+        ->name('api.v1.system-emails.index');
+    Route::get('system-emails/{slug}', [\App\Http\Controllers\Api\V1\SystemEmailController::class, 'show'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-emails.show');
+    Route::put('system-emails/{slug}/active', [\App\Http\Controllers\Api\V1\SystemEmailController::class, 'setActive'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-emails.active');
+    Route::put('system-emails/{slug}', [\App\Http\Controllers\Api\V1\SystemEmailController::class, 'update'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-emails.update');
+    Route::delete('system-emails/{slug}', [\App\Http\Controllers\Api\V1\SystemEmailController::class, 'destroy'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-emails.destroy');
+    Route::get('system-pages', [\App\Http\Controllers\Api\V1\SystemPageController::class, 'index'])
+        ->name('api.v1.system-pages.index');
+    Route::get('system-pages/{slug}', [\App\Http\Controllers\Api\V1\SystemPageController::class, 'show'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-pages.show');
+    Route::put('system-pages/{slug}', [\App\Http\Controllers\Api\V1\SystemPageController::class, 'update'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-pages.update');
+    Route::delete('system-pages/{slug}', [\App\Http\Controllers\Api\V1\SystemPageController::class, 'destroy'])
+        ->where('slug', '[A-Za-z0-9_-]+')->name('api.v1.system-pages.destroy');
+
+    // Email templates, categories and the builder's saved blocks
+    Route::get('template-categories', [\App\Http\Controllers\Api\V1\TemplateController::class, 'categories'])
+        ->name('api.v1.template-categories.index');
+    Route::get('template-blocks/types', [\App\Http\Controllers\Api\V1\TemplateBlockController::class, 'types'])
+        ->name('api.v1.template-blocks.types');
+    Route::apiResource('template-blocks', \App\Http\Controllers\Api\V1\TemplateBlockController::class)
+        ->except(['show'])
+        ->parameters(['template-blocks' => 'id'])
+        ->names([
+            'index' => 'api.v1.template-blocks.index',
+            'store' => 'api.v1.template-blocks.store',
+            'update' => 'api.v1.template-blocks.update',
+            'destroy' => 'api.v1.template-blocks.destroy',
+        ]);
+    Route::post('templates/{id}/duplicate', [\App\Http\Controllers\Api\V1\TemplateController::class, 'duplicate'])
+        ->whereNumber('id')
+        ->name('api.v1.templates.duplicate');
+    Route::post('templates/{id}/preview', [\App\Http\Controllers\Api\V1\TemplateController::class, 'preview'])
+        ->whereNumber('id')
+        ->name('api.v1.templates.preview');
+    Route::apiResource('templates', \App\Http\Controllers\Api\V1\TemplateController::class)
+        ->parameters(['templates' => 'id'])
+        ->names([
+            'index' => 'api.v1.templates.index',
+            'store' => 'api.v1.templates.store',
+            'show' => 'api.v1.templates.show',
+            'update' => 'api.v1.templates.update',
+            'destroy' => 'api.v1.templates.destroy',
+        ]);
+
+    // Automation rules ("when trigger, if conditions, do actions")
+    Route::get('automations/options', [\App\Http\Controllers\Api\V1\AutomationRuleController::class, 'options'])
+        ->name('api.v1.automations.options');
+    Route::post('automations/{automation}/toggle', [\App\Http\Controllers\Api\V1\AutomationRuleController::class, 'toggle'])
+        ->name('api.v1.automations.toggle');
+    Route::post('automations/{automation}/duplicate', [\App\Http\Controllers\Api\V1\AutomationRuleController::class, 'duplicate'])
+        ->name('api.v1.automations.duplicate');
+    Route::get('automations/{automation}/logs', [\App\Http\Controllers\Api\V1\AutomationRuleController::class, 'logs'])
+        ->name('api.v1.automations.logs');
+    Route::apiResource('automations', \App\Http\Controllers\Api\V1\AutomationRuleController::class)
+        ->names([
+            'index' => 'api.v1.automations.index',
+            'store' => 'api.v1.automations.store',
+            'show' => 'api.v1.automations.show',
+            'update' => 'api.v1.automations.update',
+            'destroy' => 'api.v1.automations.destroy',
+        ]);
+
+    // Tags and custom fields — write endpoints (reads are registered above;
+    // the methods differ, so `custom-fields/placeholders` still resolves)
+    Route::post('tags', [TagController::class, 'store'])
+        ->name('api.v1.tags.store');
+    Route::match(['put', 'patch'], 'tags/{tag}', [TagController::class, 'update'])
+        ->whereNumber('tag')
+        ->name('api.v1.tags.update');
+    Route::delete('tags/{tag}', [TagController::class, 'destroy'])
+        ->whereNumber('tag')
+        ->name('api.v1.tags.destroy');
+    Route::post('custom-fields', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'store'])
+        ->name('api.v1.custom-fields.store');
+    Route::match(['put', 'patch'], 'custom-fields/{id}', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'update'])
+        ->whereNumber('id')
+        ->name('api.v1.custom-fields.update');
+    Route::delete('custom-fields/{id}', [\App\Http\Controllers\Api\V1\CustomFieldController::class, 'destroy'])
+        ->whereNumber('id')
+        ->name('api.v1.custom-fields.destroy');
+
+    // List sending schedule (CRON) and account-level list defaults
+    Route::get('lists/{list}/cron-settings', [\App\Http\Controllers\Api\V1\ListCronSettingsController::class, 'show'])
+        ->name('api.v1.lists.cron-settings.show');
+    Route::put('lists/{list}/cron-settings', [\App\Http\Controllers\Api\V1\ListCronSettingsController::class, 'update'])
+        ->name('api.v1.lists.cron-settings.update');
+    Route::get('settings/list-defaults', [\App\Http\Controllers\Api\V1\ListDefaultsController::class, 'show'])
+        ->name('api.v1.settings.list-defaults.show');
+    Route::put('settings/list-defaults', [\App\Http\Controllers\Api\V1\ListDefaultsController::class, 'update'])
+        ->name('api.v1.settings.list-defaults.update');
+
+    // Subscription forms
+    Route::get('forms', [\App\Http\Controllers\Api\V1\FormController::class, 'index'])
+        ->name('api.v1.forms.index');
+    Route::post('forms', [\App\Http\Controllers\Api\V1\FormController::class, 'store'])
+        ->name('api.v1.forms.store');
+    Route::get('forms/{form}', [\App\Http\Controllers\Api\V1\FormController::class, 'show'])
+        ->name('api.v1.forms.show');
+    Route::put('forms/{form}', [\App\Http\Controllers\Api\V1\FormController::class, 'update'])
+        ->name('api.v1.forms.update');
+    Route::patch('forms/{form}', [\App\Http\Controllers\Api\V1\FormController::class, 'update'])
+        ->name('api.v1.forms.patch');
+    Route::delete('forms/{form}', [\App\Http\Controllers\Api\V1\FormController::class, 'destroy'])
+        ->name('api.v1.forms.destroy');
+    Route::post('forms/{form}/duplicate', [\App\Http\Controllers\Api\V1\FormController::class, 'duplicate'])
+        ->name('api.v1.forms.duplicate');
 
     // External Pages (read-only, for integrations like WooCommerce)
     Route::get('external-pages', [\App\Http\Controllers\Api\V1\ExternalPageController::class, 'index'])

@@ -77,7 +77,7 @@ class AutomationController extends Controller
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
             'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),
-            'tags' => Tag::orderBy('name')->select('id', 'name')->get(),
+            'tags' => Tag::where('user_id', Auth::id())->orderBy('name')->select('id', 'name')->get(),
             'messages' => Message::where('user_id', Auth::id())
                 ->where('status', '!=', 'draft')
                 ->select('id', 'subject')
@@ -89,7 +89,7 @@ class AutomationController extends Controller
             // CRM resources
             'pipelines' => CrmPipeline::where('user_id', Auth::id())->select('id', 'name')->get(),
             'stages' => CrmStage::whereHas('pipeline', fn($q) => $q->where('user_id', Auth::id()))->select('id', 'name', 'crm_pipeline_id')->get(),
-            'users' => User::select('id', 'name')->get(),
+            'users' => $this->accountUsers(),
         ]);
     }
 
@@ -98,21 +98,7 @@ class AutomationController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'trigger_event' => 'required|string|in:' . implode(',', array_keys(AutomationRule::TRIGGER_EVENTS)),
-            'trigger_config' => 'nullable|array',
-            'conditions' => 'nullable|array',
-            'condition_logic' => 'nullable|in:all,any',
-            'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string',
-            'actions.*.config' => 'nullable|array',
-            'is_active' => 'boolean',
-            'limit_per_subscriber' => 'boolean',
-            'limit_count' => 'nullable|integer|min:1',
-            'limit_period' => 'nullable|in:hour,day,week,month,ever',
-        ]);
+        $validated = $request->validate(AutomationRule::validationRules());
 
         $validated['user_id'] = Auth::id();
         $validated['condition_logic'] = $validated['condition_logic'] ?? 'all';
@@ -149,7 +135,7 @@ class AutomationController extends Controller
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
             'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),
-            'tags' => Tag::orderBy('name')->select('id', 'name')->get(),
+            'tags' => Tag::where('user_id', Auth::id())->orderBy('name')->select('id', 'name')->get(),
             'messages' => Message::where('user_id', Auth::id())
                 ->where('status', '!=', 'draft')
                 ->select('id', 'subject')
@@ -161,7 +147,7 @@ class AutomationController extends Controller
             // CRM resources
             'pipelines' => CrmPipeline::where('user_id', Auth::id())->select('id', 'name')->get(),
             'stages' => CrmStage::whereHas('pipeline', fn($q) => $q->where('user_id', Auth::id()))->select('id', 'name', 'crm_pipeline_id')->get(),
-            'users' => User::select('id', 'name')->get(),
+            'users' => $this->accountUsers(),
         ]);
     }
 
@@ -172,21 +158,7 @@ class AutomationController extends Controller
     {
         $this->authorize('update', $automation);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'trigger_event' => 'required|string|in:' . implode(',', array_keys(AutomationRule::TRIGGER_EVENTS)),
-            'trigger_config' => 'nullable|array',
-            'conditions' => 'nullable|array',
-            'condition_logic' => 'nullable|in:all,any',
-            'actions' => 'required|array|min:1',
-            'actions.*.type' => 'required|string',
-            'actions.*.config' => 'nullable|array',
-            'is_active' => 'boolean',
-            'limit_per_subscriber' => 'boolean',
-            'limit_count' => 'nullable|integer|min:1',
-            'limit_period' => 'nullable|in:hour,day,week,month,ever',
-        ]);
+        $validated = $request->validate(AutomationRule::validationRules());
 
         $automation->update($validated);
 
@@ -328,5 +300,19 @@ class AutomationController extends Controller
         return AutomationRule::forUser(Auth::id())
             ->where('is_system', true)
             ->exists();
+    }
+
+    /**
+     * The account's admin and team members — the only users a CRM action
+     * may assign to (never every user of the instance).
+     */
+    private function accountUsers()
+    {
+        $adminId = Auth::user()->getAdminUserId();
+
+        return User::where('id', $adminId)
+            ->orWhere('admin_user_id', $adminId)
+            ->select('id', 'name')
+            ->get();
     }
 }

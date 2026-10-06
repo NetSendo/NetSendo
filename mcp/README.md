@@ -145,6 +145,31 @@ Best for connecting to NetSendo hosted on a server (e.g., `https://app.example.c
 | `list_tags`            | Get all available tags                                         |
 | `list_custom_fields`   | Get custom field definitions                                   |
 
+List settings and sending schedule:
+
+| Tool                        | Description                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `get_list_cron_settings`    | A list's sending windows and per-minute limit, with the effective values and the global CRON settings       |
+| `update_list_cron_settings` | Set a list's sending windows (minutes from midnight per day) and limit, or return it to the global defaults |
+| `get_list_defaults`         | Account-level defaults for new lists and the instance-wide CRON settings                                    |
+| `update_list_defaults`      | Change the list defaults (deep-merged); `cron` for the account owner only                                   |
+
+`get_contact_list` returns the whole configuration (settings document, tags, co-registration, limits,
+webhook); `create_contact_list` / `update_contact_list` accept every setting of the list editor and
+deep-merge `settings` (subscription, sending, pages, advanced).
+
+### Tags & Custom Fields
+
+| Tool                  | Description                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `create_tag`          | Create a tag (name unique per account, optional hex colour and description)                                       |
+| `update_tag`          | Rename a tag or change its colour/description                                                                     |
+| `delete_tag`          | Delete a tag and detach it from subscribers, lists and messages (**`confirm: true`** if subscribers carry it)     |
+| `get_custom_field`    | Full settings of one custom field (placeholder, type, options, flags, scope)                                      |
+| `create_custom_field` | Create a global or list-specific field (text, number, date, select, radio, checkbox); its name becomes `[[name]]` |
+| `update_custom_field` | Change label, type, options, default value or form flags, or rename the field                                     |
+| `delete_custom_field` | Delete a field and its stored values (**`confirm: true`** if any subscriber has a value)                          |
+
 ### List Import
 
 | Tool                    | Description                                                       |
@@ -266,6 +291,68 @@ Suppression outranks every list: suppressed addresses are skipped by future impo
 | `get_campaign_stats`      | Get sending statistics                                               |
 | `delete_campaign`         | Delete a campaign                                                    |
 
+`create_campaign` / `update_campaign` also take `template_id` (a reference — copy the template's
+`html` into `content`), autoresponder triggers (`trigger_type` + `trigger_config`, synced to an
+automation rule like the editor does), `tag_ids`, `translations`, `tracked_links`, CRM contacts,
+include/exclude custom-field filters, `ab_test_config` and `send_in_subscriber_timezone`.
+`get_campaign` returns every editable field.
+
+| Tool                           | Description                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `send_campaign_test`           | Send a `[TEST]` copy to up to 5 addresses, personalised with a subscriber or sample data; nothing is queued |
+| `preview_campaign`             | Render subject + HTML as a recipient sees it; lists unresolved placeholders                                 |
+| `duplicate_campaign`           | Copy a campaign as a new draft                                                                              |
+| `set_campaign_active`          | Activate or pause an autoresponder (activation promotes a draft and enables its trigger rule)               |
+| `get_campaign_recipient_count` | Who the campaign would reach now, after exclusions and filters                                              |
+| `resend_campaign_failed`       | Re-queue recipients whose delivery failed (**`confirm: true`**)                                             |
+| `send_campaign_to_missed`      | Send an active autoresponder now to subscribers who missed it (**`confirm: true`**)                         |
+
+### Email Templates
+
+| Tool                        | Description                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `list_templates`            | Own and system starter templates (filters: search, category, source, type)                        |
+| `get_template`              | Full template: `html`, `mjml`, builder `json_structure`, settings, editor mode, messages using it |
+| `create_template`           | Create a template from HTML (`content`) or builder blocks (`json_structure`)                      |
+| `update_template`           | Partially update an own template (system templates: duplicate first)                              |
+| `delete_template`           | Soft-delete an own template; campaigns keep their content                                         |
+| `duplicate_template`        | Copy an own or system template into the account                                                   |
+| `preview_template`          | Render placeholders for a subscriber or sample data; reports unknown placeholders                 |
+| `list_template_categories`  | System and own template categories                                                                |
+| `list_template_block_types` | Builder block types with default content/settings (schema for `json_structure`)                   |
+| `list_template_blocks`      | Saved builder blocks (own and global)                                                             |
+| `create_template_block`     | Save a reusable builder block                                                                     |
+| `update_template_block`     | Change an own saved block                                                                         |
+| `delete_template_block`     | Delete an own saved block                                                                         |
+
+### System Emails & Pages
+
+Global defaults plus per-list overrides (copy-on-write), addressed by slug and an optional `list_id`.
+Editing the global defaults needs the account owner's key (not a team member's).
+
+| Tool                      | Description                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `list_system_emails`      | Automatic emails (double opt-in, welcome, unsubscribe, owner notification) as resolved for a list or globally |
+| `get_system_email`        | Subject, HTML, active flag and placeholders (incl. the slug's required link, e.g. `[[activation-link]]`)      |
+| `update_system_email`     | Change subject/content/active; with `list_id` creates or edits the list override, without it edits the global |
+| `set_system_email_active` | Switch one email on or off for one list                                                                       |
+| `reset_system_email`      | Remove a list's override so it uses the global default again                                                  |
+| `list_system_pages`       | Pages shown after signup, activation, unsubscribe and preference changes                                      |
+| `get_system_page`         | Title, HTML, access and placeholders of one page                                                              |
+| `update_system_page`      | Change title/content/access (list overrides can also be renamed via `new_slug`)                               |
+| `reset_system_page`       | Remove a list's override of a page                                                                            |
+
+### Subscription Forms
+
+| Tool             | Description                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `list_forms`     | Subscription forms, filterable by list and status                                                |
+| `get_form`       | A form's configuration plus hosted URL and HTML / JS / iframe embed codes                        |
+| `create_form`    | Create a signup form for an email list (fields by id, design preset, styles, redirects, captcha) |
+| `update_form`    | Change a form; styles merged, fields replaced; status `active` publishes it                      |
+| `delete_form`    | Delete a form (**`confirm: true`** when it has submissions)                                      |
+| `duplicate_form` | Copy a form as a new draft with new embed code                                                   |
+
 ### A/B Testing
 
 | Tool                  | Description                |
@@ -294,6 +381,36 @@ Suppression outranks every list: suppressed addresses are skipped by future impo
 | `pause_funnel`                | Pause funnel                                                            |
 | `get_funnel_stats`            | Get funnel statistics                                                   |
 | `delete_funnel`               | Delete a funnel                                                         |
+
+### Automation Rules
+
+"If this happens, check that, then do this" rules (`trigger_event` + `trigger_config`, optional
+conditions, ordered actions). Call `get_automation_options` before building one.
+
+| Tool                     | Description                                                                                                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `get_automation_options` | Catalogue of trigger events (with their filters), condition types and action types with their config fields |
+| `list_automations`       | Rules, filterable by trigger event, active state and name                                                   |
+| `get_automation`         | One rule with 7-day stats; `read_only` marks rules synced from an autoresponder trigger                     |
+| `create_automation`      | Create a rule (validated against the catalogue and account ownership)                                       |
+| `update_automation`      | Change a rule; only the fields sent change                                                                  |
+| `set_automation_active`  | Activate, deactivate or flip a rule                                                                         |
+| `duplicate_automation`   | Copy a rule (the copy starts inactive)                                                                      |
+| `delete_automation`      | Delete a rule (default automations need **`confirm: true`**)                                                |
+| `get_automation_logs`    | Execution log: status per run, subscriber, per-action results and errors                                    |
+
+### Webhooks
+
+| Tool                        | Description                                                                 |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `list_webhook_events`       | Event names a webhook can subscribe to                                      |
+| `list_webhooks`             | The account's webhooks with status, failure count and last delivery         |
+| `get_webhook`               | One webhook's settings                                                      |
+| `create_webhook`            | Register a URL for chosen events; returns the HMAC signing secret once      |
+| `update_webhook`            | Change name, URL, events or active state                                    |
+| `delete_webhook`            | Remove a webhook                                                            |
+| `test_webhook`              | Send a `webhook.test` delivery and report whether the endpoint answered 2xx |
+| `regenerate_webhook_secret` | Issue a new signing secret; the old one stops working immediately           |
 
 ### Account
 
@@ -358,11 +475,14 @@ CLI arguments take priority over environment variables.
 
 | Scope                 | Unlocks                                                            |
 | --------------------- | ------------------------------------------------------------------ |
-| `lists:read`          | List details, stats, import preview, health report, activity, engagement |
-| `lists:write`         | Create/update/delete lists, import, clean, dedupe, membership changes |
+| `lists:read`          | List details, stats, import preview, health report, activity, engagement, list settings, forms, system emails/pages |
+| `lists:write`         | Create/update/delete lists, import, clean, dedupe, membership changes, tags, custom fields, forms, list settings, system emails/pages |
 | `subscribers:read`    | Inline export, subscriber timeline, suppression list                |
 | `subscribers:write`   | Suppression changes, subscriber CRUD                                |
 | `notifications:write` | `send_notification`                                                 |
+| `messages:read/write` | Campaigns, autoresponders, test sends, previews, email templates     |
+| `funnels:read/write`  | Funnels and automation rules                                        |
+| `webhooks:read/write` | Webhook tools                                                       |
 
 `lists:write` and `notifications:write` were added in 1.4.0. Keys created before the
 upgrade are migrated automatically **if** they already held `subscribers:write`;
@@ -377,6 +497,9 @@ Tools that can lose data refuse to act until they are told to twice:
 - `clean_list` with `action: delete` or `suppress` — additionally needs `confirm: true`
 - `delete_contact_list` on a non-empty list — needs `confirm: true`
 - `remove_list_members` selected by `filter` — needs `confirm: true`
+- `delete_tag`, `delete_custom_field`, `delete_form` when data is attached — need `confirm: true`
+- `delete_automation` on a default automation — needs `confirm: true`
+- `resend_campaign_failed`, `send_campaign_to_missed` — need `confirm: true`
 
 The intent is that an assistant always shows the user the affected count from the dry
 run before anything is written.

@@ -429,11 +429,30 @@ export class NetSendoApiClient {
         return response.data.data;
     }
     // ============================================================================
+    // Generic request
+    // ============================================================================
+    /**
+     * Raw call against /api/v1 for the configuration surfaces (system content,
+     * templates, automations, tags, custom fields, webhooks, forms, list
+     * settings). Their tools pass the JSON body through and return the API's
+     * response as-is, so a typed wrapper per endpoint would add nothing.
+     */
+    async request(method, path, options = {}) {
+        const response = await this.client.request({
+            method,
+            url: path,
+            data: options.data,
+            params: options.params,
+        });
+        return response.data;
+    }
+    // ============================================================================
     // Account / Stats (internal API)
     // ============================================================================
     async getAccountInfo() {
         const response = await this.client.get('/account');
-        return response.data;
+        // The endpoint wraps the account in `data`
+        return response.data.data ?? response.data;
     }
     /**
      * Test connection to the API

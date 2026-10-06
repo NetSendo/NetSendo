@@ -112,7 +112,9 @@ class WebhookController extends Controller
             'url' => 'sometimes|url|max:2048',
             'events' => 'sometimes|array|min:1',
             'events.*' => 'string|in:' . implode(',', Webhook::EVENTS),
-            'is_active' => 'nullable|boolean',
+            // sometimes, not nullable: an explicit null used to reach the
+            // NOT NULL column and fail with a 500
+            'is_active' => 'sometimes|boolean',
         ]);
 
         $webhook->update($validated);

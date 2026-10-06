@@ -80,8 +80,10 @@ class DefaultSettingsController extends Controller
         $cronData = $validated['settings']['cron'] ?? null;
         unset($validated['settings']['cron']);
 
-        // Save user settings (without CRON)
-        $user->settings = $validated['settings'];
+        // Save user settings (without CRON). The sections of this form replace
+        // the stored ones; the account's other settings kept in the same
+        // document (CRM, campaign advisor, currency...) must survive.
+        $user->settings = array_merge($user->settings ?? [], $validated['settings']);
         $user->save();
 
         // Save CRON settings separately using key-value store

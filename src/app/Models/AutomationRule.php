@@ -156,6 +156,37 @@ class AutomationRule extends Model
         'ever' => 'w ogóle',
     ];
 
+    /**
+     * Validation rules shared by the web builder and the API (store and update).
+     */
+    public static function validationRules(): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'trigger_event' => 'required|string|in:' . implode(',', array_keys(self::TRIGGER_EVENTS)),
+            'trigger_config' => 'nullable|array',
+            'conditions' => 'nullable|array',
+            'condition_logic' => 'nullable|in:all,any',
+            'actions' => 'required|array|min:1',
+            'actions.*.type' => 'required|string',
+            'actions.*.config' => 'nullable|array',
+            'is_active' => 'boolean',
+            'limit_per_subscriber' => 'boolean',
+            'limit_count' => 'nullable|integer|min:1',
+            'limit_period' => 'nullable|in:hour,day,week,month,ever',
+        ];
+    }
+
+    /**
+     * Whether the rule is kept in sync by a message's trigger
+     * (MessageController::syncMessageTrigger()), which overwrites it on save.
+     */
+    public function isManagedByMessage(): bool
+    {
+        return $this->trigger_source === 'message' && $this->trigger_source_id;
+    }
+
     // Relationships
 
     public function user(): BelongsTo
@@ -233,6 +264,13 @@ class AutomationRule extends Model
         $newRule->is_active = false;
         $newRule->execution_count = 0;
         $newRule->last_executed_at = null;
+        // The copy is an ordinary rule of the user: it is neither one of the
+        // default automations (system_key is unique per user) nor the rule a
+        // message keeps in sync with its trigger.
+        $newRule->is_system = false;
+        $newRule->system_key = null;
+        $newRule->trigger_source = null;
+        $newRule->trigger_source_id = null;
         $newRule->save();
 
         return $newRule;

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Concerns\ManagesContactLists;
 use App\Http\Resources\Api\V1\ContactListResource;
 use App\Http\Resources\Api\V1\SubscriberResource;
 use App\Models\ContactList;
+use App\Services\Lists\ListSettingsSchema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -58,25 +59,15 @@ class ContactListController extends Controller
     /**
      * Get a single contact list
      */
-    public function show(Request $request, int $id): ContactListResource|JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
-        $user = $request->user();
-
-        $list = ContactList::forUser($user->id)
-            ->withCount(['subscribers' => function ($query) {
-                $query->where('contact_list_subscriber.status', 'active');
-            }])
-            ->with(['group', 'defaultMailbox'])
-            ->find($id);
+        $list = $this->findList($request, $id);
 
         if (!$list) {
-            return response()->json([
-                'error' => 'Not Found',
-                'message' => 'Contact list not found',
-            ], 404);
+            return $this->listNotFound();
         }
 
-        return new ContactListResource($list);
+        return $this->listResponse($request, $list);
     }
 
     /**
@@ -115,8 +106,11 @@ class ContactListController extends Controller
 
     /**
      * Create a contact list.
+     *
+     * Accepts every setting of the list editor in the browser, validated the
+     * same way (see ListSettingsSchema for the `settings` structure).
      */
-    public function store(Request $request): ContactListResource|JsonResponse
+    public function store(Request $request): JsonResponse
     {
         if ($denied = $this->requirePermission($request, 'lists:write')) {
             return $denied;
@@ -127,65 +121,41 @@ class ContactListController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'nullable|in:email,sms',
-            'description' => 'nullable|string|max:1000',
-            'contact_list_group_id' => [
-                'nullable', 'integer',
-                Rule::exists('contact_list_groups', 'id')->where('user_id', $user->id),
-            ],
-            'default_mailbox_id' => [
-                'nullable', 'integer',
-                Rule::exists('mailboxes', 'id')->where('user_id', $user->id),
-            ],
-            'default_sms_provider_id' => [
-                'nullable', 'integer',
-                Rule::exists('sms_providers', 'id')->where('user_id', $user->id),
-            ],
-            'is_public' => 'nullable|boolean',
-            'timezone' => 'nullable|string|max:64',
-            'double_opt_in' => 'nullable|boolean',
-            'resubscription_behavior' => 'nullable|in:reset_date,keep_original_date',
-            'max_subscribers' => 'nullable|integer|min:0',
-            'settings' => 'nullable|array',
+            ...$this->configurationRules($request),
         ]);
 
-        $settings = $validated['settings'] ?? [];
-
-        if (array_key_exists('double_opt_in', $validated)) {
-            $settings['subscription']['double_optin'] = (bool) $validated['double_opt_in'];
-        }
+        $attributes = $this->configurationAttributes($validated, []);
 
         $list = ContactList::create([
             'user_id' => $user->id,
             'name' => $validated['name'],
             'type' => $validated['type'] ?? 'email',
-            'description' => $validated['description'] ?? null,
-            'contact_list_group_id' => $validated['contact_list_group_id'] ?? null,
-            'default_mailbox_id' => $validated['default_mailbox_id'] ?? null,
-            'default_sms_provider_id' => $validated['default_sms_provider_id'] ?? null,
-            'is_public' => $validated['is_public'] ?? false,
-            'timezone' => $validated['timezone'] ?? null,
-            'resubscription_behavior' => $validated['resubscription_behavior'] ?? 'reset_date',
-            'max_subscribers' => $validated['max_subscribers'] ?? 0,
-            'settings' => $settings,
+            'description' => null,
+            'is_public' => false,
+            'resubscription_behavior' => 'reset_date',
+            'max_subscribers' => 0,
+            'settings' => [],
+            ...$attributes,
         ]);
 
-        $list->loadCount('subscribers')->load(['group', 'defaultMailbox']);
+        if (array_key_exists('tags', $validated)) {
+            $list->tags()->sync($validated['tags'] ?? []);
+        }
 
-        return (new ContactListResource($list))
-            ->response()
-            ->setStatusCode(201);
+        return $this->listResponse($request, $list, 201);
     }
 
     /**
-     * Update a contact list.
+     * Update a contact list. Only the fields sent are changed; `settings` and
+     * `sync_settings` are deep-merged into what is stored, so a partial update
+     * never wipes the rest of the list's configuration.
      */
-    public function update(Request $request, int $id): ContactListResource|JsonResponse
+    public function update(Request $request, int $id): JsonResponse
     {
         if ($denied = $this->requirePermission($request, 'lists:write')) {
             return $denied;
         }
 
-        $user = $request->user();
         $list = $this->findList($request, $id);
 
         if (!$list) {
@@ -194,51 +164,174 @@ class ContactListController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
+            ...$this->configurationRules($request, $list),
+        ]);
+
+        $attributes = $this->configurationAttributes($validated, $list->settings ?? [], $list);
+
+        if (array_key_exists('name', $validated)) {
+            $attributes['name'] = $validated['name'];
+        }
+
+        $list->update($attributes);
+
+        if (array_key_exists('tags', $validated)) {
+            $list->tags()->sync($validated['tags'] ?? []);
+        }
+
+        return $this->listResponse($request, $list->fresh());
+    }
+
+    /**
+     * Rules shared by create and update: the list's own columns plus the
+     * documented `settings` document.
+     */
+    private function configurationRules(Request $request, ?ContactList $list = null): array
+    {
+        $userId = $request->user()->id;
+
+        return [
             'description' => 'nullable|string|max:1000',
             'contact_list_group_id' => [
                 'nullable', 'integer',
-                Rule::exists('contact_list_groups', 'id')->where('user_id', $user->id),
+                Rule::exists('contact_list_groups', 'id')->where('user_id', $userId),
             ],
             'default_mailbox_id' => [
                 'nullable', 'integer',
-                Rule::exists('mailboxes', 'id')->where('user_id', $user->id),
+                Rule::exists('mailboxes', 'id')->where('user_id', $userId),
             ],
             'default_sms_provider_id' => [
                 'nullable', 'integer',
-                Rule::exists('sms_providers', 'id')->where('user_id', $user->id),
+                Rule::exists('sms_providers', 'id')->where('user_id', $userId),
+            ],
+            'tags' => 'nullable|array',
+            'tags.*' => [
+                'integer',
+                Rule::exists('tags', 'id')->where('user_id', $userId),
             ],
             'is_public' => 'nullable|boolean',
             'timezone' => 'nullable|string|max:64',
             'double_opt_in' => 'nullable|boolean',
             'resubscription_behavior' => 'nullable|in:reset_date,keep_original_date',
+            'reset_autoresponders_on_resubscription' => 'nullable|boolean',
             'max_subscribers' => 'nullable|integer|min:0',
             'signups_blocked' => 'nullable|boolean',
+            'required_fields' => 'nullable|array',
             'webhook_url' => 'nullable|url|max:2048',
             'webhook_events' => 'nullable|array',
             'webhook_events.*' => ['string', Rule::in(ContactList::acceptedWebhookEvents())],
-            'settings' => 'nullable|array',
-        ]);
 
-        $attributes = collect($validated)
-            ->except(['double_opt_in', 'settings'])
-            ->toArray();
+            // Co-registration: members are synced from this parent list
+            'parent_list_id' => [
+                'nullable', 'integer',
+                Rule::exists('contact_lists', 'id')->where('user_id', $userId)->whereNull('deleted_at'),
+                ...($list ? [Rule::notIn([$list->id])] : []),
+            ],
+            'sync_settings' => 'nullable|array',
+            'sync_settings.sync_on_subscribe' => 'boolean',
+            'sync_settings.sync_on_unsubscribe' => 'boolean',
 
-        if (array_key_exists('settings', $validated) || array_key_exists('double_opt_in', $validated)) {
-            // Merge rather than replace — a partial update must not wipe the
-            // list's sending, pages or advanced configuration.
-            $settings = array_replace_recursive($list->settings ?? [], $validated['settings'] ?? []);
+            ...ListSettingsSchema::rules($userId),
+        ];
+    }
 
-            if (array_key_exists('double_opt_in', $validated)) {
-                $settings['subscription']['double_optin'] = (bool) $validated['double_opt_in'];
+    /**
+     * Column values for a create or update from validated input. The list's
+     * sender lives in two places (the default_mailbox_id column used for
+     * sending and settings.sending.mailbox_id shown by the editor), so they
+     * are kept in step whichever one the caller sets; the same goes for the
+     * SMS provider.
+     */
+    private function configurationAttributes(array $validated, array $storedSettings, ?ContactList $list = null): array
+    {
+        $columns = [
+            'description', 'contact_list_group_id', 'default_mailbox_id', 'default_sms_provider_id',
+            'is_public', 'timezone', 'resubscription_behavior', 'reset_autoresponders_on_resubscription',
+            'max_subscribers', 'signups_blocked', 'required_fields', 'webhook_url', 'webhook_events',
+            'parent_list_id',
+        ];
+
+        $attributes = array_intersect_key($validated, array_flip($columns));
+
+        // Columns that are NOT NULL in the schema: an explicit null means "default"
+        foreach (['is_public' => false, 'signups_blocked' => false, 'max_subscribers' => 0, 'resubscription_behavior' => 'reset_date'] as $column => $default) {
+            if (array_key_exists($column, $attributes) && $attributes[$column] === null) {
+                $attributes[$column] = $default;
             }
-
-            $attributes['settings'] = $settings;
         }
 
-        $list->update($attributes);
-        $list->loadCount('subscribers')->load(['group', 'defaultMailbox']);
+        if (array_key_exists('reset_autoresponders_on_resubscription', $attributes) && $attributes['reset_autoresponders_on_resubscription'] === null) {
+            unset($attributes['reset_autoresponders_on_resubscription']);
+        }
 
-        return new ContactListResource($list);
+        if (array_key_exists('sync_settings', $validated)) {
+            $attributes['sync_settings'] = $validated['sync_settings'] === null
+                ? null
+                : ListSettingsSchema::merge($list?->sync_settings ?? [], $validated['sync_settings']);
+        }
+
+        $touchesSettings = array_key_exists('settings', $validated)
+            || array_key_exists('double_opt_in', $validated)
+            || array_key_exists('default_mailbox_id', $validated)
+            || array_key_exists('default_sms_provider_id', $validated);
+
+        if (!$touchesSettings) {
+            return $attributes;
+        }
+
+        $patch = $validated['settings'] ?? [];
+        $settings = ListSettingsSchema::merge($storedSettings, $patch);
+
+        if (array_key_exists('double_opt_in', $validated) && $validated['double_opt_in'] !== null) {
+            $settings['subscription']['double_optin'] = (bool) $validated['double_opt_in'];
+        }
+
+        foreach (['mailbox_id' => 'default_mailbox_id', 'sms_provider_id' => 'default_sms_provider_id'] as $settingKey => $column) {
+            if (is_array($patch['sending'] ?? null) && array_key_exists($settingKey, $patch['sending'])) {
+                $attributes[$column] = $patch['sending'][$settingKey];
+            } elseif (array_key_exists($column, $validated)) {
+                $settings['sending'][$settingKey] = $validated[$column];
+            }
+        }
+
+        $attributes['settings'] = $settings;
+
+        return $attributes;
+    }
+
+    /**
+     * Full configuration of one list: the summary fields plus everything the
+     * list editor shows (settings document, tags, co-registration, limits,
+     * webhook). CRON sending windows live at /lists/{id}/cron-settings.
+     */
+    private function listResponse(Request $request, ContactList $list, int $status = 200): JsonResponse
+    {
+        $list->loadCount(['subscribers' => function ($query) {
+            $query->where('contact_list_subscriber.status', 'active');
+        }])->load(['group', 'defaultMailbox', 'tags']);
+
+        $data = (new ContactListResource($list))->resolve($request);
+
+        $data += [
+            'double_opt_in' => (bool) ($list->settings['subscription']['double_optin'] ?? false),
+            'contact_list_group_id' => $list->contact_list_group_id,
+            'default_mailbox_id' => $list->default_mailbox_id,
+            'default_sms_provider_id' => $list->default_sms_provider_id,
+            'tags' => $list->tags->map(fn ($tag) => ['id' => $tag->id, 'name' => $tag->name])->values(),
+            'settings' => (object) ($list->settings ?? []),
+            'resubscription_behavior' => $list->resubscription_behavior ?? 'reset_date',
+            'reset_autoresponders_on_resubscription' => (bool) ($list->reset_autoresponders_on_resubscription ?? true),
+            'max_subscribers' => (int) ($list->max_subscribers ?? 0),
+            'signups_blocked' => (bool) $list->signups_blocked,
+            'required_fields' => $list->required_fields ?? [],
+            'parent_list_id' => $list->parent_list_id,
+            'sync_settings' => (object) ($list->sync_settings ?? []),
+            'webhook_url' => $list->webhook_url,
+            'webhook_events' => $list->webhook_events ?? [],
+            'has_list_api_key' => !empty($list->api_key),
+        ];
+
+        return response()->json(['data' => $data], $status);
     }
 
     /**

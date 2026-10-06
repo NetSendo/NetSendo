@@ -15,6 +15,7 @@ use App\Models\MessageFieldFilter;
 use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Template;
+use App\Services\Messages\MessageEditorService;
 use App\Services\Segmentation\SubscriberFieldFilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -215,18 +216,9 @@ class MessageController extends Controller
             ->with(['contactLists', 'excludedLists'])
             ->get();
 
-        return response()->json($messages->map(fn($msg) => [
-            'id' => $msg->id,
-            'recipients_count' => $msg->status === 'sent'
-                ? ($msg->planned_recipients_count ?? $msg->sent_count ?? 0)
-                : ($msg->contactLists->count() > 0 ? $msg->getUniqueRecipients()->count() : 0),
-            'skipped_count' => $msg->type === 'autoresponder'
-                ? ($msg->getQueueScheduleStats()['missed'] ?? 0)
-                : 0,
-            'queue_stats' => $msg->type === 'autoresponder'
-                ? $msg->getQueueStats()
-                : null,
-        ]));
+        $editor = app(MessageEditorService::class);
+
+        return response()->json($messages->map(fn($msg) => $editor->recipientCounts($msg)));
     }
 
     public function create(Request $request)
@@ -949,60 +941,7 @@ class MessageController extends Controller
             abort(403);
         }
 
-        // Create a copy of the message
-        $newMessage = $message->replicate();
-        $newMessage->subject = '[KOPIA] ' . $message->subject;
-        $newMessage->status = 'draft';
-        $newMessage->send_at = null;
-        $newMessage->scheduled_at = null; // Reset - new message needs fresh scheduling
-        $newMessage->sent_count = 0; // Critical: reset sent counter so queue can be populated
-        $newMessage->planned_recipients_count = null; // Reset - will be calculated when activated
-        $newMessage->recipients_calculated_at = null; // Reset - needs fresh calculation
-        $newMessage->recipients_snapshot = false; // A copy has no queue entries - it targets its lists
-        $newMessage->created_at = now();
-        $newMessage->updated_at = now();
-        $newMessage->save();
-
-        // Copy contact list associations
-        $newMessage->contactLists()->sync($message->contactLists->pluck('id'));
-
-        // Copy excluded list associations
-        $newMessage->excludedLists()->sync($message->excludedLists->pluck('id'));
-
-        // Copy custom-field audience filters (both sides)
-        foreach ($message->fieldFilters as $filter) {
-            $newMessage->fieldFilters()->create([
-                'custom_field_id' => $filter->custom_field_id,
-                'mode' => $filter->mode,
-                'operator' => $filter->operator,
-                'values' => $filter->values,
-                'sort_order' => $filter->sort_order,
-            ]);
-        }
-
-        // Copy tracked links configuration (preserve all settings)
-        foreach ($message->trackedLinks as $trackedLink) {
-            MessageTrackedLink::create([
-                'message_id' => $newMessage->id,
-                'url' => $trackedLink->url,
-                'url_hash' => $trackedLink->url_hash,
-                'tracking_enabled' => $trackedLink->tracking_enabled,
-                'share_data_enabled' => $trackedLink->share_data_enabled,
-                'shared_fields' => $trackedLink->shared_fields,
-                'subscribe_to_list_ids' => $trackedLink->subscribe_to_list_ids,
-                'unsubscribe_from_list_ids' => $trackedLink->unsubscribe_from_list_ids,
-            ]);
-        }
-
-        // Copy message translations (multi-language)
-        foreach ($message->translations as $translation) {
-            $newMessage->translations()->create([
-                'language' => $translation->language,
-                'subject' => $translation->subject,
-                'preheader' => $translation->preheader,
-                'content' => $translation->content,
-            ]);
-        }
+        $newMessage = app(MessageEditorService::class)->duplicate($message);
 
         return response()->json([
             'success' => true,
@@ -1113,42 +1052,11 @@ class MessageController extends Controller
             abort(403);
         }
 
-        // Get failed queue entries
-        $failedEntries = $message->queueEntries()
-            ->where('status', MessageQueueEntry::STATUS_FAILED)
-            ->get();
-
-        $failedCount = $failedEntries->count();
+        $failedCount = app(MessageEditorService::class)->resendToFailed($message);
 
         if ($failedCount === 0) {
             return back()->with('error', __('messages.stats.queue.no_failed_recipients'));
         }
-
-        // Reset message status to scheduled if it was sent
-        if ($message->status === 'sent') {
-            $message->update([
-                'status' => 'scheduled',
-                'scheduled_at' => now(),
-            ]);
-        }
-
-        // Reset all failed entries to planned
-        $message->queueEntries()
-            ->where('status', MessageQueueEntry::STATUS_FAILED)
-            ->update([
-                'status' => MessageQueueEntry::STATUS_PLANNED,
-                'planned_at' => now(),
-                'queued_at' => null,
-                'sent_at' => null,
-                'error_message' => null,
-            ]);
-
-        // Update planned recipients count
-        $message->update([
-            'planned_recipients_count' => $message->queueEntries()
-                ->whereIn('status', [MessageQueueEntry::STATUS_PLANNED, MessageQueueEntry::STATUS_QUEUED])
-                ->count() + $message->sent_count,
-        ]);
 
         return back()->with('success', __('messages.stats.queue.resend_scheduled', ['count' => $failedCount]));
     }
@@ -1515,7 +1423,6 @@ class MessageController extends Controller
      */
     public function test(Request $request, \App\Services\Mail\MailProviderService $providerService, \App\Services\PlaceholderService $placeholderService)
     {
-        // ... (existing test method implementation) ...
         $validated = $request->validate([
             'email' => 'required|email',
             'subject' => 'required|string|max:255',
@@ -1540,93 +1447,28 @@ class MessageController extends Controller
         }
 
         try {
-            $content = $validated['content'];
-            $subject = $validated['subject'];
+            $editor = app(MessageEditorService::class);
 
             // Get subscriber for placeholder substitution
             // Priority: 1) subscriber by test email, 2) subscriber_id from request, 3) first from selected lists
-            $subscriber = null;
+            $subscriber = $editor->findTestSubscriber(
+                auth()->id(),
+                $validated['email'],
+                $validated['subscriber_id'] ?? null,
+                $validated['contact_list_ids'] ?? []
+            );
 
-            // First, try to find subscriber by the test email address
-            if (!empty($validated['email'])) {
-                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
-                    ->where('email', $validated['email'])
-                    ->first();
-            }
-
-            // Fallback: use subscriber_id from request
-            if (!$subscriber && !empty($validated['subscriber_id'])) {
-                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())->find($validated['subscriber_id']);
-            }
-
-            // Fallback: use first subscriber from selected lists
-            if (!$subscriber && !empty($validated['contact_list_ids'])) {
-                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())
-                    ->whereHas('contactLists', function ($q) use ($validated) {
-                        $q->whereIn('contact_lists.id', $validated['contact_list_ids']);
-                    })
-                    ->first();
-            }
-
-            // If we have a real subscriber, use PlaceholderService
-            if ($subscriber) {
-                $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
-                $content = $processed['content'];
-                $subject = $processed['subject'];
-            } else {
-                // Use sample data for placeholders
-                $sampleData = [
-                    'email' => $validated['email'],
-                    'first_name' => 'Jan',
-                    'last_name' => 'Kowalski',
-                    'phone' => '+48 123 456 789',
-                    'device' => 'Desktop',
-                    'ip_address' => '127.0.0.1',
-                    'subscribed_at' => now()->format('Y-m-d H:i:s'),
-                    'confirmed_at' => now()->format('Y-m-d H:i:s'),
-                    'source' => 'test',
-                    'unsubscribe_link' => '#',
-                    'unsubscribe_url' => '#',
-                ];
-
-                // Replace placeholders with sample data
-                $content = preg_replace_callback(
-                    '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
-                    function ($matches) use ($sampleData) {
-                        $key = $matches[1];
-                        return $sampleData[$key] ?? $matches[0];
-                    },
-                    $content
-                );
-                $subject = preg_replace_callback(
-                    '/\[\[([a-zA-Z_][a-zA-Z0-9_]*)\]\]/',
-                    function ($matches) use ($sampleData) {
-                        $key = $matches[1];
-                        return $sampleData[$key] ?? $matches[0];
-                    },
-                    $subject
-                );
-            }
-
-            // Inject preheader if provided
-            $preheader = $validated['preheader'] ?? null;
-            if (!empty($preheader)) {
-                // Process placeholders in preheader if subscriber is available
-                if ($subscriber) {
-                    $preheader = $placeholderService->replacePlaceholders($preheader, $subscriber);
-                }
-                $content = $this->injectPreheader($content, $preheader);
-            }
+            // A real subscriber goes through PlaceholderService, otherwise sample data
+            $rendered = $editor->render(
+                $validated['content'],
+                $validated['subject'],
+                $validated['preheader'] ?? null,
+                $subscriber,
+                $subscriber ? null : $editor->sampleData($validated['email'])
+            );
 
             // Use the proper mail provider service to send HTML email
-            $provider = $providerService->getProvider($mailbox);
-
-            $provider->send(
-                to: $validated['email'],
-                toName: $validated['email'], // Use email as name for test
-                subject: '[TEST] ' . $subject,
-                htmlContent: $content
-            );
+            $editor->deliverTest($mailbox, $validated['email'], $rendered['subject'], $rendered['content']);
 
             return response()->json(['success' => true, 'message' => 'Test email sent']);
         } catch (\Exception $e) {
@@ -1648,35 +1490,25 @@ class MessageController extends Controller
         ]);
 
         try {
-            $content = $validated['content'];
-            $subject = $validated['subject'] ?? '';
+            $subscriber = null;
             $subscriberId = $validated['subscriber_id'] ?? null;
 
             if ($subscriberId) {
-                $subscriber = \App\Models\Subscriber::find($subscriberId);
-
-                // Security: verify subscriber belongs to user
-                if ($subscriber && $subscriber->user_id === auth()->id()) {
-                    $processed = $placeholderService->processEmailContent($content, $subject, $subscriber);
-                    $content = $processed['content'];
-                    $subject = $processed['subject'];
-                }
+                // Security: only the user's own subscriber may personalise the preview
+                $subscriber = \App\Models\Subscriber::where('user_id', auth()->id())->find($subscriberId);
             }
 
-            // Inject preheader if provided
-            $preheader = $validated['preheader'] ?? null;
-            if (!empty($preheader)) {
-                // Process placeholders in preheader if subscriber is selected
-                if (isset($subscriber) && $subscriber) {
-                    $preheader = $placeholderService->replacePlaceholders($preheader, $subscriber);
-                }
-                $content = $this->injectPreheader($content, $preheader);
-            }
+            $rendered = app(MessageEditorService::class)->render(
+                $validated['content'],
+                $validated['subject'] ?? '',
+                $validated['preheader'] ?? null,
+                $subscriber
+            );
 
             return response()->json([
                 'success' => true,
-                'content' => $content,
-                'subject' => $subject,
+                'content' => $rendered['content'],
+                'subject' => $rendered['subject'],
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -1728,40 +1560,7 @@ class MessageController extends Controller
      */
     private function injectPreheader(string $content, string $preheader): string
     {
-        // Remove existing preheader div from HTML content (if present)
-        $content = preg_replace(
-            '/<!--\s*Preheader\s+text\s*-->\s*<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none[^"\']*["\'][^>]*>.*?<\/div>/is',
-            '',
-            $content
-        );
-
-        // Also remove any hidden preheader divs without comment
-        $content = preg_replace(
-            '/<div\s+style\s*=\s*["\'][^"\']*display\s*:\s*none;\s*max-height:\s*0[^"\']*["\'][^>]*>.*?<\/div>/is',
-            '',
-            $content
-        );
-
-        // Create new preheader HTML
-        $preheaderHtml = '<!-- Preheader text -->' . "\n" .
-            '<div style="display: none; max-height: 0; overflow: hidden;">' . "\n" .
-            '    ' . htmlspecialchars($preheader, ENT_QUOTES, 'UTF-8') . "\n" .
-            '</div>' . "\n";
-
-        // Insert preheader after <body> tag
-        if (preg_match('/<body[^>]*>/i', $content, $matches)) {
-            $content = preg_replace(
-                '/(<body[^>]*>)/i',
-                '$1' . "\n" . $preheaderHtml,
-                $content,
-                1
-            );
-        } else {
-            // If no body tag, prepend to content
-            $content = $preheaderHtml . $content;
-        }
-
-        return $content;
+        return app(MessageEditorService::class)->injectPreheader($content, $preheader);
     }
 
     /**
@@ -1781,18 +1580,8 @@ class MessageController extends Controller
             ], 422);
         }
 
-        $message->is_active = !($message->is_active ?? true);
-
-        // The send pipeline (signup listener + cron) only looks at messages
-        // with status `scheduled`. Flipping is_active alone left a draft queue
-        // message labelled "Active" in the UI while nothing was ever scheduled
-        // or sent for it, so activation promotes the draft as well.
-        if ($message->is_active && $message->status === 'draft') {
-            $message->status = 'scheduled';
-            $message->scheduled_at = $message->scheduled_at ?? now();
-        }
-
-        $message->save();
+        // Activation also promotes a draft to `scheduled` (see setActive)
+        app(MessageEditorService::class)->setActive($message, !($message->is_active ?? true));
 
         return response()->json([
             'success' => true,
@@ -1808,58 +1597,7 @@ class MessageController extends Controller
      */
     protected function syncMessageTrigger(Message $message, array $data): void
     {
-        $triggerType = $data['trigger_type'] ?? null;
-
-        if (empty($triggerType)) {
-            // Remove automation rule if trigger was removed
-            AutomationRule::where('trigger_source', 'message')
-                ->where('trigger_source_id', $message->id)
-                ->delete();
-            return;
-        }
-
-        // Map message trigger types to AutomationRule trigger events
-        $triggerEventMap = [
-            'signup' => 'subscriber_signup',
-            'anniversary' => 'subscription_anniversary',
-            'inactivity' => 'subscriber_inactive',
-            'birthday' => 'subscriber_birthday',
-            'page_visit' => 'page_visited',
-            'custom' => 'tag_added', // Custom allows any trigger
-        ];
-
-        $triggerEvent = $triggerEventMap[$triggerType] ?? $triggerType;
-
-        // Build trigger config
-        $triggerConfig = $data['trigger_config'] ?? [];
-
-        // Add list_id from message if not set
-        if (empty($triggerConfig['list_id']) && $message->contactLists->isNotEmpty()) {
-            $triggerConfig['list_id'] = $message->contactLists->first()->id;
-        }
-
-        AutomationRule::updateOrCreate(
-            [
-                'trigger_source' => 'message',
-                'trigger_source_id' => $message->id,
-            ],
-            [
-                'user_id' => $message->user_id,
-                'name' => "Auto: {$message->subject}",
-                'description' => "Automatyzacja utworzona z wiadomości #{$message->id}",
-                'trigger_event' => $triggerEvent,
-                'trigger_config' => $triggerConfig,
-                'conditions' => [],
-                'condition_logic' => 'all',
-                'actions' => [
-                    [
-                        'type' => 'send_email',
-                        'config' => ['message_id' => $message->id]
-                    ]
-                ],
-                'is_active' => in_array($message->status, ['sent', 'scheduled']),
-            ]
-        );
+        app(MessageEditorService::class)->syncTrigger($message, $data);
     }
 
     /**
@@ -1907,50 +1645,7 @@ class MessageController extends Controller
 
     protected function syncTrackedLinks(Message $message, array $trackedLinks): void
     {
-        // Get existing tracked links for this message (by URL hash for comparison)
-        $existingLinks = $message->trackedLinks()->get()->keyBy(function ($link) {
-            return $link->url_hash;
-        });
-
-        $processedHashes = [];
-
-        foreach ($trackedLinks as $linkData) {
-            if (empty($linkData['url'])) {
-                continue;
-            }
-
-            $urlHash = MessageTrackedLink::generateUrlHash($linkData['url']);
-            $processedHashes[] = $urlHash;
-
-            // Check if this link already exists
-            $existingLink = $existingLinks->get($urlHash);
-
-            $data = [
-                'message_id' => $message->id,
-                'url' => $linkData['url'],
-                'url_hash' => $urlHash,
-                'tracking_enabled' => $linkData['tracking_enabled'] ?? true,
-                'share_data_enabled' => $linkData['share_data_enabled'] ?? false,
-                'shared_fields' => !empty($linkData['shared_fields']) ? $linkData['shared_fields'] : null,
-                'subscribe_to_list_ids' => !empty($linkData['subscribe_to_list_ids']) ? $linkData['subscribe_to_list_ids'] : null,
-                'unsubscribe_from_list_ids' => !empty($linkData['unsubscribe_from_list_ids']) ? $linkData['unsubscribe_from_list_ids'] : null,
-            ];
-
-            // Use updateOrCreate to handle duplicate URLs in the same request
-            // (e.g., when pasting content from Word with the same link multiple times)
-            MessageTrackedLink::updateOrCreate(
-                [
-                    'message_id' => $message->id,
-                    'url_hash' => $urlHash,
-                ],
-                $data
-            );
-        }
-
-        // Delete links that are no longer in the content
-        $message->trackedLinks()
-            ->whereNotIn('url_hash', $processedHashes)
-            ->delete();
+        app(MessageEditorService::class)->syncTrackedLinks($message, $trackedLinks);
     }
 
     /**
@@ -1959,87 +1654,7 @@ class MessageController extends Controller
      */
     protected function syncAbTest(Message $message, array $config): void
     {
-        $enabled = $config['enabled'] ?? false;
-        $variants = $config['variants'] ?? [];
-
-        // If A/B testing is disabled, delete any existing test
-        if (!$enabled || count($variants) < 2) {
-            $existingTest = $message->abTest;
-            if ($existingTest) {
-                // Only delete if test is still in draft status
-                if ($existingTest->status === \App\Models\AbTest::STATUS_DRAFT) {
-                    $existingTest->variants()->delete();
-                    $existingTest->delete();
-                }
-            }
-            return;
-        }
-
-        // Get or create the A/B test
-        $test = $message->abTest;
-        if (!$test) {
-            $test = \App\Models\AbTest::create([
-                'message_id' => $message->id,
-                'user_id' => $message->user_id,
-                'name' => $message->subject . ' - A/B Test',
-                'status' => \App\Models\AbTest::STATUS_DRAFT,
-                'test_type' => $config['test_type'] ?? 'subject',
-                'winning_metric' => $config['winning_metric'] ?? 'open_rate',
-                'sample_percentage' => $config['sample_percentage'] ?? 20,
-                'test_duration_hours' => $config['test_duration_hours'] ?? 4,
-                'auto_select_winner' => $config['auto_select_winner'] ?? true,
-                'confidence_threshold' => $config['confidence_threshold'] ?? 95,
-            ]);
-        } else {
-            // Update existing test (only if draft)
-            if ($test->status === \App\Models\AbTest::STATUS_DRAFT) {
-                $test->update([
-                    'test_type' => $config['test_type'] ?? 'subject',
-                    'winning_metric' => $config['winning_metric'] ?? 'open_rate',
-                    'sample_percentage' => $config['sample_percentage'] ?? 20,
-                    'test_duration_hours' => $config['test_duration_hours'] ?? 4,
-                    'auto_select_winner' => $config['auto_select_winner'] ?? true,
-                    'confidence_threshold' => $config['confidence_threshold'] ?? 95,
-                ]);
-            }
-        }
-
-        // Sync variants (only if test is draft)
-        if ($test->status === \App\Models\AbTest::STATUS_DRAFT) {
-            $existingVariants = $test->variants()->get()->keyBy('variant_letter');
-            $processedLetters = [];
-
-            foreach ($variants as $variantData) {
-                $letter = $variantData['variant_letter'];
-                $processedLetters[] = $letter;
-
-                $existingVariant = $existingVariants->get($letter);
-                $data = [
-                    'ab_test_id' => $test->id,
-                    'variant_letter' => $letter,
-                    'subject' => $variantData['subject'] ?? null,
-                    'preheader' => $variantData['preheader'] ?? null,
-                    'is_control' => $variantData['is_control'] ?? false,
-                ];
-
-                // For control variant, use message's subject/preheader
-                if ($data['is_control']) {
-                    $data['subject'] = $message->subject;
-                    $data['preheader'] = $message->preheader;
-                }
-
-                if ($existingVariant) {
-                    $existingVariant->update($data);
-                } else {
-                    \App\Models\AbTestVariant::create($data);
-                }
-            }
-
-            // Delete variants that were removed
-            $test->variants()
-                ->whereNotIn('variant_letter', $processedLetters)
-                ->delete();
-        }
+        app(MessageEditorService::class)->syncAbTest($message, $config);
     }
 
     /**
@@ -2047,38 +1662,7 @@ class MessageController extends Controller
      */
     protected function formatAbTestConfig(Message $message): array
     {
-        $message->load(['abTest.variants']);
-
-        if (!$message->abTest) {
-            return [
-                'enabled' => false,
-                'test_type' => 'subject',
-                'winning_metric' => 'open_rate',
-                'sample_percentage' => 20,
-                'test_duration_hours' => 4,
-                'auto_select_winner' => true,
-                'confidence_threshold' => 95,
-                'variants' => [],
-            ];
-        }
-
-        $test = $message->abTest;
-
-        return [
-            'enabled' => true,
-            'test_type' => $test->test_type ?? 'subject',
-            'winning_metric' => $test->winning_metric ?? 'open_rate',
-            'sample_percentage' => $test->sample_percentage ?? 20,
-            'test_duration_hours' => $test->test_duration_hours ?? 4,
-            'auto_select_winner' => $test->auto_select_winner ?? true,
-            'confidence_threshold' => $test->confidence_threshold ?? 95,
-            'variants' => $test->variants->map(fn($v) => [
-                'variant_letter' => $v->variant_letter,
-                'subject' => $v->subject,
-                'preheader' => $v->preheader,
-                'is_control' => $v->is_control,
-            ])->values()->toArray(),
-        ];
+        return app(MessageEditorService::class)->formatAbTestConfig($message);
     }
 
     /**
@@ -2186,52 +1770,9 @@ class MessageController extends Controller
             ], 422);
         }
 
-        $created = 0;
-        $alreadyExists = 0;
-
-        foreach ($missedSubscribers as $subscriberData) {
-            // Check if queue entry already exists
-            $existing = $message->queueEntries()
-                ->where('subscriber_id', $subscriberData['id'])
-                ->first();
-
-            if ($existing) {
-                // If skipped or failed, reset to planned
-                if (in_array($existing->status, [MessageQueueEntry::STATUS_SKIPPED, MessageQueueEntry::STATUS_FAILED])) {
-                    $existing->update([
-                        'status' => MessageQueueEntry::STATUS_PLANNED,
-                        'planned_at' => now(),
-                        'scheduled_for' => now(),
-                        'error_message' => null,
-                    ]);
-                    $created++;
-                } else {
-                    $alreadyExists++;
-                }
-            } else {
-                // Create new entry, due immediately
-                try {
-                    $message->queueEntries()->create([
-                        'subscriber_id' => $subscriberData['id'],
-                        'status' => MessageQueueEntry::STATUS_PLANNED,
-                        'planned_at' => now(),
-                        'scheduled_for' => now(),
-                    ]);
-                    $created++;
-                } catch (\Illuminate\Database\UniqueConstraintViolationException) {
-                    // Backfilled concurrently by CRON or the signup listener (issue #30)
-                    $alreadyExists++;
-                }
-            }
-        }
-
-        // Ensure message is scheduled for processing
-        if ($message->status !== 'scheduled') {
-            $message->update([
-                'status' => 'scheduled',
-                'scheduled_at' => now(),
-            ]);
-        }
+        $result = app(MessageEditorService::class)->queueMissedRecipients($message, $missedSubscribers);
+        $created = $result['created'];
+        $alreadyExists = $result['already_exists'];
 
         return response()->json([
             'success' => true,

@@ -264,6 +264,23 @@ class SubscriptionForm extends Model
         return $slug;
     }
 
+    /**
+     * Copy this form as a new draft with its own slug and empty statistics.
+     * Integrations and submissions are not copied.
+     */
+    public function duplicate(): self
+    {
+        $newForm = $this->replicate();
+        $newForm->name = "[KOPIA] " . $this->name;
+        $newForm->slug = self::generateUniqueSlug();
+        $newForm->status = 'draft';
+        $newForm->submissions_count = 0;
+        $newForm->last_submission_at = null;
+        $newForm->save();
+
+        return $newForm;
+    }
+
     // ========== RELATIONSHIPS ==========
 
     public function user(): BelongsTo
