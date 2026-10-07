@@ -80,6 +80,7 @@ class MailboxController extends Controller
                     'reply_last_scan_count' => $mailbox->reply_last_scan_count,
                     // Custom headers
                     'custom_headers' => $mailbox->custom_headers ?? [],
+                    'tracking_enabled' => $mailbox->tracking_enabled ?? true,
                     // Reputation monitoring
                     'reputation_overall' => $mailbox->reputation_overall ?? 'unchecked',
                     'reputation_checked_at' => $mailbox->reputation_checked_at?->toIso8601String(),
@@ -136,6 +137,7 @@ class MailboxController extends Controller
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
+            'tracking_enabled' => ['nullable', 'boolean'],
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
@@ -155,6 +157,7 @@ class MailboxController extends Controller
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
             'custom_headers' => $validated['custom_headers'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? true,
         ]);
 
         // Set as default if it's the first mailbox
@@ -238,6 +241,7 @@ class MailboxController extends Controller
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
+            'tracking_enabled' => ['nullable', 'boolean'],
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
@@ -265,6 +269,7 @@ class MailboxController extends Controller
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
             'custom_headers' => $validated['custom_headers'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? $mailbox->tracking_enabled ?? true,
         ];
 
         // Only update credentials if provided

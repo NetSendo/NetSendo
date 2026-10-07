@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Events\EmailBounced;
+use App\Helpers\EmailPlainText;
+use App\Models\ContactList;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\MessageQueueEntry;
@@ -70,6 +72,9 @@ class SendEmailJob implements ShouldQueue
 
             $content = $this->message->content;
             $subject = $this->message->subject;
+            // The message's own text part goes with its own HTML only; content
+            // replaced by a translation gets text generated from that HTML.
+            $plainText = $this->message->plain_text;
 
             // Language-specific content: check subscriber's language preference
             $subscriberLanguage = $this->subscriber->language;
@@ -79,6 +84,7 @@ class SendEmailJob implements ShouldQueue
                     $subject = $translation->subject;
                     if ($translation->content) {
                         $content = $translation->content;
+                        $plainText = null;
                     }
                     if ($translation->preheader) {
                         $this->message->preheader = $translation->preheader;
@@ -128,6 +134,13 @@ class SendEmailJob implements ShouldQueue
             $content = $processed['content'];
             $subject = $processed['subject'];
 
+            if ($plainText !== null && trim($plainText) !== '') {
+                $plainText = $placeholderService->processEmailContent($plainText, '', $this->subscriber, $unsubscribeList)['content'];
+            }
+
+            // Click and open tracking: the message's switch, else its mailbox's
+            $trackingEnabled = $this->message->tracking_enabled ?? $mailbox?->tracking_enabled ?? true;
+
             // 2. Preheader Processing - use preheader from Message field, not from HTML content
             $preheader = $this->message->preheader;
             if (!empty($preheader)) {
@@ -172,13 +185,17 @@ class SendEmailJob implements ShouldQueue
                 }
             }
 
+            // text/plain alternative, generated from the HTML before the links
+            // are rewritten for tracking, so it carries the real link targets
+            $plainText = EmailPlainText::forEmail($plainText, $content);
+
             // 3. Link Tracking Replacement
             // Load tracked links configuration for this message
             $trackedLinksConfig = $this->message->trackedLinks()->get()->keyBy(function ($link) {
                 return $link->url_hash;
             });
 
-            $content = preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash, $trackedLinksConfig) {
+            $content = !$trackingEnabled ? $content : preg_replace_callback('/href=["\']([^"\']+)["\']/', function ($matches) use ($hash, $trackedLinksConfig) {
                 $url = $matches[1];
 
                 // Skip special links
@@ -207,18 +224,20 @@ class SendEmailJob implements ShouldQueue
             }, $content);
 
             // 4. Open Tracking Pixel
-            $pixelUrl = route('tracking.open', [
-                'message' => $this->message->id,
-                'subscriber' => $this->subscriber->id,
-                'hash' => $hash,
-            ]);
+            if ($trackingEnabled) {
+                $pixelUrl = route('tracking.open', [
+                    'message' => $this->message->id,
+                    'subscriber' => $this->subscriber->id,
+                    'hash' => $hash,
+                ]);
 
-            $pixelHtml = '<img src="' . $pixelUrl . '" alt="" width="1" height="1" border="0" style="height:1px !important;width:1px !important;border-width:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-right:0 !important;margin-left:0 !important;padding-top:0 !important;padding-bottom:0 !important;padding-right:0 !important;padding-left:0 !important;"/>';
+                $pixelHtml = '<img src="' . $pixelUrl . '" alt="" width="1" height="1" border="0" style="height:1px !important;width:1px !important;border-width:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-right:0 !important;margin-left:0 !important;padding-top:0 !important;padding-bottom:0 !important;padding-right:0 !important;padding-left:0 !important;"/>';
 
-            if (str_contains($content, '</body>')) {
-                $content = str_replace('</body>', $pixelHtml . '</body>', $content);
-            } else {
-                $content .= $pixelHtml;
+                if (str_contains($content, '</body>')) {
+                    $content = str_replace('</body>', $pixelHtml . '</body>', $content);
+                } else {
+                    $content .= $pixelHtml;
+                }
             }
 
             // 5. Convert images marked with class="img_to_b64" to inline base64
@@ -255,8 +274,8 @@ class SendEmailJob implements ShouldQueue
 
             // Use custom mailbox provider
             $provider = $providerService->getProvider($mailbox);
-            // Resolve custom headers
-            $headers = $this->resolveHeaders($placeholderService);
+            // Resolve custom headers — for the mailbox that actually sends
+            $headers = $this->resolveHeaders($placeholderService, $mailbox);
 
             $provider->send(
                 $this->subscriber->email,
@@ -264,7 +283,9 @@ class SendEmailJob implements ShouldQueue
                 $subject,
                 $content,
                 $headers,
-                $attachments
+                $attachments,
+                $plainText,
+                $trackingEnabled
             );
 
             // Track sent count for rate limiting
@@ -425,13 +446,21 @@ class SendEmailJob implements ShouldQueue
     }
 
     /**
-     * Resolve custom headers (Return-Path < Global < List < Mailbox Custom < API Custom)
+     * Resolve custom headers (Return-Path < Global < List < Mailbox Custom < API Custom),
+     * plus the RFC 8058 one-click List-Unsubscribe pair for list mail.
      *
-     * Forbidden headers (From, To, Subject, etc.) are silently filtered out
-     * to prevent spoofing or breaking MIME structure.
+     * $mailbox is the mailbox that sends — resolved in handle() from the job,
+     * the message, the list default or the account default. Forbidden headers
+     * (From, To, Subject, etc.) are silently filtered out to prevent spoofing
+     * or breaking MIME structure. Names are matched case-insensitively, and
+     * `list_unsubscribe` / `list_unsubscribe_post` (the settings keys) are
+     * List-Unsubscribe / List-Unsubscribe-Post, so a later source replaces an
+     * earlier one instead of sending the header twice.
      */
-    private function resolveHeaders(PlaceholderService $placeholderService): array
+    private function resolveHeaders(PlaceholderService $placeholderService, ?Mailbox $mailbox = null): array
     {
+        $mailbox ??= $this->mailbox ?? $this->message->mailbox;
+
         // Headers that must not be overridden by users
         $forbiddenHeaders = [
             'from', 'to', 'cc', 'bcc', 'subject', 'date',
@@ -439,45 +468,43 @@ class SendEmailJob implements ShouldQueue
             'message-id', 'return-path',
         ];
 
+        // lower-case name => [name, value]
         $rawHeaders = [];
+        $put = function ($key, $value) use (&$rawHeaders, $forbiddenHeaders) {
+            if (!is_string($key) || $value === null || $value === '' || !is_scalar($value)) {
+                return;
+            }
+            $name = self::canonicalHeaderName($key);
+            if ($name === '' || in_array(strtolower($name), $forbiddenHeaders, true)) {
+                return;
+            }
+            $rawHeaders[strtolower($name)] = [$name, (string) $value];
+        };
 
-        // 0. Return-Path for bounce mailbox handling
-        // If the mailbox has bounce monitoring enabled, set Return-Path
-        // so bounce emails go to the monitored IMAP mailbox
-        if ($this->mailbox && $this->mailbox->bounce_enabled) {
-            $bounceEmail = $this->mailbox->getBounceEmail();
-            if ($bounceEmail) {
-                $rawHeaders['Return-Path'] = $bounceEmail;
+        // List context: the list this subscriber gets the message from
+        $list = $this->resolveListContext();
+
+        // 1. Global Defaults (settings.sending.headers)
+        $userSettings = $this->message->user->settings ?? [];
+        if (isset($userSettings['sending']['headers']) && is_array($userSettings['sending']['headers'])) {
+            foreach ($userSettings['sending']['headers'] as $key => $value) {
+                $put($key, $value);
             }
         }
 
-        // 1. Global Defaults
-        // Access settings.sending.headers
-        $userSettings = $this->message->user->settings ?? [];
-        if (isset($userSettings['sending']['headers']) && is_array($userSettings['sending']['headers'])) {
-             // Filter empty strings
-             $globalHeaders = array_filter($userSettings['sending']['headers'], fn($v) => !empty($v));
-             $rawHeaders = array_merge($rawHeaders, $globalHeaders);
-        }
-
-        // 2. List Settings (Overrides)
-        $list = $this->subscriber->contactList;
-        if ($list && isset($list->settings['sending']['headers']) && is_array($list->settings['sending']['headers'])) {
-             // Filter empty strings
-             $listHeaders = array_filter($list->settings['sending']['headers'], fn($v) => !empty($v));
-             $rawHeaders = array_merge($rawHeaders, $listHeaders);
+        // 2. List Settings (Overrides) — the list in context, else the message's first list
+        $settingsList = $list ?? $this->message->contactLists->sortBy('id')->first();
+        if ($settingsList && isset($settingsList->settings['sending']['headers']) && is_array($settingsList->settings['sending']['headers'])) {
+            foreach ($settingsList->settings['sending']['headers'] as $key => $value) {
+                $put($key, $value);
+            }
         }
 
         // 3. Mailbox-level custom headers (overrides global/list)
-        $mailbox = $this->mailbox ?? $this->message->mailbox;
         if ($mailbox && !empty($mailbox->custom_headers) && is_array($mailbox->custom_headers)) {
             foreach ($mailbox->custom_headers as $header) {
-                if (!empty($header['key']) && isset($header['value']) && $header['value'] !== '') {
-                    $headerKey = trim($header['key']);
-                    // Skip forbidden headers
-                    if (!in_array(strtolower($headerKey), $forbiddenHeaders)) {
-                        $rawHeaders[$headerKey] = $header['value'];
-                    }
+                if (!empty($header['key']) && isset($header['value'])) {
+                    $put(trim($header['key']), $header['value']);
                 }
             }
         }
@@ -485,72 +512,109 @@ class SendEmailJob implements ShouldQueue
         // 4. API per-message custom headers (highest custom priority, overrides mailbox)
         if (!empty($this->message->custom_headers) && is_array($this->message->custom_headers)) {
             foreach ($this->message->custom_headers as $key => $value) {
-                if (!empty($key) && isset($value) && $value !== '') {
-                    $headerKey = trim($key);
-                    // Skip forbidden headers
-                    if (!in_array(strtolower($headerKey), $forbiddenHeaders)) {
-                        $rawHeaders[$headerKey] = $value;
-                    }
-                }
+                $put(is_string($key) ? trim($key) : $key, $value);
             }
         }
 
-        if (empty($rawHeaders)) {
-            return [];
-        }
+        // A one-click URL: list-scoped when the list is known, else the
+        // account-wide opt-out. Both answer GET with a page and POST
+        // List-Unsubscribe=One-Click by unsubscribing (UnsubscribeController).
+        $oneClickUrl = $list
+            ? $placeholderService->generateUnsubscribeLink($this->subscriber, $list)
+            : $placeholderService->generateGlobalUnsubscribeLink($this->subscriber);
 
-        // Determine list context for unsubscribe link
-        $contactLists = $this->message->contactLists;
-        $unsubscribeList = ($contactLists && $contactLists->count() === 1)
-            ? $contactLists->first()
-            : null;
-
-        // Generate placeholders
-        $unsubscribeLink = $placeholderService->generateUnsubscribeLink($this->subscriber, $unsubscribeList);
         $additionalData = [
-            'unsubscribe_link' => $unsubscribeLink,
-            'unsubscribe_url' => $unsubscribeLink,
-            'unsubscribe' => $unsubscribeLink,
+            'unsubscribe_link' => $oneClickUrl,
+            'unsubscribe_url' => $oneClickUrl,
+            'unsubscribe' => $oneClickUrl,
+            'unsubscribe_global' => $placeholderService->generateGlobalUnsubscribeLink($this->subscriber),
             'manage' => $placeholderService->generateManageLink($this->subscriber),
         ];
 
-        // Process values
         $finalHeaders = [];
-
-        // List-Unsubscribe (special handling)
-        if (!empty($rawHeaders['list_unsubscribe'])) {
-            $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe'], $this->subscriber, $additionalData);
-            if (!empty($value)) {
-                $finalHeaders['List-Unsubscribe'] = $value;
+        foreach ($rawHeaders as [$name, $value]) {
+            // Process placeholder replacement in header values too
+            $processedValue = $placeholderService->replacePlaceholders($value, $this->subscriber, $additionalData);
+            if ($processedValue !== '') {
+                $finalHeaders[$name] = $processedValue;
             }
         }
 
-        // List-Unsubscribe-Post (special handling)
-        if (!empty($rawHeaders['list_unsubscribe_post'])) {
-            $value = $placeholderService->replacePlaceholders($rawHeaders['list_unsubscribe_post'], $this->subscriber, $additionalData);
-            if (!empty($value)) {
-                 $finalHeaders['List-Unsubscribe-Post'] = $value;
+        // RFC 8058: list mail (broadcasts and autoresponders) can be left in one click
+        if ($this->wantsListUnsubscribe()) {
+            if (!isset($finalHeaders['List-Unsubscribe'])) {
+                $finalHeaders['List-Unsubscribe'] = '<' . $oneClickUrl . '>';
+                $finalHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+            } elseif (!isset($finalHeaders['List-Unsubscribe-Post'])
+                && str_contains($finalHeaders['List-Unsubscribe'], $oneClickUrl)) {
+                // A configured header carrying our URL: that URL takes the POST
+                $finalHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
             }
         }
 
-        // Pass through all other non-special headers (custom headers from mailbox/API/settings)
-        $specialKeys = ['list_unsubscribe', 'list_unsubscribe_post', 'Return-Path'];
-        foreach ($rawHeaders as $key => $value) {
-            if (!in_array($key, $specialKeys) && !isset($finalHeaders[$key])) {
-                // Process placeholder replacement in custom header values too
-                $processedValue = $placeholderService->replacePlaceholders($value, $this->subscriber, $additionalData);
-                if (!empty($processedValue)) {
-                    $finalHeaders[$key] = $processedValue;
-                }
+        // Return-Path for bounce mailbox handling (system-level, not user-overridable):
+        // bounces go to the monitored IMAP mailbox of the mailbox that sends
+        if ($mailbox && $mailbox->bounce_enabled) {
+            $bounceEmail = $mailbox->getBounceEmail();
+            if ($bounceEmail) {
+                $finalHeaders['Return-Path'] = $bounceEmail;
             }
-        }
-
-        // Always include Return-Path if set (system-level, not user-overridable)
-        if (!empty($rawHeaders['Return-Path'])) {
-            $finalHeaders['Return-Path'] = $rawHeaders['Return-Path'];
         }
 
         return $finalHeaders;
+    }
+
+    /**
+     * The list this subscriber receives the message from: the message's only
+     * list, or — for a message to several lists — the one of them the
+     * subscriber is an active member of. Null when that is not one list.
+     */
+    private function resolveListContext(): ?ContactList
+    {
+        $lists = $this->message->contactLists;
+
+        if (!$lists || $lists->isEmpty()) {
+            return null;
+        }
+
+        if ($lists->count() === 1) {
+            return $lists->first();
+        }
+
+        $memberOf = $this->subscriber->contactLists()
+            ->whereIn('contact_lists.id', $lists->pluck('id'))
+            ->wherePivot('status', 'active')
+            ->pluck('contact_lists.id');
+
+        return $memberOf->count() === 1 ? $lists->firstWhere('id', $memberOf->first()) : null;
+    }
+
+    /**
+     * One-click unsubscribe headers are added to list mail: broadcasts and
+     * autoresponders with at least one list. A single API send without a
+     * list (POST /api/v1/email/send) may be transactional and gets them only
+     * when it passes its own List-Unsubscribe.
+     */
+    private function wantsListUnsubscribe(): bool
+    {
+        return config('netsendo.email.list_unsubscribe', true)
+            && in_array($this->message->type ?? 'broadcast', ['broadcast', 'autoresponder'], true)
+            && $this->message->contactLists->isNotEmpty();
+    }
+
+    /**
+     * Header name as sent: the List-Unsubscribe pair spelled the RFC way
+     * whatever the source wrote (list_unsubscribe, list-unsubscribe, ...).
+     */
+    private static function canonicalHeaderName(string $key): string
+    {
+        $key = trim($key);
+
+        return match (str_replace('_', '-', strtolower($key))) {
+            'list-unsubscribe' => 'List-Unsubscribe',
+            'list-unsubscribe-post' => 'List-Unsubscribe-Post',
+            default => $key,
+        };
     }
 
     /**

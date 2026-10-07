@@ -3,6 +3,7 @@
 namespace App\Services\Mail\Providers;
 
 use App\Helpers\EmailHtmlDocument;
+use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use Illuminate\Support\Facades\Http;
 use Exception;
@@ -17,10 +18,11 @@ class SendGridProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = [], ?string $textContent = null, ?bool $trackingEnabled = null): bool
     {
         // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
         $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+        $textContent = EmailPlainText::forEmail($textContent, $htmlContent);
 
         try {
             $payload = [
@@ -39,16 +41,36 @@ class SendGridProvider implements MailProviderInterface
                     'email' => $this->fromEmail,
                     'name' => $this->fromName,
                 ],
-                'content' => [
-                    [
-                        'type' => 'text/html',
-                        'value' => $htmlContent,
-                    ],
-                ],
+                'content' => [],
             ];
+
+            // SendGrid requires text/plain before text/html
+            if ($textContent !== null) {
+                $payload['content'][] = [
+                    'type' => 'text/plain',
+                    'value' => $textContent,
+                ];
+            }
+            $payload['content'][] = [
+                'type' => 'text/html',
+                'value' => $htmlContent,
+            ];
+
+            // SendGrid sets the envelope sender itself and processes the bounces
+            // (its own bounce domain); a Return-Path header would not be honoured.
+            unset($headers['Return-Path']);
 
             if (!empty($headers)) {
                 $payload['headers'] = $headers;
+            }
+
+            // The message must not be tracked: switch off SendGrid's own click
+            // and open tracking for it too, whatever the account settings say.
+            if ($trackingEnabled === false) {
+                $payload['tracking_settings'] = [
+                    'click_tracking' => ['enable' => false, 'enable_text' => false],
+                    'open_tracking' => ['enable' => false],
+                ];
             }
 
             // Add attachments

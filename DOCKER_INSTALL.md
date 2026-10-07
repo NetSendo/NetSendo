@@ -304,6 +304,46 @@ docker compose down -v
 docker compose up -d
 ```
 
+### Unsubscribe Confirmations or New-Subscriber Notifications Not Sent
+
+The *unsubscribed confirmation* email (system email `unsubscribed_confirmation`)
+and the *new subscriber* notification are queued on the `notifications` queue.
+Campaigns, autoresponders and the *Confirm your unsubscribe* email do not use
+it, so they keep going out while these two never arrive.
+
+**Cause:** the `queue` service runs a worker for the `default` queue only. Up to
+2.1.3 `docker-compose.yml` started it with `php artisan queue:work` and no
+`--queue`, so no worker ever read `notifications`.
+
+**Solution:** the worker must listen to both queues, `default` first:
+
+```yaml
+  queue:
+    command: php artisan queue:work --queue=default,notifications --sleep=3 --tries=3 --max-time=3600
+```
+
+`docker compose pull` does not change a `docker-compose.yml` you already have —
+edit the `command` of the `queue` service, then `docker compose up -d queue`.
+A supervisor or systemd worker outside Docker needs the same `--queue` option.
+
+**Before restarting, check the backlog.** Jobs queued while no worker read
+`notifications` are sent as soon as one does — confirmations to people who
+unsubscribed weeks ago and a notification for every past signup:
+
+```bash
+# QUEUE_CONNECTION=database
+docker compose exec app php artisan tinker --execute="echo DB::table('jobs')->where('queue', 'notifications')->count();"
+
+# QUEUE_CONNECTION=redis (the key carries the Redis prefix)
+docker compose exec redis redis-cli --scan --pattern '*queues:notifications*'
+```
+
+Up to 2.1.3 both listeners were pinned to the `database` connection, so with
+`QUEUE_CONNECTION=redis` their jobs went to the `jobs` table, which the
+entrypoint empties at every container start — nothing is left to send. With
+`QUEUE_CONNECTION=database` they wait in `jobs`; delete them first if they
+should not go out (`DB::table('jobs')->where('queue', 'notifications')->delete()`).
+
 ### WebSocket Connection Issues
 
 If you see `WebSocket connection failed` errors in the browser console:

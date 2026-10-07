@@ -104,7 +104,11 @@ class SystemEmailService
                     $recipient,
                     $recipient, // Use email as name if name not available
                     $subject,
-                    $htmlContent
+                    $htmlContent,
+                    [],
+                    [],
+                    null,
+                    $mailbox->tracking_enabled === false ? false : null
                 );
             } else {
                 // Send via Laravel default (fallback)
@@ -194,7 +198,11 @@ class SystemEmailService
                     $recipient,
                     $recipient, // Use email as name
                     $subject,
-                    $htmlContent
+                    $htmlContent,
+                    [],
+                    [],
+                    null,
+                    $mailbox->tracking_enabled === false ? false : null
                 );
             } else {
                 Mail::to($recipient)->send($mailable);

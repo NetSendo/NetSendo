@@ -400,6 +400,8 @@ class MessageController extends Controller
             'channel' => 'required|in:email,sms',
             'type' => 'required|in:broadcast,autoresponder',
             'content' => 'nullable|string',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'preheader' => 'nullable|string|max:255',
             'mailbox_id' => [
                 'nullable',
@@ -429,6 +431,8 @@ class MessageController extends Controller
             'channel' => $validated['channel'],
             'type' => $validated['type'],
             'content' => $validated['content'] ?? '',
+            'plain_text' => $validated['plain_text'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? null,
             'preheader' => $validated['preheader'] ?? null,
             'mailbox_id' => $validated['mailbox_id'] ?? null,
             'template_id' => $validated['template_id'] ?? null,
@@ -508,6 +512,8 @@ class MessageController extends Controller
         $validated = $request->validate([
             'subject' => 'sometimes|string|max:255',
             'content' => 'nullable|string',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'preheader' => 'nullable|string|max:255',
             'mailbox_id' => [
                 'nullable',

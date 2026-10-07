@@ -1777,7 +1777,15 @@
             "excluded_crm_contacts": "Excluded CRM Contacts",
             "excluded_crm_contacts_help": "These contacts will not receive the message, even if they are on selected lists.",
             "search_crm_contacts": "Search CRM contacts...",
-            "selected_crm_contacts": "Selected {count} CRM contact(s)"
+            "selected_crm_contacts": "Selected {count} CRM contact(s)",
+            "plain_text": "Plain-text version",
+            "plain_text_placeholder": "Leave empty to generate it from the HTML when sending",
+            "plain_text_help": "Sent as the text/plain part next to the HTML. Empty: generated from the content, with link targets written out. Placeholders work as in the content.",
+            "tracking": "Click and open tracking",
+            "tracking_mailbox": "As set on the mailbox",
+            "tracking_on": "On for this message",
+            "tracking_off": "Off for this message",
+            "tracking_help": "Off: links are not rewritten to /t/click, no open pixel is added and SendGrid tracking is switched off for this message. Clicks and opens are then not counted."
         },
         "attachments": {
             "title": "PDF Attachments",
@@ -4408,6 +4416,10 @@
             "title": "WooCommerce Integration",
             "update_credentials": "Update connection credentials",
             "verified_at": "Verified"
+        },
+        "tracking": {
+            "label": "Track clicks and opens",
+            "help": "Rewrites links through NetSendo and adds the open pixel. Off: links stay as written, no pixel, and SendGrid tracking is switched off per message. A message can override this."
         }
     },
     "funnels": {

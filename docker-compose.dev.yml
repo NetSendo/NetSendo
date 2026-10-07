@@ -72,7 +72,9 @@ services:
     container_name: netsendo-queue
     restart: unless-stopped
     init: true
-    command: php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+    # `notifications` carries the queued system emails (unsubscribe confirmation,
+    # new-subscriber notification); a worker on `default` alone never sends them
+    command: php artisan queue:work --queue=default,notifications --sleep=3 --tries=3 --max-time=3600
     working_dir: /var/www
     volumes:
       - ./src:/var/www

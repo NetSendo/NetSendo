@@ -216,6 +216,26 @@ return [
         | the previous send-content-verbatim behaviour.
         */
         'wrap_html_document' => env('EMAIL_WRAP_HTML_DOCUMENT', true),
+
+        /*
+        | text/plain alternative.
+        | Every e-mail goes out as multipart/alternative: the HTML part plus a
+        | plain-text part — the message's own plain text when it has one, else
+        | text generated from the HTML. HTML-only mail scores worse with spam
+        | filters (SpamAssassin MIME_HTML_ONLY) and is unreadable in text-only
+        | clients. Disable to send HTML only, as before.
+        */
+        'plain_text_alternative' => env('EMAIL_PLAIN_TEXT_ALTERNATIVE', true),
+
+        /*
+        | RFC 8058 one-click unsubscribe.
+        | Broadcasts and autoresponders sent to a list get List-Unsubscribe
+        | (a signed HTTPS URL) and List-Unsubscribe-Post: List-Unsubscribe=One-Click,
+        | which Gmail and Yahoo require from bulk senders. A List-Unsubscribe
+        | configured on the mailbox, list, account or message wins; it gets the
+        | Post header only when it carries NetSendo's own unsubscribe URL.
+        */
+        'list_unsubscribe' => env('EMAIL_LIST_UNSUBSCRIBE', true),
     ],
 
     /*

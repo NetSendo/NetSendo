@@ -2183,7 +2183,15 @@
             "excluded_crm_contacts": "Contactos CRM excluidos",
             "excluded_crm_contacts_help": "Estos contactos no recibirán el mensaje, aunque estén en las listas seleccionadas.",
             "search_crm_contacts": "Buscar contactos CRM...",
-            "selected_crm_contacts": "{count} contacto(s) CRM seleccionado(s)"
+            "selected_crm_contacts": "{count} contacto(s) CRM seleccionado(s)",
+            "plain_text": "Versión de texto",
+            "plain_text_placeholder": "Déjalo vacío para generarla a partir del HTML al enviar",
+            "plain_text_help": "Se envía como parte text/plain junto al HTML. Vacío: se genera a partir del contenido, con las direcciones de los enlaces escritas. Los marcadores funcionan como en el contenido.",
+            "tracking": "Seguimiento de clics y aperturas",
+            "tracking_mailbox": "Según el buzón",
+            "tracking_on": "Activado para este mensaje",
+            "tracking_off": "Desactivado para este mensaje",
+            "tracking_help": "Desactivado: los enlaces no se reescriben a /t/click, no se añade el píxel de apertura y el seguimiento de SendGrid se desactiva para este mensaje. Los clics y aperturas no se cuentan."
         },
         "actions": {
             "save_draft": "Guardar como borrador",
@@ -4793,6 +4801,10 @@
             "test_store": "Probar",
             "test_success": "Conexión activa",
             "test_failed": "Conexión inactiva"
+        },
+        "tracking": {
+            "label": "Seguir clics y aperturas",
+            "help": "Reescribe los enlaces a través de NetSendo y añade el píxel de apertura. Desactivado: los enlaces quedan como están, sin píxel, y el seguimiento de SendGrid se desactiva por mensaje. Un mensaje puede cambiarlo."
         }
     },
     "tracked_links": {

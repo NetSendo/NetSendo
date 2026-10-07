@@ -20,6 +20,10 @@ use Illuminate\Support\Facades\URL;
  * 1. User clicks unsubscribe link in email
  * 2. System sends confirmation email with signed link
  * 3. User clicks confirmation link to actually unsubscribe
+ *
+ * One-click (RFC 8058): the List-Unsubscribe header carries the same signed
+ * URL. A mailbox provider POSTs List-Unsubscribe=One-Click to it, and that
+ * unsubscribes at once — the user already confirmed in the mail client.
  */
 class UnsubscribeController extends Controller
 {
@@ -167,6 +171,79 @@ class UnsubscribeController extends Controller
             ]);
             return $this->renderSystemPage('unsubscribe_error', $subscriber, $list);
         }
+    }
+
+    /**
+     * RFC 8058 one-click unsubscribe from one list.
+     *
+     * POST to the signed list URL of the List-Unsubscribe header, body
+     * List-Unsubscribe=One-Click. Unsubscribes immediately, drops what is
+     * still planned for the list and fires SubscriberUnsubscribed (automations,
+     * webhooks, the unsubscribed_confirmation email). Idempotent.
+     */
+    public function oneClick(Request $request, Subscriber $subscriber, ContactList $list)
+    {
+        if (!$request->hasValidSignature()) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list, [], 403);
+        }
+
+        if (!$this->isOneClickRequest($request)) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list, [], 400);
+        }
+
+        $unsubscribed = $subscriber->unsubscribeFromList($list->id, 'one_click');
+
+        Log::info('One-click unsubscribe', [
+            'subscriber_id' => $subscriber->id,
+            'list_id' => $list->id,
+            'changed' => $unsubscribed,
+        ]);
+
+        return $this->renderSystemPage('unsubscribe_success', $subscriber, $list);
+    }
+
+    /**
+     * RFC 8058 one-click unsubscribe from every list (the List-Unsubscribe
+     * URL of a message whose list could not be told apart). Same rules as
+     * oneClick(), for all the subscriber's active lists.
+     */
+    public function globalOneClick(Request $request, Subscriber $subscriber)
+    {
+        if (!$request->hasValidSignature()) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null, [], 403);
+        }
+
+        if (!$this->isOneClickRequest($request)) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null, [], 400);
+        }
+
+        $count = 0;
+        $listIds = $subscriber->contactLists()->wherePivot('status', 'active')->pluck('contact_lists.id');
+        foreach ($listIds as $listId) {
+            if ($subscriber->unsubscribeFromList($listId, 'one_click_global')) {
+                $count++;
+            }
+        }
+
+        Log::info('One-click global unsubscribe', [
+            'subscriber_id' => $subscriber->id,
+            'unsubscribed_count' => $count,
+        ]);
+
+        return $this->renderSystemPage('unsubscribe_global_success', $subscriber, null, [
+            'unsubscribed_count' => (string) $count,
+        ]);
+    }
+
+    /**
+     * RFC 8058 §3.2: the POST body is List-Unsubscribe=One-Click
+     * (application/x-www-form-urlencoded or multipart/form-data).
+     */
+    protected function isOneClickRequest(Request $request): bool
+    {
+        $value = $request->request->get('List-Unsubscribe');
+
+        return is_string($value) && strcasecmp(trim($value), 'One-Click') === 0;
     }
 
     /**

@@ -34,6 +34,8 @@ class Message extends Model
         'preheader',
         'custom_headers',
         'content',
+        'plain_text', // text/plain part; empty = generated from the HTML
+        'tracking_enabled', // click/open tracking; null = the mailbox decides
         'status',
         'timezone',
         'send_at',
@@ -66,6 +68,7 @@ class Message extends Model
         'ab_split_percentage' => 'integer',
         'trigger_config' => 'array',
         'custom_headers' => 'array',
+        'tracking_enabled' => 'boolean',
         'is_active' => 'boolean',
         'send_in_subscriber_timezone' => 'boolean',
         'sent_count' => 'integer',

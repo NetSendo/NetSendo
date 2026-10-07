@@ -3,6 +3,7 @@
 namespace App\Services\Mail\Providers;
 
 use App\Helpers\EmailHtmlDocument;
+use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Mail\GmailOAuthService;
 use App\Models\Mailbox;
@@ -23,10 +24,11 @@ class GmailProvider implements MailProviderInterface
         private string $fromName
     ) {}
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = [], ?string $textContent = null, ?bool $trackingEnabled = null): bool
     {
         // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
         $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+        $textContent = EmailPlainText::forEmail($textContent, $htmlContent);
 
         try {
             // Get valid access token
@@ -38,6 +40,16 @@ class GmailProvider implements MailProviderInterface
                 ->to(new Address($to, $toName))
                 ->subject($subject)
                 ->html($htmlContent);
+
+            if ($textContent !== null) {
+                $email->text($textContent);
+            }
+
+            // Return-Path is a path header: added as text, Symfony throws
+            if (!empty($headers['Return-Path'])) {
+                $email->returnPath($headers['Return-Path']);
+            }
+            unset($headers['Return-Path']);
 
             // Add custom headers
             foreach ($headers as $name => $value) {

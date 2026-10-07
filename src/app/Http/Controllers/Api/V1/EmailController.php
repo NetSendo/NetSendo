@@ -43,6 +43,8 @@ class EmailController extends Controller
             'email' => 'required|email',
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'preheader' => 'nullable|string|max:500',
             'mailbox_id' => 'nullable|integer|exists:mailboxes,id',
             'sending_server_id' => 'nullable|integer|exists:mailboxes,id', // n8n alias for mailbox_id
@@ -112,6 +114,8 @@ class EmailController extends Controller
             'channel' => 'email',
             'subject' => $validated['subject'],
             'content' => $validated['content'],
+            'plain_text' => $validated['plain_text'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? null,
             'preheader' => $validated['preheader'] ?? null,
             'mailbox_id' => $mailbox->id,
             'status' => 'scheduled',
@@ -172,6 +176,8 @@ class EmailController extends Controller
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
             'content' => 'required|string',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'preheader' => 'nullable|string|max:500',
             'list_id' => 'nullable|integer',
             'contact_list_ids' => 'nullable|array',       // v2 alias for list_id (array of IDs)
@@ -291,6 +297,8 @@ class EmailController extends Controller
             'channel' => 'email',
             'subject' => $validated['subject'],
             'content' => $validated['content'],
+            'plain_text' => $validated['plain_text'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? null,
             'preheader' => $validated['preheader'] ?? null,
             'mailbox_id' => $mailbox->id,
             'status' => 'scheduled',

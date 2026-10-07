@@ -991,6 +991,10 @@ Route::get('/unsubscribe/{subscriber}/process-all', [\App\Http\Controllers\Unsub
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
+// RFC 8058 one-click: the same signed URLs, POSTed by the mailbox provider with
+// List-Unsubscribe=One-Click (CSRF-exempt, see bootstrap/app.php)
+Route::post('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'oneClick'])->name('subscriber.unsubscribe.one-click');
+Route::post('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalOneClick'])->name('subscriber.unsubscribe.global.one-click');
 
 // Subscriber Preferences Management (public, signed URLs)
 Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'show'])->name('subscriber.preferences');

@@ -51,6 +51,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks/shopify',
             'webhooks/google-calendar',
             'subscribe/*',
+            // RFC 8058 one-click unsubscribe: mailbox providers POST without a
+            // session; the signed URL is the authorisation (UnsubscribeController::oneClick)
+            'unsubscribe/*',
             't/pixel/*',
         ]);
     })

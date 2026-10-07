@@ -263,6 +263,10 @@ const form = useForm({
         props.message?.exclude_field_filter_match || "all",
     status: props.message?.status || "draft",
     content: props.message?.content || "",
+    // text/plain part; empty = generated from the HTML when sending
+    plain_text: props.message?.plain_text || "",
+    // click/open tracking: null = as the mailbox, true/false = this message
+    tracking_enabled: props.message?.tracking_enabled ?? null,
     send_at: props.message?.send_at || null,
     time_of_day: props.message?.time_of_day || null,
     timezone: props.message?.timezone || null,
@@ -1746,6 +1750,35 @@ watch(
                                 />
                             </div>
 
+                            <!-- Plain-text version (text/plain alternative) -->
+                            <div>
+                                <InputLabel for="plain_text">
+                                    {{ $t("messages.fields.plain_text") }}
+                                    <span
+                                        class="text-slate-400 font-normal ml-1"
+                                        >({{ $t("common.optional") }})</span
+                                    >
+                                </InputLabel>
+                                <textarea
+                                    id="plain_text"
+                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                                    rows="6"
+                                    v-model="form.plain_text"
+                                    :placeholder="
+                                        $t('messages.fields.plain_text_placeholder')
+                                    "
+                                ></textarea>
+                                <p
+                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("messages.fields.plain_text_help") }}
+                                </p>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.plain_text"
+                                />
+                            </div>
+
                             <!-- PDF Attachments Section -->
                             <div class="mt-6">
                                 <InputLabel class="mb-2">
@@ -2854,6 +2887,37 @@ watch(
                                 </button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Click and open tracking -->
+                    <div
+                        class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                    >
+                        <InputLabel
+                            for="tracking_enabled"
+                            :value="$t('messages.fields.tracking')"
+                            class="mb-2"
+                        />
+                        <select
+                            id="tracking_enabled"
+                            v-model="form.tracking_enabled"
+                            class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        >
+                            <option :value="null">
+                                {{ $t("messages.fields.tracking_mailbox") }}
+                            </option>
+                            <option :value="true">
+                                {{ $t("messages.fields.tracking_on") }}
+                            </option>
+                            <option :value="false">
+                                {{ $t("messages.fields.tracking_off") }}
+                            </option>
+                        </select>
+                        <p
+                            class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{ $t("messages.fields.tracking_help") }}
+                        </p>
                     </div>
 
                     <!-- Tracked Links Section -->

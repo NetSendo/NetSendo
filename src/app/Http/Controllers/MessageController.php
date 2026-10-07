@@ -286,6 +286,8 @@ class MessageController extends Controller
             'day' => 'nullable|integer|min:0',
             'content' => 'nullable|string',
             'preheader' => 'nullable|string|max:500',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'status' => 'required|in:draft,scheduled,sent',
             'contact_list_ids' => 'nullable|array',
             'contact_list_ids.*' => 'exists:contact_lists,id',
@@ -410,6 +412,8 @@ class MessageController extends Controller
             'day' => $validated['type'] === 'autoresponder' ? ($validated['day'] ?? 0) : null,
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
+            'plain_text' => $validated['plain_text'] ?? null,
+            'tracking_enabled' => $validated['tracking_enabled'] ?? null,
 
             // Autoresponders cannot be 'sent' (finished) immediately. If status is 'sent' (Active in UI), force 'scheduled'.
             'status' => ($validated['type'] === 'autoresponder' && $validated['status'] === 'sent') ? 'scheduled' : $validated['status'],
@@ -544,6 +548,8 @@ class MessageController extends Controller
                 'day' => $message->day,
                 'content' => $message->content,
                 'preheader' => $message->preheader,
+                'plain_text' => $message->plain_text,
+                'tracking_enabled' => $message->tracking_enabled,
                 'status' => $message->status,
                 'contact_list_ids' => $message->contactLists->pluck('id'),
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
@@ -678,6 +684,8 @@ class MessageController extends Controller
             'day' => 'nullable|integer|min:0',
             'content' => 'nullable|string',
             'preheader' => 'nullable|string|max:500',
+            'plain_text' => 'nullable|string',
+            'tracking_enabled' => 'nullable|boolean',
             'status' => 'required|in:draft,scheduled,sent',
             'contact_list_ids' => 'nullable|array',
             'contact_list_ids.*' => 'exists:contact_lists,id',
@@ -804,6 +812,9 @@ class MessageController extends Controller
             'day' => $validated['type'] === 'autoresponder' ? ($validated['day'] ?? 0) : null,
             'content' => $validated['content'],
             'preheader' => $validated['preheader'] ?? null,
+            // Older clients that do not send these keep what is stored
+            'plain_text' => array_key_exists('plain_text', $validated) ? $validated['plain_text'] : $message->plain_text,
+            'tracking_enabled' => array_key_exists('tracking_enabled', $validated) ? $validated['tracking_enabled'] : $message->tracking_enabled,
             // Autoresponders cannot be 'sent' (finished) immediately. If status is 'sent' (Active in UI), force 'scheduled'.
             'status' => ($validated['type'] === 'autoresponder' && $validated['status'] === 'sent') ? 'scheduled' : $validated['status'],
             'send_at' => $sendAt,

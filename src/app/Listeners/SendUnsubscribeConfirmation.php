@@ -16,7 +16,12 @@ class SendUnsubscribeConfirmation implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    public string $connection = 'database';
+    /**
+     * The default queue connection (QUEUE_CONNECTION), queue `notifications`:
+     * the worker must listen to it — `queue:work --queue=default,notifications`.
+     * Pinned to `database` before, the job sat in a table no worker read when
+     * QUEUE_CONNECTION was redis (and the entrypoint truncates it at start).
+     */
     public string $queue = 'notifications';
 
     public function __construct(

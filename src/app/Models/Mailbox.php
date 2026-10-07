@@ -52,6 +52,8 @@ class Mailbox extends Model
         'reply_last_scan_count',
         // Custom SMTP headers
         'custom_headers',
+        // NetSendo click/open tracking for this mailbox's mail (a message may override)
+        'tracking_enabled',
         // Reputation monitoring
         'reputation_status',
         'reputation_checked_at',
@@ -61,6 +63,7 @@ class Mailbox extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'tracking_enabled' => 'boolean',
         'allowed_types' => 'array',
         'daily_limit' => 'integer',
         'sent_today' => 'integer',

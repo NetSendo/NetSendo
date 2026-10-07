@@ -5,6 +5,7 @@ namespace App\Services\Mail\Providers;
 use App\Models\DedicatedIpAddress;
 use App\Models\DomainConfiguration;
 use App\Helpers\EmailHtmlDocument;
+use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Nmi\DkimKeyManager;
 use Symfony\Component\Mailer\Mailer;
@@ -105,10 +106,11 @@ class NmiProvider implements MailProviderInterface
         return max(0, $this->dedicatedIp->getCurrentWarmingLimit() - $this->dedicatedIp->sent_today);
     }
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = [], ?string $textContent = null, ?bool $trackingEnabled = null): bool
     {
         // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
         $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+        $textContent = EmailPlainText::forEmail($textContent, $htmlContent);
 
         // Check warming limits
         if (!$this->canSend()) {
@@ -143,6 +145,10 @@ class NmiProvider implements MailProviderInterface
             $email->to(new Address($to, $toName))
                 ->subject($subject)
                 ->html($htmlContent);
+
+            if ($textContent !== null) {
+                $email->text($textContent);
+            }
 
             // Add attachments
             foreach ($attachments as $attachment) {

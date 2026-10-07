@@ -15,12 +15,8 @@ class SendNewSubscriberNotification implements ShouldQueue
     use InteractsWithQueue;
 
     /**
-     * The queue connection that should be used.
-     */
-    public string $connection = 'database';
-
-    /**
-     * The queue name.
+     * The queue name, on the default connection (QUEUE_CONNECTION). The worker
+     * must listen to it: `queue:work --queue=default,notifications`.
      */
     public string $queue = 'notifications';
 

@@ -3,6 +3,7 @@
 namespace App\Services\Mail\Providers;
 
 use App\Helpers\EmailHtmlDocument;
+use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
@@ -62,10 +63,11 @@ class SmtpProvider implements MailProviderInterface
         return $dsn;
     }
 
-    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = []): bool
+    public function send(string $to, string $toName, string $subject, string $htmlContent, array $headers = [], array $attachments = [], ?string $textContent = null, ?bool $trackingEnabled = null): bool
     {
         // Ensure a valid HTML document structure (issue #22 — HTML_MIME_NO_HTML_TAG).
         $htmlContent = EmailHtmlDocument::wrap($htmlContent, $subject);
+        $textContent = EmailPlainText::forEmail($textContent, $htmlContent);
 
         try {
             $email = (new Email())
@@ -73,6 +75,22 @@ class SmtpProvider implements MailProviderInterface
 
             if ($this->replyTo) {
                 $email->replyTo($this->replyTo);
+            }
+
+            // Set Return-Path for bounce routing. It is a path header, not a
+            // text header: added as text, Symfony throws and the send fails.
+            if (!empty($headers['Return-Path'])) {
+                $email->returnPath($headers['Return-Path']);
+            }
+            unset($headers['Return-Path']);
+
+            // SendGrid's SMTP relay tracks clicks and opens on its own; an
+            // untracked message switches that off through X-SMTPAPI.
+            if ($trackingEnabled === false && $this->isSendGridRelay() && !isset($headers['X-SMTPAPI'])) {
+                $headers['X-SMTPAPI'] = json_encode(['filters' => [
+                    'clicktrack' => ['settings' => ['enable' => 0, 'enable_text' => 0]],
+                    'opentrack' => ['settings' => ['enable' => 0]],
+                ]]);
             }
 
             // Add custom headers
@@ -84,10 +102,8 @@ class SmtpProvider implements MailProviderInterface
                 ->subject($subject)
                 ->html($htmlContent);
 
-            // Set Return-Path for bounce routing
-            if (!empty($headers['Return-Path'])) {
-                $email->returnPath($headers['Return-Path']);
-                unset($headers['Return-Path']);
+            if ($textContent !== null) {
+                $email->text($textContent);
             }
 
             // Add attachments
@@ -149,5 +165,12 @@ class SmtpProvider implements MailProviderInterface
     public function getProviderName(): string
     {
         return 'SMTP';
+    }
+
+    private function isSendGridRelay(): bool
+    {
+        $host = strtolower($this->host);
+
+        return $host === 'sendgrid.net' || str_ends_with($host, '.sendgrid.net');
     }
 }

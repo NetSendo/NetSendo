@@ -1778,7 +1778,15 @@
             "excluded_crm_contacts": "Wykluczone kontakty CRM",
             "excluded_crm_contacts_help": "Te kontakty nie otrzymają wiadomości, nawet jeśli są na wybranych listach.",
             "search_crm_contacts": "Szukaj kontaktów CRM...",
-            "selected_crm_contacts": "Wybrano {count} kontakt(ów) CRM"
+            "selected_crm_contacts": "Wybrano {count} kontakt(ów) CRM",
+            "plain_text": "Wersja tekstowa",
+            "plain_text_placeholder": "Zostaw puste, aby wygenerować ją z HTML przy wysyłce",
+            "plain_text_help": "Wysyłana jako część text/plain obok HTML. Puste: generowana z treści, z adresami linków wypisanymi w tekście. Wstawki działają jak w treści.",
+            "tracking": "Śledzenie kliknięć i otwarć",
+            "tracking_mailbox": "Jak w skrzynce nadawczej",
+            "tracking_on": "Włączone dla tej wiadomości",
+            "tracking_off": "Wyłączone dla tej wiadomości",
+            "tracking_help": "Wyłączone: linki nie są przepisywane na /t/click, nie ma piksela otwarć, a śledzenie SendGrid jest wyłączone dla tej wiadomości. Kliknięcia i otwarcia nie są wtedy liczone."
         },
         "attachments": {
             "title": "Załączniki PDF",
@@ -4095,6 +4103,10 @@
             "title": "Integracja WooCommerce",
             "update_credentials": "Zaktualizuj dane połączenia",
             "verified_at": "Zweryfikowano"
+        },
+        "tracking": {
+            "label": "Śledź kliknięcia i otwarcia",
+            "help": "Przepisuje linki przez NetSendo i dodaje piksel otwarć. Wyłączone: linki zostają bez zmian, bez piksela, a śledzenie SendGrid jest wyłączane dla każdej wiadomości. Wiadomość może to nadpisać."
         }
     },
     "sms_providers": {

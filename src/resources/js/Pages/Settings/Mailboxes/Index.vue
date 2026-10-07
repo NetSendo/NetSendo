@@ -212,6 +212,8 @@ const form = useForm({
     reply_imap_folder: "INBOX",
     // Custom SMTP headers
     custom_headers: [],
+    // NetSendo click/open tracking (a message may override it)
+    tracking_enabled: true,
 });
 
 // Provider icons
@@ -307,6 +309,7 @@ const openModal = (mailbox = null) => {
         form.reply_imap_username = mailbox.reply_imap_username || "";
         form.reply_imap_password = "";
         form.reply_imap_folder = mailbox.reply_imap_folder || "INBOX";
+        form.tracking_enabled = mailbox.tracking_enabled ?? true;
         // Populate custom headers
         form.custom_headers = (mailbox.custom_headers && mailbox.custom_headers.length > 0)
             ? mailbox.custom_headers.map(h => ({ key: h.key || '', value: h.value || '' }))
@@ -2157,6 +2160,25 @@ const isBroadcastDisabled = computed(() => {
                                     </div>
                                 </div>
                             </Transition>
+                        </div>
+
+                        <!-- Click and open tracking -->
+                        <div class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    v-model="form.tracking_enabled"
+                                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                />
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $t('mailboxes.tracking.label') }}
+                                    </span>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {{ $t('mailboxes.tracking.help') }}
+                                    </p>
+                                </div>
+                            </label>
                         </div>
 
                         <!-- Custom SMTP Headers Section -->

@@ -2228,7 +2228,15 @@
             "excluded_crm_contacts": "Ausgeschlossene CRM-Kontakte",
             "excluded_crm_contacts_help": "Diese Kontakte erhalten die Nachricht nicht, auch wenn sie in ausgewählten Listen sind.",
             "search_crm_contacts": "CRM-Kontakte suchen...",
-            "selected_crm_contacts": "{count} CRM-Kontakt(e) ausgewählt"
+            "selected_crm_contacts": "{count} CRM-Kontakt(e) ausgewählt",
+            "plain_text": "Textversion",
+            "plain_text_placeholder": "Leer lassen, um sie beim Versand aus dem HTML zu erzeugen",
+            "plain_text_help": "Wird als text/plain-Teil neben dem HTML gesendet. Leer: aus dem Inhalt erzeugt, Linkziele ausgeschrieben. Platzhalter funktionieren wie im Inhalt.",
+            "tracking": "Klick- und Öffnungs-Tracking",
+            "tracking_mailbox": "Wie im Postfach eingestellt",
+            "tracking_on": "Für diese Nachricht an",
+            "tracking_off": "Für diese Nachricht aus",
+            "tracking_help": "Aus: Links werden nicht auf /t/click umgeschrieben, kein Öffnungspixel, und das SendGrid-Tracking wird für diese Nachricht ausgeschaltet. Klicks und Öffnungen werden dann nicht gezählt."
         },
         "actions": {
             "save_draft": "Als Entwurf speichern",
@@ -8524,6 +8532,10 @@
             "title": "WooCommerce-Integration",
             "update_credentials": "Zugangsdaten aktualisieren",
             "verified_at": "Verifiziert"
+        },
+        "tracking": {
+            "label": "Klicks und Öffnungen tracken",
+            "help": "Leitet Links über NetSendo und fügt das Öffnungspixel ein. Aus: Links bleiben unverändert, kein Pixel, und das SendGrid-Tracking wird pro Nachricht ausgeschaltet. Eine Nachricht kann das überschreiben."
         }
     },
     "mcp": {
