@@ -20,7 +20,7 @@
         "league/csv": "^9.27",
         "pragmarx/google2fa-laravel": "^3.0",
         "spatie/laravel-backup": "^10.0",
-        "spatie/laravel-permission": "^6.24",
+        "spatie/laravel-permission": "^8.3",
         "stripe/stripe-php": "^19.1",
         "tightenco/ziggy": "^2.0",
         "webklex/php-imap": "^6.2"
