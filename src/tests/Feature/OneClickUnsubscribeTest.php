@@ -10,7 +10,7 @@ use App\Models\MessageQueueEntry;
 use App\Models\Subscriber;
 use App\Models\User;
 use App\Services\PlaceholderService;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -245,7 +245,7 @@ class OneClickUnsubscribeTest extends TestCase
     public function test_one_click_urls_need_no_csrf_token(): void
     {
         // Laravel skips CSRF checks in tests, so check the exemption itself
-        $middleware = $this->app->make(ValidateCsrfToken::class);
+        $middleware = $this->app->make(PreventRequestForgery::class);
         $inExceptArray = new \ReflectionMethod($middleware, 'inExceptArray');
 
         $request = Request::create($this->listUrl(), 'POST', ['List-Unsubscribe' => 'One-Click']);

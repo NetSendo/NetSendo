@@ -40,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Exclude routes from CSRF verification
-        $middleware->validateCsrfTokens(except: [
+        $middleware->preventRequestForgery(except: [
             'api/*',
             'api/cron/webhook',
             'webhooks/bounce/*',

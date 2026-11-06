@@ -26,7 +26,7 @@
         <meta property="twitter:description" content="NetSendo - Professional Email Marketing Platform">
         <meta property="twitter:image" content="https://gregciupek.com/wp-content/uploads/2025/12/netsendo.png">
 
-        <title inertia>NetSendo</title>
+        <title data-inertia>NetSendo</title>
 
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="https://gregciupek.com/wp-content/uploads/2025/12/Logo-NetSendo-1.png">

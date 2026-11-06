@@ -102,7 +102,7 @@ if [ $attempt -lt $max_attempts ]; then
         done
         
         # Verify migrations after execution
-        STILL_PENDING=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || echo "0")
+        STILL_PENDING=$(php artisan migrate:status 2>/dev/null | grep -c "Pending" || true)
         if [ "$STILL_PENDING" != "0" ]; then
             echo "❌ WARNING: $STILL_PENDING migration(s) still pending after $MIGRATION_ATTEMPTS attempts!"
             echo "   Application may not work correctly. Please check logs."
