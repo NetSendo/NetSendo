@@ -26,8 +26,11 @@ class AppServiceProvider extends ServiceProvider
         // Ensure storage link and required directories exist
         $this->ensureStorageSetup();
 
+        // API reference (/docs/api, /docs/api.json) only for signed-in panel users:
+        // it was public on every instance, exposing the full API surface and the
+        // docs generator (dedoc/scramble) to anonymous requests.
         \Illuminate\Support\Facades\Gate::define('viewApiDocs', function ($user = null) {
-            return true;
+            return $user !== null;
         });
 
         // Register AbTest policy
