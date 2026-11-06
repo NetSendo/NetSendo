@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.1.3',
+    'version' => '2.2.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -126,7 +126,7 @@ return [
             'download_url' => 'https://www.npmjs.com/package/n8n-nodes-netsendo',
         ],
         'mcp' => [
-            'version' => '1.5.1',
+            'version' => '1.6.0',
             'download_url' => 'https://www.npmjs.com/package/@netsendo/mcp-client',
         ],
     ],
