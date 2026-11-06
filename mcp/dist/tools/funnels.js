@@ -22,7 +22,7 @@ const stepSettings = {
     wait_until_timezone: z.string().nullable().optional().describe('wait_until: IANA time zone, e.g. Europe/Warsaw (default: the account owner\'s)'),
     condition_type: z.enum(['email_opened', 'email_clicked', 'link_clicked', 'tag_exists', 'field_value', 'task_completed']).nullable().optional()
         .describe('condition: what to check. Connect its yes/no paths with branch (add_funnel_step) or next_step_yes_id/next_step_no_id'),
-    condition_config: z.record(z.unknown()).nullable().optional()
+    condition_config: z.record(z.string(), z.unknown()).nullable().optional()
         .describe('condition settings by type: email_opened/email_clicked {message_id?} (default: the last email this funnel sent); link_clicked {url, message_id?}; tag_exists {tag} (tag name); field_value {field, operator: equals|not_equals|contains|not_empty|empty, value}; task_completed {task_id}'),
     wait_for_condition: z.boolean().optional().describe('condition: wait until the condition is met instead of taking the no path at once'),
     retry_enabled: z.boolean().optional().describe('condition with wait_for_condition: send reminders while waiting'),
@@ -34,12 +34,12 @@ const stepSettings = {
         .describe('after the last reminder and one more interval: continue (no path), exit the funnel, or unsubscribe from the trigger list and exit'),
     action_type: z.enum(['add_tag', 'remove_tag', 'move_to_list', 'copy_to_list', 'webhook', 'unsubscribe', 'notify']).nullable().optional()
         .describe('action: what to do'),
-    action_config: z.record(z.unknown()).nullable().optional()
+    action_config: z.record(z.string(), z.unknown()).nullable().optional()
         .describe('action settings by type: add_tag/remove_tag {tag} (name; add_tag creates a missing tag); move_to_list {list_id, from_list_id?} (default source: the trigger list); copy_to_list {list_id}; webhook {url, method?, data?}; unsubscribe {list_id?} (default: the trigger list); notify {email?, subject?, message?} (default recipient: the account owner; {{subscriber_email}}, {{subscriber_name}}, {{funnel_name}} are filled in)'),
     goal_name: z.string().max(255).nullable().optional().describe('goal: name of the conversion'),
     goal_type: z.enum(['purchase', 'signup', 'page_visit', 'tag_added', 'custom', 'webhook']).nullable().optional().describe('goal: kind of conversion'),
     goal_value: z.number().min(0).nullable().optional().describe('goal: value recorded with the conversion'),
-    goal_config: z.record(z.unknown()).nullable().optional().describe('goal: extra settings'),
+    goal_config: z.record(z.string(), z.unknown()).nullable().optional().describe('goal: extra settings'),
     split_variants: z.array(z.object({
         key: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).optional()
             .describe('Stable ID of the variant (default: v1, v2... by position). Keep it when changing a variant so its path and results stay with it'),

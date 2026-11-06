@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:24-alpine
 
 # Install Haraka and required plugins
 RUN npm install -g Haraka@3.0.3 \

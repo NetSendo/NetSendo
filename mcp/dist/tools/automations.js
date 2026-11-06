@@ -28,7 +28,7 @@ const condition = z.object({
 });
 const action = z.object({
     type: z.string().describe('Action type key from get_automation_options (actions[].key), e.g. add_tag, send_email, move_to_list, start_funnel, call_webhook, notify_admin'),
-    config: z.record(z.unknown()).optional()
+    config: z.record(z.string(), z.unknown()).optional()
         .describe('Settings of the action type (actions[].config in get_automation_options), e.g. add_tag {tag_id} or {tag_name}; send_email {message_id}; copy_to_list {list_id}; start_funnel {funnel_id}; call_webhook {url, method?, headers?}'),
 });
 const ruleFields = {
@@ -36,7 +36,7 @@ const ruleFields = {
     description: z.string().max(1000).nullable().optional().describe('Optional description'),
     trigger_event: z.string()
         .describe('Trigger event key from get_automation_options (triggers[].key with available: true), e.g. subscriber_signup, tag_added, email_clicked, form_submitted, purchase, crm_deal_won'),
-    trigger_config: z.record(z.unknown()).optional()
+    trigger_config: z.record(z.string(), z.unknown()).optional()
         .describe('Filters of the trigger (triggers[].config), e.g. subscriber_signup {list_id, form_id}; tag_added {tag_id}; email_opened {message_id, list_id}; date_reached {date: "YYYY-MM-DD"} (required). {} = every event of that type in the account. Keys the trigger does not use are rejected'),
     conditions: z.array(condition).optional().describe('Extra checks on the subscriber/event; [] or omitted for none'),
     condition_logic: z.enum(['all', 'any']).optional().describe('all = every condition must pass (default), any = at least one'),

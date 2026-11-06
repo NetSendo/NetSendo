@@ -18,7 +18,7 @@ This reaches only the account owner. It cannot message subscribers or third part
         type: z.enum(['info', 'success', 'warning', 'error']).optional().describe('Severity (default: info). Use "warning" for something needing attention, "error" for a failure.'),
         list_id: z.number().optional().describe('Related list — makes the notification link straight to it'),
         action_url: z.string().max(2048).optional().describe('Custom link target; overrides the list link'),
-        data: z.record(z.any()).optional().describe('Structured payload kept with the notification, e.g. the import counters'),
+        data: z.record(z.string(), z.any()).optional().describe('Structured payload kept with the notification, e.g. the import counters'),
     }, async (payload) => {
         try {
             const result = await api.createNotification(compact(payload));

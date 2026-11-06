@@ -8,15 +8,7 @@ declare const ConfigSchema: z.ZodObject<{
     apiUrl: z.ZodString;
     apiKey: z.ZodString;
     debug: z.ZodDefault<z.ZodBoolean>;
-}, "strip", z.ZodTypeAny, {
-    apiUrl: string;
-    apiKey: string;
-    debug: boolean;
-}, {
-    apiUrl: string;
-    apiKey: string;
-    debug?: boolean | undefined;
-}>;
+}, z.core.$strip>;
 export type Config = z.infer<typeof ConfigSchema>;
 export interface CliArgs {
     url?: string;

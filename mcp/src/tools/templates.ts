@@ -52,8 +52,8 @@ const blockSchema = z
   .object({
     id: z.string().optional().describe('Block id; generated when omitted'),
     type: z.enum(BLOCK_TYPES).describe('Block type (see list_template_block_types)'),
-    content: z.record(z.unknown()).optional().describe('Block content, e.g. text: {html}, button: {text, href, backgroundColor}'),
-    settings: z.record(z.unknown()).optional().describe('Block style settings (backgroundColor, padding, margin, borderRadius)'),
+    content: z.record(z.string(), z.unknown()).optional().describe('Block content, e.g. text: {html}, button: {text, href, backgroundColor}'),
+    settings: z.record(z.string(), z.unknown()).optional().describe('Block style settings (backgroundColor, padding, margin, borderRadius)'),
   })
   .passthrough();
 
@@ -83,7 +83,7 @@ const templateFields = {
     .optional()
     .describe('Visual-builder structure {blocks: [...]}. MJML is regenerated from it on save. Only needed if the template should be editable block-by-block in the drag & drop builder'),
   settings: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .nullable()
     .optional()
     .describe('Builder global settings: width (600), background_color, content_background, font_family, primary_color, secondary_color, text_color, link_color'),
@@ -342,8 +342,8 @@ Returns html (HTML templates) or mjml (builder-only templates), the rendered pre
     {
       name: z.string().max(255).describe('Block name'),
       type: z.enum(BLOCK_TYPES).describe('Block type'),
-      content: z.record(z.unknown()).describe('Block content'),
-      settings: z.record(z.unknown()).nullable().optional().describe('Block style settings (defaults applied when omitted)'),
+      content: z.record(z.string(), z.unknown()).describe('Block content'),
+      settings: z.record(z.string(), z.unknown()).nullable().optional().describe('Block style settings (defaults applied when omitted)'),
     },
     async (params) => {
       try {
@@ -361,8 +361,8 @@ Returns html (HTML templates) or mjml (builder-only templates), the rendered pre
     {
       block_id: z.number().describe('Saved block ID'),
       name: z.string().max(255).optional().describe('New name'),
-      content: z.record(z.unknown()).optional().describe('New content (replaces the whole content object)'),
-      settings: z.record(z.unknown()).nullable().optional().describe('New settings'),
+      content: z.record(z.string(), z.unknown()).optional().describe('New content (replaces the whole content object)'),
+      settings: z.record(z.string(), z.unknown()).nullable().optional().describe('New settings'),
     },
     async ({ block_id, ...fields }) => {
       try {

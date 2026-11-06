@@ -1,0 +1,52 @@
+# Fails when a locked dependency has a published security advisory.
+# Runs on lock file changes and weekly, so advisories published after a release show up too.
+name: Dependency Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/composer.lock'
+      - 'src/package-lock.json'
+      - 'mcp/package-lock.json'
+      - '.github/workflows/dependency-audit.yml'
+  pull_request:
+    paths:
+      - 'src/composer.lock'
+      - 'src/package-lock.json'
+      - 'mcp/package-lock.json'
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer
+          coverage: none
+      - name: composer audit (locked versions)
+        working-directory: src
+        run: composer audit --locked --no-interaction
+
+  npm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: [src, mcp]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: npm audit (${{ matrix.directory }})
+        working-directory: ${{ matrix.directory }}
+        run: npm audit --audit-level=moderate

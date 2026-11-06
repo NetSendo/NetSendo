@@ -103,7 +103,7 @@ export function registerSubscriberTools(server, api) {
         lists: z.array(z.number()).min(1).describe('Contact list IDs to subscribe to (at least one required)'),
         tags: z.array(z.union([z.number(), z.string()])).optional().describe('Array of tag IDs or names'),
         source: z.string().optional().describe('Subscription source (e.g., "mcp", "api")'),
-        custom_fields: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().describe('Custom field values'),
+        custom_fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Custom field values'),
     }, async (params) => {
         try {
             const subscriber = await api.createSubscriber({
@@ -146,7 +146,7 @@ export function registerSubscriberTools(server, api) {
         last_name: z.string().optional().describe('Last name'),
         phone: z.string().optional().describe('Phone number'),
         status: z.enum(['subscribed', 'unsubscribed']).optional().describe('Subscription status'),
-        custom_fields: z.record(z.union([z.string(), z.number(), z.boolean()])).optional().describe('Custom field values'),
+        custom_fields: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional().describe('Custom field values'),
     }, async ({ id, ...updates }) => {
         try {
             const subscriber = await api.updateSubscriber(id, updates);

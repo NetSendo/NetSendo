@@ -24,8 +24,8 @@ const blockSchema = z
     .object({
     id: z.string().optional().describe('Block id; generated when omitted'),
     type: z.enum(BLOCK_TYPES).describe('Block type (see list_template_block_types)'),
-    content: z.record(z.unknown()).optional().describe('Block content, e.g. text: {html}, button: {text, href, backgroundColor}'),
-    settings: z.record(z.unknown()).optional().describe('Block style settings (backgroundColor, padding, margin, borderRadius)'),
+    content: z.record(z.string(), z.unknown()).optional().describe('Block content, e.g. text: {html}, button: {text, href, backgroundColor}'),
+    settings: z.record(z.string(), z.unknown()).optional().describe('Block style settings (backgroundColor, padding, margin, borderRadius)'),
 })
     .passthrough();
 const jsonStructureSchema = z
@@ -51,7 +51,7 @@ const templateFields = {
         .optional()
         .describe('Visual-builder structure {blocks: [...]}. MJML is regenerated from it on save. Only needed if the template should be editable block-by-block in the drag & drop builder'),
     settings: z
-        .record(z.unknown())
+        .record(z.string(), z.unknown())
         .nullable()
         .optional()
         .describe('Builder global settings: width (600), background_color, content_background, font_family, primary_color, secondary_color, text_color, link_color'),
@@ -252,8 +252,8 @@ Returns html (HTML templates) or mjml (builder-only templates), the rendered pre
     server.tool('create_template_block', 'Save a reusable builder block (e.g. a branded header, footer or CTA button) so it appears under "Saved blocks" in the template builder. content follows the block type\'s shape from list_template_block_types.', {
         name: z.string().max(255).describe('Block name'),
         type: z.enum(BLOCK_TYPES).describe('Block type'),
-        content: z.record(z.unknown()).describe('Block content'),
-        settings: z.record(z.unknown()).nullable().optional().describe('Block style settings (defaults applied when omitted)'),
+        content: z.record(z.string(), z.unknown()).describe('Block content'),
+        settings: z.record(z.string(), z.unknown()).nullable().optional().describe('Block style settings (defaults applied when omitted)'),
     }, async (params) => {
         try {
             const result = await api.request('post', '/template-blocks', { data: compact(params) });
@@ -266,8 +266,8 @@ Returns html (HTML templates) or mjml (builder-only templates), the rendered pre
     server.tool('update_template_block', 'Update an own saved block (name, content and/or settings). Global blocks are read-only. Templates that already contain the block are not changed.', {
         block_id: z.number().describe('Saved block ID'),
         name: z.string().max(255).optional().describe('New name'),
-        content: z.record(z.unknown()).optional().describe('New content (replaces the whole content object)'),
-        settings: z.record(z.unknown()).nullable().optional().describe('New settings'),
+        content: z.record(z.string(), z.unknown()).optional().describe('New content (replaces the whole content object)'),
+        settings: z.record(z.string(), z.unknown()).nullable().optional().describe('New settings'),
     }, async ({ block_id, ...fields }) => {
         try {
             const result = await api.request('put', `/template-blocks/${block_id}`, {

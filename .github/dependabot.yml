@@ -1,0 +1,51 @@
+# Weekly dependency update pull requests.
+# Minor and patch updates are grouped into one PR per ecosystem; majors come one by one
+# so they can be reviewed (and tested on MySQL) separately.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: /src
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      php-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /src
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # npm's "latest" tag of vuedraggable points at the old Vue 2 line (2.x).
+      - dependency-name: vuedraggable
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: npm
+    directory: /mcp
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      mcp-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /docker/php
+      - /docker/haraka
+    schedule:
+      interval: weekly
+      day: monday
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
