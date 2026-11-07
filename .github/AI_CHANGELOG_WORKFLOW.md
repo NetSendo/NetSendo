@@ -23,7 +23,7 @@ Rules:
 ```
 
 A release whose section has `### Security` reaches NetSendo Cloud instances at once; other
-releases are installed there overnight (`notify-aderlo` in `.github/workflows/docker-publish.yml`).
+releases are installed there overnight (`.github/workflows/aderlo-notify.yml`).
 
 ---
 
