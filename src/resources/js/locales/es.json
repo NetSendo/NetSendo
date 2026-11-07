@@ -1239,7 +1239,8 @@
             "statistics": "Estadísticas",
             "settings": "Configuración",
             "brain": "NetSendo Brain"
-        }
+        },
+        "telemetry": "Telemetría"
     },
     "dashboard": {
         "welcome_back": "¡Bienvenido de nuevo, {name}! 👋",
@@ -9027,5 +9028,28 @@
         "team_members": "Miembros del equipo",
         "team_members_subtitle": "Usuarios con acceso a su cuenta de NetSendo",
         "title": "Gestión de Usuarios"
+    },
+    "telemetry": {
+        "title": "Telemetría",
+        "subtitle": "Ayúdanos a mejorar NetSendo con un informe de uso anónimo al día",
+        "intro": "Si la activas, NetSendo envía a NetSendo PSA un informe al día con la versión, el plan y las funciones que usas. Las cantidades se envían como rangos. Nunca se envían contactos, direcciones de email, mensajes, nombres ni dominios, y nada va a Google ni a otros servicios de analítica.",
+        "toggle": "Enviar informes de uso anónimos",
+        "status_on": "Activada: se envía un informe al día",
+        "status_off": "Desactivada: no se envía nada",
+        "env_locked": "Definido con NETSENDO_TELEMETRY en el entorno; cámbialo allí.",
+        "instance_id": "ID de la instalación",
+        "instance_id_help": "Un ID aleatorio creado al activar la telemetría. No está vinculado a tu dominio, licencia ni cuenta.",
+        "last_sent": "Último informe enviado",
+        "never": "nunca",
+        "preview": "El informe que envía tu instalación",
+        "preview_help": "Esto es exactamente lo que se envía, generado ahora desde tu instalación.",
+        "docs_link": "Explicación de cada campo",
+        "saved_on": "Telemetría activada. ¡Gracias!",
+        "saved_off": "Telemetría desactivada. Hemos pedido a netsendo.com que borre los informes de esta instalación.",
+        "notice_title": "¿Nos ayudas a mejorar NetSendo?",
+        "notice_text": "Permite un informe de uso anónimo al día: versión, plan y funciones usadas, cantidades como rangos. Sin contactos ni datos personales. Desactivado hasta que lo actives.",
+        "notice_enable": "Activar",
+        "notice_details": "Ver qué se envía",
+        "notice_dismiss": "No, gracias"
     }
 }

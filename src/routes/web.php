@@ -684,6 +684,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace/tpay', fn() => Inertia::render('Marketplace/Tpay'))->name('marketplace.tpay');
 
     // Tpay Settings
+    // Opt-in, anonymous usage report (administrator only, docs/TELEMETRY.md)
+    Route::prefix('settings/telemetry')->name('settings.telemetry.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TelemetrySettingsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\TelemetrySettingsController::class, 'update'])->name('update');
+        Route::post('/dismiss', [\App\Http\Controllers\TelemetrySettingsController::class, 'dismiss'])->name('dismiss');
+    });
+
     Route::prefix('settings/tpay')->name('settings.tpay.')->group(function () {
         Route::get('/', [\App\Http\Controllers\TpaySettingsController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\TpaySettingsController::class, 'update'])->name('update');

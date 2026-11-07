@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Added
+
+- **Opt-in, anonymous usage report — off by default.** An installation can send NetSendo PSA one report a day with its version, plan, kind of deployment and which features are in use, so we know which versions are still running and what to fix and build first. **Nothing is sent until the administrator switches it on** under *Settings → Telemetry* (new, administrator only), and it can be switched off at any time. 2.5.1 removed the hard-coded Google Analytics; this is its consented, documented replacement and sends nothing to Google or any other third party.
+  - **What is sent** (`POST https://netsendo.com/api/telemetry`, JSON): a random installation id created when telemetry is switched on (not derived from the domain, licence key, email or any account), the NetSendo version, plan (`silver`/`gold`/`none`), deployment (`docker`/`cloud`/`other`), panel language, PHP, database and queue driver versions; counts **as ranges only** (`0`, `1-10`, `11-100`, `101-1k`, `1k-10k`, `10k-100k`, `100k-1m`, `1m+`) of contacts, lists, users, campaigns and emails/SMS sent in the last 30 days, active funnels and automations, webinars, forms and mailboxes; true/false flags for SMS, AI, Brain, MCP, API keys, webhooks, CRM, webinars, A/B tests and the WooCommerce, WordPress, n8n, Shopify, Stripe, Polar, Calendly, Google Calendar and Zoom integrations; and provider *types* (e.g. `smtp`, `twilio`, `openai`). **Never sent:** contacts or their data, email addresses, names, subjects or content of messages, list/form/campaign names, the domain, host names, keys, logs. Every field is listed in [`docs/TELEMETRY.md`](docs/TELEMETRY.md) and at <https://netsendo.com/en/docs/telemetry>; netsendo.com stores only those fields and no IP address.
+  - **See before you agree:** the settings page shows the exact report generated from the installation, the installation id and when the last report was sent. `php artisan netsendo:telemetry --show` prints it on the command line.
+  - **Switching off** stops the reports and asks netsendo.com to delete every report of that installation id (`DELETE /api/telemetry/{id}`); a later opt-in gets a new id.
+  - **Asked once:** the dashboard shows the administrator a short question (*Turn on* / *See what is sent* / *No, thanks*); either answer is kept and the question does not come back.
+  - **Environment:** `NETSENDO_TELEMETRY=true|false` overrides the panel and locks the switch (unset: the panel decides, default off). `NETSENDO_DEPLOYMENT=docker|cloud|other` sets the reported deployment (unset: `docker` when `/.dockerenv` exists, else `other`); NetSendo Cloud sets `cloud`. `NETSENDO_TELEMETRY_URL` changes the endpoint.
+  - **Schedule:** `netsendo:telemetry` runs hourly (minute 17) and sends once a day in an hour derived from the installation id, or at once when the last report is more than two days old. A failed send is logged and never affects the installation. Sleeping (dormant) Cloud instances send nothing, like every other scheduled job.
+  - Code: `app/Services/Telemetry/{TelemetryService,TelemetryReport,TelemetryClient}.php`, `app/Console/Commands/SendTelemetry.php`, `TelemetrySettingsController`, `Pages/Settings/Telemetry/Index.vue`, `Components/Dashboard/TelemetryNotice.vue`; texts in en, pl, de, es. Covered by `tests/Feature/TelemetryTest.php` (off by default, only documented fields and nothing identifying, ranges, sending and deletion, administrator only, environment override, asked once).
+
 ## [2.5.2] – The panel and webinar pages load nothing from other hosts - 2026-11-07
 
 **Release date:** 2026-11-07

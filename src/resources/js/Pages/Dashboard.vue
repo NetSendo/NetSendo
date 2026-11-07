@@ -10,6 +10,7 @@ import SetupTrackerBar from "@/Components/Dashboard/SetupTrackerBar.vue";
 import HealthScoreWidget from "@/Components/Dashboard/HealthScoreWidget.vue";
 import BrainWidget from "@/Components/Dashboard/BrainWidget.vue";
 import BrainOrchestrationWidget from "@/Components/Dashboard/BrainOrchestrationWidget.vue";
+import TelemetryNotice from "@/Components/Dashboard/TelemetryNotice.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const page = usePage();
@@ -104,6 +105,9 @@ onMounted(() => {
 
         <!-- Setup Tracker Bar (Critical Logic) -->
         <SetupTrackerBar :stats="dashboardStats" :cron-status="cronStatus" />
+
+        <!-- One-time question: opt-in anonymous usage report (administrator only) -->
+        <TelemetryNotice />
 
         <!-- License inactive alert -->
         <div

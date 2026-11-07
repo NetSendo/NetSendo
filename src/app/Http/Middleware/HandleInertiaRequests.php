@@ -71,6 +71,14 @@ class HandleInertiaRequests extends Middleware
                 'gold_required' => fn () => $request->session()->get('gold_required'),
             ],
             'appVersion' => config('netsendo.version', '1.0.0'),
+            // Ask the administrator once whether to switch the opt-in telemetry on (dashboard card)
+            'telemetry' => fn () => [
+                'ask' => (bool) $request->user()?->isAdmin() && rescue(
+                    fn () => app(\App\Services\Telemetry\TelemetryService::class)->shouldAsk(),
+                    false,
+                    report: false
+                ),
+            ],
         ];
     }
 }

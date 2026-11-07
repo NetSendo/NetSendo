@@ -88,6 +88,13 @@ Schedule::command('license:verify --deactivate')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/license-verify.log'));
 
+// Opt-in, anonymous usage report (docs/TELEMETRY.md): checked hourly, sent once a day in this
+// installation's own hour, only when the administrator has switched telemetry on
+Schedule::command('netsendo:telemetry')
+    ->hourlyAt(17)
+    ->withoutOverlapping()
+    ->runInBackground();
+
 // GOLD kupiony na stronie Licencja: aktywacja klucza po potwierdzeniu płatności (gdy jest rozpoczęty zakup)
 Schedule::command('license:claim-gold')
     ->everyFiveMinutes()

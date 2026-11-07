@@ -813,7 +813,8 @@
             "statistics": "Statistics",
             "settings": "Settings",
             "brain": "NetSendo Brain"
-        }
+        },
+        "telemetry": "Telemetry"
     },
     "dashboard": {
         "welcome_back": "Welcome back, {name}! 👋",
@@ -9027,5 +9028,28 @@
             "topics_placeholder": "e.g. product news, industry tips, case studies"
         },
         "edit_title": "Edit title"
+    },
+    "telemetry": {
+        "title": "Telemetry",
+        "subtitle": "Help us improve NetSendo with one anonymous usage report a day",
+        "intro": "When switched on, NetSendo sends NetSendo PSA one report a day with the version, plan and which features are used. Counts are sent as ranges. No contacts, email addresses, messages, names or domains are ever sent, and nothing goes to Google or other analytics services.",
+        "toggle": "Send anonymous usage reports",
+        "status_on": "On — a report is sent once a day",
+        "status_off": "Off — nothing is sent",
+        "env_locked": "Set by NETSENDO_TELEMETRY in the environment; change it there.",
+        "instance_id": "Installation id",
+        "instance_id_help": "A random id created when telemetry was switched on. It is not linked to your domain, licence or account.",
+        "last_sent": "Last report sent",
+        "never": "never",
+        "preview": "The report your installation sends",
+        "preview_help": "This is exactly what is sent, generated now from your installation.",
+        "docs_link": "Every field explained",
+        "saved_on": "Telemetry is on. Thank you!",
+        "saved_off": "Telemetry is off. We asked netsendo.com to delete the reports of this installation.",
+        "notice_title": "Help improve NetSendo?",
+        "notice_text": "Allow one anonymous usage report a day: version, plan and which features are used, counts as ranges. No contacts or personal data. Off until you turn it on.",
+        "notice_enable": "Turn on",
+        "notice_details": "See what is sent",
+        "notice_dismiss": "No, thanks"
     }
 }

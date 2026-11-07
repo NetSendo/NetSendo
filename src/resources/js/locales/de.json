@@ -1284,7 +1284,8 @@
             "statistics": "Statistiken",
             "settings": "Einstellungen",
             "brain": "NetSendo Brain"
-        }
+        },
+        "telemetry": "Telemetrie"
     },
     "dashboard": {
         "welcome_back": "Willkommen zurück, {name}! 👋",
@@ -9027,5 +9028,28 @@
         "team_members": "Teammitglieder",
         "team_members_subtitle": "Benutzer mit Zugriff auf Ihr NetSendo-Konto",
         "title": "Benutzerverwaltung"
+    },
+    "telemetry": {
+        "title": "Telemetrie",
+        "subtitle": "Hilf uns, NetSendo mit einem anonymen Nutzungsbericht pro Tag zu verbessern",
+        "intro": "Wenn aktiviert, sendet NetSendo einmal täglich einen Bericht an NetSendo PSA mit Version, Tarif und den genutzten Funktionen. Zahlen werden als Bereiche gesendet. Kontakte, E-Mail-Adressen, Nachrichten, Namen oder Domains werden nie gesendet, und nichts geht an Google oder andere Analysedienste.",
+        "toggle": "Anonyme Nutzungsberichte senden",
+        "status_on": "Aktiv — ein Bericht pro Tag",
+        "status_off": "Aus — es wird nichts gesendet",
+        "env_locked": "Über NETSENDO_TELEMETRY in der Umgebung festgelegt; dort ändern.",
+        "instance_id": "Installations-ID",
+        "instance_id_help": "Eine zufällige ID, erstellt beim Aktivieren der Telemetrie. Sie ist nicht mit deiner Domain, Lizenz oder deinem Konto verknüpft.",
+        "last_sent": "Letzter gesendeter Bericht",
+        "never": "nie",
+        "preview": "Der Bericht, den deine Installation sendet",
+        "preview_help": "Genau das wird gesendet, jetzt aus deiner Installation erzeugt.",
+        "docs_link": "Alle Felder erklärt",
+        "saved_on": "Telemetrie ist aktiv. Danke!",
+        "saved_off": "Telemetrie ist aus. Wir haben netsendo.com gebeten, die Berichte dieser Installation zu löschen.",
+        "notice_title": "NetSendo verbessern helfen?",
+        "notice_text": "Erlaube einen anonymen Nutzungsbericht pro Tag: Version, Tarif und genutzte Funktionen, Zahlen als Bereiche. Keine Kontakte, keine personenbezogenen Daten. Aus, bis du es einschaltest.",
+        "notice_enable": "Einschalten",
+        "notice_details": "Ansehen, was gesendet wird",
+        "notice_dismiss": "Nein, danke"
     }
 }
