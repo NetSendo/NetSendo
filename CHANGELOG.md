@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **MCP client 1.6.1 can be listed in the official MCP Registry:** `mcp/package.json` declares `"mcpName": "com.netsendo/netsendo"`. The registry (registry.modelcontextprotocol.io) reads that field from the published npm package and accepts the server entry `com.netsendo/netsendo` only when the two match; 1.6.0 had no such field. The package's `homepage` now points to https://netsendo.com/en/integrations/mcp instead of the site's home page. No tool changes. Released from the `mcp-v1.6.1` tag through `publish-mcp.yml`, so the package keeps its npm provenance.
+
 ## [2.4.0] – GOLD features require the GOLD licence - 2026-11-07
 
 **Release date:** 2026-11-07

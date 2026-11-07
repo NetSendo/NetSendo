@@ -26,7 +26,7 @@ import { NetSendoApiClient } from './api-client.js';
 import { registerAllTools } from './tools/index.js';
 
 const SERVER_NAME = 'netsendo-mcp';
-const SERVER_VERSION = '1.6.0';
+const SERVER_VERSION = '1.6.1';
 
 // Parse CLI arguments
 program
