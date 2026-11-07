@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.4.0] – GOLD features require the GOLD licence - 2026-11-07
+
+**Release date:** 2026-11-07
+
 ### Changed
 
 - **The GOLD plan sold on netsendo.com is now enforced in the application.** Until now only the Campaign Architect limit (3 plans on SILVER) was checked; A/B tests, auto and hybrid webinars and OpenRouter/Ollama worked on every installation, even without a licence. Without an active GOLD licence (no key, SILVER, or GOLD past its expiry) these are now refused on the server, in the panel, the public API, MCP and NetSendo Brain alike:
