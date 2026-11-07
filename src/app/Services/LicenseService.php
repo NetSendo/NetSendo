@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\CampaignPlan;
 use App\Models\Setting;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LicenseService
 {
@@ -14,12 +16,51 @@ class LicenseService
     public const SILVER_CAMPAIGN_LIMIT = 3;
 
     /**
-     * Get the current license plan
+     * The plan in effect, used for every GOLD/SILVER decision in the app.
+     *
+     * GOLD only while a GOLD key is stored and its expiry (end of the paid period plus grace,
+     * kept in step by license:verify) has not passed. Anything else (no licence, no key, an
+     * expired or unreadable GOLD) works as the free SILVER plan.
      */
     public function getCurrentPlan(): string
     {
-        $licensePlan = Setting::where('key', 'license_plan')->first();
-        return $licensePlan ? strtoupper($licensePlan->value) : 'SILVER';
+        return $this->storedPlan() === 'GOLD' && $this->hasKey() && !$this->isGoldExpired() ? 'GOLD' : 'SILVER';
+    }
+
+    /**
+     * The plan saved with the licence, regardless of expiry (null without a licence).
+     */
+    public function storedPlan(): ?string
+    {
+        $plan = Setting::where('key', 'license_plan')->value('value');
+        return $plan ? strtoupper($plan) : null;
+    }
+
+    /**
+     * A GOLD licence is stored but its expiry date has passed.
+     */
+    public function isGoldExpired(): bool
+    {
+        if ($this->storedPlan() !== 'GOLD') {
+            return false;
+        }
+
+        $expiresAt = Setting::where('key', 'license_expires_at')->value('value');
+        if (!$expiresAt) {
+            return false; // GOLD without an end date
+        }
+
+        try {
+            return Carbon::parse($expiresAt)->isPast();
+        } catch (\Throwable $e) {
+            Log::warning('Unreadable licence expiry date', ['value' => $expiresAt]);
+            return false;
+        }
+    }
+
+    private function hasKey(): bool
+    {
+        return Setting::where('key', 'license_key')->exists();
     }
 
     /**
@@ -102,6 +143,7 @@ class LicenseService
         return [
             'plan' => $this->getCurrentPlan(),
             'isGold' => $this->isGoldPlan(),
+            'goldExpired' => $this->isGoldExpired(),
             'campaignCount' => $this->getUserCampaignCount($userId),
             'campaignLimit' => $this->getCampaignLimit(),
             'remainingCampaigns' => $this->getRemainingCampaigns($userId),

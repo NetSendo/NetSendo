@@ -311,14 +311,17 @@ class LicenseVerificationService
     /**
      * The licence server reports the licence as no longer active. A GOLD licence falls back
      * to the free SILVER licence (EULA 5.5: NetSendo keeps working); otherwise, or when no
-     * SILVER key can be obtained, the local licence is removed.
+     * SILVER key can be obtained, the local licence is removed. Either way the app works as
+     * SILVER (LicenseService::getCurrentPlan).
      *
      * @return string 'downgraded' | 'deactivated'
      */
     public function endLicense(?string $domain = null): string
     {
         $plan = strtoupper((string) Setting::where('key', 'license_plan')->value('value'));
-        $email = Setting::where('key', 'license_email')->value('value');
+        // The SILVER licence is requested for the licence email, or the account owner's email
+        $email = Setting::where('key', 'license_email')->value('value')
+            ?? \App\Models\User::whereNull('admin_user_id')->orderBy('id')->value('email');
         $domain = $domain ?? Setting::where('key', 'license_domain')->value('value') ?? request()->getHost();
         $requestUrl = config('netsendo.license_webhook_url');
 

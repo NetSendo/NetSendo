@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Setting;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
@@ -41,7 +42,8 @@ class HandleInertiaRequests extends Middleware
             $licensePlanSetting = Setting::where('key', 'license_plan')->first();
 
             $licenseActive = $licenseKey !== null;
-            $licensePlan = $licensePlanSetting?->value;
+            // The plan in effect: an expired GOLD or a missing key works as SILVER
+            $licensePlan = app(LicenseService::class)->getCurrentPlan();
         } catch (\Exception $e) {
             // Database not ready
         }

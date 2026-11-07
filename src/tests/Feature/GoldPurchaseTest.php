@@ -162,15 +162,24 @@ class GoldPurchaseTest extends TestCase
         $this->assertSame('GOLD', $this->setting('license_plan'));
     }
 
-    public function test_the_public_activation_webhook_stores_only_confirmed_keys(): void
+    public function test_the_public_activation_webhook_rejects_unconfirmed_keys(): void
     {
         $this->fakeServers([], licence: ['valid' => false, 'error' => 'LICENSE_NOT_FOUND', 'message' => 'not found']);
-        $this->postJson('/api/license/webhook', ['licenseKey' => self::GOLD_KEY, 'package' => 'GOLD'])->assertStatus(422);
-        $this->assertNull($this->setting('license_key'));
 
-        // plan and expiry come from the licence server, not from the request
+        $this->postJson('/api/license/webhook', ['licenseKey' => self::GOLD_KEY, 'package' => 'GOLD'])->assertStatus(422);
+
+        $this->assertNull($this->setting('license_key'));
+        $this->assertNull($this->setting('license_plan'));
+    }
+
+    public function test_the_public_activation_webhook_takes_the_plan_from_the_licence_server(): void
+    {
         $this->fakeServers([], licence: [['package' => 'SILVER', 'license_key' => self::SILVER_KEY, 'is_active' => true]]);
+
+        // the request claims GOLD, the licence server says SILVER
         $this->postJson('/api/license/webhook', ['licenseKey' => self::SILVER_KEY, 'package' => 'GOLD'])->assertOk();
+
+        $this->assertSame(self::SILVER_KEY, $this->setting('license_key'));
         $this->assertSame('SILVER', $this->setting('license_plan'));
     }
 
@@ -206,15 +215,81 @@ class GoldPurchaseTest extends TestCase
         $this->assertNull($this->setting('license_expires_at'));
     }
 
-    public function test_an_ended_licence_without_a_silver_fallback_is_removed(): void
+    public function test_an_ended_licence_without_a_silver_key_is_removed_and_works_as_silver(): void
     {
         Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);
         Setting::create(['key' => 'license_plan', 'value' => 'GOLD']);
+        // the licence server gives no SILVER key
         $this->fakeServers([], licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => false]]);
 
         $this->artisan('license:verify --deactivate')->assertSuccessful();
 
         $this->assertNull($this->setting('license_key'));
+        $this->assertSame('SILVER', app(\App\Services\LicenseService::class)->getCurrentPlan());
+    }
+
+    private function storeLicence(string $plan, ?string $key, ?string $expiresAt): void
+    {
+        Setting::create(['key' => 'license_plan', 'value' => $plan]);
+        if ($key) {
+            Setting::create(['key' => 'license_key', 'value' => $key]);
+        }
+        if ($expiresAt) {
+            Setting::create(['key' => 'license_expires_at', 'value' => $expiresAt]);
+        }
+    }
+
+    /** The plan every page gets (sidebar, dashboard, feature gates in the UI). */
+    private function assertSharedPlan(string $expected): void
+    {
+        $this->actingAs($this->user)->get(route('license.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('license.plan', $expected));
+    }
+
+    public function test_an_active_gold_licence_unlocks_gold(): void
+    {
+        $this->storeLicence('GOLD', self::GOLD_KEY, now()->addDays(20)->toIso8601String());
+
+        $this->assertSame('GOLD', app(\App\Services\LicenseService::class)->getCurrentPlan());
+        $this->assertNull(app(\App\Services\LicenseService::class)->getCampaignLimit());
+        $this->assertSharedPlan('GOLD');
+    }
+
+    public function test_an_expired_gold_licence_works_as_silver(): void
+    {
+        $this->storeLicence('GOLD', self::GOLD_KEY, now()->subDay()->toIso8601String());
+        $licence = app(\App\Services\LicenseService::class);
+
+        $this->assertSame('SILVER', $licence->getCurrentPlan());
+        $this->assertTrue($licence->isGoldExpired());
+        $this->assertSame(\App\Services\LicenseService::SILVER_CAMPAIGN_LIMIT, $licence->getCampaignLimit());
+        $this->assertSharedPlan('SILVER');
+    }
+
+    public function test_gold_without_a_key_or_without_a_licence_works_as_silver(): void
+    {
+        $licence = app(\App\Services\LicenseService::class);
+        $this->assertSame('SILVER', $licence->getCurrentPlan(), 'no licence at all');
+
+        $this->storeLicence('GOLD', null, null);
+        $this->assertSame('SILVER', $licence->getCurrentPlan(), 'plan GOLD but no key');
+        $this->assertSharedPlan('SILVER');
+    }
+
+    public function test_an_ended_gold_without_a_licence_email_asks_silver_for_the_account_owner(): void
+    {
+        $this->storeLicence('GOLD', self::GOLD_KEY, now()->addDay()->toIso8601String());
+        $this->fakeServers(
+            [],
+            licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => false]],
+            silverRequest: ['license_key' => self::SILVER_KEY],
+        );
+
+        $this->artisan('license:verify --deactivate')->assertSuccessful();
+
+        $this->assertSame('SILVER', $this->setting('license_plan'));
+        Http::assertSent(fn (Request $request) => ($request['action'] ?? null) === 'request_license' && $request['email'] === $this->user->email);
     }
 
     public function test_the_licence_page_offers_the_store_purchase(): void

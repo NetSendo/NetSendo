@@ -44,6 +44,7 @@ class LicenseController extends Controller
      */
     public function buyGold(Request $request, GoldPurchaseService $goldPurchase)
     {
+        abort_unless($request->user()?->isAdmin(), 403);
         if (!$goldPurchase->available()) {
             return response()->json(['message' => 'GOLD purchase is not available.'], 404);
         }
@@ -255,6 +256,8 @@ class LicenseController extends Controller
         return response()->json([
             'active' => $isActive && !$isExpired,
             'plan' => $licensePlan?->value,
+            // the plan the app works with: an expired GOLD or a missing key is SILVER
+            'effective_plan' => app(\App\Services\LicenseService::class)->getCurrentPlan(),
             'expires_at' => $licenseExpiresAt?->value,
             'is_expired' => $isExpired,
         ]);
