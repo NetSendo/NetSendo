@@ -3307,6 +3307,11 @@
         "api_key_missing": "Brak klucza API MCP"
     },
     "license": {
+        "gold_purchase_waiting": "Dokończ płatność w nowej karcie. Gdy tylko zostanie potwierdzona, GOLD włączy się tutaj automatycznie.",
+        "gold_activated": "GOLD jest aktywny. Dziękujemy!",
+        "gold_purchase_inactive": "Subskrypcja GOLD nie jest aktywna. Rozpocznij zakup ponownie.",
+        "gold_purchase_error": "Nie udało się połączyć ze sklepem NetSendo. Spróbuj ponownie za chwilę.",
+        "gold_purchase_later": "Nie widzimy jeszcze płatności. Jeśli zapłaciłeś, GOLD włączy się automatycznie w ciągu kilku minut; klucz wysłaliśmy też e-mailem.",
         "title": "Licencja",
         "active_status": "Licencja {plan} aktywna",
         "expires_at": "Ważna do: {date}",

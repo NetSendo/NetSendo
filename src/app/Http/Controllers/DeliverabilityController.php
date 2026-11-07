@@ -106,7 +106,8 @@ class DeliverabilityController extends Controller
             'domains' => $domains,
             'recentSimulations' => $recentSimulations,
             'stats' => $stats,
-            'isGold' => $user->license?->plan === 'GOLD',
+            // User had no licence relation, so GOLD never showed here; the licence is per installation
+            'isGold' => app(\App\Services\LicenseService::class)->isGoldPlan(),
             'licenseRoute' => route('license.index'),
         ]);
     }

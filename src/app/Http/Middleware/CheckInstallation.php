@@ -22,7 +22,8 @@ class CheckInstallation
             
             $request->attributes->set('license_active', $licenseKey !== null);
             $request->attributes->set('license_key', $licenseKey?->value);
-            $request->attributes->set('license_plan', $licensePlan?->value);
+            // The plan in effect (an expired GOLD or a missing key works as SILVER)
+            $request->attributes->set('license_plan', app(\App\Services\LicenseService::class)->getCurrentPlan());
         } catch (\Exception $e) {
             $request->attributes->set('license_active', false);
             $request->attributes->set('license_key', null);

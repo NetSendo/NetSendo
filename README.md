@@ -527,7 +527,8 @@ WebSocket connection to 'ws://localhost:8080/app/...' failed
 - 💬 **Forum**: https://forum.netsendo.com
 - 🎓 **Courses**: https://netsendo.com/courses
 - 🐛 **Report Bug**: https://support.netsendo.com
-- 📧 **Email**: support@netsendo.com
+- 📧 **Technical support**: support@netsendo.com
+- 📧 **Licensing, orders and business**: contact@netsendo.com
 
 ---
 

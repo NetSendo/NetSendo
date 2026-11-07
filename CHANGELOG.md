@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **Buy GOLD from the licence page.** The "Upgrade to GOLD", plan card and "Renew GOLD" buttons (until now "coming soon") open the NetSendo store at netsendo.com with the installation's domain and admin email filled in. After payment GOLD switches on in the installation by itself, without copying the key:
+  - `POST /license/buy-gold` creates a random secret, stores it encrypted (setting `license_claim_secret`) and returns the store URL with `claim` = SHA-256 of the secret. Only the hash passes through the browser.
+  - `POST /license/claim-gold` sends the secret to the store (`POST {store}/api/billing/claim`, server to server), gets the key, verifies it with the licence server and activates it. The licence page polls it while the customer pays; the new command `license:claim-gold` (every 5 minutes) finishes purchases when the page was closed. A purchase is waited for 72 hours.
+  - New config `netsendo.store_url` (`NETSENDO_STORE_URL`, default `https://netsendo.com`; empty hides the purchase) replaces `stripe_gold_payment_link`.
+  - Translations: en, pl, de, es. Covered by `tests/Feature/GoldPurchaseTest.php`.
+
 ### Security
+
+- **The licence activation webhook stores only confirmed keys:** `POST /api/license/webhook` was public and saved any key and plan it received, so anyone could switch an instance to GOLD. It now stores a key only after the licence server confirms it, and takes the plan and expiry from that answer.
 
 - **Bounce webhooks are authenticated:** `/webhooks/bounce/{sendgrid,postmark,mailgun,generic}` were public and checked no signature, token or source. Anyone who knew an instance URL could POST a fake bounce and mark any subscriber address as bounced. Each mailbox now has its own URL, `/webhooks/bounce/{provider}/{mailbox}`, and every request is checked with the provider's own mechanism:
   - **SendGrid:** Signed Event Webhook. The ECDSA signature of the timestamp and the raw body (`X-Twilio-Email-Event-Webhook-Signature` / `-Timestamp`) is verified with the account's verification key.
@@ -23,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Setup per provider is described in `docs/BOUNCE_WEBHOOKS.md`. Covered by `tests/Feature/BounceWebhookAuthenticationTest.php` (valid, invalid and missing credentials per provider, stale timestamps, replays, old URLs, account isolation) and `tests/Feature/MailboxBounceWebhookSettingsTest.php`.
 
 ### Fixed
+
+- **A renewed GOLD no longer shows as expired:** the daily licence check (`license:verify`) now copies the plan and expiry from the licence server, so the monthly renewal moves the local expiry date too.
+- **GOLD works only with a valid GOLD licence; everything else is SILVER:** `LicenseService::getCurrentPlan()` is now the one rule for GOLD and SILVER: GOLD only while a GOLD key is stored and its expiry has not passed. No licence, a GOLD plan without a key, or an expired GOLD works as SILVER (campaign limit, GOLD-only features). The shared `license.plan` prop (sidebar, dashboard, Campaign Architect), the `CheckInstallation` attribute and `/api/license/status` (`effective_plan`) use it. Before, they read the stored plan and ignored expiry, so GOLD stayed unlocked after it ended until the daily check removed it.
+- **Deliverability showed GOLD features to nobody:** it checked `$user->license?->plan`, a relation the user model does not have. It now uses the installation's licence.
+- **An ended GOLD falls back to SILVER:** when the licence server reports a GOLD licence inactive, the installation requests its free SILVER licence (with the licence email) instead of removing the licence, as EULA 5.5 describes. Without a licence email it uses the account owner's email; if no SILVER key comes back the licence is removed and the app works as SILVER.
 
 - **The bounce mailbox and custom headers sections of the mailbox form showed translation keys** (`mailboxes.bounce.section_title`, `mailboxes.custom_headers.add` …) instead of text. The keys existed only in the PHP language files, so they are now in the panel's locale files too (en, pl, de, es).
 - **Bounces from the bounce mailbox (IMAP) and from SMTP errors could hit another account's subscriber:** both looked the address up across all accounts of the instance and took the first match. They now only touch the account that sent the mail: the mailbox owner for IMAP, and the subscriber's own account for SMTP errors. Covered by `tests/Feature/BounceOwnerScopeTest.php`.

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\GoldPurchaseService;
 use App\Services\LicenseVerificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
@@ -14,7 +16,7 @@ class LicenseController extends Controller
     /**
      * Show the license activation page.
      */
-    public function index()
+    public function index(GoldPurchaseService $goldPurchase)
     {
         $licenseKey = Setting::where('key', 'license_key')->first();
         $licensePlan = Setting::where('key', 'license_plan')->first();
@@ -31,8 +33,39 @@ class LicenseController extends Controller
             'licenseDomain' => $licenseDomain?->value,
             'appVersion' => config('netsendo.version'),
             'plans' => config('netsendo.plans'),
-            'stripeGoldPaymentLink' => config('netsendo.stripe_gold_payment_link'),
+            // GOLD is bought through the NetSendo store and activated here automatically
+            'goldPurchaseAvailable' => $goldPurchase->available(),
+            'goldPurchasePending' => $goldPurchase->hasPendingPurchase(),
         ]);
+    }
+
+    /**
+     * Start a GOLD purchase: returns the store's order page for this installation.
+     */
+    public function buyGold(Request $request, GoldPurchaseService $goldPurchase)
+    {
+        abort_unless($request->user()?->isAdmin(), 403);
+        if (!$goldPurchase->available()) {
+            return response()->json(['message' => 'GOLD purchase is not available.'], 404);
+        }
+
+        $email = Setting::where('key', 'license_email')->value('value') ?? $request->user()?->email ?? '';
+        $url = $goldPurchase->checkoutUrl(
+            $email,
+            $request->getHost(),
+            app()->getLocale(),
+            route('license.index', ['purchase' => 'return'])
+        );
+
+        return response()->json(['url' => $url]);
+    }
+
+    /**
+     * Check whether the started GOLD purchase is paid; activates GOLD when it is.
+     */
+    public function claimGold(Request $request, GoldPurchaseService $goldPurchase)
+    {
+        return response()->json($goldPurchase->claim($request->getHost()));
     }
 
     /**
@@ -190,14 +223,8 @@ class LicenseController extends Controller
         $plan = $verificationResult['plan'] ?? strtoupper($decodedPlan);
         $expiresAt = $verificationResult['expires_at'] ?? null;
 
-        // Zapisz licencję - teraz wiemy że jest zwalidowana
-        $this->saveLicense($key, $plan, $expiresAt);
-
-        // Zapisz domenę
-        Setting::updateOrCreate(
-            ['key' => 'license_domain'],
-            ['value' => $domain]
-        );
+        // Zapisz licencję i domenę - teraz wiemy że jest zwalidowana
+        $verificationService->storeLicense($key, $plan, $expiresAt, $domain);
 
         return Redirect::route('dashboard')->with('success', 'Licencja ' . $plan . ' została aktywowana!');
     }
@@ -207,24 +234,7 @@ class LicenseController extends Controller
      */
     private function saveLicense(string $key, string $plan, ?string $expiresAt): void
     {
-        Setting::updateOrCreate(
-            ['key' => 'license_key'],
-            ['value' => $key]
-        );
-
-        Setting::updateOrCreate(
-            ['key' => 'license_plan'],
-            ['value' => $plan]
-        );
-
-        if ($expiresAt) {
-            Setting::updateOrCreate(
-                ['key' => 'license_expires_at'],
-                ['value' => $expiresAt]
-            );
-        } else {
-            Setting::where('key', 'license_expires_at')->delete();
-        }
+        app(LicenseVerificationService::class)->storeLicense($key, $plan, $expiresAt);
     }
 
     /**
@@ -246,6 +256,8 @@ class LicenseController extends Controller
         return response()->json([
             'active' => $isActive && !$isExpired,
             'plan' => $licensePlan?->value,
+            // the plan the app works with: an expired GOLD or a missing key is SILVER
+            'effective_plan' => app(\App\Services\LicenseService::class)->getCurrentPlan(),
             'expires_at' => $licenseExpiresAt?->value,
             'is_expired' => $isExpired,
         ]);
@@ -261,8 +273,10 @@ class LicenseController extends Controller
 
         // If license should be deactivated, do it
         if (isset($result['should_deactivate']) && $result['should_deactivate']) {
-            $verificationService->deactivateLicense();
-            $result['deactivated'] = true;
+            // GOLD falls back to SILVER; other licences are removed
+            $outcome = $verificationService->endLicense(request()->getHost());
+            $result['deactivated'] = $outcome === 'deactivated';
+            $result['downgraded'] = $outcome === 'downgraded';
         }
 
         return response()->json($result);
@@ -273,11 +287,10 @@ class LicenseController extends Controller
      * Expects JSON array with license data:
      * [{"package": "SILVER", "licenseKey": "...", "domain": "...", "contact_email": "...", "is_active": true}]
      */
-    public function webhookActivate(Request $request)
+    public function webhookActivate(Request $request, LicenseVerificationService $verificationService)
     {
-        Log::info('Webhook activation received', $request->all());
-
         $licenseData = $request->all();
+        Log::info('Webhook activation received', ['package' => $licenseData['package'] ?? $licenseData['plan'] ?? null]);
 
         // Check for license key in camelCase (n8n) or snake_case
         $licenseKey = $licenseData['licenseKey'] ?? $licenseData['license_key'] ?? null;
@@ -291,6 +304,16 @@ class LicenseController extends Controller
             return response()->json(['success' => false, 'message' => 'No license key provided'], 400);
         }
 
+        // The endpoint is public: a key is stored only if the licence server confirms it,
+        // and the plan and expiry come from that answer, not from the request
+        $verified = $verificationService->verifyLicense($licenseKey, $request->getHost());
+        if (!($verified['valid'] ?? false)) {
+            Log::warning('Webhook activation rejected: licence server did not confirm the key');
+            return response()->json(['success' => false, 'message' => 'Invalid license'], 422);
+        }
+        $plan = strtoupper($verified['plan'] ?? $plan);
+        $expiresAt = $verified['expires_at'] ?? null;
+
         try {
             $this->saveLicense($licenseKey, $plan, $expiresAt);
 
@@ -302,7 +325,7 @@ class LicenseController extends Controller
                 );
             }
 
-            Log::info("License activated via webhook: $licenseKey ($plan)");
+            Log::info("License activated via webhook ($plan)");
 
             return response()->json([
                 'success' => true,
