@@ -115,8 +115,10 @@ jobs:
           cache: npm
           cache-dependency-path: mcp/package-lock.json
 
+      # The client has no test files yet; --passWithNoTests keeps the job green
+      # until the first *.test.ts lands, then those tests gate the PR.
       - name: Install, build and test
         run: |
           npm ci
           npm run build
-          npm run test:run
+          npm run test:run -- --passWithNoTests
