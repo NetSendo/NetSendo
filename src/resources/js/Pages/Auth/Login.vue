@@ -181,8 +181,8 @@ const submit = () => {
             </button>
         </form>
 
-        <!-- Register link -->
-        <div class="mt-6 pt-6 border-t border-white/10 text-center">
+        <!-- Register link: only before the first (administrator) account exists -->
+        <div v-if="isFirstUser" class="mt-6 pt-6 border-t border-white/10 text-center">
             <p class="text-white/50 text-sm">
                 {{ $t('auth.no_account') }}
                 <Link :href="route('register')" class="text-purple-400 hover:text-purple-300 font-medium transition-colors">

@@ -10,6 +10,7 @@ return [
     'login_to_account' => 'Zaloguj się na swoje konto',
     'forgot_password_link' => 'Zapomniałeś hasła?',
     'no_account' => 'Nie masz jeszcze konta?',
+    'registration_closed' => 'Rejestracja jest zamknięta: to NetSendo ma już administratora. Zaloguj się albo poproś administratora o dodanie konta.',
     'register' => [
         'title' => 'Rejestracja',
         'admin_title' => 'Utwórz konto administratora',

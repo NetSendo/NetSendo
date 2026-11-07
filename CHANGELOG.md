@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.3.2] – Welcome email for NetSendo Cloud, sign-up shown only when possible - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **A new NetSendo Cloud instance welcomes its administrator instead of sending a "password reset":** `netsendo:bootstrap` tells the password relay that the email is a welcome (`reason: welcome`) and in which language (`--locale`, the language of the order). Before, the first email a Cloud customer got read "We received a request to reset the password", in English.
+- **The password relay gets this installation's sign-in address** (`login_url`, from `APP_URL`) with every request, plus the language and the administrator's name. The relay builds the link in the email from it, so "Forgot password" emails link to your own NetSendo. Before, the link could point to the relay's own host.
+
+### Fixed
+
+- **The sign-in page offers registration only while it is possible:** "Don't have an account? Sign up" shows only before the first account exists. Registration creates the administrator. After that (on a self-hosted installation after the first sign-up, on a Cloud instance right after installation) it is closed, and the administrator adds further users. Self-hosted installations work as before: the first person to open a fresh installation registers as its administrator.
+- **"Registration is closed" is translated** (en, pl, de, es; it was Polish only) and says why: the installation already has an administrator. Covered by `tests/Feature/RegistrationClosedTest.php` and `tests/Feature/BootstrapCommandTest.php`.
+
 ## [2.3.1] – NetSendo Cloud gets new versions right away - 2026-11-07
 
 **Release date:** 2026-11-07

@@ -94,7 +94,7 @@ class BootstrapInstanceCommand extends Command
 
         // Only for a new account: on a later run the administrator uses "Forgot password"
         if ($created && ! $this->option('no-password-mail')) {
-            if ($relay->sendNewPassword($admin)) {
+            if ($relay->sendNewPassword($admin, 'welcome', $locale ?? 'en')) {
                 $this->info("Password emailed to {$email}");
             } else {
                 $this->error('The password email could not be sent. The administrator can use "Forgot password" on the sign-in page.');
