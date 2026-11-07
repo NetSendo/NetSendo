@@ -275,3 +275,10 @@ Schedule::command('brain:run-cron')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/brain-cron.log'));
 
+// A sleeping Cloud instance (NETSENDO_DORMANT) runs no scheduled work: nothing is sent,
+// synced or checked until the owner resumes it (App\Http\Middleware\DormantMode)
+if (config('netsendo.dormant')) {
+    foreach (Schedule::events() as $event) {
+        $event->skip(fn () => true);
+    }
+}
