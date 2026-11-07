@@ -68,6 +68,11 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # :latest comes only from the raw rule below (builds of main).
+          # The default latest=auto would also add it to every semver build,
+          # so building an older tag would move :latest back to that release.
+          flavor: |
+            latest=false
           tags: |
             # Set latest tag for main branch
             type=raw,value=latest,enable={{is_default_branch}}
