@@ -122,7 +122,7 @@ return [
         | registry page (an absolute URL passes through url() untouched).
         */
         'n8n' => [
-            'version' => '1.3.2',
+            'version' => '1.3.3',
             'download_url' => 'https://www.npmjs.com/package/n8n-nodes-netsendo',
         ],
         'mcp' => [

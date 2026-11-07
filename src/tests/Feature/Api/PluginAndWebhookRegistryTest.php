@@ -71,7 +71,7 @@ class PluginAndWebhookRegistryTest extends TestCase
                 'plugin_type' => 'n8n',
                 'site_url' => 'https://n8n.example.com/',
                 'site_name' => 'n8n',
-                'plugin_version' => '1.3.2',
+                'plugin_version' => config('netsendo.plugins.n8n.version'),
             ])
             ->assertStatus(200)
             ->assertJsonPath('success', true)

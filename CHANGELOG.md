@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - `install.sh` downloads the new `docker-compose.yml`, so new installs get the change.
   - Existing installs keep their copy of the file. To apply the change there, edit the `command:` line of the `redis` service and run `docker compose up -d redis`. Alternatively, apply it without a restart with `docker compose exec redis redis-cli CONFIG SET maxmemory-policy volatile-lru`, then also edit the file so the setting survives a restart.
 
+### Changed
+
+- **n8n node 1.3.3 is the latest in the plugin registry** (`netsendo.plugins.n8n.version`), so n8n instances still on 1.3.2 are told to update. The NetSendo Trigger in 1.3.2 rejected genuine webhook deliveries whose payload held a URL or non-ASCII text (e.g. Polish names): it re-encoded the parsed JSON before checking the `X-NetSendo-Signature` HMAC, while NetSendo signs the exact `json_encode()` bytes it sends. 1.3.3 checks the raw body in constant time.
+
 ## [2.2.1] – Message editor 502 fix - 2026-11-07
 
 **Release date:** 2026-11-07
