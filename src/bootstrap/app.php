@@ -28,7 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            // Capped: the message editor preloads ~27 chunks, and the full Link header
+            // pushed its response headers past nginx's default 4 KB fastcgi buffer
+            // (502 Bad Gateway on a full load of /messages/create). Every chunk is
+            // still preloaded by the <link rel="modulepreload"> tags @vite writes.
+            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::using(8),
             \App\Http\Middleware\CheckInstallation::class,
         ]);
 

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.2.1] – Message editor 502 fix - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Fixed
+
+- **Opening the email editor directly answered 502 Bad Gateway:** a full page load (a link, a refresh, a bookmark) of `/messages/create` or `/messages/{id}/edit` failed, while getting there by clicking inside the panel worked. Laravel's `AddLinkHeadersForPreloadedAssets` middleware put every JavaScript and CSS chunk of the page into one `Link` response header; the editor has about 27 of them, and with the absolute asset URLs and the cookies the response headers grew past nginx's default 4 KB FastCGI buffer, so nginx dropped the response. The header now lists at most 8 assets (`AddLinkHeadersForPreloadedAssets::using(8)` in `bootstrap/app.php`), which keeps every page's headers at about 2 KB. Nothing loads later than before: the page HTML still carries a `<link rel="modulepreload">` for every chunk. The fix ships in the image, so existing installs need no change of their nginx configuration.
+- **`docker/nginx/default.conf` gives PHP responses larger header buffers** (`fastcgi_buffer_size 32k`, `fastcgi_buffers 16 16k`), so new installs have headroom if headers grow again. Existing installs keep their copy of this file until they replace it.
+
 ## [2.2.0] – Security updates, Laravel 13, Inertia 3, MySQL 8.4 - 2026-11-06
 
 **Release date:** 2026-11-06
