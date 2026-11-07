@@ -4307,6 +4307,62 @@
         "error_details": {
             "title": "Connection Error Details"
         },
+        "bounce": {
+            "section_title": "Bounce Mailbox Monitoring",
+            "section_desc": "Monitor a dedicated IMAP mailbox for bounce-back emails and automatically mark subscribers as bounced.",
+            "imap_host": "IMAP Host",
+            "imap_port": "IMAP Port",
+            "imap_encryption": "Encryption",
+            "imap_username": "IMAP Username",
+            "imap_password": "IMAP Password",
+            "imap_folder": "IMAP Folder",
+            "test_connection": "Test IMAP Connection",
+            "last_scanned": "Last scanned",
+            "last_scan_count": "Bounces found in last scan",
+            "never_scanned": "Never scanned"
+        },
+        "bounce_webhooks": {
+            "section_title": "Bounce webhooks",
+            "section_desc": "Let your email provider report bounces to NetSendo. Each request must carry this mailbox's secret; requests without it are rejected (401).",
+            "providers": {
+                "sendgrid": "SendGrid",
+                "mailgun": "Mailgun",
+                "postmark": "Postmark",
+                "generic": "Other"
+            },
+            "url": "Webhook URL",
+            "help": {
+                "sendgrid": "In SendGrid open Settings → Mail Settings → Event Webhook, paste this URL, select the Bounced, Dropped and Deferred events and turn on Signed Event Webhook. Paste the verification key SendGrid shows there below.",
+                "mailgun": "In Mailgun open Send → Sending → Webhooks, add this URL for the Permanent failure and Temporary failure events and paste the HTTP webhook signing key shown on that page below.",
+                "postmark": "In Postmark open your server's message stream → Webhooks → Add webhook, paste this URL and select Bounce and Spam complaint.",
+                "generic": "For your own scripts and other providers: send a POST with the JSON fields email, bounce_type (hard or soft) and bounce_reason."
+            },
+            "sendgrid_key": "SendGrid verification key",
+            "mailgun_key": "Mailgun HTTP webhook signing key",
+            "token": "Webhook token",
+            "key_saved": "Key saved.",
+            "remove_key": "Remove",
+            "undo_remove": "Undo",
+            "will_be_removed": "The key will be removed when you save.",
+            "token_missing": "No token yet. Generate one to use this webhook.",
+            "generate_token": "Generate token",
+            "regenerate_token": "Generate new token",
+            "regenerate_confirm": "Generate a new token? The current token stops working at once and must be replaced at your provider.",
+            "postmark_auth": "In the webhook's Basic auth credentials, enter the username netsendo and this token as the password. Alternatively add ?token= with the token to the URL.",
+            "generic_auth": "Send the token in the X-NetSendo-Webhook-Token header. If your sender cannot set headers, add ?token= with the token to the URL.",
+            "status_ready": "Secret saved: signed requests to this URL are accepted.",
+            "status_missing": "No secret yet: NetSendo rejects requests to this URL (401)."
+        },
+        "custom_headers": {
+            "section_title": "Custom SMTP Headers",
+            "section_desc": "Add custom headers to all emails sent from this sending server (e.g. Feedback-ID for Google Postmaster Tools).",
+            "key": "Header Name",
+            "value": "Header Value",
+            "add": "Add Header",
+            "remove": "Remove",
+            "key_placeholder": "e.g. Feedback-ID",
+            "value_placeholder": "e.g. campaign1:user123:netsendo"
+        },
         "replies": {
             "section_title": "Reply detection",
             "section_desc": "Detect replies from subscribers and record them in the CRM.",

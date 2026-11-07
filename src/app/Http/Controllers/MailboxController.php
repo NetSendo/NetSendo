@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Mailbox;
 use App\Services\Mail\BounceMailboxService;
+use App\Services\Mail\BounceWebhookAuthenticator;
 use App\Services\Mail\MailProviderService;
 use App\Services\Mail\MailboxReputationService;
 use App\Services\Mail\ReplyMailboxService;
@@ -69,6 +70,8 @@ class MailboxController extends Controller
                     'bounce_imap_folder' => $mailbox->bounce_imap_folder,
                     'bounce_last_scanned_at' => $mailbox->bounce_last_scanned_at?->toIso8601String(),
                     'bounce_last_scan_count' => $mailbox->bounce_last_scan_count,
+                    // Bounce webhooks (URLs and which secrets are set)
+                    'bounce_webhook' => $this->bounceWebhookSettings($mailbox),
                     // Reply inbox monitoring
                     'reply_enabled' => $mailbox->reply_enabled,
                     'reply_imap_host' => $mailbox->reply_imap_host,
@@ -247,6 +250,21 @@ class MailboxController extends Controller
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
 
+        $webhookValidated = $request->validate([
+            'bounce_webhook_sendgrid_key' => [
+                'nullable', 'string', 'max:2000',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (is_string($value) && trim($value) !== ''
+                        && BounceWebhookAuthenticator::normaliseSendGridKey($value) === null) {
+                        $fail(__('mailboxes.bounce_webhooks.invalid_sendgrid_key'));
+                    }
+                },
+            ],
+            'bounce_webhook_mailgun_key' => ['nullable', 'string', 'max:255'],
+            'bounce_webhook_remove' => ['nullable', 'array'],
+            'bounce_webhook_remove.*' => [Rule::in(['sendgrid', 'mailgun'])],
+        ]);
+
         $replyValidated = $request->has('reply_enabled') ? $request->validate([
             'reply_enabled' => ['boolean'],
             'reply_imap_host' => ['nullable', 'required_if:reply_enabled,true', 'string', 'max:255'],
@@ -321,6 +339,23 @@ class MailboxController extends Controller
             }
 
             $mailbox->update($bounceData);
+        }
+
+        // Bounce webhook secrets: an empty field keeps the stored key
+        $webhookChanges = [];
+        foreach ($webhookValidated['bounce_webhook_remove'] ?? [] as $provider) {
+            $webhookChanges[$provider === 'sendgrid' ? 'sendgrid_verification_key' : 'mailgun_signing_key'] = null;
+        }
+        if (filled($webhookValidated['bounce_webhook_sendgrid_key'] ?? null)) {
+            $webhookChanges['sendgrid_verification_key'] = BounceWebhookAuthenticator::normaliseSendGridKey(
+                $webhookValidated['bounce_webhook_sendgrid_key']
+            );
+        }
+        if (filled($webhookValidated['bounce_webhook_mailgun_key'] ?? null)) {
+            $webhookChanges['mailgun_signing_key'] = trim($webhookValidated['bounce_webhook_mailgun_key']);
+        }
+        if ($webhookChanges !== []) {
+            $mailbox->updateBounceWebhookCredentials($webhookChanges);
         }
 
         // Handle reply inbox configuration separately
@@ -419,6 +454,45 @@ class MailboxController extends Controller
         $mailbox->setAsDefault();
 
         return back()->with('success', __('mailboxes.set_default'));
+    }
+
+    /**
+     * Generate (or replace) the token that authenticates the Postmark and
+     * generic bounce webhooks of this mailbox. The previous token stops working.
+     */
+    public function regenerateBounceWebhookToken(Mailbox $mailbox)
+    {
+        $this->authorize('update', $mailbox);
+
+        $mailbox->updateBounceWebhookCredentials(['token' => BounceWebhookAuthenticator::generateToken()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('mailboxes.bounce_webhooks.token_generated'),
+            'bounce_webhook' => $this->bounceWebhookSettings($mailbox->fresh()),
+        ]);
+    }
+
+    /**
+     * Bounce webhook URLs of a mailbox and which secrets are set. The token is
+     * shown to the owner so it can be copied into Postmark or a custom sender;
+     * the Mailgun signing key is never sent back.
+     */
+    private function bounceWebhookSettings(Mailbox $mailbox): array
+    {
+        $credentials = $mailbox->getDecryptedBounceWebhookCredentials();
+
+        $urls = [];
+        foreach (Mailbox::BOUNCE_WEBHOOK_PROVIDERS as $provider) {
+            $urls[$provider] = route("webhooks.bounce.{$provider}", ['mailbox' => $mailbox->id]);
+        }
+
+        return [
+            'urls' => $urls,
+            'token' => $credentials['token'] ?? null,
+            'sendgrid_key_set' => !empty($credentials['sendgrid_verification_key']),
+            'mailgun_key_set' => !empty($credentials['mailgun_signing_key']),
+        ];
     }
 
     /**

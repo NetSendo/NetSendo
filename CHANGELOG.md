@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Security
+
+- **Bounce webhooks are authenticated:** `/webhooks/bounce/{sendgrid,postmark,mailgun,generic}` were public and checked no signature, token or source. Anyone who knew an instance URL could POST a fake bounce and mark any subscriber address as bounced. Each mailbox now has its own URL, `/webhooks/bounce/{provider}/{mailbox}`, and every request is checked with the provider's own mechanism:
+  - **SendGrid:** Signed Event Webhook. The ECDSA signature of the timestamp and the raw body (`X-Twilio-Email-Event-Webhook-Signature` / `-Timestamp`) is verified with the account's verification key.
+  - **Mailgun:** HMAC-SHA256 of the timestamp and the token with the HTTP webhook signing key (the `signature` object), compared with `hash_equals`.
+  - **Postmark** (Postmark does not sign) and **generic:** a per-mailbox NetSendo token, sent as the Basic auth password, the `X-NetSendo-Webhook-Token` header, a Bearer token or `?token=`, compared with `hash_equals`.
+  - SendGrid and Mailgun requests are accepted only within 5 minutes of their timestamp (`BOUNCE_WEBHOOK_TIMESTAMP_TOLERANCE`), and each signature only once, so a captured request cannot be replayed. This matters most for Mailgun, which does not sign the event body.
+  - Requests without valid credentials get 401 and are logged as `Bounce webhook rejected` with the provider, the mailbox, the reason and the IP address. This covers an unknown mailbox and a mailbox with no secret set.
+  - **The old URLs without a mailbox are rejected (401).** Installs that set one up at a provider must copy the new URL and the secret from the mailbox. The panel never showed the old URLs and no documentation described them.
+  - A webhook now only changes the subscribers of the mailbox's owner. `BounceProcessingService::processBounce()` gained an optional `$userId`. Before, it picked the first subscriber with the address in any account of the instance.
+  - Secrets are set in **Settings → Mailboxes → edit → Bounce webhooks**, with a tab per provider, the URL to copy, the SendGrid and Mailgun key fields, and token generation for Postmark and generic webhooks. They are stored encrypted in the new column `mailboxes.bounce_webhook_credentials` (migration `2026_11_07_120000`), and the Mailgun key is never sent back to the browser. The new route `POST /settings/mailboxes/{mailbox}/bounce-webhook-token` generates the token. Translations: en, pl, de, es.
+  - Setup per provider is described in `docs/BOUNCE_WEBHOOKS.md`. Covered by `tests/Feature/BounceWebhookAuthenticationTest.php` (valid, invalid and missing credentials per provider, stale timestamps, replays, old URLs, account isolation) and `tests/Feature/MailboxBounceWebhookSettingsTest.php`.
+
+### Fixed
+
+- **The bounce mailbox and custom headers sections of the mailbox form showed translation keys** (`mailboxes.bounce.section_title`, `mailboxes.custom_headers.add` …) instead of text. The keys existed only in the PHP language files, so they are now in the panel's locale files too (en, pl, de, es).
+
 ## [2.2.1] – Message editor 502 fix - 2026-11-07
 
 **Release date:** 2026-11-07

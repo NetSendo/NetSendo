@@ -408,6 +408,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{mailbox}', [\App\Http\Controllers\MailboxController::class, 'destroy'])->name('destroy');
         Route::post('/{mailbox}/test', [\App\Http\Controllers\MailboxController::class, 'test'])->name('test');
         Route::post('/{mailbox}/test-bounce', [\App\Http\Controllers\MailboxController::class, 'testBounce'])->name('test-bounce');
+        Route::post('/{mailbox}/bounce-webhook-token', [\App\Http\Controllers\MailboxController::class, 'regenerateBounceWebhookToken'])->name('bounce-webhook-token');
         Route::post('/{mailbox}/test-reply', [\App\Http\Controllers\MailboxController::class, 'testReply'])->name('test-reply');
         Route::post('/{mailbox}/check-reputation', [\App\Http\Controllers\MailboxController::class, 'checkReputation'])->name('check-reputation');
         Route::post('/{mailbox}/default', [\App\Http\Controllers\MailboxController::class, 'setDefault'])->name('default');
@@ -1034,12 +1035,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/cron/webhook/generate', [\App\Http\Controllers\CronSettingsController::class, 'generateWebhookToken'])->name('settings.cron.webhook.generate');
 });
 
-// Email Bounce Webhooks (public, provider-authenticated)
+// Email Bounce Webhooks (public; authenticated with the secrets of the mailbox in the URL,
+// see BounceWebhookAuthenticator — SendGrid signature, Mailgun HMAC, token for Postmark/generic)
 Route::prefix('webhooks/bounce')->name('webhooks.bounce.')->group(function () {
-    Route::post('/sendgrid', [\App\Http\Controllers\Webhooks\BounceController::class, 'sendgrid'])->name('sendgrid');
-    Route::post('/postmark', [\App\Http\Controllers\Webhooks\BounceController::class, 'postmark'])->name('postmark');
-    Route::post('/mailgun', [\App\Http\Controllers\Webhooks\BounceController::class, 'mailgun'])->name('mailgun');
-    Route::post('/generic', [\App\Http\Controllers\Webhooks\BounceController::class, 'generic'])->name('generic');
+    Route::post('/sendgrid/{mailbox}', [\App\Http\Controllers\Webhooks\BounceController::class, 'sendgrid'])->whereNumber('mailbox')->name('sendgrid');
+    Route::post('/postmark/{mailbox}', [\App\Http\Controllers\Webhooks\BounceController::class, 'postmark'])->whereNumber('mailbox')->name('postmark');
+    Route::post('/mailgun/{mailbox}', [\App\Http\Controllers\Webhooks\BounceController::class, 'mailgun'])->whereNumber('mailbox')->name('mailgun');
+    Route::post('/generic/{mailbox}', [\App\Http\Controllers\Webhooks\BounceController::class, 'generic'])->whereNumber('mailbox')->name('generic');
+    // Old URLs without a mailbox cannot be authenticated: logged and rejected with 401
+    Route::post('/{provider}', [\App\Http\Controllers\Webhooks\BounceController::class, 'legacy'])
+        ->whereIn('provider', \App\Models\Mailbox::BOUNCE_WEBHOOK_PROVIDERS)->name('legacy');
 });
 
 // Stripe Webhook (public, Stripe-signature authenticated)

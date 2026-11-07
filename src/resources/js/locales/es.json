@@ -4692,6 +4692,62 @@
         "error_details": {
             "title": "Detalles del Error de Conexión"
         },
+        "bounce": {
+            "section_title": "Monitoreo de buzón de rebotes",
+            "section_desc": "Monitorea un buzón IMAP dedicado para correos de rebote y marca automáticamente a los suscriptores como rebotados.",
+            "imap_host": "Host IMAP",
+            "imap_port": "Puerto IMAP",
+            "imap_encryption": "Cifrado",
+            "imap_username": "Usuario IMAP",
+            "imap_password": "Contraseña IMAP",
+            "imap_folder": "Carpeta IMAP",
+            "test_connection": "Probar conexión IMAP",
+            "last_scanned": "Último escaneo",
+            "last_scan_count": "Rebotes encontrados en el último escaneo",
+            "never_scanned": "Nunca escaneado"
+        },
+        "bounce_webhooks": {
+            "section_title": "Webhooks de rebotes",
+            "section_desc": "Permite que tu proveedor de correo informe los rebotes a NetSendo. Cada solicitud debe incluir el secreto de este buzón; las que no lo incluyen se rechazan (401).",
+            "providers": {
+                "sendgrid": "SendGrid",
+                "mailgun": "Mailgun",
+                "postmark": "Postmark",
+                "generic": "Otro"
+            },
+            "url": "URL del webhook",
+            "help": {
+                "sendgrid": "En SendGrid abre Settings → Mail Settings → Event Webhook, pega esta URL, selecciona los eventos Bounced, Dropped y Deferred y activa Signed Event Webhook. Pega abajo la clave de verificación que muestra SendGrid.",
+                "mailgun": "En Mailgun abre Send → Sending → Webhooks, añade esta URL para los eventos Permanent failure y Temporary failure y pega abajo la HTTP webhook signing key que aparece en esa página.",
+                "postmark": "En Postmark abre el message stream de tu servidor → Webhooks → Add webhook, pega esta URL y selecciona Bounce y Spam complaint.",
+                "generic": "Para tus propios scripts y otros proveedores: envía un POST con los campos JSON email, bounce_type (hard o soft) y bounce_reason."
+            },
+            "sendgrid_key": "Clave de verificación de SendGrid",
+            "mailgun_key": "Mailgun HTTP webhook signing key",
+            "token": "Token del webhook",
+            "key_saved": "Clave guardada.",
+            "remove_key": "Eliminar",
+            "undo_remove": "Deshacer",
+            "will_be_removed": "La clave se eliminará al guardar.",
+            "token_missing": "Todavía no hay token. Genera uno para usar este webhook.",
+            "generate_token": "Generar token",
+            "regenerate_token": "Generar nuevo token",
+            "regenerate_confirm": "¿Generar un nuevo token? El actual deja de funcionar de inmediato y hay que sustituirlo en tu proveedor.",
+            "postmark_auth": "En las Basic auth credentials del webhook introduce el usuario netsendo y este token como contraseña. También puedes añadir ?token= con el token a la URL.",
+            "generic_auth": "Envía el token en la cabecera X-NetSendo-Webhook-Token. Si tu remitente no puede definir cabeceras, añade ?token= con el token a la URL.",
+            "status_ready": "Secreto guardado: se aceptan las solicitudes firmadas a esta URL.",
+            "status_missing": "Aún no hay secreto: NetSendo rechaza las solicitudes a esta URL (401)."
+        },
+        "custom_headers": {
+            "section_title": "Encabezados SMTP personalizados",
+            "section_desc": "Agrega encabezados personalizados a todos los correos enviados desde este servidor (ej. Feedback-ID para Google Postmaster Tools).",
+            "key": "Nombre del encabezado",
+            "value": "Valor del encabezado",
+            "add": "Agregar encabezado",
+            "remove": "Eliminar",
+            "key_placeholder": "ej. Feedback-ID",
+            "value_placeholder": "ej. campaign1:user123:netsendo"
+        },
         "replies": {
             "section_title": "Detección de respuestas",
             "section_desc": "Detecta las respuestas de los suscriptores y guárdalas en el CRM.",

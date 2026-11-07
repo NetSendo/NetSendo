@@ -3994,6 +3994,62 @@
         "error_details": {
             "title": "Szczegóły błędu połączenia"
         },
+        "bounce": {
+            "section_title": "Monitoring skrzynki bounce",
+            "section_desc": "Monitoruj dedykowaną skrzynkę IMAP pod kątem emaili zwrotnych (bounce) i automatycznie oznaczaj subskrybentów jako bounced.",
+            "imap_host": "Host IMAP",
+            "imap_port": "Port IMAP",
+            "imap_encryption": "Szyfrowanie",
+            "imap_username": "Użytkownik IMAP",
+            "imap_password": "Hasło IMAP",
+            "imap_folder": "Folder IMAP",
+            "test_connection": "Testuj połączenie IMAP",
+            "last_scanned": "Ostatnie skanowanie",
+            "last_scan_count": "Bounce znalezione w ostatnim skanie",
+            "never_scanned": "Nigdy nie skanowano"
+        },
+        "bounce_webhooks": {
+            "section_title": "Webhooki zwrotów (bounce)",
+            "section_desc": "Pozwól dostawcy poczty zgłaszać zwroty do NetSendo. Każde żądanie musi zawierać sekret tej skrzynki – bez niego jest odrzucane (401).",
+            "providers": {
+                "sendgrid": "SendGrid",
+                "mailgun": "Mailgun",
+                "postmark": "Postmark",
+                "generic": "Inny"
+            },
+            "url": "Adres webhooka",
+            "help": {
+                "sendgrid": "W SendGrid otwórz Settings → Mail Settings → Event Webhook, wklej ten adres, zaznacz zdarzenia Bounced, Dropped i Deferred i włącz Signed Event Webhook. Klucz weryfikacyjny, który SendGrid tam pokaże, wklej poniżej.",
+                "mailgun": "W Mailgun otwórz Send → Sending → Webhooks, dodaj ten adres dla zdarzeń Permanent failure i Temporary failure, a HTTP webhook signing key z tej strony wklej poniżej.",
+                "postmark": "W Postmark otwórz strumień wiadomości swojego serwera → Webhooks → Add webhook, wklej ten adres i zaznacz Bounce oraz Spam complaint.",
+                "generic": "Dla własnych skryptów i innych dostawców: wyślij POST z polami JSON email, bounce_type (hard lub soft) i bounce_reason."
+            },
+            "sendgrid_key": "Klucz weryfikacyjny SendGrid",
+            "mailgun_key": "Mailgun HTTP webhook signing key",
+            "token": "Token webhooka",
+            "key_saved": "Klucz zapisany.",
+            "remove_key": "Usuń",
+            "undo_remove": "Cofnij",
+            "will_be_removed": "Klucz zostanie usunięty po zapisaniu.",
+            "token_missing": "Brak tokenu. Wygeneruj go, aby używać tego webhooka.",
+            "generate_token": "Wygeneruj token",
+            "regenerate_token": "Wygeneruj nowy token",
+            "regenerate_confirm": "Wygenerować nowy token? Obecny przestanie działać od razu i trzeba go będzie podmienić u dostawcy.",
+            "postmark_auth": "W ustawieniach webhooka (Basic auth credentials) wpisz użytkownika netsendo, a jako hasło ten token. Możesz też dopisać do adresu ?token= z tokenem.",
+            "generic_auth": "Wysyłaj token w nagłówku X-NetSendo-Webhook-Token. Jeśli nadawca nie umie ustawić nagłówka, dopisz do adresu ?token= z tokenem.",
+            "status_ready": "Sekret zapisany: podpisane żądania na ten adres są przyjmowane.",
+            "status_missing": "Brak sekretu: NetSendo odrzuca żądania na ten adres (401)."
+        },
+        "custom_headers": {
+            "section_title": "Niestandardowe nagłówki SMTP",
+            "section_desc": "Dodaj niestandardowe nagłówki do wszystkich e-maili wysyłanych z tego serwera (np. Feedback-ID dla Google Postmaster Tools).",
+            "key": "Nazwa nagłówka",
+            "value": "Wartość nagłówka",
+            "add": "Dodaj nagłówek",
+            "remove": "Usuń",
+            "key_placeholder": "np. Feedback-ID",
+            "value_placeholder": "np. campaign1:user123:netsendo"
+        },
         "replies": {
             "section_title": "Odczyt odpowiedzi",
             "section_desc": "Wykrywaj odpowiedzi subskrybentów i zapisuj je w CRM.",

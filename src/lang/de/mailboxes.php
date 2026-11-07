@@ -32,6 +32,11 @@ return [
         'processed' => ':count Bounce(s) verarbeitet',
     ],
 
+    'bounce_webhooks' => [
+        'token_generated' => 'Webhook-Token erstellt. Hinterlegen Sie es bei Ihrem Anbieter – ein bisheriges Token ist nicht mehr gültig.',
+        'invalid_sendgrid_key' => 'Dies ist kein gültiger SendGrid-Verifizierungsschlüssel. Kopieren Sie den öffentlichen Schlüssel, den SendGrid nach dem Aktivieren von Signed Event Webhook anzeigt.',
+    ],
+
     'replies' => [
         'test_success' => 'Verbindung zum Antwort-Postfach erfolgreich',
         'test_failed' => 'Verbindung zum Antwort-Postfach fehlgeschlagen',

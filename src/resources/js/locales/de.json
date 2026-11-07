@@ -8406,6 +8406,62 @@
             "not_connected": "Nicht verbunden",
             "save_first": "Speichern Sie das Postfach, um es mit einem Gmail-Konto verknüpfen zu können."
         },
+        "bounce": {
+            "section_title": "Bounce-Postfach Überwachung",
+            "section_desc": "Überwachen Sie ein dediziertes IMAP-Postfach für Bounce-E-Mails und markieren Sie Abonnenten automatisch als Bounced.",
+            "imap_host": "IMAP Host",
+            "imap_port": "IMAP Port",
+            "imap_encryption": "Verschlüsselung",
+            "imap_username": "IMAP Benutzername",
+            "imap_password": "IMAP Passwort",
+            "imap_folder": "IMAP Ordner",
+            "test_connection": "IMAP-Verbindung testen",
+            "last_scanned": "Zuletzt gescannt",
+            "last_scan_count": "Bounces im letzten Scan gefunden",
+            "never_scanned": "Noch nie gescannt"
+        },
+        "bounce_webhooks": {
+            "section_title": "Bounce-Webhooks",
+            "section_desc": "Lassen Sie Ihren E-Mail-Anbieter Bounces an NetSendo melden. Jede Anfrage muss das Geheimnis dieses Postfachs enthalten; Anfragen ohne werden abgelehnt (401).",
+            "providers": {
+                "sendgrid": "SendGrid",
+                "mailgun": "Mailgun",
+                "postmark": "Postmark",
+                "generic": "Andere"
+            },
+            "url": "Webhook-URL",
+            "help": {
+                "sendgrid": "Öffnen Sie in SendGrid Settings → Mail Settings → Event Webhook, fügen Sie diese URL ein, wählen Sie die Ereignisse Bounced, Dropped und Deferred und aktivieren Sie Signed Event Webhook. Den dort angezeigten Verifizierungsschlüssel fügen Sie unten ein.",
+                "mailgun": "Öffnen Sie in Mailgun Send → Sending → Webhooks, fügen Sie diese URL für die Ereignisse Permanent failure und Temporary failure hinzu und fügen Sie den dort angezeigten HTTP webhook signing key unten ein.",
+                "postmark": "Öffnen Sie in Postmark den Message Stream Ihres Servers → Webhooks → Add webhook, fügen Sie diese URL ein und wählen Sie Bounce und Spam complaint.",
+                "generic": "Für eigene Skripte und andere Anbieter: Senden Sie einen POST mit den JSON-Feldern email, bounce_type (hard oder soft) und bounce_reason."
+            },
+            "sendgrid_key": "SendGrid-Verifizierungsschlüssel",
+            "mailgun_key": "Mailgun HTTP webhook signing key",
+            "token": "Webhook-Token",
+            "key_saved": "Schlüssel gespeichert.",
+            "remove_key": "Entfernen",
+            "undo_remove": "Rückgängig",
+            "will_be_removed": "Der Schlüssel wird beim Speichern entfernt.",
+            "token_missing": "Noch kein Token. Erstellen Sie eines, um diesen Webhook zu nutzen.",
+            "generate_token": "Token erstellen",
+            "regenerate_token": "Neues Token erstellen",
+            "regenerate_confirm": "Neues Token erstellen? Das aktuelle Token ist sofort ungültig und muss beim Anbieter ersetzt werden.",
+            "postmark_auth": "Tragen Sie bei den Basic auth credentials des Webhooks den Benutzernamen netsendo und dieses Token als Passwort ein. Alternativ hängen Sie ?token= mit dem Token an die URL an.",
+            "generic_auth": "Senden Sie das Token im Header X-NetSendo-Webhook-Token. Kann Ihr Absender keine Header setzen, hängen Sie ?token= mit dem Token an die URL an.",
+            "status_ready": "Geheimnis gespeichert: signierte Anfragen an diese URL werden angenommen.",
+            "status_missing": "Noch kein Geheimnis: NetSendo lehnt Anfragen an diese URL ab (401)."
+        },
+        "custom_headers": {
+            "section_title": "Benutzerdefinierte SMTP-Header",
+            "section_desc": "Fügen Sie benutzerdefinierte Header zu allen E-Mails hinzu, die von diesem Sendeserver gesendet werden (z.B. Feedback-ID für Google Postmaster Tools).",
+            "key": "Header-Name",
+            "value": "Header-Wert",
+            "add": "Header hinzufügen",
+            "remove": "Entfernen",
+            "key_placeholder": "z.B. Feedback-ID",
+            "value_placeholder": "z.B. campaign1:user123:netsendo"
+        },
         "replies": {
             "section_title": "Antworterkennung",
             "section_desc": "Antworten von Abonnenten erkennen und im CRM speichern.",

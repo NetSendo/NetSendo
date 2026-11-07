@@ -19,22 +19,30 @@ class BounceProcessingService
 {
     /**
      * Process a bounce event — mark subscriber as bounced and dispatch event.
+     *
+     * $userId limits the lookup to one account's subscribers and messages
+     * (bounce webhooks act for the owner of the mailbox they authenticated).
      */
     public function processBounce(
         string $email,
         string $bounceType,
         string $bounceReason,
         ?string $messageId,
-        string $provider
+        string $provider,
+        ?int $userId = null
     ): void {
         Log::info("Bounce received from {$provider}", [
             'email' => $email,
             'type' => $bounceType,
             'reason' => $bounceReason,
+            'user_id' => $userId,
         ]);
 
         // Find subscriber by email
-        $subscriber = Subscriber::where('email', $email)->first();
+        $subscriber = Subscriber::query()
+            ->when($userId !== null, fn ($query) => $query->where('user_id', $userId))
+            ->where('email', $email)
+            ->first();
 
         if (!$subscriber) {
             Log::warning("Bounce for unknown subscriber: {$email}");
@@ -44,7 +52,9 @@ class BounceProcessingService
         // Find message if we have an ID
         $message = null;
         if ($messageId) {
-            $message = Message::find($messageId);
+            $message = Message::query()
+                ->when($userId !== null, fn ($query) => $query->where('user_id', $userId))
+                ->find($messageId);
         }
 
         // Process bounce for each list the subscriber belongs to

@@ -32,6 +32,11 @@ return [
         'processed' => ':count bounce(s) processed',
     ],
 
+    'bounce_webhooks' => [
+        'token_generated' => 'Webhook token generated. Paste it at your provider – any previous token no longer works.',
+        'invalid_sendgrid_key' => 'This is not a valid SendGrid verification key. Copy the public key shown after enabling Signed Event Webhook in SendGrid.',
+    ],
+
     'replies' => [
         'test_success' => 'Successfully connected to the reply mailbox',
         'test_failed' => 'Failed to connect to the reply mailbox',

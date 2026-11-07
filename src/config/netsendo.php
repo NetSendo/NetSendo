@@ -240,6 +240,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Bounce Webhooks
+    |--------------------------------------------------------------------------
+    |
+    | /webhooks/bounce/{provider}/{mailbox} accepts only authenticated requests
+    | (secrets per mailbox, Settings → Mailboxes). Providers that sign with a
+    | timestamp (SendGrid, Mailgun) are accepted only within this many seconds
+    | of it, and every signature only once, so a captured request cannot be
+    | replayed.
+    |
+    */
+
+    'bounce_webhooks' => [
+        'timestamp_tolerance' => (int) env('BOUNCE_WEBHOOK_TIMESTAMP_TOLERANCE', 300),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Supported Languages
     |--------------------------------------------------------------------------
     |

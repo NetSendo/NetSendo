@@ -32,6 +32,11 @@ return [
         'processed' => ':count rebote(s) procesado(s)',
     ],
 
+    'bounce_webhooks' => [
+        'token_generated' => 'Se ha generado el token del webhook. Pégalo en tu proveedor: cualquier token anterior ya no funciona.',
+        'invalid_sendgrid_key' => 'Esta no es una clave de verificación de SendGrid válida. Copia la clave pública que SendGrid muestra al activar Signed Event Webhook.',
+    ],
+
     'replies' => [
         'test_success' => 'Conexión exitosa al buzón de respuestas',
         'test_failed' => 'Error al conectar con el buzón de respuestas',

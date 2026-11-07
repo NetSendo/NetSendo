@@ -39,6 +39,8 @@ class Mailbox extends Model
         'bounce_imap_folder',
         'bounce_last_scanned_at',
         'bounce_last_scan_count',
+        // Bounce webhook secrets (encrypted)
+        'bounce_webhook_credentials',
         // Reply inbox IMAP monitoring
         'reply_enabled',
         'reply_imap_host',
@@ -88,8 +90,15 @@ class Mailbox extends Model
     protected $hidden = [
         'credentials',
         'bounce_imap_credentials',
+        'bounce_webhook_credentials',
         'reply_imap_credentials',
     ];
+
+    /**
+     * Providers whose bounce webhooks NetSendo accepts
+     * (/webhooks/bounce/{provider}/{mailbox}).
+     */
+    public const BOUNCE_WEBHOOK_PROVIDERS = ['sendgrid', 'mailgun', 'postmark', 'generic'];
 
     /**
      * Provider constants
@@ -240,6 +249,54 @@ class Mailbox extends Model
         } catch (\Exception $e) {
             return [];
         }
+    }
+
+    /**
+     * Set bounce webhook secrets (auto-encrypt)
+     */
+    public function setBounceWebhookCredentialsAttribute($value): void
+    {
+        if ($value === null || $value === []) {
+            $this->attributes['bounce_webhook_credentials'] = null;
+            return;
+        }
+        $this->attributes['bounce_webhook_credentials'] = Crypt::encryptString(
+            is_array($value) ? json_encode($value) : $value
+        );
+    }
+
+    /**
+     * Get decrypted bounce webhook secrets: token, sendgrid_verification_key,
+     * mailgun_signing_key (each optional).
+     */
+    public function getDecryptedBounceWebhookCredentials(): array
+    {
+        try {
+            if (empty($this->attributes['bounce_webhook_credentials'])) {
+                return [];
+            }
+            return json_decode(Crypt::decryptString($this->attributes['bounce_webhook_credentials']), true) ?? [];
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Merge changes into the bounce webhook secrets; a null value removes the key.
+     */
+    public function updateBounceWebhookCredentials(array $changes): void
+    {
+        $credentials = $this->getDecryptedBounceWebhookCredentials();
+
+        foreach ($changes as $key => $value) {
+            if ($value === null || $value === '') {
+                unset($credentials[$key]);
+            } else {
+                $credentials[$key] = $value;
+            }
+        }
+
+        $this->update(['bounce_webhook_credentials' => $credentials]);
     }
 
     /**

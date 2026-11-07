@@ -32,6 +32,11 @@ return [
         'processed' => 'Przetworzono :count bounce(ów)',
     ],
 
+    'bounce_webhooks' => [
+        'token_generated' => 'Wygenerowano token webhooka. Wklej go u dostawcy – poprzedni token, jeśli był, już nie działa.',
+        'invalid_sendgrid_key' => 'To nie jest poprawny klucz weryfikacyjny SendGrid. Skopiuj klucz publiczny, który SendGrid pokazuje po włączeniu Signed Event Webhook.',
+    ],
+
     'replies' => [
         'test_success' => 'Połączenie ze skrzynką odpowiedzi nawiązane poprawnie',
         'test_failed' => 'Nie udało się połączyć ze skrzynką odpowiedzi',
