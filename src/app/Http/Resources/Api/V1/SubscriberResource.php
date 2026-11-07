@@ -30,7 +30,9 @@ class SubscriberResource extends JsonResource
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
             'phone' => $this->phone,
-            'status' => $this->is_active_global ? 'active' : 'inactive',
+            // The real status: bounced and unsubscribed contacts were reported as
+            // `active` (the flag alone), the masking issue #31 fixed in the UI.
+            'status' => $this->display_status,
             'contact_list_id' => $firstContactListId,
             'contact_list_ids' => $contactListIds,
             'device' => $this->device,
