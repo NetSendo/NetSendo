@@ -214,6 +214,12 @@ class LicenseVerificationService
                 if ($licenseData !== null) {
                     $isActive = isset($licenseData['is_active']) && $licenseData['is_active'] === true;
 
+                    // A renewed GOLD subscription moves the expiry date on the licence server;
+                    // keep the local copy in step so the licence page does not show it as expired
+                    if ($isActive) {
+                        $this->refreshLocalLicense($licenseData['package'] ?? null, $licenseData['expires_at'] ?? null);
+                    }
+
                     return [
                         'has_license' => true,
                         'checked' => true,
@@ -266,6 +272,79 @@ class LicenseVerificationService
                 'message' => 'Błąd połączenia: ' . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Store an activated licence locally (key, plan, expiry and the domain it was activated on).
+     */
+    public function storeLicense(string $key, string $plan, ?string $expiresAt, ?string $domain = null): void
+    {
+        Setting::updateOrCreate(['key' => 'license_key'], ['value' => $key]);
+        Setting::updateOrCreate(['key' => 'license_plan'], ['value' => strtoupper($plan)]);
+
+        if ($expiresAt) {
+            Setting::updateOrCreate(['key' => 'license_expires_at'], ['value' => $expiresAt]);
+        } else {
+            Setting::where('key', 'license_expires_at')->delete();
+        }
+
+        if ($domain) {
+            Setting::updateOrCreate(['key' => 'license_domain'], ['value' => $domain]);
+        }
+    }
+
+    /**
+     * Update the local plan and expiry from the licence server's answer.
+     */
+    private function refreshLocalLicense(?string $plan, ?string $expiresAt): void
+    {
+        if ($plan) {
+            Setting::updateOrCreate(['key' => 'license_plan'], ['value' => strtoupper($plan)]);
+        }
+        if ($expiresAt) {
+            Setting::updateOrCreate(['key' => 'license_expires_at'], ['value' => $expiresAt]);
+        } elseif ($plan && strtoupper($plan) === 'SILVER') {
+            Setting::where('key', 'license_expires_at')->delete();
+        }
+    }
+
+    /**
+     * The licence server reports the licence as no longer active. A GOLD licence falls back
+     * to the free SILVER licence (EULA 5.5: NetSendo keeps working); otherwise, or when no
+     * SILVER key can be obtained, the local licence is removed.
+     *
+     * @return string 'downgraded' | 'deactivated'
+     */
+    public function endLicense(?string $domain = null): string
+    {
+        $plan = strtoupper((string) Setting::where('key', 'license_plan')->value('value'));
+        $email = Setting::where('key', 'license_email')->value('value');
+        $domain = $domain ?? Setting::where('key', 'license_domain')->value('value') ?? request()->getHost();
+        $requestUrl = config('netsendo.license_webhook_url');
+
+        if ($plan === 'GOLD' && $email && $requestUrl) {
+            try {
+                $response = Http::timeout(30)->post($requestUrl, [
+                    'action' => 'request_license',
+                    'email' => $email,
+                    'domain' => $domain,
+                    'package' => 'SILVER',
+                    'version' => config('netsendo.version'),
+                ]);
+                $silverKey = $response->successful() ? ($response->json('license_key') ?? $response->json('licenseKey')) : null;
+
+                if ($silverKey) {
+                    $this->storeLicense($silverKey, 'SILVER', null, $domain);
+                    Log::info('GOLD ended: switched to SILVER');
+                    return 'downgraded';
+                }
+            } catch (\Throwable $e) {
+                Log::warning('GOLD ended: SILVER request failed', ['error' => $e->getMessage()]);
+            }
+        }
+
+        $this->deactivateLicense();
+        return 'deactivated';
     }
 
     /**

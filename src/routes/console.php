@@ -82,6 +82,12 @@ Schedule::command('license:verify --deactivate')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/license-verify.log'));
 
+// GOLD kupiony na stronie Licencja: aktywacja klucza po potwierdzeniu płatności (gdy jest rozpoczęty zakup)
+Schedule::command('license:claim-gold')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/license-verify.log'));
+
 // Test połączenia MCP - raz dziennie o 5:30
 Schedule::command('mcp:test-connection --silent')
     ->dailyAt('05:30')

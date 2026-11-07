@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, usePage, router } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 import { useDateTime } from "@/Composables/useDateTime";
@@ -18,7 +18,9 @@ const props = defineProps({
     licenseDomain: String,
     appVersion: String,
     plans: Object,
-    stripeGoldPaymentLink: String,
+    // GOLD is bought in the NetSendo store and activated here automatically
+    goldPurchaseAvailable: Boolean,
+    goldPurchasePending: Boolean,
 });
 
 const page = usePage();
@@ -195,7 +197,7 @@ const planCards = computed(() => [
         color: "from-yellow-400 to-amber-600",
         badgeColor: "bg-gradient-to-r from-yellow-400 to-amber-500",
         popular: true,
-        coming_soon: !props.stripeGoldPaymentLink,
+        coming_soon: !props.goldPurchaseAvailable,
         sections: [
             {
                 title: t("license.plans.gold.sections.everything"),
@@ -222,7 +224,7 @@ const planCards = computed(() => [
             },
         ],
         summary: [t("license.plans.gold.summary")],
-        buttonText: props.stripeGoldPaymentLink
+        buttonText: props.goldPurchaseAvailable
             ? t("license.plans.gold.select")
             : t("license.coming_soon"),
         buttonAction: "stripe",
@@ -272,16 +274,85 @@ const handlePlanAction = (plan) => {
     if (plan.buttonAction === "request") {
         requestSilverLicense();
     } else if (plan.buttonAction === "stripe") {
-        if (props.stripeGoldPaymentLink) {
-            window.open(props.stripeGoldPaymentLink, "_blank");
-            // Show manual input for entering license after purchase
-            showManualInput.value = true;
+        if (props.goldPurchaseAvailable) {
+            buyGold();
         } else {
             // Coming soon - show message
             successMessage.value = t("license.gold_coming_soon_msg");
         }
     }
 };
+
+// GOLD purchase in the NetSendo store. The order page opens in a new tab; this page asks
+// the server every few seconds whether the payment went through and GOLD is active.
+const goldWaiting = ref(false);
+let goldTimer = null;
+let goldDeadline = 0;
+
+const stopGoldPolling = () => {
+    if (goldTimer) clearTimeout(goldTimer);
+    goldTimer = null;
+    goldWaiting.value = false;
+};
+
+const pollGoldPurchase = async () => {
+    try {
+        const { data } = await axios.post(route("license.claim-gold"));
+        if (data.status === "activated") {
+            stopGoldPolling();
+            errorMessage.value = "";
+            successMessage.value = t("license.gold_activated");
+            setTimeout(() => router.visit(route("license.index")), 1500);
+            return;
+        }
+        if (data.status === "inactive" || data.status === "none") {
+            stopGoldPolling();
+            if (data.status === "inactive") errorMessage.value = t("license.gold_purchase_inactive");
+            return;
+        }
+    } catch (error) {
+        // temporary problem: keep trying until the deadline
+    }
+    if (Date.now() < goldDeadline) {
+        goldTimer = setTimeout(pollGoldPurchase, 5000);
+    } else {
+        stopGoldPolling();
+        successMessage.value = t("license.gold_purchase_later");
+    }
+};
+
+const startGoldPolling = () => {
+    stopGoldPolling();
+    goldWaiting.value = true;
+    errorMessage.value = "";
+    successMessage.value = t("license.gold_purchase_waiting");
+    goldDeadline = Date.now() + 15 * 60 * 1000;
+    goldTimer = setTimeout(pollGoldPurchase, 3000);
+};
+
+const buyGold = async () => {
+    // Open the tab during the click, so pop-up blockers allow it
+    const tab = window.open("", "_blank");
+    try {
+        const { data } = await axios.post(route("license.buy-gold"));
+        if (tab) {
+            tab.location = data.url;
+        } else {
+            window.location.href = data.url;
+            return;
+        }
+        startGoldPolling();
+    } catch (error) {
+        if (tab) tab.close();
+        errorMessage.value = t("license.gold_purchase_error");
+    }
+};
+
+onMounted(() => {
+    const returned = new URLSearchParams(window.location.search).get("purchase") === "return";
+    if (props.goldPurchasePending || returned) startGoldPolling();
+});
+onBeforeUnmount(stopGoldPolling);
 
 // Submit manual license activation
 const submitActivation = () => {
@@ -370,6 +441,25 @@ const checkLicenseStatus = async () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+                <!-- GOLD purchase status for an active (SILVER) licence -->
+                <div
+                    v-if="licenseActive && !isGoldExpired && (goldWaiting || successMessage || errorMessage)"
+                    class="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+                    :class="
+                        errorMessage
+                            ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                            : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200'
+                    "
+                    role="status"
+                    aria-live="polite"
+                >
+                    <svg v-if="goldWaiting" class="mt-0.5 h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span>{{ errorMessage || successMessage }}</span>
+                </div>
+
                 <!-- Already activated - Active License Status -->
                 <div
                     v-if="licenseActive && !isGoldExpired"
@@ -773,13 +863,11 @@ const checkLicenseStatus = async () => {
                                     </div>
                                     <button
                                         @click="
-                                            stripeGoldPaymentLink
-                                                ? window.open(
-                                                      stripeGoldPaymentLink,
-                                                      '_blank',
-                                                  )
+                                            goldPurchaseAvailable
+                                                ? buyGold()
                                                 : (showComingSoonModal = true)
                                         "
+                                        :disabled="goldWaiting"
                                         class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl md:w-auto"
                                     >
                                         {{ $t("license.upgrade_to_gold") }}
@@ -842,8 +930,9 @@ const checkLicenseStatus = async () => {
                         </div>
                     </div>
                     <button
-                        v-if="stripeGoldPaymentLink"
-                        @click="window.open(stripeGoldPaymentLink, '_blank')"
+                        v-if="goldPurchaseAvailable"
+                        @click="buyGold()"
+                        :disabled="goldWaiting"
                         class="mt-4 rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
                     >
                         {{ $t("license.renew_gold") }}

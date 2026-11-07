@@ -5484,6 +5484,11 @@
         }
     },
     "license": {
+        "gold_purchase_waiting": "Finish the payment in the new tab. As soon as it is confirmed, GOLD switches on here automatically.",
+        "gold_activated": "GOLD is active. Thank you!",
+        "gold_purchase_inactive": "The GOLD subscription is not active. Start the purchase again.",
+        "gold_purchase_error": "Could not reach the NetSendo store. Try again in a moment.",
+        "gold_purchase_later": "We do not see the payment yet. If you paid, GOLD switches on automatically within a few minutes; we also emailed you the key.",
         "title": "License",
         "active_status": "License {plan} active",
         "expires_at": "Expires at: {date}",

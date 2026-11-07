@@ -48,7 +48,9 @@ return [
     |
     */
 
-    'stripe_gold_payment_link' => null, // Coming soon
+    // NetSendo store: the licence page sells GOLD there and activates the bought key here
+    // automatically (App\Services\GoldPurchaseService). Empty value hides the purchase.
+    'store_url' => env('NETSENDO_STORE_URL', 'https://netsendo.com'),
 
     /*
     |--------------------------------------------------------------------------
