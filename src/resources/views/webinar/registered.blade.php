@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dziękujemy! - {{ $webinar->name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/webinar.css')
 </head>
 <body class="min-h-screen bg-gray-900 text-white py-12">
     <div class="max-w-2xl mx-auto px-4 text-center">

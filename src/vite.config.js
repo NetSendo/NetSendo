@@ -6,7 +6,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: 'resources/js/app.js',
+            // webinar.css: public webinar pages (resources/views/webinar)
+            input: ['resources/js/app.js', 'resources/css/webinar.css'],
             refresh: true,
         }),
         vue({

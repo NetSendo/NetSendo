@@ -22,10 +22,9 @@ const page = usePage();
 const { isDark } = useTheme();
 
 // Logos - always use light (white) logos since sidebar is always dark
-const logoFull =
-    "https://gregciupek.com/wp-content/uploads/2025/12/Logo-NetSendo-1700-x-500-px-1.png";
-const logoSquare =
-    "https://gregciupek.com/wp-content/uploads/2025/12/logo-netsendo-kwadrat-biale.png";
+// Shipped in public/images/brand, so the panel loads no image from another host
+const logoFull = "/images/brand/netsendo-logo.png";
+const logoSquare = "/images/brand/netsendo-logo-square.png";
 
 const currentLogo = computed(() => {
     return props.collapsed ? logoSquare : logoFull;

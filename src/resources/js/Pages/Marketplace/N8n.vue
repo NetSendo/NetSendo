@@ -86,7 +86,7 @@ const installSteps = [
                                         class="h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white p-2 shadow-lg ring-1 ring-gray-100 dark:ring-transparent"
                                     >
                                         <img
-                                            src="https://gregciupek.com/wp-content/uploads/2025/12/n8n-logo.png"
+                                            src="/images/integrations/n8n-logo.png"
                                             alt="n8n Logo"
                                             class="h-full w-full object-contain"
                                         />
