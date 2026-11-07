@@ -2,11 +2,35 @@
 
 namespace App\Models;
 
+use App\Licensing\Feature;
+use App\Services\LicenseService;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiBrainSettings extends Model
 {
+    /** Whether the licence includes Brain autonomy, read once per settings instance. */
+    private ?bool $autonomyLicence = null;
+
+    /**
+     * Brain working without approval (semi-automatic and autonomous modes, cron, goals,
+     * digest, Telegram, research, voice) is GOLD; the chat in manual mode is SILVER.
+     */
+    public function autonomyLicensed(): bool
+    {
+        return $this->autonomyLicence ??= app(LicenseService::class)->allows(Feature::BrainAutonomy);
+    }
+
+    /**
+     * The work mode in effect: without GOLD Brain works in manual mode whatever is stored;
+     * the stored choice applies again once GOLD is active.
+     */
+    protected function workMode(): Attribute
+    {
+        return Attribute::get(fn ($value) => $this->autonomyLicensed() ? $value : 'manual');
+    }
+
     protected $fillable = [
         'user_id',
         'work_mode',
@@ -191,7 +215,8 @@ class AiBrainSettings extends Model
      */
     public function isResearchEnabled(): bool
     {
-        return $this->isPerplexityConfigured() || $this->isSerpApiConfigured();
+        // Web research is part of Brain autonomy (GOLD)
+        return $this->autonomyLicensed() && ($this->isPerplexityConfigured() || $this->isSerpApiConfigured());
     }
 
     /**
@@ -275,6 +300,11 @@ class AiBrainSettings extends Model
      */
     public function getAgentMode(string $agentType): string
     {
+        // Without GOLD every agent works in manual mode, like the global one
+        if (!$this->autonomyLicensed()) {
+            return 'manual';
+        }
+
         $agentModes = $this->agent_modes ?? [];
         return $agentModes[$agentType] ?? $this->work_mode;
     }

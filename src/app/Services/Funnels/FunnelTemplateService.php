@@ -117,6 +117,9 @@ class FunnelTemplateService
      */
     public function createFromTemplate(FunnelTemplate $template, array $data): Funnel
     {
+        // A template with split A/B steps creates new ones (GOLD)
+        app(FunnelService::class)->ensureSplitStepsAllowed(null, $template->structure['nodes'] ?? []);
+
         return DB::transaction(function () use ($template, $data) {
             // Record usage
             $template->recordUsage();

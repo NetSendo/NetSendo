@@ -128,7 +128,15 @@ const activateForm = useForm({
     license_key: "",
 });
 
-// Plan cards data
+// Plan cards: what each plan includes comes from config('netsendo.plans') (the `plans`
+// prop), so this page, the GOLD checks (App\Licensing\Feature) and the pricing on
+// netsendo.com list the same things
+const planSections = (plan) =>
+    Object.entries(props.plans?.[plan]?.sections || {}).map(([section, items]) => ({
+        title: t(`license.plan_sections.${plan.toLowerCase()}.${section}`),
+        items: items.map((item) => t(`license.plan_features.${item}`)),
+    }));
+
 const planCards = computed(() => [
     {
         key: "SILVER",
@@ -138,49 +146,7 @@ const planCards = computed(() => [
         description: t("license.plans.silver.description"),
         color: "from-slate-400 to-slate-600",
         badgeColor: "bg-slate-500",
-        sections: [
-            {
-                title: t("license.plans.silver.sections.core"),
-                items: [
-                    t("license.plans.silver.features.unlimited_lists"),
-                    t("license.plans.silver.features.multimailing"),
-                    t("license.plans.silver.features.queue"),
-                    t("license.plans.silver.features.system_msgs"),
-                    t("license.plans.silver.features.cron"),
-                    t("license.plans.silver.features.triggers"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.ai"),
-                items: [
-                    t("license.plans.silver.features.ai_titles"),
-                    t("license.plans.silver.features.ai_content"),
-                    t("license.plans.silver.features.dynamic_fields"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.forms"),
-                items: [
-                    t("license.plans.silver.features.forms_gen"),
-                    t("license.plans.silver.features.templates_gen"),
-                    t("license.plans.silver.features.segmentation"),
-                    t("license.plans.silver.features.stats"),
-                    t("license.plans.silver.features.import"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.integrations"),
-                items: [
-                    t("license.plans.silver.features.smtp"),
-                    t("license.plans.silver.features.gmail"),
-                    t("license.plans.silver.features.sendgrid"),
-                    t("license.plans.silver.features.openai"),
-                    t("license.plans.silver.features.anthropic"),
-                    t("license.plans.silver.features.grok"),
-                    t("license.plans.silver.features.gemini"),
-                ],
-            },
-        ],
+        sections: planSections("SILVER"),
         summary: [
             t("license.plans.silver.summary_1"),
             t("license.plans.silver.summary_2"),
@@ -198,31 +164,7 @@ const planCards = computed(() => [
         badgeColor: "bg-gradient-to-r from-yellow-400 to-amber-500",
         popular: true,
         coming_soon: !props.goldPurchaseAvailable,
-        sections: [
-            {
-                title: t("license.plans.gold.sections.everything"),
-                items: [t("license.plans.gold.features.core_access")],
-            },
-            {
-                title: t("license.plans.gold.sections.automation"),
-                items: [
-                    t("license.plans.gold.features.funnels"),
-                    t("license.plans.gold.features.advanced_auto"),
-                ],
-            },
-            {
-                title: t("license.plans.gold.sections.integrations"),
-                items: [
-                    t("license.plans.gold.features.public_api"),
-                    t("license.plans.gold.features.openrouter"),
-                    t("license.plans.gold.features.ollama"),
-                ],
-            },
-            {
-                title: t("license.plans.gold.sections.users"),
-                items: [t("license.plans.gold.features.team")],
-            },
-        ],
+        sections: planSections("GOLD"),
         summary: [t("license.plans.gold.summary")],
         buttonText: props.goldPurchaseAvailable
             ? t("license.plans.gold.select")

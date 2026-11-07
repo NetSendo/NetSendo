@@ -4,12 +4,15 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import { useLicense } from "@/Composables/useLicense";
 import { createSafeMarkdown } from "@/utils/safeMarkdown";
 
 // Replies can echo untrusted content (emails, web research, subscriber data)
 const renderMarkdown = createSafeMarkdown({ breaks: true, images: false });
 
 const { t } = useI18n();
+// Voice input is part of Brain autonomy (GOLD); the chat itself is SILVER
+const { can: licenceAllows, requireGold } = useLicense();
 
 const props = defineProps({
     conversations: Array,
@@ -85,6 +88,10 @@ watch(messages, scrollToBottom, { deep: true });
 
 // --- Voice Recording Methods ---
 const startRecording = async () => {
+    if (!licenceAllows("brain_autonomy")) {
+        requireGold("brain_autonomy");
+        return;
+    }
     try {
         audioStream = await navigator.mediaDevices.getUserMedia({
             audio: true,

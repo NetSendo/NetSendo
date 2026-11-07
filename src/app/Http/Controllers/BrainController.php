@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Licensing\Feature;
 use App\Models\AiActionPlan;
 use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
@@ -21,6 +22,7 @@ use App\Services\Brain\Telegram\TelegramBotService;
 use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Skills\ResearchSkill;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -498,6 +500,10 @@ class BrainController extends Controller
             }
 
             if ($approved) {
+                // Goals are part of Brain autonomy (GOLD): a proposal left from GOLD days
+                // can still be rejected, but not turned into a goal without it
+                app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+
                 $goalPlanner = app(\App\Services\Brain\GoalPlanner::class);
                 $goal = $goalPlanner->createGoal(
                     $user,
@@ -726,6 +732,17 @@ class BrainController extends Controller
             'strategy_settings.campaign.preferred_topics' => 'nullable|array',
             'agent_modes' => 'nullable|array',
         ]);
+
+        // Brain working on its own is GOLD: the automatic modes, the Telegram bot and the
+        // research keys answer 402 without it; manual mode, language, model and strategy stay open
+        $wantsAutonomy = in_array($request->input('work_mode'), ['autonomous', 'semi_auto'], true)
+            || collect($request->input('agent_modes', []))->contains(fn ($mode) => $mode !== 'manual')
+            || filled($request->input('telegram_bot_token'))
+            || filled($request->input('perplexity_api_key'))
+            || filled($request->input('serpapi_api_key'));
+        if ($wantsAutonomy) {
+            app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+        }
 
         $settings = AiBrainSettings::getForUser($request->user()->id);
 
@@ -1140,6 +1157,11 @@ class BrainController extends Controller
             'cron_enabled' => 'required|boolean',
             'cron_interval_minutes' => 'required|integer|in:5,15,30,60,120,240,360,720,1440',
         ]);
+
+        // The autonomous cron is GOLD; turning it off stays open
+        if ($request->boolean('cron_enabled')) {
+            app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+        }
 
         $settings = AiBrainSettings::getForUser($request->user()->id);
         $settings->update([

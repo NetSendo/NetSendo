@@ -4,8 +4,13 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+// Brain working on its own is GOLD; the chat in manual mode is SILVER
+const { can, requireGold } = useLicense();
+const autonomyLocked = computed(() => !can("brain_autonomy"));
 
 const props = defineProps({
     settings: Object,
@@ -489,6 +494,10 @@ function trendClass(trend, higherIsBetter = true) {
                 </div>
             </div>
         </template>
+
+        <div v-if="autonomyLocked" class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+            <GoldNotice feature="brain_autonomy" :message="t('license.gating.brain_locked')" />
+        </div>
 
         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <!-- Loading -->

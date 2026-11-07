@@ -2,6 +2,9 @@
 import { ref, computed } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import GoldBadge from '@/Components/License/GoldBadge.vue';
+import GoldNotice from '@/Components/License/GoldNotice.vue';
+import { requireGold } from '@/Composables/useLicense';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -10,7 +13,16 @@ const props = defineProps({
     teamMembers: Array,
     pendingInvitations: Array,
     availableLists: Array,
+    // Team members allowed besides the owner; null = unlimited (GOLD)
+    teamMemberLimit: { type: Number, default: null },
 });
+
+// SILVER has room for one team member (pending invitations count); more needs GOLD
+const teamFull = computed(
+    () =>
+        props.teamMemberLimit !== null &&
+        (props.teamMembers?.length ?? 0) + (props.pendingInvitations?.length ?? 0) >= props.teamMemberLimit,
+);
 
 // Modal states
 const showAddUserModal = ref(false);
@@ -32,6 +44,10 @@ const permissionsForm = useForm({
 });
 
 function openAddUserModal() {
+    if (teamFull.value) {
+        requireGold('unlimited_team_members');
+        return;
+    }
     addUserForm.reset();
     addUserForm.list_permissions = [];
     showAddUserModal.value = true;
@@ -129,12 +145,18 @@ function formatDateTime(dateString) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
                     {{ t('users.add_user') }}
+                    <GoldBadge v-if="teamFull" locked />
                 </button>
             </div>
         </template>
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+                <GoldNotice
+                    v-if="teamFull"
+                    feature="unlimited_team_members"
+                    :message="t('license.gating.team_locked')"
+                />
                 <!-- Info Box -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <div class="flex items-start gap-3">

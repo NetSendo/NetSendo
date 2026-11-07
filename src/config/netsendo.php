@@ -67,32 +67,33 @@ return [
     */
 
     'plans' => [
+        // The single list of what each plan includes, shown on the Licence page
+        // (Pages/License/Activate.vue). Items are keys of license.plan_features.* and sections
+        // of license.plan_sections.<plan>.* in resources/js/locales. Every App\Licensing\Feature
+        // must be listed under GOLD (tests/Feature/GoldFeatureGatingTest checks it), and the
+        // pricing on netsendo.com must say the same.
         'SILVER' => [
             'name' => 'SILVER',
             'price' => 0,
-            'price_display' => 'Darmowa',
             'duration' => 'lifetime',
-            'features' => [
-                'Wszystkie podstawowe funkcje',
-                'Nieograniczone kontakty',
-                'Szablony email',
-                'Publiczne API',
-                'Serwer MCP',
-                'Wsparcie społeczności',
+            'sections' => [
+                'marketing' => ['email_sms', 'lists_forms_templates', 'automations_funnels', 'stats'],
+                'crm' => ['crm', 'live_webinars'],
+                'ai' => ['ai_assistants', 'brain_chat', 'ai_campaigns_3'],
+                'integrations' => ['all_integrations', 'api_mcp', 'affiliate'],
+                'team' => ['team_one', 'community_support'],
             ],
         ],
         'GOLD' => [
             'name' => 'GOLD',
             'price' => 97,
-            'price_display' => '$97/miesiąc',
             'duration' => 'monthly',
-            'features' => [
-                'Wszystko z SILVER',
-                'Nielimitowane kampanie AI',
-                'Zaawansowane AI (lokalne LLM)',
-                'Testy A/B w kampaniach',
-                'Auto-Webinary + Scenariusze',
-                'Priorytetowe wsparcie',
+            'sections' => [
+                'everything' => ['everything_silver'],
+                'ai' => ['unlimited_ai_campaigns', 'advanced_ai', 'brain_autonomy', 'campaign_auditor'],
+                'growth' => ['ab_tests', 'funnel_ab_split', 'auto_webinars', 'hybrid_webinars', 'segmentation_dashboard'],
+                'deliverability' => ['deliverability_shield', 'mail_infrastructure'],
+                'team' => ['unlimited_team_members', 'priority_support'],
             ],
         ],
     ],

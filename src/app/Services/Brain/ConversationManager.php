@@ -165,7 +165,8 @@ PROMPT;
         $sections[] = "YOUR WORK MODE: {$settings->work_mode} — {$modeLabel}";
 
         // --- CRON awareness ---
-        if ($settings->cron_enabled && $settings->cron_interval_minutes) {
+        // The cron and Telegram are Brain autonomy (GOLD): without it the prompt says neither
+        if ($settings->cron_enabled && $settings->cron_interval_minutes && $settings->autonomyLicensed()) {
             $interval = (int) $settings->cron_interval_minutes;
 
             $lastRun = $settings->last_cron_run_at
@@ -232,7 +233,7 @@ RESEARCH;
         }
 
         // --- Telegram ---
-        if ($settings->isTelegramConnected()) {
+        if ($settings->isTelegramConnected() && $settings->autonomyLicensed()) {
             $sections[] = <<<TELEGRAM_BLOCK
 
 TELEGRAM (CONNECTED ✅):

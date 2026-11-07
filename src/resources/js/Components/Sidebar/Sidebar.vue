@@ -1,4 +1,6 @@
 <script setup>
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import { useLicense } from "@/Composables/useLicense";
 import { ref, computed } from "vue";
 import { usePage, Link, router } from "@inertiajs/vue3";
 import SidebarItem from "./SidebarItem.vue";
@@ -43,9 +45,10 @@ const isActive = (routeName) => {
     }
 };
 
-// License info
+// License info: GOLD items carry a GOLD badge, with a padlock while the licence lacks them
 const license = computed(() => page.props.license);
 const isGold = computed(() => license.value?.plan === "GOLD");
+const { can } = useLicense();
 
 // Admin check - for hiding admin-only menu items
 const isAdmin = computed(() => page.props.auth?.isAdmin ?? false);
@@ -1387,10 +1390,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     <span class="flex items-center gap-2">
                         Segmentacja
-                        <span
-                            class="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
-                            >PRO</span
-                        >
+                        <GoldBadge :locked="!can('segmentation_dashboard')" />
                     </span>
                 </SidebarItem>
 
@@ -1447,10 +1447,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     <span class="flex items-center gap-2">
                         {{ $t("campaign_auditor.title") }}
-                        <span
-                            class="rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 px-1.5 py-0.5 text-[9px] font-bold text-white"
-                            >AI</span
-                        >
+                        <GoldBadge :locked="!can('campaign_auditor')" />
                     </span>
                 </SidebarItem>
 
@@ -2170,10 +2167,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                                 "Deliverability Shield",
                             )
                         }}
-                        <span
-                            class="rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 px-1.5 py-0.5 text-[9px] font-bold text-slate-900"
-                            >GOLD</span
-                        >
+                        <GoldBadge :locked="!can('deliverability_shield')" />
                     </span>
                 </SidebarItem>
 
@@ -2200,10 +2194,7 @@ watch(() => page.url, updateOpenGroup, { immediate: true });
                     </template>
                     <span class="flex items-center gap-2">
                         {{ $t("navigation.nmi", "Mail Infrastructure") }}
-                        <span
-                            class="rounded-full bg-gradient-to-r from-violet-500 to-purple-600 px-1.5 py-0.5 text-[9px] font-bold text-white"
-                            >PRO</span
-                        >
+                        <GoldBadge :locked="!can('mail_infrastructure')" />
                     </span>
                 </SidebarItem>
 

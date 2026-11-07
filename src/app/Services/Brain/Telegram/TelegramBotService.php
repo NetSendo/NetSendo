@@ -67,6 +67,23 @@ class TelegramBotService
      */
     public function processUpdate(array $update): void
     {
+        // The Telegram bot is part of Brain autonomy (GOLD). Without it every update gets a
+        // short notice and nothing runs; the webhook still answers 200 so Telegram does not retry
+        if (!app(\App\Services\LicenseService::class)->allows(\App\Licensing\Feature::BrainAutonomy)) {
+            $chatId = $update['message']['chat']['id'] ?? $update['callback_query']['message']['chat']['id'] ?? null;
+            // Only a chat linked to an account has a bot to answer with
+            if ($chatId !== null && $this->authService->findUserByChatId((string) $chatId)) {
+                try {
+                    $this->sendMessage((string) $chatId, __('license.gating.requires_gold', [
+                        'feature' => \App\Licensing\Feature::BrainAutonomy->label(),
+                    ]));
+                } catch (\Throwable $e) {
+                    Log::warning('Telegram: GOLD notice not sent', ['error' => $e->getMessage()]);
+                }
+            }
+            return;
+        }
+
         if (isset($update['message'])) {
             $this->handleMessage($update['message']);
         } elseif (isset($update['callback_query'])) {

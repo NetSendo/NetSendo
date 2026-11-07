@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Licensing\Feature;
 use App\Models\AiActionPlan;
 use App\Models\AiActionPlanStep;
 use App\Models\AiBrainActivityLog;
@@ -21,6 +22,7 @@ use App\Services\Brain\CampaignCalendarService;
 use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Telegram\TelegramBotService;
+use App\Services\LicenseService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -32,6 +34,12 @@ class RunBrainCronCommand extends Command
 
     public function handle(AgentOrchestrator $orchestrator): int
     {
+        // Brain working on its own is GOLD (the schedule skips it too; this covers a manual run)
+        if (!app(LicenseService::class)->allows(Feature::BrainAutonomy)) {
+            $this->info('[Brain CRON] Skipped: autonomous Brain needs the GOLD licence.');
+            return self::SUCCESS;
+        }
+
         $this->info('[Brain CRON] Starting orchestration cycle...');
 
         // Find all users with cron enabled

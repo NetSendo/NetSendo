@@ -516,14 +516,17 @@ Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(functi
     Route::put('settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])
         ->name('api.v1.brain.settings.update');
 
-    // Telegram Integration
+    // Telegram Integration (GOLD, Brain autonomy; disconnecting stays open)
     Route::post('telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.link-code');
     Route::post('telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])
         ->name('api.v1.brain.telegram.disconnect');
     Route::post('telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.test');
     Route::post('telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.set-webhook');
 });
 

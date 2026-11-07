@@ -1,8 +1,14 @@
 <?php
 
+use App\Licensing\Feature;
+use App\Services\LicenseService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+
+// Scheduled work of a GOLD feature runs only while the licence includes it:
+// ->when($licensed(Feature::CampaignAuditor))
+$licensed = fn (Feature $feature) => fn () => app(LicenseService::class)->allows($feature);
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -97,6 +103,7 @@ Schedule::command('mcp:test-connection --silent')
 // AI Campaign Audit - raz dziennie o 5:00
 // Automatyczna analiza kampanii dla wszystkich użytkowników
 Schedule::command('audit:run --all')
+    ->when($licensed(Feature::CampaignAuditor))
     ->dailyAt('05:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/campaign-audit.log'));
@@ -170,12 +177,14 @@ Schedule::command('calendar:sync-pending-tasks')
 
 // Sprawdzanie konfiguracji DNS domen - co 6 godzin
 Schedule::command('deliverability:check-domains')
+    ->when($licensed(Feature::DeliverabilityShield))
     ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/deliverability-dns.log'));
 
 // Analiza możliwych upgrade'ów polityki DMARC - raz dziennie o 7:00
 Schedule::command('deliverability:upgrade-dmarc')
+    ->when($licensed(Feature::DeliverabilityShield))
     ->dailyAt('07:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/deliverability-dmarc.log'));
@@ -195,18 +204,21 @@ Schedule::command('mailbox:check-reputation')
 
 // NMI - Procesowanie aktualizacji IP warming - raz dziennie o 6:00
 Schedule::command('nmi:process-warming')
+    ->when($licensed(Feature::MailInfrastructure))
     ->dailyAt('06:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-warming.log'));
 
 // NMI - Sprawdzanie IP na blacklistach - co 6 godzin
 Schedule::command('nmi:check-blacklists')
+    ->when($licensed(Feature::MailInfrastructure))
     ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-blacklists.log'));
 
 // NMI - Rotacja kluczy DKIM (jeśli auto-rotate włączone) - raz w tygodniu
 Schedule::command('nmi:rotate-dkim')
+    ->when($licensed(Feature::MailInfrastructure))
     ->weekly()
     ->sundays()
     ->at('04:00')
@@ -270,6 +282,7 @@ Schedule::command('pixel:detect-abandoned-carts')
 
 // Brain AI — Automatyczna orkiestracja (sprawdza per-user interwał)
 Schedule::command('brain:run-cron')
+    ->when($licensed(Feature::BrainAutonomy))
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground()

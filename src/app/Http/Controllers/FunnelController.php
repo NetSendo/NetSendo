@@ -98,6 +98,9 @@ class FunnelController extends Controller
             'edges' => 'nullable|array',
         ]);
 
+        // Split A/B steps are GOLD: refuse before the funnel is created
+        $this->funnelService->ensureSplitStepsAllowed(null, $validated['nodes'] ?? []);
+
         $validated['user_id'] = Auth::id();
 
         $funnel = $this->funnelService->create($validated);
@@ -161,6 +164,9 @@ class FunnelController extends Controller
             'edges' => 'nullable|array',
         ]);
 
+        // Split A/B steps are GOLD: refuse before anything is saved
+        $this->funnelService->ensureSplitStepsAllowed($funnel, $validated['nodes'] ?? []);
+
         $this->funnelService->update($funnel, $validated);
 
         // Update steps if nodes provided
@@ -198,6 +204,11 @@ class FunnelController extends Controller
     public function duplicate(Funnel $funnel)
     {
         $this->authorize('update', $funnel);
+
+        // A copy of a funnel with split A/B steps adds new ones (GOLD)
+        if ($funnel->steps()->where('type', \App\Models\FunnelStep::TYPE_SPLIT)->exists()) {
+            app(\App\Services\LicenseService::class)->ensureAllows(\App\Licensing\Feature::FunnelAbSplit);
+        }
 
         $newFunnel = $funnel->duplicate();
 

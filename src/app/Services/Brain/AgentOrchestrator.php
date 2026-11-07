@@ -201,7 +201,11 @@ class AgentOrchestrator
                         // Wrapped in try-catch: ai_goals table may not exist if migration hasn't been run
                         $goalData = null;
                         try {
-                            $goalData = $this->goalPlanner->isGoalRequest($message, $user);
+                            // Goals are part of Brain autonomy (GOLD); without it the chat goes
+                            // straight to intent classification
+                            $goalData = $settings->autonomyLicensed()
+                                ? $this->goalPlanner->isGoalRequest($message, $user)
+                                : null;
                         } catch (\Exception $e) {
                             Log::debug('Goal detection skipped (table may not exist)', ['error' => $e->getMessage()]);
                         }

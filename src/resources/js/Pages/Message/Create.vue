@@ -16,6 +16,8 @@ import TrackedLinksSection from "@/Components/TrackedLinksSection.vue";
 import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
 import CrmContactSelector from "@/Components/CrmContactSelector.vue";
 import FieldFilterBuilder from "@/Components/FieldFilterBuilder.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import { useLicense } from "@/Composables/useLicense";
 import { computed, ref, watch, nextTick } from "vue";
 import { debounce } from "lodash";
 import { useI18n } from "vue-i18n";
@@ -1048,8 +1050,14 @@ const showDeliverabilityModal = ref(false);
 const deliverabilityResult = ref(null);
 const isDeliverabilityLoading = ref(false);
 
-// Check deliverability via InboxPassport AI
+// Check deliverability via InboxPassport AI (Deliverability Shield, GOLD)
+const { can: licenceAllows, requireGold } = useLicense();
 const checkDeliverability = async () => {
+    if (!licenceAllows("deliverability_shield")) {
+        requireGold("deliverability_shield");
+        return;
+    }
+
     if (!form.subject || !form.content) {
         showToast(t("messages.deliverability.missing_content"), false);
         return;
@@ -4368,6 +4376,10 @@ watch(
                                 />
                             </svg>
                             {{ $t("messages.deliverability.check_button") }}
+                            <GoldBadge
+                                v-if="!licenceAllows('deliverability_shield')"
+                                locked
+                            />
                         </button>
 
                         <template v-if="form.type === 'broadcast'">

@@ -7,6 +7,8 @@ use App\Models\ContactList;
 use App\Models\TeamInvitation;
 use App\Models\User;
 use App\Mail\TeamInvitationMail;
+use App\Licensing\FeatureRequiresGold;
+use App\Services\LicenseService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -70,6 +72,8 @@ class UserManagementController extends Controller
             'teamMembers' => $teamMembers,
             'pendingInvitations' => $pendingInvitations,
             'availableLists' => $availableLists,
+            // Team members allowed besides the owner (null = unlimited, GOLD)
+            'teamMemberLimit' => app(LicenseService::class)->getTeamMemberLimit(),
         ]);
     }
 
@@ -88,6 +92,9 @@ class UserManagementController extends Controller
             'email' => ['required', 'email', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
         ]);
+
+        // SILVER: one team member besides the owner (invitations count)
+        app(LicenseService::class)->ensureCanAddTeamMember($user);
 
         // Check if user already exists
         if (User::where('email', $validated['email'])->exists()) {
@@ -131,6 +138,9 @@ class UserManagementController extends Controller
             'list_permissions.*.list_id' => ['required', 'exists:contact_lists,id'],
             'list_permissions.*.permission' => ['required', 'in:view,edit'],
         ]);
+
+        // SILVER: one team member besides the owner (invitations count)
+        app(LicenseService::class)->ensureCanAddTeamMember($admin);
 
         // Create user
         $user = User::create([
@@ -186,6 +196,14 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // An invitation sent under GOLD cannot take the team past the SILVER limit once GOLD
+        // ended; the invitee sees why under the password field (the page has no upgrade dialog)
+        try {
+            app(LicenseService::class)->ensureCanAddTeamMember($invitation->admin, acceptingInvitation: true);
+        } catch (FeatureRequiresGold $e) {
+            return back()->withErrors(['password' => __('license.gating.team_invitation_closed')]);
+        }
 
         // Create user
         $user = User::create([

@@ -27,6 +27,34 @@ enum Feature: string
     /** Hybrid webinars. */
     case HybridWebinars = 'hybrid_webinars';
 
+    /** Split A/B steps in funnels (funnels themselves are SILVER). */
+    case FunnelAbSplit = 'funnel_ab_split';
+
+    /**
+     * NetSendo Brain working without approval: the semi-automatic and autonomous modes, the
+     * autonomous cron, goals, the weekly digest, Telegram, web research and voice input.
+     * The Brain chat in manual mode is SILVER.
+     */
+    case BrainAutonomy = 'brain_autonomy';
+
+    /** AI campaign audits (Campaign Auditor, daily audit) and AI analysis in campaign stats. */
+    case CampaignAuditor = 'campaign_auditor';
+
+    /** Deliverability Shield: domain DNS monitoring, alerts, DMARC upgrades, record generators, InboxPassport. */
+    case DeliverabilityShield = 'deliverability_shield';
+
+    /**
+     * NetSendo Mail Infrastructure: own MTA, IP pools, dedicated IPs, warming, DKIM.
+     * Sending through an NMI set up earlier keeps working without GOLD.
+     */
+    case MailInfrastructure = 'mail_infrastructure';
+
+    /** The segmentation dashboard (AutoTag Pro); audience filters in campaigns are SILVER. */
+    case SegmentationDashboard = 'segmentation_dashboard';
+
+    /** More team members than SILVER allows (LicenseService::SILVER_TEAM_MEMBER_LIMIT). */
+    case UnlimitedTeamMembers = 'unlimited_team_members';
+
     /** The plan that unlocks the feature. */
     public function plan(): string
     {

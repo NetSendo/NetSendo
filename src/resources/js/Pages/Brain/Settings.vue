@@ -4,8 +4,14 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+// Brain working on its own is GOLD; the chat in manual mode is SILVER
+const { can, requireGold } = useLicense();
+const autonomyLocked = computed(() => !can("brain_autonomy"));
 
 const props = defineProps({
     settings: Object,
@@ -146,6 +152,10 @@ const isSavingMode = ref(false);
 const modeSaved = ref(false);
 
 const saveMode = async (mode) => {
+    if (mode !== "manual" && autonomyLocked.value) {
+        requireGold("brain_autonomy");
+        return;
+    }
     currentMode.value = mode;
     isSavingMode.value = true;
     modeSaved.value = false;
@@ -847,6 +857,10 @@ const getCategoryColor = (key) => {
             </div>
         </template>
 
+        <div v-if="autonomyLocked" class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+            <GoldNotice feature="brain_autonomy" :message="t('license.gating.brain_locked')" />
+        </div>
+
         <div class="space-y-6">
             <!-- Work Mode Card -->
             <div
@@ -900,6 +914,10 @@ const getCategoryColor = (key) => {
                                 class="text-sm font-semibold text-slate-900 dark:text-white"
                                 >{{ t(mode.label) }}</span
                             >
+                            <GoldBadge
+                                v-if="mode.value !== 'manual'"
+                                :locked="autonomyLocked"
+                            />
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
                             {{ t(mode.description) }}

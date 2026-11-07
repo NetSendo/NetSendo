@@ -2,12 +2,14 @@
 
 namespace App\Services\Funnels;
 
+use App\Licensing\Feature;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
 use App\Models\Message;
 use App\Models\ContactList;
 use App\Models\SubscriptionForm;
+use App\Services\LicenseService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -69,8 +71,40 @@ class FunnelService
     /**
      * Update funnel steps from flow builder data.
      */
+    /**
+     * Split A/B steps are GOLD: refuse builder nodes that add one without the licence.
+     * Split steps the funnel already has may be kept and edited, so a funnel built under
+     * GOLD still saves after it ends. Call it before anything of the save is written.
+     *
+     * @throws \App\Licensing\FeatureRequiresGold
+     */
+    public function ensureSplitStepsAllowed(?Funnel $funnel, array $nodes): void
+    {
+        $splitNodeIds = collect($nodes)
+            ->filter(fn ($node) => ($node['type'] ?? null) === FunnelStep::TYPE_SPLIT)
+            ->map(fn ($node) => $node['id'] ?? null);
+
+        if ($splitNodeIds->isEmpty()) {
+            return;
+        }
+
+        $existingSplitIds = $funnel?->exists
+            ? $funnel->steps()->where('type', FunnelStep::TYPE_SPLIT)->pluck('id')->map(fn ($id) => (string) $id)->all()
+            : [];
+
+        $addsSplit = $splitNodeIds->contains(
+            fn ($id) => !is_numeric($id) || !in_array((string) $id, $existingSplitIds, true)
+        );
+
+        if ($addsSplit) {
+            app(LicenseService::class)->ensureAllows(Feature::FunnelAbSplit);
+        }
+    }
+
     public function updateSteps(Funnel $funnel, array $nodes, array $edges = []): Funnel
     {
+        $this->ensureSplitStepsAllowed($funnel, $nodes);
+
         return DB::transaction(function () use ($funnel, $nodes, $edges) {
             // Create temporary ID mapping
             $tempIdMap = [];

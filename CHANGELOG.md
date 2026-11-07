@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **The SILVER/GOLD split is complete.** Besides the features enforced since 2.4.0, these now need an active GOLD licence (refused on the server, in the panel, the public API and MCP; 402 with `code: gold_required` for API calls):
+  - **NetSendo Brain autonomy** (`brain_autonomy`): the semi-automatic and autonomous modes, the autonomous cron (`brain:run-cron` is skipped), goals, the weekly digest, the Telegram bot, web research (Perplexity, SerpAPI) and voice input. **The Brain chat in manual mode stays in SILVER.** Without GOLD `AiBrainSettings::work_mode` and `getAgentMode()` read `manual` whatever is stored (the stored choice applies again with GOLD), goals are not detected in chat, research reports itself unavailable, the prompt no longer mentions the cron or Telegram, and the Telegram webhook answers 200 with a short GOLD notice without running anything.
+  - **AI Campaign Auditor** (`campaign_auditor`): running audits, applying and measuring recommendations, advisor settings, the daily `audit:run --all`, and the AI analysis in campaign statistics. Past audits and the statistics stay readable.
+  - **Deliverability Shield** (`deliverability_shield`): adding and checking domains, alerts, DNS record generators, InboxPassport (also the "Check Deliverability" button in the message editor) and the scheduled DNS checks and DMARC upgrades. Its dashboard shows the offer; domains and simulations stay readable and removable.
+  - **NetSendo Mail Infrastructure** (`mail_infrastructure`): adding pools and IPs, provisioning, warming, DKIM, blacklist checks and their scheduled jobs. Sending through an NMI set up earlier keeps working.
+  - **Segmentation dashboard** (`segmentation_dashboard`, AutoTag Pro). Audience filters in campaigns stay in SILVER.
+  - **Split A/B steps in funnels** (`funnel_ab_split`): adding one in the builder, over the API or from a template, and copying a funnel that has one. Funnels stay in SILVER, and split steps a funnel already has can be kept and edited.
+  - **Team members** (`unlimited_team_members`): SILVER has room for one team member besides the owner (a pending invitation counts); GOLD has no limit. Existing members keep their access.
+- **One list of what each plan includes:** `config/netsendo.php` `plans` now holds the SILVER and GOLD sections, and the Licence page builds its plan cards from it (new `license.plan_features.*` and `license.plan_sections.*` texts in en, pl, de, es). It used to list the public API, funnels and team members as GOLD, which contradicted netsendo.com. A test checks that every `App\Licensing\Feature` is listed under GOLD and none under SILVER. The unused plan lists in `lang/*/license.php` are removed.
+- **Sidebar:** Deliverability Shield, NMI, the segmentation dashboard and Campaign Auditor carry a GOLD badge, with a padlock while the licence lacks them (the static "PRO" and "AI" badges are gone).
+- **README** describes the plans as enforced, and no longer claims NetSendo needs a licence to run.
+
+### Fixed
+
+- **Campaign Architect's plan comparison** named GPT-4, Claude and Gemini as GOLD; they work on SILVER. It now names OpenRouter and Ollama.
+
 ## [2.4.0] – GOLD features require the GOLD licence - 2026-11-07
 
 **Release date:** 2026-11-07

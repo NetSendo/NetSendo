@@ -6,6 +6,7 @@ use App\Licensing\Feature;
 use App\Licensing\FeatureRequiresGold;
 use App\Models\CampaignPlan;
 use App\Models\Setting;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,11 @@ class LicenseService
      * Campaign limit for SILVER plan
      */
     public const SILVER_CAMPAIGN_LIMIT = 3;
+
+    /**
+     * Team members (besides the account owner) a SILVER installation may have
+     */
+    public const SILVER_TEAM_MEMBER_LIMIT = 1;
 
     /**
      * The plan in effect, used for every GOLD/SILVER decision in the app.
@@ -149,6 +155,37 @@ class LicenseService
         }
 
         return self::SILVER_CAMPAIGN_LIMIT;
+    }
+
+    /**
+     * Team members allowed besides the owner; null for unlimited (GOLD)
+     */
+    public function getTeamMemberLimit(): ?int
+    {
+        return $this->allows(Feature::UnlimitedTeamMembers) ? null : self::SILVER_TEAM_MEMBER_LIMIT;
+    }
+
+    /**
+     * Whether the account owner may add one more team member. Pending invitations count,
+     * unless $acceptingInvitation (the invitation being accepted was counted when it was sent).
+     *
+     * @throws FeatureRequiresGold when the SILVER limit is reached
+     */
+    public function ensureCanAddTeamMember(User $owner, bool $acceptingInvitation = false): void
+    {
+        $limit = $this->getTeamMemberLimit();
+        if ($limit === null) {
+            return;
+        }
+
+        $taken = $owner->teamMembers()->count();
+        if (!$acceptingInvitation) {
+            $taken += $owner->invitations()->pending()->count();
+        }
+
+        if ($taken >= $limit) {
+            throw new FeatureRequiresGold(Feature::UnlimitedTeamMembers);
+        }
     }
 
     /**

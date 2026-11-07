@@ -248,13 +248,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::put('/api/monitor/cron', [\App\Http\Controllers\BrainController::class, 'updateCronSettings'])->name('api.monitor.cron');
 
         // Telegram Integration
-        Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code');
+        Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code')->middleware('licensed:brain_autonomy');
         Route::post('/api/telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])->name('api.telegram.disconnect');
-        Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test');
-        Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook');
+        Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test')->middleware('licensed:brain_autonomy');
+        Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook')->middleware('licensed:brain_autonomy');
 
         // Research API
-        Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test');
+        Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test')->middleware('licensed:brain_autonomy');
 
         // Knowledge Base
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
@@ -265,7 +265,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // Chat API (session-authenticated, used by Index.vue)
         Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');
         Route::post('/api/chat/stream', [\App\Http\Controllers\BrainController::class, 'chatStream'])->name('api.chat.stream');
-        Route::post('/api/chat/voice', [\App\Http\Controllers\BrainController::class, 'chatVoice'])->name('api.chat.voice');
+        Route::post('/api/chat/voice', [\App\Http\Controllers\BrainController::class, 'chatVoice'])->name('api.chat.voice')->middleware('licensed:brain_autonomy');
         Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
         Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
         Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');
@@ -281,20 +281,20 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         // Goals
         Route::get('/api/goals', [\App\Http\Controllers\BrainController::class, 'goals'])->name('api.goals.index');
-        Route::post('/api/goals', [\App\Http\Controllers\BrainController::class, 'createGoal'])->name('api.goals.store');
-        Route::patch('/api/goals/{id}', [\App\Http\Controllers\BrainController::class, 'updateGoal'])->name('api.goals.update');
+        Route::post('/api/goals', [\App\Http\Controllers\BrainController::class, 'createGoal'])->name('api.goals.store')->middleware('licensed:brain_autonomy');
+        Route::patch('/api/goals/{id}', [\App\Http\Controllers\BrainController::class, 'updateGoal'])->name('api.goals.update')->middleware('licensed:brain_autonomy');
         Route::get('/api/goals/{id}/plans', [\App\Http\Controllers\BrainController::class, 'goalPlans'])->name('api.goals.plans');
 
         // Digest
-        Route::get('/api/digest', [\App\Http\Controllers\BrainController::class, 'digest'])->name('api.digest');
-        Route::post('/api/digest/send', [\App\Http\Controllers\BrainController::class, 'sendDigest'])->name('api.digest.send');
+        Route::get('/api/digest', [\App\Http\Controllers\BrainController::class, 'digest'])->name('api.digest')->middleware('licensed:brain_autonomy');
+        Route::post('/api/digest/send', [\App\Http\Controllers\BrainController::class, 'sendDigest'])->name('api.digest.send')->middleware('licensed:brain_autonomy');
 
         // KPI
         Route::get('/api/kpi', [\App\Http\Controllers\BrainController::class, 'kpi'])->name('api.kpi');
     });
 
-    // AutoTag Pro - Segmentation Dashboard
-    Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index');
+    // AutoTag Pro - Segmentation Dashboard (GOLD)
+    Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index')->middleware('licensed:segmentation_dashboard');
 
     // AI Campaign Architect
     Route::prefix('campaign-architect')->name('campaign-architect.')->group(function () {
@@ -313,22 +313,23 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/benchmarks', [\App\Http\Controllers\CampaignArchitectController::class, 'getBenchmarks'])->name('benchmarks');
     });
 
-    // AI Campaign Auditor
+    // AI Campaign Auditor (GOLD): running audits and applying recommendations need the
+    // licence; past audits stay readable
     Route::prefix('campaign-auditor')->name('campaign-auditor.')->group(function () {
         Route::get('/', [\App\Http\Controllers\CampaignAuditorController::class, 'index'])->name('index');
-        Route::post('/run', [\App\Http\Controllers\CampaignAuditorController::class, 'runAudit'])->name('run');
+        Route::post('/run', [\App\Http\Controllers\CampaignAuditorController::class, 'runAudit'])->name('run')->middleware('licensed:campaign_auditor');
         Route::get('/{audit}', [\App\Http\Controllers\CampaignAuditorController::class, 'show'])->name('show');
         Route::get('/{audit}/issues', [\App\Http\Controllers\CampaignAuditorController::class, 'issues'])->name('issues');
         Route::post('/issues/{issue}/mark-fixed', [\App\Http\Controllers\CampaignAuditorController::class, 'markFixed'])->name('mark-fixed');
 
         // Recommendations
         Route::get('/{audit}/recommendations', [\App\Http\Controllers\CampaignAuditorController::class, 'recommendations'])->name('recommendations');
-        Route::post('/recommendations/{recommendation}/apply', [\App\Http\Controllers\CampaignAuditorController::class, 'applyRecommendation'])->name('recommendations.apply');
-        Route::post('/recommendations/{recommendation}/measure', [\App\Http\Controllers\CampaignAuditorController::class, 'measureImpact'])->name('recommendations.measure');
+        Route::post('/recommendations/{recommendation}/apply', [\App\Http\Controllers\CampaignAuditorController::class, 'applyRecommendation'])->name('recommendations.apply')->middleware('licensed:campaign_auditor');
+        Route::post('/recommendations/{recommendation}/measure', [\App\Http\Controllers\CampaignAuditorController::class, 'measureImpact'])->name('recommendations.measure')->middleware('licensed:campaign_auditor');
 
         // Advisor Settings
         Route::get('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'getAdvisorSettings'])->name('advisor.settings');
-        Route::put('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'updateAdvisorSettings'])->name('advisor.settings.update');
+        Route::put('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'updateAdvisorSettings'])->name('advisor.settings.update')->middleware('licensed:campaign_auditor');
     });
 
     Route::prefix('api/campaign-auditor')->name('api.campaign-auditor.')->group(function () {
@@ -341,7 +342,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\CampaignStatsController::class, 'index'])->name('index');
         Route::get('/{tag}', [\App\Http\Controllers\CampaignStatsController::class, 'show'])->name('show');
         Route::get('/{tag}/stats', [\App\Http\Controllers\CampaignStatsController::class, 'getTagStats'])->name('stats');
-        Route::post('/{tag}/ai-analysis', [\App\Http\Controllers\CampaignStatsController::class, 'generateAiAnalysis'])->name('ai-analysis');
+        Route::post('/{tag}/ai-analysis', [\App\Http\Controllers\CampaignStatsController::class, 'generateAiAnalysis'])->name('ai-analysis')->middleware('licensed:campaign_auditor');
         Route::get('/{tag}/export', [\App\Http\Controllers\CampaignStatsController::class, 'export'])->name('export');
     });
 
@@ -880,6 +881,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     });
 
     // ==================== DELIVERABILITY SHIELD (GOLD) ====================
+    // Without GOLD the dashboard shows the offer; domains and simulations stay readable and
+    // removable, everything that checks, generates or simulates needs the licence
 
     // Deliverability Shield - DMARC Wiz & InboxPassport AI
     Route::prefix('deliverability')->name('deliverability.')->group(function () {
@@ -887,28 +890,30 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\DeliverabilityController::class, 'index'])->name('index');
 
         // DMARC Wiz - Domain Management
-        Route::get('/domains/add', [\App\Http\Controllers\DeliverabilityController::class, 'createDomain'])->name('domains.create');
-        Route::post('/domains', [\App\Http\Controllers\DeliverabilityController::class, 'addDomain'])->name('domains.store');
+        Route::get('/domains/add', [\App\Http\Controllers\DeliverabilityController::class, 'createDomain'])->name('domains.create')->middleware('licensed:deliverability_shield');
+        Route::post('/domains', [\App\Http\Controllers\DeliverabilityController::class, 'addDomain'])->name('domains.store')->middleware('licensed:deliverability_shield');
         Route::get('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'showDomain'])->name('domains.show');
-        Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify');
-        Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh');
-        Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts');
+        Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify')->middleware('licensed:deliverability_shield');
+        Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh')->middleware('licensed:deliverability_shield');
+        Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts')->middleware('licensed:deliverability_shield');
         Route::delete('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'removeDomain'])->name('domains.destroy');
 
         // DNS Record Generators (One-Click Fix)
-        Route::get('/domains/{domain}/dmarc-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getDmarcGenerator'])->name('domains.dmarc-generator');
-        Route::get('/domains/{domain}/spf-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getSpfGenerator'])->name('domains.spf-generator');
-        Route::get('/domains/{domain}/dns-generators', [\App\Http\Controllers\DeliverabilityController::class, 'getDnsGenerators'])->name('domains.dns-generators');
+        Route::get('/domains/{domain}/dmarc-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getDmarcGenerator'])->name('domains.dmarc-generator')->middleware('licensed:deliverability_shield');
+        Route::get('/domains/{domain}/spf-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getSpfGenerator'])->name('domains.spf-generator')->middleware('licensed:deliverability_shield');
+        Route::get('/domains/{domain}/dns-generators', [\App\Http\Controllers\DeliverabilityController::class, 'getDnsGenerators'])->name('domains.dns-generators')->middleware('licensed:deliverability_shield');
 
         // InboxPassport AI - Simulation
-        Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator');
-        Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate');
-        Route::post('/inbox-passport/quick-simulate', [\App\Http\Controllers\DeliverabilityController::class, 'quickSimulateInbox'])->name('quick-simulate');
+        Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator')->middleware('licensed:deliverability_shield');
+        Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate')->middleware('licensed:deliverability_shield');
+        Route::post('/inbox-passport/quick-simulate', [\App\Http\Controllers\DeliverabilityController::class, 'quickSimulateInbox'])->name('quick-simulate')->middleware('licensed:deliverability_shield');
         Route::get('/simulations', [\App\Http\Controllers\DeliverabilityController::class, 'simulationHistory'])->name('simulations.index');
         Route::get('/simulations/{simulation}', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulation'])->name('simulations.show');
     });
 
-    // ==================== NETSENDO MAIL INFRASTRUCTURE (NMI) ====================
+    // ==================== NETSENDO MAIL INFRASTRUCTURE (NMI, GOLD) ====================
+    // Without GOLD the setup stays readable and removable and sending through it continues;
+    // adding pools and IPs, provisioning, warming, DKIM and blacklist checks need the licence
 
     // NetSendo Mail Infrastructure - IP Pool & Dedicated IP Management
     Route::prefix('settings/nmi')->name('settings.nmi.')->group(function () {
@@ -917,29 +922,29 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         // IP Pools
         Route::get('/pools', [\App\Http\Controllers\NmiController::class, 'listPools'])->name('pools.index');
-        Route::post('/pools', [\App\Http\Controllers\NmiController::class, 'createPool'])->name('pools.store');
+        Route::post('/pools', [\App\Http\Controllers\NmiController::class, 'createPool'])->name('pools.store')->middleware('licensed:mail_infrastructure');
         Route::get('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'getPool'])->name('pools.show');
         Route::delete('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'deletePool'])->name('pools.destroy');
 
         // Dedicated IPs
         Route::get('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'getIp'])->name('ips.show');
-        Route::post('/ips/{ip}/warming/start', [\App\Http\Controllers\NmiController::class, 'startWarming'])->name('ips.warming.start');
-        Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate');
+        Route::post('/ips/{ip}/warming/start', [\App\Http\Controllers\NmiController::class, 'startWarming'])->name('ips.warming.start')->middleware('licensed:mail_infrastructure');
+        Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate')->middleware('licensed:mail_infrastructure');
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
-        Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check');
+        Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check')->middleware('licensed:mail_infrastructure');
         Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
 
         // Add IP to Pool
-        Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store');
+        Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store')->middleware('licensed:mail_infrastructure');
 
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
 
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
-        Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store');
-        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions');
-        Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision');
+        Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');
+        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions')->middleware('licensed:mail_infrastructure');
+        Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision')->middleware('licensed:mail_infrastructure');
     });
 });
 

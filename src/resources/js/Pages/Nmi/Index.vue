@@ -4,6 +4,11 @@ import { Head, Link, router } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
+
+// NMI is GOLD: without it the setup stays readable, changes answer 402 (upgrade dialog)
+const { can } = useLicense();
 
 const { t } = useI18n();
 
@@ -309,6 +314,12 @@ const removeProvider = async (provider) => {
         </template>
 
         <div class="space-y-6">
+            <GoldNotice
+                v-if="!can('mail_infrastructure')"
+                feature="mail_infrastructure"
+                :message="$t('license.gating.nmi_locked')"
+            />
+
             <!-- NMI Disabled Banner -->
             <div
                 v-if="!nmiEnabled"

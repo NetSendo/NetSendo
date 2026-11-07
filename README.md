@@ -176,14 +176,16 @@ On first run, the container will automatically:
 
 ## 🔑 Licensing
 
-NetSendo requires an active license to operate.
+Every installation runs on a licence: SILVER is free, GOLD is a subscription. Without an active GOLD licence (no key, SILVER, or GOLD past its paid period) the GOLD features are switched off and everything else keeps working; nothing is deleted.
 
 ### License Plans
 
-| Plan       | Price  | Features                                    |
-| ---------- | ------ | ------------------------------------------- |
-| **SILVER** | Free   | All basic features, unlimited contacts      |
-| **GOLD**   | $97/mo | Advanced automations, priority support, API |
+| Plan       | Price                 | Features |
+| ---------- | --------------------- | -------- |
+| **SILVER** | Free                  | Email and SMS marketing with unlimited lists and contacts, automations and funnels, complete CRM (incl. lead scoring and CardIntel), live webinars, AI assistants with your own OpenAI, Anthropic, Gemini or Grok keys, NetSendo Brain chat (manual mode), up to 3 AI campaigns, all integrations, public API and MCP server, affiliate program, owner + 1 team member, community support |
+| **GOLD**   | $97/mo or $970/yr     | Everything in SILVER, plus: unlimited AI campaigns, OpenRouter and local Ollama models, autonomous NetSendo Brain (automatic modes, cron, goals, digest, Telegram, research, voice), AI Campaign Auditor, A/B tests (campaigns and funnel split steps), auto-webinars with the scenario builder, hybrid webinars, segmentation dashboard, Deliverability Shield, NetSendo Mail Infrastructure, unlimited team members, priority support |
+
+The list the application enforces is `src/config/netsendo.php` (`plans`) and `App\Licensing\Feature`.
 
 No plan includes white-label or rebranding rights (EULA §3.6, §7.3).
 
