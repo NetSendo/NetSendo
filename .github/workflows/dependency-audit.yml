@@ -26,7 +26,7 @@ jobs:
   composer:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
@@ -43,7 +43,7 @@ jobs:
       matrix:
         directory: [src, mcp]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
