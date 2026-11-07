@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.5.1] – Installations no longer contact Google Analytics - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Removed
+
+- **NetSendo no longer sends page views from your installation to Google Analytics.** Until now every installation, self-hosted and NetSendo Cloud alike, loaded Google's `gtag.js` with NetSendo's own measurement ID `G-96J7WQ3SMT` on every page rendered by `app.blade.php`: the panel, its sign-in page and the affiliate partner portal (`/portal/...`). Each page view (its address, such as `/messages/36/stats`, the page title, and the browser and IP address of the person using it) went to Google and to NetSendo's analytics, without a consent banner and without the installation's operator being told. The partial `resources/views/partials/google-analytics.blade.php` and its include are removed. The panel and the partner portal now load no analytics or tracking script, from NetSendo or anyone else.
+- Installations on 2.5.0 or earlier keep sending these page views until they are updated, so update. Nothing has to be configured. The tracking you set up yourself is not affected: open and click tracking, the NetSendo pixel and Live Visitors send their data only to your own installation.
+- `tests/Feature/NoThirdPartyAnalyticsTest.php` checks that the sign-in page and the panel load no Google Analytics or Google Tag Manager script.
+
 ## [2.5.0] – The SILVER/GOLD split is complete - 2026-11-07
 
 **Release date:** 2026-11-07
