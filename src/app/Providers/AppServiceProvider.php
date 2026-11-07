@@ -23,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // A sleeping Cloud instance (NETSENDO_DORMANT) sends nothing: a queue worker that is
+        // still running pauses instead of taking jobs (App\Http\Middleware\DormantMode)
+        if (config('netsendo.dormant')) {
+            \Illuminate\Support\Facades\Queue::looping(fn () => false);
+        }
+
         // Ensure storage link and required directories exist
         $this->ensureStorageSetup();
 

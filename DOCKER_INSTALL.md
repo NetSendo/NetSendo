@@ -216,6 +216,11 @@ docker compose cp app:/var/www/storage/app ./backup-storage/
 | `DB_PASSWORD`      | `root`    | MySQL password       |
 | `MAIL_HOST`        | `mailpit` | SMTP host            |
 
+Hosted installations (NetSendo Cloud) also use:
+
+- `NETSENDO_DORMANT=true` puts a sleeping instance to sleep: only unsubscribe links work, nothing is sent, every other page shows "instance asleep" (503). Stop the `queue` and `scheduler` services too.
+- `php artisan netsendo:bootstrap --admin-email=… [--locale=pl] [--license=…]` creates the administrator right after installing (password by email), so the first visitor cannot register as administrator.
+
 ### Production with Reverse Proxy
 
 For public deployments, use a reverse proxy (nginx/Caddy) with HTTPS:

@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add CORS middleware globally for cross-origin pixel tracking
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
+        // Sleeping Cloud instance (NETSENDO_DORMANT): only unsubscribe links work. Appended,
+        // so it runs after TrustProxies and sees the https URL the links were signed with.
+        $middleware->append(\App\Http\Middleware\DormantMode::class);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,

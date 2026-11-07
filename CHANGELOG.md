@@ -9,8 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.3.0] – Buy GOLD in the app, sleeping Cloud instances - 2026-11-07
+
+**Release date:** 2026-11-07
+
 ### Added
 
+- **Sleeping mode for hosted (Cloud) instances** (`NETSENDO_DORMANT=true`, config `netsendo.dormant`). When a NetSendo Cloud subscription ends, the hosting provider puts the instance to sleep instead of deleting it; the owner can resume it with all data. While asleep (`App\Http\Middleware\DormantMode`):
+  - Unsubscribe links in messages sent before keep working. A GET of a list link shows a confirmation page that POSTs the same signed URL as an RFC 8058 one-click request, because the usual confirmation email cannot be sent. One-click POSTs, the confirmation links and the account-wide unsubscribe work as before.
+  - Nothing is sent: the unsubscribe fires no automations, webhooks or emails (`SubscriberUnsubscribed` listeners are dropped), mail goes to the `array` mailer, queued jobs are discarded, scheduled tasks are skipped and a running queue worker pauses.
+  - Every other page, sign-in and the API answer 503 with an "instance asleep" page (JSON `{"error":"instance_asleep"}` for the API), `noindex`, in en, pl, de and es. `/up` still answers.
+  - Covered by `tests/Feature/DormantModeTest.php`.
+- **`php artisan netsendo:bootstrap`** sets up a hosted installation without the first-run screen, so the first visitor can no longer register the administrator: `--admin-email` (required), `--admin-name`, `--locale`, `--license` (verified with the licence server for the host of `APP_URL` or `--domain`) and `--no-password-mail`. The administrator gets a password by email through the same relay as "Forgot password" (now `App\Services\PasswordRelayService`). Safe to run again; refuses an installation that already has users. Covered by `tests/Feature/BootstrapCommandTest.php`.
 - **Buy GOLD from the licence page.** The "Upgrade to GOLD", plan card and "Renew GOLD" buttons (until now "coming soon") open the NetSendo store at netsendo.com with the installation's domain and admin email filled in. After payment GOLD switches on in the installation by itself, without copying the key:
   - `POST /license/buy-gold` creates a random secret, stores it encrypted (setting `license_claim_secret`) and returns the store URL with `claim` = SHA-256 of the secret. Only the hash passes through the browser.
   - `POST /license/claim-gold` sends the secret to the store (`POST {store}/api/billing/claim`, server to server), gets the key, verifies it with the licence server and activates it. The licence page polls it while the customer pays; the new command `license:claim-gold` (every 5 minutes) finishes purchases when the page was closed. A purchase is waited for 72 hours.

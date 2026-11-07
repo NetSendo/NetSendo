@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.2.1',
+    'version' => '2.3.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -51,6 +51,11 @@ return [
     // NetSendo store: the licence page sells GOLD there and activates the bought key here
     // automatically (App\Services\GoldPurchaseService). Empty value hides the purchase.
     'store_url' => env('NETSENDO_STORE_URL', 'https://netsendo.com'),
+
+    // Sleeping NetSendo Cloud instance (its subscription has ended, the data is kept): only
+    // unsubscribe links work, nothing is sent and every other page shows "instance asleep".
+    // Set by the hosting provider; see App\Http\Middleware\DormantMode.
+    'dormant' => (bool) env('NETSENDO_DORMANT', false),
 
     /*
     |--------------------------------------------------------------------------
