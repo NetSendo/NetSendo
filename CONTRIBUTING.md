@@ -70,7 +70,7 @@ Use our issue templates:
 
 - [Telegram Community](https://t.me/netsendo) — ask questions, share ideas
 - [Forum](https://forum.netsendo.com) — longer discussions
-- Email: support@netsendo.com
+- Email: support@netsendo.com (technical support), contact@netsendo.com (licensing and business)
 
 ## 🙏 Recognition
 
