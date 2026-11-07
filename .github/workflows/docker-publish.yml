@@ -5,9 +5,12 @@
 # with proper version tags (latest, semver).
 #
 # Triggers:
-#   - Push to main branch → publishes :latest
-#   - Release created → publishes :X.Y.Z and :latest
-#   - Manual trigger → publishes specified tag
+#   - Push to main branch → publishes :latest and :sha-<commit>
+#   - New version → release.yml dispatches this workflow on the tag vX.Y.Z,
+#     which publishes :X.Y.Z, :X.Y and :X (a release created by release.yml
+#     with GITHUB_TOKEN cannot fire `release: published` here)
+#   - Release published by a person in the UI → same version tags
+#   - Manual trigger → optional extra tag from the `version` input
 # =============================================================================
 
 name: Build & Publish Docker Image
@@ -28,9 +31,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag for the image (e.g., 1.0.0)'
+        description: 'Extra image tag (e.g. 2.2.1). Leave empty to tag by git ref only.'
         required: false
-        default: 'latest'
+        default: ''
 
 env:
   REGISTRY: ghcr.io
@@ -72,8 +75,9 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            # Manual version input
-            type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            # Manual version input (never defaults to latest: a dispatch on an
+            # older tag must not move :latest back)
+            type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' }}
             # Short SHA for debugging
             type=sha,prefix=sha-
 

@@ -36,6 +36,10 @@ updates:
     groups:
       mcp-minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Types follow the oldest Node the client supports (engines), not the newest.
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directories:
@@ -44,8 +48,17 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    ignore:
+      # Odd Node majors never become LTS; move to the next LTS line by hand.
+      - dependency-name: node
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      # One PR for all action bumps; they touch the same workflow lines and
+      # conflict with each other when merged one by one.
+      github-actions:
+        patterns: ["*"]
