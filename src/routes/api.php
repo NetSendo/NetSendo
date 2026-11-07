@@ -244,16 +244,19 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
             'destroy' => 'api.v1.campaigns.destroy',
         ]);
 
-    // A/B Tests
+    // A/B Tests (GOLD): creating, editing and starting need the licence (402 otherwise)
     Route::post('ab-tests/{ab_test}/variants', [AbTestController::class, 'addVariant'])
+        ->middleware('licensed:ab_tests')
         ->name('api.v1.ab-tests.variants');
     Route::post('ab-tests/{ab_test}/start', [AbTestController::class, 'start'])
+        ->middleware('licensed:ab_tests')
         ->name('api.v1.ab-tests.start');
     Route::post('ab-tests/{ab_test}/end', [AbTestController::class, 'end'])
         ->name('api.v1.ab-tests.end');
     Route::get('ab-tests/{ab_test}/results', [AbTestController::class, 'results'])
         ->name('api.v1.ab-tests.results');
     Route::apiResource('ab-tests', AbTestController::class)
+        ->middlewareFor(['store', 'update'], 'licensed:ab_tests')
         ->names([
             'index' => 'api.v1.ab-tests.index',
             'store' => 'api.v1.ab-tests.store',

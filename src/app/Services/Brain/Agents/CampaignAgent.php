@@ -2,6 +2,7 @@
 
 namespace App\Services\Brain\Agents;
 
+use App\Licensing\Feature;
 use App\Models\AbTest;
 use App\Models\AbTestVariant;
 use App\Models\AiActionPlan;
@@ -12,6 +13,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\AbTestService;
 use App\Services\AI\AiService;
+use App\Services\LicenseService;
 use App\Services\Brain\KnowledgeBaseService;
 use Illuminate\Support\Facades\Log;
 
@@ -711,8 +713,27 @@ PROMPT;
 
     // === A/B Test Executors ===
 
+    /**
+     * A/B tests are GOLD: the failed step result when the installation has no GOLD licence.
+     */
+    protected function abTestsNotLicensed(): ?array
+    {
+        if (app(LicenseService::class)->allows(Feature::AbTests)) {
+            return null;
+        }
+
+        return [
+            'status' => 'failed',
+            'message' => __('license.gating.requires_gold', ['feature' => Feature::AbTests->label()]),
+        ];
+    }
+
     protected function executeCreateAbTest(AiActionPlanStep $step, User $user): array
     {
+        if ($refused = $this->abTestsNotLicensed()) {
+            return $refused;
+        }
+
         $config = $step->config;
 
         // Find message — either from config or from a previous create_message step
@@ -816,6 +837,10 @@ PROMPT;
      */
     protected function executeStartAbTest(AiActionPlanStep $step, User $user): array
     {
+        if ($refused = $this->abTestsNotLicensed()) {
+            return $refused;
+        }
+
         $abTest = $this->resolveAbTest($step, $user);
 
         if (!$abTest) {

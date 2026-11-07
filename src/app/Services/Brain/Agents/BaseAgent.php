@@ -182,7 +182,7 @@ abstract class BaseAgent
             if ($taskConfig) {
                 if ($taskConfig['integration_id']) {
                     $taskIntegration = \App\Models\AiIntegration::find($taskConfig['integration_id']);
-                    if ($taskIntegration?->is_active) {
+                    if ($taskIntegration?->isUsable()) {
                         $integration = $taskIntegration;
                     }
                 }

@@ -3628,13 +3628,14 @@
         "gold_priority": "Priorisierter E-Mail-Support",
         "upgrade_to_gold": "Upgrade auf GOLD",
         "upgrade_price": "$97/Monat • Jederzeit kündbar",
-        "campaign_limit_reached": "Sie haben das Limit von :limit Kampagnen für den SILVER-Plan erreicht. Upgrade auf GOLD für unbegrenzte Kampagnen.",
+        "campaign_limit_reached": "Sie haben das Limit von {limit} Kampagnen für den SILVER-Plan erreicht. Upgrade auf GOLD für unbegrenzte Kampagnen.",
         "limit_reached_title": "Kampagnenlimit erreicht",
         "gold_benefits_title": "Vorteile des GOLD-Plans",
         "gold_ai_models": "Erweiterte KI-Modelle (GPT-4, Claude 3)",
         "campaign_count": ":count von :limit Kampagnen",
         "campaign_count_unlimited": ":count Kampagnen (unbegrenzt)",
-        "upgrade_for_more": "Upgrade auf GOLD für mehr Kampagnen"
+        "upgrade_for_more": "Upgrade auf GOLD für mehr Kampagnen",
+        "campaigns_label": "Kampagnen"
     },
     "integrations": {
         "title": "Integrationseinstellungen",
@@ -4952,7 +4953,29 @@
         "status_deactivated": "Die Lizenz wurde deaktiviert. Die Seite wird aktualisiert...",
         "status_invalid": "Die Lizenz ist ungültig oder inaktiv",
         "status_verified": "Lizenz erfolgreich verifiziert",
-        "view_eula": "Lizenzvereinbarung (EULA) lesen"
+        "view_eula": "Lizenzvereinbarung (EULA) lesen",
+        "gating": {
+            "badge": "GOLD",
+            "locked_title": "Verfügbar in GOLD",
+            "dialog_title": "GOLD-Funktion: {feature}",
+            "dialog_desc": "Ihre Installation läuft mit der kostenlosen SILVER-Lizenz. Kaufen Sie GOLD auf der Lizenzseite, um es freizuschalten — der Schlüssel wird nach der Zahlung hier automatisch aktiviert.",
+            "dialog_cta": "Zur Lizenzseite",
+            "dialog_close": "Nicht jetzt",
+            "feature_fallback": "Diese Funktion",
+            "ab_tests_locked": "A/B-Tests von Kampagnen sind Teil von GOLD. Sie können diese Nachricht ohne Test senden.",
+            "ab_tests_draft_locked": "Diese Nachricht hat einen vorbereiteten A/B-Test, aber A/B-Tests erfordern GOLD. Schalten Sie den Test aus, um die Nachricht zu speichern, oder kaufen Sie GOLD.",
+            "ab_tests_actions_locked": "Das Starten und Fortsetzen von A/B-Tests erfordert GOLD. Ergebnisse, Pausieren und Gewinnerauswahl bleiben verfügbar.",
+            "webinar_type_locked": "Auto- und Hybrid-Webinare sind Teil von GOLD.",
+            "auto_webinar_locked": "Das Ändern von Zeitplan und Chat-Szenario eines Auto-Webinars erfordert GOLD. Ohne GOLD nimmt das Webinar keine neuen Anmeldungen an; bereits Angemeldete erhalten ihre Sitzung.",
+            "ai_provider_locked": "OpenRouter und lokale Ollama-Modelle sind Teil von GOLD. OpenAI, Anthropic, Gemini und Grok funktionieren mit SILVER.",
+            "features": {
+                "unlimited_ai_campaigns": "Unbegrenzte KI-Kampagnen",
+                "advanced_ai": "Erweiterte KI (OpenRouter und lokale Ollama-Modelle)",
+                "ab_tests": "A/B-Tests",
+                "auto_webinars": "Auto-Webinare und Szenario-Builder",
+                "hybrid_webinars": "Hybrid-Webinare"
+            }
+        }
     },
     "notifications": {
         "title": "Benachrichtigungen",

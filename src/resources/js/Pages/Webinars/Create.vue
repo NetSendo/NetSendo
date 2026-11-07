@@ -2,7 +2,21 @@
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import SectionListEditor from './Partials/SectionListEditor.vue';
+import GoldBadge from '@/Components/License/GoldBadge.vue';
+import { useLicense } from '@/Composables/useLicense';
 import { ref, watch, computed } from 'vue';
+
+// Auto and hybrid webinars are GOLD (App\Models\Webinar::featureForType)
+const { can, requireGold } = useLicense();
+const typeFeatures = { auto: 'auto_webinars', hybrid: 'hybrid_webinars' };
+const typeLocked = (type) => !!typeFeatures[type] && !can(typeFeatures[type]);
+const selectType = (type) => {
+    if (typeLocked(type)) {
+        requireGold(typeFeatures[type]);
+        return;
+    }
+    form.type = type;
+};
 
 const props = defineProps({
     types: Object,
@@ -96,12 +110,13 @@ const typeDescriptions = {
                             <div
                                 v-for="(label, type) in types"
                                 :key="type"
-                                @click="form.type = type"
+                                @click="selectType(type)"
                                 :class="[
                                     'relative rounded-lg border p-4 cursor-pointer transition-all',
                                     form.type === type
                                         ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 ring-2 ring-indigo-500'
-                                        : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700',
+                                    typeLocked(type) ? 'opacity-70' : ''
                                 ]"
                             >
                                 <div class="flex items-center gap-3">
@@ -116,8 +131,9 @@ const typeDescriptions = {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                     </svg>
                                     <div>
-                                        <p :class="['font-medium', form.type === type ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white']">
+                                        <p :class="['flex flex-wrap items-center gap-2 font-medium', form.type === type ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white']">
                                             {{ label }}
+                                            <GoldBadge v-if="typeFeatures[type]" :locked="typeLocked(type)" />
                                         </p>
                                     </div>
                                 </div>

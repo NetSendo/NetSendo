@@ -4920,13 +4920,14 @@
         "gold_priority": "Priority email support",
         "upgrade_to_gold": "Upgrade to GOLD",
         "upgrade_price": "$97/month • Cancel anytime",
-        "campaign_limit_reached": "You've reached the limit of :limit campaigns for SILVER plan. Upgrade to GOLD to create unlimited campaigns.",
+        "campaign_limit_reached": "You've reached the limit of {limit} campaigns for SILVER plan. Upgrade to GOLD to create unlimited campaigns.",
         "limit_reached_title": "Campaign Limit Reached",
         "gold_benefits_title": "GOLD Plan Benefits",
         "gold_ai_models": "Advanced AI models (GPT-4, Claude 3)",
         "campaign_count": ":count of :limit campaigns",
         "campaign_count_unlimited": ":count campaigns (unlimited)",
-        "upgrade_for_more": "Upgrade to GOLD to create more campaigns"
+        "upgrade_for_more": "Upgrade to GOLD to create more campaigns",
+        "campaigns_label": "Campaigns"
     },
     "backup": {
         "title": "Backups",
@@ -5597,6 +5598,28 @@
                     "team": "Team members option"
                 },
                 "summary": "GOLD = automation engine + developer layer + AI without architectural limits"
+            }
+        },
+        "gating": {
+            "badge": "GOLD",
+            "locked_title": "Available in GOLD",
+            "dialog_title": "GOLD feature: {feature}",
+            "dialog_desc": "Your installation runs on the free SILVER licence. Buy GOLD on the Licence page to unlock it — the key activates here automatically after payment.",
+            "dialog_cta": "Go to the Licence page",
+            "dialog_close": "Not now",
+            "feature_fallback": "This feature",
+            "ab_tests_locked": "A/B tests of campaigns are part of GOLD. You can still send this message without a test.",
+            "ab_tests_draft_locked": "This message has a prepared A/B test, but A/B tests need GOLD. Turn the test off to save the message, or buy GOLD.",
+            "ab_tests_actions_locked": "Starting and resuming A/B tests needs GOLD. Results, pausing and picking the winner stay available.",
+            "webinar_type_locked": "Auto and hybrid webinars are part of GOLD.",
+            "auto_webinar_locked": "Changing the schedule and chat scenario of an auto-webinar needs GOLD. Without it the webinar takes no new registrations; people already registered still get their session.",
+            "ai_provider_locked": "OpenRouter and local Ollama models are part of GOLD. OpenAI, Anthropic, Gemini and Grok work on SILVER.",
+            "features": {
+                "unlimited_ai_campaigns": "Unlimited AI campaigns",
+                "advanced_ai": "Advanced AI (OpenRouter and local Ollama models)",
+                "ab_tests": "A/B tests",
+                "auto_webinars": "Auto-webinars and the scenario builder",
+                "hybrid_webinars": "Hybrid webinars"
             }
         }
     },

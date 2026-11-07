@@ -101,4 +101,16 @@ return [
             'summary' => 'Volle KI-Power und automatisierte Webinare',
         ],
     ],
+
+    // GOLD features refused on SILVER (App\Licensing\FeatureRequiresGold)
+    'gating' => [
+        'requires_gold' => '„:feature“ erfordert die GOLD-Lizenz. Upgrade auf der Lizenzseite, um es zu nutzen.',
+        'features' => [
+            'unlimited_ai_campaigns' => 'Unbegrenzte KI-Kampagnen',
+            'advanced_ai' => 'Erweiterte KI (OpenRouter und lokale Ollama-Modelle)',
+            'ab_tests' => 'A/B-Tests',
+            'auto_webinars' => 'Auto-Webinare und Szenario-Builder',
+            'hybrid_webinars' => 'Hybrid-Webinare',
+        ],
+    ],
 ];

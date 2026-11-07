@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Licensing\Feature;
+use App\Licensing\FeatureRequiresGold;
 use App\Models\CampaignPlan;
 use App\Models\Setting;
 use Illuminate\Support\Carbon;
@@ -24,7 +26,11 @@ class LicenseService
      */
     public function getCurrentPlan(): string
     {
-        return $this->storedPlan() === 'GOLD' && $this->hasKey() && !$this->isGoldExpired() ? 'GOLD' : 'SILVER';
+        $stored = $this->stored();
+
+        return $stored['plan'] === 'GOLD' && $stored['has_key'] && !$this->hasPassed($stored['expires_at'])
+            ? 'GOLD'
+            : 'SILVER';
     }
 
     /**
@@ -32,8 +38,7 @@ class LicenseService
      */
     public function storedPlan(): ?string
     {
-        $plan = Setting::where('key', 'license_plan')->value('value');
-        return $plan ? strtoupper($plan) : null;
+        return $this->stored()['plan'];
     }
 
     /**
@@ -41,13 +46,72 @@ class LicenseService
      */
     public function isGoldExpired(): bool
     {
-        if ($this->storedPlan() !== 'GOLD') {
-            return false;
+        $stored = $this->stored();
+
+        return $stored['plan'] === 'GOLD' && $this->hasPassed($stored['expires_at']);
+    }
+
+    /**
+     * Whether the licence in effect includes the feature.
+     */
+    public function allows(Feature $feature): bool
+    {
+        return $feature->plan() === 'SILVER' || $this->isGoldPlan();
+    }
+
+    /**
+     * @throws FeatureRequiresGold when the licence in effect does not include the feature
+     */
+    public function ensureAllows(Feature $feature): void
+    {
+        if (!$this->allows($feature)) {
+            throw new FeatureRequiresGold($feature);
+        }
+    }
+
+    /**
+     * Every licensed feature with whether the licence in effect includes it (for the frontend).
+     *
+     * @return array<string, bool>
+     */
+    public function features(): array
+    {
+        $gold = $this->isGoldPlan();
+        $features = [];
+
+        foreach (Feature::cases() as $feature) {
+            $features[$feature->value] = $feature->plan() === 'SILVER' || $gold;
         }
 
-        $expiresAt = Setting::where('key', 'license_expires_at')->value('value');
+        return $features;
+    }
+
+    /**
+     * The stored licence, read in one query (every GOLD check goes through here).
+     *
+     * @return array{plan: ?string, has_key: bool, expires_at: ?string}
+     */
+    private function stored(): array
+    {
+        $values = Setting::whereIn('key', ['license_plan', 'license_key', 'license_expires_at'])
+            ->pluck('value', 'key');
+
+        $plan = $values->get('license_plan');
+
+        return [
+            'plan' => $plan ? strtoupper($plan) : null,
+            'has_key' => $values->has('license_key'),
+            'expires_at' => $values->get('license_expires_at'),
+        ];
+    }
+
+    /**
+     * An expiry date that has passed (no date = GOLD without an end date).
+     */
+    private function hasPassed(?string $expiresAt): bool
+    {
         if (!$expiresAt) {
-            return false; // GOLD without an end date
+            return false;
         }
 
         try {
@@ -56,11 +120,6 @@ class LicenseService
             Log::warning('Unreadable licence expiry date', ['value' => $expiresAt]);
             return false;
         }
-    }
-
-    private function hasKey(): bool
-    {
-        return Setting::where('key', 'license_key')->exists();
     }
 
     /**
@@ -85,7 +144,7 @@ class LicenseService
      */
     public function getCampaignLimit(): ?int
     {
-        if ($this->isGoldPlan()) {
+        if ($this->allows(Feature::UnlimitedAiCampaigns)) {
             return null; // Unlimited
         }
 
@@ -144,6 +203,7 @@ class LicenseService
             'plan' => $this->getCurrentPlan(),
             'isGold' => $this->isGoldPlan(),
             'goldExpired' => $this->isGoldExpired(),
+            'features' => $this->features(),
             'campaignCount' => $this->getUserCampaignCount($userId),
             'campaignLimit' => $this->getCampaignLimit(),
             'remainingCampaigns' => $this->getRemainingCampaigns($userId),

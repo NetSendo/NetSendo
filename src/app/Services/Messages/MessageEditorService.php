@@ -2,6 +2,7 @@
 
 namespace App\Services\Messages;
 
+use App\Licensing\Feature;
 use App\Models\AbTest;
 use App\Models\AbTestVariant;
 use App\Models\AutomationRule;
@@ -10,6 +11,7 @@ use App\Models\Message;
 use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Subscriber;
+use App\Services\LicenseService;
 use App\Services\Mail\MailProviderService;
 use App\Services\PlaceholderService;
 
@@ -159,11 +161,35 @@ class MessageEditorService
     }
 
     /**
+     * A/B tests are GOLD: refuse a config that would create or change a test without the
+     * licence. Called before the message is saved, so a refused save changes nothing.
+     * Turning a test off, and saving a message whose test already started, stay allowed.
+     *
+     * @throws \App\Licensing\FeatureRequiresGold
+     */
+    public function ensureAbTestAllowed(array $config, ?Message $message = null): void
+    {
+        if (!($config['enabled'] ?? false) || count($config['variants'] ?? []) < 2) {
+            return;
+        }
+
+        // syncAbTest() leaves a started (running, paused or finished) test untouched
+        $existing = $message?->abTest;
+        if ($existing && $existing->status !== AbTest::STATUS_DRAFT) {
+            return;
+        }
+
+        app(LicenseService::class)->ensureAllows(Feature::AbTests);
+    }
+
+    /**
      * Sync A/B test configuration for the message.
      * Creates/updates/deletes AbTest and AbTestVariant records based on form data.
      */
     public function syncAbTest(Message $message, array $config): void
     {
+        $this->ensureAbTestAllowed($config, $message);
+
         $enabled = $config['enabled'] ?? false;
         $variants = $config['variants'] ?? [];
 
@@ -271,6 +297,8 @@ class MessageEditorService
 
         return [
             'enabled' => true,
+            // draft until sending starts it; the editor only changes a draft test
+            'status' => $test->status,
             'test_type' => $test->test_type ?? 'subject',
             'winning_metric' => $test->winning_metric ?? 'open_rate',
             'sample_percentage' => $test->sample_percentage ?? 20,

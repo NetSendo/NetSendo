@@ -45,6 +45,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
             '2fa' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
             'affiliate.auth' => \App\Http\Middleware\AffiliateAuth::class,
+            // GOLD features: ->middleware('licensed:ab_tests') (values of App\Licensing\Feature)
+            'licensed' => \App\Http\Middleware\RequireLicensedFeature::class,
         ]);
 
         // Exclude routes from CSRF verification

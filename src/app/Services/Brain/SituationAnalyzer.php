@@ -47,7 +47,7 @@ class SituationAnalyzer
         // Use user-preferred integration if set
         if ($settings->preferred_integration_id) {
             $preferredIntegration = \App\Models\AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration?->is_active) {
+            if ($preferredIntegration?->isUsable()) {
                 $integration = $preferredIntegration;
             }
         }

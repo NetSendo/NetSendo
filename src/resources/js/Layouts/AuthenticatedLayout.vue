@@ -12,6 +12,7 @@ import GlobalSearchPanel from "@/Components/GlobalSearchPanel.vue";
 import McpStatusIndicator from "@/Components/McpStatusIndicator.vue";
 import BrainActivityBar from "@/Components/BrainActivityBar.vue";
 import MeetingReminderNotification from "@/Components/MeetingReminderNotification.vue";
+import UpgradeModal from "@/Components/License/UpgradeModal.vue";
 import { useTheme } from "@/Composables/useTheme";
 import { useMeetingReminders } from "@/Composables/useMeetingReminders";
 
@@ -471,5 +472,8 @@ const toggleMobileMenu = () => {
             @dismiss="dismissReminder"
             @join="joinMeeting"
         />
+
+        <!-- GOLD upgrade dialog (refused GOLD features, requireGold()) -->
+        <UpgradeModal />
     </div>
 </template>

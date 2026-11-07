@@ -105,7 +105,7 @@ class AgentOrchestrator
         // Use user-preferred integration if set
         if ($settings->preferred_integration_id) {
             $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration && $preferredIntegration->is_active) {
+            if ($preferredIntegration?->isUsable()) {
                 $integration = $preferredIntegration;
             }
         }
@@ -911,7 +911,7 @@ PROMPT;
         // Use user-preferred integration if set
         if ($settings->preferred_integration_id) {
             $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration && $preferredIntegration->is_active) {
+            if ($preferredIntegration?->isUsable()) {
                 $integration = $preferredIntegration;
             }
         }

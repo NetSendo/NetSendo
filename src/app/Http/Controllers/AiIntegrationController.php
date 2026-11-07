@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AiIntegration;
 use App\Models\AiModel;
 use App\Services\AI\AiService;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -27,6 +28,8 @@ class AiIntegrationController extends Controller
         // renders the same catalog as the backend (single source of truth).
         foreach ($providers as $key => &$provider) {
             $provider['default_models'] = AiIntegration::getDefaultModels($key);
+            // GOLD feature the provider needs (OpenRouter, Ollama), null when SILVER has it
+            $provider['required_feature'] = AiIntegration::featureForProvider($key)?->value;
         }
         unset($provider);
 
@@ -50,7 +53,9 @@ class AiIntegrationController extends Controller
         // Add default models to each provider
         foreach ($providers as $key => &$provider) {
             $provider['default_models'] = AiIntegration::getDefaultModels($key);
+            $provider['required_feature'] = AiIntegration::featureForProvider($key)?->value;
         }
+        unset($provider);
 
         return response()->json($providers);
     }
@@ -71,6 +76,11 @@ class AiIntegrationController extends Controller
             'max_tokens_small' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'max_tokens_large' => ['nullable', 'integer', 'min:1', 'max:1000000'],
         ]);
+
+        // OpenRouter and Ollama are GOLD ("advanced AI")
+        if ($feature = AiIntegration::featureForProvider($validated['provider'])) {
+            app(LicenseService::class)->ensureAllows($feature);
+        }
 
         // Check if integration for this provider already exists
         $existing = AiIntegration::where('provider', $validated['provider'])->first();

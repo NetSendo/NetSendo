@@ -772,15 +772,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/products/{product}/unpin', [\App\Http\Controllers\WebinarProductController::class, 'unpin'])->name('products.unpin');
         Route::post('/{webinar}/products/reorder', [\App\Http\Controllers\WebinarProductController::class, 'reorder'])->name('products.reorder');
 
-        // Auto-Webinar Configuration
+        // Auto-Webinar Configuration (GOLD): changing the schedule and chat needs the licence;
+        // the configuration stays readable after a GOLD ends
         Route::get('/{webinar}/auto-config', [\App\Http\Controllers\AutoWebinarController::class, 'config'])->name('auto.config');
-        Route::post('/{webinar}/auto-config/schedule', [\App\Http\Controllers\AutoWebinarController::class, 'saveSchedule'])->name('auto.schedule');
-        Route::post('/{webinar}/auto-config/import-chat', [\App\Http\Controllers\AutoWebinarController::class, 'importChat'])->name('auto.import-chat');
-        Route::post('/{webinar}/auto-config/generate-chat', [\App\Http\Controllers\AutoWebinarController::class, 'generateChat'])->name('auto.generate-chat');
+        Route::post('/{webinar}/auto-config/schedule', [\App\Http\Controllers\AutoWebinarController::class, 'saveSchedule'])->name('auto.schedule')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/auto-config/import-chat', [\App\Http\Controllers\AutoWebinarController::class, 'importChat'])->name('auto.import-chat')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/auto-config/generate-chat', [\App\Http\Controllers\AutoWebinarController::class, 'generateChat'])->name('auto.generate-chat')->middleware('licensed:auto_webinars');
         Route::delete('/{webinar}/auto-config/chat', [\App\Http\Controllers\AutoWebinarController::class, 'clearChat'])->name('auto.clear-chat');
         Route::get('/{webinar}/auto-config/timeline', [\App\Http\Controllers\AutoWebinarController::class, 'previewTimeline'])->name('auto.timeline');
         Route::get('/{webinar}/auto-config/sessions', [\App\Http\Controllers\AutoWebinarController::class, 'getNextSessions'])->name('auto.sessions');
-        Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert');
+        Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert')->middleware('licensed:auto_webinars');
 
         // Chat Reactions API
         Route::post('/{webinar}/reactions', [\App\Http\Controllers\WebinarChatController::class, 'addReaction'])->name('reactions.add');
@@ -796,7 +797,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/host/bulk-approve', [\App\Http\Controllers\WebinarHostController::class, 'bulkApprove'])->name('host.bulk-approve');
         Route::post('/{webinar}/host/bulk-delete', [\App\Http\Controllers\WebinarHostController::class, 'bulkDelete'])->name('host.bulk-delete');
 
-        // Scenario Builder API
+        // Scenario Builder API (GOLD, routes below the page builder): adding, editing and
+        // generating chat scripts needs the licence; viewing and deleting stay open
         // Funnel page builder (registration / thank-you / waiting room / replay)
         Route::get('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'edit'])->name('pages.edit');
         Route::put('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'update'])->name('pages.update');
@@ -806,27 +808,28 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         Route::get('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'index'])->name('scripts.index');
         Route::get('/{webinar}/scripts/builder', [\App\Http\Controllers\AutoWebinarScriptController::class, 'builder'])->name('scripts.builder');
-        Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store');
-        Route::put('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'update'])->name('scripts.update');
-        Route::post('/{webinar}/scripts/generate', [\App\Http\Controllers\AutoWebinarScriptController::class, 'generateRandom'])->name('scripts.generate');
+        Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store')->middleware('licensed:auto_webinars');
+        Route::put('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'update'])->name('scripts.update')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/scripts/generate', [\App\Http\Controllers\AutoWebinarScriptController::class, 'generateRandom'])->name('scripts.generate')->middleware('licensed:auto_webinars');
         Route::delete('/{webinar}/scripts/clear', [\App\Http\Controllers\AutoWebinarScriptController::class, 'clear'])->name('scripts.clear');
         Route::delete('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'destroy'])->name('scripts.destroy');
     });
 
-    // A/B Testing
+    // A/B Testing (GOLD): creating, editing and starting tests needs the licence; reading
+    // results, pausing, picking the winner and deleting stay open after a GOLD ends
     Route::prefix('ab-tests')->name('ab-tests.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AbTestController::class, 'index'])->name('index');
-        Route::post('/', [\App\Http\Controllers\AbTestController::class, 'store'])->name('store');
+        Route::post('/', [\App\Http\Controllers\AbTestController::class, 'store'])->name('store')->middleware('licensed:ab_tests');
         Route::get('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'show'])->name('show');
-        Route::put('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'update'])->name('update');
+        Route::put('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'update'])->name('update')->middleware('licensed:ab_tests');
         Route::delete('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'destroy'])->name('destroy');
-        Route::post('/{abTest}/start', [\App\Http\Controllers\AbTestController::class, 'start'])->name('start');
+        Route::post('/{abTest}/start', [\App\Http\Controllers\AbTestController::class, 'start'])->name('start')->middleware('licensed:ab_tests');
         Route::post('/{abTest}/pause', [\App\Http\Controllers\AbTestController::class, 'pause'])->name('pause');
-        Route::post('/{abTest}/resume', [\App\Http\Controllers\AbTestController::class, 'resume'])->name('resume');
+        Route::post('/{abTest}/resume', [\App\Http\Controllers\AbTestController::class, 'resume'])->name('resume')->middleware('licensed:ab_tests');
         Route::post('/{abTest}/select-winner', [\App\Http\Controllers\AbTestController::class, 'selectWinner'])->name('select-winner');
         Route::get('/{abTest}/results', [\App\Http\Controllers\AbTestController::class, 'getResults'])->name('results');
-        Route::post('/{abTest}/variants', [\App\Http\Controllers\AbTestController::class, 'addVariant'])->name('variants.add');
-        Route::put('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'updateVariant'])->name('variants.update');
+        Route::post('/{abTest}/variants', [\App\Http\Controllers\AbTestController::class, 'addVariant'])->name('variants.add')->middleware('licensed:ab_tests');
+        Route::put('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'updateVariant'])->name('variants.update')->middleware('licensed:ab_tests');
         Route::delete('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'deleteVariant'])->name('variants.delete');
     });
 

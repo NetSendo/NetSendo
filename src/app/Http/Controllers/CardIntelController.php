@@ -726,7 +726,7 @@ HTML;
         ];
 
         // Check which are integrated
-        $integrations = AiIntegration::active()
+        $integrations = AiIntegration::usable()
             ->whereIn('provider', array_keys($visionCapable))
             ->get()
             ->keyBy('provider');

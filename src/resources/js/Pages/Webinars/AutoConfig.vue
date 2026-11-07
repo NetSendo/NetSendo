@@ -1,7 +1,12 @@
 <script setup>
 import { Head, useForm, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import GoldNotice from '@/Components/License/GoldNotice.vue';
+import { useLicense } from '@/Composables/useLicense';
 import { ref, computed, watch } from 'vue';
+
+// Changing the schedule and chat of an auto-webinar is GOLD (saving answers 402 without it)
+const { can } = useLicense();
 
 const props = defineProps({
     webinar: Object,
@@ -146,6 +151,12 @@ fetchNextSessions();
 
         <div class="py-6">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+                <GoldNotice
+                    v-if="!can('auto_webinars')"
+                    feature="auto_webinars"
+                    :message="$t('license.gating.auto_webinar_locked')"
+                />
+
                 <!-- Schedule Type -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">{{ $t('webinars.autoconfig.schedule_type') }}</h3>

@@ -17,6 +17,11 @@ class AiService
      */
     public function getProvider(AiIntegration $integration): AiProviderInterface
     {
+        // OpenRouter and Ollama are GOLD: refused without the licence, whoever calls
+        if ($feature = AiIntegration::featureForProvider($integration->provider)) {
+            app(\App\Services\LicenseService::class)->ensureAllows($feature);
+        }
+
         $provider = match ($integration->provider) {
             'openai' => new OpenAiProvider(),
             'anthropic' => new AnthropicProvider(),
@@ -166,9 +171,9 @@ class AiService
      */
     public function getDefaultIntegration(): ?AiIntegration
     {
-        return AiIntegration::active()
-            ->whereNotNull('api_key')
-            ->orWhere('provider', 'ollama')
+        // Usable = active and covered by the licence (no OpenRouter/Ollama without GOLD)
+        return AiIntegration::usable()
+            ->where(fn ($query) => $query->whereNotNull('api_key')->orWhere('provider', 'ollama'))
             ->first();
     }
 }

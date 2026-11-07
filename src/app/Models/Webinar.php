@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Licensing\Feature;
+use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -571,11 +573,39 @@ class Webinar extends Model
     }
 
     /**
+     * The GOLD feature a webinar type needs: auto and hybrid webinars are GOLD, live ones are not.
+     */
+    public static function featureForType(?string $type): ?Feature
+    {
+        return match ($type) {
+            self::TYPE_AUTO => Feature::AutoWebinars,
+            self::TYPE_HYBRID => Feature::HybridWebinars,
+            default => null,
+        };
+    }
+
+    /**
+     * Whether the licence in effect covers this webinar's type.
+     */
+    public function isLicensed(): bool
+    {
+        $feature = self::featureForType($this->type);
+
+        return !$feature || app(LicenseService::class)->allows($feature);
+    }
+
+    /**
      * Check if webinar allows registration.
      */
     public function canRegister(): bool
     {
         if ($this->status === self::STATUS_DRAFT) {
+            return false;
+        }
+
+        // An auto or hybrid webinar without GOLD takes no new registrations; people already
+        // registered still get their session
+        if (!$this->isLicensed()) {
             return false;
         }
 

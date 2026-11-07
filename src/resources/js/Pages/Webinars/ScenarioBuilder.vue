@@ -5,6 +5,8 @@ import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ConfirmModal from '@/Components/Webinar/ConfirmModal.vue';
+import GoldNotice from '@/Components/License/GoldNotice.vue';
+import { useLicense } from '@/Composables/useLicense';
 import GenerateScriptsModal from '@/Pages/Webinars/Partials/GenerateScriptsModal.vue';
 
 const props = defineProps({
@@ -14,6 +16,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const { can } = useLicense();
 const scripts = ref(props.scripts);
 const isLoading = ref(false);
 const editingScript = ref(null);
@@ -198,6 +201,14 @@ const getTypeColor = (type) => {
 
     <AuthenticatedLayout>
         <div class="max-w-6xl mx-auto py-6 px-4">
+            <!-- Adding, editing and generating chat scripts is GOLD -->
+            <GoldNotice
+                v-if="!can('auto_webinars')"
+                class="mb-6"
+                feature="auto_webinars"
+                :message="$t('license.gating.auto_webinar_locked')"
+            />
+
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>

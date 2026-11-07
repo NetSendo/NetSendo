@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Webinar;
 use App\Models\ContactList;
+use App\Services\LicenseService;
 use App\Services\Webinar\WebinarService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,6 +81,11 @@ class WebinarController extends Controller
             'vimeo_id' => 'nullable|string|max:64',
             'video_provider' => 'nullable|in:youtube,vimeo,upload',
         ]);
+
+        // Auto and hybrid webinars are GOLD
+        if ($feature = Webinar::featureForType($validated['type'])) {
+            app(LicenseService::class)->ensureAllows($feature);
+        }
 
         $webinar = $this->webinarService->create($validated, auth()->id());
 
@@ -221,6 +227,11 @@ class WebinarController extends Controller
     public function duplicate(Webinar $webinar)
     {
         $this->authorize('view', $webinar);
+
+        // A copy of an auto or hybrid webinar is a new GOLD webinar
+        if ($feature = Webinar::featureForType($webinar->type)) {
+            app(LicenseService::class)->ensureAllows($feature);
+        }
 
         $newWebinar = $this->webinarService->duplicate($webinar);
 

@@ -3421,6 +3421,28 @@
                 },
                 "summary": "GOLD = silnik automatyzacji + warstwa developerska + AI bez ograniczeń architektury"
             }
+        },
+        "gating": {
+            "badge": "GOLD",
+            "locked_title": "Dostępne w GOLD",
+            "dialog_title": "Funkcja GOLD: {feature}",
+            "dialog_desc": "Twoja instalacja działa na darmowej licencji SILVER. Kup GOLD na stronie Licencja, aby to odblokować — klucz aktywuje się tu sam po opłaceniu.",
+            "dialog_cta": "Przejdź do strony Licencja",
+            "dialog_close": "Nie teraz",
+            "feature_fallback": "Ta funkcja",
+            "ab_tests_locked": "Testy A/B kampanii są w planie GOLD. Tę wiadomość możesz wysłać bez testu.",
+            "ab_tests_draft_locked": "Ta wiadomość ma przygotowany test A/B, ale testy A/B wymagają GOLD. Wyłącz test, żeby zapisać wiadomość, albo kup GOLD.",
+            "ab_tests_actions_locked": "Uruchamianie i wznawianie testów A/B wymaga GOLD. Wyniki, wstrzymanie i wybór zwycięzcy zostają dostępne.",
+            "webinar_type_locked": "Auto-webinary i webinary hybrydowe są w planie GOLD.",
+            "auto_webinar_locked": "Zmiana harmonogramu i scenariusza czatu auto-webinaru wymaga GOLD. Bez niego webinar nie przyjmuje nowych zapisów, a osoby już zapisane dostaną swoją sesję.",
+            "ai_provider_locked": "OpenRouter i lokalne modele Ollama są w planie GOLD. OpenAI, Anthropic, Gemini i Grok działają w SILVER.",
+            "features": {
+                "unlimited_ai_campaigns": "Nielimitowane kampanie AI",
+                "advanced_ai": "Zaawansowane AI (OpenRouter i lokalne modele Ollama)",
+                "ab_tests": "Testy A/B",
+                "auto_webinars": "Auto-webinary i kreator scenariuszy",
+                "hybrid_webinars": "Webinary hybrydowe"
+            }
         }
     },
     "ai": {
@@ -5084,13 +5106,14 @@
         "gold_priority": "Priorytetowe wsparcie email",
         "upgrade_to_gold": "Uaktualnij do GOLD",
         "upgrade_price": "$97/miesiąc • Anuluj kiedy chcesz",
-        "campaign_limit_reached": "Osiągnąłeś limit :limit kampanii dla planu SILVER. Uaktualnij do GOLD, aby tworzyć nieograniczoną liczbę kampanii.",
+        "campaign_limit_reached": "Osiągnąłeś limit {limit} kampanii dla planu SILVER. Uaktualnij do GOLD, aby tworzyć nieograniczoną liczbę kampanii.",
         "limit_reached_title": "Osiągnięto limit kampanii",
         "gold_benefits_title": "Korzyści planu GOLD",
         "gold_ai_models": "Zaawansowane modele AI (GPT-4, Claude 3)",
         "campaign_count": ":count z :limit kampanii",
         "campaign_count_unlimited": ":count kampanii (bez limitu)",
-        "upgrade_for_more": "Uaktualnij do GOLD, aby tworzyć więcej kampanii"
+        "upgrade_for_more": "Uaktualnij do GOLD, aby tworzyć więcej kampanii",
+        "campaigns_label": "Kampanii"
     },
     "backup": {
         "title": "Kopie zapasowe",

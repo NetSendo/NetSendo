@@ -101,4 +101,16 @@ return [
             'summary' => 'Full AI power and automated webinars',
         ],
     ],
+
+    // GOLD features refused on SILVER (App\Licensing\FeatureRequiresGold)
+    'gating' => [
+        'requires_gold' => '“:feature” requires the GOLD licence. Upgrade on the Licence page to use it.',
+        'features' => [
+            'unlimited_ai_campaigns' => 'Unlimited AI campaigns',
+            'advanced_ai' => 'Advanced AI (OpenRouter and local Ollama models)',
+            'ab_tests' => 'A/B tests',
+            'auto_webinars' => 'Auto-webinars and the scenario builder',
+            'hybrid_webinars' => 'Hybrid webinars',
+        ],
+    ],
 ];

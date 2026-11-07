@@ -3,12 +3,25 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import DangerButton from "@/Components/DangerButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 import { Head, useForm, router, usePage } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 const page = usePage();
+
+// OpenRouter and Ollama are GOLD (provider.required_feature, set by AiIntegrationController)
+const { can, requireGold } = useLicense();
+const providerLocked = (key) => {
+    const feature = props.providers[key]?.required_feature;
+    return !!feature && !can(feature);
+};
+const anyProviderLocked = computed(() =>
+    Object.keys(props.providers).some((key) => providerLocked(key)),
+);
 
 const props = defineProps({
     integrations: {
@@ -133,6 +146,13 @@ const getStatusClass = (providerKey) => {
 const openModal = (providerKey) => {
     const integration = getIntegration(providerKey);
     const provider = props.providers[providerKey];
+
+    // Adding a GOLD provider without GOLD: show the upgrade dialog instead (an existing
+    // one can still be edited or removed)
+    if (!integration && providerLocked(providerKey)) {
+        requireGold(provider?.required_feature);
+        return;
+    }
 
     if (integration) {
         // Edit mode
@@ -460,6 +480,12 @@ const currentProviderModels = computed(() => {
                 </div>
             </div>
 
+            <GoldNotice
+                v-if="anyProviderLocked"
+                feature="advanced_ai"
+                :message="$t('license.gating.ai_provider_locked')"
+            />
+
             <!-- Provider Cards Grid -->
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div
@@ -489,9 +515,13 @@ const currentProviderModels = computed(() => {
                             </div>
                             <div>
                                 <h3
-                                    class="font-semibold text-gray-900 dark:text-white"
+                                    class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-gray-900 dark:text-white"
                                 >
                                     {{ provider.name }}
+                                    <GoldBadge
+                                        v-if="provider.required_feature"
+                                        :locked="providerLocked(key)"
+                                    />
                                 </h3>
                                 <p
                                     class="text-xs text-gray-500 dark:text-gray-400"

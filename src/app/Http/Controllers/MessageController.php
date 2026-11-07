@@ -363,6 +363,9 @@ class MessageController extends Controller
             'translations.*.content' => 'nullable|string',
         ]);
 
+        // A/B tests are GOLD: refuse before anything is saved
+        app(MessageEditorService::class)->ensureAbTestAllowed($request->input('ab_test_config', []));
+
         // Verify access to lists (including shared lists for team members)
         if (!empty($validated['contact_list_ids'])) {
             $count = auth()->user()->accessibleLists()->whereIn('id', $validated['contact_list_ids'])->count();
@@ -762,6 +765,9 @@ class MessageController extends Controller
             'translations.*.preheader' => 'nullable|string|max:500',
             'translations.*.content' => 'nullable|string',
         ]);
+
+        // A/B tests are GOLD: refuse before anything is saved
+        app(MessageEditorService::class)->ensureAbTestAllowed($request->input('ab_test_config', []), $message);
 
         // Verify access to lists (including shared lists for team members)
         if (!empty($validated['contact_list_ids'])) {

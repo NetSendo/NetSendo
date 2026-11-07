@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **The GOLD plan sold on netsendo.com is now enforced in the application.** Until now only the Campaign Architect limit (3 plans on SILVER) was checked; A/B tests, auto and hybrid webinars and OpenRouter/Ollama worked on every installation, even without a licence. Without an active GOLD licence (no key, SILVER, or GOLD past its expiry) these are now refused on the server, in the panel, the public API, MCP and NetSendo Brain alike:
+  - **A/B tests:** creating, editing, adding variants, starting and resuming (`ab-tests.*`, `POST/PUT /api/v1/ab-tests`, `.../variants`, `.../start`), a message saved with an A/B test (editor and `POST/PUT /api/v1/messages` with `ab_test_config`, refused before anything is saved), and Brain's `create_ab_test` / `start_ab_test` steps. When a message with a draft test starts sending without GOLD, the test is cancelled and the message goes out as written (`AbTestService::cancelDraftWithoutLicence`).
+  - **Auto and hybrid webinars:** creating and copying them, saving the auto-webinar schedule and chat (`webinars.auto.schedule|import-chat|generate-chat|convert`), and adding, editing or generating chat scripts in the scenario builder. Without GOLD such a webinar takes no new registrations (`Webinar::canRegister()`).
+  - **OpenRouter and Ollama:** adding them in AI settings, and every call through them (`AiService::getProvider`). Wherever the app picks an integration (default integration, AI model list, Brain's preferred and per-task model, Campaign Auditor, CardIntel, template AI) it now uses `AiIntegration::usable()`, which leaves them out without GOLD, so AI falls back to OpenAI, Anthropic, Gemini or Grok.
+- **What keeps working after a GOLD licence ends** (EULA §5.5, nothing is deleted): tests that are already running finish and send the winner; results, pausing, picking the winner and deleting tests stay available; people already registered for an auto-webinar still get their session; auto-webinar settings stay readable; a message whose test already ran can still be edited; an existing OpenRouter/Ollama integration can be edited or removed.
+
+### Added
+
+- **One place for GOLD checks:** `App\Licensing\Feature` lists the GOLD features (`unlimited_ai_campaigns`, `advanced_ai`, `ab_tests`, `auto_webinars`, `hybrid_webinars`); `LicenseService::allows()`, `ensureAllows()` and `features()` check them, and the route middleware `licensed:<feature>` guards routes. A refused feature throws `App\Licensing\FeatureRequiresGold`: the public API and JSON calls get **402 Payment Required** with `code: gold_required`, `feature`, `required_plan` and `upgrade_url` (MCP shows its `message`), Inertia visits go back with a `gold_required` error and flash.
+- **GOLD in the interface:** every page gets `license.features` (shared Inertia prop). New `useLicense()` composable (`can('ab_tests')`, `requireGold()`), `GoldBadge`, `GoldNotice` and an upgrade dialog (`Components/License/UpgradeModal.vue`, mounted in the main layout) that opens on a refused feature, including axios calls answered with 402. Locked controls and notices in the message editor's A/B panel, the webinar type choice, the auto-webinar configuration and scenario builder pages, and the OpenRouter/Ollama cards in AI settings. Texts in en, pl, de, es.
+- `tests/Feature/GoldFeatureGatingTest.php` (24 tests) covers SILVER, GOLD and expired GOLD for each feature.
+
+### Fixed
+
+- **Campaign Architect limit messages showed raw text:** the limit dialog printed `:limit` literally and the plan counter showed the key `campaign_architect.campaigns_label`; the 403 answer returned the key `campaign_architect.campaign_limit_reached`. All three are translated now (en, pl, de, es).
+- **The default AI integration could pick an inactive Ollama integration** (`AiService::getDefaultIntegration` combined `orWhere('provider', 'ollama')` without grouping).
+- The licence plan is read in one database query instead of four per check (`LicenseService`).
+
 ## [2.3.2] – Welcome email for NetSendo Cloud, sign-up shown only when possible - 2026-11-07
 
 **Release date:** 2026-11-07

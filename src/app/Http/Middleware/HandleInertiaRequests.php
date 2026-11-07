@@ -36,14 +36,15 @@ class HandleInertiaRequests extends Middleware
         // Get license status directly from database
         $licenseActive = false;
         $licensePlan = null;
+        $licenseFeatures = [];
 
         try {
-            $licenseKey = Setting::where('key', 'license_key')->first();
-            $licensePlanSetting = Setting::where('key', 'license_plan')->first();
-
-            $licenseActive = $licenseKey !== null;
+            $licenses = app(LicenseService::class);
+            $licenseActive = Setting::where('key', 'license_key')->exists();
             // The plan in effect: an expired GOLD or a missing key works as SILVER
-            $licensePlan = app(LicenseService::class)->getCurrentPlan();
+            $licensePlan = $licenses->getCurrentPlan();
+            // GOLD features with whether this installation may use them (useLicense().can())
+            $licenseFeatures = $licenses->features();
         } catch (\Exception $e) {
             // Database not ready
         }
@@ -61,10 +62,13 @@ class HandleInertiaRequests extends Middleware
             'license' => [
                 'active' => $licenseActive,
                 'plan' => $licensePlan,
+                'features' => $licenseFeatures,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                // A GOLD feature was refused (App\Licensing\FeatureRequiresGold): opens the upgrade dialog
+                'gold_required' => fn () => $request->session()->get('gold_required'),
             ],
             'appVersion' => config('netsendo.version', '1.0.0'),
         ];
