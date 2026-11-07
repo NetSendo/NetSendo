@@ -149,7 +149,9 @@ class GmailOAuthService
             ? now()->parse($credentials['token_expires_at']) 
             : now()->subMinute();
 
-        if ($expiresAt->isPast() || $expiresAt->diffInMinutes(now()) < 5) {
+        // Carbon 3 returns a signed diff, so diffInMinutes(now()) < 5 was true
+        // for every token still valid (negative) and each call refreshed it.
+        if ($expiresAt->lte(now()->addMinutes(5))) {
             // Token expired or expiring soon, refresh it
             if (empty($credentials['refresh_token'])) {
                 throw new Exception('Gmail token expired and no refresh token available');
