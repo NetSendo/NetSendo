@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.5.2',
+    'version' => '2.6.0',
 
     /*
     |--------------------------------------------------------------------------
@@ -56,6 +56,19 @@ return [
     // unsubscribe links work, nothing is sent and every other page shows "instance asleep".
     // Set by the hosting provider; see App\Http\Middleware\DormantMode.
     'dormant' => (bool) env('NETSENDO_DORMANT', false),
+
+    // How this installation runs: docker, cloud (NetSendo Cloud, set by the hosting provider)
+    // or other. Unset: docker when /.dockerenv exists, else other. Used only by telemetry.
+    'deployment' => env('NETSENDO_DEPLOYMENT'),
+
+    // Anonymous usage report sent once a day to NetSendo PSA, only when the administrator
+    // switches it on (Settings → Telemetry); see docs/TELEMETRY.md and
+    // https://netsendo.com/en/docs/telemetry. NETSENDO_TELEMETRY=true/false overrides the
+    // panel switch and hides it; unset leaves the choice to the panel (default: off).
+    'telemetry' => [
+        'enabled' => env('NETSENDO_TELEMETRY'),
+        'url' => env('NETSENDO_TELEMETRY_URL', 'https://netsendo.com/api/telemetry'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

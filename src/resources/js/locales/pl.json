@@ -813,7 +813,8 @@
             "statistics": "Statystyki",
             "settings": "Ustawienia",
             "brain": "NetSendo Brain"
-        }
+        },
+        "telemetry": "Telemetria"
     },
     "dashboard": {
         "welcome_back": "Witaj ponownie, {name}! 👋",
@@ -9027,5 +9028,28 @@
     "Pole zostało usunięte.": "Pole zostało usunięte.",
     "Pole zostało utworzone.": "Pole zostało utworzone.",
     "Pole zostało zaktualizowane.": "Pole zostało zaktualizowane.",
-    "Ta nazwa pola jest zarezerwowana przez system.": "Ta nazwa pola jest zarezerwowana przez system."
+    "Ta nazwa pola jest zarezerwowana przez system.": "Ta nazwa pola jest zarezerwowana przez system.",
+    "telemetry": {
+        "title": "Telemetria",
+        "subtitle": "Pomóż nam ulepszać NetSendo jednym anonimowym raportem dziennie",
+        "intro": "Po włączeniu NetSendo wysyła raz dziennie do NetSendo PSA raport z wersją, planem i informacją, z których funkcji korzystasz. Liczby są wysyłane jako przedziały. Nigdy nie wysyłamy kontaktów, adresów e-mail, wiadomości, nazw ani domen, i nic nie trafia do Google ani innych narzędzi analitycznych.",
+        "toggle": "Wysyłaj anonimowe raporty użycia",
+        "status_on": "Włączona — raport jest wysyłany raz dziennie",
+        "status_off": "Wyłączona — nic nie jest wysyłane",
+        "env_locked": "Ustawione zmienną NETSENDO_TELEMETRY w środowisku; zmień ją tam.",
+        "instance_id": "Identyfikator instalacji",
+        "instance_id_help": "Losowy identyfikator utworzony przy włączeniu telemetrii. Nie jest powiązany z Twoją domeną, licencją ani kontem.",
+        "last_sent": "Ostatni wysłany raport",
+        "never": "nigdy",
+        "preview": "Raport, który wysyła Twoja instalacja",
+        "preview_help": "Dokładnie to zostaje wysłane, wygenerowane teraz z Twojej instalacji.",
+        "docs_link": "Opis wszystkich pól",
+        "saved_on": "Telemetria włączona. Dziękujemy!",
+        "saved_off": "Telemetria wyłączona. Poprosiliśmy netsendo.com o usunięcie raportów tej instalacji.",
+        "notice_title": "Pomożesz ulepszać NetSendo?",
+        "notice_text": "Zezwól na jeden anonimowy raport użycia dziennie: wersja, plan i używane funkcje, liczby jako przedziały. Bez kontaktów i danych osobowych. Wyłączone, dopóki tego nie włączysz.",
+        "notice_enable": "Włącz",
+        "notice_details": "Zobacz, co jest wysyłane",
+        "notice_dismiss": "Nie, dziękuję"
+    }
 }
