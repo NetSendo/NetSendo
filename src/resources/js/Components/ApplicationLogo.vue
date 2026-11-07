@@ -9,7 +9,7 @@ defineProps({
 
 <template>
     <img 
-        src="https://gregciupek.com/wp-content/uploads/2025/12/Logo-NetSendo-1700-x-500-px-1.png" 
+        src="/images/brand/netsendo-logo.png" 
         alt="NetSendo Logo"
         :class="class"
     />

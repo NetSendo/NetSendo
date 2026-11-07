@@ -16,6 +16,8 @@
         "vue": "^3.5.31"
     },
     "dependencies": {
+        "@fontsource/figtree": "^5.3.0",
+        "@fontsource/inter": "^5.3.0",
         "@tiptap/extension-color": "^3.21.0",
         "@tiptap/extension-font-family": "^3.21.0",
         "@tiptap/extension-highlight": "^3.21.0",

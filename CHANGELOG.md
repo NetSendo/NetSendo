@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.5.2] – The panel and webinar pages load nothing from other hosts - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **The panel loads its logos, favicon and fonts from your installation.** Until now every page of the panel, its sign-in page and the affiliate partner portal fetched the NetSendo logos and favicon from `gregciupek.com` and the Figtree and Inter fonts from `fonts.bunny.net`, so each page view gave those hosts the IP address and browser of the person using it. The images now ship in `public/images/brand` (the n8n logo in `public/images/integrations`), the fonts are bundled by Vite from the `@fontsource/figtree` and `@fontsource/inter` packages (SIL Open Font License), and the share image (`og:image`, `twitter:image`) points at your installation. The panel looks the same.
+- **Public webinar pages no longer load the Tailwind Play CDN.** The registration, post-registration, thank-you, watch and replay pages fetched `cdn.tailwindcss.com` on every visit: a request to another host from your subscribers' browsers, made with a script Tailwind does not support in production. They now use a stylesheet built with the app (`resources/css/webinar.css`, about 6 KB gzipped) and look the same. The watch and replay pages also stop loading the panel's JavaScript bundle, which they did not use (it only threw an error in the browser console there).
+- What a webinar's owner adds still loads from where they chose: YouTube, Vimeo and Calendly embeds, and a Google Font picked in the page builder.
+- `tests/Feature/NoThirdPartyAssetsTest.php` checks that the sign-in page, the panel and the five webinar pages load scripts, styles, icons and images only from the installation, that the former hosts are gone from the frontend sources, and that every `@vite()` entry a view asks for is built.
+
+### Fixed
+
+- The countdown, "not started yet" and "session ended" screens of the webinar watch page show their gradient again (gray, indigo, purple) instead of fading to black at the edges. The panel stylesheet and the Tailwind CDN, both loaded there, cancelled each other's gradient colours.
+
 ## [2.5.1] – Installations no longer contact Google Analytics - 2026-11-07
 
 **Release date:** 2026-11-07

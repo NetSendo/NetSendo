@@ -1,4 +1,15 @@
 import '../css/app.css';
+// Fonts are bundled with the app (no request to a font CDN): Figtree for the panel,
+// Inter for the dashboard activity chart. Each weight file covers its subsets with
+// unicode-range, so browsers download only the ones a page needs.
+import '@fontsource/figtree/400.css';
+import '@fontsource/figtree/500.css';
+import '@fontsource/figtree/600.css';
+import '@fontsource/figtree/700.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
 import './bootstrap';
 
 import { createInertiaApp, router } from '@inertiajs/vue3';

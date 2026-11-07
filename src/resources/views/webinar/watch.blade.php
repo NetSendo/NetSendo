@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $webinar->name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    @vite(['resources/js/app.js'])
+    @vite('resources/css/webinar.css')
     <style>
         /* Hide default video controls */
         video::-webkit-media-controls {

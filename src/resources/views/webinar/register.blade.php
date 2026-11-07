@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $webinar->name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/webinar.css')
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -75,7 +75,7 @@
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.email') }} *</label>
                             <input type="email" name="email" id="email" required
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="jan@example.com">
                         </div>
 
@@ -83,13 +83,13 @@
                             <div>
                                 <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.first_name') }}</label>
                                 <input type="text" name="first_name" id="first_name"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                     placeholder="Jan">
                             </div>
                             <div>
                                 <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.last_name') }}</label>
                                 <input type="text" name="last_name" id="last_name"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                     placeholder="Kowalski">
                             </div>
                         </div>
@@ -97,7 +97,7 @@
                         <div>
                             <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.timezone') }}</label>
                             <select name="timezone" id="timezone"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                 @foreach($timezones as $tz => $label)
                                     <option value="{{ $tz }}" {{ $tz === $defaultTimezone ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
@@ -114,7 +114,7 @@
                             {{ $webinar->pageContent('register_button', __('webinars.public.register.submit')) }}
                         </button>
 
-                        <p class="text-xs text-gray-500 text-center mt-4">
+                        <p class="text-xs text-gray-500 text-center">
                             {{ __('webinars.public.register.consent') }}
                         </p>
                     </form>
