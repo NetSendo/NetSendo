@@ -10,6 +10,7 @@ return [
     'login_to_account' => 'Inicia sesión en tu cuenta',
     'forgot_password_link' => '¿Olvidaste la contraseña?',
     'no_account' => '¿No tienes una cuenta?',
+    'registration_closed' => 'El registro está cerrado: este NetSendo ya tiene un administrador. Inicia sesión o pide al administrador que te añada.',
     'register' => [
         'title' => 'Registro',
         'admin_title' => 'Crear cuenta de administrador',

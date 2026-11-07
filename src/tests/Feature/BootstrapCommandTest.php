@@ -52,7 +52,10 @@ class BootstrapCommandTest extends TestCase
         $this->assertSame('pl', $admin->locale);
         $this->assertNotNull($admin->email_verified_at);
         $this->assertTrue(Hash::check('Mailed-Password-123', $admin->password));
-        Http::assertSent(fn (Request $r) => $r->url() === self::RELAY && $r['email'] === 'owner@example.com');
+        // A welcome email in the order's language with this instance's sign-in page, not a reset
+        Http::assertSent(fn (Request $r) => $r->url() === self::RELAY && $r['email'] === 'owner@example.com'
+            && $r['reason'] === 'welcome' && $r['locale'] === 'pl'
+            && $r['login_url'] === rtrim((string) config('app.url'), '/') . '/login');
 
         // The first-run registration is closed: nobody else can become the administrator
         $this->get('/register')->assertRedirect(route('login'));
