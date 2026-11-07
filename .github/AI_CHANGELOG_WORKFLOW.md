@@ -19,7 +19,11 @@ Rules:
 4. Be specific about what was changed (file names, feature names)
 5. Do NOT modify existing version sections
 6. Do NOT bump the VERSION file (I will do this manually when releasing)
+7. Use a "### Security" section only for fixes of vulnerabilities
 ```
+
+A release whose section has `### Security` reaches NetSendo Cloud instances at once; other
+releases are installed there overnight (`notify-aderlo` in `.github/workflows/docker-publish.yml`).
 
 ---
 
