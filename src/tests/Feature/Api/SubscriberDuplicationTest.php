@@ -39,7 +39,7 @@ class SubscriberDuplicationTest extends TestCase
         ]);
     }
 
-    public function test_cannot_create_duplicate_of_soft_deleted_subscriber()
+    public function test_recreating_a_soft_deleted_subscriber_restores_it_instead_of_duplicating()
     {
         // 1. Create a subscriber
         $subscriber = Subscriber::create([
@@ -66,23 +66,17 @@ class SubscriberDuplicationTest extends TestCase
             'last_name' => 'Doe',
         ];
 
-        // This is expected to fail currently with 500 or 409 or some SQL error
-        // But for the test to be useful/pass initially we might want to catch it or assert it fails.
-        // However, I want to prove it fails first.
+        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
+            ->postJson('/api/v1/subscribers', $payload);
 
-        try {
-            $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
-                ->postJson('/api/v1/subscribers', $payload);
+        // The deleted contact is restored and reused instead of duplicated
+        // (unique email per user). Like any existing address it answers 200,
+        // not 201 (docs/API_DOCUMENTATION.md, POST /api/v1/subscribers).
+        $response->assertStatus(200)
+            ->assertJsonPath('data.id', $subscriber->id);
 
-            // If it succeeds (which it shouldn't if bug exists), we print status
-            if ($response->status() !== 500) {
-                 // It might return 201 if my assumption is wrong, or 500 if SQL error
-            }
-
-            $response->assertStatus(201); // We WANT this to eventually pass
-        } catch (\Exception $e) {
-            // If it throws exception during test execution (unlikely with Laravel testing, usually returns 500 response)
-            throw $e;
-        }
+        $this->assertSame(1, Subscriber::withTrashed()->where('email', 'duplicate@example.com')->count());
+        $this->assertNotSoftDeleted('subscribers', ['id' => $subscriber->id]);
+        $this->assertTrue($subscriber->fresh()->contactLists()->whereKey($this->list->id)->exists());
     }
 }
