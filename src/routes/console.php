@@ -240,6 +240,22 @@ Schedule::command('replies:process-mailboxes')
 
 /*
 |--------------------------------------------------------------------------
+| Pixel — porzucone koszyki
+|--------------------------------------------------------------------------
+| Szuka koszyków (add_to_cart / checkout_started) bez zakupu i bez aktywności
+| od godziny i wysyła PixelCartAbandoned, które uruchamia automatyzacje
+| z wyzwalaczem pixel_cart_abandoned. Jeden trigger na koszyk.
+*/
+
+// Porzucone koszyki - co 15 minut
+Schedule::command('pixel:detect-abandoned-carts')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/pixel-abandoned-carts.log'));
+
+/*
+|--------------------------------------------------------------------------
 | Brain AI Orchestration
 |--------------------------------------------------------------------------
 | Automatyczne uruchamianie Mózgu AI wg ustawień CRON per-user.

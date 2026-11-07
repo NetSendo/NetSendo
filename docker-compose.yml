@@ -251,7 +251,10 @@ services:
       - netsendo-network
     volumes:
       - redisdata:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # Queued jobs live here next to the cache and sessions. volatile-lru evicts
+    # only keys with an expiry (cache entries, sessions) and never queued jobs,
+    # which have none; allkeys-lru could silently drop jobs when memory is full.
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

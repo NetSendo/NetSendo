@@ -259,7 +259,9 @@ class BounceMailboxService
             bounceType: $bounceType,
             bounceReason: mb_substr($parsed['diagnostic'] ?? $subject, 0, 255),
             messageId: null,
-            provider: 'imap_bounce'
+            provider: 'imap_bounce',
+            // Bounces in this mailbox come from mail its owner sent
+            userId: $mailbox->user_id
         );
 
         return [

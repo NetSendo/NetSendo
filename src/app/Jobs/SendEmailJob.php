@@ -342,7 +342,8 @@ class SendEmailJob implements ShouldQueue
                         bounceType: EmailBounced::TYPE_HARD,
                         bounceReason: mb_substr($errorMsg, 0, 255),
                         messageId: (string) $this->message->id,
-                        provider: 'smtp_inline'
+                        provider: 'smtp_inline',
+                        userId: $this->subscriber->user_id
                     );
                 } elseif ($bounceService->isSoftBounceError($errorMsg)) {
                     Log::info("Inline soft bounce detected for {$this->subscriber->email}", [
@@ -353,7 +354,8 @@ class SendEmailJob implements ShouldQueue
                         bounceType: EmailBounced::TYPE_SOFT,
                         bounceReason: mb_substr($errorMsg, 0, 255),
                         messageId: (string) $this->message->id,
-                        provider: 'smtp_inline'
+                        provider: 'smtp_inline',
+                        userId: $this->subscriber->user_id
                     );
                 }
             } catch (\Exception $bounceEx) {

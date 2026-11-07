@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **The bounce mailbox and custom headers sections of the mailbox form showed translation keys** (`mailboxes.bounce.section_title`, `mailboxes.custom_headers.add` …) instead of text. The keys existed only in the PHP language files, so they are now in the panel's locale files too (en, pl, de, es).
+- **Bounces from the bounce mailbox (IMAP) and from SMTP errors could hit another account's subscriber:** both looked the address up across all accounts of the instance and took the first match. They now only touch the account that sent the mail: the mailbox owner for IMAP, and the subscriber's own account for SMTP errors. Covered by `tests/Feature/BounceOwnerScopeTest.php`.
+- **Abandoned-cart automations never ran on their own:** `pixel:detect-abandoned-carts` feeds the `pixel_cart_abandoned` trigger but was not in the scheduler, so it ran only when started by hand. It now runs every 15 minutes (`routes/console.php`, log `storage/logs/pixel-abandoned-carts.log`). Two fixes come with it:
+  - A cart triggers once. The old check allowed a new trigger after 24 hours, so the same unpurchased cart re-triggered every day for up to 7 days. It also blocked a genuinely new cart for 24 hours after a trigger. A new `add_to_cart` or `checkout_started` event now starts a new cart.
+  - The new `--max-age` option (default 48 hours) skips carts whose last cart activity is older. Without it, the first scheduled run would have triggered automations for carts up to a week old.
+  - Covered by `tests/Feature/AbandonedCartDetectionTest.php`.
+- **Redis could evict queued jobs:** `docker-compose.yml` ran Redis with `--maxmemory-policy allkeys-lru`, and queues, cache and sessions share that instance. When Redis reached 256 MB, it could drop waiting jobs (emails, automations) without any error. The policy is now `volatile-lru`, which evicts only keys with an expiry: cache entries and sessions, never queued jobs. If memory is full and only keys without an expiry are left (a very large backlog), Redis rejects new writes with an OOM error instead of losing jobs. In that case raise `--maxmemory`.
+  - `install.sh` downloads the new `docker-compose.yml`, so new installs get the change.
+  - Existing installs keep their copy of the file. To apply the change there, edit the `command:` line of the `redis` service and run `docker compose up -d redis`. Alternatively, apply it without a restart with `docker compose exec redis redis-cli CONFIG SET maxmemory-policy volatile-lru`, then also edit the file so the setting survives a restart.
 
 ## [2.2.1] – Message editor 502 fix - 2026-11-07
 

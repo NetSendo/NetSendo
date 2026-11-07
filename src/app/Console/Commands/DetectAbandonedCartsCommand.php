@@ -17,6 +17,7 @@ class DetectAbandonedCartsCommand extends Command
      */
     protected $signature = 'pixel:detect-abandoned-carts
                             {--hours=1 : Hours of inactivity to consider cart abandoned}
+                            {--max-age=48 : Ignore carts whose last cart activity is older than this many hours}
                             {--dry-run : Run without dispatching events}';
 
     /**
@@ -32,9 +33,10 @@ class DetectAbandonedCartsCommand extends Command
     public function handle(): int
     {
         $hours = (int) $this->option('hours');
+        $maxAge = max($hours, (int) $this->option('max-age'));
         $dryRun = $this->option('dry-run');
 
-        $this->info("Detecting abandoned carts (inactivity threshold: {$hours} hour(s))...");
+        $this->info("Detecting abandoned carts (inactivity threshold: {$hours} hour(s), max age: {$maxAge} hour(s))...");
 
         $cutoffTime = now()->subHours($hours);
         $abandonedCount = 0;
@@ -44,21 +46,24 @@ class DetectAbandonedCartsCommand extends Command
         // 2. No purchase event after that
         // 3. No activity in the last X hours
         // 4. Are linked to a subscriber (for automation targeting)
-        // 5. Haven't already been marked as abandoned recently
+        // 5. Last cart activity no older than --max-age (no burst of week-old carts)
+        // 6. Haven't been marked as abandoned since that cart activity
 
-        $potentiallyAbandoned = $this->findPotentiallyAbandonedCarts($cutoffTime);
+        $potentiallyAbandoned = $this->findPotentiallyAbandonedCarts($cutoffTime, now()->subHours($maxAge));
 
         foreach ($potentiallyAbandoned as $cartData) {
             $this->info("  → Processing device #{$cartData['device_id']} (subscriber #{$cartData['subscriber_id']})");
 
-            // Check if already processed recently (last 24 hours)
+            // One trigger per cart: a new add_to_cart / checkout_started starts a new one.
+            // (A 24-hour window used to re-trigger the same cart every day for a week.)
             $alreadyProcessed = PixelEvent::where('subscriber_device_id', $cartData['device_id'])
+                ->where('subscriber_id', $cartData['subscriber_id'])
                 ->where('event_type', 'cart_abandoned_triggered')
-                ->where('occurred_at', '>=', now()->subHours(24))
+                ->where('occurred_at', '>=', $cartData['last_cart_activity'])
                 ->exists();
 
             if ($alreadyProcessed) {
-                $this->line("    Skipped (already processed within 24h)");
+                $this->line("    Skipped (already processed for this cart)");
                 continue;
             }
 
@@ -112,7 +117,7 @@ class DetectAbandonedCartsCommand extends Command
     /**
      * Find devices with potentially abandoned carts
      */
-    protected function findPotentiallyAbandonedCarts($cutoffTime): array
+    protected function findPotentiallyAbandonedCarts($cutoffTime, $oldestCartActivity): array
     {
         // Get devices that had cart activity but no purchase
         $results = PixelEvent::query()
@@ -134,6 +139,7 @@ class DetectAbandonedCartsCommand extends Command
             ->where('occurred_at', '>=', now()->subDays(7)) // Only look at last 7 days
             ->groupBy('subscriber_device_id', 'subscriber_id', 'user_id')
             ->havingRaw('last_cart_activity IS NOT NULL')
+            ->havingRaw('last_cart_activity >= ?', [$oldestCartActivity])
             ->havingRaw('(last_purchase_at IS NULL OR last_purchase_at < last_cart_activity)')
             ->havingRaw('last_activity_at < ?', [$cutoffTime])
             ->get();
@@ -143,6 +149,7 @@ class DetectAbandonedCartsCommand extends Command
             'subscriber_id' => $row->subscriber_id,
             'user_id' => $row->user_id,
             'last_activity_at' => $row->last_activity_at,
+            'last_cart_activity' => $row->last_cart_activity,
             'last_cart_event' => $row->last_cart_event,
             'cart_value' => $row->cart_value,
             'product_id' => $row->product_id,
