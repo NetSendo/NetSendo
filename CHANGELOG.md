@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.3.1] – NetSendo Cloud gets new versions right away - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **New versions reach NetSendo Cloud right after the release:** once the Docker image of a version (`vX.Y.Z`) is published, `.github/workflows/docker-publish.yml` tells Aderlo, which hosts NetSendo Cloud, through a signed call to its catalog. Before, hosted instances waited for the hosting provider's nightly registry check. The instances are updated one group at a time, at night. A release whose notes have a `### Security` section is installed at once, so use that section only for vulnerability fixes. The key (`ADERLO_RELEASE_KEY`) can only refresh the catalog. Self-hosted installations are not affected.
+
 ## [2.3.0] – Buy GOLD in the app, sleeping Cloud instances - 2026-11-07
 
 **Release date:** 2026-11-07
