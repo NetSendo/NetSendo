@@ -1,0 +1,102 @@
+# =============================================================================
+# NetSendo - Tell Aderlo about a published version
+# =============================================================================
+# Aderlo, which hosts NetSendo Cloud, checks the image registry every night
+# (02:34); this signed call makes it pick up a new version right away. It
+# updates its test instance first, then the customer instances in waves at
+# night, or at once for a security release.
+#
+#   - docker-publish.yml calls it after the image of a vX.Y.Z tag is pushed
+#   - Start it by hand to send it again for an existing tag (no rebuild)
+#
+# A release counts as a security release when its notes (from CHANGELOG.md)
+# have a `### Security` heading, or when `security` is set.
+# ADERLO_RELEASE_KEY may only refresh Aderlo's catalog: it cannot read or
+# change any instance. Store the key alone in the secret, nothing around it.
+# =============================================================================
+
+name: Notify Aderlo
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+      security:
+        type: boolean
+        required: false
+        default: false
+    secrets:
+      ADERLO_RELEASE_KEY:
+        required: false
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Released tag, e.g. v2.3.1'
+        required: true
+      security:
+        description: 'Security release: NetSendo Cloud updates at once instead of overnight.'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tell Aderlo a new NetSendo image is out
+        env:
+          ADERLO_RELEASE_KEY: ${{ secrets.ADERLO_RELEASE_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          SECURITY_INPUT: ${{ inputs.security }}
+        run: |
+          if ! printf '%s' "$TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'$TAG' is not a release tag (vX.Y.Z)."
+            exit 1
+          fi
+
+          # A line break or spaces around the key (pasted from a file) would break the signature
+          key="$ADERLO_RELEASE_KEY"
+          key="${key#"${key%%[![:space:]]*}"}"
+          key="${key%"${key##*[![:space:]]}"}"
+          if [ -z "$key" ]; then
+            echo "::warning::ADERLO_RELEASE_KEY is not set: Aderlo will find $TAG at its nightly check."
+            exit 0
+          fi
+          case "$key" in
+            *[[:space:]]*)
+              echo "::error::ADERLO_RELEASE_KEY has spaces or several lines in it. Store only the key itself."
+              exit 1 ;;
+          esac
+          # Never print the key; its length and shape help to spot "NAME=key" or the wrong key
+          shape="${#key} characters"
+          case "$key" in aderlo_*) shape="$shape, starts with aderlo_" ;; *) shape="$shape, does not start with aderlo_" ;; esac
+          case "$key" in *=*|*:*) shape="$shape, contains = or :" ;; esac
+
+          security=false
+          if [ "$SECURITY_INPUT" = "true" ]; then
+            security=true
+          elif gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body 2>/dev/null \
+            | grep -qE '^###[[:space:]]+Security[[:space:]]*$'; then
+            security=true
+          fi
+
+          body="{\"security\":$security}"
+          ts=$(date +%s)
+          sig="sha256=$(printf '%s.%s' "$ts" "$body" | openssl dgst -sha256 -hmac "$key" -hex | sed 's/^.* //')"
+          status=$(curl -sS --retry 3 --max-time 30 -o response.json -w '%{http_code}' \
+            -X POST https://aderlo.cloud/api/partner/v1/catalog/refresh \
+            -H "Authorization: Bearer $key" \
+            -H "X-Aderlo-Timestamp: $ts" -H "X-Aderlo-Signature: $sig" \
+            -H 'Content-Type: application/json' --data "$body") || status=000
+          echo "Aderlo answered $status: $(head -c 500 response.json 2>/dev/null)"
+          case "$status" in
+            2??) echo "**Aderlo notified:** \`$TAG\`, security release: $security" >> "$GITHUB_STEP_SUMMARY" ;;
+            401) echo "::error::Aderlo rejected the key or the signature (401): check that ADERLO_RELEASE_KEY holds only the release-workflow key ($shape)."; exit 1 ;;
+            *) echo "::error::Aderlo answered $status; it will still find $TAG at its nightly check."; exit 1 ;;
+          esac

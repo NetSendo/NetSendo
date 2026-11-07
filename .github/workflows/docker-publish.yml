@@ -14,9 +14,7 @@
 #
 # After a version image (tag vX.Y.Z) is pushed, notify-aderlo tells Aderlo,
 # which hosts NetSendo Cloud, so the hosted instances get the new version
-# without waiting for Aderlo's nightly registry check. A release whose
-# CHANGELOG section has a `### Security` heading rolls out at once instead of
-# overnight (or start this workflow on the tag by hand with security=true).
+# without waiting for Aderlo's nightly registry check (aderlo-notify.yml).
 # =============================================================================
 
 name: Build & Publish Docker Image
@@ -128,48 +126,16 @@ jobs:
           echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  # Tells Aderlo (NetSendo Cloud hosting) that a new version image is in the
-  # registry. Aderlo updates its test instance first, then the customer
-  # instances in waves at night, or at once for a security release. The key
-  # may only refresh Aderlo's catalog: it cannot read or change any instance.
-  # Without the call, Aderlo finds the version at its nightly check (02:34).
+  # Tells Aderlo (NetSendo Cloud hosting) about the new version right away
+  # (aderlo-notify.yml; also startable by hand to send it again for a tag).
   notify-aderlo:
     needs: build-and-push
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
     permissions:
       contents: read
-
-    steps:
-      - name: Tell Aderlo a new NetSendo image is out
-        env:
-          ADERLO_RELEASE_KEY: ${{ secrets.ADERLO_RELEASE_KEY }}
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-          SECURITY_INPUT: ${{ github.event.inputs.security }}
-        run: |
-          if [ -z "$ADERLO_RELEASE_KEY" ]; then
-            echo "::warning::ADERLO_RELEASE_KEY is not set: Aderlo will find $TAG at its nightly check."
-            exit 0
-          fi
-
-          # A security release: `### Security` in the release notes (taken from
-          # CHANGELOG.md by release.yml), or security=true on a manual run
-          security=false
-          if [ "$SECURITY_INPUT" = "true" ]; then
-            security=true
-          elif gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq .body 2>/dev/null \
-            | grep -qE '^###[[:space:]]+Security[[:space:]]*$'; then
-            security=true
-          fi
-
-          body="{\"security\":$security}"
-          ts=$(date +%s)
-          sig="sha256=$(printf '%s.%s' "$ts" "$body" | openssl dgst -sha256 -hmac "$ADERLO_RELEASE_KEY" -hex | sed 's/^.* //')"
-          curl -fsS --retry 3 --retry-all-errors --max-time 30 \
-            -X POST https://aderlo.cloud/api/partner/v1/catalog/refresh \
-            -H "Authorization: Bearer $ADERLO_RELEASE_KEY" \
-            -H "X-Aderlo-Timestamp: $ts" -H "X-Aderlo-Signature: $sig" \
-            -H 'Content-Type: application/json' --data "$body"
-          echo
-          echo "**Aderlo notified:** \`$TAG\`, security release: $security" >> "$GITHUB_STEP_SUMMARY"
+    uses: ./.github/workflows/aderlo-notify.yml
+    with:
+      tag: ${{ github.ref_name }}
+      security: ${{ github.event.inputs.security == 'true' }}
+    secrets:
+      ADERLO_RELEASE_KEY: ${{ secrets.ADERLO_RELEASE_KEY }}
