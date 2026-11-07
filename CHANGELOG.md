@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.5.0] – The SILVER/GOLD split is complete - 2026-11-07
+
+**Release date:** 2026-11-07
+
 ### Changed
 
 - **The SILVER/GOLD split is complete.** Besides the features enforced since 2.4.0, these now need an active GOLD licence (refused on the server, in the panel, the public API and MCP; 402 with `code: gold_required` for API calls):
