@@ -72,9 +72,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata (tags, labels, annotations)
         id: meta
         uses: docker/metadata-action@v6
+        # The image is multi-platform, so ghcr.io reads the package page's
+        # description and licence from annotations on the image index, not from
+        # labels (with labels only it showed no description and licence "Other").
+        # Annotations go on each platform manifest and on the index.
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # :latest comes only from the raw rule below (builds of main).
@@ -94,6 +100,15 @@ jobs:
             type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' }}
             # Short SHA for debugging
             type=sha,prefix=sha-
+          # Override the defaults taken from the repository (its description,
+          # and a licence GitHub cannot detect). Description max 512 characters.
+          labels: |
+            org.opencontainers.image.description=NetSendo - self-hosted email and SMS marketing automation (Laravel, Vue.js). Proprietary, source-available under the NetSendo EULA - not open source. Install guide: https://netsendo.com/en/docs/quickstart
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+            org.opencontainers.image.url=https://netsendo.com
+          annotations: |
+            org.opencontainers.image.description=NetSendo - self-hosted email and SMS marketing automation (Laravel, Vue.js). Proprietary, source-available under the NetSendo EULA - not open source. Install guide: https://netsendo.com/en/docs/quickstart
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
@@ -104,6 +119,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
