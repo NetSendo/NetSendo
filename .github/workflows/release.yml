@@ -8,6 +8,7 @@
 #   1. Reads version from VERSION file
 #   2. Checks if git tag already exists (idempotency)
 #   3. If new version: creates tag + GitHub Release with CHANGELOG notes
+#   4. Starts the Docker image build for the new tag (versioned image tags)
 #
 # To trigger a release:
 #   1. Update VERSION file (e.g., 1.0.5)
@@ -20,9 +21,12 @@ name: Create GitHub Release
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'VERSION'
 
 permissions:
   contents: write
+  actions: write   # start docker-publish.yml for the new tag
 
 jobs:
   release:
@@ -110,7 +114,19 @@ jobs:
           draft: false
           prerelease: false
 
-      # 6) Summary
+      # 6) Build the versioned Docker image.
+      #    A release created with GITHUB_TOKEN does not trigger other workflows,
+      #    so docker-publish.yml never sees `release: published` from here.
+      #    workflow_dispatch is the exception GITHUB_TOKEN may start, so dispatch
+      #    the build on the new tag: metadata-action then tags X.Y.Z, X.Y and X.
+      - name: Build Docker image for this release
+        if: steps.tagcheck.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: gh workflow run docker-publish.yml --repo "$GITHUB_REPOSITORY" --ref "v$VERSION" -f version="$VERSION"
+
+      # 7) Summary
       - name: Generate summary
         if: steps.tagcheck.outputs.exists != 'true'
         run: |

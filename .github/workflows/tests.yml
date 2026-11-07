@@ -1,0 +1,124 @@
+# =============================================================================
+# NetSendo - Tests
+# =============================================================================
+# Runs on every pull request and on pushes to main, so a green check on a
+# Dependabot PR means the app still installs, passes its test suite and builds,
+# not only that its lock files have no known advisories (dependency-audit.yml).
+#
+#   php       composer install + php artisan test (SQLite in memory, see phpunit.xml)
+#   frontend  composer install --no-dev + npm ci + npm run build, as in the image
+#   mcp       npm ci + tsc build + vitest for the MCP client
+# =============================================================================
+
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.5'   # same as docker/php/Dockerfile
+  NODE_VERSION: '24'   # same as the app image
+  PHP_EXTENSIONS: mbstring, intl, gd, zip, bcmath, exif, pcntl, pdo_sqlite, sqlite3
+
+jobs:
+  php:
+    name: PHP tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer
+          coverage: none
+
+      - name: Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('src/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Run tests
+        run: php artisan test
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+    steps:
+      - uses: actions/checkout@v7
+
+      # `npm run build` calls artisan (route:clear, ziggy:generate), so the
+      # build needs the PHP dependencies, like the Docker image build does.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          tools: composer
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --no-progress
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+  mcp:
+    name: MCP client
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      # The client has no test files yet; --passWithNoTests keeps the job green
+      # until the first *.test.ts lands, then those tests gate the PR.
+      - name: Install, build and test
+        run: |
+          npm ci
+          npm run build
+          npm run test:run -- --passWithNoTests

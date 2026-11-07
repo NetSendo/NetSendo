@@ -2,12 +2,12 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are currently being supported with security updates.
+Security fixes are released for the latest minor version only. Update to the newest release before reporting.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.x     | :white_check_mark: |
-| < 1.0   | :x:                |
+| 2.2.x   | :white_check_mark: |
+| < 2.2   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -17,7 +17,10 @@ We take the security of our software seriously. If you have found a security vul
 
 ### How to Report
 
-If you believe you have found a security vulnerability in NetSendo, please report it to us by emailing security@netsendo.com.
+If you believe you have found a security vulnerability in NetSendo, please report it privately in one of these ways:
+
+- **GitHub (preferred):** open the [Security tab](https://github.com/NetSendo/NetSendo/security) and choose **Report a vulnerability**. The report stays private between you and the maintainers.
+- **Email:** security@netsendo.com
 
 You should include:
 
