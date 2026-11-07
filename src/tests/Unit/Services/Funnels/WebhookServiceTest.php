@@ -11,6 +11,7 @@ use App\Models\ContactList;
 use App\Services\Funnels\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\Test;
 
 class WebhookServiceTest extends TestCase
 {
@@ -57,7 +58,7 @@ class WebhookServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function test_send_returns_success_on_200_response()
     {
         Http::fake([
@@ -74,7 +75,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals(1, $result['attempts']);
     }
 
-    /** @test */
+    #[Test]
     public function test_send_retries_on_server_error()
     {
         $callCount = 0;
@@ -96,7 +97,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals(3, $result['attempts']);
     }
 
-    /** @test */
+    #[Test]
     public function test_send_does_not_retry_on_client_error()
     {
         Http::fake([
@@ -113,7 +114,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals(1, $result['attempts']);
     }
 
-    /** @test */
+    #[Test]
     public function test_send_includes_custom_headers()
     {
         Http::fake(function ($request) {
@@ -132,7 +133,7 @@ class WebhookServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function test_build_payload_includes_subscriber_data()
     {
         $payload = $this->service->buildPayload($this->enrollment);
@@ -144,7 +145,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals($this->funnel->name, $payload['funnel']['name']);
     }
 
-    /** @test */
+    #[Test]
     public function test_build_payload_substitutes_variables()
     {
         $templateData = [
@@ -160,7 +161,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals('Test Funnel', $payload['funnel_name']);
     }
 
-    /** @test */
+    #[Test]
     public function test_parse_headers_handles_api_key()
     {
         $headers = $this->service->parseHeaders([
@@ -170,7 +171,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals('Bearer my-secret-key', $headers['Authorization']);
     }
 
-    /** @test */
+    #[Test]
     public function test_parse_headers_handles_basic_auth()
     {
         $headers = $this->service->parseHeaders([
@@ -180,7 +181,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals('Basic ' . base64_encode('user:password'), $headers['Authorization']);
     }
 
-    /** @test */
+    #[Test]
     public function test_parse_headers_handles_custom_headers()
     {
         $headers = $this->service->parseHeaders([
@@ -194,7 +195,7 @@ class WebhookServiceTest extends TestCase
         $this->assertEquals('value2', $headers['X-Custom-2']);
     }
 
-    /** @test */
+    #[Test]
     public function test_send_supports_different_http_methods()
     {
         Http::fake([
@@ -215,7 +216,7 @@ class WebhookServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function test_send_fails_after_max_retries()
     {
         Http::fake([

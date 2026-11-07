@@ -112,8 +112,12 @@ class CronScheduleServiceTimezoneTest extends TestCase
 
         $subscriber = $this->createSubscriber('America/New_York');
 
-        // Subscribed 5 days ago, day=1, so eligible by day count.
-        // But 10:00 AM New York = 15:00 UTC, and it's 14:59 UTC now.
+        // Subscribed yesterday, so the day-1 message is due today at
+        // 10:00 New York = 15:00 UTC, and it's 14:59 UTC now. (With the
+        // helper's five days ago the message was overdue and rightly sent.)
+        $subscriber->contactLists()->updateExistingPivot($this->list->id, [
+            'subscribed_at' => now()->subDay(),
+        ]);
         $message = $this->createMessage([
             'day' => 1,
             'time_of_day' => '10:00',

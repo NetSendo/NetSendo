@@ -11,6 +11,7 @@ use App\Models\AutomationRuleLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use App\Events\SubscriberSignedUp;
+use PHPUnit\Framework\Attributes\Test;
 
 class AutomationTriggerTest extends TestCase
 {
@@ -37,7 +38,7 @@ class AutomationTriggerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function test_bulk_move_triggers_automation()
     {
         // Create automation: when subscribing to List B, unsubscribe from List A
@@ -94,7 +95,7 @@ class AutomationTriggerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function test_bulk_copy_triggers_automation()
     {
         // Create automation: when subscribing to List B, add a tag
@@ -129,7 +130,7 @@ class AutomationTriggerTest extends TestCase
         ]);
 
         // Verify subscriber doesn't have the tag
-        $this->assertFalse($subscriber->tags->contains($tag));
+        $this->assertFalse($subscriber->tags()->get()->contains($tag));
 
         // Bulk copy subscriber to List B
         $this->actingAs($this->user)->post(route('subscribers.bulk-copy'), [
@@ -148,10 +149,10 @@ class AutomationTriggerTest extends TestCase
         $this->assertTrue($subscriber->contactLists->contains($this->listB));
 
         // Verify tag was added (automation worked)
-        $this->assertTrue($subscriber->tags->contains($tag));
+        $this->assertTrue($subscriber->tags()->get()->contains($tag));
     }
 
-    /** @test */
+    #[Test]
     public function test_bulk_add_triggers_automation()
     {
         // Create automation similar to bulk_copy test
@@ -202,10 +203,10 @@ class AutomationTriggerTest extends TestCase
         $this->assertTrue($subscriber->contactLists->contains($this->listB));
 
         // Verify tag was added (automation worked)
-        $this->assertTrue($subscriber->tags->contains($tag));
+        $this->assertTrue($subscriber->tags()->get()->contains($tag));
     }
 
-    /** @test */
+    #[Test]
     public function test_manual_add_always_triggers_automation_without_welcome_email()
     {
         // Create automation
@@ -247,10 +248,10 @@ class AutomationTriggerTest extends TestCase
         $this->assertNotNull($subscriber);
 
         // Verify tag was added even without welcome email (automation worked)
-        $this->assertTrue($subscriber->tags->contains($tag));
+        $this->assertTrue($subscriber->tags()->get()->contains($tag));
     }
 
-    /** @test */
+    #[Test]
     public function test_subscriber_signed_up_event_is_dispatched_on_bulk_operations()
     {
         Event::fake([SubscriberSignedUp::class]);
