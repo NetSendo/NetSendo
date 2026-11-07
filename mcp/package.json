@@ -1,6 +1,7 @@
 {
   "name": "@netsendo/mcp-client",
-  "version": "1.6.0",
+  "version": "1.6.1",
+  "mcpName": "com.netsendo/netsendo",
   "description": "Model Context Protocol client for NetSendo email marketing platform - connect AI assistants to your NetSendo instance",
   "main": "dist/index.js",
   "bin": {
@@ -35,7 +36,7 @@
     "url": "https://github.com/NetSendo/NetSendo.git",
     "directory": "mcp"
   },
-  "homepage": "https://netsendo.com",
+  "homepage": "https://netsendo.com/en/integrations/mcp",
   "bugs": {
     "url": "https://github.com/NetSendo/NetSendo/issues"
   },
