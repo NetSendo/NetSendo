@@ -4933,6 +4933,7 @@
                 "hybrid_webinars": "Hybrid-Webinare",
                 "funnel_ab_split": "Split-A/B-Schritte in Funnels",
                 "brain_autonomy": "NetSendo-Brain-Autonomie (automatische Modi, Cron, Ziele, Digest, Telegram, Recherche, Sprache)",
+                "semantic_knowledge": "Semantische Brain-Wissensdatenbank (Vektorsuche)",
                 "campaign_auditor": "KI-Kampagnen-Auditor",
                 "deliverability_shield": "Deliverability Shield",
                 "mail_infrastructure": "NetSendo Mail Infrastructure (NMI)",
@@ -4944,7 +4945,8 @@
             "nmi_locked": "NetSendo Mail Infrastructure ist Teil von GOLD. Der Versand über bereits eingerichtete IPs läuft weiter; Pools und IPs hinzufügen, Aufwärmen, DKIM und Blacklist-Prüfungen erfordern GOLD.",
             "team_locked": "SILVER umfasst ein Teammitglied neben dem Inhaber. Kaufen Sie GOLD, um weitere Personen einzuladen.",
             "funnel_split_locked": "Split-A/B-Schritte in Funnels sind Teil von GOLD. Funnels selbst sind in SILVER.",
-            "brain_locked": "Der NetSendo-Brain-Chat arbeitet in SILVER im manuellen Modus: Brain berät, Sie handeln. Automatische Modi, Cron, Ziele, Wochenbericht, Telegram, Webrecherche und Spracheingabe sind Teil von GOLD."
+            "brain_locked": "Der NetSendo-Brain-Chat arbeitet in SILVER im manuellen Modus: Brain berät, Sie handeln. Automatische Modi, Cron, Ziele, Wochenbericht, Telegram, Webrecherche und Spracheingabe sind Teil von GOLD.",
+            "semantic_knowledge_locked": "Die semantische Suche in der Wissensdatenbank ist im GOLD-Plan enthalten. In SILVER liest Brain die Wissensdatenbank nach Kategorien, und ein Eintrag darf bis zu 10.000 Zeichen haben."
         },
         "plan_features": {
             "email_sms": "E-Mail- und SMS-Kampagnen, Autoresponder und Systemnachrichten",
@@ -4965,6 +4967,7 @@
             "unlimited_ai_campaigns": "Unbegrenzte KI-Kampagnen",
             "advanced_ai": "Erweiterte KI: OpenRouter und lokale Ollama-Modelle",
             "brain_autonomy": "Autonomer NetSendo Brain: automatische Modi, Cron, Ziele, Wochenbericht, Telegram, Webrecherche, Sprache",
+            "semantic_knowledge": "Semantische Brain-Wissensdatenbank: Vektorsuche und Einträge bis 100.000 Zeichen",
             "campaign_auditor": "KI-Kampagnen-Auditor und KI-Analyse der Ergebnisse",
             "ab_tests": "A/B-Tests von Kampagnen",
             "funnel_ab_split": "Split-A/B-Schritte in Funnels",
@@ -8168,7 +8171,27 @@
             "selected_count": "Ausgewählt: {count}",
             "delete_selected": "🗑️ Ausgewählte löschen ({count})",
             "bulk_delete_confirm": "Möchtest du wirklich {count} Einträge aus der Wissensbasis löschen? Alle ausgewählten Einträge werden dauerhaft entfernt.",
-            "confirm_delete": "{count} Einträge löschen"
+            "confirm_delete": "{count} Einträge löschen",
+            "semantic": {
+                "title": "Semantische Suche",
+                "description": "Brain teilt Einträge in Abschnitte, wandelt sie in Vektoren um und wählt für jede Aufgabe die passenden Abschnitte statt einiger ganzer Einträge aus festen Kategorien. Einträge dürfen bis zu 100.000 Zeichen haben.",
+                "provider": "Embedding-Anbieter",
+                "provider_auto": "Automatisch: {name}",
+                "provider_auto_none": "Automatisch",
+                "model": "Embedding-Modell",
+                "model_help": "Wähle aus der Liste oder gib einen Modellnamen ein. Nach einer Änderung berechnet Brain die ganze Wissensdatenbank im Hintergrund neu.",
+                "no_provider": "Keine der verbundenen KI-Integrationen kann Embeddings erstellen. Füge OpenAI, Google Gemini, OpenRouter oder Ollama hinzu (Anthropic und Grok bieten das nicht an).",
+                "save": "Speichern und testen",
+                "saving": "Wird getestet…",
+                "saved": "Das Modell funktioniert, gespeichert",
+                "status": "{indexed} von {entries} Einträgen indexiert · {chunks} Abschnitte",
+                "status_model": "Modell: {model}",
+                "indexing": "Indexierung läuft im Hintergrund…",
+                "reindex": "Neu indexieren",
+                "reindex_queued": "Neuindexierung im Hintergrund gestartet",
+                "active": "Aktiv",
+                "content_limit": "Max. {limit} Zeichen"
+            }
         },
         "monitor_label": "Monitor",
         "monitor": {

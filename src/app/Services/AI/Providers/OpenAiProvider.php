@@ -3,9 +3,18 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use App\Services\AI\Concerns\OpenAiCompatibleEmbeddings;
+use App\Services\AI\EmbeddingProviderInterface;
 
-class OpenAiProvider extends BaseProvider
+class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
 {
+    use OpenAiCompatibleEmbeddings;
+
+    public function embeddingModels(): array
+    {
+        return ['text-embedding-3-small', 'text-embedding-3-large'];
+    }
+
     protected function getDefaultModel(): string
     {
         return 'gpt-4o-mini';

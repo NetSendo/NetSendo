@@ -228,7 +228,7 @@ VARS;
     protected function executeGenerateSubject(AiActionPlanStep $step, User $user): array
     {
         $config = $step->config;
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message', query: $config['topic'] ?? null);
 
         $topic = $config['topic'] ?? '';
         $count = $config['count'] ?? 5;
@@ -282,7 +282,7 @@ PROMPT;
     protected function executeGenerateBody(AiActionPlanStep $step, User $user): array
     {
         $config = $step->config;
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message', query: $config['topic'] ?? null);
 
         $type = $config['type'] ?? 'email';
         $topic = $config['topic'] ?? '';

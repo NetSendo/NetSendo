@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
@@ -612,15 +612,140 @@ const testSerpApi = async () => {
     }
 };
 
+// --- Semantic knowledge base (GOLD) ---
+const semanticLocked = computed(() => !can("semantic_knowledge"));
+const semantic = ref(null);
+const semanticForm = reactive({ integration_id: null, model: "" });
+const isSavingSemantic = ref(false);
+const isReindexing = ref(false);
+const semanticMessage = ref("");
+const semanticError = ref("");
+let semanticTimer = null;
+let semanticPolls = 0;
+// Set once this page started indexing (save, re-index, a changed entry): only then is
+// "indexing in the background" true, and only then is the state followed
+const semanticWatching = ref(false);
+
+const semanticIntegration = computed(() =>
+    (semantic.value?.integrations || []).find(
+        (i) => i.id === semanticForm.integration_id,
+    ) || null,
+);
+const semanticModelOptions = computed(
+    () => semanticIntegration.value?.models || [],
+);
+const semanticAutoName = computed(() => {
+    const first = semantic.value?.integrations?.[0];
+    return first ? `${first.name} (${first.provider})` : null;
+});
+const semanticIndexing = computed(() => {
+    const state = semantic.value;
+    return (
+        semanticWatching.value &&
+        !!state?.licensed &&
+        !!state?.active &&
+        state.status.indexed < state.status.entries
+    );
+});
+
+const loadSemantic = async (resetForm = false) => {
+    try {
+        const { data } = await axios.get("/brain/api/knowledge/semantic");
+        semantic.value = data;
+        if (resetForm) {
+            semanticForm.integration_id = data.integration_id ?? null;
+            semanticForm.model = data.model || "";
+        }
+    } catch (error) {
+        // The panel stays hidden without the state
+    }
+
+    // Follow background indexing for a few minutes
+    clearTimeout(semanticTimer);
+    if (semanticIndexing.value && semanticPolls < 60) {
+        semanticPolls++;
+        semanticTimer = setTimeout(() => loadSemantic(), 5000);
+    }
+};
+
+const refreshSemanticSoon = () => {
+    if (semanticLocked.value) return;
+    semanticWatching.value = true;
+    semanticPolls = 0;
+    clearTimeout(semanticTimer);
+    semanticTimer = setTimeout(() => loadSemantic(), 1500);
+};
+
+const onSemanticIntegrationChange = () => {
+    semanticForm.model = "";
+};
+
+const saveSemantic = async () => {
+    if (semanticLocked.value) {
+        requireGold("semantic_knowledge");
+        return;
+    }
+    isSavingSemantic.value = true;
+    semanticMessage.value = "";
+    semanticError.value = "";
+    try {
+        const { data } = await axios.put("/brain/api/knowledge/semantic", {
+            embedding_integration_id: semanticForm.integration_id,
+            embedding_model: semanticForm.integration_id
+                ? semanticForm.model || null
+                : null,
+        });
+        semantic.value = data;
+        semanticMessage.value = t("brain.knowledge.semantic.saved");
+        setTimeout(() => (semanticMessage.value = ""), 4000);
+        refreshSemanticSoon();
+    } catch (error) {
+        semanticError.value =
+            error.response?.data?.message || error.message || "";
+    } finally {
+        isSavingSemantic.value = false;
+    }
+};
+
+const reindexSemantic = async () => {
+    if (semanticLocked.value) {
+        requireGold("semantic_knowledge");
+        return;
+    }
+    isReindexing.value = true;
+    semanticMessage.value = "";
+    semanticError.value = "";
+    try {
+        const { data } = await axios.post(
+            "/brain/api/knowledge/semantic/reindex",
+        );
+        semantic.value = data;
+        semanticMessage.value = t("brain.knowledge.semantic.reindex_queued");
+        setTimeout(() => (semanticMessage.value = ""), 4000);
+        refreshSemanticSoon();
+    } catch (error) {
+        semanticError.value =
+            error.response?.data?.message || error.message || "";
+    } finally {
+        isReindexing.value = false;
+    }
+};
+
+onMounted(() => loadSemantic(true));
+onBeforeUnmount(() => clearTimeout(semanticTimer));
+
 // --- Knowledge Base ---
 const entries = ref(props.knowledgeEntries || []);
 const showAddForm = ref(false);
 const newEntry = reactive({
-    category: "general",
+    category: "company",
     title: "",
     content: "",
 });
-const CONTENT_MAX_LENGTH = 10000;
+// Longer entries come with the semantic knowledge base (GOLD), which sends only matching chunks
+const CONTENT_MAX_LENGTH = computed(() =>
+    can("semantic_knowledge") ? 100000 : 10000,
+);
 const TITLE_MAX_LENGTH = 255;
 const isSavingEntry = ref(false);
 
@@ -698,6 +823,7 @@ const saveEdit = async () => {
         );
         const idx = entries.value.findIndex((e) => e.id === editingEntry.id);
         if (idx !== -1) entries.value[idx] = response.data;
+        refreshSemanticSoon();
         cancelEdit();
     } catch (error) {
         // Error
@@ -717,7 +843,8 @@ const addEntry = async () => {
             content: newEntry.content,
         });
         entries.value.unshift(response.data);
-        newEntry.category = "general";
+        refreshSemanticSoon();
+        newEntry.category = "company";
         newEntry.title = "";
         newEntry.content = "";
         showAddForm.value = false;
@@ -732,6 +859,7 @@ const deleteEntry = async (id) => {
     try {
         await axios.delete(`/brain/api/knowledge/${id}`);
         entries.value = entries.value.filter((e) => e.id !== id);
+        refreshSemanticSoon();
         selectedIds.value.delete(id);
     } catch (error) {
         // Error
@@ -756,6 +884,7 @@ const confirmBulkDelete = async () => {
     try {
         await axios.post('/brain/api/knowledge/bulk-delete', { ids });
         entries.value = entries.value.filter((e) => !selectedIds.value.has(e.id));
+        refreshSemanticSoon();
         selectedIds.value = new Set();
     } catch (error) {
         // Error
@@ -2019,6 +2148,170 @@ const getCategoryColor = (key) => {
                                 : t("brain.knowledge.add", "➕ Dodaj wpis")
                         }}
                     </button>
+                </div>
+
+                <!-- Semantic search (GOLD) -->
+                <div
+                    v-if="semantic"
+                    class="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/30"
+                >
+                    <div
+                        class="mb-1 flex flex-wrap items-center justify-between gap-2"
+                    >
+                        <h4
+                            class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
+                        >
+                            🧭 {{ t("brain.knowledge.semantic.title") }}
+                            <GoldBadge :locked="semanticLocked" />
+                            <span
+                                v-if="!semanticLocked && semantic.active"
+                                class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            >
+                                {{ t("brain.knowledge.semantic.active") }}
+                            </span>
+                        </h4>
+                        <span
+                            v-if="!semanticLocked && semantic.active"
+                            class="text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{
+                                t("brain.knowledge.semantic.status", {
+                                    indexed: semantic.status.indexed,
+                                    entries: semantic.status.entries,
+                                    chunks: semantic.status.chunks,
+                                })
+                            }}
+                        </span>
+                    </div>
+                    <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                        {{ t("brain.knowledge.semantic.description") }}
+                    </p>
+
+                    <GoldNotice
+                        v-if="semanticLocked"
+                        feature="semantic_knowledge"
+                        :message="t('license.gating.semantic_knowledge_locked')"
+                    />
+
+                    <template v-else>
+                        <p
+                            v-if="!semantic.integrations.length"
+                            class="text-xs text-amber-700 dark:text-amber-300"
+                        >
+                            {{ t("brain.knowledge.semantic.no_provider") }}
+                        </p>
+                        <template v-else>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label
+                                        class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ t("brain.knowledge.semantic.provider") }}
+                                    </label>
+                                    <select
+                                        v-model="semanticForm.integration_id"
+                                        @change="onSemanticIntegrationChange"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    >
+                                        <option :value="null">
+                                            {{
+                                                semanticAutoName
+                                                    ? t(
+                                                          "brain.knowledge.semantic.provider_auto",
+                                                          { name: semanticAutoName },
+                                                      )
+                                                    : t(
+                                                          "brain.knowledge.semantic.provider_auto_none",
+                                                      )
+                                            }}
+                                        </option>
+                                        <option
+                                            v-for="integ in semantic.integrations"
+                                            :key="integ.id"
+                                            :value="integ.id"
+                                        >
+                                            {{ integ.name }} ({{ integ.provider }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <div v-if="semanticForm.integration_id">
+                                    <label
+                                        class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ t("brain.knowledge.semantic.model") }}
+                                    </label>
+                                    <input
+                                        v-model="semanticForm.model"
+                                        type="text"
+                                        list="brain-embedding-models"
+                                        maxlength="191"
+                                        :placeholder="semanticModelOptions[0] || ''"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    />
+                                    <datalist id="brain-embedding-models">
+                                        <option
+                                            v-for="model in semanticModelOptions"
+                                            :key="model"
+                                            :value="model"
+                                        />
+                                    </datalist>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-400">
+                                {{ t("brain.knowledge.semantic.model_help") }}
+                            </p>
+                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    @click="saveSemantic"
+                                    :disabled="isSavingSemantic"
+                                    class="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-2 text-xs font-medium text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl disabled:opacity-50"
+                                >
+                                    {{
+                                        isSavingSemantic
+                                            ? t("brain.knowledge.semantic.saving")
+                                            : t("brain.knowledge.semantic.save")
+                                    }}
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="reindexSemantic"
+                                    :disabled="isReindexing || !semantic.active"
+                                    class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                                >
+                                    {{ t("brain.knowledge.semantic.reindex") }}
+                                </button>
+                                <span
+                                    v-if="semantic.active"
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{
+                                        t("brain.knowledge.semantic.status_model", {
+                                            model: semantic.active.model,
+                                        })
+                                    }}
+                                </span>
+                                <span
+                                    v-if="semanticIndexing"
+                                    class="text-xs text-cyan-600 dark:text-cyan-400"
+                                >
+                                    {{ t("brain.knowledge.semantic.indexing") }}
+                                </span>
+                                <span
+                                    v-if="semanticMessage"
+                                    class="text-xs text-green-600 dark:text-green-400"
+                                >
+                                    ✓ {{ semanticMessage }}
+                                </span>
+                                <span
+                                    v-if="semanticError"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                >
+                                    {{ semanticError }}
+                                </span>
+                            </div>
+                        </template>
+                    </template>
                 </div>
 
                 <!-- Add Entry Form -->

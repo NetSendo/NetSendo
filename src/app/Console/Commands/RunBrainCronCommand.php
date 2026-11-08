@@ -341,7 +341,7 @@ class RunBrainCronCommand extends Command
                         ),
                     ];
 
-                    $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
+                    $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null);
                     $plan = $agent->plan($intent, $user, $knowledgeContext);
 
                     if (!$plan) {
@@ -826,7 +826,7 @@ class RunBrainCronCommand extends Command
                             ),
                         ];
 
-                        $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
+                        $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null);
                         $plan = $agent->plan($intent, $user, $knowledgeContext);
 
                         if ($plan) {

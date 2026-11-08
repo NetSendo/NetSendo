@@ -103,7 +103,7 @@ return [
             'duration' => 'monthly',
             'sections' => [
                 'everything' => ['everything_silver'],
-                'ai' => ['unlimited_ai_campaigns', 'advanced_ai', 'brain_autonomy', 'campaign_auditor'],
+                'ai' => ['unlimited_ai_campaigns', 'advanced_ai', 'brain_autonomy', 'semantic_knowledge', 'campaign_auditor'],
                 'growth' => ['ab_tests', 'funnel_ab_split', 'auto_webinars', 'hybrid_webinars', 'segmentation_dashboard'],
                 'deliverability' => ['deliverability_shield', 'mail_infrastructure'],
                 'team' => ['unlimited_team_members', 'priority_support'],

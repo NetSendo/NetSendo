@@ -37,6 +37,13 @@ enum Feature: string
      */
     case BrainAutonomy = 'brain_autonomy';
 
+    /**
+     * Semantic search in the Brain knowledge base: entries are split into chunks and embedded,
+     * and Brain picks the chunks that match the task at hand. Entries can be longer. On SILVER
+     * Brain reads the knowledge base by category; vectors made under GOLD are kept.
+     */
+    case SemanticKnowledge = 'semantic_knowledge';
+
     /** AI campaign audits (Campaign Auditor, daily audit) and AI analysis in campaign stats. */
     case CampaignAuditor = 'campaign_auditor';
 

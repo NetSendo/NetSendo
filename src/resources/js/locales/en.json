@@ -5579,6 +5579,7 @@
                 "hybrid_webinars": "Hybrid webinars",
                 "funnel_ab_split": "Split A/B steps in funnels",
                 "brain_autonomy": "NetSendo Brain autonomy (automatic modes, cron, goals, digest, Telegram, research, voice)",
+                "semantic_knowledge": "Semantic Brain knowledge base (vector search)",
                 "campaign_auditor": "AI Campaign Auditor",
                 "deliverability_shield": "Deliverability Shield",
                 "mail_infrastructure": "NetSendo Mail Infrastructure (NMI)",
@@ -5590,7 +5591,8 @@
             "nmi_locked": "NetSendo Mail Infrastructure is part of GOLD. Sending through IPs you already set up keeps working; adding pools and IPs, warming, DKIM and blacklist checks need GOLD.",
             "team_locked": "SILVER includes one team member besides the owner. Buy GOLD to invite more people.",
             "funnel_split_locked": "Split A/B steps in funnels are part of GOLD. Funnels themselves are in SILVER.",
-            "brain_locked": "The NetSendo Brain chat works in manual mode in SILVER: Brain advises, you act. Automatic modes, the cron, goals, the weekly digest, Telegram, web research and voice input are part of GOLD."
+            "brain_locked": "The NetSendo Brain chat works in manual mode in SILVER: Brain advises, you act. Automatic modes, the cron, goals, the weekly digest, Telegram, web research and voice input are part of GOLD.",
+            "semantic_knowledge_locked": "Semantic search in the knowledge base is in the GOLD plan. On SILVER Brain reads the knowledge base by category and an entry can have up to 10,000 characters."
         },
         "plan_features": {
             "email_sms": "Email and SMS campaigns, autoresponders and system messages",
@@ -5611,6 +5613,7 @@
             "unlimited_ai_campaigns": "Unlimited AI campaigns",
             "advanced_ai": "Advanced AI: OpenRouter and local Ollama models",
             "brain_autonomy": "Autonomous NetSendo Brain: automatic modes, cron, goals, weekly digest, Telegram, web research, voice",
+            "semantic_knowledge": "Semantic Brain knowledge base: vector search and entries up to 100,000 characters",
             "campaign_auditor": "AI Campaign Auditor and AI analysis of results",
             "ab_tests": "A/B tests of campaigns",
             "funnel_ab_split": "Split A/B steps in funnels",
@@ -8814,7 +8817,27 @@
             "selected_count": "Selected: {count}",
             "delete_selected": "🗑️ Delete selected ({count})",
             "bulk_delete_confirm": "Are you sure you want to delete {count} knowledge base entries? All selected entries will be permanently removed.",
-            "confirm_delete": "Delete {count} entries"
+            "confirm_delete": "Delete {count} entries",
+            "semantic": {
+                "title": "Semantic search",
+                "description": "Brain splits entries into chunks, turns them into vectors and picks the chunks that match each task, instead of a few whole entries from chosen categories. Entries can have up to 100,000 characters.",
+                "provider": "Embedding provider",
+                "provider_auto": "Automatic: {name}",
+                "provider_auto_none": "Automatic",
+                "model": "Embedding model",
+                "model_help": "Pick one from the list or type a model name. After a change Brain re-embeds the whole knowledge base in the background.",
+                "no_provider": "None of the connected AI integrations can create embeddings. Add OpenAI, Google Gemini, OpenRouter or Ollama (Anthropic and Grok do not offer them).",
+                "save": "Save and test",
+                "saving": "Testing…",
+                "saved": "The model works, saved",
+                "status": "{indexed} of {entries} entries indexed · {chunks} chunks",
+                "status_model": "Model: {model}",
+                "indexing": "Indexing in the background…",
+                "reindex": "Re-index",
+                "reindex_queued": "Re-indexing started in the background",
+                "active": "Active",
+                "content_limit": "Max. {limit} characters"
+            }
         },
         "monitor_label": "Monitor",
         "monitor": {

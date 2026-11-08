@@ -257,6 +257,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test')->middleware('licensed:brain_autonomy');
 
         // Knowledge Base
+        // Semantic knowledge base (GOLD) — registered before /api/knowledge/{id}
+        Route::get('/api/knowledge/semantic', [\App\Http\Controllers\SemanticKnowledgeController::class, 'show'])->name('api.knowledge.semantic');
+        Route::put('/api/knowledge/semantic', [\App\Http\Controllers\SemanticKnowledgeController::class, 'update'])->name('api.knowledge.semantic.update')->middleware('licensed:semantic_knowledge');
+        Route::post('/api/knowledge/semantic/reindex', [\App\Http\Controllers\SemanticKnowledgeController::class, 'reindex'])->name('api.knowledge.semantic.reindex')->middleware('licensed:semantic_knowledge');
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
         Route::put('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])->name('api.knowledge.update');
         Route::delete('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'deleteKnowledge'])->name('api.knowledge.destroy');

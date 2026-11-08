@@ -3,9 +3,45 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use App\Services\AI\EmbeddingProviderInterface;
+use Illuminate\Support\Facades\Http;
 
-class OllamaProvider extends BaseProvider
+class OllamaProvider extends BaseProvider implements EmbeddingProviderInterface
 {
+    /** Multilingual models first: knowledge bases are often not in English. */
+    public function embeddingModels(): array
+    {
+        return ['bge-m3', 'embeddinggemma', 'qwen3-embedding', 'nomic-embed-text'];
+    }
+
+    public function embed(array $texts, ?string $model = null, array $options = []): array
+    {
+        if ($texts === []) {
+            return [];
+        }
+
+        $url = rtrim($this->getBaseUrl(), '/') . '/api/embed';
+        $response = Http::withHeaders($this->getDefaultHeaders())
+            // A local model on a CPU can take a while for a batch of chunks
+            ->timeout($options['timeout'] ?? 80)
+            ->post($url, [
+                'model' => $model ?: $this->embeddingModels()[0],
+                'input' => array_values($texts),
+            ]);
+
+        if (!$response->successful()) {
+            $error = $response->json('error') ?? mb_substr($response->body(), 0, 300);
+            throw new \RuntimeException("Embedding request failed ({$response->status()}): " . (is_string($error) ? $error : json_encode($error)));
+        }
+
+        $embeddings = $response->json('embeddings');
+        if (!is_array($embeddings) || count($embeddings) !== count($texts)) {
+            throw new \RuntimeException('Embedding response has no vectors for every text.');
+        }
+
+        return array_map(fn ($vector) => array_map('floatval', $vector), $embeddings);
+    }
+
     protected function getDefaultModel(): string
     {
         return 'llama4.1';
@@ -25,8 +61,8 @@ class OllamaProvider extends BaseProvider
 
         // Optional: Add Authorization header if API key is configured
         // Useful for Ollama servers behind reverse proxy with auth
-        if (!empty($this->apiKey)) {
-            $headers['Authorization'] = 'Bearer ' . $this->apiKey;
+        if (!empty($apiKey = $this->getApiKey())) {
+            $headers['Authorization'] = 'Bearer ' . $apiKey;
         }
 
         return $headers;

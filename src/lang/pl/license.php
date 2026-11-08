@@ -45,6 +45,7 @@ return [
             'hybrid_webinars' => 'Webinary hybrydowe',
             'funnel_ab_split' => 'Kroki split A/B w lejkach',
             'brain_autonomy' => 'Autonomia NetSendo Brain (tryby automatyczne, cron, cele, raport, Telegram, research, głos)',
+            'semantic_knowledge' => 'Semantyczna baza wiedzy Brain (wyszukiwanie wektorowe)',
             'campaign_auditor' => 'AI Campaign Auditor',
             'deliverability_shield' => 'Deliverability Shield',
             'mail_infrastructure' => 'NetSendo Mail Infrastructure (NMI)',

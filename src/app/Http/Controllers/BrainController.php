@@ -276,7 +276,8 @@ class BrainController extends Controller
         $request->validate([
             'category' => 'required|string|in:' . implode(',', array_keys(KnowledgeEntry::CATEGORIES)),
             'title' => 'required|string|max:255',
-            'content' => 'required|string|max:10000',
+            // Longer entries come with the semantic knowledge base (GOLD), which sends only matching chunks
+            'content' => 'required|string|max:' . KnowledgeEntry::contentLimit(),
             'tags' => 'nullable|array',
         ]);
 
@@ -304,7 +305,7 @@ class BrainController extends Controller
         $request->validate([
             'category' => 'nullable|string|in:' . implode(',', array_keys(KnowledgeEntry::CATEGORIES)),
             'title' => 'nullable|string|max:255',
-            'content' => 'nullable|string|max:10000',
+            'content' => 'nullable|string|max:' . KnowledgeEntry::contentLimit(),
             'is_active' => 'nullable|boolean',
             'is_verified' => 'nullable|boolean',
         ]);

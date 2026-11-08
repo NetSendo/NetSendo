@@ -506,4 +506,10 @@ return [
     'situation_analysis_auto_executed' => ':count tareas de alta prioridad ejecutadas automáticamente',
     'situation_analysis_error' => '❌ El análisis de situación falló. Por favor, inténtalo de nuevo.',
     'situation_analysis_no_data' => '⚠️ No se pudieron recopilar suficientes datos para el análisis. Asegúrate de tener campañas, listas o datos CRM.',
+
+    // === Semantic knowledge base (GOLD) ===
+    'knowledge_semantic' => [
+        'no_provider' => 'Ninguna de las integraciones de IA conectadas puede crear embeddings. Añade OpenAI, Google Gemini, OpenRouter u Ollama (Anthropic y Grok no los ofrecen).',
+        'test_failed' => 'El modelo de embeddings no respondió correctamente: :error',
+    ],
 ];
