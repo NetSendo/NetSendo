@@ -291,7 +291,8 @@
             "confirm_action": "Sind Sie sicher, dass Sie fortfahren möchten?",
             "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "exported_failed": "Export fehlgeschlagen.",
-            "imported_failed": "Import fehlgeschlagen."
+            "imported_failed": "Import fehlgeschlagen.",
+            "error": "Fehler"
         },
         "days": {
             "monday": "Montag",
@@ -357,7 +358,10 @@
         "source_placeholder": "HTML-Code eingeben oder einfügen...",
         "undo": "Rückgängig",
         "redo": "Wiederholen",
-        "date": "Datum"
+        "date": "Datum",
+        "adding": "Wird hinzugefügt...",
+        "connect": "Verbinden",
+        "creating": "Wird erstellt..."
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -7987,7 +7991,8 @@
         "setup_required": "EINRICHTUNG ERFORDERLICH",
         "banner": {
             "title": "Professionelle Mail-Infrastruktur",
-            "description": "Bauen Sie Ihre Absender-Reputation mit dedizierten IP-Adressen, intelligentem IP-Warming und automatischer DKIM-Signierung auf."
+            "description": "Bauen Sie Ihre Absender-Reputation mit dedizierten IP-Adressen, intelligentem IP-Warming und automatischer DKIM-Signierung auf.",
+            "start_with_guide": "Beginne mit der Anleitung unten: Sie führt dich durch alle Schritte."
         },
         "features": {
             "dedicated_ips": "Dedizierte IP-Adressen",
@@ -8063,7 +8068,10 @@
             "ip_address": "IP-Adresse",
             "ip_address_placeholder": "z.B. 192.168.1.100",
             "submit": "IP hinzufügen",
-            "title": "IP-Adresse hinzufügen"
+            "title": "IP-Adresse hinzufügen",
+            "provider": "Anbieter des Servers",
+            "provider_other": "Anderer Anbieter",
+            "provider_help": "NetSendo zeigt die Anleitungen dieses Anbieters auf der Seite der IP."
         },
         "delete_ip": {
             "confirm": "Möchten Sie diese IP-Adresse wirklich löschen?",
@@ -8079,7 +8087,10 @@
             "checking": "Überprüfung...",
             "offline": "MTA Offline",
             "online": "MTA Online",
-            "title": "MTA-Status"
+            "title": "MTA-Status",
+            "port25_open": "Port 25 offen",
+            "port25_blocked": "Port 25 gesperrt",
+            "port25_blocked_help": "Dieser Server kann keine ausgehenden Verbindungen auf Port 25 öffnen, daher kann NetSendo MTA von hier keine E-Mails an die Server der Empfänger zustellen. Viele Cloud-Anbieter sperren Port 25 (Google Cloud immer): Bitten Sie Ihren Anbieter um Freigabe oder senden Sie über einen anderen Postfach-Anbieter (SMTP, SendGrid)."
         },
         "pool_max_ips_reached": "Dieser Pool hat die maximale Anzahl an IP-Adressen erreicht.",
         "provider_not_configured": "Dieser Anbieter ist nicht konfiguriert. Fügen Sie einen API-Schlüssel in den Anbieter-Einstellungen hinzu.",
@@ -8106,7 +8117,225 @@
             "select_provider": "Anbieter wählen",
             "select_region": "Region wählen",
             "submit": "IP bestellen",
-            "title": "IP aus der Cloud bestellen"
+            "title": "IP aus der Cloud bestellen",
+            "reserve_only": "Damit wird nur eine Adresse beim Anbieter reserviert. Die Adresse muss vom selben Anbieter wie dein Server stammen und noch zum Server hinzugefügt werden. Prüfe im Anbietervergleich, ob er Port 25 durchlässt."
+        },
+        "starting": "Wird gestartet...",
+        "checking": "Wird geprüft...",
+        "generating": "Wird generiert...",
+        "dkim_needs_domain": "Weisen Sie die IP zuerst einer Domain zu: Der DKIM-Eintrag wird unter dieser Domain veröffentlicht.",
+        "dkim_check_failed": "Die DKIM-Prüfung ist fehlgeschlagen.",
+        "warming": {
+            "new": "Nicht gestartet",
+            "warming": "Warming läuft",
+            "warmed": "Aufgewärmt",
+            "paused": "Pausiert"
+        },
+        "ip_domain": {
+            "title": "Absenderdomain",
+            "description": "Die Domain, für die diese IP sendet. Ihr DKIM-Eintrag wird unter dieser Domain veröffentlicht, und die NetSendo-MTA-Postfächer der Domain senden über diese IP.",
+            "none": "Noch keiner Domain zugewiesen. Wählen Sie eine Ihrer Domains aus dem Deliverability Shield.",
+            "select": "Domain wählen",
+            "assign": "Zuweisen",
+            "move": "Verschieben",
+            "unassign": "Von der Domain lösen",
+            "no_domains": "Sie haben noch keine Domains. Fügen Sie eine hinzu im",
+            "open_domain": "Domain-Einstellungen",
+            "not_verified": "nicht verifiziert",
+            "nmi_on": "NetSendo MTA eingeschaltet",
+            "nmi_off": "NetSendo MTA ausgeschaltet",
+            "in_use": "Postfächer, die über diese IP senden: {count}. Um sie zu verschieben oder zu lösen, stellen Sie diese zuerst auf eine andere IP oder einen anderen Anbieter um.",
+            "dkim_note": "Die DKIM-Schlüssel bleiben beim Verschieben der IP erhalten: Veröffentlichen Sie ihren Eintrag unter der neuen Domain erneut."
+        },
+        "domain_card": {
+            "title": "NetSendo MTA (NMI)",
+            "description": "Senden Sie die E-Mails dieser Domain über den eigenen MTA von NetSendo und Ihre dedizierten IPs.",
+            "enabled": "Eingeschaltet",
+            "disabled": "Ausgeschaltet",
+            "enable": "NetSendo MTA einschalten",
+            "disable": "Ausschalten",
+            "needs_verification": "Verifizieren Sie die Domain (den CNAME-Eintrag oben), bevor Sie NetSendo MTA einschalten.",
+            "not_available": "Der Versandserver ist ausgeschaltet. Ein Admin schaltet ihn in der Mail-Infrastruktur ein (Schritt-für-Schritt-Anleitung).",
+            "smtp_username": "MTA-Login",
+            "smtp_username_hint": "NetSendo meldet sich mit diesem Login und einem generierten Passwort am MTA an. Sie müssen sie nirgends eingeben.",
+            "ips": "Dedizierte IPs dieser Domain",
+            "no_ips": "Dieser Domain ist noch keine dedizierte IP zugewiesen. Weisen Sie eine auf ihrer Seite zu in",
+            "dkim_ready": "DKIM-Schlüssel bereit",
+            "dkim_missing": "Keine DKIM-Schlüssel",
+            "mailboxes": "Postfächer, die über NetSendo MTA senden: {count}",
+            "in_use": "Stellen Sie diese Postfächer auf einen anderen Anbieter um, bevor Sie NetSendo MTA ausschalten.",
+            "next_steps": "Weiter: eine dedizierte IP zuweisen, ihre DKIM-Schlüssel generieren und den Eintrag veröffentlichen, dann ein NetSendo-MTA-Postfach anlegen unter"
+        },
+        "server_name": {
+            "label": "Name des Mailservers",
+            "none": "keiner",
+            "ptr_ok": "PTR-Eintrag in Ordnung",
+            "ptr_missing": "PTR-Eintrag fehlt",
+            "ok_help": "Empfangende Server sehen diesen Namen, und der PTR-Eintrag der Serveradresse zeigt auf ihn.",
+            "ptr_help": "Empfangende Server (Gmail, Outlook…) prüfen den PTR-Eintrag der Adresse, von der die Mail kommt. Setze beim Anbieter deines Servers (in dessen Panel oder per Supportanfrage) den PTR-Eintrag der Adresse unten auf {name}. Eine neue Subdomain ist nicht nötig.",
+            "address_ptr": "{ip} → PTR: {ptr}",
+            "no_ptr": "keiner",
+            "none_help": "Die Adresse des Panels (APP_URL) ist kein Domainname, daher hat der Mailserver keinen Namen. Setze APP_URL auf die Adresse des Panels mit seiner Domain oder NMI_HOSTNAME in der .env.",
+            "cloudflare": "Läuft die Domain des Panels über den Cloudflare-Proxy (orange Wolke), zeigt sie auf Adressen von Cloudflare, nicht auf deinen Server. Setze dann NMI_HOSTNAME auf einen Namen ohne Proxy, z. B. mail.example.com."
+        },
+        "sending_ip": {
+            "title": "Versand von dieser IP",
+            "description": "Mails der Postfächer mit dieser IP gehen unter dem Namen unten von ihr aus, wenn die IP auf dem Server eingerichtet ist.",
+            "name_label": "Name der IP (für ihren PTR-Eintrag)",
+            "name_help": "Mit diesem Namen stellt sich der Mailserver vor, wenn er von dieser IP sendet. Jede Subdomain deiner Domain ist möglich, z. B. mail1.example.com.",
+            "ptr_label": "PTR-Eintrag",
+            "ptr_ok": "Stimmt",
+            "ptr_not_ok": "Nicht geprüft oder stimmt nicht",
+            "verify_ptr": "PTR prüfen",
+            "ptr_now": "Der PTR-Eintrag zeigt jetzt auf: {ptr}",
+            "step_a_record": "Lege im DNS deiner Domain einen A-Eintrag an: {name} → {ip}.",
+            "step_ptr": "Setze beim Anbieter deines Servers den PTR-Eintrag von {ip} auf {name}. Er wird nicht im DNS der Domain gesetzt, sondern im Panel des Anbieters, dem die Adresse gehört.",
+            "on_server": "Der Mailserver hat diese Adresse: die Mails gehen von ihr aus.",
+            "not_on_server": "Der Versandserver hat diese Adresse nicht, daher gehen die Mails von der Hauptadresse des Servers aus. Füge die Adresse beim Anbieter zum Server hinzu (Anleitungen des Anbieters oben), dann nutzt der Versandserver sie.",
+            "server_unknown": "Nicht bekannt, ob der Mailserver diese Adresse hat (er antwortet nicht oder ist eine ältere Version).",
+            "ipv6": "IPv6-Adressen werden nicht zum Versand genutzt: der Mailserver liefert über IPv4 von der Hauptadresse des Servers aus.",
+            "ptr_check_failed": "Der PTR-Eintrag konnte nicht geprüft werden.",
+            "at_provider": "Anleitungen von {provider}"
+        },
+        "guide": {
+            "title": "Eigener Versandserver: Schritt für Schritt",
+            "subtitle": "Jeder Schritt prüft sich selbst. Grün ist erledigt, Rot blockiert den Versand, Orange funktioniert, braucht aber eine Korrektur.",
+            "progress": "Erledigt: {done} von {total}",
+            "refresh": "Erneut prüfen",
+            "load_failed": "Die Schritte konnten nicht geprüft werden. Versuche es erneut.",
+            "see_providers": "Anbieter ansehen",
+            "needs_ip": "Füge zuerst eine IP-Adresse hinzu und weise sie einer Domain zu.",
+            "status": {
+                "ok": "Erledigt",
+                "todo": "Zu tun",
+                "warning": "Zu korrigieren",
+                "error": "Blockiert den Versand",
+                "unknown": "Unbekannt",
+                "info": "Zum Schluss"
+            },
+            "switch": {
+                "title": "Versandserver einschalten",
+                "ok": "Eingeschaltet. Er versendet nur Mails der Domains, für die du ihn einschaltest.",
+                "todo": "Der Versandserver ist ausgeschaltet und versendet nichts. Zum Einschalten ist eine GOLD-Lizenz nötig.",
+                "forced": "Dauerhaft eingeschaltet in der .env (NMI_ENABLED=true). Entferne diese Zeile, um ihn im Panel zu schalten.",
+                "admin_only": "Einschalten kann ihn der Admin des Kontos.",
+                "enable": "Versandserver einschalten",
+                "disable": "Ausschalten"
+            },
+            "mta": {
+                "title": "Der Versandserver läuft",
+                "ok": "Er antwortet unter {address}.",
+                "error": "NetSendo kann sich nicht mit dem Versandserver ({address}) verbinden. Lade auf dem Server im NetSendo-Ordner die neueste docker-compose.yml herunter und führe aus:",
+                "firewall": "Ist auf dem Server die Firewall ufw aktiv, lass die NetSendo-Container durch:"
+            },
+            "port25": {
+                "title": "Port 25 ist offen",
+                "ok": "Der Server kann sich mit den Mailservern der Empfänger verbinden.",
+                "error": "Der Anbieter des Servers sperrt Port 25, daher geht keine Mail hinaus. Bitte den Anbieter um Freigabe oder zieh NetSendo zu einem Anbieter um, der ihn erlaubt.",
+                "unknown": "Nicht geprüft: die Prüfung ist ausgeschaltet (NMI_PORT25_CHECK_HOST)."
+            },
+            "server_name": {
+                "title": "Name des Servers und PTR-Eintrag",
+                "ok": "Der Server stellt sich als {name} vor, und der PTR-Eintrag der Serveradresse zeigt auf diesen Namen.",
+                "warning": "Der Server stellt sich als {name} vor. Setze beim Anbieter des Servers (in dessen Panel oder per Supportanfrage) den PTR-Eintrag der Hauptadresse des Servers auf diesen Namen.",
+                "error": "Die Adresse des Panels (APP_URL) ist kein Domainname, daher hat der Server keinen Namen. Setze APP_URL auf die Adresse des Panels mit seiner Domain oder NMI_HOSTNAME in der .env.",
+                "now": "Jetzt:",
+                "no_address": "Dieser Name zeigt noch auf keine IP-Adresse: lege im DNS der Domain einen A-Eintrag dieses Namens mit der Adresse des Servers an."
+            },
+            "domain": {
+                "title": "Domain des Absenders",
+                "ok": "Versand eingeschaltet für:",
+                "todo": "Füge in Deliverability Shield eine Domain hinzu, bestätige sie mit dem CNAME-Eintrag und schalte auf ihrer Seite NetSendo MTA ein.",
+                "switch_on": "NetSendo MTA auf der Seite der Domain einschalten",
+                "verify": "Domain mit dem CNAME-Eintrag bestätigen",
+                "open": "Deliverability Shield öffnen"
+            },
+            "ip": {
+                "title": "Eine IP-Adresse für den Versand",
+                "ok": "Den Domains zugewiesene Adressen:",
+                "todo": "Füge einem Pool eine IP-Adresse hinzu (Schaltfläche „IP hinzufügen“ unten) und weise sie auf ihrer Seite einer Domain zu. Keine zusätzlichen Adressen? Beginne mit der Hauptadresse des Servers.",
+                "server_addresses": "Adressen dieses Servers:"
+            },
+            "dkim": {
+                "title": "DKIM-Signatur",
+                "ok": "Die Schlüssel sind erzeugt und die Einträge im DNS veröffentlicht.",
+                "todo": "Erzeuge auf der Seite der IP die DKIM-Schlüssel und lege den angezeigten TXT-Eintrag im DNS der Domain an:",
+                "no_keys": "keine Schlüssel",
+                "not_published": "der Eintrag ist noch nicht im DNS"
+            },
+            "ip_on_server": {
+                "title": "Die IP-Adresse ist auf dem Server",
+                "ok": "Der Versandserver hat alle Adressen, daher gehen die Mails von ihnen aus.",
+                "warning": "Diese Adressen hat der Versandserver nicht, daher gehen ihre Mails von der Hauptadresse des Servers aus. Füge sie beim Anbieter zum Server hinzu (Anleitung auf der Seite der IP):",
+                "unknown": "Unbekannt, weil der Versandserver nicht antwortet.",
+                "missing": "nicht auf dem Server"
+            },
+            "ptr": {
+                "title": "PTR-Einträge der Adressen",
+                "ok": "Jede Adresse und ihr Name zeigen aufeinander.",
+                "warning": "Zu setzen: der A-Eintrag des Namens im DNS der Domain und der PTR-Eintrag der Adresse beim Anbieter (Details und die Schaltfläche „PTR prüfen“ auf der Seite der IP):",
+                "item": "{name}, PTR jetzt: {ptr}"
+            },
+            "mailbox": {
+                "title": "Ein Absender-Postfach",
+                "ok": "Postfächer, die über NetSendo MTA senden: {count}.",
+                "todo": "Füge ein Postfach mit dem Anbieter NetSendo MTA hinzu und wähle die Domain und die IP-Adresse.",
+                "open": "Postfächer öffnen"
+            },
+            "test": {
+                "title": "Ein Testversand",
+                "info": "Klicke beim Postfach NetSendo MTA auf „Verbindung testen“. Sende dann eine Testnachricht an die Adresse, die mail-tester.com dir gibt: das Ergebnis zeigt, ob SPF, DKIM und PTR stimmen."
+            }
+        },
+        "hosting": {
+            "title": "Woher Server und IP-Adressen nehmen",
+            "subtitle": "Anbieter im Vergleich: Port 25, zusätzliche IPv4-Adressen und PTR-Einträge.",
+            "need_port25": "Ausgehender Port 25 muss offen sein, sonst verlässt keine Mail den Server.",
+            "need_ips": "Zusätzliche IPv4-Adressen kauft man beim selben Anbieter wie den Server und fügt sie seiner Netzwerkschnittstelle hinzu.",
+            "need_ptr": "Jede Adresse braucht einen PTR-Eintrag (den Namen der Adresse): im Panel des Anbieters oder per Supportanfrage.",
+            "disclaimer": "Nach den Seiten der Anbieter, Stand {date}. Bedingungen und Preise ändern sich: prüfe sie vor dem Kauf beim Anbieter.",
+            "col_provider": "Anbieter",
+            "col_port25": "Port 25",
+            "col_ips": "Zusätzliche IPv4",
+            "col_ptr": "PTR-Eintrag",
+            "col_notes": "Hinweise",
+            "port25_open": "offen",
+            "port25_on_request": "auf Anfrage",
+            "port25_blocked": "gesperrt",
+            "ptr_panel": "im Panel",
+            "ptr_panel_api": "im Panel und per API",
+            "ptr_ticket": "per Supportanfrage",
+            "ptr_none": "keiner",
+            "fit_recommended": "Gut für Mail",
+            "fit_possible": "Möglich",
+            "fit_avoid": "Nicht für Mail",
+            "no_extra_ips": "keine",
+            "link_extra_ips": "Zusätzliche Adressen",
+            "link_configure": "Adresse zum Server hinzufügen",
+            "link_ptr": "PTR setzen",
+            "link_port25": "Port 25",
+            "notes": {
+                "ovh": "Port 25 offen auf VPS und dedizierten Servern (in der Public Cloud gesperrt), wird bei erkanntem Spam automatisch gesperrt. Bis zu 16 zusätzliche Adressen pro VPS, bis zu 256 pro dediziertem Server.",
+                "scaleway": "Port 25 schaltest du nach einer Identitätsprüfung selbst in der Konsole frei. Bis zu 5 Adressen pro Instance, bis zu 64 bei Elastic Metal; der PTR-Eintrag ist inklusive.",
+                "hetzner": "Eine Adresse kostet €1,70 im Monat plus einmalig €4,90; Hetzner verlangt eine technische Begründung. Die Regeln für Port 25 stehen nicht auf den Seiten: frag vor dem Kauf den Support.",
+                "hetzner_cloud": "Ports 25 und 465 sind gesperrt; eine Freigabe kann nach einem Monat und der ersten bezahlten Rechnung beantragt werden, Entscheidung im Einzelfall. Eine Floating IP muss auf dem Server eingerichtet werden.",
+                "netcup": "Günstige zusätzliche Adressen (€2,00 inkl. MwSt.), auf die Hauptadresse des Servers geroutet; PTR im Panel und per API. Die Regeln für Port 25 stehen nicht auf den Seiten: frag den Support.",
+                "linode": "Port 25 nach einer Anfrage (deine Angaben, Zweck, Absenderdomains). Erlaubt ausdrücklich Marketing-Mails mit Einwilligung. Jede zusätzliche Adresse braucht eine Begründung; der Preis hängt von der Region ab.",
+                "upcloud": "Port 25 nach einer Anfrage mit Identitäts- oder Zahlungsnachweis. Bis zu 5 IPv4-Adressen; jede ist eine eigene Netzwerkschnittstelle, daher muss das Routing eingerichtet werden.",
+                "vultr": "Port 25 nach einer Anfrage mit Zweck und Versandmenge; eine Zusage ist nicht garantiert. Das Hinzufügen einer Adresse startet den Server neu.",
+                "ionos": "Port 25 wird telefonisch freigegeben, wenn der Server einen vollständigen Namen, PTR und SPF hat. Eine zusätzliche Adresse kostet €5 im Monat inkl. MwSt. (deutscher Preis); der PTR wird beim Anlegen der Adresse gesetzt.",
+                "homepl": "Je nach Tarif 3–31 zusätzliche IPv4-Adressen; der PTR wird im Kundenpanel gesetzt. Regeln für Port 25 und Preis der Adresse stehen nicht auf den Seiten: frag den Support.",
+                "aws": "Port 25 nach einem Antragsformular, getrennt für jede Region. Die AWS-Richtlinie verbietet unerwünschte Massenmails.",
+                "contabo": "Grenze von etwa 25 Mails pro Minute; auf einem VPS nur eine zusätzliche Adresse.",
+                "nazwapl": "Nur eine IPv4-Adresse, keine zusätzlichen; der PTR-Eintrag ist ein kostenpflichtiges Extra (40 PLN im Monat).",
+                "digitalocean": "SMTP ist auf allen Droplets gesperrt, ohne Möglichkeit zur Freigabe; Reserved IPs haben keinen PTR-Eintrag.",
+                "google_cloud": "Port 25 ist gesperrt, ohne Verfahren für eine Ausnahme: ein Versandserver in Google Cloud kann keine Mails zustellen.",
+                "azure": "Port 25 nur in Enterprise-Abonnements (EA, MCA-E); der PTR wird nur per CLI oder PowerShell gesetzt."
+            },
+            "port25_unconfirmed": "nicht angegeben: nachfragen",
+            "ptr_api": "nur per API/CLI",
+            "per_month": "im Monat",
+            "per_hour": "pro Stunde"
         }
     },
     "high_confidence_data": "Hohe Datenqualität",
@@ -8518,7 +8747,8 @@
             "gmail": "Gmail-API (OAuth 2.0) - sicherer Versand ohne via gmail.com",
             "sendgrid": "SendGrid-API - API-Key auf sendgrid.com anfordern",
             "smtp": "Eigener SMTP-Server oder E-Mail-Dienst (Mailgun, Amazon SES usw.)",
-            "title": "Anbieterinformationen"
+            "title": "Anbieterinformationen",
+            "nmi": "integrierter MTA mit Ihren dedizierten IPs (GOLD) - Einrichtung im Deliverability Shield und in der Mail-Infrastruktur"
         },
         "modal": {
             "add_title": "Postfach hinzufügen",
@@ -8555,7 +8785,8 @@
             "created": "Postfach wurde erstellt.",
             "deleted": "Postfach wurde gelöscht.",
             "set_default": "Postfach wurde als Standard festgelegt.",
-            "updated": "Postfach wurde aktualisiert."
+            "updated": "Postfach wurde aktualisiert.",
+            "disconnected": "Gmail wurde getrennt."
         },
         "oauth": {
             "connect_google": "Mit Google verbinden",
@@ -8759,6 +8990,21 @@
         "tracking": {
             "label": "Klicks und Öffnungen tracken",
             "help": "Leitet Links über NetSendo und fügt das Öffnungspixel ein. Aus: Links bleiben unverändert, kein Pixel, und das SendGrid-Tracking wird pro Nachricht ausgeschaltet. Eine Nachricht kann das überschreiben."
+        },
+        "nmi": {
+            "info": "NetSendo MTA sendet über Ihre eigene dedizierte IP. Richten Sie sie zuerst ein: eine verifizierte Domain mit eingeschaltetem NetSendo MTA (Deliverability Shield) und eine ihr zugewiesene dedizierte IP mit DKIM-Schlüsseln (Mail-Infrastruktur).",
+            "domain": "Absenderdomain",
+            "select_domain": "Domain wählen",
+            "ip": "Dedizierte IP",
+            "select_ip": "IP wählen",
+            "not_verified": "nicht verifiziert",
+            "not_enabled": "NetSendo MTA ausgeschaltet",
+            "no_dkim": "keine DKIM-Schlüssel",
+            "inactive": "ausgeschaltet",
+            "no_domains": "Sie haben noch keine Domains im Deliverability Shield.",
+            "no_ips": "Dieser Domain ist keine dedizierte IP zugewiesen.",
+            "from_hint": "Die Absenderadresse muss zu {domain} oder einer ihrer Subdomains gehören.",
+            "disabled_installation": "Der Versandserver ist ausgeschaltet, oder neue NetSendo-MTA-Postfächer sind es (NMI_ALLOW_NEW in .env). Ein Admin schaltet den Server in der Mail-Infrastruktur ein."
         }
     },
     "mcp": {

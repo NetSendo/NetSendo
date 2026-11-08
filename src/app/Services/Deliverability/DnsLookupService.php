@@ -49,6 +49,59 @@ class DnsLookupService
     }
 
     /**
+     * The name the PTR record of an IP address points to (reverse DNS), or null
+     */
+    public function reverse(string $ip): ?string
+    {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return null;
+        }
+
+        return Cache::remember("dns_ptr_{$ip}", 60, function () use ($ip) {
+            $name = @gethostbyaddr($ip);
+
+            // gethostbyaddr answers with the address itself when there is no PTR record
+            if (!is_string($name) || $name === '' || $name === $ip) {
+                return null;
+            }
+
+            return strtolower(rtrim($name, '.'));
+        });
+    }
+
+    /**
+     * IPv4 and IPv6 addresses a name points to (A and AAAA records)
+     *
+     * @return list<string>
+     */
+    public function addresses(string $name): array
+    {
+        $name = strtolower(rtrim($name, '.'));
+        if ($name === '') {
+            return [];
+        }
+
+        return Cache::remember("dns_addresses_{$name}", 60, function () use ($name) {
+            try {
+                $records = @dns_get_record($name, DNS_A | DNS_AAAA) ?: [];
+            } catch (\Throwable $e) {
+                Log::warning("DNS A/AAAA lookup failed for {$name}: " . $e->getMessage());
+                $records = [];
+            }
+
+            $addresses = [];
+            foreach ($records as $record) {
+                $address = $record['ip'] ?? $record['ipv6'] ?? null;
+                if (is_string($address) && ($packed = @inet_pton($address)) !== false) {
+                    $addresses[] = inet_ntop($packed);
+                }
+            }
+
+            return array_values(array_unique($addresses));
+        });
+    }
+
+    /**
      * Get SPF record for a domain
      */
     public function getSpfRecord(string $domain): ?string
@@ -169,6 +222,15 @@ class DnsLookupService
         }
 
         return $result;
+    }
+
+    /**
+     * Forget the cached PTR record of an IP and the addresses of a name
+     */
+    public function forgetAddressRecords(string $ip, string $name): void
+    {
+        Cache::forget("dns_ptr_{$ip}");
+        Cache::forget('dns_addresses_' . strtolower(rtrim($name, '.')));
     }
 
     /**

@@ -19,9 +19,24 @@ return [
     | Connection details for the Haraka MTA server.
     |
     */
+    // The MTA runs on the server's network and listens on netsendo-network's gateway
+    // (10.58.0.1:2525), which the NetSendo containers know as netsendo-mta (MtaEndpoint)
     'mta_host' => env('NMI_MTA_HOST', 'netsendo-mta'),
-    'mta_port' => env('NMI_MTA_PORT', 25),
+    'mta_port' => env('NMI_MTA_PORT', 2525),
     'mta_encryption' => env('NMI_MTA_ENCRYPTION', 'none'),
+
+    // Name the MTA gives itself to the recipients' mail servers (HELO) when it sends from
+    // the server's main address. Empty: the panel's domain (the host of APP_URL), so no
+    // second subdomain is needed. Mail from a dedicated IP goes out under that IP's name.
+    'hostname' => env('NMI_HOSTNAME'),
+
+    // Logins the MTA accepts (one per domain with NMI on), written by NetSendo and read by
+    // the netsendo_auth Haraka plugin. In Docker: the nmi-auth volume, shared with nmi-mta.
+    'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('nmi/mta-users.json')),
+
+    // Public mail server the dashboard connects to on port 25 to see whether outgoing
+    // port 25 is open (nothing is sent). Empty: no check.
+    'port25_check_host' => env('NMI_PORT25_CHECK_HOST', 'gmail-smtp-in.l.google.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -131,7 +146,8 @@ return [
     |
     */
     'features' => [
-        // Master switch for NMI
+        // NMI_ENABLED=true keeps NetSendo MTA on; otherwise the switch in the panel decides
+        // (App\Services\Nmi\NmiSwitch)
         'enabled' => env('NMI_ENABLED', false),
 
         // Allow new NMI mailbox creation

@@ -3,15 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
 use App\Models\IpPool;
 use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
+use App\Services\Nmi\HostingProviders;
 use App\Services\Nmi\IpProvisioningService;
+use App\Services\Deliverability\DnsLookupService;
 use App\Services\Nmi\IpWarmingService;
+use App\Services\Nmi\MailServerName;
+use App\Services\Nmi\MtaEndpoint;
+use App\Services\Nmi\MtaProbe;
+use App\Services\Nmi\NmiSwitch;
+use App\Services\Nmi\NmiSetupService;
+use App\Services\Nmi\OutboundPortCheck;
+use App\Services\Nmi\SetupGuide;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -21,7 +32,8 @@ class NmiController extends Controller
         private DkimKeyManager $dkimManager,
         private IpWarmingService $warmingService,
         private BlacklistMonitorService $blacklistService,
-        private IpProvisioningService $provisioningService
+        private IpProvisioningService $provisioningService,
+        private NmiSetupService $setupService
     ) {}
 
     /**
@@ -35,7 +47,7 @@ class NmiController extends Controller
 
         $ips = DedicatedIpAddress::whereHas('pool', function ($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->active()->get();
+        })->active()->with('domainConfiguration')->withCount('mailboxes')->get();
 
         $stats = [
             'total_pools' => $pools->count(),
@@ -50,7 +62,15 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            'nmiEnabled' => config('netsendo.nmi.enabled', false),
+            // Switched on in the panel (or NMI_ENABLED=true in .env); the key read before did
+            // not exist, so the "setup required" banner was shown on every installation
+            'nmiEnabled' => NmiSwitch::enabled(),
+            'nmiSwitch' => [
+                'forced_by_env' => NmiSwitch::forcedByEnv(),
+                'can_toggle' => $user->isAdmin(),
+            ],
+            // Where to get a server with own IP addresses (the guide compares them)
+            'hostingProviders' => HostingProviders::all(),
         ];
 
         // Return JSON for AJAX requests
@@ -62,6 +82,49 @@ class NmiController extends Controller
         }
 
         return Inertia::render('Nmi/Index', $data);
+    }
+
+    /**
+     * Switch NetSendo MTA on for the installation (admin; GOLD through the route)
+     */
+    public function enableInstallation(Request $request)
+    {
+        return $this->switchInstallation($request, true);
+    }
+
+    /**
+     * Switch NetSendo MTA off for the installation (admin; allowed without GOLD). The MTA
+     * loses all logins at once; domains, IPs and mailboxes stay as they are.
+     */
+    public function disableInstallation(Request $request)
+    {
+        return $this->switchInstallation($request, false);
+    }
+
+    private function switchInstallation(Request $request, bool $enabled)
+    {
+        abort_unless($request->user()->isAdmin(), 403, __('nmi.switch_admin_only'));
+
+        if (!$enabled && NmiSwitch::forcedByEnv()) {
+            throw ValidationException::withMessages(['nmi' => __('nmi.switch_forced_by_env')]);
+        }
+
+        NmiSwitch::set($enabled);
+
+        return $this->respond($request, $enabled ? __('nmi.switched_on') : __('nmi.switched_off'), [
+            'enabled' => NmiSwitch::enabled(),
+        ]);
+    }
+
+    /**
+     * The setup guide: each step to a working sending server with its live state
+     */
+    public function guide(Request $request, SetupGuide $guide): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => ['steps' => $guide->steps($request->user())],
+        ]);
     }
 
     /**
@@ -173,11 +236,21 @@ class NmiController extends Controller
     {
         $this->authorizeIp($request, $ip);
 
+        $ip->load('domainConfiguration')->loadCount('mailboxes');
+
         $data = [
             'ip' => $this->formatIpForResponse($ip),
             'warming' => $this->warmingService->getWarmingStatus($ip),
             'blacklist' => $this->blacklistService->getSummary($ip),
             'dkim' => $this->dkimManager->getDnsInstructions($ip),
+            // Hosting providers, with the instructions for the IP's own
+            'hostingProviders' => HostingProviders::all(),
+            // Domains of the user the IP can be assigned to (Deliverability Shield)
+            'domains' => DomainConfiguration::forUser($request->user()->id)
+                ->orderBy('domain')
+                ->get()
+                ->map(fn (DomainConfiguration $domain) => $this->formatDomainForResponse($domain))
+                ->values(),
         ];
 
         // Return JSON for AJAX requests
@@ -256,6 +329,156 @@ class NmiController extends Controller
     }
 
     /**
+     * Assign the IP to a domain of the same user (or move it to another one)
+     */
+    public function assignDomain(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $validated = $request->validate([
+            'domain_configuration_id' => [
+                'required',
+                'integer',
+                Rule::exists('domain_configurations', 'id')
+                    ->where('user_id', $request->user()->id)
+                    ->whereNull('deleted_at'),
+            ],
+        ], [
+            'domain_configuration_id.exists' => __('nmi.domain_not_found'),
+        ]);
+
+        $domain = DomainConfiguration::findOrFail($validated['domain_configuration_id']);
+        $this->setupService->assignIpToDomain($ip, $domain);
+
+        return $this->respond($request, __('nmi.ip_assigned', ['domain' => $domain->domain]), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Take the IP away from its domain (allowed without GOLD, like deleting)
+     */
+    public function unassignDomain(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $this->setupService->unassignIp($ip);
+
+        return $this->respond($request, __('nmi.ip_unassigned'), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Switch NMI on for a verified domain; generates its SMTP login on the MTA
+     */
+    public function enableDomain(Request $request, DomainConfiguration $domain)
+    {
+        $this->authorize('update', $domain);
+
+        $this->setupService->enable($domain);
+
+        return $this->respond($request, __('nmi.domain_enabled', ['domain' => $domain->domain]), $this->formatDomainForResponse($domain->fresh()));
+    }
+
+    /**
+     * Switch NMI off for a domain (allowed without GOLD)
+     */
+    public function disableDomain(Request $request, DomainConfiguration $domain)
+    {
+        $this->authorize('update', $domain);
+
+        $this->setupService->disable($domain);
+
+        return $this->respond($request, __('nmi.domain_disabled', ['domain' => $domain->domain]), $this->formatDomainForResponse($domain->fresh()));
+    }
+
+    /**
+     * JSON for AJAX calls, back with a flash message for Inertia visits
+     */
+    private function respond(Request $request, string $message, array $data)
+    {
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $data,
+            ]);
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
+     * Change the name of an IP: the name the MTA introduces itself with when it sends from
+     * this IP, and the one the IP's PTR record has to point to
+     */
+    public function updateIp(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $validated = $request->validate([
+            'hostname' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:253',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (!MailServerName::isValid((string) $value)) {
+                        $fail(__('nmi.hostname_invalid'));
+                    }
+                },
+            ],
+            // The hosting provider of the server (the IP page shows its instructions)
+            'provider' => ['sometimes', 'required', 'string', Rule::in(array_merge(HostingProviders::keys(), [DedicatedIpAddress::PROVIDER_MANUAL]))],
+        ]);
+
+        if (array_key_exists('hostname', $validated)) {
+            $hostname = MailServerName::normalize($validated['hostname']);
+            if ($hostname !== $ip->hostname) {
+                // The PTR check was for the old name
+                $ip->update(['hostname' => $hostname, 'ptr_verified' => false, 'ptr_verified_at' => null]);
+            }
+        }
+        if (array_key_exists('provider', $validated)) {
+            $ip->update(['provider' => $validated['provider']]);
+        }
+
+        return $this->respond($request, __('nmi.ip_updated'), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Check the PTR record of an IP: it has to point to the IP's name, and the name back
+     * to the IP. The PTR record is set at the provider of the server, not in the domain's DNS.
+     */
+    public function verifyPtr(Request $request, DedicatedIpAddress $ip, MailServerName $names, DnsLookupService $dns): JsonResponse
+    {
+        $this->authorizeIp($request, $ip);
+
+        // Asked for: no answer from the cache
+        $dns->forgetAddressRecords((string) MailServerName::normalizeIp((string) $ip->ip_address), (string) $ip->hostname);
+
+        $check = $names->checkIp($ip);
+        $ip->update([
+            'ptr_record' => $check['ptr'],
+            'ptr_verified' => $check['ok'],
+            'ptr_verified_at' => $check['ok'] ? now() : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $check + [
+                'ip' => $ip->ip_address,
+                'message' => $check['ok']
+                    ? __('nmi.ptr_ok', ['ip' => $ip->ip_address, 'name' => $check['name']])
+                    : __('nmi.ptr_not_ok', ['ip' => $ip->ip_address, 'name' => (string) $check['name']]),
+            ],
+        ]);
+    }
+
+    /**
      * Verify DKIM DNS record
      */
     public function verifyDkim(Request $request, DedicatedIpAddress $ip): JsonResponse
@@ -305,6 +528,8 @@ class NmiController extends Controller
         return [
             'id' => $ip->id,
             'ip_address' => $ip->ip_address,
+            // As the mail server reports its addresses (MtaProbe)
+            'normalized_ip' => MailServerName::normalizeIp((string) $ip->ip_address),
             'hostname' => $ip->hostname,
             'provider' => $ip->provider,
             'warming_status' => $ip->warming_status,
@@ -313,9 +538,33 @@ class NmiController extends Controller
             'is_blacklisted' => $ip->isBlacklisted(),
             'delivery_rate' => $ip->getDeliveryRate(),
             'total_sent' => $ip->total_sent,
-            'dkim_configured' => !empty($ip->dkim_selector),
-            'ptr_verified' => $ip->ptr_verified,
+            'total_delivered' => $ip->total_delivered,
+            'total_bounced' => $ip->total_bounced,
+            'total_complaints' => $ip->total_complaints,
+            'dkim_configured' => $ip->hasDkimKeys(),
+            'ptr_verified' => (bool) $ip->ptr_verified,
+            'ptr_record' => $ip->ptr_record,
+            'ptr_verified_at' => $ip->ptr_verified_at?->toIso8601String(),
             'is_active' => $ip->is_active,
+            'domain' => $ip->domainConfiguration ? $this->formatDomainForResponse($ip->domainConfiguration) : null,
+            'mailboxes_count' => $ip->mailboxes_count ?? $ip->mailboxes()->count(),
+        ];
+    }
+
+    /**
+     * Domain as the NMI pages show it (never the SMTP password)
+     */
+    private function formatDomainForResponse(DomainConfiguration $domain): array
+    {
+        return [
+            'id' => $domain->id,
+            'domain' => $domain->domain,
+            'cname_verified' => (bool) $domain->cname_verified,
+            'nmi_enabled' => (bool) $domain->nmi_enabled,
+            'nmi_ready' => $domain->isNmiReady(),
+            'nmi_smtp_username' => $domain->nmi_smtp_username,
+            'nmi_enabled_at' => $domain->nmi_enabled_at?->toIso8601String(),
+            'dedicated_ip_id' => $domain->dedicated_ip_id,
         ];
     }
 
@@ -342,45 +591,25 @@ class NmiController extends Controller
     /**
      * Check MTA container status
      */
-    public function getMtaStatus(): JsonResponse
+    public function getMtaStatus(OutboundPortCheck $portCheck, MtaProbe $probe, MailServerName $names): JsonResponse
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = (int) config('nmi.mta_port', 25);
-        $timeout = 3; // seconds
-
-        $isOnline = false;
-        $message = '';
-
-        try {
-            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-
-            if ($socket) {
-                // Read the SMTP greeting
-                $response = fgets($socket, 1024);
-                fclose($socket);
-
-                // Check for valid SMTP greeting (starts with 220)
-                if (str_starts_with(trim($response), '220')) {
-                    $isOnline = true;
-                    $message = 'MTA is online and accepting connections';
-                } else {
-                    $message = 'MTA responded but with unexpected greeting';
-                }
-            } else {
-                $message = "Cannot connect to MTA: {$errstr} (error {$errno})";
-            }
-        } catch (\Exception $e) {
-            $message = 'Connection error: ' . $e->getMessage();
-        }
+        $status = $probe->probe();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'online' => $isOnline,
-                'host' => $host,
-                'port' => $port,
-                'message' => $message,
+                'online' => $status['online'],
+                'host' => MtaEndpoint::host(),
+                'port' => MtaEndpoint::port(),
+                'message' => $status['message'],
                 'checked_at' => now()->toIso8601String(),
+                // The MTA delivers straight to the recipients' servers: port 25 must be open
+                'outbound_port_25' => $portCheck->port25Open(),
+                // Addresses of the server the MTA can send from (null: not known); a mailbox
+                // sends from its dedicated IP only when the IP is among them
+                'addresses' => $status['addresses'],
+                // The name the MTA gives itself from the main address, and its PTR record
+                'server_name' => $names->check(),
             ],
         ]);
     }
@@ -412,19 +641,30 @@ class NmiController extends Controller
                 },
                 Rule::unique('dedicated_ip_addresses', 'ip_address')->whereNull('deleted_at'),
             ],
-            'hostname' => ['required', 'string', 'max:255'],
+            'hostname' => [
+                'required',
+                'string',
+                'max:253',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (!MailServerName::isValid((string) $value)) {
+                        $fail(__('nmi.hostname_invalid'));
+                    }
+                },
+            ],
+            // The hosting provider of the server (the IP page shows its instructions)
+            'provider' => ['nullable', 'string', Rule::in(array_merge(HostingProviders::keys(), [DedicatedIpAddress::PROVIDER_MANUAL]))],
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Determine IP version
-        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4;
+        // The column is ENUM('ipv4', 'ipv6'); 4 and 6 failed on MySQL (strict mode) and SQLite
+        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'ipv6' : 'ipv4';
 
         $ip = DedicatedIpAddress::create([
             'ip_pool_id' => $pool->id,
             'ip_address' => $validated['ip_address'],
-            'hostname' => $validated['hostname'],
+            'hostname' => MailServerName::normalize($validated['hostname']),
             'ip_version' => $ipVersion,
-            'provider' => DedicatedIpAddress::PROVIDER_MANUAL,
+            'provider' => $validated['provider'] ?? DedicatedIpAddress::PROVIDER_MANUAL,
             'warming_status' => DedicatedIpAddress::WARMING_NEW,
             'reputation_score' => 100,
             'is_active' => true,
@@ -456,6 +696,11 @@ class NmiController extends Controller
                 'success' => false,
                 'message' => __('nmi.ip_has_mailboxes'),
             ], 400);
+        }
+
+        // Its domain gets another primary IP (or none)
+        if ($ip->domain_configuration_id) {
+            $this->setupService->unassignIp($ip);
         }
 
         $poolId = $ip->ip_pool_id;

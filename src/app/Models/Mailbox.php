@@ -30,6 +30,9 @@ class Mailbox extends Model
         'last_test_success',
         'last_test_message',
         'google_integration_id',
+        // NetSendo MTA (NMI): the domain and the dedicated IP it sends through
+        'domain_configuration_id',
+        'dedicated_ip_id',
         // Bounce mailbox IMAP monitoring
         'bounce_enabled',
         'bounce_imap_host',
@@ -65,6 +68,8 @@ class Mailbox extends Model
     protected $casts = [
         'is_default' => 'boolean',
         'is_active' => 'boolean',
+        'domain_configuration_id' => 'integer',
+        'dedicated_ip_id' => 'integer',
         'tracking_enabled' => 'boolean',
         'allowed_types' => 'array',
         'daily_limit' => 'integer',

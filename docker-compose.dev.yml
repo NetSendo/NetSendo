@@ -194,14 +194,22 @@ services:
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     volumes:
       - ./docker/haraka/config:/opt/haraka/config
+      # Logins NetSendo writes to storage/nmi (src is mounted into the app)
+      - ./src/storage/nmi:/opt/haraka/auth:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
     environment:
       - NODE_ENV=development
+      # Names in the greeting (the name of each message comes from NetSendo)
+      - NMI_HOSTNAME=${NMI_HOSTNAME:-}
+      - APP_URL=${APP_URL:-}
+      # Development keeps the MTA on the Docker network (as netsendo-mta, port 2525);
+      # docker-compose.yml runs it on the server's network instead
+      - NMI_MTA_LISTEN=${NMI_MTA_LISTEN:-}
     networks:
       - netsendo-network
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 25 || exit 1"]
+      test: ["CMD", "netsendo-mta-healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3

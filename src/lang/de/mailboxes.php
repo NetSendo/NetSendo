@@ -53,4 +53,27 @@ return [
         'key_placeholder' => 'z.B. Feedback-ID',
         'value_placeholder' => 'z.B. campaign1:user123:netsendo',
     ],
+
+    // NetSendo MTA (NMI) mailboxes
+    'nmi' => [
+        'disabled' => 'Der Versandserver ist ausgeschaltet. Ein Admin schaltet ihn in der Mail-Infrastruktur ein (Schritt-für-Schritt-Anleitung).',
+        'new_mailboxes_disabled' => 'Neue NetSendo-MTA-Postfächer sind in dieser Installation ausgeschaltet (NMI_ALLOW_NEW in .env).',
+        'domain_required' => 'Wählen Sie eine Ihrer Domains für NetSendo MTA.',
+        'ip_required' => 'Wählen Sie eine Ihrer dedizierten IPs für NetSendo MTA.',
+        'domain_not_verified' => 'Die Domain :domain ist noch nicht verifiziert. Fügen Sie zuerst ihren CNAME-Eintrag im Deliverability Shield hinzu.',
+        'domain_not_enabled' => 'NetSendo MTA ist für :domain nicht eingeschaltet. Schalten Sie es auf der Domain-Seite im Deliverability Shield ein.',
+        'ip_not_assigned' => 'Die IP :ip ist :domain nicht zugewiesen. Weisen Sie sie auf der IP-Seite in der Mail-Infrastruktur zu.',
+        'ip_no_dkim' => 'Die IP :ip hat noch keine DKIM-Schlüssel. Generieren Sie sie auf der IP-Seite in der Mail-Infrastruktur.',
+        'ip_inactive' => 'Die IP :ip ist ausgeschaltet.',
+        'from_email_domain' => 'Die Absenderadresse muss zu :domain oder einer ihrer Subdomains gehören, damit sie zur DKIM-Signatur passt.',
+        'no_domain' => 'Das Postfach ":mailbox" hat keine NetSendo-MTA-Domain. Bearbeiten Sie es und wählen Sie eine Domain und eine IP.',
+        'test' => [
+            'not_verified' => 'Die Domain :domain ist nicht verifiziert. Fügen Sie zuerst ihren CNAME-Eintrag im Deliverability Shield hinzu.',
+            'not_enabled' => 'NetSendo MTA ist für :domain ausgeschaltet.',
+            'no_credentials' => 'Die Domain :domain hat keinen NetSendo-MTA-Login. Schalten Sie NetSendo MTA auf der Domain-Seite aus und wieder ein.',
+            'warming_limit' => 'Das tägliche Warming-Limit dieser IP ist erreicht. Versuchen Sie es morgen erneut.',
+            'success' => 'Die Verbindung funktioniert: Eine Test-E-Mail wurde über NetSendo MTA gesendet.',
+            'failed' => 'Verbindung fehlgeschlagen: :error',
+        ],
+    ],
 ];

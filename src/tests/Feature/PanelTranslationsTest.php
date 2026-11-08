@@ -43,6 +43,13 @@ class PanelTranslationsTest extends TestCase
         'js/Pages/Deliverability/InboxPassport.vue',
         'js/Components/Deliverability/DnsRecordGenerator.vue',
         'js/Pages/MailingList/Create.vue',
+        // NetSendo MTA setup (NmiSetupFlowTest)
+        'js/Pages/Nmi/IpDetail.vue',
+        'js/Pages/Nmi/Index.vue',
+        'js/Pages/Settings/Mailboxes/Index.vue',
+        // The setup guide and the hosting providers (NmiServerSetupTest)
+        'js/Components/Nmi/SetupGuide.vue',
+        'js/Components/Nmi/HostingProviders.vue',
     ];
 
     public function test_the_listed_php_files_have_no_polish_texts_in_string_literals(): void

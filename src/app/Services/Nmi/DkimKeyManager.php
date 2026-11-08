@@ -5,7 +5,7 @@ namespace App\Services\Nmi;
 use App\Models\DedicatedIpAddress;
 use App\Models\DomainConfiguration;
 use Illuminate\Support\Facades\Log;
-use phpseclib3\Crypt\RSA;
+use RuntimeException;
 
 class DkimKeyManager
 {
@@ -25,12 +25,18 @@ class DkimKeyManager
     {
         $selector = $selector ?? $this->generateSelector();
 
-        // Generate RSA key pair
-        $privateKey = RSA::createKey(self::KEY_SIZE);
-        $publicKey = $privateKey->getPublicKey();
+        // RSA key pair from PHP's openssl extension (phpseclib, used before, is not a
+        // dependency of NetSendo, so key generation ended in "Class not found")
+        $key = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            'private_key_bits' => max(1024, (int) config('nmi.dkim.key_size', self::KEY_SIZE)),
+        ]);
+        if ($key === false || !openssl_pkey_export($key, $privateKeyPem)) {
+            throw new RuntimeException('Could not generate a DKIM key: ' . (openssl_error_string() ?: 'openssl error'));
+        }
 
-        // Extract the public key in format suitable for DNS
-        $publicKeyPem = $publicKey->toString('PKCS8');
+        // PKCS#8 PEM: "-----BEGIN PUBLIC KEY-----"
+        $publicKeyPem = openssl_pkey_get_details($key)['key'];
         $publicKeyBase64 = $this->extractPublicKeyForDns($publicKeyPem);
 
         // Format the DNS TXT record value
@@ -38,7 +44,7 @@ class DkimKeyManager
 
         return [
             'selector' => $selector,
-            'private_key' => $privateKey->toString('PKCS8'),
+            'private_key' => $privateKeyPem,
             'public_key' => $publicKeyPem,
             'dns_record' => $dnsRecord,
             'dns_name' => "{$selector}._domainkey.{$domain}",

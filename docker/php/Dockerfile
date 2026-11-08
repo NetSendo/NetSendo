@@ -78,6 +78,11 @@ RUN mkdir -p /var/www/storage/app/backup-temp \
     && chown dev:www-data /var/www/storage/app/backup-temp \
     && chmod 775 /var/www/storage/app/backup-temp
 
+# NetSendo MTA logins (nmi-auth volume): a new volume takes this owner from the image
+RUN mkdir -p /var/www/storage/nmi \
+    && chown dev:www-data /var/www/storage/nmi \
+    && chmod 755 /var/www/storage/nmi
+
 USER dev
 
 ENTRYPOINT ["docker-entrypoint.sh"]

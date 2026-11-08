@@ -946,12 +946,26 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
         Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check')->middleware('licensed:mail_infrastructure');
         Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
+        // The IP's name (HELO from this IP, target of its PTR record) and the PTR check
+        Route::patch('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'updateIp'])->name('ips.update');
+        Route::post('/ips/{ip}/ptr/verify', [\App\Http\Controllers\NmiController::class, 'verifyPtr'])->name('ips.ptr.verify');
+        Route::post('/ips/{ip}/domain', [\App\Http\Controllers\NmiController::class, 'assignDomain'])->name('ips.domain.assign')->middleware('licensed:mail_infrastructure');
+        Route::delete('/ips/{ip}/domain', [\App\Http\Controllers\NmiController::class, 'unassignDomain'])->name('ips.domain.unassign');
+
+        // Domains (Deliverability Shield): switch NMI on with its SMTP login on the MTA, or off
+        Route::post('/domains/{domain}/enable', [\App\Http\Controllers\NmiController::class, 'enableDomain'])->name('domains.enable')->middleware('licensed:mail_infrastructure');
+        Route::post('/domains/{domain}/disable', [\App\Http\Controllers\NmiController::class, 'disableDomain'])->name('domains.disable');
 
         // Add IP to Pool
         Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store')->middleware('licensed:mail_infrastructure');
 
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
+
+        // NetSendo MTA on/off for the installation (admin) and the setup guide
+        Route::post('/installation/enable', [\App\Http\Controllers\NmiController::class, 'enableInstallation'])->name('installation.enable')->middleware('licensed:mail_infrastructure');
+        Route::post('/installation/disable', [\App\Http\Controllers\NmiController::class, 'disableInstallation'])->name('installation.disable');
+        Route::get('/guide', [\App\Http\Controllers\NmiController::class, 'guide'])->name('guide');
 
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');

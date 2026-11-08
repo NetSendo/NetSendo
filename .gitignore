@@ -25,3 +25,6 @@ coverage/
 .fleet
 .agent/
 .gemini/
+
+# NetSendo MTA: written at start-up from NMI_HOSTNAME or APP_URL (docker-compose.dev.yml mounts the config)
+docker/haraka/config/me

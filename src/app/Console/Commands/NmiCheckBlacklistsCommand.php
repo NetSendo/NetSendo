@@ -19,7 +19,7 @@ class NmiCheckBlacklistsCommand extends Command
 
     public function handle(): int
     {
-        if (!config('nmi.features.enabled')) {
+        if (!\App\Services\Nmi\NmiSwitch::enabled()) {
             $this->info('NMI is disabled. Skipping blacklist checks.');
             return self::SUCCESS;
         }

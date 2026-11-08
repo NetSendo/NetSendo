@@ -50,7 +50,8 @@ class MailProviderService
             ),
 
             Mailbox::PROVIDER_NMI => new NmiProvider(
-                domain: $mailbox->domainConfiguration,
+                domain: $mailbox->domainConfiguration
+                    ?? throw new InvalidArgumentException(__('mailboxes.nmi.no_domain', ['mailbox' => $mailbox->name])),
                 dedicatedIp: $mailbox->dedicatedIp,
                 fromEmail: $mailbox->from_email,
                 fromName: $mailbox->from_name,

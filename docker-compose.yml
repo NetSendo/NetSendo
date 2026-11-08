@@ -41,6 +41,8 @@ services:
       # Persistent user data
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+      # NetSendo MTA logins (written here, read by nmi-mta)
+      - nmi-auth:/var/www/storage/nmi
       # Shared volume for nginx to serve static files
       - netsendo-public:/var/www/public
     environment:
@@ -49,6 +51,9 @@ services:
       - MAIL_HOST=${MAIL_HOST:-mailpit}
       - APP_ENV=production
       - APP_DEBUG=false
+    # NetSendo MTA on the server's network (nmi-mta)
+    extra_hosts:
+      - "netsendo-mta:10.58.0.1"
     networks:
       - netsendo-network
     depends_on:
@@ -81,6 +86,8 @@ services:
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+      # NetSendo MTA logins, rewritten every 5 minutes (nmi:sync-mta-auth)
+      - nmi-auth:/var/www/storage/nmi
     environment:
       # Only the app migrates and seeds; this container waits for the schema
       - NETSENDO_RUN_MIGRATIONS=false
@@ -89,6 +96,9 @@ services:
       - MAIL_HOST=${MAIL_HOST:-mailpit}
       - APP_ENV=production
       - APP_DEBUG=false
+    # NetSendo MTA on the server's network (nmi-mta)
+    extra_hosts:
+      - "netsendo-mta:10.58.0.1"
     networks:
       - netsendo-network
     depends_on:
@@ -127,6 +137,9 @@ services:
       - MAIL_HOST=${MAIL_HOST:-mailpit}
       - APP_ENV=production
       - APP_DEBUG=false
+    # NetSendo MTA on the server's network (nmi-mta)
+    extra_hosts:
+      - "netsendo-mta:10.58.0.1"
     networks:
       - netsendo-network
     depends_on:
@@ -314,35 +327,43 @@ services:
     tty: true
 
   # =============================================================================
-  # NMI - NetSendo Mail Infrastructure (Haraka MTA)
+  # NMI - NetSendo Mail Infrastructure (NetSendo MTA, Haraka)
   # =============================================================================
-  # Built-in mail transfer agent for sending emails with dedicated IPs.
-  # Only enable if NMI feature is activated.
+  # Starts with NetSendo and sends only for domains with NetSendo MTA switched on in the
+  # panel (Mail Infrastructure); until then it relays for nobody. Nothing to set here.
+  #
+  # It runs on the server's own network, so it sees every address of the server and sends
+  # each mailbox from its dedicated IP once that IP is on the server. It listens only on
+  # netsendo-network's gateway (10.58.0.1:2525): reachable from the NetSendo containers,
+  # which know it as netsendo-mta, not from the internet. It delivers straight to the
+  # recipients' mail servers: outgoing port 25 must be open (the dashboard checks it).
   nmi-mta:
-    build:
-      context: ./docker/haraka
-      dockerfile: Dockerfile
+    image: ghcr.io/netsendo/netsendo-mta:${NETSENDO_VERSION:-latest}
     container_name: netsendo-mta
     restart: unless-stopped
-    profiles:
-      - nmi  # Only starts when explicitly enabled with --profile nmi
-    ports:
-      - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
-      - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
+    network_mode: host
     volumes:
-      - ./docker/haraka/config:/opt/haraka/config:ro
+      # The configuration is part of the image (docker/haraka/config)
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
+      # Logins and sending addresses written by NetSendo
+      - nmi-auth:/opt/haraka/auth:ro
       # DKIM keys - managed by application
       - nmi-dkim:/opt/haraka/config/dkim
       # TLS certificates
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
-    networks:
-      - netsendo-network
+      # Names in the greeting (the name of each message comes from NetSendo)
+      - NMI_HOSTNAME=${NMI_HOSTNAME:-}
+      - APP_URL=${APP_URL:-}
+      # netsendo-network's gateway (see networks below); change both together
+      - NMI_MTA_LISTEN=${NMI_MTA_LISTEN:-10.58.0.1:2525}
+    depends_on:
+      # netsendo-network (and its gateway address) exists once app is created
+      - app
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 25 || exit 1"]
+      test: ["CMD", "netsendo-mta-healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -382,4 +403,6 @@ volumes:
   nmi-dkim:
     driver: local
   nmi-tls:
+    driver: local
+  nmi-auth:
     driver: local
