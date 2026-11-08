@@ -32,6 +32,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('/license/check-status', [LicenseController::class, 'checkLicenseStatus'])->name('license.check-status');
     Route::post('/license/buy-gold', [LicenseController::class, 'buyGold'])->name('license.buy-gold');
     Route::post('/license/claim-gold', [LicenseController::class, 'claimGold'])->name('license.claim-gold');
+    Route::post('/license/cancel-gold', [LicenseController::class, 'cancelGold'])->name('license.cancel-gold');
 
     // Version check routes
     Route::get('/api/version/check', [VersionController::class, 'check'])->name('api.version.check');

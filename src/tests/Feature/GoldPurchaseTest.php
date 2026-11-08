@@ -183,6 +183,80 @@ class GoldPurchaseTest extends TestCase
         $this->assertSame('SILVER', $this->setting('license_plan'));
     }
 
+    public function test_a_gold_key_sent_to_the_installation_replaces_silver_and_ends_a_started_purchase(): void
+    {
+        Setting::create(['key' => 'license_key', 'value' => self::SILVER_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'SILVER']);
+        $this->startPurchase();
+        $this->fakeServers([], licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => true, 'expires_at' => '2027-11-08T22:59:59.000Z']]);
+
+        // what the netsendo.com admin panel sends after granting GOLD to this address
+        $this->postJson('/api/license/webhook', ['licenseKey' => self::GOLD_KEY, 'package' => 'GOLD', 'domain' => 'localhost'])
+            ->assertOk()
+            ->assertJson(['success' => true, 'package' => 'GOLD']);
+
+        $this->assertSame(self::GOLD_KEY, $this->setting('license_key'));
+        $this->assertSame('GOLD', $this->setting('license_plan'));
+        $this->assertSame('2027-11-08T22:59:59.000Z', $this->setting('license_expires_at'));
+        $this->assertSame('localhost', $this->setting('license_domain'));
+        $this->assertFalse(app(GoldPurchaseService::class)->hasPendingPurchase(), 'the started purchase is no longer waited for');
+        $this->assertNull($this->setting(GoldPurchaseService::SECRET_KEY));
+    }
+
+    public function test_the_public_activation_webhook_does_not_replace_an_active_gold_with_silver(): void
+    {
+        Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'GOLD']);
+        $this->fakeServers([], licence: [['package' => 'SILVER', 'license_key' => self::SILVER_KEY, 'is_active' => true]]);
+
+        $this->postJson('/api/license/webhook', ['licenseKey' => self::SILVER_KEY, 'package' => 'SILVER'])->assertStatus(409);
+
+        $this->assertSame(self::GOLD_KEY, $this->setting('license_key'));
+        $this->assertSame('GOLD', $this->setting('license_plan'));
+    }
+
+    public function test_a_key_entered_on_the_licence_page_replaces_an_active_silver(): void
+    {
+        Setting::create(['key' => 'license_key', 'value' => self::SILVER_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'SILVER']);
+        $this->startPurchase();
+        $this->fakeServers([], licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => true, 'expires_at' => null]]);
+
+        $this->actingAs($this->user)
+            ->post(route('license.activate'), ['license_key' => self::GOLD_KEY])
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertSame(self::GOLD_KEY, $this->setting('license_key'));
+        $this->assertSame('GOLD', $this->setting('license_plan'));
+        $this->assertNull($this->setting('license_expires_at'));
+        $this->assertFalse(app(GoldPurchaseService::class)->hasPendingPurchase());
+    }
+
+    public function test_a_started_purchase_can_be_cancelled(): void
+    {
+        $this->startPurchase();
+
+        $this->actingAs($this->user)->postJson(route('license.cancel-gold'))->assertOk()->assertJson(['status' => 'none']);
+
+        $this->assertFalse(app(GoldPurchaseService::class)->hasPendingPurchase());
+        $this->actingAs($this->user)->postJson(route('license.claim-gold'))->assertOk()->assertJson(['status' => 'none']);
+        // and it can be started again
+        $this->startPurchase();
+        $this->assertTrue(app(GoldPurchaseService::class)->hasPendingPurchase());
+    }
+
+    public function test_the_licence_page_does_not_wait_for_a_purchase_while_gold_is_on(): void
+    {
+        $this->startPurchase();
+        // GOLD stored before this version cleared started purchases
+        Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'GOLD']);
+
+        $this->actingAs($this->user)->get(route('license.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('licensePlan', 'GOLD')->where('goldPurchasePending', false));
+    }
+
     public function test_the_daily_check_keeps_a_renewed_gold_expiry_in_step(): void
     {
         Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);

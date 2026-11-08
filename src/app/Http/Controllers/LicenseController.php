@@ -35,7 +35,10 @@ class LicenseController extends Controller
             'plans' => config('netsendo.plans'),
             // GOLD is bought through the NetSendo store and activated here automatically
             'goldPurchaseAvailable' => $goldPurchase->available(),
-            'goldPurchasePending' => $goldPurchase->hasPendingPurchase(),
+            // A purchase started before GOLD came another way (a key entered here or sent to
+            // this installation) is not waited for while that GOLD is on
+            'goldPurchasePending' => $goldPurchase->hasPendingPurchase()
+                && app(\App\Services\LicenseService::class)->getCurrentPlan() !== 'GOLD',
         ]);
     }
 
@@ -66,6 +69,18 @@ class LicenseController extends Controller
     public function claimGold(Request $request, GoldPurchaseService $goldPurchase)
     {
         return response()->json($goldPurchase->claim($request->getHost()));
+    }
+
+    /**
+     * Stop waiting for a started GOLD purchase (the order tab was closed without paying).
+     * A purchase can be started again at any time.
+     */
+    public function cancelGold(Request $request, GoldPurchaseService $goldPurchase)
+    {
+        abort_unless($request->user()?->isAdmin(), 403);
+        $goldPurchase->clear();
+
+        return response()->json(['status' => 'none']);
     }
 
     /**
@@ -314,8 +329,15 @@ class LicenseController extends Controller
         $plan = strtoupper($verified['plan'] ?? $plan);
         $expiresAt = $verified['expires_at'] ?? null;
 
+        // A key sent from outside never takes an active GOLD licence down to a lower plan:
+        // anyone holding some valid SILVER key could otherwise post it here
+        if ($plan !== 'GOLD' && app(\App\Services\LicenseService::class)->getCurrentPlan() === 'GOLD') {
+            Log::warning('Webhook activation rejected: it would replace an active GOLD licence');
+            return response()->json(['success' => false, 'message' => 'An active GOLD licence is not replaced by a lower plan'], 409);
+        }
+
         try {
-            $this->saveLicense($licenseKey, $plan, $expiresAt);
+            $verificationService->storeLicense($licenseKey, $plan, $expiresAt, $request->getHost());
 
             // Optionally save contact email
             if ($contactEmail) {
