@@ -20,7 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The quick install script (`install.sh`) starts a working installation.** It downloaded only `docker-compose.yml` and the nginx config, so Docker created folders in place of `docker/php/docker-entrypoint.sh` and `docker/php/uploads.ini` and the app container never started; its `.env` also had no `APP_KEY` (the containers mount `.env` read-only and cannot write one) and pointed the app at database port 33006. The script now downloads every file the compose file mounts, from the same release as the image (`VERSION=2.6.0` takes the `v2.6.0` files and the `2.6.0` image), builds `.env` from `.env.example` with a new `APP_KEY` and a random database password, refuses to overwrite an existing installation's `.env`, and waits until the app answers. Checked with a clean install in Docker: all containers up, `/` redirects to `/login`, no pending migrations.
+- **The help menu no longer links to `forum.netsendo.com`**, which does not exist.
 - **Clicking into a text block's content field no longer strips its formatting** (email template builder). The field showed the block's text without its HTML tags and saved that text back every time it lost focus, so clicking into it and out again turned links, bold text, line breaks and paragraphs into one plain paragraph. It now saves only after you change the text, and it reloads after AI Generate, Improve or the AI assistant panel change the block, so old text can no longer overwrite the AI result. Editing keeps the formatting too: see the rich-text editor under *Changed*.
+
+### Documentation
+
+- README, CONTRIBUTING and DOCKER_INSTALL match the current stack: Laravel 13, Inertia 3, MySQL 8.4 LTS, Node.js 24, the real ports of both stacks, `CACHE_STORE` instead of `CACHE_DRIVER`, AI keys set in *Settings → AI Integrations* instead of `.env`, the licence activation as the licence page does it, and version examples for 2.6.0. The links to `docs.netsendo.com`, `forum.netsendo.com`, `support.netsendo.com` and `netsendo.com/courses` (none of them exists) point to the documentation and guides on netsendo.com, GitHub Issues and the official Telegram channel. README has a short privacy section (no third-party assets in the panel, telemetry off by default, what the licence check sends).
+- DOCKER_INSTALL no longer appends a second `APP_KEY` line to `.env`: with the empty `APP_KEY=` line left in place the entrypoint tried to write a key into the read-only file and stopped. The key now replaces that line.
+- SECURITY.md lists 2.6.x as the supported version; CONTRIBUTING shows how to run the tests and no longer claims that CHANGELOG lists every contributor.
 
 ## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
 

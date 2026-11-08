@@ -8,15 +8,17 @@
 
 [![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
 [![PHP](https://img.shields.io/badge/PHP-8.5-purple.svg)](https://php.net)
-[![Laravel](https://img.shields.io/badge/Laravel-12-red.svg)](https://laravel.com)
+[![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-green.svg)](https://vuejs.org)
+[![Inertia](https://img.shields.io/badge/Inertia-3-9553e9.svg)](https://inertiajs.com)
 [![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8.svg)](https://tailwindcss.com)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vite.dev)
+[![MySQL](https://img.shields.io/badge/MySQL-8.4_LTS-4479a1.svg)](https://dev.mysql.com/doc/refman/8.4/en/)
 [![License](https://img.shields.io/badge/License-Proprietary-orange.svg)](LICENSE.md)
 [![Contributing](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/NetSendo/NetSendo?style=social)](https://github.com/NetSendo/NetSendo/stargazers)
 
-[📖 Documentation](https://docs.netsendo.com) • [🎓 Courses](https://netsendo.com/courses) • [💬 Forum](https://forum.netsendo.com) • [🐛 Report Bug](https://support.netsendo.com)
+[📖 Documentation](https://netsendo.com/en/docs) • [📚 Guides](https://netsendo.com/en/guides) • [📢 Telegram](https://t.me/netsendo_official) • [🐛 Report Bug](https://github.com/NetSendo/NetSendo/issues/new?template=bug_report.md)
 
 **[🇺🇸 English](#-about-netsendo)** | [🇵🇱 Polski](#-o-netsendo-pl) | [🇩🇪 Deutsch](#-über-netsendo-de) | [🇪🇸 Español](#-acerca-de-netsendo-es)
 
@@ -31,8 +33,8 @@ NetSendo is a modern email marketing and automation platform that enables:
 - 📧 **Email Marketing** - Create and send email campaigns with advanced MJML editor
 - 🎥 **Webinars & Auto-Webinars** - Host live sessions or schedule automated evergreen webinars with simulated chat
 - 👥 **Live Visitors** - Real-time visitor tracking and analytics using WebSockets
-- 🛍️ **E-commerce & Funnels** - Sell digital products via Stripe, Polar, & Shopify with built-in sales funnels
-- 🤖 **AI Suite** - Campaign Auditor, Advisor, and Smart Content Generation (OpenAI, Claude, Gemini)
+- 🛍️ **E-commerce & Funnels** - Sell digital products with Stripe, Polar and Tpay, take orders from Shopify and WooCommerce, and follow up with built-in sales funnels
+- 🤖 **AI Suite** - NetSendo Brain, Campaign Auditor, Advisor and content generation with your own OpenAI, Anthropic Claude, Google Gemini or xAI Grok keys (OpenRouter and local Ollama models on GOLD)
 - 🔌 **MCP Server** - Model Context Protocol integration for AI assistants (Claude, Cursor, VS Code)
 - 📱 **SMS Marketing** - Send SMS messages to your subscribers
 - 🔄 **Automations** - Build complex scenarios and workflows
@@ -41,6 +43,12 @@ NetSendo is a modern email marketing and automation platform that enables:
 - 🎨 **Templates** - Drag & drop email template builder
 - 👥 **CRM** - Manage subscribers, groups, and tags
 - 🔒 **[NMI](docs/NMI.md)** - Professional mail infrastructure with dedicated IPs, IP warming, DKIM, and blacklist monitoring
+
+### 🔐 Privacy
+
+- The panel loads nothing from other hosts: fonts and scripts are served by your own installation, and there is no Google Analytics. A webinar page loads Google Fonts only when you pick a Google font for it.
+- Telemetry is off by default. If the administrator switches it on, the installation sends one anonymous usage report a day; [docs/TELEMETRY.md](docs/TELEMETRY.md) lists every field.
+- Activating and checking the licence sends netsendo.com the licence key or e-mail address, the domain and the NetSendo version. Your subscribers, messages and statistics stay on your server.
 
 ---
 
@@ -58,12 +66,12 @@ _Modern, intuitive dashboard with real-time analytics and campaign management_
 
 ## 📋 Requirements
 
-- **Docker Desktop** (recommended) or:
-  - PHP 8.5+
-  - MySQL 8.0+
-  - Redis
-  - Node.js 25+
-  - Composer
+- **Docker** with Docker Compose v2 (recommended), or for a manual setup:
+  - PHP 8.5 (the Docker image and CI use 8.5)
+  - MySQL 8.4 LTS (8.0 still works, but it reached end of life in April 2026)
+  - Redis 7
+  - Node.js 24 LTS and npm (to build the frontend)
+  - Composer 2
   - **PHP GD Extension** (optional, for automatic color extraction from images)
 
 > [!TIP]
@@ -73,33 +81,14 @@ _Modern, intuitive dashboard with real-time analytics and campaign management_
 
 ## 🐳 Installation (Docker)
 
-> [!IMPORTANT] > **Required Configuration Before Starting Docker**
+> [!IMPORTANT]
+> The production stack reads the `.env` file in the repository root (created from `.env.example`) and mounts it read-only, so set these values **before the first start**:
 >
-> Before running Docker, you MUST configure the following environment variables in `src/.env.docker`:
+> - `APP_KEY` — must start with `base64:`; generate it with `openssl rand -base64 32`. The containers cannot write a key into the read-only file.
+> - `APP_URL` — the address users open, e.g. `https://mail.example.com`.
+> - `DB_PASSWORD` — change it from the default.
 >
-> **1. APP_KEY** (Required - Docker will NOT build without this!):
->
-> ```env
-> # Find the line: APP_KEY=
-> # Replace with (IMPORTANT: must start with base64:):
-> APP_KEY=base64:YOUR_32_BYTE_KEY_HERE
-> ```
->
-> Generate a key using: `openssl rand -base64 32`
->
-> **2. DB_PASSWORD** (Required - change from default):
->
-> ```env
-> DB_PASSWORD=your_secure_password
-> ```
->
-> **3. AI API Keys** (Optional - for AI features):
->
-> ```env
-> OPENAI_API_KEY=sk-...
-> ANTHROPIC_API_KEY=sk-ant-...
-> GOOGLE_AI_API_KEY=...
-> ```
+> AI keys do not go into `.env`: add OpenAI, Anthropic, Gemini or Grok keys in the panel under **Settings → AI Integrations**.
 
 ---
 
@@ -111,10 +100,10 @@ _Modern, intuitive dashboard with real-time analytics and campaign management_
 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-To install a specific version:
+The script creates a `netsendo/` folder with the compose file, its config files and a `.env` with a new `APP_KEY` and a random database password, then starts the stack on http://localhost:8080. To install a specific version:
 
 ```bash
-VERSION=1.0.0 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | VERSION=2.6.0 bash
 ```
 
 **Option 2: Manual Production Deployment**
@@ -124,26 +113,27 @@ VERSION=1.0.0 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/mai
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
 
-# Create .env file from example
+# Create .env file from example and put a new key into it
 cp .env.example .env
-# Edit .env with your production settings
+sed -i.bak "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env && rm .env.bak
+# Edit .env: APP_URL, DB_PASSWORD, mail settings
 
 # Start production stack (uses pre-built images)
 docker compose up -d
 
 # Or specify a version
-NETSENDO_VERSION=1.0.0 docker compose up -d
+NETSENDO_VERSION=2.6.0 docker compose up -d
 ```
 
-| Service      | URL                   | Description      |
-| ------------ | --------------------- | ---------------- |
-| **NetSendo** | http://localhost:5029 | Main dashboard   |
-| **Mailpit**  | http://localhost:5031 | Test email inbox |
-| **MySQL**    | localhost:5030        | Database         |
-| **Reverb**   | localhost:8085        | WebSocket Server |
+| Service      | Address               | Description                                  |
+| ------------ | --------------------- | -------------------------------------------- |
+| **NetSendo** | http://localhost:5029 | Main dashboard (`HTTP_PORT`)                 |
+| **Mailpit**  | http://localhost:5031 | Test email inbox (`MAILPIT_HTTP_PORT`)       |
+| **MySQL**    | 127.0.0.1:3306        | Database (`DB_PORT`, 3306 in `.env.example`) |
+| **Reverb**   | localhost:8085        | WebSocket Server (`REVERB_PORT`)             |
 
 > [!TIP]
-> All ports are bound to `127.0.0.1` for security. Use a reverse proxy (nginx, Caddy) for public access.
+> The web app, MySQL and Mailpit are bound to `127.0.0.1`; put a reverse proxy (nginx, Caddy) in front of the web app for public access. Reverb listens on all interfaces because browsers connect to it directly.
 
 ---
 
@@ -153,6 +143,9 @@ NETSENDO_VERSION=1.0.0 docker compose up -d
 git clone https://github.com/NetSendo/NetSendo.git
 cd NetSendo
 
+# The dev stack mounts ./src and uses src/.env
+cp src/.env.docker src/.env
+
 # Start development stack (builds from source)
 docker compose -f docker-compose.dev.yml up -d --build
 ```
@@ -160,7 +153,7 @@ docker compose -f docker-compose.dev.yml up -d --build
 On first run, the container will automatically:
 
 - ✅ Install Composer and NPM dependencies
-- ✅ Generate application key
+- ✅ Generate application key (into `src/.env`)
 - ✅ Run database migrations
 - ✅ Build frontend assets
 
@@ -168,9 +161,11 @@ On first run, the container will automatically:
 | ------------ | --------------------- | ---------------------- |
 | **NetSendo** | http://localhost:8080 | Main dashboard         |
 | **Mailpit**  | http://localhost:8025 | Test email inbox       |
-| **MySQL**    | localhost:3306        | Database               |
+| **MySQL**    | localhost:33006       | Database               |
 | **Reverb**   | localhost:8085        | WebSocket Server       |
 | **Vite HMR** | http://localhost:5173 | Hot Module Replacement |
+
+Run the tests from `src/` with `php artisan test` (SQLite in memory, no Docker needed).
 
 ---
 
@@ -191,10 +186,11 @@ No plan includes white-label or rebranding rights (EULA §3.6, §7.3).
 
 ### License Activation
 
-1. Launch the application and go to the main page
-2. Register an administrator account
-3. On the license page, select SILVER (free) or GOLD plan
-4. Enter your email - the license will be automatically activated
+1. Open the application and register the administrator account.
+2. The licence page opens. For **SILVER**, enter your e-mail address; the licence is activated automatically.
+3. For **GOLD**, choose **Buy GOLD**: payment opens on netsendo.com in a new tab, and GOLD switches on in the panel as soon as the payment is confirmed. A key you already have goes in under **I have a license key**.
+
+Plans and prices: [netsendo.com/en/pricing](https://netsendo.com/en/pricing).
 
 ---
 
@@ -251,8 +247,11 @@ docker exec netsendo-app npm <command>
 ```
 NetSendo/
 ├── docker/                     # Docker configuration
+│   ├── haraka/                # NMI mail server (Haraka MTA)
 │   ├── nginx/                 # Nginx config
 │   └── php/                   # PHP Dockerfile + entrypoint
+├── docs/                       # Integration and feature docs
+├── mcp/                        # MCP client (@netsendo/mcp-client on npm)
 ├── src/                        # Laravel source code
 │   ├── app/                   # Application logic
 │   ├── config/                # Configuration
@@ -264,6 +263,7 @@ NetSendo/
 │   └── db/                    # MySQL backup files
 ├── docker-compose.yml          # Production configuration (main)
 ├── docker-compose.dev.yml      # Development configuration
+├── install.sh                  # Quick install script
 └── README.md                  # This file
 ```
 
@@ -271,9 +271,7 @@ NetSendo/
 
 ## 🔧 Configuration
 
-Configuration is stored in `src/.env` (automatically created from `src/.env.docker`).
-
-> [!CAUTION] > **You MUST configure these variables before building Docker!**
+The production stack reads `.env` in the repository root (created from `.env.example`, read-only inside the containers). The development stack reads `src/.env` (created from `src/.env.docker`). After changing `.env`, run `docker compose up -d` again; the containers rebuild their configuration cache on start.
 
 ### Required Environment Variables
 
@@ -282,13 +280,13 @@ Configuration is stored in `src/.env` (automatically created from `src/.env.dock
 # Generate with: openssl rand -base64 32
 APP_KEY=base64:YOUR_GENERATED_KEY_HERE
 
-APP_URL=http://localhost:8080
+APP_URL=http://localhost:5029
 APP_LOCALE=en
 
 # Database (Docker) - CHANGE THE PASSWORD!
 DB_HOST=db
-DB_DATABASE=netsendo
-DB_USERNAME=netsendo
+DB_DATABASE=netsendo_prod
+DB_USERNAME=netsendo_user
 DB_PASSWORD=your_secure_password_here
 
 # Redis
@@ -299,18 +297,9 @@ MAIL_HOST=mailpit
 MAIL_PORT=1025
 ```
 
-### Optional: AI Integration Keys
+### AI Integrations
 
-```env
-# OpenAI (for GPT features)
-OPENAI_API_KEY=sk-...
-
-# Anthropic Claude
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Google AI (Gemini)
-GOOGLE_AI_API_KEY=...
-```
+AI providers are not configured in `.env`. Add your keys in the panel under **Settings → AI Integrations**: OpenAI, Anthropic, Google Gemini and xAI Grok on every plan, OpenRouter and local Ollama models on GOLD.
 
 ### WebSocket Configuration (Reverb)
 
@@ -344,7 +333,7 @@ VITE_REVERB_SCHEME=http
 - `REVERB_HOST=reverb` - for backend (Docker internal network)
 - `VITE_REVERB_HOST=localhost` - for browser (external access)
 - Port `8085` is exposed by the `reverb` container
-- After changing `VITE_*` variables, rebuild frontend: `npm run build`
+- The browser gets the `VITE_REVERB_*` values from the server when a page loads, so after changing them run `docker compose up -d`; no frontend rebuild is needed
 
 ### Production Configuration
 
@@ -370,7 +359,7 @@ DB_PASSWORD=your_secure_password   # CHANGE THIS!
 # Redis (recommended for sessions/cache)
 REDIS_HOST=redis
 SESSION_DRIVER=redis
-CACHE_DRIVER=redis
+CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 
 # Mail configuration
@@ -440,7 +429,7 @@ docker compose up -d
 **Update to specific version:**
 
 ```bash
-NETSENDO_VERSION=1.1.0 docker compose up -d
+NETSENDO_VERSION=2.6.0 docker compose up -d
 ```
 
 ## 📖 For detailed instructions, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)
@@ -477,7 +466,7 @@ If changes don't appear after update:
 If you see errors like:
 
 ```
-WebSocket connection to 'ws://localhost:8080/app/...' failed
+WebSocket connection to 'ws://localhost:8085/app/...' failed
 ```
 
 **Cause:** Reverb is not configured or not running.
@@ -506,11 +495,11 @@ WebSocket connection to 'ws://localhost:8080/app/...' failed
    # Should show: "Starting server on 0.0.0.0:8085"
    ```
 
-4. **Restart Reverb and rebuild frontend:**
+4. **Apply the configuration again:**
 
    ```bash
+   docker compose up -d
    docker compose restart reverb
-   docker compose exec app npm run build
    ```
 
 5. **Verify port 8085 is accessible:**
@@ -525,15 +514,12 @@ WebSocket connection to 'ws://localhost:8080/app/...' failed
 
 ## 🤝 Support
 
-- 📖 **Documentation**: https://docs.netsendo.com
-- 💬 **Forum**: https://forum.netsendo.com
-- 🎓 **Courses**: https://netsendo.com/courses
-- 🐛 **Report Bug**: https://support.netsendo.com
+- 📖 **Documentation**: https://netsendo.com/en/docs
+- 📚 **Guides**: https://netsendo.com/en/guides
+- 🐛 **Report Bug**: [GitHub Issues](https://github.com/NetSendo/NetSendo/issues/new?template=bug_report.md)
+- 🔒 **Security issues**: privately, as described in [SECURITY.md](SECURITY.md)
 - 📧 **Technical support**: support@netsendo.com
 - 📧 **Licensing, orders and business**: contact@netsendo.com
-
----
-
 
 ---
 
@@ -545,14 +531,13 @@ We welcome contributions! Whether it's fixing bugs, improving documentation, or 
 
 ### Quick ways to help:
 - ⭐ **Star this repo** — helps others discover NetSendo
-- 🐛 **Report bugs** — [open an issue](https://github.com/NetSendo/NetSendo/issues/new)
+- 🐛 **Report bugs** — [open an issue](https://github.com/NetSendo/NetSendo/issues/new?template=bug_report.md)
 - 📝 **Improve docs** — fix typos, add examples
 - 🌍 **Translate** — help with [translations](TRANSLATIONS.md)
 
 ### Community
-- [💬 Telegram](https://t.me/netsendo) — questions & discussions
-- [📖 Forum](https://forum.netsendo.com) — longer conversations
-- [🎓 Courses](https://netsendo.com/courses) — learn NetSendo
+- [📢 Telegram](https://t.me/netsendo_official) — product updates and announcements
+- [📚 Guides](https://netsendo.com/en/guides) — learn NetSendo
 
 ## 📄 License
 
@@ -578,12 +563,10 @@ NetSendo to nowoczesna platforma e-mail marketingu i automatyzacji. Umożliwia t
 ### Instalacja
 
 ```bash
-git clone https://github.com/NetSendo/NetSendo.git
-cd NetSendo
-docker compose up -d --build
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-Aplikacja dostępna pod: http://localhost:8080
+Skrypt tworzy folder `netsendo/` z konfiguracją i kluczem aplikacji. Aplikacja jest dostępna pod http://localhost:5029. Licencja SILVER jest darmowa, GOLD to subskrypcja; szczegóły w [cenniku](https://netsendo.com/pl/pricing). Pełna instrukcja: [Production Deployment](#-production-deployment).
 
 </details>
 
@@ -599,12 +582,10 @@ NetSendo ist eine moderne E-Mail-Marketing- und Automatisierungsplattform. Erste
 ### Installation
 
 ```bash
-git clone https://github.com/NetSendo/NetSendo.git
-cd NetSendo
-docker compose up -d --build
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-Anwendung verfügbar unter: http://localhost:8080
+Das Skript legt den Ordner `netsendo/` mit Konfiguration und Anwendungsschlüssel an. Die Anwendung ist unter http://localhost:5029 erreichbar. Die SILVER-Lizenz ist kostenlos, GOLD ist ein Abonnement; Details in der [Preisliste](https://netsendo.com/de/pricing). Vollständige Anleitung: [Production Deployment](#-production-deployment).
 
 </details>
 
@@ -620,12 +601,10 @@ NetSendo es una plataforma moderna de email marketing y automatización. Cree ca
 ### Instalación
 
 ```bash
-git clone https://github.com/NetSendo/NetSendo.git
-cd NetSendo
-docker compose up -d --build
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-Aplicación disponible en: http://localhost:8080
+El script crea la carpeta `netsendo/` con la configuración y la clave de la aplicación. La aplicación está disponible en http://localhost:5029. La licencia SILVER es gratuita y GOLD es una suscripción; detalles en los [precios](https://netsendo.com/es/pricing). Guía completa: [Production Deployment](#-production-deployment).
 
 </details>
 
