@@ -136,6 +136,15 @@ docker compose up -d
 
 **That's it!** No manual cache clearing or rebuilding required.
 
+The `app` container runs pending migrations and seeds missing starter data on
+start; `scheduler`, `queue` and `reverb` (`NETSENDO_RUN_MIGRATIONS=false` in
+`docker-compose.yml`) wait until it is done. A MySQL lock lets only one
+container prepare the database at a time, also with an older compose file.
+Follow it with `docker compose logs -f app`. If you keep downloaded copies of
+the configuration instead of a git checkout, download
+`docker/php/docker-entrypoint.sh` again with each update: the compose file
+mounts it over the one in the image.
+
 ### Update to Specific Version
 
 ```bash

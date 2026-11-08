@@ -82,6 +82,8 @@ services:
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=${MAIL_HOST:-mailpit}
@@ -118,6 +120,8 @@ services:
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=${MAIL_HOST:-mailpit}
@@ -153,6 +157,8 @@ services:
     ports:
       - "${REVERB_PORT:-8085}:8085"
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - REVERB_SERVER_HOST=0.0.0.0

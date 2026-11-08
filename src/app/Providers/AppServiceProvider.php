@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Console\MigrationLock::class);
     }
 
     /**
@@ -22,6 +22,17 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // `migrate` and `db:seed` started by several containers at once wait for each other
+        // instead of racing (App\Console\MigrationLock)
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Console\Events\CommandStarting::class,
+            fn ($event) => $this->app->make(\App\Console\MigrationLock::class)->commandStarting($event)
+        );
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Console\Events\CommandFinished::class,
+            fn ($event) => $this->app->make(\App\Console\MigrationLock::class)->commandFinished($event)
+        );
 
         // A sleeping Cloud instance (NETSENDO_DORMANT) sends nothing: a queue worker that is
         // still running pauses instead of taking jobs (App\Http\Middleware\DormantMode)
