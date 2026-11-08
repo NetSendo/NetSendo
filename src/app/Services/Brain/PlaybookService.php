@@ -223,7 +223,7 @@ class PlaybookService
         $strategy = $settings->getStrategyForAgent('campaign');
         $tone = $strategy['tone'] ?? 'professional';
         $langName = AiBrainSettings::getLanguageName($settings->resolveLanguage($user));
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message', query: trim(($item['brief'] ?? '') . ' ' . ($options['topic'] ?? '')));
         $topic = $options['topic'] ?? '';
 
         $prompt = <<<PROMPT

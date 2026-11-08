@@ -141,7 +141,7 @@ class AgentOrchestrator
                 // Clear pending state
                 $conversation->update(['context' => array_diff_key($context, ['pending_agent' => '', 'pending_intent' => ''])]);
 
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $pendingIntent['task_type'] ?? 'general');
+                $knowledgeContext = $this->knowledgeBase->getContext($user, $pendingIntent['task_type'] ?? 'general', query: trim(($pendingIntent['intent'] ?? '') . "\n" . $message));
                 $intent = $pendingIntent;
                 $intent['requires_agent'] = true;
                 $intent['has_user_details'] = true;
@@ -166,7 +166,7 @@ class AgentOrchestrator
                         $conversation->update(['context' => $ctx]);
                     }
 
-                    $knowledgeContext = $this->knowledgeBase->getContext($user, 'general');
+                    $knowledgeContext = $this->knowledgeBase->getContext($user, 'general', query: $message);
                     $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
                     if ($goalsContext) {
                         $knowledgeContext .= $goalsContext;
@@ -229,7 +229,7 @@ class AgentOrchestrator
                                 $result = $this->handleSituationAnalysis($user, $conversation, $settings);
                             } else {
                                 // Step 3: Get knowledge context for this intent
-                                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+                                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general', query: $message);
 
                                 // Inject active goal context
                                 $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
@@ -773,7 +773,7 @@ PROMPT;
                 'parameters' => [],
             ];
 
-            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
+            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'], query: $intent['intent'] ?? null);
             return $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
         }
 
@@ -821,7 +821,7 @@ PROMPT;
                     'parameters' => [],
                 ];
 
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
+                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'], query: $intent['intent'] ?? null);
                 $planResult = $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
                 $message .= "\n" . ($planResult['message'] ?? '');
             }
@@ -997,7 +997,7 @@ PROMPT;
         // NOW save the user message (only for successful streaming path)
         $this->conversationManager->addUserMessage($conversation, $message);
 
-        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general', query: $message);
         $messages = $this->conversationManager->buildAiPayload($conversation, $user, $knowledgeContext);
         $provider = $this->aiService->getProvider($integration);
         $modelToUse = $settings->preferred_model ?: null;
@@ -1393,7 +1393,7 @@ PROMPT;
         ];
 
         // Get knowledge context
-        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName);
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intent['intent'] ?? null);
 
         // Enrich knowledge context with auto-gathered data
         if (!empty($autoContext)) {

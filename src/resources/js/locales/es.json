@@ -5188,6 +5188,7 @@
                 "hybrid_webinars": "Webinars híbridos",
                 "funnel_ab_split": "Pasos split A/B en embudos",
                 "brain_autonomy": "Autonomía de NetSendo Brain (modos automáticos, cron, objetivos, resumen, Telegram, investigación, voz)",
+                "semantic_knowledge": "Base de conocimiento semántica de Brain (búsqueda vectorial)",
                 "campaign_auditor": "Auditor de campañas con IA",
                 "deliverability_shield": "Deliverability Shield",
                 "mail_infrastructure": "NetSendo Mail Infrastructure (NMI)",
@@ -5199,7 +5200,8 @@
             "nmi_locked": "NetSendo Mail Infrastructure forma parte de GOLD. El envío por las IP ya configuradas sigue funcionando; añadir pools e IP, el calentamiento, DKIM y las comprobaciones de listas negras requieren GOLD.",
             "team_locked": "SILVER incluye un miembro del equipo además del propietario. Compra GOLD para invitar a más personas.",
             "funnel_split_locked": "Los pasos split A/B en embudos forman parte de GOLD. Los embudos están en SILVER.",
-            "brain_locked": "El chat de NetSendo Brain funciona en SILVER en modo manual: Brain aconseja y tú actúas. Los modos automáticos, el cron, los objetivos, el resumen semanal, Telegram, la investigación web y la voz forman parte de GOLD."
+            "brain_locked": "El chat de NetSendo Brain funciona en SILVER en modo manual: Brain aconseja y tú actúas. Los modos automáticos, el cron, los objetivos, el resumen semanal, Telegram, la investigación web y la voz forman parte de GOLD.",
+            "semantic_knowledge_locked": "La búsqueda semántica en la base de conocimiento está en el plan GOLD. En SILVER, Brain lee la base de conocimiento por categorías y una entrada puede tener hasta 10.000 caracteres."
         },
         "plan_features": {
             "email_sms": "Campañas de email y SMS, autorespondedores y mensajes del sistema",
@@ -5220,6 +5222,7 @@
             "unlimited_ai_campaigns": "Campañas de IA ilimitadas",
             "advanced_ai": "IA avanzada: OpenRouter y modelos locales de Ollama",
             "brain_autonomy": "NetSendo Brain autónomo: modos automáticos, cron, objetivos, resumen semanal, Telegram, investigación web, voz",
+            "semantic_knowledge": "Base de conocimiento semántica de Brain: búsqueda vectorial y entradas de hasta 100.000 caracteres",
             "campaign_auditor": "Auditor de campañas con IA y análisis de resultados con IA",
             "ab_tests": "Pruebas A/B de campañas",
             "funnel_ab_split": "Pasos split A/B en embudos",
@@ -8423,7 +8426,27 @@
             "selected_count": "Seleccionados: {count}",
             "delete_selected": "🗑️ Eliminar seleccionados ({count})",
             "bulk_delete_confirm": "¿Seguro que quieres eliminar {count} entradas de la base de conocimiento? Todas las entradas seleccionadas se eliminarán permanentemente.",
-            "confirm_delete": "Eliminar {count} entradas"
+            "confirm_delete": "Eliminar {count} entradas",
+            "semantic": {
+                "title": "Búsqueda semántica",
+                "description": "Brain divide las entradas en fragmentos, los convierte en vectores y elige para cada tarea los fragmentos que encajan, en lugar de unas pocas entradas completas de categorías fijas. Las entradas pueden tener hasta 100.000 caracteres.",
+                "provider": "Proveedor de embeddings",
+                "provider_auto": "Automático: {name}",
+                "provider_auto_none": "Automático",
+                "model": "Modelo de embeddings",
+                "model_help": "Elige uno de la lista o escribe el nombre de un modelo. Tras un cambio, Brain recalcula toda la base de conocimiento en segundo plano.",
+                "no_provider": "Ninguna de las integraciones de IA conectadas puede crear embeddings. Añade OpenAI, Google Gemini, OpenRouter u Ollama (Anthropic y Grok no los ofrecen).",
+                "save": "Guardar y probar",
+                "saving": "Probando…",
+                "saved": "El modelo funciona, guardado",
+                "status": "{indexed} de {entries} entradas indexadas · {chunks} fragmentos",
+                "status_model": "Modelo: {model}",
+                "indexing": "Indexando en segundo plano…",
+                "reindex": "Reindexar",
+                "reindex_queued": "Reindexación iniciada en segundo plano",
+                "active": "Activa",
+                "content_limit": "Máx. {limit} caracteres"
+            }
         },
         "monitor_label": "Monitor",
         "monitor": {

@@ -128,7 +128,7 @@ PROMPT;
         $langCode = $settings->resolveLanguage($user);
         $langName = AiBrainSettings::getLanguageName($langCode);
 
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'general');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'general', query: trim($goal->title . "\n" . $goal->description));
 
         // Include completed plan context
         $completedContext = '';

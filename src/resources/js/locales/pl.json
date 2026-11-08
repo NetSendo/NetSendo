@@ -3401,6 +3401,7 @@
                 "hybrid_webinars": "Webinary hybrydowe",
                 "funnel_ab_split": "Kroki split A/B w lejkach",
                 "brain_autonomy": "Autonomia NetSendo Brain (tryby automatyczne, cron, cele, raport, Telegram, research, głos)",
+                "semantic_knowledge": "Semantyczna baza wiedzy Brain (wyszukiwanie wektorowe)",
                 "campaign_auditor": "AI Campaign Auditor",
                 "deliverability_shield": "Deliverability Shield",
                 "mail_infrastructure": "NetSendo Mail Infrastructure (NMI)",
@@ -3412,7 +3413,8 @@
             "nmi_locked": "NetSendo Mail Infrastructure jest w planie GOLD. Wysyłka przez skonfigurowane już adresy IP działa dalej; dodawanie pul i adresów IP, rozgrzewanie, DKIM i sprawdzanie czarnych list wymagają GOLD.",
             "team_locked": "SILVER obejmuje jednego członka zespołu poza właścicielem. Kup GOLD, aby zaprosić więcej osób.",
             "funnel_split_locked": "Kroki split A/B w lejkach są w planie GOLD. Same lejki są w SILVER.",
-            "brain_locked": "Czat NetSendo Brain działa w SILVER w trybie ręcznym: Brain doradza, a Ty działasz. Tryby automatyczne, cron, cele, raport tygodniowy, Telegram, research w sieci i wiadomości głosowe są w planie GOLD."
+            "brain_locked": "Czat NetSendo Brain działa w SILVER w trybie ręcznym: Brain doradza, a Ty działasz. Tryby automatyczne, cron, cele, raport tygodniowy, Telegram, research w sieci i wiadomości głosowe są w planie GOLD.",
+            "semantic_knowledge_locked": "Wyszukiwanie semantyczne w bazie wiedzy jest w planie GOLD. W SILVER Brain korzysta z bazy według kategorii, a wpis może mieć do 10 000 znaków."
         },
         "plan_features": {
             "email_sms": "Kampanie email i SMS, autorespondery i wiadomości systemowe",
@@ -3433,6 +3435,7 @@
             "unlimited_ai_campaigns": "Nielimitowane kampanie AI",
             "advanced_ai": "Zaawansowane AI: OpenRouter i lokalne modele Ollama",
             "brain_autonomy": "Autonomiczny NetSendo Brain: tryby automatyczne, cron, cele, raport tygodniowy, Telegram, research w sieci, głos",
+            "semantic_knowledge": "Semantyczna baza wiedzy Brain: wyszukiwanie wektorowe i wpisy do 100 000 znaków",
             "campaign_auditor": "AI Campaign Auditor i analiza wyników przez AI",
             "ab_tests": "Testy A/B kampanii",
             "funnel_ab_split": "Kroki split A/B w lejkach",
@@ -8809,7 +8812,27 @@
             "selected_count": "Zaznaczono: {count}",
             "delete_selected": "🗑️ Usuń zaznaczone ({count})",
             "bulk_delete_confirm": "Czy na pewno chcesz usunąć {count} wpisów z bazy wiedzy? Wszystkie zaznaczone wpisy zostaną trwale usunięte.",
-            "confirm_delete": "Usuń {count} wpisów"
+            "confirm_delete": "Usuń {count} wpisów",
+            "semantic": {
+                "title": "Wyszukiwanie semantyczne",
+                "description": "Brain dzieli wpisy na fragmenty, zamienia je na wektory i do każdego zadania dobiera fragmenty pasujące do pytania, zamiast kilku całych wpisów z wybranych kategorii. Wpisy mogą mieć do 100 000 znaków.",
+                "provider": "Dostawca wektorów",
+                "provider_auto": "Automatycznie: {name}",
+                "provider_auto_none": "Automatycznie",
+                "model": "Model wektorów",
+                "model_help": "Wybierz z listy albo wpisz nazwę modelu. Po zmianie modelu Brain przeliczy całą bazę w tle.",
+                "no_provider": "Żadna z podłączonych integracji AI nie potrafi liczyć wektorów. Dodaj OpenAI, Google Gemini, OpenRouter albo Ollamę (Anthropic i Grok tego nie oferują).",
+                "save": "Zapisz i sprawdź",
+                "saving": "Sprawdzanie…",
+                "saved": "Model działa, zapisano",
+                "status": "Zindeksowano {indexed} z {entries} wpisów · {chunks} fragmentów",
+                "status_model": "Model: {model}",
+                "indexing": "Indeksowanie trwa w tle…",
+                "reindex": "Przelicz od nowa",
+                "reindex_queued": "Przeliczanie ruszyło w tle",
+                "active": "Aktywne",
+                "content_limit": "Maks. {limit} znaków"
+            }
         },
         "monitor_label": "Monitor",
         "monitor": {

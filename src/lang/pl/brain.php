@@ -511,4 +511,10 @@ return [
     'situation_analysis_auto_executed' => 'Automatycznie wykonano :count zadań o wysokim priorytecie',
     'situation_analysis_error' => '❌ Analiza sytuacji nie powiodła się. Spróbuj ponownie.',
     'situation_analysis_no_data' => '⚠️ Nie udało się zebrać wystarczających danych do analizy. Upewnij się, że masz kampanie, listy lub dane CRM.',
+
+    // === Semantic knowledge base (GOLD) ===
+    'knowledge_semantic' => [
+        'no_provider' => 'Żadna z podłączonych integracji AI nie potrafi liczyć wektorów. Dodaj OpenAI, Google Gemini, OpenRouter albo Ollamę (Anthropic i Grok tego nie oferują).',
+        'test_failed' => 'Model wektorów nie odpowiedział poprawnie: :error',
+    ],
 ];

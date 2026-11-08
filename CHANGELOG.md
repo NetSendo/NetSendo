@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **Semantic Brain knowledge base (GOLD).** Until now Brain put the five best-rated entries of a few fixed categories into every prompt, whatever the task was about, so in a large knowledge base most of what it knew never reached it. With GOLD every entry is split into chunks of about 1,200 characters, each chunk is turned into an embedding vector, and for every task Brain gets the chunks that match it: the user's message in the chat, the topic of an e-mail or campaign, a goal, a playbook brief or a cron task. The brand voice and company entries stay in writing tasks as before, and an entry can now have up to 100,000 characters (10,000 on SILVER).
+  - **Embeddings** come from an AI integration the installation already has: OpenAI (`text-embedding-3-small` by default), Google Gemini (`gemini-embedding-001`), OpenRouter or a local Ollama model (`bge-m3`). Anthropic and Grok have no embedding endpoint. *Brain → Settings → Knowledge base → Semantic search* picks the integration and model (automatic by default), tries the model before saving it, shows how many entries are indexed and can re-index. A new model embeds the whole knowledge base again in the background; vectors of different models are never mixed.
+  - **No new service.** MySQL Community cannot search vectors (the `VECTOR` type of MySQL 9 has no distance function outside HeatWave), so vectors are stored as packed float32 in the new `knowledge_chunks` table (768 dimensions where the model can shorten them) and compared in PHP, about 60 ms for 5,000 chunks. Words found by the existing full-text index, the task's categories and verified entries add a small bonus, and matches far weaker than the best one are left out.
+  - **Kept in step:** an added or changed entry is embedded by a queued job (`IndexKnowledgeEntry`), changed text drops its old vectors on any plan, and `brain:index-knowledge` (hourly, GOLD only; `--sync`, `--user=`) embeds whatever is missing, e.g. entries saved while the provider was down or before GOLD. Saving an entry never fails because of the provider.
+  - **Without GOLD**, without an embedding provider, or when the provider does not answer, Brain reads the knowledge base by category as before. Vectors made under GOLD are kept.
+  - The knowledge base search of the API (`GET /api/v1/brain/knowledge?search=`) also searches by meaning with GOLD.
+  - Code: `app/Services/Brain/Knowledge/{KnowledgeChunker,KnowledgeEmbedder,KnowledgeIndexer,SemanticKnowledgeSearch,EmbeddingTarget}.php`, `EmbeddingProviderInterface` for the OpenAI, Gemini, OpenRouter and Ollama providers, `SemanticKnowledgeController`, `Feature::SemanticKnowledge`; texts in en, pl, de, es. Covered by `tests/Feature/SemanticKnowledgeTest.php` and `tests/Unit/KnowledgeChunkerTest.php`.
+
+### Fixed
+
+- **Web research entries reach Brain again.** Research saved entries under categories the AI made up (e.g. `marketing`, `marketing_strategy`); Brain reads the knowledge base by category, so it never used them, and the edit form refused them. They move to *Insights* (the old category is kept as a tag), and new entries with an unknown category are stored the same way.
+- Adding a knowledge base entry without choosing a category failed silently: the form started with a category that does not exist. It starts with *Company* now.
+- An Ollama integration behind a proxy now sends its optional API key as a bearer token; it was never sent.
+
 ## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
 
 **Release date:** 2026-11-08

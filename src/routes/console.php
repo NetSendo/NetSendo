@@ -295,6 +295,14 @@ Schedule::command('brain:run-cron')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/brain-cron.log'));
 
+// Semantic knowledge base (GOLD): embed entries that are missing or outdated — saved while the
+// AI provider was down, before GOLD or before an embedding provider was added
+Schedule::command('brain:index-knowledge')
+    ->when($licensed(Feature::SemanticKnowledge))
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 // A sleeping Cloud instance (NETSENDO_DORMANT) runs no scheduled work: nothing is sent,
 // synced or checked until the owner resumes it (App\Http\Middleware\DormantMode)
 if (config('netsendo.dormant')) {

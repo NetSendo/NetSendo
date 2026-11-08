@@ -5,13 +5,34 @@ namespace App\Services\Brain;
 use App\Models\KnowledgeEntry;
 use App\Models\User;
 use App\Services\AI\AiService;
+use App\Services\Brain\Knowledge\SemanticKnowledgeSearch;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class KnowledgeBaseService
 {
+    /** Categories Brain reads for each kind of task (the SILVER way; a small bonus in semantic search). */
+    private const CATEGORY_MAP = [
+        'campaign' => ['company', 'products', 'brand_voice', 'audience', 'best_practices', 'goals', 'style_preference', 'performance_pattern'],
+        'message' => ['brand_voice', 'products', 'company', 'templates', 'audience', 'style_preference', 'performance_pattern'],
+        'list' => ['audience', 'products', 'goals'],
+        'analysis' => ['insights', 'best_practices', 'goals', 'competitors', 'performance_pattern'],
+        'general' => ['company', 'products', 'brand_voice', 'goals'],
+    ];
+
+    /** Who the company is and how it speaks: kept in every semantic context of a task that uses them. */
+    private const CORE_CATEGORIES = ['brand_voice', 'company', 'style_preference'];
+
+    private const SEMANTIC_CHUNKS = 8;
+
+    private const CORE_ENTRY_CHARS = 1500;
+
+    /** Upper bound of the semantic knowledge context in characters (about 2,500 tokens). */
+    private const SEMANTIC_BUDGET = 10000;
+
     public function __construct(
         protected AiService $aiService,
+        protected SemanticKnowledgeSearch $semanticSearch,
     ) {}
 
     /**
@@ -26,9 +47,16 @@ class KnowledgeBaseService
         ?string $sourceReference = null,
         array $tags = [],
     ): KnowledgeEntry {
+        // An unknown category (e.g. one web research made up) would hide the entry from Brain,
+        // which reads the knowledge base by category: keep it as a tag instead
+        $known = KnowledgeEntry::normalizeCategory($category);
+        if ($known !== $category && $category !== '' && !in_array($category, $tags, true)) {
+            $tags[] = $category;
+        }
+
         return KnowledgeEntry::create([
             'user_id' => $user->id,
-            'category' => $category,
+            'category' => $known,
             'title' => $title,
             'content' => $content,
             'source' => $source,
@@ -41,9 +69,17 @@ class KnowledgeBaseService
 
     /**
      * Search knowledge base for a user.
+     *
+     * With the semantic knowledge base (GOLD) entries come by meaning, best first; otherwise,
+     * or when it cannot run, by MySQL full-text search and then LIKE.
      */
     public function search(User $user, string $query, ?string $category = null, int $limit = 10): Collection
     {
+        $hits = $this->semanticSearch->search($user->id, $query, $limit, [], 1, $category);
+        if ($hits !== null && $hits->isNotEmpty()) {
+            return $hits->pluck('entry')->values();
+        }
+
         $q = KnowledgeEntry::forUser($user->id)->active();
 
         if ($category) {
@@ -76,18 +112,22 @@ class KnowledgeBaseService
     /**
      * Get knowledge context for a specific task type.
      * Returns a formatted string ready to inject into AI prompts.
+     *
+     * Given the task's text ($query: the user's message, the topic of the e-mail, the goal),
+     * the semantic knowledge base (GOLD) supplies the chunks that match it. Otherwise, or when
+     * that cannot run, Brain reads the best entries of the task's categories (SILVER).
      */
-    public function getContext(User $user, string $taskType, int $maxEntries = 5): string
+    public function getContext(User $user, string $taskType, int $maxEntries = 5, ?string $query = null): string
     {
-        $categoryMap = [
-            'campaign' => ['company', 'products', 'brand_voice', 'audience', 'best_practices', 'goals', 'style_preference', 'performance_pattern'],
-            'message' => ['brand_voice', 'products', 'company', 'templates', 'audience', 'style_preference', 'performance_pattern'],
-            'list' => ['audience', 'products', 'goals'],
-            'analysis' => ['insights', 'best_practices', 'goals', 'competitors', 'performance_pattern'],
-            'general' => ['company', 'products', 'brand_voice', 'goals'],
-        ];
+        $categories = self::CATEGORY_MAP[$taskType] ?? self::CATEGORY_MAP['general'];
 
-        $categories = $categoryMap[$taskType] ?? $categoryMap['general'];
+        if (filled($query)) {
+            $semantic = $this->semanticContext($user, $categories, $query);
+            if ($semantic !== null) {
+                return $semantic;
+            }
+        }
+
         $entries = collect();
 
         foreach ($categories as $category) {
@@ -111,14 +151,77 @@ class KnowledgeBaseService
         // Record usage
         $entries->each(fn($entry) => $entry->recordUsage());
 
-        // Format for AI context
+        // Format for AI context. Whole entries go in, but no longer than SILVER allows: longer
+        // ones were written for the semantic knowledge base, which sends only their matching chunks
         $context = "--- KNOWLEDGE BASE ---\n";
         foreach ($entries as $entry) {
             $verified = $entry->is_verified ? '✓' : '~';
-            $context .= "[{$verified}] [{$entry->category}] {$entry->title}: {$entry->content}\n";
+            $content = $this->cut($entry->content, KnowledgeEntry::CONTENT_LIMIT);
+            $context .= "[{$verified}] [{$entry->category}] {$entry->title}: {$content}\n";
         }
 
         return $context;
+    }
+
+    /**
+     * The start of the task's core entries (brand voice, company) and the chunks that match
+     * the query; null when semantic search cannot run, so the caller reads by category.
+     *
+     * @param  list<string>  $categories
+     */
+    protected function semanticContext(User $user, array $categories, string $query): ?string
+    {
+        $hits = $this->semanticSearch->search($user->id, $query, self::SEMANTIC_CHUNKS, $categories);
+        if ($hits === null || $hits->isEmpty()) {
+            return null;
+        }
+
+        $coreCategories = array_values(array_intersect(self::CORE_CATEGORIES, $categories));
+        $core = $coreCategories === [] ? collect() : KnowledgeEntry::forUser($user->id)
+            ->active()
+            ->whereIn('category', $coreCategories)
+            ->byRelevance()
+            ->limit(2)
+            ->get();
+
+        $context = "--- KNOWLEDGE BASE ---\n";
+        $used = collect();
+
+        foreach ($core as $entry) {
+            $verified = $entry->is_verified ? '✓' : '~';
+            $context .= "[{$verified}] [{$entry->category}] {$entry->title}: {$this->cut($entry->content, self::CORE_ENTRY_CHARS)}\n";
+            $used->put($entry->id, $entry);
+        }
+
+        foreach ($hits as $hit) {
+            $entry = $hit['entry'];
+            // The start of a core entry is already in
+            if ($used->has($entry->id) && $hit['chunk_index'] === 0 && $core->contains('id', $entry->id)) {
+                continue;
+            }
+
+            $verified = $entry->is_verified ? '✓' : '~';
+            $part = $hit['chunks_total'] > 1 ? ' (' . ($hit['chunk_index'] + 1) . "/{$hit['chunks_total']})" : '';
+            $line = "[{$verified}] [{$entry->category}] {$entry->title}{$part}: {$hit['content']}\n";
+
+            if (mb_strlen($context) + mb_strlen($line) > self::SEMANTIC_BUDGET) {
+                break;
+            }
+
+            $context .= $line;
+            $used->put($entry->id, $entry);
+        }
+
+        $used->each(fn (KnowledgeEntry $entry) => $entry->recordUsage());
+
+        return $context;
+    }
+
+    private function cut(?string $text, int $limit): string
+    {
+        $text = (string) $text;
+
+        return mb_strlen($text) > $limit ? rtrim(mb_substr($text, 0, $limit)) . '…' : $text;
     }
 
     /**

@@ -3,11 +3,57 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use App\Services\AI\EmbeddingProviderInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class GeminiProvider extends BaseProvider
+class GeminiProvider extends BaseProvider implements EmbeddingProviderInterface
 {
+    public function embeddingModels(): array
+    {
+        return ['gemini-embedding-001'];
+    }
+
+    public function embed(array $texts, ?string $model = null, array $options = []): array
+    {
+        if ($texts === []) {
+            return [];
+        }
+
+        $model = $model ?: $this->embeddingModels()[0];
+        $taskType = ($options['purpose'] ?? 'document') === 'query' ? 'RETRIEVAL_QUERY' : 'RETRIEVAL_DOCUMENT';
+
+        $requests = [];
+        foreach (array_values($texts) as $text) {
+            $request = [
+                'model' => "models/{$model}",
+                'content' => ['parts' => [['text' => $text]]],
+                'taskType' => $taskType,
+            ];
+            if (!empty($options['dimensions'])) {
+                $request['outputDimensionality'] = (int) $options['dimensions'];
+            }
+            $requests[] = $request;
+        }
+
+        // The key goes in a header, so it never lands in a logged URL
+        $response = Http::withHeaders(['x-goog-api-key' => (string) $this->getApiKey()])
+            ->timeout($options['timeout'] ?? 60)
+            ->post($this->getBaseUrl() . "/models/{$model}:batchEmbedContents", ['requests' => $requests]);
+
+        if (!$response->successful()) {
+            $error = $response->json('error.message') ?? mb_substr($response->body(), 0, 300);
+            throw new \RuntimeException("Embedding request failed ({$response->status()}): {$error}");
+        }
+
+        $embeddings = $response->json('embeddings');
+        if (!is_array($embeddings) || count($embeddings) !== count($texts)) {
+            throw new \RuntimeException('Embedding response has no vectors for every text.');
+        }
+
+        return array_map(fn ($item) => array_map('floatval', $item['values'] ?? []), $embeddings);
+    }
+
     protected function getDefaultModel(): string
     {
         return 'gemini-2.5-pro';
