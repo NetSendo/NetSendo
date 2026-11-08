@@ -137,7 +137,7 @@ class BrainPageController extends Controller
                 'cron_interval_minutes' => (int) ($settings->cron_interval_minutes ?? 60),
                 'is_active' => (bool) $settings->is_active,
                 'daily_token_limit' => (int) $settings->daily_token_limit,
-                'tokens_used_today' => (int) $settings->tokens_used_today,
+                'tokens_used_today' => $settings->tokensUsedToday(),
             ],
         ]);
     }

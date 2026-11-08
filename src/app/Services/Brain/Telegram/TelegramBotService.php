@@ -362,7 +362,7 @@ class TelegramBotService
         $status = "📊 **NetSendo Brain Status**\n\n";
         $status .= "👤 Account: {$user->name}\n";
         $status .= "🔧 Mode: {$modeController->getModeLabel($settings->work_mode)}\n";
-        $status .= "🔢 Tokens today: {$settings->tokens_used_today}/{$settings->daily_token_limit}\n";
+        $status .= "🔢 Tokens today: {$settings->tokensUsedToday()}/{$settings->daily_token_limit}\n";
 
         // Pending approvals
         $pendingCount = AiPendingApproval::forUser($user->id)->pending()->count();

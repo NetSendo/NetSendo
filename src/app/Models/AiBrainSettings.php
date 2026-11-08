@@ -227,7 +227,17 @@ class AiBrainSettings extends Model
      */
     public function isTokenLimitReached(): bool
     {
-        return $this->tokens_used_today >= $this->daily_token_limit;
+        return $this->tokensUsedToday() >= $this->daily_token_limit;
+    }
+
+    /**
+     * Tokens charged today. The stored counter is reset only when tokens are charged, so a
+     * count left from an earlier day is no longer today's — without this a day that ended
+     * over the limit blocked Brain for good (blocked calls charge nothing, so nothing reset it).
+     */
+    public function tokensUsedToday(): int
+    {
+        return $this->countsForToday() ? (int) $this->tokens_used_today : 0;
     }
 
     /**
@@ -235,7 +245,7 @@ class AiBrainSettings extends Model
      */
     public function addTokensUsed(int $tokens): void
     {
-        if ($this->token_reset_date === null || $this->token_reset_date->lt(today())) {
+        if (!$this->countsForToday()) {
             $this->update([
                 'tokens_used_today' => $tokens,
                 'token_reset_date' => today(),
@@ -243,6 +253,12 @@ class AiBrainSettings extends Model
         } else {
             $this->increment('tokens_used_today', $tokens);
         }
+    }
+
+    /** Whether the stored token counter was started today. */
+    private function countsForToday(): bool
+    {
+        return $this->token_reset_date !== null && !$this->token_reset_date->lt(today());
     }
 
     /**
