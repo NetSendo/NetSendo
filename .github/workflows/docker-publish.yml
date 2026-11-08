@@ -44,6 +44,14 @@ on:
         required: false
         default: false
 
+# Builds of main publish :latest. A merge followed by the release commit used to build in
+# parallel, and whichever finished last won: on 2026-11-08 the merge commit's image (still
+# saying 2.8.1) overwrote the 2.8.2 one, so updated installations kept showing 2.8.1. A newer
+# build of the same ref now cancels the older one; tags and dispatches have refs of their own.
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}

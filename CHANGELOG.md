@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **The `latest` Docker image comes from the newest commit of main.** A merge and the release commit right after it were built in parallel, and whichever build finished last published `:latest`. On 2026-11-08 the merge commit's image, which still said 2.8.1, finished last, so installations updated to `latest` showed 2.8.1 although they ran the 2.8.2 code. A newer build of main now cancels the older one.
+
 ## [2.8.2] – Brain understands chat commands, the mode you see is the mode it works in - 2026-11-08
 
 **Release date:** 2026-11-08
