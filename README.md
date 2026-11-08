@@ -6,7 +6,7 @@
 
 **Professional Email Marketing & Automation Platform**
 
-[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
+[![Version](https://img.shields.io/badge/version-2.7.0-blue.svg)](https://github.com/NetSendo/NetSendo/releases)
 [![PHP](https://img.shields.io/badge/PHP-8.5-purple.svg)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-green.svg)](https://vuejs.org)
@@ -103,7 +103,7 @@ curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh |
 The script creates a `netsendo/` folder with the compose file, its config files and a `.env` with a new `APP_KEY` and a random database password, then starts the stack on http://localhost:8080. To install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | VERSION=2.6.0 bash
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | VERSION=2.7.0 bash
 ```
 
 **Option 2: Manual Production Deployment**
@@ -122,7 +122,7 @@ sed -i.bak "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env && rm
 docker compose up -d
 
 # Or specify a version
-NETSENDO_VERSION=2.6.0 docker compose up -d
+NETSENDO_VERSION=2.7.0 docker compose up -d
 ```
 
 | Service      | Address               | Description                                  |
@@ -412,24 +412,41 @@ Check for available updates:
 
 ### Update Process (Standard Docker Workflow)
 
-```bash
-# Stop containers
-docker compose down
+1. **Back up the database.** Migrations run on start and cannot be undone:
 
-# Pull latest images
-docker compose pull
+   ```bash
+   docker compose exec db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" > /backups/before-update.sql'
+   ```
 
-# Start with new version
-docker compose up -d
-```
+   The file lands in `backups/db/` next to `docker-compose.yml`.
 
-> [!TIP]
-> That's it! No rebuilding or cache clearing required. Works just like n8n and other Docker apps.
+2. **Update the configuration files.** `docker-compose.yml` mounts your own copies of `docker/php/docker-entrypoint.sh`, `docker/php/uploads.ini` and `docker/nginx/default.conf` over the ones in the image, so `docker compose pull` alone does not bring their changes. In a git checkout run `git pull`. In a folder made by `install.sh`, or with downloaded copies:
+
+   ```bash
+   V=v2.7.0   # the release you update to, or main for the newest
+   for f in docker-compose.yml docker/php/docker-entrypoint.sh docker/php/uploads.ini docker/nginx/default.conf; do
+     cp "$f" "$f.bak" 2>/dev/null
+     curl -fsSL "https://raw.githubusercontent.com/NetSendo/NetSendo/$V/$f" -o "$f"
+   done
+   chmod +x docker/php/docker-entrypoint.sh
+   ```
+
+   If you changed one of these files, carry your change over from its `.bak` copy. `.env` is never replaced; compare it with [`.env.example`](.env.example) for new settings.
+
+3. **Pull the images and start:**
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+   docker compose logs -f app   # migrations run here; scheduler, queue and reverb wait for them
+   ```
+
+No frontend rebuild or cache clearing is needed: the image brings the built assets and the containers rebuild their caches on start.
 
 **Update to specific version:**
 
 ```bash
-NETSENDO_VERSION=2.6.0 docker compose up -d
+NETSENDO_VERSION=2.7.0 docker compose up -d
 ```
 
 ## 📖 For detailed instructions, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)

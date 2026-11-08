@@ -123,32 +123,47 @@ Navigate to **Settings → Mail Infrastructure** in NetSendo UI.
 
 NetSendo supports the standard Docker update workflow:
 
-```bash
-# 1. Stop services
-docker compose down
+1. **Back up the database.** Migrations run on start and cannot be undone:
 
-# 2. Pull latest images
-docker compose pull
+   ```bash
+   docker compose exec db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" > /backups/before-update.sql'
+   ```
 
-# 3. Start services
-docker compose up -d
-```
+   The file lands in `backups/db/` next to `docker-compose.yml`.
 
-**That's it!** No manual cache clearing or rebuilding required.
+2. **Update the configuration files.** `docker-compose.yml` mounts your own copies of `docker/php/docker-entrypoint.sh`, `docker/php/uploads.ini` and `docker/nginx/default.conf` over the ones in the image, so `docker compose pull` alone does not bring their changes. In a git checkout run `git pull`. In a folder made by `install.sh`, or with downloaded copies:
+
+   ```bash
+   V=v2.7.0   # the release you update to, or main for the newest
+   for f in docker-compose.yml docker/php/docker-entrypoint.sh docker/php/uploads.ini docker/nginx/default.conf; do
+     cp "$f" "$f.bak" 2>/dev/null
+     curl -fsSL "https://raw.githubusercontent.com/NetSendo/NetSendo/$V/$f" -o "$f"
+   done
+   chmod +x docker/php/docker-entrypoint.sh
+   ```
+
+   If you changed one of these files, carry your change over from its `.bak` copy. `.env` is never replaced; compare it with [`.env.example`](.env.example) for new settings.
+
+3. **Pull the images and start:**
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+   docker compose logs -f app   # migrations run here; scheduler, queue and reverb wait for them
+   ```
+
+No frontend rebuild or cache clearing is needed: the image brings the built assets and the containers rebuild their caches on start.
 
 The `app` container runs pending migrations and seeds missing starter data on
 start; `scheduler`, `queue` and `reverb` (`NETSENDO_RUN_MIGRATIONS=false` in
 `docker-compose.yml`) wait until it is done. A MySQL lock lets only one
 container prepare the database at a time, also with an older compose file.
-Follow it with `docker compose logs -f app`. If you keep downloaded copies of
-the configuration instead of a git checkout, download
-`docker/php/docker-entrypoint.sh` again with each update: the compose file
-mounts it over the one in the image.
+Follow it with `docker compose logs -f app`.
 
 ### Update to Specific Version
 
 ```bash
-NETSENDO_VERSION=2.6.0 docker compose up -d
+NETSENDO_VERSION=2.7.0 docker compose up -d
 ```
 
 ### ⚠️ Manual Update Required (v1.6.9+)

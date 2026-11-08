@@ -9,7 +9,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 #
 # Options (environment variables for bash, after the pipe):
-#   ... | VERSION=2.6.0 bash               # Install a specific version (default: latest)
+#   ... | VERSION=2.7.0 bash               # Install a specific version (default: latest)
 #   ... | INSTALL_DIR=/opt/netsendo bash   # Install folder (default: ./netsendo)
 #   ... | HTTP_PORT=8080 bash              # Port of the web app (default: 5029)
 # =============================================================================
