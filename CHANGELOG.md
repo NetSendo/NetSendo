@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **Clicking into a text block's content field no longer strips its formatting** (email template builder). The field shows the block's text without its HTML tags and saved that text back every time it lost focus, so clicking into it and out again turned links, bold text, line breaks and paragraphs into one plain paragraph. It now saves only after you edit it. It also reloads after AI Generate, Improve or the AI assistant panel change the block, so its old text can no longer overwrite the AI result. Typing and inserting variables or signatures save as before.
+
 ## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
 
 **Release date:** 2026-11-08

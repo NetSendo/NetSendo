@@ -26,6 +26,15 @@ const localSettings = ref({ ...props.block?.settings });
 // Track current block ID to prevent focus loss
 const currentBlockId = ref(props.block?.id);
 
+// The textarea shows the block HTML with its tags removed, so saving that text
+// back turns links, bold text, line breaks and paragraphs into one flat <p>.
+// It is saved only after the user edited it (textEdited). textareaHtml is the
+// HTML the textarea was loaded from or last saved as: a different value means
+// the HTML was changed elsewhere (AI generate/improve, the AI assistant panel)
+// and the textarea reloads, so a stale text cannot overwrite it later.
+let textareaHtml = props.block?.content?.html;
+let textEdited = false;
+
 // Local text content for textarea (extracted from HTML to prevent focus loss)
 const localTextContent = ref(
     props.block?.content?.html?.replace(/<[^>]*>/g, "") || ""
@@ -39,9 +48,16 @@ watch(
             localContent.value = { ...newBlock.content };
             localSettings.value = { ...newBlock.settings };
 
-            // Only update localTextContent when the selected block CHANGES (not on content updates)
-            if (newBlock.id !== currentBlockId.value) {
+            // Reload localTextContent when another block is selected or this
+            // block's HTML was changed outside the textarea; the textarea's own
+            // saves leave it alone (see textareaHtml above)
+            if (
+                newBlock.id !== currentBlockId.value ||
+                newBlock.content?.html !== textareaHtml
+            ) {
                 currentBlockId.value = newBlock.id;
+                textareaHtml = newBlock.content?.html;
+                textEdited = false;
                 localTextContent.value =
                     newBlock.content?.html?.replace(/<[^>]*>/g, "") || "";
             }
@@ -168,6 +184,25 @@ const refreshProductData = async () => {
 const updateContent = (key, value) => {
     localContent.value[key] = value;
     emit("update", { content: { ...localContent.value } });
+};
+
+// Save the text block's textarea into its HTML (see textareaHtml above)
+const saveTextContent = () => {
+    textareaHtml = "<p>" + localTextContent.value + "</p>";
+    textEdited = false;
+    updateContent("html", textareaHtml);
+};
+
+const markTextEdited = () => {
+    textEdited = true;
+};
+
+// On blur: only an edited textarea is saved, so focusing it and leaving it
+// again keeps the block's formatting
+const saveEditedTextContent = () => {
+    if (textEdited) {
+        saveTextContent();
+    }
 };
 
 // Update block settings
@@ -356,7 +391,7 @@ const handleInsert = (data) => {
     } else if (activeInsertField.value === "localText") {
         // Special case for main text area
         localTextContent.value += content;
-        updateContent("html", "<p>" + localTextContent.value + "</p>");
+        saveTextContent();
     } else if (activeInsertField.value) {
         // Standard field update
         const current = localContent.value[activeInsertField.value] || "";
@@ -611,12 +646,8 @@ const handleInsert = (data) => {
                     </div>
                     <textarea
                         v-model="localTextContent"
-                        @blur="
-                            updateContent(
-                                'html',
-                                '<p>' + localTextContent + '</p>'
-                            )
-                        "
+                        @input="markTextEdited"
+                        @blur="saveEditedTextContent"
                         rows="6"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         :placeholder="$t('template_builder.text_placeholder')"
