@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.2] – Brain understands chat commands, the mode you see is the mode it works in - 2026-11-08
+
+**Release date:** 2026-11-08
+
 ### Changed
 
 - **A global Brain mode applies to every agent.** Choosing Manual, Semi-automatic or Autonomous in *Brain → Settings* (or `/mode` in Telegram) now clears the per-agent modes, and saving the agent modes stores only the agents that differ from the global mode. Saving the agent modes used to store a mode for every agent, freezing the global mode of that moment, so after a later switch the agents kept the old one: on a reviewed instance every agent stayed autonomous while the chat header said semi-automatic. The chat header, the Monitor and the dashboard widget show the mode the agents really work in, or *Mixed*. An agent set to *Advisory* now only advises, also when the global mode is semi-automatic (it used to get plans to approve). See *Upgrading* for the migration.
