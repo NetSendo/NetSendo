@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class DomainConfiguration extends Model
@@ -32,6 +33,13 @@ class DomainConfiguration extends Model
         'alerts_enabled',
         'last_alert_at',
         'mailbox_id',
+        // NetSendo MTA (NMI)
+        'dedicated_ip_id',
+        'nmi_enabled',
+        'nmi_enabled_at',
+        'nmi_smtp_username',
+        'nmi_smtp_password',
+        'nmi_credentials_rotated_at',
     ];
 
     protected $casts = [
@@ -45,6 +53,14 @@ class DomainConfiguration extends Model
         'check_history' => 'array',
         'alerts_enabled' => 'boolean',
         'last_alert_at' => 'datetime',
+        'dedicated_ip_id' => 'integer',
+        'nmi_enabled' => 'boolean',
+        'nmi_enabled_at' => 'datetime',
+        'nmi_credentials_rotated_at' => 'datetime',
+    ];
+
+    protected $hidden = [
+        'nmi_smtp_password',
     ];
 
     /**
@@ -94,6 +110,78 @@ class DomainConfiguration extends Model
     public function simulations()
     {
         return $this->hasMany(InboxSimulation::class);
+    }
+
+    /**
+     * NMI: the domain's primary dedicated IP (preselected for new NMI mailboxes)
+     */
+    public function dedicatedIp()
+    {
+        return $this->belongsTo(DedicatedIpAddress::class, 'dedicated_ip_id');
+    }
+
+    /**
+     * NMI: every dedicated IP assigned to this domain (dedicated_ip_addresses.domain_configuration_id)
+     */
+    public function dedicatedIps()
+    {
+        return $this->hasMany(DedicatedIpAddress::class);
+    }
+
+    /**
+     * NMI: mailboxes that send for this domain through NetSendo MTA
+     */
+    public function nmiMailboxes()
+    {
+        return $this->hasMany(Mailbox::class)->where('provider', Mailbox::PROVIDER_NMI);
+    }
+
+    /**
+     * Encrypt the NMI SMTP password when it is set
+     */
+    public function setNmiSmtpPasswordAttribute($value): void
+    {
+        $this->attributes['nmi_smtp_password'] = $value ? Crypt::encryptString($value) : null;
+    }
+
+    /**
+     * The NMI SMTP password NmiProvider logs in to the MTA with
+     */
+    public function getDecryptedNmiPassword(): ?string
+    {
+        if (empty($this->attributes['nmi_smtp_password'])) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($this->attributes['nmi_smtp_password']);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public function hasNmiCredentials(): bool
+    {
+        return !empty($this->nmi_smtp_username) && !empty($this->attributes['nmi_smtp_password'] ?? null);
+    }
+
+    /**
+     * Ready to send through NMI: ownership verified (CNAME), NMI switched on, credentials set
+     */
+    public function isNmiReady(): bool
+    {
+        return $this->cname_verified && $this->nmi_enabled && $this->hasNmiCredentials();
+    }
+
+    /**
+     * Generate the SMTP login of this domain on the MTA. Letters and digits only, so the
+     * pair also fits the MTA's user file (username=password).
+     */
+    public function generateNmiCredentials(): void
+    {
+        $this->nmi_smtp_username = 'nmi-' . $this->id . '-' . Str::lower(Str::random(8));
+        $this->nmi_smtp_password = Str::random(40);
+        $this->nmi_credentials_rotated_at = now();
     }
 
     /**

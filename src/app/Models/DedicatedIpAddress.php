@@ -47,6 +47,7 @@ class DedicatedIpAddress extends Model
     ];
 
     protected $casts = [
+        'domain_configuration_id' => 'integer',
         'ptr_verified' => 'boolean',
         'ptr_verified_at' => 'datetime',
         'warming_started_at' => 'datetime',
@@ -117,6 +118,16 @@ class DedicatedIpAddress extends Model
     }
 
     /**
+     * DKIM keys are generated (NmiProvider signs with them)
+     */
+    public function hasDkimKeys(): bool
+    {
+        return !empty($this->dkim_selector)
+            && !empty($this->attributes['dkim_private_key'] ?? null)
+            && !empty($this->dkim_public_key);
+    }
+
+    /**
      * Set DKIM private key (auto-encrypt)
      */
     public function setDkimPrivateKeyAttribute($value): void
@@ -145,7 +156,8 @@ class DedicatedIpAddress extends Model
      */
     public function getDeliveryRate(): float
     {
-        if ($this->total_sent === 0) {
+        // A new model has no counters loaded yet (null)
+        if ((int) $this->total_sent === 0) {
             return 100.0;
         }
 
@@ -157,7 +169,8 @@ class DedicatedIpAddress extends Model
      */
     public function getBounceRate(): float
     {
-        if ($this->total_sent === 0) {
+        // A new model has no counters loaded yet (null)
+        if ((int) $this->total_sent === 0) {
             return 0.0;
         }
 
@@ -169,7 +182,8 @@ class DedicatedIpAddress extends Model
      */
     public function getComplaintRate(): float
     {
-        if ($this->total_sent === 0) {
+        // A new model has no counters loaded yet (null)
+        if ((int) $this->total_sent === 0) {
             return 0.0;
         }
 
@@ -364,6 +378,14 @@ class DedicatedIpAddress extends Model
     public function scopeForPool($query, int $poolId)
     {
         return $query->where('ip_pool_id', $poolId);
+    }
+
+    /**
+     * IPs in the user's own pools (shared pools have no user)
+     */
+    public function scopeOwnedBy($query, int $userId)
+    {
+        return $query->whereHas('pool', fn ($q) => $q->where('user_id', $userId));
     }
 
     public function scopeUnassigned($query)

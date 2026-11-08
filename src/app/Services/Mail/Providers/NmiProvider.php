@@ -9,7 +9,8 @@ use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Nmi\DkimKeyManager;
 use Symfony\Component\Mailer\Mailer;
-use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Crypto\DkimSigner;
@@ -32,26 +33,32 @@ class NmiProvider implements MailProviderInterface
         private ?DedicatedIpAddress $dedicatedIp,
         private string $fromEmail,
         private string $fromName,
-        private ?string $replyTo = null
+        private ?string $replyTo = null,
+        ?TransportInterface $transport = null
     ) {
-        $this->initializeMailer();
+        // A transport can be passed in (tests); otherwise the MTA container
+        $this->mailer = new Mailer($transport ?? self::createTransport($this->domain));
         $this->initializeDkimSigner();
     }
 
     /**
-     * Initialize the mailer with NMI MTA connection
+     * SMTP connection to the NMI MTA (Haraka), logged in with the domain's NMI credentials.
+     * Built directly rather than from a DSN, so a password with characters such as @ : / ?
+     * cannot break it.
      */
-    private function initializeMailer(): void
+    public static function createTransport(DomainConfiguration $domain): EsmtpTransport
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = config('nmi.mta_port', 25);
-        $username = $this->domain->nmi_smtp_username;
-        $password = $this->domain->getDecryptedNmiPassword();
+        $transport = new EsmtpTransport(
+            (string) config('nmi.mta_host', 'netsendo-mta'),
+            (int) config('nmi.mta_port', 25)
+        );
 
-        $dsn = "smtp://{$username}:{$password}@{$host}:{$port}";
+        if ($domain->nmi_smtp_username) {
+            $transport->setUsername($domain->nmi_smtp_username);
+            $transport->setPassword((string) $domain->getDecryptedNmiPassword());
+        }
 
-        $transport = Transport::fromDsn($dsn);
-        $this->mailer = new Mailer($transport);
+        return $transport;
     }
 
     /**
@@ -196,15 +203,22 @@ class NmiProvider implements MailProviderInterface
             if (!$this->domain->cname_verified) {
                 return [
                     'success' => false,
-                    'message' => 'Domain not verified. Please configure CNAME record first.',
+                    'message' => __('mailboxes.nmi.test.not_verified', ['domain' => $this->domain->domain]),
                 ];
             }
 
-            // Check NMI credentials
-            if (!$this->domain->nmi_smtp_username || !$this->domain->nmi_smtp_password) {
+            // NMI switched on for the domain, with its SMTP login on the MTA
+            if (!$this->domain->nmi_enabled) {
                 return [
                     'success' => false,
-                    'message' => 'NMI credentials not configured for this domain.',
+                    'message' => __('mailboxes.nmi.test.not_enabled', ['domain' => $this->domain->domain]),
+                ];
+            }
+
+            if (!$this->domain->hasNmiCredentials()) {
+                return [
+                    'success' => false,
+                    'message' => __('mailboxes.nmi.test.no_credentials', ['domain' => $this->domain->domain]),
                 ];
             }
 
@@ -212,7 +226,7 @@ class NmiProvider implements MailProviderInterface
             if ($this->dedicatedIp && !$this->canSend()) {
                 return [
                     'success' => false,
-                    'message' => 'Daily warming limit reached. Please wait until tomorrow.',
+                    'message' => __('mailboxes.nmi.test.warming_limit'),
                 ];
             }
 
@@ -233,7 +247,7 @@ class NmiProvider implements MailProviderInterface
 
             return [
                 'success' => true,
-                'message' => 'Connection successful! Test email sent via NMI.',
+                'message' => __('mailboxes.nmi.test.success'),
                 'details' => [
                     'domain' => $this->domain->domain,
                     'ip' => $this->dedicatedIp?->ip_address ?? 'Shared Pool',
@@ -244,7 +258,7 @@ class NmiProvider implements MailProviderInterface
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Connection failed: ' . $e->getMessage(),
+                'message' => __('mailboxes.nmi.test.failed', ['error' => $e->getMessage()]),
             ];
         }
     }

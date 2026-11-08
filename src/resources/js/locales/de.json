@@ -291,7 +291,8 @@
             "confirm_action": "Sind Sie sicher, dass Sie fortfahren möchten?",
             "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "exported_failed": "Export fehlgeschlagen.",
-            "imported_failed": "Import fehlgeschlagen."
+            "imported_failed": "Import fehlgeschlagen.",
+            "error": "Fehler"
         },
         "days": {
             "monday": "Montag",
@@ -8107,6 +8108,52 @@
             "select_region": "Region wählen",
             "submit": "IP bestellen",
             "title": "IP aus der Cloud bestellen"
+        },
+        "starting": "Wird gestartet...",
+        "checking": "Wird geprüft...",
+        "generating": "Wird generiert...",
+        "dkim_needs_domain": "Weisen Sie die IP zuerst einer Domain zu: Der DKIM-Eintrag wird unter dieser Domain veröffentlicht.",
+        "dkim_check_failed": "Die DKIM-Prüfung ist fehlgeschlagen.",
+        "warming": {
+            "new": "Nicht gestartet",
+            "warming": "Warming läuft",
+            "warmed": "Aufgewärmt",
+            "paused": "Pausiert"
+        },
+        "ip_domain": {
+            "title": "Absenderdomain",
+            "description": "Die Domain, für die diese IP sendet. Ihr DKIM-Eintrag wird unter dieser Domain veröffentlicht, und die NetSendo-MTA-Postfächer der Domain senden über diese IP.",
+            "none": "Noch keiner Domain zugewiesen. Wählen Sie eine Ihrer Domains aus dem Deliverability Shield.",
+            "select": "Domain wählen",
+            "assign": "Zuweisen",
+            "move": "Verschieben",
+            "unassign": "Von der Domain lösen",
+            "no_domains": "Sie haben noch keine Domains. Fügen Sie eine hinzu im",
+            "open_domain": "Domain-Einstellungen",
+            "not_verified": "nicht verifiziert",
+            "nmi_on": "NetSendo MTA eingeschaltet",
+            "nmi_off": "NetSendo MTA ausgeschaltet",
+            "in_use": "Postfächer, die über diese IP senden: {count}. Um sie zu verschieben oder zu lösen, stellen Sie diese zuerst auf eine andere IP oder einen anderen Anbieter um.",
+            "dkim_note": "Die DKIM-Schlüssel bleiben beim Verschieben der IP erhalten: Veröffentlichen Sie ihren Eintrag unter der neuen Domain erneut."
+        },
+        "domain_card": {
+            "title": "NetSendo MTA (NMI)",
+            "description": "Senden Sie die E-Mails dieser Domain über den eigenen MTA von NetSendo und Ihre dedizierten IPs.",
+            "enabled": "Eingeschaltet",
+            "disabled": "Ausgeschaltet",
+            "enable": "NetSendo MTA einschalten",
+            "disable": "Ausschalten",
+            "needs_verification": "Verifizieren Sie die Domain (den CNAME-Eintrag oben), bevor Sie NetSendo MTA einschalten.",
+            "not_available": "NetSendo MTA ist in dieser Installation ausgeschaltet (NMI_ENABLED in .env).",
+            "smtp_username": "MTA-Login",
+            "smtp_username_hint": "NetSendo meldet sich mit diesem Login und einem generierten Passwort am MTA an. Sie müssen sie nirgends eingeben.",
+            "ips": "Dedizierte IPs dieser Domain",
+            "no_ips": "Dieser Domain ist noch keine dedizierte IP zugewiesen. Weisen Sie eine auf ihrer Seite zu in",
+            "dkim_ready": "DKIM-Schlüssel bereit",
+            "dkim_missing": "Keine DKIM-Schlüssel",
+            "mailboxes": "Postfächer, die über NetSendo MTA senden: {count}",
+            "in_use": "Stellen Sie diese Postfächer auf einen anderen Anbieter um, bevor Sie NetSendo MTA ausschalten.",
+            "next_steps": "Weiter: eine dedizierte IP zuweisen, ihre DKIM-Schlüssel generieren und den Eintrag veröffentlichen, dann ein NetSendo-MTA-Postfach anlegen unter"
         }
     },
     "high_confidence_data": "Hohe Datenqualität",
@@ -8518,7 +8565,8 @@
             "gmail": "Gmail-API (OAuth 2.0) - sicherer Versand ohne via gmail.com",
             "sendgrid": "SendGrid-API - API-Key auf sendgrid.com anfordern",
             "smtp": "Eigener SMTP-Server oder E-Mail-Dienst (Mailgun, Amazon SES usw.)",
-            "title": "Anbieterinformationen"
+            "title": "Anbieterinformationen",
+            "nmi": "integrierter MTA mit Ihren dedizierten IPs (GOLD) - Einrichtung im Deliverability Shield und in der Mail-Infrastruktur"
         },
         "modal": {
             "add_title": "Postfach hinzufügen",
@@ -8555,7 +8603,8 @@
             "created": "Postfach wurde erstellt.",
             "deleted": "Postfach wurde gelöscht.",
             "set_default": "Postfach wurde als Standard festgelegt.",
-            "updated": "Postfach wurde aktualisiert."
+            "updated": "Postfach wurde aktualisiert.",
+            "disconnected": "Gmail wurde getrennt."
         },
         "oauth": {
             "connect_google": "Mit Google verbinden",
@@ -8759,6 +8808,21 @@
         "tracking": {
             "label": "Klicks und Öffnungen tracken",
             "help": "Leitet Links über NetSendo und fügt das Öffnungspixel ein. Aus: Links bleiben unverändert, kein Pixel, und das SendGrid-Tracking wird pro Nachricht ausgeschaltet. Eine Nachricht kann das überschreiben."
+        },
+        "nmi": {
+            "info": "NetSendo MTA sendet über Ihre eigene dedizierte IP. Richten Sie sie zuerst ein: eine verifizierte Domain mit eingeschaltetem NetSendo MTA (Deliverability Shield) und eine ihr zugewiesene dedizierte IP mit DKIM-Schlüsseln (Mail-Infrastruktur).",
+            "domain": "Absenderdomain",
+            "select_domain": "Domain wählen",
+            "ip": "Dedizierte IP",
+            "select_ip": "IP wählen",
+            "not_verified": "nicht verifiziert",
+            "not_enabled": "NetSendo MTA ausgeschaltet",
+            "no_dkim": "keine DKIM-Schlüssel",
+            "inactive": "ausgeschaltet",
+            "no_domains": "Sie haben noch keine Domains im Deliverability Shield.",
+            "no_ips": "Dieser Domain ist keine dedizierte IP zugewiesen.",
+            "from_hint": "Die Absenderadresse muss zu {domain} oder einer ihrer Subdomains gehören.",
+            "disabled_installation": "NetSendo MTA oder neue NetSendo-MTA-Postfächer sind in dieser Installation ausgeschaltet (NMI_ENABLED, NMI_ALLOW_NEW in .env)."
         }
     },
     "mcp": {

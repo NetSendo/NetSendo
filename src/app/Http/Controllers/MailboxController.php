@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Licensing\Feature;
+use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
+use App\Models\IpPool;
 use App\Models\Mailbox;
+use App\Services\LicenseService;
 use App\Services\Mail\BounceMailboxService;
 use App\Services\Mail\BounceWebhookAuthenticator;
 use App\Services\Mail\MailProviderService;
@@ -11,6 +16,7 @@ use App\Services\Mail\ReplyMailboxService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class MailboxController extends Controller
@@ -30,6 +36,7 @@ class MailboxController extends Controller
     public function index()
     {
         $mailboxes = Mailbox::forUser(Auth::id())
+            ->with(['domainConfiguration', 'dedicatedIp'])
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get()
@@ -62,6 +69,13 @@ class MailboxController extends Controller
                     'reply_to' => $mailbox->reply_to,
                     'time_restriction' => $mailbox->time_restriction,
                     'google_integration_id' => $mailbox->google_integration_id,
+                    // NetSendo MTA (NMI)
+                    'domain_configuration_id' => $mailbox->domain_configuration_id,
+                    'dedicated_ip_id' => $mailbox->dedicated_ip_id,
+                    'nmi' => $mailbox->provider === Mailbox::PROVIDER_NMI ? [
+                        'domain' => $mailbox->domainConfiguration?->domain,
+                        'ip_address' => $mailbox->dedicatedIp?->ip_address,
+                    ] : null,
                     // Bounce mailbox monitoring
                     'bounce_enabled' => $mailbox->bounce_enabled,
                     'bounce_imap_host' => $mailbox->bounce_imap_host,
@@ -99,7 +113,9 @@ class MailboxController extends Controller
                 Mailbox::PROVIDER_SMTP => MailProviderService::getProviderFields(Mailbox::PROVIDER_SMTP),
                 Mailbox::PROVIDER_SENDGRID => MailProviderService::getProviderFields(Mailbox::PROVIDER_SENDGRID),
                 Mailbox::PROVIDER_GMAIL => MailProviderService::getProviderFields(Mailbox::PROVIDER_GMAIL),
+                Mailbox::PROVIDER_NMI => MailProviderService::getProviderFields(Mailbox::PROVIDER_NMI),
             ],
+            'nmi' => $this->nmiOptions(),
             'messageTypes' => [
                 Mailbox::TYPE_BROADCAST => __('mailboxes.types.broadcast'),
                 Mailbox::TYPE_AUTORESPONDER => __('mailboxes.types.autoresponder'),
@@ -129,14 +145,15 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL, Mailbox::PROVIDER_NMI])],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
             'is_active' => ['boolean'],
             'allowed_types' => ['required', 'array', 'min:1'],
             'allowed_types.*' => [Rule::in([Mailbox::TYPE_BROADCAST, Mailbox::TYPE_AUTORESPONDER, Mailbox::TYPE_SYSTEM])],
-            'credentials' => [Rule::requiredIf(fn () => $request->provider !== Mailbox::PROVIDER_GMAIL), 'array'],
+            // Gmail connects with OAuth, NMI logs in with the credentials of its domain
+            'credentials' => [Rule::requiredIf(fn () => !in_array($request->provider, [Mailbox::PROVIDER_GMAIL, Mailbox::PROVIDER_NMI], true)), 'array'],
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
@@ -145,6 +162,8 @@ class MailboxController extends Controller
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
+
+        $nmi = $this->validateNmiSetup($request);
 
         $mailbox = Mailbox::create([
             'user_id' => Auth::id(),
@@ -155,12 +174,14 @@ class MailboxController extends Controller
             'reply_to' => $validated['reply_to'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'allowed_types' => array_values($validated['allowed_types']),
-            'credentials' => $validated['credentials'] ?? [],
+            'credentials' => $validated['provider'] === Mailbox::PROVIDER_NMI ? [] : ($validated['credentials'] ?? []),
             'daily_limit' => $validated['daily_limit'] ?? null,
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
             'custom_headers' => $validated['custom_headers'] ?? null,
             'tracking_enabled' => $validated['tracking_enabled'] ?? true,
+            'domain_configuration_id' => $nmi['domain_configuration_id'],
+            'dedicated_ip_id' => $nmi['dedicated_ip_id'],
         ]);
 
         // Set as default if it's the first mailbox
@@ -233,7 +254,7 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL, Mailbox::PROVIDER_NMI])],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
@@ -249,6 +270,8 @@ class MailboxController extends Controller
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
         ]);
+
+        $nmi = $this->validateNmiSetup($request, $mailbox);
 
         $webhookValidated = $request->validate([
             'bounce_webhook_sendgrid_key' => [
@@ -288,11 +311,16 @@ class MailboxController extends Controller
             'google_integration_id' => $validated['google_integration_id'] ?? null,
             'custom_headers' => $validated['custom_headers'] ?? null,
             'tracking_enabled' => $validated['tracking_enabled'] ?? $mailbox->tracking_enabled ?? true,
+            'domain_configuration_id' => $nmi['domain_configuration_id'],
+            'dedicated_ip_id' => $nmi['dedicated_ip_id'],
         ];
 
-        // Only update credentials if provided
-        // Handle credentials update with merging
-        if (!empty($validated['credentials'])) {
+        if ($validated['provider'] === Mailbox::PROVIDER_NMI) {
+            // NMI logs in with its domain's credentials: no SMTP or API secrets are kept
+            $updateData['credentials'] = [];
+        } elseif (!empty($validated['credentials'])) {
+            // Only update credentials if provided
+            // Handle credentials update with merging
             $currentCredentials = $mailbox->getDecryptedCredentials();
             $newCredentials = $validated['credentials'];
 
@@ -471,6 +499,127 @@ class MailboxController extends Controller
             'message' => __('mailboxes.bounce_webhooks.token_generated'),
             'bounce_webhook' => $this->bounceWebhookSettings($mailbox->fresh()),
         ]);
+    }
+
+    /**
+     * The NMI part of a mailbox: a domain of the user that is verified and has NMI switched on,
+     * and a dedicated IP of the user assigned to that domain, with DKIM keys. The sender address
+     * must be on the domain (or a subdomain), so the DKIM signature (d=domain) aligns.
+     *
+     * Setting NMI up (a new NMI mailbox, or another domain or IP) needs GOLD, NMI switched on for
+     * the installation (NMI_ENABLED, NMI_ALLOW_NEW) and a ready domain and IP. An NMI mailbox set
+     * up earlier can still be edited, renamed or switched off without them; the domain and the IP
+     * must still be the user's and the sender address on the domain.
+     *
+     * @return array{domain_configuration_id: ?int, dedicated_ip_id: ?int} the values to store
+     */
+    private function validateNmiSetup(Request $request, ?Mailbox $mailbox = null): array
+    {
+        if ($request->input('provider') !== Mailbox::PROVIDER_NMI) {
+            return ['domain_configuration_id' => null, 'dedicated_ip_id' => null];
+        }
+
+        $userId = Auth::id();
+
+        $changesSetup = $mailbox === null
+            || $mailbox->provider !== Mailbox::PROVIDER_NMI
+            || (string) $mailbox->domain_configuration_id !== (string) $request->input('domain_configuration_id')
+            || (string) $mailbox->dedicated_ip_id !== (string) $request->input('dedicated_ip_id');
+
+        if ($changesSetup) {
+            app(LicenseService::class)->ensureAllows(Feature::MailInfrastructure);
+
+            if (!config('nmi.features.enabled')) {
+                throw ValidationException::withMessages(['provider' => __('mailboxes.nmi.disabled')]);
+            }
+            if (!config('nmi.features.allow_new_mailboxes', true)) {
+                throw ValidationException::withMessages(['provider' => __('mailboxes.nmi.new_mailboxes_disabled')]);
+            }
+        }
+
+        $validated = $request->validate([
+            'domain_configuration_id' => [
+                'required',
+                'integer',
+                Rule::exists('domain_configurations', 'id')->where('user_id', $userId)->whereNull('deleted_at'),
+            ],
+            'dedicated_ip_id' => [
+                'required',
+                'integer',
+                Rule::exists('dedicated_ip_addresses', 'id')
+                    ->whereNull('deleted_at')
+                    ->whereIn('ip_pool_id', IpPool::where('user_id', $userId)->pluck('id')->all()),
+            ],
+        ], [
+            'domain_configuration_id.required' => __('mailboxes.nmi.domain_required'),
+            'domain_configuration_id.exists' => __('mailboxes.nmi.domain_required'),
+            'dedicated_ip_id.required' => __('mailboxes.nmi.ip_required'),
+            'dedicated_ip_id.exists' => __('mailboxes.nmi.ip_required'),
+        ]);
+
+        $domain = DomainConfiguration::findOrFail($validated['domain_configuration_id']);
+        $ip = DedicatedIpAddress::findOrFail($validated['dedicated_ip_id']);
+        $errors = [];
+
+        // Readiness is checked when the setup changes, not again on every later edit
+        if ($changesSetup && !$domain->cname_verified) {
+            $errors['domain_configuration_id'] = __('mailboxes.nmi.domain_not_verified', ['domain' => $domain->domain]);
+        } elseif ($changesSetup && (!$domain->nmi_enabled || !$domain->hasNmiCredentials())) {
+            $errors['domain_configuration_id'] = __('mailboxes.nmi.domain_not_enabled', ['domain' => $domain->domain]);
+        }
+
+        if ($ip->domain_configuration_id !== $domain->id) {
+            $errors['dedicated_ip_id'] = __('mailboxes.nmi.ip_not_assigned', ['ip' => $ip->ip_address, 'domain' => $domain->domain]);
+        } elseif ($changesSetup && !$ip->hasDkimKeys()) {
+            $errors['dedicated_ip_id'] = __('mailboxes.nmi.ip_no_dkim', ['ip' => $ip->ip_address]);
+        } elseif ($changesSetup && !$ip->is_active) {
+            $errors['dedicated_ip_id'] = __('mailboxes.nmi.ip_inactive', ['ip' => $ip->ip_address]);
+        }
+
+        $fromDomain = strtolower(substr((string) strrchr((string) $request->input('from_email'), '@'), 1));
+        $sendingDomain = strtolower($domain->domain);
+        if ($fromDomain !== $sendingDomain && !str_ends_with($fromDomain, '.' . $sendingDomain)) {
+            $errors['from_email'] = __('mailboxes.nmi.from_email_domain', ['domain' => $domain->domain]);
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return ['domain_configuration_id' => $domain->id, 'dedicated_ip_id' => $ip->id];
+    }
+
+    /**
+     * Domains (Deliverability Shield) and dedicated IPs of the user for the NMI part of the form
+     */
+    private function nmiOptions(): array
+    {
+        $userId = Auth::id();
+
+        $domains = DomainConfiguration::forUser($userId)
+            ->with(['dedicatedIps' => fn ($query) => $query->ownedBy($userId)->orderBy('ip_address')])
+            ->orderBy('domain')
+            ->get();
+
+        return [
+            'enabled' => (bool) config('nmi.features.enabled') && (bool) config('nmi.features.allow_new_mailboxes', true),
+            'domains' => $domains->map(fn (DomainConfiguration $domain) => [
+                'id' => $domain->id,
+                'domain' => $domain->domain,
+                'cname_verified' => (bool) $domain->cname_verified,
+                'nmi_enabled' => (bool) $domain->nmi_enabled,
+                'ready' => $domain->isNmiReady(),
+                'dedicated_ip_id' => $domain->dedicated_ip_id,
+                'ips' => $domain->dedicatedIps->map(fn (DedicatedIpAddress $ip) => [
+                    'id' => $ip->id,
+                    'ip_address' => $ip->ip_address,
+                    'hostname' => $ip->hostname,
+                    'dkim_ready' => $ip->hasDkimKeys(),
+                    'is_active' => (bool) $ip->is_active,
+                    'warming_status' => $ip->warming_status,
+                ])->values(),
+            ])->values(),
+        ];
     }
 
     /**

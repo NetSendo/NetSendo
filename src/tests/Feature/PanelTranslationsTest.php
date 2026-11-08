@@ -43,6 +43,9 @@ class PanelTranslationsTest extends TestCase
         'js/Pages/Deliverability/InboxPassport.vue',
         'js/Components/Deliverability/DnsRecordGenerator.vue',
         'js/Pages/MailingList/Create.vue',
+        // NetSendo MTA setup (NmiSetupFlowTest)
+        'js/Pages/Nmi/IpDetail.vue',
+        'js/Pages/Settings/Mailboxes/Index.vue',
     ];
 
     public function test_the_listed_php_files_have_no_polish_texts_in_string_literals(): void

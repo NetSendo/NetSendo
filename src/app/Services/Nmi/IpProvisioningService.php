@@ -99,7 +99,7 @@ class IpProvisioningService
             'ip_pool_id' => $pool->id,
             'ip_address' => $data['subnet'],
             'hostname' => $data['label'] ?? 'vultr-' . $data['id'],
-            'ip_version' => 4,
+            'ip_version' => 'ipv4',
             'provider' => DedicatedIpAddress::PROVIDER_VULTR,
             'provider_id' => $data['id'],
             'warming_status' => DedicatedIpAddress::WARMING_NEW,
@@ -149,7 +149,7 @@ class IpProvisioningService
             'ip_pool_id' => $pool->id,
             'ip_address' => $data['ip'],
             'hostname' => 'do-' . str_replace('.', '-', $data['ip']),
-            'ip_version' => 4,
+            'ip_version' => 'ipv4',
             'provider' => DedicatedIpAddress::PROVIDER_DIGITALOCEAN,
             'provider_id' => $data['ip'], // DO uses IP as identifier
             'warming_status' => DedicatedIpAddress::WARMING_NEW,

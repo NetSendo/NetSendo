@@ -2,11 +2,14 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
 import DnsRecordGenerator from "@/Components/Deliverability/DnsRecordGenerator.vue";
-import { Head, Link, router, useForm } from "@inertiajs/vue3";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+const { can } = useLicense();
+const page = usePage();
 
 const props = defineProps({
     domain: { type: Object, required: true },
@@ -14,7 +17,29 @@ const props = defineProps({
     humanStatus: { type: Object, required: true },
     simulations: { type: Array, default: () => [] },
     isLocalhost: { type: Boolean, default: false },
+    // NetSendo MTA (NMI, GOLD) for this domain
+    nmi: {
+        type: Object,
+        default: () => ({ available: false, enabled: false, ips: [], mailboxes_count: 0 }),
+    },
 });
+
+// NMI card: shown with GOLD, or when NMI was switched on before (it can still be switched off)
+const showNmiCard = computed(() => can("mail_infrastructure") || props.nmi.enabled);
+const nmiProcessing = ref(false);
+const nmiError = computed(() => page.props.errors?.domain);
+
+const toggleNmi = () => {
+    nmiProcessing.value = true;
+    router.post(
+        route(props.nmi.enabled ? "settings.nmi.domains.disable" : "settings.nmi.domains.enable", props.domain.id),
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => (nmiProcessing.value = false),
+        },
+    );
+};
 
 const refreshing = ref(false);
 const verifying = ref(false);
@@ -797,6 +822,139 @@ const deleteDomain = () => {
                         class="mt-4"
                     />
                 </Transition>
+            </div>
+
+            <!-- NetSendo MTA (NMI) -->
+            <div
+                v-if="showNmiCard"
+                class="rounded-xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+            >
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-gray-900 dark:text-white">
+                                {{ $t("nmi.domain_card.title") }}
+                            </h3>
+                            <span
+                                class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                :class="
+                                    nmi.enabled
+                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'
+                                "
+                            >
+                                {{ nmi.enabled ? $t("nmi.domain_card.enabled") : $t("nmi.domain_card.disabled") }}
+                            </span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.domain_card.description") }}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        @click="toggleNmi"
+                        :disabled="
+                            nmiProcessing ||
+                            (!nmi.enabled && (!domain.cname_verified || !nmi.available)) ||
+                            (nmi.enabled && nmi.mailboxes_count > 0)
+                        "
+                        class="rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="
+                            nmi.enabled
+                                ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700'
+                                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        "
+                    >
+                        {{ nmi.enabled ? $t("nmi.domain_card.disable") : $t("nmi.domain_card.enable") }}
+                    </button>
+                </div>
+
+                <p v-if="nmiError" class="mt-3 text-sm text-rose-600">{{ nmiError }}</p>
+                <p
+                    v-if="!nmi.enabled && !nmi.available"
+                    class="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                >
+                    {{ $t("nmi.domain_card.not_available") }}
+                </p>
+                <p
+                    v-else-if="!nmi.enabled && !domain.cname_verified"
+                    class="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                >
+                    {{ $t("nmi.domain_card.needs_verification") }}
+                </p>
+
+                <div v-if="nmi.enabled" class="mt-4 space-y-4">
+                    <div>
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ $t("nmi.domain_card.smtp_username") }}
+                        </span>
+                        <code class="mt-1 inline-block rounded bg-gray-100 px-2 py-1 text-sm dark:bg-slate-700 dark:text-gray-200">
+                            {{ nmi.smtp_username }}
+                        </code>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.domain_card.smtp_username_hint") }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ $t("nmi.domain_card.ips") }}
+                        </span>
+                        <ul v-if="nmi.ips.length" class="mt-2 divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-slate-700 dark:border-slate-700">
+                            <li
+                                v-for="ip in nmi.ips"
+                                :key="ip.id"
+                                class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
+                            >
+                                <Link
+                                    :href="route('settings.nmi.ips.show', ip.id)"
+                                    class="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+                                >
+                                    {{ ip.ip_address }}
+                                </Link>
+                                <span class="text-gray-500 dark:text-gray-400">{{ ip.hostname }}</span>
+                                <span
+                                    class="rounded-full px-2 py-0.5 text-xs"
+                                    :class="
+                                        ip.dkim_ready
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    "
+                                >
+                                    {{ ip.dkim_ready ? $t("nmi.domain_card.dkim_ready") : $t("nmi.domain_card.dkim_missing") }}
+                                </span>
+                            </li>
+                        </ul>
+                        <p v-else class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.domain_card.no_ips") }}
+                            <Link
+                                :href="route('settings.nmi.dashboard')"
+                                class="text-indigo-600 hover:underline dark:text-indigo-400"
+                            >
+                                {{ $t("navigation.nmi") }}
+                            </Link>
+                        </p>
+                    </div>
+
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        {{ $t("nmi.domain_card.mailboxes", { count: nmi.mailboxes_count }) }}
+                        <span v-if="nmi.mailboxes_count > 0" class="block text-xs text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.domain_card.in_use") }}
+                        </span>
+                    </p>
+                    <p
+                        v-if="nmi.mailboxes_count === 0"
+                        class="rounded-lg bg-indigo-50 p-3 text-sm text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-200"
+                    >
+                        {{ $t("nmi.domain_card.next_steps") }}
+                        <Link
+                            :href="route('settings.mailboxes.index')"
+                            class="font-medium underline"
+                        >
+                            {{ $t("mailboxes.title") }}
+                        </Link>
+                    </p>
+                </div>
             </div>
 
             <!-- Alerts Toggle -->

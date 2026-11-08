@@ -262,7 +262,8 @@
             "confirm_action": "Are you sure you want to proceed?",
             "action_irreversible": "This action is irreversible.",
             "exported_failed": "Export failed.",
-            "imported_failed": "Import failed."
+            "imported_failed": "Import failed.",
+            "error": "Error"
         },
         "days": {
             "monday": "Monday",
@@ -4339,7 +4340,8 @@
             "created": "Mailbox created.",
             "updated": "Mailbox updated.",
             "deleted": "Mailbox deleted.",
-            "set_default": "Mailbox set as default."
+            "set_default": "Mailbox set as default.",
+            "disconnected": "Gmail disconnected."
         },
         "delete": {
             "title": "Delete Mailbox",
@@ -4380,7 +4382,8 @@
             "title": "Provider Information",
             "smtp": "Own SMTP server or mail service (Mailgun, Amazon SES, etc.)",
             "sendgrid": "SendGrid API - get API key at sendgrid.com",
-            "gmail": "Gmail API (OAuth 2.0) - secure sending without via gmail.com"
+            "gmail": "Gmail API (OAuth 2.0) - secure sending without via gmail.com",
+            "nmi": "built-in MTA with your dedicated IPs (GOLD) - set up in Deliverability Shield and Mail Infrastructure"
         },
         "oauth": {
             "save_first": "Save the mailbox to be able to connect it to a Gmail account.",
@@ -4571,6 +4574,21 @@
         "tracking": {
             "label": "Track clicks and opens",
             "help": "Rewrites links through NetSendo and adds the open pixel. Off: links stay as written, no pixel, and SendGrid tracking is switched off per message. A message can override this."
+        },
+        "nmi": {
+            "info": "NetSendo MTA sends through your own dedicated IP. Set it up first: a verified domain with NetSendo MTA switched on (Deliverability Shield), and a dedicated IP assigned to it with DKIM keys (Mail Infrastructure).",
+            "domain": "Sending domain",
+            "select_domain": "Choose a domain",
+            "ip": "Dedicated IP",
+            "select_ip": "Choose an IP",
+            "not_verified": "not verified",
+            "not_enabled": "NetSendo MTA off",
+            "no_dkim": "no DKIM keys",
+            "inactive": "switched off",
+            "no_domains": "You have no domains in Deliverability Shield yet.",
+            "no_ips": "No dedicated IP is assigned to this domain.",
+            "from_hint": "The sender address must be on {domain} or one of its subdomains.",
+            "disabled_installation": "NetSendo MTA is switched off on this installation, or new NetSendo MTA mailboxes are (NMI_ENABLED, NMI_ALLOW_NEW in .env)."
         }
     },
     "funnels": {
@@ -8761,7 +8779,53 @@
         },
         "provider_not_configured": "This provider is not configured. Please add your API key in provider settings.",
         "provider_saved": "Provider settings saved successfully!",
-        "ip_provisioned": "IP address provisioned successfully!"
+        "ip_provisioned": "IP address provisioned successfully!",
+        "starting": "Starting...",
+        "checking": "Checking...",
+        "generating": "Generating...",
+        "dkim_needs_domain": "Assign the IP to a domain first: the DKIM record is published under that domain.",
+        "dkim_check_failed": "The DKIM check failed.",
+        "warming": {
+            "new": "Not started",
+            "warming": "Warming",
+            "warmed": "Warmed",
+            "paused": "Paused"
+        },
+        "ip_domain": {
+            "title": "Sending domain",
+            "description": "The domain this IP sends for. Its DKIM record is published under this domain, and the NetSendo MTA mailboxes of the domain send through this IP.",
+            "none": "Not assigned to a domain yet. Choose one of your domains from Deliverability Shield.",
+            "select": "Choose a domain",
+            "assign": "Assign",
+            "move": "Move",
+            "unassign": "Remove from domain",
+            "no_domains": "You have no domains yet. Add one in",
+            "open_domain": "Domain settings",
+            "not_verified": "not verified",
+            "nmi_on": "NetSendo MTA on",
+            "nmi_off": "NetSendo MTA off",
+            "in_use": "Mailboxes sending through this IP: {count}. To move or remove it, switch them to another IP or provider first.",
+            "dkim_note": "The DKIM keys stay when you move the IP: publish its record again under the new domain."
+        },
+        "domain_card": {
+            "title": "NetSendo MTA (NMI)",
+            "description": "Send this domain's mail through NetSendo's own MTA and your dedicated IPs.",
+            "enabled": "On",
+            "disabled": "Off",
+            "enable": "Switch on NetSendo MTA",
+            "disable": "Switch off",
+            "needs_verification": "Verify the domain (the CNAME record above) before switching NetSendo MTA on.",
+            "not_available": "NetSendo MTA is switched off on this installation (NMI_ENABLED in .env).",
+            "smtp_username": "MTA login",
+            "smtp_username_hint": "NetSendo logs in to the MTA with this login and a generated password. You do not need to enter them anywhere.",
+            "ips": "Dedicated IPs of this domain",
+            "no_ips": "No dedicated IP is assigned to this domain yet. Assign one on its page in",
+            "dkim_ready": "DKIM keys ready",
+            "dkim_missing": "No DKIM keys",
+            "mailboxes": "Mailboxes sending through NetSendo MTA: {count}",
+            "in_use": "Switch these mailboxes to another provider before switching NetSendo MTA off.",
+            "next_steps": "Next: assign a dedicated IP, generate its DKIM keys and publish the record, then create a NetSendo MTA mailbox in"
+        }
     },
     "high_confidence_data": "High Confidence Data",
     "brain": {

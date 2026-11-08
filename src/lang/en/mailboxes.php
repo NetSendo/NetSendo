@@ -53,4 +53,27 @@ return [
         'key_placeholder' => 'e.g. Feedback-ID',
         'value_placeholder' => 'e.g. campaign1:user123:netsendo',
     ],
+
+    // NetSendo MTA (NMI) mailboxes
+    'nmi' => [
+        'disabled' => 'NetSendo MTA is switched off on this installation (NMI_ENABLED in .env).',
+        'new_mailboxes_disabled' => 'New NetSendo MTA mailboxes are switched off on this installation (NMI_ALLOW_NEW in .env).',
+        'domain_required' => 'Choose one of your domains for NetSendo MTA.',
+        'ip_required' => 'Choose one of your dedicated IPs for NetSendo MTA.',
+        'domain_not_verified' => 'The domain :domain is not verified yet. Add its CNAME record in Deliverability Shield first.',
+        'domain_not_enabled' => 'NetSendo MTA is not switched on for :domain. Switch it on on the domain page in Deliverability Shield.',
+        'ip_not_assigned' => 'The IP :ip is not assigned to :domain. Assign it on the IP page in Mail Infrastructure.',
+        'ip_no_dkim' => 'The IP :ip has no DKIM keys yet. Generate them on the IP page in Mail Infrastructure.',
+        'ip_inactive' => 'The IP :ip is switched off.',
+        'from_email_domain' => 'The sender address must be on :domain or one of its subdomains, so that the DKIM signature matches it.',
+        'no_domain' => 'The mailbox ":mailbox" has no NetSendo MTA domain. Edit it and choose a domain and an IP.',
+        'test' => [
+            'not_verified' => 'The domain :domain is not verified. Add its CNAME record in Deliverability Shield first.',
+            'not_enabled' => 'NetSendo MTA is switched off for :domain.',
+            'no_credentials' => 'The domain :domain has no NetSendo MTA login. Switch NetSendo MTA off and on again on the domain page.',
+            'warming_limit' => 'The daily warming limit of this IP is reached. Try again tomorrow.',
+            'success' => 'Connection works: a test email was sent through NetSendo MTA.',
+            'failed' => 'Connection failed: :error',
+        ],
+    ],
 ];

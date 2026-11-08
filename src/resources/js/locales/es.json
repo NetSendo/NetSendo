@@ -245,7 +245,8 @@
             "validation_error": "Por favor, verifique su entrada e inténtelo de nuevo.",
             "confirm_delete": "¿Está seguro de que desea eliminar esto?",
             "confirm_action": "¿Está seguro de que desea continuar?",
-            "action_irreversible": "Esta acción es irreversible."
+            "action_irreversible": "Esta acción es irreversible.",
+            "error": "Error"
         },
         "days": {
             "monday": "Lunes",
@@ -4725,7 +4726,8 @@
             "created": "Cuenta creada con éxito.",
             "updated": "Cuenta actualizada con éxito.",
             "deleted": "Cuenta eliminada con éxito.",
-            "set_default": "Cuenta establecida como predeterminada."
+            "set_default": "Cuenta establecida como predeterminada.",
+            "disconnected": "Gmail desconectado."
         },
         "delete": {
             "title": "Eliminar cuenta",
@@ -4766,7 +4768,8 @@
             "title": "Información de proveedores",
             "smtp": "Servidor SMTP propio o servicio de correo (Mailgun, Amazon SES, etc.)",
             "sendgrid": "API de SendGrid - obtenga su clave API en sendgrid.com",
-            "gmail": "API de Gmail (OAuth 2.0) - envio seguro sin via gmail.com"
+            "gmail": "API de Gmail (OAuth 2.0) - envio seguro sin via gmail.com",
+            "nmi": "MTA integrado con sus IP dedicadas (GOLD) - se configura en Deliverability Shield e Infraestructura de Correo"
         },
         "oauth": {
             "save_first": "Guarde la cuenta para poder conectarla con una cuenta de Gmail.",
@@ -4957,6 +4960,21 @@
         "tracking": {
             "label": "Seguir clics y aperturas",
             "help": "Reescribe los enlaces a través de NetSendo y añade el píxel de apertura. Desactivado: los enlaces quedan como están, sin píxel, y el seguimiento de SendGrid se desactiva por mensaje. Un mensaje puede cambiarlo."
+        },
+        "nmi": {
+            "info": "NetSendo MTA envía a través de su propia IP dedicada. Configúrela primero: un dominio verificado con NetSendo MTA activado (Deliverability Shield) y una IP dedicada asignada a él con claves DKIM (Infraestructura de Correo).",
+            "domain": "Dominio de envío",
+            "select_domain": "Elija un dominio",
+            "ip": "IP dedicada",
+            "select_ip": "Elija una IP",
+            "not_verified": "sin verificar",
+            "not_enabled": "NetSendo MTA desactivado",
+            "no_dkim": "sin claves DKIM",
+            "inactive": "desactivada",
+            "no_domains": "Aún no tiene dominios en Deliverability Shield.",
+            "no_ips": "No hay ninguna IP dedicada asignada a este dominio.",
+            "from_hint": "La dirección del remitente debe pertenecer a {domain} o a uno de sus subdominios.",
+            "disabled_installation": "NetSendo MTA o las nuevas cuentas de correo NetSendo MTA están desactivados en esta instalación (NMI_ENABLED, NMI_ALLOW_NEW en .env)."
         }
     },
     "tracked_links": {
@@ -8370,6 +8388,52 @@
             "select_region": "Seleccione una región",
             "submit": "Aprovisionar IP",
             "title": "Aprovisionar IP desde la nube"
+        },
+        "starting": "Iniciando...",
+        "checking": "Comprobando...",
+        "generating": "Generando...",
+        "dkim_needs_domain": "Asigne primero la IP a un dominio: el registro DKIM se publica en ese dominio.",
+        "dkim_check_failed": "No se pudo comprobar DKIM.",
+        "warming": {
+            "new": "Sin iniciar",
+            "warming": "Calentando",
+            "warmed": "Calentada",
+            "paused": "En pausa"
+        },
+        "ip_domain": {
+            "title": "Dominio de envío",
+            "description": "El dominio para el que envía esta IP. Su registro DKIM se publica en este dominio, y las cuentas de correo NetSendo MTA del dominio envían a través de esta IP.",
+            "none": "Aún no está asignada a ningún dominio. Elija uno de sus dominios de Deliverability Shield.",
+            "select": "Elija un dominio",
+            "assign": "Asignar",
+            "move": "Mover",
+            "unassign": "Quitar del dominio",
+            "no_domains": "Aún no tiene dominios. Añada uno en",
+            "open_domain": "Ajustes del dominio",
+            "not_verified": "sin verificar",
+            "nmi_on": "NetSendo MTA activado",
+            "nmi_off": "NetSendo MTA desactivado",
+            "in_use": "Cuentas de correo que envían a través de esta IP: {count}. Para moverla o quitarla, cámbielas primero a otra IP u otro proveedor.",
+            "dkim_note": "Las claves DKIM se mantienen al mover la IP: publique su registro de nuevo en el nuevo dominio."
+        },
+        "domain_card": {
+            "title": "NetSendo MTA (NMI)",
+            "description": "Envíe el correo de este dominio a través del MTA propio de NetSendo y sus IP dedicadas.",
+            "enabled": "Activado",
+            "disabled": "Desactivado",
+            "enable": "Activar NetSendo MTA",
+            "disable": "Desactivar",
+            "needs_verification": "Verifique el dominio (el registro CNAME de arriba) antes de activar NetSendo MTA.",
+            "not_available": "NetSendo MTA está desactivado en esta instalación (NMI_ENABLED en .env).",
+            "smtp_username": "Usuario del MTA",
+            "smtp_username_hint": "NetSendo inicia sesión en el MTA con este usuario y una contraseña generada. No necesita introducirlos en ningún sitio.",
+            "ips": "IP dedicadas de este dominio",
+            "no_ips": "Aún no hay ninguna IP dedicada asignada a este dominio. Asígnela en su página de",
+            "dkim_ready": "Claves DKIM listas",
+            "dkim_missing": "Sin claves DKIM",
+            "mailboxes": "Cuentas de correo que envían a través de NetSendo MTA: {count}",
+            "in_use": "Cambie estas cuentas de correo a otro proveedor antes de desactivar NetSendo MTA.",
+            "next_steps": "Siguiente: asigne una IP dedicada, genere sus claves DKIM y publique el registro, y después cree una cuenta de correo NetSendo MTA en"
         }
     },
     "high_confidence_data": "Datos de alta confianza",

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
 use App\Models\IpPool;
 use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\IpProvisioningService;
 use App\Services\Nmi\IpWarmingService;
+use App\Services\Nmi\NmiSetupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,7 +23,8 @@ class NmiController extends Controller
         private DkimKeyManager $dkimManager,
         private IpWarmingService $warmingService,
         private BlacklistMonitorService $blacklistService,
-        private IpProvisioningService $provisioningService
+        private IpProvisioningService $provisioningService,
+        private NmiSetupService $setupService
     ) {}
 
     /**
@@ -35,7 +38,7 @@ class NmiController extends Controller
 
         $ips = DedicatedIpAddress::whereHas('pool', function ($q) use ($user) {
             $q->where('user_id', $user->id);
-        })->active()->get();
+        })->active()->with('domainConfiguration')->withCount('mailboxes')->get();
 
         $stats = [
             'total_pools' => $pools->count(),
@@ -50,7 +53,9 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            'nmiEnabled' => config('netsendo.nmi.enabled', false),
+            // NMI_ENABLED (config/nmi.php); the key read before did not exist, so the
+            // "setup required" banner was shown on every installation
+            'nmiEnabled' => (bool) config('nmi.features.enabled', false),
         ];
 
         // Return JSON for AJAX requests
@@ -173,11 +178,19 @@ class NmiController extends Controller
     {
         $this->authorizeIp($request, $ip);
 
+        $ip->load('domainConfiguration')->loadCount('mailboxes');
+
         $data = [
             'ip' => $this->formatIpForResponse($ip),
             'warming' => $this->warmingService->getWarmingStatus($ip),
             'blacklist' => $this->blacklistService->getSummary($ip),
             'dkim' => $this->dkimManager->getDnsInstructions($ip),
+            // Domains of the user the IP can be assigned to (Deliverability Shield)
+            'domains' => DomainConfiguration::forUser($request->user()->id)
+                ->orderBy('domain')
+                ->get()
+                ->map(fn (DomainConfiguration $domain) => $this->formatDomainForResponse($domain))
+                ->values(),
         ];
 
         // Return JSON for AJAX requests
@@ -256,6 +269,87 @@ class NmiController extends Controller
     }
 
     /**
+     * Assign the IP to a domain of the same user (or move it to another one)
+     */
+    public function assignDomain(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $validated = $request->validate([
+            'domain_configuration_id' => [
+                'required',
+                'integer',
+                Rule::exists('domain_configurations', 'id')
+                    ->where('user_id', $request->user()->id)
+                    ->whereNull('deleted_at'),
+            ],
+        ], [
+            'domain_configuration_id.exists' => __('nmi.domain_not_found'),
+        ]);
+
+        $domain = DomainConfiguration::findOrFail($validated['domain_configuration_id']);
+        $this->setupService->assignIpToDomain($ip, $domain);
+
+        return $this->respond($request, __('nmi.ip_assigned', ['domain' => $domain->domain]), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Take the IP away from its domain (allowed without GOLD, like deleting)
+     */
+    public function unassignDomain(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $this->setupService->unassignIp($ip);
+
+        return $this->respond($request, __('nmi.ip_unassigned'), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Switch NMI on for a verified domain; generates its SMTP login on the MTA
+     */
+    public function enableDomain(Request $request, DomainConfiguration $domain)
+    {
+        $this->authorize('update', $domain);
+
+        $this->setupService->enable($domain);
+
+        return $this->respond($request, __('nmi.domain_enabled', ['domain' => $domain->domain]), $this->formatDomainForResponse($domain->fresh()));
+    }
+
+    /**
+     * Switch NMI off for a domain (allowed without GOLD)
+     */
+    public function disableDomain(Request $request, DomainConfiguration $domain)
+    {
+        $this->authorize('update', $domain);
+
+        $this->setupService->disable($domain);
+
+        return $this->respond($request, __('nmi.domain_disabled', ['domain' => $domain->domain]), $this->formatDomainForResponse($domain->fresh()));
+    }
+
+    /**
+     * JSON for AJAX calls, back with a flash message for Inertia visits
+     */
+    private function respond(Request $request, string $message, array $data)
+    {
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => $data,
+            ]);
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
      * Verify DKIM DNS record
      */
     public function verifyDkim(Request $request, DedicatedIpAddress $ip): JsonResponse
@@ -313,9 +407,31 @@ class NmiController extends Controller
             'is_blacklisted' => $ip->isBlacklisted(),
             'delivery_rate' => $ip->getDeliveryRate(),
             'total_sent' => $ip->total_sent,
-            'dkim_configured' => !empty($ip->dkim_selector),
+            'total_delivered' => $ip->total_delivered,
+            'total_bounced' => $ip->total_bounced,
+            'total_complaints' => $ip->total_complaints,
+            'dkim_configured' => $ip->hasDkimKeys(),
             'ptr_verified' => $ip->ptr_verified,
             'is_active' => $ip->is_active,
+            'domain' => $ip->domainConfiguration ? $this->formatDomainForResponse($ip->domainConfiguration) : null,
+            'mailboxes_count' => $ip->mailboxes_count ?? $ip->mailboxes()->count(),
+        ];
+    }
+
+    /**
+     * Domain as the NMI pages show it (never the SMTP password)
+     */
+    private function formatDomainForResponse(DomainConfiguration $domain): array
+    {
+        return [
+            'id' => $domain->id,
+            'domain' => $domain->domain,
+            'cname_verified' => (bool) $domain->cname_verified,
+            'nmi_enabled' => (bool) $domain->nmi_enabled,
+            'nmi_ready' => $domain->isNmiReady(),
+            'nmi_smtp_username' => $domain->nmi_smtp_username,
+            'nmi_enabled_at' => $domain->nmi_enabled_at?->toIso8601String(),
+            'dedicated_ip_id' => $domain->dedicated_ip_id,
         ];
     }
 
@@ -416,8 +532,8 @@ class NmiController extends Controller
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Determine IP version
-        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4;
+        // The column is ENUM('ipv4', 'ipv6'); 4 and 6 failed on MySQL (strict mode) and SQLite
+        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'ipv6' : 'ipv4';
 
         $ip = DedicatedIpAddress::create([
             'ip_pool_id' => $pool->id,
@@ -456,6 +572,11 @@ class NmiController extends Controller
                 'success' => false,
                 'message' => __('nmi.ip_has_mailboxes'),
             ], 400);
+        }
+
+        // Its domain gets another primary IP (or none)
+        if ($ip->domain_configuration_id) {
+            $this->setupService->unassignIp($ip);
         }
 
         $poolId = $ip->ip_pool_id;

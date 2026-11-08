@@ -262,7 +262,8 @@
             "confirm_action": "Czy na pewno chcesz kontynuować?",
             "action_irreversible": "Tej akcji nie można cofnąć.",
             "exported_failed": "Błąd eksportu.",
-            "imported_failed": "Błąd importu."
+            "imported_failed": "Błąd importu.",
+            "error": "Błąd"
         },
         "days": {
             "monday": "Poniedziałek",
@@ -4038,7 +4039,8 @@
             "created": "Skrzynka została utworzona.",
             "updated": "Skrzynka została zaktualizowana.",
             "deleted": "Skrzynka została usunięta.",
-            "set_default": "Skrzynka została ustawiona jako domyślna."
+            "set_default": "Skrzynka została ustawiona jako domyślna.",
+            "disconnected": "Gmail został odłączony."
         },
         "delete": {
             "title": "Usuń skrzynkę",
@@ -4079,7 +4081,8 @@
             "title": "Informacje o dostawcach",
             "smtp": "Własny serwer SMTP lub usługa mailowa (Mailgun, Amazon SES, itp.)",
             "sendgrid": "SendGrid API - uzyskaj klucz API na sendgrid.com",
-            "gmail": "Gmail API (OAuth 2.0) - bezpieczna wysyłka bez via gmail.com"
+            "gmail": "Gmail API (OAuth 2.0) - bezpieczna wysyłka bez via gmail.com",
+            "nmi": "wbudowany serwer MTA z Twoimi dedykowanymi adresami IP (GOLD) - konfiguracja w Deliverability Shield i Infrastrukturze Pocztowej"
         },
         "oauth": {
             "save_first": "Zapisz skrzynkę, aby móc połączyć ją z kontem Gmail.",
@@ -4270,6 +4273,21 @@
         "tracking": {
             "label": "Śledź kliknięcia i otwarcia",
             "help": "Przepisuje linki przez NetSendo i dodaje piksel otwarć. Wyłączone: linki zostają bez zmian, bez piksela, a śledzenie SendGrid jest wyłączane dla każdej wiadomości. Wiadomość może to nadpisać."
+        },
+        "nmi": {
+            "info": "NetSendo MTA wysyła przez Twój własny dedykowany adres IP. Najpierw go skonfiguruj: zweryfikowana domena z włączonym NetSendo MTA (Deliverability Shield) i przypisany do niej dedykowany adres IP z kluczami DKIM (Infrastruktura Pocztowa).",
+            "domain": "Domena wysyłkowa",
+            "select_domain": "Wybierz domenę",
+            "ip": "Dedykowany adres IP",
+            "select_ip": "Wybierz adres IP",
+            "not_verified": "niezweryfikowana",
+            "not_enabled": "NetSendo MTA wyłączone",
+            "no_dkim": "brak kluczy DKIM",
+            "inactive": "wyłączony",
+            "no_domains": "Nie masz jeszcze domen w Deliverability Shield.",
+            "no_ips": "Do tej domeny nie przypisano dedykowanego adresu IP.",
+            "from_hint": "Adres nadawcy musi być w domenie {domain} lub jednej z jej subdomen.",
+            "disabled_installation": "NetSendo MTA albo nowe skrzynki NetSendo MTA są wyłączone w tej instalacji (NMI_ENABLED, NMI_ALLOW_NEW w .env)."
         }
     },
     "sms_providers": {
@@ -8756,7 +8774,53 @@
         },
         "provider_not_configured": "Ten dostawca nie jest skonfigurowany. Dodaj klucz API w ustawieniach dostawców.",
         "provider_saved": "Ustawienia dostawcy zapisane pomyślnie!",
-        "ip_provisioned": "Adres IP zamówiony pomyślnie!"
+        "ip_provisioned": "Adres IP zamówiony pomyślnie!",
+        "starting": "Uruchamianie...",
+        "checking": "Sprawdzanie...",
+        "generating": "Generowanie...",
+        "dkim_needs_domain": "Najpierw przypisz adres IP do domeny: rekord DKIM publikuje się pod tą domeną.",
+        "dkim_check_failed": "Nie udało się sprawdzić DKIM.",
+        "warming": {
+            "new": "Nierozpoczęte",
+            "warming": "Ogrzewanie",
+            "warmed": "Ogrzany",
+            "paused": "Wstrzymane"
+        },
+        "ip_domain": {
+            "title": "Domena wysyłkowa",
+            "description": "Domena, dla której wysyła ten adres IP. Pod tą domeną publikujesz jego rekord DKIM, a skrzynki NetSendo MTA tej domeny wysyłają przez ten adres.",
+            "none": "Nie przypisano jeszcze domeny. Wybierz jedną ze swoich domen z Deliverability Shield.",
+            "select": "Wybierz domenę",
+            "assign": "Przypisz",
+            "move": "Przenieś",
+            "unassign": "Odłącz od domeny",
+            "no_domains": "Nie masz jeszcze domen. Dodaj domenę w",
+            "open_domain": "Ustawienia domeny",
+            "not_verified": "niezweryfikowana",
+            "nmi_on": "NetSendo MTA włączone",
+            "nmi_off": "NetSendo MTA wyłączone",
+            "in_use": "Skrzynki wysyłające przez ten adres IP: {count}. Aby go przenieść lub odłączyć, najpierw przełącz je na inny adres IP lub innego dostawcę.",
+            "dkim_note": "Klucze DKIM zostają przy przeniesieniu adresu IP: opublikuj jego rekord ponownie pod nową domeną."
+        },
+        "domain_card": {
+            "title": "NetSendo MTA (NMI)",
+            "description": "Wysyłaj pocztę tej domeny przez własny serwer MTA NetSendo i swoje dedykowane adresy IP.",
+            "enabled": "Włączone",
+            "disabled": "Wyłączone",
+            "enable": "Włącz NetSendo MTA",
+            "disable": "Wyłącz",
+            "needs_verification": "Zweryfikuj domenę (rekord CNAME powyżej), zanim włączysz NetSendo MTA.",
+            "not_available": "NetSendo MTA jest wyłączone w tej instalacji (NMI_ENABLED w .env).",
+            "smtp_username": "Login do MTA",
+            "smtp_username_hint": "NetSendo loguje się do MTA tym loginem i wygenerowanym hasłem. Nie musisz ich nigdzie wpisywać.",
+            "ips": "Dedykowane adresy IP tej domeny",
+            "no_ips": "Do tej domeny nie przypisano jeszcze dedykowanego adresu IP. Przypisz go na jego stronie w",
+            "dkim_ready": "Klucze DKIM gotowe",
+            "dkim_missing": "Brak kluczy DKIM",
+            "mailboxes": "Skrzynki wysyłające przez NetSendo MTA: {count}",
+            "in_use": "Przełącz te skrzynki na innego dostawcę, zanim wyłączysz NetSendo MTA.",
+            "next_steps": "Dalej: przypisz dedykowany adres IP, wygeneruj jego klucze DKIM i opublikuj rekord, a potem utwórz skrzynkę NetSendo MTA w sekcji"
+        }
     },
     "high_confidence_data": "Dane o wysokim zaufaniu",
     "brain": {

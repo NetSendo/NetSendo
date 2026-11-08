@@ -26,6 +26,17 @@ docker compose --profile nmi up -d
 
 Navigate to **Settings → Mail Infrastructure** in the UI.
 
+### 5. Set up a NetSendo MTA mailbox (GOLD)
+
+1. **Domain** — *Deliverability Shield → Add domain*, publish the CNAME record and verify the domain. On the domain page, in the **NetSendo MTA (NMI)** card, click **Switch on NetSendo MTA**. NetSendo generates the domain's login on the MTA (the password is stored encrypted and never shown).
+2. **Dedicated IP** — *Mail Infrastructure → pool → Add IP*, open the IP and, under **Sending domain**, assign it to the domain (only your own domains are offered). Click **Generate DKIM keys** and publish the TXT record shown under `<selector>._domainkey.<domain>`; **Verify DKIM** checks it.
+3. **Mailbox** — *Settings → Mailboxes → Add Mailbox → NetSendo MTA*, choose the domain and the IP. The sender address must be on the domain or one of its subdomains, so the DKIM signature (`d=` the domain) aligns.
+
+The mailbox is refused while the domain is not verified, NMI is off for it, the IP belongs to another domain or has no DKIM keys. An IP a mailbox sends through cannot be moved, removed from its domain or deleted, and NMI cannot be switched off for a domain whose mailboxes use it. Without GOLD the setup stays readable, existing NMI mailboxes keep working and can be edited or switched off; setting NMI up for a new mailbox, assigning IPs and switching NMI on need GOLD.
+
+> [!WARNING]
+> **The MTA container does not deliver mail yet.** The Haraka configuration in `docker/haraka/config` loads only `limit` and `queue/smtp_forward`: it offers no `AUTH` and relays for nobody (`550 I cannot deliver mail for <…>`), queued mail would go to `queue/smtp_forward`, for which no `smtp_forward.ini` (forwarding host) is configured, and nothing binds outgoing connections to the dedicated IP. The panel setup above is complete; sending through NMI needs that MTA work first.
+
 ---
 
 ## Features
@@ -234,3 +245,7 @@ docker network ls | grep netsendo
 | `/settings/nmi/ips/{id}/warming/start`   | POST       | Start warming    |
 | `/settings/nmi/ips/{id}/dkim/generate`   | POST       | Generate DKIM    |
 | `/settings/nmi/ips/{id}/blacklist/check` | POST       | Check blacklists |
+| `/settings/nmi/ips/{id}/domain`          | POST       | Assign the IP to a domain (`domain_configuration_id`) |
+| `/settings/nmi/ips/{id}/domain`          | DELETE     | Remove the IP from its domain |
+| `/settings/nmi/domains/{id}/enable`      | POST       | Switch NMI on for a verified domain |
+| `/settings/nmi/domains/{id}/disable`     | POST       | Switch NMI off for a domain |

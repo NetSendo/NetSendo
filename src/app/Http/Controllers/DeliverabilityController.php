@@ -228,6 +228,28 @@ class DeliverabilityController extends Controller
             'cnameInstruction' => $cnameInstruction,
             'humanStatus' => $humanStatus,
             'simulations' => $simulations,
+            // NetSendo MTA (NMI, GOLD) for this domain; the SMTP password is never sent
+            'nmi' => [
+                'available' => (bool) config('nmi.features.enabled'),
+                'enabled' => (bool) $domain->nmi_enabled,
+                'ready' => $domain->isNmiReady(),
+                'smtp_username' => $domain->nmi_smtp_username,
+                'enabled_at' => $domain->nmi_enabled_at?->format('Y-m-d H:i'),
+                'ips' => $domain->dedicatedIps()
+                    ->ownedBy($domain->user_id)
+                    ->orderBy('ip_address')
+                    ->get()
+                    ->map(fn ($ip) => [
+                        'id' => $ip->id,
+                        'ip_address' => $ip->ip_address,
+                        'hostname' => $ip->hostname,
+                        'dkim_ready' => $ip->hasDkimKeys(),
+                        'is_active' => (bool) $ip->is_active,
+                        'warming_status' => $ip->warming_status,
+                    ])
+                    ->values(),
+                'mailboxes_count' => $domain->nmiMailboxes()->count(),
+            ],
         ]);
     }
 
