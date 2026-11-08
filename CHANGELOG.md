@@ -9,9 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **The text block in the email template builder is edited in a rich-text editor.** Its content field was a plain text box that showed the block without its HTML tags and saved any edit back as one plain paragraph, so changing one word of AI-generated or library content dropped its links, bold text, line breaks, paragraphs, headings and colours. It is now an editor (TipTap) with bold, italic, underline, link, bulleted and numbered lists, line break (also Shift+Enter), undo and redo, and an edit keeps the block's formatting and its inline styles exactly as written (`#64748b` stays hex, `mso-*` properties stay).
+  - **Nothing is saved until you change the text.** Clicking into the editor, selecting and leaving it keep the block's HTML byte for byte, and undoing every change brings the original HTML back exactly.
+  - **Insert variable** inserts at the cursor (replacing a selection) instead of at the end of the text; without a cursor in the editor, at the end. Variables go in as text, snippets and signatures as HTML, tables and images included.
+  - **AI:** Generate, Improve and the AI assistant panel replace the block's content as before; the editor shows the new text with a fresh undo history. Improve receives the block's HTML with its formatting.
+  - **Email-safe HTML.** The editor knows paragraphs, line breaks, bold, italic, underline, strikethrough, links, lists, headings, quotes, rules, styled `span` and `div`, images and tables. Anything else in a block (`script`, `iframe`, forms, `<font>`, CSS classes) is dropped the first time the block is edited. Links open in a new tab; `javascript:` addresses are refused, placeholders such as `[[unsubscribe]]` work as addresses, `netsendo.com` becomes `https://netsendo.com` and `jan@firma.pl` a `mailto:` link. List items and table cells are stored without an inner `<p>` (`<li>text</li>`), so email clients do not add paragraph margins inside lists and signatures. Pasted text keeps bold, links and lists but not the fonts and colours of where it came from.
+  - Code: `Components/TemplateBuilder/TextBlockEditor.vue` (new) and `BlockEditor.vue`; toolbar texts in en, pl, de, es.
+
 ### Fixed
 
-- **Clicking into a text block's content field no longer strips its formatting** (email template builder). The field shows the block's text without its HTML tags and saved that text back every time it lost focus, so clicking into it and out again turned links, bold text, line breaks and paragraphs into one plain paragraph. It now saves only after you edit it. It also reloads after AI Generate, Improve or the AI assistant panel change the block, so its old text can no longer overwrite the AI result. Typing and inserting variables or signatures save as before.
+- **Clicking into a text block's content field no longer strips its formatting** (email template builder). The field showed the block's text without its HTML tags and saved that text back every time it lost focus, so clicking into it and out again turned links, bold text, line breaks and paragraphs into one plain paragraph. It now saves only after you change the text, and it reloads after AI Generate, Improve or the AI assistant panel change the block, so old text can no longer overwrite the AI result. Editing keeps the formatting too: see the rich-text editor under *Changed*.
 
 ## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
 

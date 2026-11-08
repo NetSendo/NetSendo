@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import axios from "axios";
 import InsertPickerModal from "@/Components/InsertPickerModal.vue";
 import ProductPickerModal from "@/Components/ProductPickerModal.vue";
+import TextBlockEditor from "@/Components/TemplateBuilder/TextBlockEditor.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const { t } = useI18n();
@@ -23,44 +24,19 @@ const emit = defineEmits(["update", "delete", "duplicate", "ai-content"]);
 const localContent = ref({ ...props.block?.content });
 const localSettings = ref({ ...props.block?.settings });
 
-// Track current block ID to prevent focus loss
-const currentBlockId = ref(props.block?.id);
+// The text block's rich-text editor (TextBlockEditor), for inserts at its caret
+const textEditor = ref(null);
 
-// The textarea shows the block HTML with its tags removed, so saving that text
-// back turns links, bold text, line breaks and paragraphs into one flat <p>.
-// It is saved only after the user edited it (textEdited). textareaHtml is the
-// HTML the textarea was loaded from or last saved as: a different value means
-// the HTML was changed elsewhere (AI generate/improve, the AI assistant panel)
-// and the textarea reloads, so a stale text cannot overwrite it later.
-let textareaHtml = props.block?.content?.html;
-let textEdited = false;
-
-// Local text content for textarea (extracted from HTML to prevent focus loss)
-const localTextContent = ref(
-    props.block?.content?.html?.replace(/<[^>]*>/g, "") || ""
-);
-
-// Watch for block change - only update text when switching to DIFFERENT block
+// Keep the local copies in step with the block. The text block's editor
+// follows localContent.html: it ignores its own saves coming back and reloads
+// when the HTML was changed elsewhere (AI generate/improve, the AI assistant
+// panel).
 watch(
     () => props.block,
     (newBlock) => {
         if (newBlock) {
             localContent.value = { ...newBlock.content };
             localSettings.value = { ...newBlock.settings };
-
-            // Reload localTextContent when another block is selected or this
-            // block's HTML was changed outside the textarea; the textarea's own
-            // saves leave it alone (see textareaHtml above)
-            if (
-                newBlock.id !== currentBlockId.value ||
-                newBlock.content?.html !== textareaHtml
-            ) {
-                currentBlockId.value = newBlock.id;
-                textareaHtml = newBlock.content?.html;
-                textEdited = false;
-                localTextContent.value =
-                    newBlock.content?.html?.replace(/<[^>]*>/g, "") || "";
-            }
         }
     },
     { deep: true }
@@ -184,25 +160,6 @@ const refreshProductData = async () => {
 const updateContent = (key, value) => {
     localContent.value[key] = value;
     emit("update", { content: { ...localContent.value } });
-};
-
-// Save the text block's textarea into its HTML (see textareaHtml above)
-const saveTextContent = () => {
-    textareaHtml = "<p>" + localTextContent.value + "</p>";
-    textEdited = false;
-    updateContent("html", textareaHtml);
-};
-
-const markTextEdited = () => {
-    textEdited = true;
-};
-
-// On blur: only an edited textarea is saved, so focusing it and leaving it
-// again keeps the block's formatting
-const saveEditedTextContent = () => {
-    if (textEdited) {
-        saveTextContent();
-    }
 };
 
 // Update block settings
@@ -389,9 +346,13 @@ const handleInsert = (data) => {
         // Custom callback for complex handling
         activeInputCallback.value(content);
     } else if (activeInsertField.value === "localText") {
-        // Special case for main text area
-        localTextContent.value += content;
-        saveTextContent();
+        // Text block: at the editor's caret; a variable as text, a snippet or
+        // signature as HTML
+        if (data?.type === "variable") {
+            textEditor.value?.insertText(content);
+        } else {
+            textEditor.value?.insertHtml(content);
+        }
     } else if (activeInsertField.value) {
         // Standard field update
         const current = localContent.value[activeInsertField.value] || "";
@@ -630,7 +591,7 @@ const handleInsert = (data) => {
         <!-- TEXT BLOCK -->
         <template v-else-if="block.type === 'text'">
             <div class="space-y-4">
-                <!-- Rich text editor (simplified) -->
+                <!-- Rich text editor -->
                 <div>
                     <div class="mb-1 flex items-center justify-between">
                         <label
@@ -644,14 +605,13 @@ const handleInsert = (data) => {
                             {{ $t("template_builder.insert_variable") }}
                         </button>
                     </div>
-                    <textarea
-                        v-model="localTextContent"
-                        @input="markTextEdited"
-                        @blur="saveEditedTextContent"
-                        rows="6"
-                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    <TextBlockEditor
+                        ref="textEditor"
+                        :key="block.id"
+                        :model-value="localContent.html || ''"
                         :placeholder="$t('template_builder.text_placeholder')"
-                    ></textarea>
+                        @update:model-value="(html) => updateContent('html', html)"
+                    />
                 </div>
 
                 <!-- Alignment -->

@@ -3745,6 +3745,20 @@
     },
     "template_builder": {
         "insert_variable": "Wstaw zmienną",
+        "text_editor": {
+            "bold": "Pogrubienie",
+            "italic": "Kursywa",
+            "underline": "Podkreślenie",
+            "link": "Link",
+            "bullet_list": "Lista punktowana",
+            "ordered_list": "Lista numerowana",
+            "line_break": "Złamanie linii (Shift+Enter)",
+            "undo": "Cofnij",
+            "redo": "Ponów",
+            "link_placeholder": "https://… albo [[wstawka]]",
+            "link_apply": "Zapisz",
+            "link_remove": "Usuń link"
+        },
         "untitled": "Bez nazwy",
         "mobile_nav_blocks": "Bloki",
         "mobile_nav_edit": "Edytuj",

@@ -3016,6 +3016,20 @@
     },
     "template_builder": {
         "insert_variable": "Insert variable",
+        "text_editor": {
+            "bold": "Bold",
+            "italic": "Italic",
+            "underline": "Underline",
+            "link": "Link",
+            "bullet_list": "Bulleted list",
+            "ordered_list": "Numbered list",
+            "line_break": "Line break (Shift+Enter)",
+            "undo": "Undo",
+            "redo": "Redo",
+            "link_placeholder": "https://… or [[placeholder]]",
+            "link_apply": "Apply",
+            "link_remove": "Remove link"
+        },
         "untitled": "Untitled",
         "mobile_nav_blocks": "Blocks",
         "mobile_nav_edit": "Edit",
