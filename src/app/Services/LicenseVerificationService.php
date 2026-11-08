@@ -296,6 +296,12 @@ class LicenseVerificationService
         if ($domain) {
             Setting::updateOrCreate(['key' => 'license_domain'], ['value' => $domain]);
         }
+
+        // GOLD is on, however it came (store purchase, a key entered on the licence page or
+        // sent to this installation): a started purchase is no longer waited for
+        if (strtoupper($plan) === 'GOLD') {
+            Setting::whereIn('key', [GoldPurchaseService::SECRET_KEY, GoldPurchaseService::STARTED_KEY])->delete();
+        }
     }
 
     /**
