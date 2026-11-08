@@ -424,7 +424,8 @@ FORMAT: Clean markdown text. No JSON wrapper.
 PROMPT;
 
         try {
-            $integration = $this->aiService->getDefaultIntegration();
+            // The model assigned to this task in the Brain settings, else the Brain model
+            [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('analytics');
 
             if (!$integration) {
                 Log::warning('Weekly digest: no AI integration configured', ['user_id' => $user->id]);
@@ -436,7 +437,7 @@ PROMPT;
                 'weekly_digest',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
-                ['max_tokens' => 4000, 'temperature' => 0.5]
+                ['model' => $brainModel, 'max_tokens' => 4000, 'temperature' => 0.5]
             );
         } catch (\Exception $e) {
             Log::warning('Weekly digest AI report generation failed', [

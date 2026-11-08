@@ -293,16 +293,18 @@ class RunBrainCronCommand extends Command
                     $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
                     $cronResults['tasks_executed'][$i] = $status;
 
+                    // A failed task keeps its reason, so the Monitor shows why it failed
                     AiBrainActivityLog::logEvent(
                         $user->id,
                         'cron_task',
                         $status,
                         null,
-                        [
+                        array_filter([
                             'task_title' => $task['title'] ?? '',
                             'agent' => $agentType,
                             'mode' => 'autonomous',
-                        ]
+                            'error' => $status === 'error' ? mb_substr((string) ($result['message'] ?? ''), 0, 300) : null,
+                        ], fn ($value) => $value !== null)
                     );
                 } catch (\Exception $e) {
                     $cronResults['tasks_executed'][$i] = 'error';
@@ -310,6 +312,13 @@ class RunBrainCronCommand extends Command
                         'user_id' => $user->id,
                         'task' => $task['title'] ?? '',
                         'error' => $e->getMessage(),
+                    ]);
+
+                    AiBrainActivityLog::logEvent($user->id, 'cron_task', 'error', null, [
+                        'task_title' => $task['title'] ?? '',
+                        'agent' => $agentType,
+                        'mode' => 'autonomous',
+                        'error' => mb_substr($e->getMessage(), 0, 300),
                     ]);
                 }
             } elseif ($agentMode === ModeController::MODE_SEMI_AUTO) {

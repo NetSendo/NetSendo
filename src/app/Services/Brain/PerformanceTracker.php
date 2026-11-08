@@ -321,7 +321,8 @@ class PerformanceTracker
         array $comparison,
         User $user,
     ): array {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('analytics');
         if (!$integration) {
             return $this->generateFallbackLessons($metrics, $comparison);
         }
@@ -363,7 +364,7 @@ PROMPT;
                 'performance_lessons',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
-                ['max_tokens' => 2000, 'temperature' => 0.3]
+                ['model' => $brainModel, 'max_tokens' => 2000, 'temperature' => 0.3]
             );
 
             return $this->parseJson($response) ?? $this->generateFallbackLessons($metrics, $comparison);

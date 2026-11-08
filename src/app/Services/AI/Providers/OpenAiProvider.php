@@ -75,14 +75,13 @@ class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
 
     public function generateText(string $prompt, ?string $model = null, array $options = []): string
     {
+        $modelId = $this->getModel($model);
         $response = $this->makeRequest('post', 'chat/completions', [
-            'model' => $this->getModel($model),
+            'model' => $modelId,
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
-            'max_tokens' => $options['max_tokens'] ?? 65536,
-            'temperature' => $options['temperature'] ?? 0.7,
-        ]);
+        ] + $this->generationParams($modelId, $options));
 
         if (!$response['success']) {
             throw new \Exception('OpenAI Error: ' . ($response['error'] ?? 'Unknown error'));
@@ -93,14 +92,13 @@ class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
 
     public function generateTextWithUsage(string $prompt, ?string $model = null, array $options = []): array
     {
+        $modelId = $this->getModel($model);
         $response = $this->makeRequest('post', 'chat/completions', [
-            'model' => $this->getModel($model),
+            'model' => $modelId,
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
-            'max_tokens' => $options['max_tokens'] ?? 65536,
-            'temperature' => $options['temperature'] ?? 0.7,
-        ]);
+        ] + $this->generationParams($modelId, $options));
 
         if (!$response['success']) {
             throw new \Exception('OpenAI Error: ' . ($response['error'] ?? 'Unknown error'));
@@ -113,6 +111,47 @@ class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
             'tokens_input' => (int) ($usage['prompt_tokens'] ?? 0),
             'tokens_output' => (int) ($usage['completion_tokens'] ?? 0),
         ];
+    }
+
+    /**
+     * Below this a reasoning model's limit leaves no room for the answer after its hidden
+     * reasoning, which counts against the same limit.
+     */
+    private const REASONING_MIN_TOKENS = 4096;
+
+    /**
+     * The token limit and sampling parameters the model accepts. Reasoning models (gpt-5, o1, o3,
+     * o4…) reject `max_tokens` and any temperature but the default, so they get
+     * `max_completion_tokens` with room for the reasoning; a limit is sent only when the caller
+     * (or the method) sets one, because a fixed 65,536 is more than most models allow.
+     */
+    protected function generationParams(string $modelId, array $options, ?int $defaultMaxTokens = null, float $defaultTemperature = 0.7): array
+    {
+        $maxTokens = $options['max_tokens'] ?? $defaultMaxTokens;
+
+        if ($this->isReasoningModel($modelId)) {
+            return $maxTokens === null
+                ? []
+                : ['max_completion_tokens' => max((int) $maxTokens, self::REASONING_MIN_TOKENS)];
+        }
+
+        $params = ['temperature' => $options['temperature'] ?? $defaultTemperature];
+        if ($maxTokens !== null) {
+            $params['max_tokens'] = (int) $maxTokens;
+        }
+
+        return $params;
+    }
+
+    /**
+     * Whether the model is an OpenAI reasoning model (gpt-5 family and the o-series), apart from
+     * the chat variants such as gpt-5-chat-latest, which take the usual parameters.
+     */
+    public function isReasoningModel(string $modelId): bool
+    {
+        $id = strtolower($modelId);
+
+        return !str_contains($id, '-chat') && (bool) preg_match('/^(gpt-5|o\d)/', $id);
     }
 
     private function formatModelName(string $modelId): string
@@ -139,15 +178,14 @@ class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
     {
         $url = rtrim($this->getBaseUrl(), '/') . '/chat/completions';
 
+        $modelId = $this->getModel($model);
         $data = [
-            'model' => $this->getModel($model),
+            'model' => $modelId,
             'messages' => [
                 ['role' => 'user', 'content' => $prompt],
             ],
-            'max_tokens' => $options['max_tokens'] ?? 65536,
-            'temperature' => $options['temperature'] ?? 0.7,
             'stream' => true,
-        ];
+        ] + $this->generationParams($modelId, $options);
 
         foreach ($this->makeStreamingRequest($url, $data) as $line) {
             if (!str_starts_with($line, 'data: ')) {
@@ -207,9 +245,7 @@ class OpenAiProvider extends BaseProvider implements EmbeddingProviderInterface
                     ],
                 ],
             ],
-            'max_tokens' => $options['max_tokens'] ?? 2000,
-            'temperature' => $options['temperature'] ?? 0.3,
-        ]);
+        ] + $this->generationParams($model, $options, 2000, 0.3));
 
         if (!$response['success']) {
             throw new \Exception('OpenAI Vision Error: ' . ($response['error'] ?? 'Unknown error'));

@@ -166,6 +166,46 @@ class AiBrainSettings extends Model
     }
 
     /**
+     * The integration and model Brain uses for a kind of work: the model assigned to the task in
+     * the advanced settings, else the Brain model (settings → AI model), else the first usable
+     * integration with its default model. Every Brain service asks here, so the choice in the
+     * settings decides — not whichever integration happens to come first in the database.
+     *
+     * @param  string  $task  a key of MODEL_ROUTING_TASKS
+     * @return array{0: ?AiIntegration, 1: ?string}  the integration and the model (null = its default)
+     */
+    public function aiFor(string $task): array
+    {
+        $routed = $this->getModelForTask($task);
+
+        if (!empty($routed['integration_id'])) {
+            $integration = AiIntegration::find($routed['integration_id']);
+            if ($integration?->isUsable()) {
+                return [$integration, $routed['model'] ?: null];
+            }
+        }
+
+        $integration = null;
+        $model = null;
+        if ($this->preferred_integration_id) {
+            $preferred = AiIntegration::find($this->preferred_integration_id);
+            if ($preferred?->isUsable()) {
+                $integration = $preferred;
+                $model = $this->preferred_model ?: null;
+            }
+        }
+
+        $integration ??= app(\App\Services\AI\AiService::class)->getDefaultIntegration();
+
+        // A task with a model but no integration uses that model on the Brain integration
+        if ($integration && !empty($routed['model'])) {
+            $model = $routed['model'];
+        }
+
+        return [$integration, $model];
+    }
+
+    /**
      * Get the Telegram bot token (from DB or fallback to config).
      */
     public function getBotToken(): ?string
@@ -329,7 +369,8 @@ class AiBrainSettings extends Model
     }
 
     /**
-     * Set the work mode for a specific agent.
+     * Set the work mode for a specific agent. A mode equal to the global one is no override:
+     * the agent follows the global mode again, so a later change of the global mode reaches it.
      */
     public function setAgentMode(string $agentType, string $mode): void
     {
@@ -339,8 +380,35 @@ class AiBrainSettings extends Model
         }
 
         $agentModes = $this->agent_modes ?? [];
-        $agentModes[$agentType] = $mode;
-        $this->update(['agent_modes' => $agentModes]);
+        if ($mode === $this->work_mode) {
+            unset($agentModes[$agentType]);
+        } else {
+            $agentModes[$agentType] = $mode;
+        }
+        $this->update(['agent_modes' => $agentModes ?: null]);
+    }
+
+    /**
+     * Change the global work mode. Every agent follows it again: per-agent modes are cleared,
+     * so choosing "Manual" really makes the whole Brain advisory.
+     */
+    public function setWorkMode(string $mode): void
+    {
+        $this->update(['work_mode' => $mode, 'agent_modes' => null]);
+    }
+
+    /**
+     * The mode the agents actually work in: the one they all share, or "mixed" when per-agent
+     * modes differ. The chat header shows this rather than the global mode alone.
+     *
+     * @param  string[]  $agentTypes
+     */
+    public function effectiveMode(?array $agentTypes = null): string
+    {
+        $agentTypes ??= array_keys(self::AGENT_TYPES);
+        $modes = array_values(array_unique(array_map(fn (string $agent) => $this->getAgentMode($agent), $agentTypes)));
+
+        return count($modes) === 1 ? $modes[0] : 'mixed';
     }
 
     /**

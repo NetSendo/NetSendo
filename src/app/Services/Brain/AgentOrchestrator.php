@@ -28,6 +28,12 @@ class AgentOrchestrator
 {
     protected array $agents = [];
 
+    /** Intents classified in this request, by conversation and message. */
+    protected array $intentCache = [];
+
+    /** The conversation the last streamConversation() call resolved or opened. */
+    public ?int $streamConversationId = null;
+
     public function __construct(
         protected AiService $aiService,
         protected ConversationManager $conversationManager,
@@ -85,7 +91,7 @@ class AgentOrchestrator
             'channel' => $channel,
         ]);
 
-        $integration = $this->aiService->getDefaultIntegration();
+        [$integration, $conversationModel] = $this->brainModel($settings, 'conversation');
 
         if (!$integration) {
             return [
@@ -100,14 +106,6 @@ class AgentOrchestrator
                 'type' => 'error',
                 'message' => __('brain.token_limit_reached'),
             ];
-        }
-
-        // Use user-preferred integration if set
-        if ($settings->preferred_integration_id) {
-            $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration?->isUsable()) {
-                $integration = $preferredIntegration;
-            }
         }
 
         // Resolve conversation: specific ID, force new, or auto-find
@@ -172,27 +170,12 @@ class AgentOrchestrator
                         $knowledgeContext .= $goalsContext;
                     }
 
-                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $conversationModel);
                 } else {
                     // Step 0.5: Pre-check for situation_analysis keywords (deterministic, bypasses AI classification)
                     // This ensures well-known analysis requests always go to SituationAnalyzer
                     // instead of being misclassified by AI as general conversation.
-                    $lowerMessage = mb_strtolower($message);
-                    $situationKeywords = [
-                        'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-                        'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-                        'analyze situation', 'current state', 'analyze current',
-                        'situation analysis', 'give me an overview', 'marketing audit',
-                        'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-                        'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-                    ];
-                    $isSituationAnalysis = false;
-                    foreach ($situationKeywords as $keyword) {
-                        if (mb_strpos($lowerMessage, $keyword) !== false) {
-                            $isSituationAnalysis = true;
-                            break;
-                        }
-                    }
+                    $isSituationAnalysis = $this->isSituationRequest(mb_strtolower($message));
 
                     if ($isSituationAnalysis) {
                         $result = $this->handleSituationAnalysis($user, $conversation, $settings);
@@ -239,9 +222,9 @@ class AgentOrchestrator
 
                                 // Step 4: Route to appropriate agent or handle as conversation
                                 if ($intent['requires_agent']) {
-                                    $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                                    $result = $this->handleAgentRequest($this->withUserRequest($intent, $message), $user, $conversation, $channel, $knowledgeContext);
                                 } else {
-                                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $conversationModel);
                                 }
                             }
                         }
@@ -253,7 +236,7 @@ class AgentOrchestrator
             $modelUsed = $result['model'] ?? null;
             if (!$modelUsed && ($result['type'] ?? '') !== 'info_request') {
                 // Agent responses use the preferred model or integration default
-                $modelUsed = $settings->preferred_model ?: ($integration->default_model ?? null);
+                $modelUsed = $conversationModel ?: ($integration->default_model ?? null);
             }
             if (!$modelUsed) {
                 $modelUsed = ($result['type'] ?? '') === 'info_request' ? 'Brain' : 'unknown';
@@ -291,22 +274,34 @@ class AgentOrchestrator
                 // $this->tryAutoEnrich($user, $conversation);
             }
 
-            // Log execution
+            // Log execution: a request the agent could not plan or carry out is a failure,
+            // so it does not count towards the agent's success rate in the Monitor
             $durationMs = (int) ((microtime(true) - $startTime) * 1000);
-            AiExecutionLog::logSuccess(
-                $user->id,
-                $intent['agent'] ?? 'orchestrator',
-                'process_message',
-                ['message' => mb_substr($message, 0, 200)],
-                ['response_length' => strlen($result['message'])],
-                $result['tokens_input'] ?? 0,
-                $result['tokens_output'] ?? 0,
-                $modelUsed,
-                $durationMs
-            );
+            $failed = !empty($result['failed']) || ($result['type'] ?? '') === 'error';
+            if ($failed) {
+                AiExecutionLog::logError(
+                    $user->id,
+                    $intent['agent'] ?? 'orchestrator',
+                    'process_message',
+                    mb_substr((string) $result['message'], 0, 500),
+                    ['message' => mb_substr($message, 0, 200)]
+                );
+            } else {
+                AiExecutionLog::logSuccess(
+                    $user->id,
+                    $intent['agent'] ?? 'orchestrator',
+                    'process_message',
+                    ['message' => mb_substr($message, 0, 200)],
+                    ['response_length' => strlen($result['message'])],
+                    $result['tokens_input'] ?? 0,
+                    $result['tokens_output'] ?? 0,
+                    $modelUsed,
+                    $durationMs
+                );
+            }
 
             // Log brain activity stop event
-            AiBrainActivityLog::logEvent($user->id, 'brain_stop', 'completed', $intent['agent'] ?? null, [
+            AiBrainActivityLog::logEvent($user->id, 'brain_stop', $failed ? 'failed' : 'completed', $intent['agent'] ?? null, [
                 'duration_ms' => $durationMs,
             ], $durationMs);
 
@@ -348,7 +343,23 @@ class AgentOrchestrator
      */
     public function classifyIntent(string $message, AiConversation $conversation, User $user): array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The web chat asks once while deciding whether to stream and again in processMessage();
+        // the same message in the same conversation gets the same answer without a second AI call
+        $cacheKey = $conversation->id . ':' . sha1($message);
+        if (isset($this->intentCache[$cacheKey])) {
+            return $this->intentCache[$cacheKey];
+        }
+
+        return $this->intentCache[$cacheKey] = $this->classifyIntentWithAi($message, $conversation, $user);
+    }
+
+    protected function classifyIntentWithAi(string $message, AiConversation $conversation, User $user): array
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        // The model assigned to "Orchestration (intent classification)" in the advanced settings,
+        // else the Brain model — not whichever integration happens to come first
+        [$integration, $model] = $this->brainModel($settings, 'orchestration');
 
         if (!$integration) {
             return [
@@ -373,8 +384,11 @@ class AgentOrchestrator
             return "- {$agent['name']}: {$caps}";
         })->join("\n");
 
+        // Every registered agent can be chosen (the revenue, funnel and deliverability agents
+        // were missing from a hard-coded list, so the chat never reached them)
+        $agentNames = implode('|', array_keys($this->agents));
+
         // Get marketing/sales skill context for richer intent classification
-        $settings = AiBrainSettings::getForUser($user->id);
         $langCode = $settings->resolveLanguage($user);
         $skillContext = MarketingSalesSkill::getSystemPrompt($langCode);
 
@@ -404,14 +418,14 @@ NEW USER MESSAGE:
 Respond in JSON:
 {
   "requires_agent": true/false,
-  "agent": "campaign|list|message|crm|analytics|segmentation|research|null",
+  "agent": "{$agentNames}|null",
   "intent": "short description of intent",
-  "task_type": "campaign|message|list|crm|analytics|segmentation|research|situation_analysis|general",
+  "task_type": "{$agentNames}|situation_analysis|general",
   "confidence": 0.0-1.0,
   "parameters": {}
 }
 
-Set requires_agent=false for general questions, conversations, greetings.
+Set requires_agent=false for general questions, conversations, greetings, and questions about facts in the knowledge base (e.g. "how do we handle returns?", "what does plan X cost?") — those are answered in the conversation.
 Set requires_agent=true when the user wants to PERFORM a specific action (e.g. create a campaign, research a topic, analyze competitors, etc.)
 Set task_type="situation_analysis" (and requires_agent=false) when user asks for a holistic situation review, current state analysis, or overall assessment of their marketing/CRM situation (e.g. "przeanalizuj obecną sytuację", "analyze current situation", "co jest nie tak", "what should I do", "podsumuj stan", "give me an overview").
 
@@ -424,15 +438,17 @@ NEVER re-classify a follow-up answer as requiring an agent — the conversation 
 PROMPT;
 
         try {
-            $response = BrainAi::generate($user, 'classify_intent', $prompt, $integration, [
-                'max_tokens' => 500,
-                'temperature' => 0.1,
-            ]);
+            $options = ['max_tokens' => 500, 'temperature' => 0.1];
+            if ($model) {
+                $options['model'] = $model;
+            }
+
+            $response = BrainAi::generate($user, 'classify_intent', $prompt, $integration, $options);
 
             $parsed = $this->parseJson($response);
 
             if ($parsed) {
-                return array_merge([
+                $intent = array_merge([
                     'requires_agent' => false,
                     'agent' => null,
                     'intent' => 'conversation',
@@ -440,13 +456,62 @@ PROMPT;
                     'confidence' => 0.5,
                     'parameters' => [],
                 ], $parsed);
+
+                // An agent name the registry does not know cannot take the request
+                if (!empty($intent['requires_agent']) && !isset($this->agents[$intent['agent'] ?? ''])) {
+                    $intent['requires_agent'] = false;
+                    $intent['agent'] = null;
+                }
+                if (!is_array($intent['parameters'])) {
+                    $intent['parameters'] = [];
+                }
+
+                return $intent;
             }
+
+            Log::warning('Intent classification returned no JSON', [
+                'integration_id' => $integration->id,
+                'model' => $model ?? $integration->default_model,
+                'response' => mb_substr($response, 0, 300),
+            ]);
         } catch (\Exception $e) {
-            Log::warning('Intent classification failed', ['error' => $e->getMessage()]);
+            Log::warning('Intent classification failed', [
+                'integration_id' => $integration->id,
+                'model' => $model ?? $integration->default_model,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         // Fallback: simple keyword matching
         return $this->fallbackIntentClassification($message);
+    }
+
+    /**
+     * The integration and model Brain uses for a kind of work (see AiBrainSettings::aiFor()).
+     *
+     * @return array{0: ?AiIntegration, 1: ?string}
+     */
+    public function brainModel(AiBrainSettings $settings, string $task): array
+    {
+        return $settings->aiFor($task);
+    }
+
+    /**
+     * Give the agent the user's own words next to the classified intent, so a short or generic
+     * intent never replaces what the user actually asked for.
+     */
+    protected function withUserRequest(array $intent, string $message): array
+    {
+        $description = trim((string) ($intent['intent'] ?? ''));
+        $message = trim($message);
+
+        if ($message !== '' && !str_contains($description, $message)) {
+            $intent['intent'] = $description === ''
+                ? $message
+                : $description . "\nUser's request: " . $message;
+        }
+
+        return $intent;
     }
 
     /**
@@ -473,8 +538,10 @@ PROMPT;
 
         $settings = AiBrainSettings::getForUser($user->id);
 
-        // In manual mode, just provide advice without creating an action plan
-        if ($settings->work_mode === ModeController::MODE_MANUAL) {
+        // In manual (advisory) mode, just provide advice without creating an action plan. The
+        // agent's own mode decides, like it does for approvals: an agent set to "Advisory"
+        // advises even when the global mode is semi-automatic
+        if ($settings->getAgentMode($agentName) === ModeController::MODE_MANUAL) {
             return $agent->advise($intent, $user, $knowledgeContext);
         }
 
@@ -537,18 +604,23 @@ PROMPT;
                     'agent' => $agent->getLabel(),
                     'intent' => mb_substr($intentDesc, 0, 100),
                 ]),
+                'failed' => true,
             ];
         }
 
-        // Link plan to active goal if one exists
-        try {
-            $activeGoal = AiGoal::forUser($user->id)->active()->latest()->first();
-            if ($activeGoal && !$plan->ai_goal_id) {
-                $plan->update(['ai_goal_id' => $activeGoal->id]);
-                $activeGoal->updateProgress();
+        // A plan made for a goal counts towards that goal. Other requests from the chat belong to
+        // no goal: linking them to whichever goal was active moved its progress with unrelated work
+        $goalId = $intent['parameters']['goal_id'] ?? null;
+        if ($goalId && !$plan->ai_goal_id) {
+            try {
+                $goal = AiGoal::forUser($user->id)->find($goalId);
+                if ($goal) {
+                    $plan->update(['ai_goal_id' => $goal->id]);
+                    $goal->updateProgress();
+                }
+            } catch (\Exception $e) {
+                // ai_goals table may not exist yet if migration hasn't been run
             }
-        } catch (\Exception $e) {
-            // ai_goals table may not exist yet if migration hasn't been run
         }
 
         // Check if approval is needed (per-agent mode + destructive-step gate)
@@ -770,7 +842,7 @@ PROMPT;
                 'intent' => $goalData['description'] ?? $goalData['title'],
                 'task_type' => $goalData['agent'] ?? 'campaign',
                 'confidence' => 0.8,
-                'parameters' => [],
+                'parameters' => ['goal_id' => $goal->id],
             ];
 
             $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'], query: $intent['intent'] ?? null);
@@ -848,7 +920,8 @@ PROMPT;
         ?string $preferredModel = null,
     ): array {
         if (!$integration) {
-            $integration = $this->aiService->getDefaultIntegration();
+            [$integration, $routedModel] = $this->brainModel(AiBrainSettings::getForUser($user->id), 'conversation');
+            $preferredModel ??= $routedModel;
         }
 
         if (!$integration) {
@@ -901,8 +974,9 @@ PROMPT;
         ?callable $onComplete = null,
     ): ?\Generator {
         $startTime = microtime(true);
+        $this->streamConversationId = null;
         $settings = AiBrainSettings::getForUser($user->id);
-        $integration = $this->aiService->getDefaultIntegration();
+        [$integration, $conversationModel] = $this->brainModel($settings, 'conversation');
 
         if (!$integration) {
             return null; // Fallback to synchronous
@@ -910,14 +984,6 @@ PROMPT;
 
         if ($settings->isTokenLimitReached()) {
             return null;
-        }
-
-        // Use user-preferred integration if set
-        if ($settings->preferred_integration_id) {
-            $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration?->isUsable()) {
-                $integration = $preferredIntegration;
-            }
         }
 
         // Resolve conversation
@@ -931,6 +997,9 @@ PROMPT;
         } else {
             $conversation = $this->conversationManager->getConversation($user, $channel);
         }
+
+        // When this method returns null the caller continues in this same conversation
+        $this->streamConversationId = $conversation->id;
 
         // DO NOT save user message here!
         // If this method returns null (non-streamable), the caller falls back to processMessage()
@@ -973,19 +1042,8 @@ PROMPT;
             $intent = $this->classifyIntent($message, $conversation, $user);
 
             // Check for situation_analysis keywords (same pre-check as processMessage)
-            $lowerMessage = mb_strtolower($message);
-            $situationKeywords = [
-                'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-                'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-                'analyze situation', 'current state', 'analyze current',
-                'situation analysis', 'give me an overview', 'marketing audit',
-                'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-                'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-            ];
-            foreach ($situationKeywords as $keyword) {
-                if (mb_strpos($lowerMessage, $keyword) !== false) {
-                    return null; // Situation analysis — not streamable, processMessage will handle
-                }
+            if ($this->isSituationRequest(mb_strtolower($message))) {
+                return null; // Situation analysis — not streamable, processMessage will handle
             }
 
             if ($intent['requires_agent']) {
@@ -1000,7 +1058,7 @@ PROMPT;
         $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general', query: $message);
         $messages = $this->conversationManager->buildAiPayload($conversation, $user, $knowledgeContext);
         $provider = $this->aiService->getProvider($integration);
-        $modelToUse = $settings->preferred_model ?: null;
+        $modelToUse = $conversationModel;
         $actualModel = $modelToUse ?: ($integration->default_model ?: 'unknown');
 
         // Return a generator that yields chunks and persists on completion
@@ -1187,47 +1245,76 @@ PROMPT;
     }
 
     /**
-     * Fallback intent classification using keyword matching.
+     * Phrases that ask for a review of the whole situation (handled by SituationAnalyzer).
+     */
+    protected const SITUATION_KEYWORDS = [
+        'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
+        'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
+        'analyze situation', 'current state', 'analyze current',
+        'situation analysis', 'give me an overview', 'marketing audit',
+        'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
+        'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
+    ];
+
+    /**
+     * Fallback intent classification using keyword matching, used only when the AI classifier
+     * fails. A message goes to an agent only when it asks for something to be done (an action
+     * verb) and names that agent's area; questions stay in the conversation, where the knowledge
+     * base answers them. The agent always gets the user's own words as the intent.
      */
     protected function fallbackIntentClassification(string $message): array
     {
         $lower = mb_strtolower($message);
 
-        // Situation analysis keywords — check first (higher priority)
-        $situationKeywords = [
-            'przeanalizuj sytuacj', 'obecn', 'stan', 'podsumuj', 'co jest nie tak',
-            'analyze situation', 'current state', 'overview', 'audit', 'przeanalizuj obecn',
-        ];
-        foreach ($situationKeywords as $keyword) {
-            if (mb_strpos($lower, $keyword) !== false) {
-                return [
-                    'requires_agent' => false,
-                    'agent' => null,
-                    'intent' => 'situation_analysis',
-                    'task_type' => 'situation_analysis',
-                    'confidence' => 0.7,
-                    'parameters' => [],
-                ];
-            }
+        if ($this->isSituationRequest($lower)) {
+            return [
+                'requires_agent' => false,
+                'agent' => null,
+                'intent' => 'situation_analysis',
+                'task_type' => 'situation_analysis',
+                'confidence' => 0.7,
+                'parameters' => [],
+            ];
         }
 
-        $patterns = [
-            'campaign' => ['kampani', 'newsletter', 'wyślij mail', 'wysyłk', 'email blast', 'mailing'],
-            'list' => ['list', 'subskryb', 'kontakt', 'grupa'],
-            'message' => ['napisz', 'treść', 'temat', 'subject', 'szablon', 'template', 'wiadomoś'],
-            'crm' => ['crm', 'deal', 'lead', 'pipeline', 'scoring', 'zadani', 'firma', 'prospekt', 'klient'],
-            'analytics' => ['statystyk', 'analiz', 'raport', 'wynik', 'open rate', 'click', 'trend'],
-            'segmentation' => ['segment', 'tag', 'automat', 'reguł', 'scoring', 'filtr'],
-            'research' => ['research', 'szukaj', 'wyszukaj', 'find out', 'look up', 'investigate', 'competitor', 'konkuren', 'zbadaj', 'sprawdź w internecie', 'google', 'search online'],
+        $conversation = [
+            'requires_agent' => false,
+            'agent' => null,
+            'intent' => 'conversation',
+            'task_type' => 'general',
+            'confidence' => 0.5,
+            'parameters' => [],
         ];
 
-        foreach ($patterns as $agent => $keywords) {
-            foreach ($keywords as $keyword) {
-                if (mb_strpos($lower, $keyword) !== false) {
+        $actionVerbs = '(?:przygotuj|utw[oó]rz|stw[oó]rz|wy[sś]lij|zaplanuj|dodaj|usu[nń]|zbuduj|napisz|wygeneruj|uruchom|zaprojektuj|przeanalizuj|wyczy[sś][cć]|oczy[sś][cć]|otaguj|zbadaj|wyszukaj|poszukaj|zr[oó]b|ustaw|aktywuj|wstrzymaj|create|send|schedule|build|write|generate|add|remove|delete|run|launch|analy[sz]e|clean|research|find|set up)';
+        if (!preg_match('/(?<!\p{L})' . $actionVerbs . '(?!\p{L})/u', $lower)) {
+            return $conversation;
+        }
+
+        // Stems matched at the start of a word ("list" no longer matches "listopad")
+        $patterns = [
+            'funnel' => ['lejek', 'lejk', 'funnel', 'porzucon', 'win-back', 'winback', 'playbook'],
+            'campaign' => ['kampani', 'newsletter', 'mailing', 'wysyłk', 'campaign', 'test a/b', 'a/b test'],
+            'message' => ['treść', 'treści', 'temat', 'tematy', 'szablon', 'template', 'wiadomoś', 'sms', 'subject'],
+            'list' => ['listę', 'listy', 'lista', 'list ', 'subskryben', 'subscriber', 'kontakty'],
+            'crm' => ['crm', 'deal', 'lead', 'pipeline', 'zadani', 'prospekt', 'kontrahent'],
+            'segmentation' => ['segment', 'tag', 'automatyzacj', 'automation', 'reguł'],
+            'analytics' => ['statystyk', 'raport', 'report', 'open rate', 'wynik', 'trend'],
+            'revenue' => ['przychód', 'przychod', 'revenue', 'rpm', 'ltv', 'zarobi'],
+            'deliverability' => ['dostarczaln', 'deliverab', 'spf', 'dkim', 'dmarc', 'odbić', 'bounce', 'spam'],
+            'research' => ['internet', 'konkuren', 'competitor', 'google', 'online', 'rynk', 'market'],
+        ];
+
+        foreach ($patterns as $agent => $stems) {
+            if (!isset($this->agents[$agent])) {
+                continue;
+            }
+            foreach ($stems as $stem) {
+                if (preg_match('/(?<!\p{L})' . preg_quote($stem, '/') . '/u', $lower)) {
                     return [
                         'requires_agent' => true,
                         'agent' => $agent,
-                        'intent' => 'keyword_match',
+                        'intent' => trim($message),
                         'task_type' => $agent,
                         'confidence' => 0.4,
                         'parameters' => [],
@@ -1236,13 +1323,21 @@ PROMPT;
             }
         }
 
-        return [
-            'requires_agent' => false,
-            'intent' => 'conversation',
-            'task_type' => 'general',
-            'confidence' => 0.5,
-            'parameters' => [],
-        ];
+        return $conversation;
+    }
+
+    /**
+     * Whether a (lower-case) message asks for a review of the whole situation.
+     */
+    protected function isSituationRequest(string $lowerMessage): bool
+    {
+        foreach (self::SITUATION_KEYWORDS as $keyword) {
+            if (mb_strpos($lowerMessage, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1606,6 +1701,15 @@ PROMPT;
         }
 
         $data = json_decode($response, true);
+        if (!is_array($data)) {
+            // Some models put a sentence before or after the JSON object
+            $start = strpos($response, '{');
+            $end = strrpos($response, '}');
+            if ($start !== false && $end > $start) {
+                $data = json_decode(substr($response, $start, $end - $start + 1), true);
+            }
+        }
+
         return is_array($data) ? $data : null;
     }
 

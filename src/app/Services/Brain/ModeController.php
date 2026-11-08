@@ -59,8 +59,8 @@ class ModeController
             throw new \InvalidArgumentException("Invalid work mode: {$mode}");
         }
 
-        $settings = AiBrainSettings::getForUser($user->id);
-        $settings->update(['work_mode' => $mode]);
+        // Every agent follows the new global mode (per-agent modes are cleared)
+        AiBrainSettings::getForUser($user->id)->setWorkMode($mode);
     }
 
     /**

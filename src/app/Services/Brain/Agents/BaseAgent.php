@@ -169,27 +169,19 @@ abstract class BaseAgent
      */
     protected function callAi(string $prompt, array $options = [], ?User $user = null, ?string $task = null): string
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to the task in the advanced settings, else the Brain model, else the
+        // first usable integration (AiBrainSettings::aiFor)
+        if ($user) {
+            [$integration, $model] = AiBrainSettings::getForUser($user->id)->aiFor($task ?? 'conversation');
+            if ($model) {
+                $options['model'] = $model;
+            }
+        } else {
+            $integration = $this->aiService->getDefaultIntegration();
+        }
 
         if (!$integration) {
             throw new \RuntimeException('No AI integration configured');
-        }
-
-        // Per-task model routing: use task-specific model if configured
-        if ($user && $task) {
-            $settings = AiBrainSettings::getForUser($user->id);
-            $taskConfig = $settings->getModelForTask($task);
-            if ($taskConfig) {
-                if ($taskConfig['integration_id']) {
-                    $taskIntegration = \App\Models\AiIntegration::find($taskConfig['integration_id']);
-                    if ($taskIntegration?->isUsable()) {
-                        $integration = $taskIntegration;
-                    }
-                }
-                if ($taskConfig['model']) {
-                    $options['model'] = $taskConfig['model'];
-                }
-            }
         }
 
         $startTime = microtime(true);

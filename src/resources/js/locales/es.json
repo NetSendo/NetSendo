@@ -8407,7 +8407,10 @@
             "semi_auto_desc": "IA propone un plan de acción. Espera tu aprobación antes de ejecutar.",
             "manual": "Manual",
             "manual_label": "👤 Manual (asesoramiento)",
-            "manual_desc": "IA analiza y asesora. Tú ejecutas todas las acciones tú mismo."
+            "manual_desc": "IA analiza y asesora. Tú ejecutas todas las acciones tú mismo.",
+            "mixed": "Mixto",
+            "mixed_hint": "Los agentes trabajan en modos distintos: consulta Ajustes → Modos de agentes",
+            "mixed_label": "🔀 Mixto (agentes en modos distintos)"
         },
         "task": {
             "orchestration": "🧠 Orquestación (clasificación de intención)",
@@ -8610,7 +8613,38 @@
             "priority_medium": "Media",
             "priority_low": "Baja",
             "execute": "Ejecutar",
-            "executed_plans": "Planes ejecutados"
+            "executed_plans": "Planes ejecutados",
+            "activity_feed": "Actividad de Brain",
+            "events": {
+                "brain_start": "Brain ha empezado",
+                "brain_stop": "Brain ha terminado una respuesta",
+                "agent_dispatch": "Tarea asignada a un agente",
+                "agent_complete": "El agente ha completado una tarea",
+                "cron_task": "Tarea programada",
+                "cron_task_dispatch": "Tarea programada asignada a un agente",
+                "cron_task_complete": "Tarea programada completada",
+                "cron_task_error": "La tarea programada ha fallado",
+                "cron_task_approval_required": "La tarea programada espera aprobación",
+                "situation_analysis": "Análisis de la situación",
+                "plan_execution_started": "Ejecución del plan iniciada",
+                "plan_failure_handled": "Plan fallido gestionado",
+                "performance_review": "Revisión de resultados",
+                "goal_created": "Objetivo creado",
+                "auto_goal_created": "Brain ha creado un objetivo",
+                "goal_progress": "Progreso del objetivo",
+                "goal_completed": "Objetivo alcanzado",
+                "goal_metric_evaluated": "Métrica del objetivo comprobada",
+                "goal_sub_plan_executed": "Plan del objetivo ejecutado"
+            },
+            "statuses": {
+                "started": "iniciado",
+                "completed": "completado",
+                "success": "éxito",
+                "failed": "fallido",
+                "error": "error",
+                "pending": "pendiente",
+                "reviewed": "revisado"
+            }
         },
         "goals": {
             "title": "Objetivos",

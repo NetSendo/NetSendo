@@ -19,6 +19,11 @@ const props = defineProps({
     settings: Object,
 });
 
+// The mode the agents really work in (per-agent modes win over the global one)
+const effectiveMode = computed(
+    () => props.settings?.effective_mode || props.settings?.work_mode || "semi_auto",
+);
+
 // --- State ---
 const conversationList = ref(props.conversations || []);
 const activeConversationId = ref(null);
@@ -601,19 +606,28 @@ const getLastMessage = (conversation) => {
                         class="rounded-full px-3 py-1 text-xs font-medium"
                         :class="{
                             'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400':
-                                settings?.work_mode === 'autonomous',
+                                effectiveMode === 'autonomous',
                             'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400':
-                                settings?.work_mode === 'semi_auto',
+                                effectiveMode === 'semi_auto',
                             'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300':
-                                settings?.work_mode === 'manual',
+                                effectiveMode === 'manual',
+                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300':
+                                effectiveMode === 'mixed',
                         }"
+                        :title="
+                            effectiveMode === 'mixed'
+                                ? t('brain.mode.mixed_hint', 'Agenci pracują w różnych trybach — zobacz Ustawienia → Tryby agentów')
+                                : ''
+                        "
                     >
                         {{
-                            settings?.work_mode === "autonomous"
+                            effectiveMode === "autonomous"
                                 ? t("brain.mode.autonomous", "Autonomiczny")
-                                : settings?.work_mode === "semi_auto"
+                                : effectiveMode === "semi_auto"
                                   ? t("brain.mode.semi_auto", "Półautomatyczny")
-                                  : t("brain.mode.manual", "Doradczy")
+                                  : effectiveMode === "mixed"
+                                    ? t("brain.mode.mixed", "Mieszany")
+                                    : t("brain.mode.manual", "Doradczy")
                         }}
                     </span>
                     <!-- Mobile toggle -->

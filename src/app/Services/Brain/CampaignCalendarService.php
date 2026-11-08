@@ -44,7 +44,8 @@ class CampaignCalendarService
             return ['generated' => false, 'entries' => 0];
         }
 
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('campaign');
         if (!$integration) {
             return ['generated' => false, 'entries' => 0];
         }
@@ -149,7 +150,7 @@ PROMPT;
                 'weekly_calendar_planning',
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
-                ['max_tokens' => 2000, 'temperature' => 0.5]
+                ['model' => $brainModel, 'max_tokens' => 2000, 'temperature' => 0.5]
             );
 
             $plans = $this->parseJson($response);

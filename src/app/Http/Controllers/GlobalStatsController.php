@@ -72,16 +72,27 @@ class GlobalStatsController extends Controller
             ->whereBetween('started_at', [$startOfLastMonth, $endOfLastMonth])
             ->sum('emails_sent') ?? 0;
 
-        // Open rate
-        $opensThisMonth = EmailOpen::where('created_at', '>=', $startOfMonth)->count();
-        $clicksThisMonth = EmailClick::where('created_at', '>=', $startOfMonth)->count();
+        // Open and click rate: each recipient of a message counts once, however often they opened
+        // or clicked it. Counting every open event gave rates over 100% (114% seen on a live
+        // instance); opens this month of mail sent last month still count, hence the 100% cap
+        $uniqueThisMonth = fn (string $model) => DB::query()
+            ->fromSub(
+                $model::query()
+                    ->select('message_id', 'subscriber_id')
+                    ->where('created_at', '>=', $startOfMonth)
+                    ->distinct(),
+                'unique_events'
+            )
+            ->count();
+        $opensThisMonth = $uniqueThisMonth(EmailOpen::class);
+        $clicksThisMonth = $uniqueThisMonth(EmailClick::class);
 
         $openRate = $emailsSentThisMonth > 0
-            ? round(($opensThisMonth / $emailsSentThisMonth) * 100, 1)
+            ? min(100, round(($opensThisMonth / $emailsSentThisMonth) * 100, 1))
             : 0;
 
         $clickRate = $emailsSentThisMonth > 0
-            ? round(($clicksThisMonth / $emailsSentThisMonth) * 100, 1)
+            ? min(100, round(($clicksThisMonth / $emailsSentThisMonth) * 100, 1))
             : 0;
 
         // Calculate trends

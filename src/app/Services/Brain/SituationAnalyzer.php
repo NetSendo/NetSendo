@@ -37,20 +37,13 @@ class SituationAnalyzer
      */
     public function analyze(User $user): ?array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('analytics');
         if (!$integration) {
             return null;
         }
 
         $settings = AiBrainSettings::getForUser($user->id);
-
-        // Use user-preferred integration if set
-        if ($settings->preferred_integration_id) {
-            $preferredIntegration = \App\Models\AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration?->isUsable()) {
-                $integration = $preferredIntegration;
-            }
-        }
 
         try {
             $context = $this->gatherContext($user, $settings);
@@ -63,6 +56,7 @@ class SituationAnalyzer
                 AiService::prependDateContext($prompt, $user->timezone),
                 $integration,
                 [
+                    'model' => $brainModel,
                     'max_tokens' => 8000,
                     'temperature' => 0.3,
                 ]

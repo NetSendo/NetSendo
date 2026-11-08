@@ -512,4 +512,21 @@ return [
         'no_provider' => 'Keine der verbundenen KI-Integrationen kann Embeddings erstellen. Füge OpenAI, Google Gemini, OpenRouter oder Ollama hinzu (Anthropic und Grok bieten das nicht an).',
         'test_failed' => 'Das Embedding-Modell hat nicht korrekt geantwortet: :error',
     ],
+    // Suggested tasks in the Brain Monitor
+    'suggested' => [
+        'campaign_title' => 'Kampagne für :count Abonnenten planen',
+        'campaign_desc' => 'Du hast :lists Listen mit :count Abonnenten und in den letzten 7 Tagen keine Kampagne.',
+        'drip_title' => 'Drip-Sequenz erstellen',
+        'drip_desc' => 'Es gibt keine automatische Drip-Sequenz. Baue eine Willkommensserie für neue Abonnenten.',
+        'hot_leads_title' => ':count heiße Leads nachfassen',
+        'hot_leads_desc' => ':count Kontakte mit Score 50+. Plane persönliche Nachfassaktionen.',
+        'pipeline_title' => 'Pipeline-Prüfung: :count offene Deals',
+        'pipeline_desc' => ':count offene Deals. Pipeline analysieren und Blocker finden.',
+        'report_title' => 'Wochenbericht erstellen',
+        'report_desc' => 'In den letzten 7 Tagen gab es keinen Bericht.',
+        'hygiene_title' => 'Kontaktlisten bereinigen',
+        'hygiene_desc' => 'Prüfe :count Abonnenten auf Bounces, Inaktive und Duplikate.',
+        'segmentation_title' => 'Segmentierung der Kontaktbasis',
+        'segmentation_desc' => 'Teile die Basis nach Aktivität, Interessen und Scoring in Segmente.',
+    ],
 ];
