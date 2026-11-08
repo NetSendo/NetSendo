@@ -97,7 +97,7 @@ class SmsProviderService
         // Try any active provider that hasn't reached the daily limit
         return SmsProvider::forUser($userId)
             ->active()
-            ->whereRaw('daily_limit IS NULL OR sent_today < daily_limit')
+            ->whereRaw('(daily_limit IS NULL OR sent_today < daily_limit)')
             ->first();
     }
 

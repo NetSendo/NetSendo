@@ -533,7 +533,7 @@ export interface SmsSendInput {
   subscriber_id?: number;
   phone?: string;
   provider_id?: number;
-  content: string;
+  message: string;
 }
 
 export interface SmsStatus {

@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.7.1',
+    'version' => '2.7.2',
 
     /*
     |--------------------------------------------------------------------------
@@ -128,7 +128,7 @@ return [
 
     'plugins' => [
         'wordpress' => [
-            'version' => '1.1.0',
+            'version' => '1.1.2',
             'download_url' => '/plugins/wordpress/netsendo-wordpress.zip',
             'min_wp_version' => '5.8',
             'min_php_version' => '7.4',
