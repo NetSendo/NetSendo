@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.0] – Translated messages and validation, buyers reach the thank-you page, GOLD for contributors - 2026-11-08
+
+**Release date:** 2026-11-08
+
 ### Added
 
 - **GOLD for contributors.** Merged contributions earn points, and points earn a free NetSendo GOLD licence: 12 months for the first point, 12 more months for the second, no end date from the third. Maintainers label a merged pull request `reward` (1 point) or `reward-large` (3 points); a confirmed vulnerability reported through SECURITY.md counts as 3 points. The rules, what counts and how to claim the licence are in CONTRIBUTING.md; contributions merged before the programme count too. A claim emailed to contact@netsendo.com is answered within minutes with a one-time code that the author posts as a comment to confirm the GitHub account, then the key; further points extend the licence automatically.
@@ -46,14 +50,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Upgrading (Docker)
 
-- `docker compose pull && docker compose up -d`. Two migrations: `domain_configurations.dkim_selector` (new, nullable) and `webhooks.url` widened to 2,048 characters.
+- `docker compose pull && docker compose up -d`. Three migrations: `domain_configurations.dkim_selector` (new, nullable), `webhooks.url` widened to 2,048 characters, and the default lead scoring rules that still carry a raw key as their name or description get the text in the owner's language.
 - **Send times of queue messages with *Pick a time*:** for subscribers who sign up after the update, the hour is read in the message's timezone (Message > List > Group > User Account) instead of UTC. With an account in Europe/Warsaw and no list or message timezone, 09:00 now means 09:00 Warsaw time, one hour earlier (two in summer) than before. Entries already planned keep their time. If you had set the hour in UTC on purpose, set it again in your timezone or give the message the timezone UTC.
 - **Scheduled broadcasts** of a list or group with its own timezone go out at the entered time in that timezone. Broadcasts already scheduled keep their stored time; when you open and save one, its date is read in the new timezone.
 - **Reverb, optional:** take the new `docker-compose.yml` to use `REVERB_BIND_ADDRESS` and `REVERB_HOST_PORT`. Installations from 2.7.2 or older still use the example `REVERB_APP_KEY` and `REVERB_APP_SECRET`: replace both in `.env` with random values (`openssl rand -hex 16`) and run `docker compose up -d`. Behind a reverse proxy that forwards `/app/` to Reverb, also set `REVERB_BIND_ADDRESS=127.0.0.1`. Nothing changes for an installation that keeps its files.
 
 ### Tests
 
-- `DeliverabilityShieldTest`, `ListDefaultMailboxTest`, `MessageTimezoneTest`, `PanelTranslationsTest`, `Api/AbTestUpdateApiTest` and three new cases in `Api/WebhookApiTest`. The 255-character limit of `webhooks.url` cannot be seen on SQLite; the migration was checked on MySQL 8.4 (a 332-character URL failed with error 1406 before it and was stored whole after it).
+- `DeliverabilityShieldTest`, `ListDefaultMailboxTest`, `MessageTimezoneTest`, `PanelTranslationsTest`, `SalesFunnelThankYouPageTest`, `LeadScoringDefaultRulesTest`, `BackendTranslationKeysTest`, `ValidationTranslationsTest`, `Api/AbTestUpdateApiTest` and three new cases in `Api/WebhookApiTest` (full suite: 729 passed). The 255-character limit of `webhooks.url` cannot be seen on SQLite; the migration was checked on MySQL 8.4 (a 332-character URL failed with error 1406 before it and was stored whole after it).
 
 ## [2.7.2] – SMS campaigns send again, the WordPress plugin subscribes, accounts stay apart - 2026-11-08
 
