@@ -61,6 +61,11 @@ return [
     // or other. Unset: docker when /.dockerenv exists, else other. Used only by telemetry.
     'deployment' => env('NETSENDO_DEPLOYMENT'),
 
+    // How long `php artisan migrate` / `db:seed` wait for another process migrating or seeding
+    // the same database before giving up (App\Console\MigrationLock), in seconds. The Docker
+    // entrypoint reads the same variable for its own wait.
+    'migrations_wait_timeout' => (int) env('NETSENDO_MIGRATIONS_WAIT_TIMEOUT', 1800),
+
     // Anonymous usage report sent once a day to NetSendo PSA, only when the administrator
     // switches it on (Settings → Telemetry); see docs/TELEMETRY.md and
     // https://netsendo.com/en/docs/telemetry. NETSENDO_TELEMETRY=true/false overrides the
