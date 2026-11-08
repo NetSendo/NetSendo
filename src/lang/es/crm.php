@@ -218,4 +218,55 @@ return [
             ],
         ],
     ],
+
+    'cardintel' => [
+        'settings' => [
+            'saved' => 'Guardado',
+        ],
+    ],
+    'companies' => [
+        'lookup' => [
+            'invalid_nip' => 'Formato de NIP inválido',
+            'invalid_regon' => 'Formato de REGON inválido',
+            'missing_identifier' => 'Introduzca NIP o REGON',
+            'not_found' => 'Empresa con este NIP/REGON no encontrada',
+        ],
+    ],
+    'activities' => [
+        'log' => [
+            'email_sent' => 'Correo enviado: :subject',
+            'task_completed' => 'Tarea completada: :title',
+        ],
+    ],
+    'notifications' => [
+        'contact_replied' => [
+            'subject' => 'Nueva respuesta de :name',
+            'greeting' => '¡Hola!',
+            'intro' => ':name ha respondido a tu mensaje (canal: :channel).',
+            'action' => 'Ver contacto',
+            'outro' => 'Responde mientras la conversación sigue reciente.',
+        ],
+        'deal_won' => [
+            'subject' => 'Trato ganado: :name',
+            'intro' => '¡Enhorabuena! Se ha ganado el trato «:name» por valor de :value.',
+        ],
+        'deal_lost' => [
+            'subject' => 'Trato perdido: :name',
+            'intro' => 'El trato «:name» se ha marcado como perdido.',
+        ],
+        'deal_stage_changed' => [
+            'subject' => 'Nueva etapa del trato: :name',
+            'intro' => 'El trato «:name» ha pasado a otra etapa.',
+            'greeting' => '¡Hola!',
+            'action' => 'Ver trato',
+        ],
+        'task_overdue' => [
+            'subject' => 'Tarea vencida: :title',
+            'greeting' => '¡Hola!',
+            'intro' => 'La tarea «:title» ha superado su fecha límite.',
+            'due_date' => 'Fecha límite: :date',
+            'action' => 'Ver tarea',
+            'outro' => 'Complétala o establece una nueva fecha límite.',
+        ],
+    ],
 ];

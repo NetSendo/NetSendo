@@ -46,4 +46,8 @@ return [
         'gender_form' => 'Gender Form',
         'gender_form_desc' => 'Inserts male or female form (e.g. he|she)',
     ],
+
+    'created' => 'Insert has been created',
+    'deleted' => 'Insert has been deleted',
+    'updated' => 'Insert has been updated',
 ];
