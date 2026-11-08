@@ -8635,7 +8635,15 @@
             "test_hint": "Der Test verwendet die gespeicherten Einstellungen – speichern Sie zuerst Ihre Änderungen.",
             "last_scanned": "Zuletzt gescannt",
             "last_scan_count": "Antworten im letzten Scan",
-            "never_scanned": "Noch nicht gescannt"
+            "never_scanned": "Noch nicht gescannt",
+            "gmail": {
+                "title": "Gmail-Postfach",
+                "settings": "Host imap.gmail.com, Port 993, SSL-Verschlüsselung, Ordner INBOX und als Benutzer die vollständige Gmail-Adresse.",
+                "app_password": "Gmail akzeptiert hier nicht das Passwort Ihres Google-Kontos. Aktivieren Sie die Bestätigung in zwei Schritten, erstellen Sie ein App-Passwort (16 Zeichen) und tragen Sie es als IMAP-Passwort ein.",
+                "oauth_note": "Die Gmail-Verbindung über Google (OAuth) gilt nur für den Versand, nicht für das Lesen von Antworten.",
+                "fill": "Gmail-Einstellungen ausfüllen",
+                "app_password_link": "App-Passwort erstellen"
+            }
         },
         "reputation": {
             "blacklist_name": "Blacklist",

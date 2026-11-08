@@ -4163,7 +4163,15 @@
             "test_hint": "Test używa zapisanych ustawień – najpierw zapisz zmiany.",
             "last_scanned": "Ostatnie skanowanie",
             "last_scan_count": "Odpowiedzi w ostatnim skanie",
-            "never_scanned": "Jeszcze nie skanowano"
+            "never_scanned": "Jeszcze nie skanowano",
+            "gmail": {
+                "title": "Skrzynka Gmail",
+                "settings": "Host imap.gmail.com, port 993, szyfrowanie SSL, folder INBOX, a jako użytkownik pełny adres Gmail.",
+                "app_password": "Gmail nie przyjmie tu hasła do konta Google. Włącz weryfikację dwuetapową, utwórz hasło aplikacji (16 znaków) i wpisz je jako hasło IMAP.",
+                "oauth_note": "Połączenie Gmaila przez Google (OAuth) obejmuje tylko wysyłkę, nie odczyt odpowiedzi.",
+                "fill": "Uzupełnij ustawienia Gmaila",
+                "app_password_link": "Utwórz hasło aplikacji"
+            }
         },
         "reputation": {
             "title": "Reputacja domeny",

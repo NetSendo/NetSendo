@@ -4850,7 +4850,15 @@
             "test_hint": "La prueba usa la configuración guardada: guarda primero los cambios.",
             "last_scanned": "Último escaneo",
             "last_scan_count": "Respuestas en el último escaneo",
-            "never_scanned": "Aún no escaneado"
+            "never_scanned": "Aún no escaneado",
+            "gmail": {
+                "title": "Buzón de Gmail",
+                "settings": "Host imap.gmail.com, puerto 993, cifrado SSL, carpeta INBOX y, como usuario, la dirección de Gmail completa.",
+                "app_password": "Gmail no acepta aquí la contraseña de tu cuenta de Google. Activa la verificación en dos pasos, crea una contraseña de aplicación (16 caracteres) e introdúcela como contraseña IMAP.",
+                "oauth_note": "La conexión de Gmail con Google (OAuth) solo sirve para enviar, no para leer respuestas.",
+                "fill": "Rellenar la configuración de Gmail",
+                "app_password_link": "Crear una contraseña de aplicación"
+            }
         },
         "reputation": {
             "title": "Reputación del dominio",

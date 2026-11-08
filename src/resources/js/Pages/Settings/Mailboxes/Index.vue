@@ -731,6 +731,29 @@ const disconnectGmail = () => {
     );
 };
 
+// A Gmail reply inbox is read over IMAP with an app password: the Gmail OAuth
+// connection only covers sending, and Gmail rejects the account password.
+const GMAIL_IMAP_HOST = "imap.gmail.com";
+const GMAIL_DOMAIN = /(^|[.@])(gmail|googlemail)\.com$/;
+
+const isGmailReplyInbox = computed(() => {
+    return form.provider === "gmail"
+        || GMAIL_DOMAIN.test((form.reply_imap_host || "").trim().toLowerCase())
+        || GMAIL_DOMAIN.test((form.reply_imap_username || "").trim().toLowerCase())
+        || GMAIL_DOMAIN.test((form.from_email || "").trim().toLowerCase());
+});
+
+const fillGmailReplySettings = () => {
+    form.reply_imap_host = GMAIL_IMAP_HOST;
+    form.reply_imap_port = 993;
+    form.reply_imap_encryption = "ssl";
+    form.reply_imap_folder = form.reply_imap_folder || "INBOX";
+
+    if (!form.reply_imap_username && editingMailbox.value?.gmail_email) {
+        form.reply_imap_username = editingMailbox.value.gmail_email;
+    }
+};
+
 // Is broadcast disabled for provider
 const isBroadcastDisabled = computed(() => {
     return form.provider === "gmail";
@@ -2273,6 +2296,34 @@ const isBroadcastDisabled = computed(() => {
                                     <p class="rounded-lg bg-sky-50 p-3 text-xs text-sky-800 dark:bg-sky-900/20 dark:text-sky-200">
                                         {{ $t('mailboxes.replies.info') }}
                                     </p>
+
+                                    <!-- Gmail: imap.gmail.com with an app password -->
+                                    <div
+                                        v-if="isGmailReplyInbox"
+                                        class="rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                                    >
+                                        <p class="font-semibold">{{ $t('mailboxes.replies.gmail.title') }}</p>
+                                        <p class="mt-1">{{ $t('mailboxes.replies.gmail.settings') }}</p>
+                                        <p class="mt-1">{{ $t('mailboxes.replies.gmail.app_password') }}</p>
+                                        <p v-if="form.provider === 'gmail'" class="mt-1">{{ $t('mailboxes.replies.gmail.oauth_note') }}</p>
+                                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                                            <button
+                                                type="button"
+                                                @click="fillGmailReplySettings"
+                                                class="rounded-md border border-amber-300 bg-white px-2.5 py-1 font-medium text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/60"
+                                            >
+                                                {{ $t('mailboxes.replies.gmail.fill') }}
+                                            </button>
+                                            <a
+                                                href="https://myaccount.google.com/apppasswords"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="font-medium underline hover:no-underline"
+                                            >
+                                                {{ $t('mailboxes.replies.gmail.app_password_link') }}
+                                            </a>
+                                        </div>
+                                    </div>
 
                                     <!-- Host & Port Row -->
                                     <div class="grid grid-cols-3 gap-3">

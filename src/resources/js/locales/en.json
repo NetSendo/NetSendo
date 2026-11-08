@@ -4464,7 +4464,15 @@
             "test_hint": "The test uses the saved settings – save your changes first.",
             "last_scanned": "Last scanned",
             "last_scan_count": "Replies found in last scan",
-            "never_scanned": "Not scanned yet"
+            "never_scanned": "Not scanned yet",
+            "gmail": {
+                "title": "Gmail mailbox",
+                "settings": "Host imap.gmail.com, port 993, SSL encryption, folder INBOX, and the full Gmail address as the user.",
+                "app_password": "Gmail does not accept your Google account password here. Turn on 2-Step Verification, create an app password (16 characters) and enter it as the IMAP password.",
+                "oauth_note": "Connecting Gmail with Google (OAuth) covers sending only, not reading replies.",
+                "fill": "Fill in Gmail settings",
+                "app_password_link": "Create an app password"
+            }
         },
         "reputation": {
             "title": "Domain Reputation",
