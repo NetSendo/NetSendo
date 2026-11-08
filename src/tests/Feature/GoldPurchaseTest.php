@@ -196,6 +196,34 @@ class GoldPurchaseTest extends TestCase
         $this->assertSame(self::GOLD_KEY, $this->setting('license_key'));
     }
 
+    public function test_the_daily_check_drops_the_expiry_when_a_granted_gold_gets_no_end_date(): void
+    {
+        // a contributor's 12-month GOLD becomes GOLD without an end date on the same key
+        Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'GOLD']);
+        Setting::create(['key' => 'license_expires_at', 'value' => '2026-12-14T10:00:00.000Z']);
+        $this->fakeServers([], licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => true, 'expires_at' => null]]);
+
+        $this->artisan('license:verify --deactivate')->assertSuccessful();
+
+        $this->assertNull($this->setting('license_expires_at'));
+        $this->assertSame(self::GOLD_KEY, $this->setting('license_key'));
+        $this->travelTo('2027-06-01 12:00:00');
+        $this->assertSame('GOLD', app(\App\Services\LicenseService::class)->getCurrentPlan());
+    }
+
+    public function test_the_daily_check_keeps_the_expiry_when_the_answer_has_no_expiry_field(): void
+    {
+        Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);
+        Setting::create(['key' => 'license_plan', 'value' => 'GOLD']);
+        Setting::create(['key' => 'license_expires_at', 'value' => '2026-12-14T10:00:00.000Z']);
+        $this->fakeServers([], licence: [['package' => 'GOLD', 'license_key' => self::GOLD_KEY, 'is_active' => true]]);
+
+        $this->artisan('license:verify --deactivate')->assertSuccessful();
+
+        $this->assertSame('2026-12-14T10:00:00.000Z', $this->setting('license_expires_at'));
+    }
+
     public function test_an_ended_gold_falls_back_to_silver(): void
     {
         Setting::create(['key' => 'license_key', 'value' => self::GOLD_KEY]);

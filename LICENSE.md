@@ -18,6 +18,12 @@ means any machine learning model, large language model, generative artificial in
 **“Business Day”**
 means any day other than a Saturday, Sunday or public holiday in the Republic of Poland on which banks are open for business.
 
+**“Complimentary GOLD Licence”**
+means a GOLD Licence granted by NetSendo free of charge under Section 5.7, including under the Contributor Programme.
+
+**“Contributor Programme”**
+means the programme, described in the file CONTRIBUTING.md in the Repository, under which NetSendo may grant Complimentary GOLD Licences to persons whose Contributions it has accepted.
+
 **“Customer”, “You” or “User”**
 means any natural person or legal entity that downloads, installs, accesses or uses the Software under this EULA.
 
@@ -28,7 +34,7 @@ means any bug fix, improvement, feature, translation, documentation change or ot
 means any official technical documentation, manuals, release notes or usage guidelines made available by NetSendo via its website, GitHub repositories or the Software itself.
 
 **“GOLD Licence”**
-means the paid, subscription-based licence tier that provides access to extended or additional features of the Software, subject to payment of applicable fees and the terms of this EULA.
+means the licence tier that provides access to extended or additional features of the Software, either under a paid Subscription, subject to payment of applicable fees, or as a Complimentary GOLD Licence, in each case subject to the terms of this EULA.
 
 **“Intellectual Property Rights”**
 means all intellectual and industrial property rights, whether registered or unregistered, including but not limited to copyrights, database rights, trademarks, service marks, trade names, domain names, patents, utility models, rights to inventions, know-how, trade secrets, and any applications, renewals or extensions thereof, anywhere in the world.
@@ -203,7 +209,7 @@ No rights are granted other than those expressly set out in this EULA.
 The licence granted under this EULA is granted:
 
 - a) for an indefinite term under the SILVER Licence, subject to termination in accordance with this EULA; or
-- b) for the duration of an active Subscription under the GOLD Licence.
+- b) for the duration of an active Subscription under the GOLD Licence, or, for a Complimentary GOLD Licence, for the period stated in the grant under Section 5.7.
 
 NetSendo reserves the right to suspend or terminate the licence at any time in accordance with Section 18 of this EULA.
 
@@ -259,7 +265,7 @@ The SILVER Licence:
 
 ### 5.3 GOLD Licence (Paid Subscription Tier)
 
-Under the GOLD Licence, the Customer is granted access to additional or extended Software functionality in exchange for payment of a recurring Subscription fee.
+Under the GOLD Licence, the Customer is granted access to additional or extended Software functionality in exchange for payment of a recurring Subscription fee, or free of charge as a Complimentary GOLD Licence under Section 5.7.
 
 The GOLD Licence:
 
@@ -268,7 +274,7 @@ The GOLD Licence:
 - c) is governed by the same licence terms, restrictions and limitations as the SILVER Licence;
 - d) remains strictly subject to this EULA.
 
-The sole difference between the SILVER Licence and the GOLD Licence is the availability of enhanced or expanded features enabled within the Software during an active Subscription period.
+The sole difference between the SILVER Licence and the GOLD Licence is the availability of enhanced or expanded features enabled within the Software during an active Subscription period or the period of a Complimentary GOLD Licence.
 
 ### 5.4 Subscription Nature
 
@@ -295,6 +301,24 @@ Payment of Subscription fees under the GOLD Licence does not imply:
 - a) any warranty beyond those expressly stated in this EULA;
 - b) any guarantee of availability, performance or suitability;
 - c) any service level agreement, unless separately agreed in writing.
+
+### 5.7 Complimentary GOLD Licence
+
+NetSendo may, at its sole discretion, grant a GOLD Licence free of charge, in particular to persons whose Contributions it has accepted under the Contributor Programme, and to partners and testers.
+
+A Complimentary GOLD Licence:
+
+- a) is granted to the person named in the grant for one installation of the official Software, activated with the licence key issued by NetSendo, for the period stated in the grant or, where the grant so states, without an end date;
+- b) is subject to all terms of this EULA, including Sections 6.1, 6.8 and 7; in particular, it does not permit the use in production of a fork or modified version created under Section 6.8;
+- c) is personal and may not be assigned, transferred, sold, shared or sublicensed, and has no cash value;
+- d) is a gratuitous benefit and not remuneration for any Contribution or Feedback; Section 8.5 applies to every Contribution whether or not a grant is made, and no person has a claim to a grant;
+- e) includes the GOLD features but not the support described in Section 12.3, unless NetSendo states otherwise in the grant;
+- f) may be ended by NetSendo with immediate effect upon notice if the holder breaches this EULA, engages in any Prohibited Use under Section 7, or obtained the grant by misrepresentation, including by submitting material that is not their own or by using more than one account;
+- g) granted without an end date remains in effect until it is ended under point f) or the EULA is terminated under Section 18.
+
+Section 11 does not apply to a Complimentary GOLD Licence. When a Complimentary GOLD Licence ends, Section 5.5 applies accordingly.
+
+NetSendo may change the rules of the Contributor Programme for the future. A change does not affect Complimentary GOLD Licences already granted.
 
 ## 6. Permitted Use
 
@@ -986,7 +1010,7 @@ This EULA enters into force upon the Customer’s first download, installation, 
 ### 18.2 Term of the Licence
 
 - a) Under the SILVER Licence, the licence is granted for an indefinite term, subject to termination in accordance with this EULA.
-- b) Under the GOLD Licence, access to GOLD features is granted for the duration of an active Subscription, without affecting the underlying licence granted under the SILVER Licence.
+- b) Under the GOLD Licence, access to GOLD features is granted for the duration of an active Subscription or, for a Complimentary GOLD Licence, for the period stated in the grant under Section 5.7, without affecting the underlying licence granted under the SILVER Licence.
 
 ### 18.3 Termination by the Customer
 

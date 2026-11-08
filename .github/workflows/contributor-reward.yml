@@ -1,0 +1,65 @@
+# =============================================================================
+# NetSendo - Contributor programme: thank the author of a rewarded pull request
+# =============================================================================
+# When a pull request is merged with the `reward` (1 point) or `reward-large`
+# (3 points) label, or gets one of these labels after the merge, this posts a
+# comment that confirms the points and tells the author how to claim the free
+# GOLD licence (CONTRIBUTING.md, "GOLD for contributors"). The licence itself
+# is granted by hand in the netsendo.com admin panel.
+#
+# pull_request_target runs with a token that may comment on pull requests from
+# forks. It never checks out or runs the pull request's code, and the author's
+# login reaches the shell only through an environment variable.
+# =============================================================================
+
+name: Contributor reward
+
+on:
+  pull_request_target:
+    types: [closed, labeled]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.type != 'Bot' &&
+      github.event.pull_request.author_association != 'OWNER' &&
+      github.event.pull_request.author_association != 'MEMBER' &&
+      (
+        (github.event.action == 'closed' &&
+          (contains(github.event.pull_request.labels.*.name, 'reward') ||
+           contains(github.event.pull_request.labels.*.name, 'reward-large'))) ||
+        (github.event.action == 'labeled' &&
+          (github.event.label.name == 'reward' || github.event.label.name == 'reward-large'))
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment with the points and how to claim the licence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          LARGE: ${{ contains(github.event.pull_request.labels.*.name, 'reward-large') }}
+        run: |
+          if [ "$LARGE" = "true" ]; then label=reward-large; points="3 points"; else label=reward; points="1 point"; fi
+          marker="<!-- netsendo-reward:$label -->"
+
+          # One comment per label, also when the label is removed and added again
+          existing=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json comments --jq '.comments[].body')
+          case "$existing" in
+            *"$marker"*) echo "Already commented for $label"; exit 0 ;;
+          esac
+
+          rules="https://github.com/$GITHUB_REPOSITORY/blob/main/CONTRIBUTING.md#-gold-for-contributors"
+          body=$(printf '%s\n' \
+            "$marker" \
+            "🏆 Thank you, @$AUTHOR! This contribution earns **$points** in the [NetSendo contributor programme]($rules)." \
+            "" \
+            "To get your free NetSendo GOLD licence, or to have it extended, email **contact@netsendo.com** with your GitHub login, the link to this pull request and the address (domain) of your NetSendo installation." \
+            "" \
+            "1 point: GOLD for 12 months. Each further point: 12 more months. 3 points: GOLD with no end date.")
+
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "$body"

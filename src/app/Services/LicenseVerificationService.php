@@ -214,10 +214,15 @@ class LicenseVerificationService
                 if ($licenseData !== null) {
                     $isActive = isset($licenseData['is_active']) && $licenseData['is_active'] === true;
 
-                    // A renewed GOLD subscription moves the expiry date on the licence server;
+                    // A renewed GOLD subscription moves the expiry date on the licence server,
+                    // and a GOLD granted free of charge may lose it (no end date, EULA 5.7);
                     // keep the local copy in step so the licence page does not show it as expired
                     if ($isActive) {
-                        $this->refreshLocalLicense($licenseData['package'] ?? null, $licenseData['expires_at'] ?? null);
+                        $this->refreshLocalLicense(
+                            $licenseData['package'] ?? null,
+                            $licenseData['expires_at'] ?? null,
+                            array_key_exists('expires_at', $licenseData),
+                        );
                     }
 
                     return [
@@ -295,15 +300,19 @@ class LicenseVerificationService
 
     /**
      * Update the local plan and expiry from the licence server's answer.
+     *
+     * $expiryReported: the answer has an expires_at field. When it is null, the licence has no
+     * end date (SILVER, or a GOLD granted without one) and the local date goes; an answer
+     * without the field leaves the local date alone.
      */
-    private function refreshLocalLicense(?string $plan, ?string $expiresAt): void
+    private function refreshLocalLicense(?string $plan, ?string $expiresAt, bool $expiryReported = false): void
     {
         if ($plan) {
             Setting::updateOrCreate(['key' => 'license_plan'], ['value' => strtoupper($plan)]);
         }
         if ($expiresAt) {
             Setting::updateOrCreate(['key' => 'license_expires_at'], ['value' => $expiresAt]);
-        } elseif ($plan && strtoupper($plan) === 'SILVER') {
+        } elseif ($expiryReported || ($plan && strtoupper($plan) === 'SILVER')) {
             Setting::where('key', 'license_expires_at')->delete();
         }
     }

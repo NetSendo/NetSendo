@@ -544,6 +544,8 @@ WebSocket connection to 'ws://localhost:8085/app/...' failed
 
 We welcome contributions! Whether it's fixing bugs, improving documentation, or adding new features.
 
+🏆 **Accepted contributions earn a free GOLD licence:** 12 months for your first one, no end date from your third. [How it works](CONTRIBUTING.md#-gold-for-contributors).
+
 👉 **[Read our Contributing Guide](CONTRIBUTING.md)** to get started.
 
 ### Quick ways to help:

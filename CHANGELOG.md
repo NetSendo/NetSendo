@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **GOLD for contributors.** Merged contributions earn points, and points earn a free NetSendo GOLD licence: 12 months for the first point, 12 more months for the second, no end date from the third. Maintainers label a merged pull request `reward` (1 point) or `reward-large` (3 points); a confirmed vulnerability reported through SECURITY.md counts as 3 points. The rules, what counts and how to claim the licence are in CONTRIBUTING.md; contributions merged before the programme count too.
+- A pull request template with the checklist from CONTRIBUTING and the author's confirmation that they understand the change and license it to NetSendo.
+- The `Contributor reward` workflow comments on a merged pull request with a `reward` or `reward-large` label: it confirms the points and tells the author how to claim the licence. It runs on `pull_request_target` without checking out the pull request's code.
+
+### Changed
+
+- **EULA §5.7 "Complimentary GOLD Licence"** (new), with the definitions "Complimentary GOLD Licence" and "Contributor Programme" and matching wording in the definition of "GOLD Licence", §4.2, §5.3 and §18.2: NetSendo may grant GOLD free of charge, for a period or without an end date. Such a licence covers one installation of the official software, is personal and has no cash value, is a thank-you and not payment for a contribution (§8.5 applies either way), comes without the GOLD support of §12.3 unless the grant says otherwise, and ends on a breach of the EULA or a misrepresentation. Later changes to the programme do not affect licences already granted.
+
+### Fixed
+
+- **A GOLD licence that loses its end date on the licence server no longer ends locally on the old date.** The daily `license:verify` copied a new expiry date from the server but kept the old one when the server answered GOLD without a date, so a GOLD granted for 12 months and later changed to no end date (same key) would have turned into SILVER on the old date. An answer whose `expires_at` is null now removes the local date; an answer without the field still leaves it alone. Covered by two tests in `GoldPurchaseTest`.
+
 ## [2.7.2] – SMS campaigns send again, the WordPress plugin subscribes, accounts stay apart - 2026-11-08
 
 **Release date:** 2026-11-08
