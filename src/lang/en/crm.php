@@ -363,4 +363,55 @@ return [
             ],
         ],
     ],
+
+    'cardintel' => [
+        'settings' => [
+            'saved' => 'Saved',
+        ],
+    ],
+    'companies' => [
+        'lookup' => [
+            'invalid_nip' => 'Invalid NIP format',
+            'invalid_regon' => 'Invalid REGON format',
+            'missing_identifier' => 'Enter NIP or REGON',
+            'not_found' => 'Company with this NIP/REGON not found',
+        ],
+    ],
+    'activities' => [
+        'log' => [
+            'email_sent' => 'Email sent: :subject',
+            'task_completed' => 'Task completed: :title',
+        ],
+    ],
+    'notifications' => [
+        'contact_replied' => [
+            'subject' => 'New reply from :name',
+            'greeting' => 'Hello!',
+            'intro' => ':name replied to your message (channel: :channel).',
+            'action' => 'View contact',
+            'outro' => 'Reply while the conversation is fresh.',
+        ],
+        'deal_won' => [
+            'subject' => 'Deal won: :name',
+            'intro' => 'Congratulations! The deal ":name" worth :value was won.',
+        ],
+        'deal_lost' => [
+            'subject' => 'Deal lost: :name',
+            'intro' => 'The deal ":name" was marked as lost.',
+        ],
+        'deal_stage_changed' => [
+            'subject' => 'Deal stage changed: :name',
+            'intro' => 'The deal ":name" moved to another stage.',
+            'greeting' => 'Hello!',
+            'action' => 'View deal',
+        ],
+        'task_overdue' => [
+            'subject' => 'Overdue task: :title',
+            'greeting' => 'Hello!',
+            'intro' => 'The task ":title" is past its due date.',
+            'due_date' => 'Due: :date',
+            'action' => 'View task',
+            'outro' => 'Complete it or set a new due date.',
+        ],
+    ],
 ];

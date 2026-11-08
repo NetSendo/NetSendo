@@ -218,4 +218,55 @@ return [
             ],
         ],
     ],
+
+    'cardintel' => [
+        'settings' => [
+            'saved' => 'Gespeichert',
+        ],
+    ],
+    'companies' => [
+        'lookup' => [
+            'invalid_nip' => 'Ungültiges NIP-Format',
+            'invalid_regon' => 'Ungültiges REGON-Format',
+            'missing_identifier' => 'NIP oder REGON eingeben',
+            'not_found' => 'Firma mit dieser NIP/REGON nicht gefunden',
+        ],
+    ],
+    'activities' => [
+        'log' => [
+            'email_sent' => 'E-Mail gesendet: :subject',
+            'task_completed' => 'Aufgabe erledigt: :title',
+        ],
+    ],
+    'notifications' => [
+        'contact_replied' => [
+            'subject' => 'Neue Antwort von :name',
+            'greeting' => 'Hallo!',
+            'intro' => ':name hat auf Ihre Nachricht geantwortet (Kanal: :channel).',
+            'action' => 'Kontakt ansehen',
+            'outro' => 'Antworten Sie, solange das Gespräch noch frisch ist.',
+        ],
+        'deal_won' => [
+            'subject' => 'Verkaufschance gewonnen: :name',
+            'intro' => 'Glückwunsch! Die Verkaufschance „:name“ im Wert von :value wurde gewonnen.',
+        ],
+        'deal_lost' => [
+            'subject' => 'Verkaufschance verloren: :name',
+            'intro' => 'Die Verkaufschance „:name“ wurde als verloren markiert.',
+        ],
+        'deal_stage_changed' => [
+            'subject' => 'Neue Phase der Verkaufschance: :name',
+            'intro' => 'Die Verkaufschance „:name“ ist in eine andere Phase gewechselt.',
+            'greeting' => 'Hallo!',
+            'action' => 'Verkaufschance ansehen',
+        ],
+        'task_overdue' => [
+            'subject' => 'Überfällige Aufgabe: :title',
+            'greeting' => 'Hallo!',
+            'intro' => 'Die Aufgabe „:title“ ist überfällig.',
+            'due_date' => 'Fällig: :date',
+            'action' => 'Aufgabe ansehen',
+            'outro' => 'Erledigen Sie sie oder legen Sie einen neuen Termin fest.',
+        ],
+    ],
 ];
