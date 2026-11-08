@@ -41,8 +41,10 @@ These do not earn points: typo, wording and formatting fixes, dependency updates
 ### How to claim your licence
 
 1. When your pull request is merged with a `reward` label, a bot comment confirms the points.
-2. Email **contact@netsendo.com** with your GitHub login, the links to your merged pull requests, and the address (domain) of your NetSendo installation. Leave out the address if you have no installation yet.
-3. We send you a licence key. Paste it on the **Licence** page in NetSendo. For your next point we extend the same licence.
+2. Email **contact@netsendo.com** from the address where you want the key. Include the links to your merged pull requests and the address (domain) of your NetSendo installation, for example `Domain: newsletter.example.com`. Leave out the address if you have no installation yet.
+3. Within minutes you get a one-time code by email. Post it as a comment on one of your pull requests. This shows that the GitHub account is yours.
+4. The licence key arrives at the same address a few minutes later. Paste it on the **Licence** page in NetSendo.
+5. When you earn another point, we extend the same licence automatically and email you. You do not need to write again.
 
 ### The rules
 

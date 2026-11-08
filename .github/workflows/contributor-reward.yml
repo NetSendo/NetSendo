@@ -58,7 +58,7 @@ jobs:
             "$marker" \
             "🏆 Thank you, @$AUTHOR! This contribution earns **$points** in the [NetSendo contributor programme]($rules)." \
             "" \
-            "To get your free NetSendo GOLD licence, or to have it extended, email **contact@netsendo.com** with your GitHub login, the link to this pull request and the address (domain) of your NetSendo installation." \
+            "To get your free NetSendo GOLD licence, email **contact@netsendo.com** with the link to this pull request and the address (domain) of your NetSendo installation. You get a one-time code to post as a comment here, then the key. If you already have the licence, it is extended automatically." \
             "" \
             "1 point: GOLD for 12 months. Each further point: 12 more months. 3 points: GOLD with no end date.")
 
