@@ -38,7 +38,7 @@ class TestMcpConnection extends Command
 
         // Fall back to ENV if no database key
         if (empty($apiKey)) {
-            $apiKey = config('services.mcp.api_key') ?: env('MCP_API_KEY');
+            $apiKey = config('services.mcp.api_key');
         }
 
         $apiUrl = config('app.url');

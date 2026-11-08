@@ -134,7 +134,7 @@ NetSendo supports the standard Docker update workflow:
 2. **Update the configuration files.** `docker-compose.yml` mounts your own copies of `docker/php/docker-entrypoint.sh`, `docker/php/uploads.ini` and `docker/nginx/default.conf` over the ones in the image, so `docker compose pull` alone does not bring their changes. In a git checkout run `git pull`. In a folder made by `install.sh`, or with downloaded copies:
 
    ```bash
-   V=v2.7.0   # the release you update to, or main for the newest
+   V=v2.7.1   # the release you update to, or main for the newest
    for f in docker-compose.yml docker/php/docker-entrypoint.sh docker/php/uploads.ini docker/nginx/default.conf; do
      cp "$f" "$f.bak" 2>/dev/null
      curl -fsSL "https://raw.githubusercontent.com/NetSendo/NetSendo/$V/$f" -o "$f"
@@ -163,7 +163,7 @@ Follow it with `docker compose logs -f app`.
 ### Update to Specific Version
 
 ```bash
-NETSENDO_VERSION=2.7.0 docker compose up -d
+NETSENDO_VERSION=2.7.1 docker compose up -d
 ```
 
 ### ⚠️ Manual Update Required (v1.6.9+)

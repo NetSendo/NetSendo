@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.7.1] – Live Visitors connects to the configured Reverb address - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Fixed
+
+- **Live Visitors connected every browser to `ws://localhost:8085` in Docker installs.** The page read `VITE_REVERB_HOST`, `VITE_REVERB_PORT` and `VITE_REVERB_SCHEME` with `env()` in its controller. The Docker entrypoint runs `php artisan config:cache`, and with a cached configuration `env()` returns nothing outside the config files, so the page ignored `.env` and fell back to `localhost`, `8085` and `http`: on any instance opened from another computer the real-time visitor list never connected. The values now live in `config/broadcasting.php` (`browser`) and reach the page through `config()`. After changing them, `docker compose up -d` applies them; no frontend rebuild is needed, and `npm run build` cannot run in the production container anyway. Checked in the 2.7.0 image with a cached configuration: the old code gave the browser `localhost`, the new one the `.env` address.
+- **`MCP_API_KEY` from `.env` was never found** by the MCP status in the panel and by `php artisan mcp:test-connection` for the same reason, and the `services.mcp.api_key` setting they looked at first did not exist. It does now (`config/services.php`).
+- `tests/Feature/RuntimeConfigTest.php` checks the Live Visitors page against the configured address and fails when app code, routes or views call `env()` directly.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes since 2.7.0.
+
 ## [2.7.0] – Semantic Brain knowledge base, rich-text blocks, one container migrates - 2026-11-08
 
 **Release date:** 2026-11-08

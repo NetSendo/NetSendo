@@ -46,5 +46,11 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
     ],
 
+    // API key for the MCP server container (docker compose run --rm mcp), used when no MCP key
+    // is stored in the database.
+    'mcp' => [
+        'api_key' => env('MCP_API_KEY'),
+    ],
+
 ];
 

@@ -18,7 +18,7 @@ class McpStatusController extends Controller
 
         // Check for MCP key in database first, then fall back to ENV
         $mcpKey = ApiKey::getMcpKey();
-        $envApiKey = config('services.mcp.api_key') ?: env('MCP_API_KEY');
+        $envApiKey = config('services.mcp.api_key');
         $isConfigured = $mcpKey !== null || !empty($envApiKey);
 
         if (!$latest) {

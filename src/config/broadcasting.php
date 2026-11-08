@@ -28,6 +28,26 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Reverb Address for Browsers
+    |--------------------------------------------------------------------------
+    |
+    | Where browsers open the WebSocket for real-time features (Live Visitors).
+    | The REVERB_* values above are the server-side address (in Docker the
+    | internal "reverb" host); browsers need the public one. Read through
+    | config(), never env(): once the configuration is cached (the Docker
+    | entrypoint runs config:cache) env() returns null outside config files.
+    |
+    */
+
+    'browser' => [
+        'key' => env('VITE_REVERB_APP_KEY') ?: env('REVERB_APP_KEY'),
+        'host' => env('VITE_REVERB_HOST', 'localhost'),
+        'port' => (int) env('VITE_REVERB_PORT', 8085),
+        'scheme' => env('VITE_REVERB_SCHEME', 'http'),
+    ],
+
     'connections' => [
 
         'reverb' => [
