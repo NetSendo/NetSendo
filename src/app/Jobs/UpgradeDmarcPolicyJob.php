@@ -49,7 +49,7 @@ class UpgradeDmarcPolicyJob implements ShouldQueue
         }
 
         // Skip domains with DMARC issues
-        if ($this->domain->dmarc_status !== 'pass') {
+        if ($this->domain->dmarc_status !== DomainConfiguration::STATUS_VALID) {
             return;
         }
 
@@ -78,12 +78,13 @@ class UpgradeDmarcPolicyJob implements ShouldQueue
         // Check recent delivery issues from check history
         $history = $this->domain->check_history ?? [];
         $recentIssues = collect($history)
+            // History entries are ['timestamp' => ..., 'result' => ['spf', 'dkim', 'dmarc', 'overall']]
             ->filter(fn($check) =>
-                Carbon::parse($check['checked_at'])->isAfter(now()->subDays(self::UPGRADE_DAYS))
+                isset($check['timestamp'])
+                && Carbon::parse($check['timestamp'])->isAfter(now()->subDays(self::UPGRADE_DAYS))
             )
             ->filter(fn($check) =>
-                ($check['overall_status'] ?? '') === 'critical' ||
-                ($check['overall_status'] ?? '') === 'warning'
+                in_array($check['result']['overall'] ?? '', ['critical', 'warning'], true)
             )
             ->count();
 

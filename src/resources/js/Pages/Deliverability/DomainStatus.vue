@@ -2,7 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
 import DnsRecordGenerator from "@/Components/Deliverability/DnsRecordGenerator.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -25,10 +25,27 @@ const showDnsGenerator = ref(false);
 
 // Show DNS Generator if there are issues with DMARC or SPF
 const needsDnsHelp = computed(() => {
-    return props.domain.dmarc_status !== 'pass' ||
-           props.domain.spf_status !== 'pass' ||
+    return props.domain.dmarc_status !== 'valid' ||
+           props.domain.spf_status !== 'valid' ||
            props.domain.dmarc_policy === 'none';
 });
+
+// DKIM selector entered by the user (needed for Amazon SES and other token selectors)
+const dkimSelectorForm = useForm({
+    dkim_selector: props.domain.dkim_selector || "",
+});
+const saveDkimSelector = () => {
+    dkimSelectorForm.put(
+        route("deliverability.domains.dkim-selector", props.domain.id),
+        { preserveScroll: true },
+    );
+};
+const dkimSelectorsChecked = computed(
+    () => props.domain.dns_records?.dkim_selectors_checked || [],
+);
+const dkimSelectorFound = computed(
+    () => props.domain.dns_records?.dkim_selector_found || null,
+);
 
 // Copy to clipboard
 const copyToClipboard = async (text, fieldName) => {
@@ -43,19 +60,21 @@ const copyToClipboard = async (text, fieldName) => {
     }
 };
 
-// Status colors
+// Status colors: records are valid/warning/critical/pending, the overall status safe/warning/critical/pending
+const green = {
+    bg: "bg-emerald-100 dark:bg-emerald-900/30",
+    text: "text-emerald-700 dark:text-emerald-400",
+    icon: "check",
+};
 const statusColors = {
-    pass: {
-        bg: "bg-emerald-100 dark:bg-emerald-900/30",
-        text: "text-emerald-700 dark:text-emerald-400",
-        icon: "check",
-    },
-    partial: {
+    valid: green,
+    safe: green,
+    warning: {
         bg: "bg-amber-100 dark:bg-amber-900/30",
         text: "text-amber-700 dark:text-amber-400",
         icon: "warning",
     },
-    fail: {
+    critical: {
         bg: "bg-rose-100 dark:bg-rose-900/30",
         text: "text-rose-700 dark:text-rose-400",
         icon: "x",
@@ -544,7 +563,7 @@ const deleteDomain = () => {
                                 :class="getStatusInfo(domain.spf_status).text"
                             >
                                 <svg
-                                    v-if="domain.spf_status === 'pass'"
+                                    v-if="domain.spf_status === 'valid'"
                                     class="h-5 w-5"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -591,7 +610,7 @@ const deleteDomain = () => {
                                 :class="getStatusInfo(domain.dkim_status).text"
                             >
                                 <svg
-                                    v-if="domain.dkim_status === 'pass'"
+                                    v-if="domain.dkim_status === 'valid'"
                                     class="h-5 w-5"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -622,6 +641,58 @@ const deleteDomain = () => {
                         >
                             {{ humanStatus.dkim }}
                         </p>
+                        <p
+                            v-if="dkimSelectorFound"
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            {{ $t("deliverability.dkim_selector.found") }}:
+                            <code>{{ dkimSelectorFound }}</code>
+                        </p>
+                        <p
+                            v-else-if="dkimSelectorsChecked.length"
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            {{ $t("deliverability.dkim_selector.checked") }}:
+                            {{ dkimSelectorsChecked.join(", ") }}
+                        </p>
+                        <form
+                            v-if="domain.cname_verified"
+                            class="mt-3 space-y-1"
+                            @submit.prevent="saveDkimSelector"
+                        >
+                            <label
+                                for="dkim_selector"
+                                class="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                            >
+                                {{ $t("deliverability.dkim_selector.label") }}
+                            </label>
+                            <div class="flex gap-2">
+                                <input
+                                    id="dkim_selector"
+                                    v-model="dkimSelectorForm.dkim_selector"
+                                    type="text"
+                                    maxlength="255"
+                                    :placeholder="$t('deliverability.dkim_selector.placeholder')"
+                                    class="min-w-0 flex-1 rounded-md border-gray-300 px-2 py-1 text-xs dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                />
+                                <button
+                                    type="submit"
+                                    :disabled="dkimSelectorForm.processing"
+                                    class="rounded-md bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    {{ $t("deliverability.dkim_selector.save") }}
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $t("deliverability.dkim_selector.help") }}
+                            </p>
+                            <p
+                                v-if="dkimSelectorForm.errors.dkim_selector"
+                                class="text-xs text-rose-600"
+                            >
+                                {{ dkimSelectorForm.errors.dkim_selector }}
+                            </p>
+                        </form>
                     </div>
 
                     <!-- DMARC -->
@@ -638,7 +709,7 @@ const deleteDomain = () => {
                                 :class="getStatusInfo(domain.dmarc_status).text"
                             >
                                 <svg
-                                    v-if="domain.dmarc_status === 'pass'"
+                                    v-if="domain.dmarc_status === 'valid'"
                                     class="h-5 w-5"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -673,7 +744,7 @@ const deleteDomain = () => {
                             v-if="domain.dmarc_policy"
                             class="mt-1 text-xs text-gray-500 dark:text-gray-400"
                         >
-                            Policy: {{ domain.dmarc_policy }}
+                            {{ $t("deliverability.policy_label") }}: {{ domain.dmarc_policy }}
                         </p>
                     </div>
                 </div>
@@ -721,8 +792,8 @@ const deleteDomain = () => {
                     <DnsRecordGenerator
                         v-if="showDnsGenerator"
                         :domain-id="domain.id"
-                        :show-dmarc="domain.dmarc_status !== 'pass' || domain.dmarc_policy === 'none'"
-                        :show-spf="domain.spf_status !== 'pass'"
+                        :show-dmarc="domain.dmarc_status !== 'valid' || domain.dmarc_policy === 'none'"
+                        :show-spf="domain.spf_status !== 'valid'"
                         class="mt-4"
                     />
                 </Transition>

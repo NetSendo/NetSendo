@@ -265,10 +265,12 @@ class SendEmailJob implements ShouldQueue
             if (!$mailbox) {
                 $hasAnyMailbox = Mailbox::forUser($this->message->user_id)->active()->exists();
 
+                // In the account owner's language: the error is shown on the message's queue screen
+                $locale = $this->message->user?->locale;
                 throw new \RuntimeException(
                     $hasAnyMailbox
-                        ? "Żadna aktywna skrzynka pocztowa nie ma włączonego typu wysyłki \"{$messageType}\". Włącz ten typ w ustawieniach skrzynki (Ustawienia > Skrzynki pocztowe > Dozwolone typy)."
-                        : "Brak skonfigurowanej skrzynki pocztowej. Skonfiguruj skrzynkę w ustawieniach przed wysyłką wiadomości."
+                        ? __('mail.errors.no_mailbox_for_type', ['type' => $messageType], $locale)
+                        : __('mail.errors.no_mailbox', [], $locale)
                 );
             }
 

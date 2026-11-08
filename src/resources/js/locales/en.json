@@ -311,7 +311,8 @@
         "characters": "characters",
         "source_placeholder": "Type or paste HTML code...",
         "undo": "Undo",
-        "redo": "Redo"
+        "redo": "Redo",
+        "date": "Date"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -570,7 +571,10 @@
         },
         "simulations": {
             "recent": "Recent Simulations",
-            "empty": "No simulations run yet."
+            "empty": "No simulations run yet.",
+            "history": "Simulation history",
+            "no_history": "No simulations yet",
+            "no_history_desc": "Run your first InboxPassport AI simulation to see the results here."
         },
         "dmarc_wiz": {
             "title": "DMARC Wiz",
@@ -650,7 +654,8 @@
             "step2_desc": "Provide the subject and content of the message you want to check.",
             "step3_title": "AI Analysis",
             "step3_desc": "Our AI will analyze the message for spam filters.",
-            "what_we_check": "What we check?"
+            "what_we_check": "What we check?",
+            "title": "InboxPassport AI"
         },
         "delete_domain": "Delete Domain",
         "confirm_delete_message": "Are you sure you want to delete domain \"{domain}\"? All associated data will be permanently removed.",
@@ -703,20 +708,24 @@
         "dmarc_generator": {
             "title": "DMARC Generator",
             "subtitle": "Generate an optimal DMARC record with one click",
-            "initial_explanation": "Start with \"quarantine\" policy to monitor without blocking. This is a safe start.",
-            "recommended_explanation": "Full protection with \"reject\" policy. Use after 7-14 days of monitoring without issues.",
-            "minimal_explanation": "Minimal DMARC configuration with \"quarantine\" policy and basic reporting.",
-            "upgrade_notice": "After 7-14 days without issues, you can safely upgrade to \"reject\" policy for maximum protection.",
+            "initial_explanation": "Start here: p=none only collects reports and blocks nothing. Read the reports for one to two weeks to make sure every service that sends for your domain passes SPF or DKIM.",
+            "recommended_explanation": "Full protection: mail that fails both SPF and DKIM is rejected. Use it after a few weeks on quarantine without problems.",
+            "minimal_explanation": "The shortest valid DMARC record: p=none without reports.",
+            "upgrade_notice": "After one to two weeks of reports without unknown senders, change p=none to p=quarantine, and later to p=reject.",
             "copy_record": "Copy Record",
             "current_policy": "Current Policy",
             "recommended_policy": "Recommended Policy",
             "report_email": "Report Email",
-            "report_email_hint": "You will receive DMARC reports at this address"
+            "report_email_hint": "You will receive DMARC reports at this address",
+            "level_none": "Monitor",
+            "level_quarantine": "Quarantine",
+            "level_reject": "Reject",
+            "quarantine_explanation": "Mail that fails both SPF and DKIM goes to spam. Move here when the reports show only your own services."
         },
         "spf_generator": {
             "title": "SPF Generator",
             "subtitle": "Generate an optimized SPF record",
-            "optimal_explanation": "Simplified SPF record with hard fail (-all). Includes only necessary includes for your provider.",
+            "optimal_explanation": "Your current record with the includes your sending providers need added. Everything already in it stays, so other services that send for the domain keep working. Ends with -all (hard fail).",
             "softfail_explanation": "SPF record with soft fail (~all). Less restrictive but may affect deliverability.",
             "lookup_warning": "Your current SPF record exceeds or approaches the 10 DNS lookup limit. We recommend simplifying.",
             "lookup_count": "DNS Lookup Count",
@@ -724,7 +733,8 @@
             "copy_record": "Copy Record",
             "current_record": "Current Record",
             "optimal_record": "Optimal Record",
-            "provider_detected": "Provider Detected"
+            "provider_detected": "Provider Detected",
+            "needs_provider_include": "NetSendo does not know which SPF include your SMTP provider needs. Take it from the provider's setup guide (for example include:spf.example.net) and add it to your SPF record."
         },
         "dns_generator": {
             "instructions_title": "How to Add a DNS Record",
@@ -736,6 +746,29 @@
             "show_generator": "Show Generator",
             "hide_generator": "Hide Generator",
             "one_click_fix": "One-Click Fix"
+        },
+        "stats": {
+            "domains": "Domains",
+            "verified": "Verified",
+            "critical": "Critical issues",
+            "avg_score": "Avg. score (7 days)"
+        },
+        "new_simulation": "New simulation",
+        "recommendations_title": "Recommendations",
+        "policy_label": "Policy",
+        "dkim_selector": {
+            "label": "DKIM selector",
+            "placeholder": "e.g. abcdef1234567890abcdef1234567890",
+            "help": "The selector your provider signs with: the part before ._domainkey in the DKIM record it gave you. Amazon SES shows three in the SES console (Easy DKIM); one is enough. Separate several with commas.",
+            "save": "Save and check",
+            "checked": "Selectors checked",
+            "found": "Found with selector"
+        },
+        "table": {
+            "subject": "Subject",
+            "domain": "Domain",
+            "score": "Score",
+            "folder": "Folder"
         }
     },
     "navigation": {
@@ -2767,7 +2800,46 @@
             "honeypot": "Honeypot (hidden field)",
             "enable_captcha": "Enable CAPTCHA",
             "site_key": "Site Key",
-            "secret_key": "Secret Key"
+            "secret_key": "Secret Key",
+            "design_presets": "Design presets",
+            "placeholder_hint": "This text appears in the field as a hint",
+            "style_section_container": "Container",
+            "style_section_fields": "Fields",
+            "style_section_button": "Button",
+            "style_section_effects": "Effects",
+            "transparent_container": "Transparent container",
+            "transparent_container_hint": "Only the fields and the button",
+            "background_opacity": "Background opacity",
+            "text_color": "Text color",
+            "border_width": "Border width",
+            "field_text_color": "Field text color",
+            "placeholder_color": "Placeholder color",
+            "field_border_focus": "Field border (focus)",
+            "field_border_radius": "Field corner radius",
+            "button_hover_color": "Hover color",
+            "font_size": "Font size",
+            "shadow": "Shadow",
+            "shadow_color": "Shadow color",
+            "opacity": "Opacity",
+            "blur": "Blur",
+            "gradient": "Gradient",
+            "direction": "Direction",
+            "dir_right": "Right →",
+            "dir_left": "Left ←",
+            "dir_down": "Down ↓",
+            "dir_up": "Up ↑",
+            "dir_down_right": "Bottom right ↘",
+            "dir_down_left": "Bottom left ↙",
+            "dir_up_right": "Top right ↗",
+            "dir_up_left": "Top left ↖",
+            "gradient_from": "Color from",
+            "gradient_to": "Color to",
+            "animation": "Animation",
+            "redirect_title": "Redirect after signup",
+            "use_list_redirect": "Use the list's settings",
+            "use_list_redirect_hint": "The redirect follows the list's double opt-in settings",
+            "custom_redirect_hint": "Your own URL to redirect to after signup",
+            "validation_error": "Validation error: {errors}"
         },
         "code": {
             "title": "Embed Code",

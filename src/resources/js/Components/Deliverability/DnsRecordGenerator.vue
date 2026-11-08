@@ -51,19 +51,27 @@ const {
 
 const activeTab = ref('dmarc')
 const showInstructions = ref(false)
-const selectedDmarcLevel = ref('initial') // 'initial' | 'recommended' | 'minimal'
+// DMARC is rolled out in steps: none (monitor) -> quarantine -> reject (recommended)
+const selectedDmarcLevel = ref('initial') // 'initial' | 'quarantine' | 'recommended' | 'minimal'
+const dmarcLevels = [
+    { value: 'initial', policy: 'none', labelKey: 'deliverability.dmarc_generator.level_none', explanationKey: 'deliverability.dmarc_generator.initial_explanation' },
+    { value: 'quarantine', policy: 'quarantine', labelKey: 'deliverability.dmarc_generator.level_quarantine', explanationKey: 'deliverability.dmarc_generator.quarantine_explanation' },
+    { value: 'recommended', policy: 'reject', labelKey: 'deliverability.dmarc_generator.level_reject', explanationKey: 'deliverability.dmarc_generator.recommended_explanation' },
+]
 
 const currentDmarcRecord = computed(() => {
     if (!dmarcData.value) return ''
 
-    switch (selectedDmarcLevel.value) {
-        case 'recommended':
-            return dmarcData.value.recommended?.value || ''
-        case 'minimal':
-            return dmarcData.value.minimal?.value || ''
-        default:
-            return dmarcData.value.initial?.value || ''
-    }
+    return dmarcData.value[selectedDmarcLevel.value]?.value
+        || dmarcData.value.initial?.value
+        || ''
+})
+
+// Start one step after the policy the domain already publishes
+watch(dmarcData, (data) => {
+    const policy = data?.current?.policy
+    if (policy === 'none') selectedDmarcLevel.value = 'quarantine'
+    else if (policy === 'quarantine' || policy === 'reject') selectedDmarcLevel.value = 'recommended'
 })
 
 const dmarcHost = computed(() => {
@@ -169,16 +177,10 @@ watch(() => props.domainId, () => {
 
                 <!-- Policy Level Selector -->
                 <div class="dns-generator__level-selector">
-                    <label class="dns-generator__radio">
-                        <input type="radio" v-model="selectedDmarcLevel" value="initial" />
+                    <label v-for="level in dmarcLevels" :key="level.value" class="dns-generator__radio">
+                        <input type="radio" v-model="selectedDmarcLevel" :value="level.value" />
                         <span class="dns-generator__radio-label">
-                            <strong>Quarantine</strong> - {{ $t('deliverability.dmarc_generator.initial_explanation') }}
-                        </span>
-                    </label>
-                    <label class="dns-generator__radio">
-                        <input type="radio" v-model="selectedDmarcLevel" value="recommended" />
-                        <span class="dns-generator__radio-label">
-                            <strong>Reject</strong> - {{ $t('deliverability.dmarc_generator.recommended_explanation') }}
+                            <strong>{{ $t(level.labelKey) }} (p={{ level.policy }})</strong> - {{ $t(level.explanationKey) }}
                         </span>
                     </label>
                 </div>
@@ -261,8 +263,13 @@ watch(() => props.domainId, () => {
                     </div>
                 </div>
 
+                <!-- No record to build on and no known provider include -->
+                <div v-if="!spfOptimalRecord" class="dns-generator__notice">
+                    <span>{{ $t('deliverability.spf_generator.needs_provider_include') }}</span>
+                </div>
+
                 <!-- Generated Record -->
-                <div class="dns-generator__record">
+                <div v-else class="dns-generator__record">
                     <div class="dns-generator__record-header">
                         <span class="dns-generator__record-type">TXT</span>
                         <span class="dns-generator__record-host">{{ spfHost }}</span>
@@ -291,7 +298,7 @@ watch(() => props.domainId, () => {
                 </div>
 
                 <!-- Explanation -->
-                <p class="dns-generator__explanation">
+                <p v-if="spfOptimalRecord" class="dns-generator__explanation">
                     {{ $t('deliverability.spf_generator.optimal_explanation') }}
                 </p>
             </div>

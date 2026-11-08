@@ -73,7 +73,9 @@ class DnsLookupService
         $txtRecords = $this->lookupTxt($dkimDomain);
 
         foreach ($txtRecords as $record) {
-            if (str_contains(strtolower($record), 'v=dkim1')) {
+            $lower = strtolower($record);
+            // "v=DKIM1" is optional (RFC 6376 3.6.1): Amazon SES and others publish only "p=..."
+            if (str_contains($lower, 'v=dkim1') || preg_match('/(^|;)\s*p=/', $lower)) {
                 return $record;
             }
         }

@@ -69,6 +69,12 @@ return [
     'domain' => [
         'spf_warning' => 'SPF record has a warning status - may affect deliverability',
         'dmarc_policy_none' => 'DMARC policy is set to "none" - emails may land in spam',
+        'not_verified' => 'The domain is not verified yet (CNAME record missing)',
+        'spf_critical' => 'The SPF record is broken',
+        'dkim_critical' => 'The DKIM record is invalid',
+        'dkim_warning' => 'No DKIM signature found, or it needs attention',
+        'dmarc_critical' => 'No DMARC record found',
+        'dmarc_warning' => 'The DMARC record needs attention',
     ],
 
     // DNS Issues (detailed)
@@ -81,6 +87,7 @@ return [
         'dkim_invalid' => 'DKIM record is invalid (missing public key)',
         'dmarc_missing' => 'No DMARC record found for this domain',
         'dmarc_none' => 'DMARC policy is set to "none"',
+        'dkim_selector_needed' => ':provider signs mail with selectors of its own that cannot be guessed. Enter one of them under DKIM selector (the part before ._domainkey in the CNAME records the provider gave you).',
     ],
 
     // Test email
@@ -144,6 +151,7 @@ return [
         'good' => 'Good',
         'fair' => 'Fair',
         'poor' => 'Poor',
+        'risky' => 'Risky',
     ],
 
     // Folders
@@ -151,13 +159,66 @@ return [
         'inbox' => 'Primary Inbox',
         'promotions' => 'Promotions',
         'spam' => 'Spam',
+        'unknown' => 'Unknown',
     ],
 
-    // Table headers
-    'subject' => 'Subject',
-    'domain' => 'Domain',
-    'score' => 'Score',
-    'folder' => 'Folder',
+    // Table headers (a group of their own: plain strings named 'domain', 'score' and 'folder'
+    // here replaced the groups of the same name above, so their keys were never found)
+    'table' => [
+        'subject' => 'Subject',
+        'domain' => 'Domain',
+        'score' => 'Score',
+        'folder' => 'Folder',
+    ],
+
+    'status' => [
+        'pending' => 'Pending',
+        'safe' => 'Protected',
+        'warning' => 'Needs attention',
+        'critical' => 'Critical',
+    ],
+
+    'cname' => [
+        'verified' => 'Domain verified',
+        'pending' => 'Waiting for the CNAME record',
+    ],
+
+    'spf' => [
+        'pending' => 'Not checked yet',
+        'valid' => 'SPF record is valid',
+        'warning' => 'SPF record needs attention',
+        'critical' => 'SPF record is broken',
+    ],
+
+    'dkim' => [
+        'pending' => 'No DKIM signature found yet',
+        'valid' => 'DKIM record found',
+        'warning' => 'DKIM record needs attention',
+        'critical' => 'DKIM record is invalid',
+    ],
+
+    'dmarc' => [
+        'pending' => 'Not checked yet',
+        'valid' => 'DMARC policy is published',
+        'warning' => 'DMARC needs attention',
+        'critical' => 'No DMARC record',
+    ],
+
+    'dmarc_policy' => [
+        'none' => 'Monitoring only (p=none)',
+        'quarantine' => 'Quarantine (p=quarantine)',
+        'reject' => 'Reject (p=reject)',
+    ],
+
+    'warnings' => [
+        'spf_softfail' => 'The SPF record ends with ~all (soft fail).',
+        'dmarc_quarantine' => 'The DMARC policy is quarantine; reject gives full protection.',
+        'dmarc_no_reporting' => 'The DMARC record has no rua address, so you receive no reports.',
+    ],
+
+    'actions' => [
+        'go_to_domain_settings' => 'Open domain settings',
+    ],
 
     // Actions
     'confirm_delete' => 'Are you sure you want to remove this domain?',
@@ -174,6 +235,8 @@ return [
         'gmail_managed_dns' => 'Gmail automatically manages SPF/DKIM for your account. No additional DNS configuration required.',
         'domain_not_configured' => 'Domain :domain is not configured in DMARC Wiz. Add it for full deliverability analysis.',
         'no_domain_warning' => 'No domain configured. Analysis based on message content only.',
+        'dkim_selector_saved' => 'DKIM selector saved. The DNS records were checked again.',
+        'copied_to_clipboard' => 'Copied to clipboard!',
     ],
 
     // Validation
@@ -257,22 +320,23 @@ return [
     'dmarc_generator' => [
         'title' => 'DMARC Generator',
         'subtitle' => 'Generate the optimal DMARC record in one click',
-        'initial_explanation' => 'Start with "quarantine" policy to monitor without blocking emails. This is a safe start.',
-        'recommended_explanation' => 'Full protection with "reject" policy. Use after 7-14 days of monitoring without issues.',
-        'minimal_explanation' => 'Minimal DMARC configuration with "quarantine" policy and basic reporting.',
-        'upgrade_notice' => 'After 7-14 days without issues, you can safely upgrade to "reject" policy for maximum protection.',
+        'initial_explanation' => 'Start here: p=none only collects reports and blocks nothing. Read the reports for one to two weeks to make sure every service that sends for your domain passes SPF or DKIM.',
+        'recommended_explanation' => 'Full protection: mail that fails both SPF and DKIM is rejected. Use it after a few weeks on quarantine without problems.',
+        'minimal_explanation' => 'The shortest valid DMARC record: p=none without reports.',
+        'upgrade_notice' => 'After one to two weeks of reports without unknown senders, change p=none to p=quarantine, and later to p=reject.',
         'copy_record' => 'Copy Record',
         'current_policy' => 'Current Policy',
         'recommended_policy' => 'Recommended Policy',
         'report_email' => 'Report Email',
         'report_email_hint' => 'You will receive DMARC reports at this address',
+        'quarantine_explanation' => 'Mail that fails both SPF and DKIM goes to spam. Move here when the reports show only your own services.',
     ],
 
     // SPF Generator (One-Click Fix)
     'spf_generator' => [
         'title' => 'SPF Generator',
         'subtitle' => 'Generate an optimized SPF record',
-        'optimal_explanation' => 'Simplified SPF record with hard fail (-all). Contains only necessary includes for your provider.',
+        'optimal_explanation' => 'Your current record with the includes your sending providers need added. Everything already in it stays, so other services that send for the domain keep working. Ends with -all (hard fail).',
         'softfail_explanation' => 'SPF record with soft fail (~all). Less restrictive but may affect deliverability.',
         'lookup_warning' => 'Your current SPF record exceeds or approaches the 10 DNS lookup limit. We recommend simplifying.',
         'lookup_count' => 'DNS Lookup Count',
@@ -281,6 +345,7 @@ return [
         'current_record' => 'Current Record',
         'optimal_record' => 'Optimized Record',
         'provider_detected' => 'Detected Provider',
+        'needs_provider_include' => 'NetSendo does not know which SPF include your SMTP provider needs. Take it from the provider\'s setup guide (for example include:spf.example.net) and add it to your SPF record.',
     ],
 
     // DNS Generator Common

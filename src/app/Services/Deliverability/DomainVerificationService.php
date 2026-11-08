@@ -14,9 +14,63 @@ class DomainVerificationService
     ) {}
 
     /**
-     * Get provider-specific configuration for DNS verification
+     * DKIM selectors tried for a custom SMTP server whose provider is not recognised.
+     * Covers the usual defaults of hosting panels, Microsoft 365, Google and the big ESPs.
      */
-    public function getProviderConfig(?string $provider): array
+    private const GENERIC_DKIM_SELECTORS = ['default', 'mail', 'dkim', 'selector1', 'selector2', 'google', 'k1', 's1', 's2', 'key1'];
+
+    /**
+     * Known SMTP relays, recognised by the mailbox's SMTP host.
+     *
+     * spf_includes: includes the domain's own SPF record needs for this relay. Empty when the relay
+     * sends with its own envelope domain (MAIL FROM), so the From domain's SPF is not checked for it.
+     * dkim_selector_required: the relay signs with per-domain selectors (tokens) that cannot be
+     * guessed, so DKIM can only be checked once the user enters one of them.
+     */
+    private const SMTP_RELAYS = [
+        [
+            'pattern' => '/^email-smtp(-fips)?\.[a-z0-9-]+\.amazonaws\.com$/',
+            'provider_name' => 'Amazon SES',
+            'spf_includes' => [],
+            'dkim_selectors' => [],
+            'dkim_selector_required' => true,
+        ],
+        [
+            'pattern' => '/(^|\.)sendgrid\.net$/',
+            'provider_name' => 'SendGrid',
+            'spf_includes' => [],
+            'dkim_selectors' => ['s1', 's2'],
+            'dkim_selector_required' => false,
+        ],
+        [
+            'pattern' => '/^(smtp|smtp-relay)\.gmail\.com$/',
+            'provider_name' => 'Google Workspace',
+            'spf_includes' => ['_spf.google.com'],
+            'dkim_selectors' => ['google'],
+            'dkim_selector_required' => false,
+        ],
+        [
+            'pattern' => '/^smtp\.office365\.com$|(^|\.)mail\.protection\.outlook\.com$/',
+            'provider_name' => 'Microsoft 365',
+            'spf_includes' => ['spf.protection.outlook.com'],
+            'dkim_selectors' => ['selector1', 'selector2'],
+            'dkim_selector_required' => false,
+        ],
+        [
+            'pattern' => '/(^|\.)mailgun\.org$/',
+            'provider_name' => 'Mailgun',
+            'spf_includes' => ['mailgun.org'],
+            'dkim_selectors' => ['smtp', 'mailo', 'k1', 'krs', 'mx', 'pic'],
+            'dkim_selector_required' => false,
+        ],
+    ];
+
+    /**
+     * Get provider-specific configuration for DNS verification
+     *
+     * @param string|null $smtpHost SMTP host of an SMTP mailbox, used to recognise known relays
+     */
+    public function getProviderConfig(?string $provider, ?string $smtpHost = null): array
     {
         // Get the installation domain for NMI provider SPF
         $installDomain = $this->getVerifyDomain();
@@ -26,7 +80,22 @@ class DomainVerificationService
                 'spf_includes' => [], // No default includes - use aggregated config
                 'dkim_selectors' => ['netsendo', 'default'],
                 'provider_name' => null,
+                'dkim_selector_required' => false,
             ];
+        }
+
+        if ($provider === 'smtp') {
+            $host = strtolower(trim((string) $smtpHost));
+            foreach (self::SMTP_RELAYS as $relay) {
+                if ($host !== '' && preg_match($relay['pattern'], $host)) {
+                    return [
+                        'spf_includes' => $relay['spf_includes'],
+                        'dkim_selectors' => $relay['dkim_selectors'],
+                        'provider_name' => $relay['provider_name'],
+                        'dkim_selector_required' => $relay['dkim_selector_required'],
+                    ];
+                }
+            }
         }
 
         return match($provider) {
@@ -34,28 +103,64 @@ class DomainVerificationService
                 'spf_includes' => ['sendgrid.net'],
                 'dkim_selectors' => ['s1', 's2', 'sendgrid'],
                 'provider_name' => 'SendGrid',
+                'dkim_selector_required' => false,
             ],
             'gmail' => [
                 'spf_includes' => ['_spf.google.com'],
                 'dkim_selectors' => ['google', 'default'],
                 'provider_name' => 'Gmail',
+                'dkim_selector_required' => false,
             ],
             'smtp' => [
                 'spf_includes' => [], // Custom SMTP - user manages their own SPF
-                'dkim_selectors' => ['default', 'mail', 'dkim'],
+                'dkim_selectors' => self::GENERIC_DKIM_SELECTORS,
                 'provider_name' => 'SMTP',
+                'dkim_selector_required' => false,
             ],
             'nmi' => [
                 'spf_includes' => ['_spf.' . $installDomain],
                 'dkim_selectors' => ['netsendo', 'default'],
                 'provider_name' => 'NetSendo MTA',
+                'dkim_selector_required' => false,
             ],
             default => [
                 'spf_includes' => [],
                 'dkim_selectors' => ['default'],
                 'provider_name' => null,
+                'dkim_selector_required' => false,
             ],
         };
+    }
+
+    /**
+     * Provider configuration of one mailbox (looks at the SMTP host of SMTP mailboxes)
+     */
+    public function getMailboxProviderConfig(Mailbox $mailbox): array
+    {
+        $smtpHost = null;
+        if ($mailbox->provider === Mailbox::PROVIDER_SMTP) {
+            $smtpHost = $mailbox->getDecryptedCredentials()['host'] ?? null;
+        }
+
+        return $this->getProviderConfig($mailbox->provider, $smtpHost);
+    }
+
+    /**
+     * Selectors the user entered for the domain (comma or space separated), normalised
+     */
+    public static function parseDkimSelectors(?string $value): array
+    {
+        $selectors = [];
+        foreach (preg_split('/[\s,;]+/', (string) $value) as $selector) {
+            $selector = strtolower(trim($selector));
+            // Accept "token._domainkey.example.com" pasted from a provider console
+            $selector = preg_replace('/\._domainkey(\..*)?$/', '', $selector);
+            if ($selector !== '' && preg_match('/^[a-z0-9]([a-z0-9._-]{0,62})$/', $selector)) {
+                $selectors[] = $selector;
+            }
+        }
+
+        return array_values(array_unique($selectors));
     }
 
     /**
@@ -87,35 +192,44 @@ class DomainVerificationService
     public function getAggregatedProviderConfig(DomainConfiguration $domain): array
     {
         $mailboxes = $this->getMailboxesForDomain($domain);
+
+        // If no mailboxes found, fall back to linked mailbox (legacy behavior)
+        if ($mailboxes->isEmpty() && $domain->mailbox) {
+            $mailboxes = collect([$domain->mailbox]);
+        }
+
         $allIncludes = [];
         $allSelectors = [];
         $providers = [];
+        $selectorRequiredBy = [];
 
         foreach ($mailboxes as $mailbox) {
-            $config = $this->getProviderConfig($mailbox->provider);
+            $config = $this->getMailboxProviderConfig($mailbox);
             $allIncludes = array_merge($allIncludes, $config['spf_includes']);
             $allSelectors = array_merge($allSelectors, $config['dkim_selectors']);
             if ($config['provider_name']) {
                 $providers[] = $config['provider_name'];
             }
+            if ($config['dkim_selector_required'] ?? false) {
+                $selectorRequiredBy[] = $config['provider_name'];
+            }
         }
 
-        // If no mailboxes found, fall back to linked mailbox (legacy behavior)
-        if ($mailboxes->isEmpty() && $domain->mailbox) {
-            $config = $this->getProviderConfig($domain->mailbox->provider);
-            return [
-                'spf_includes' => $config['spf_includes'],
-                'dkim_selectors' => $config['dkim_selectors'],
-                'provider_name' => $config['provider_name'],
-                'providers' => $config['provider_name'] ? [$config['provider_name']] : [],
-            ];
+        if ($mailboxes->isEmpty()) {
+            $allSelectors = $this->getProviderConfig(null)['dkim_selectors'];
         }
+
+        // Selectors the user entered come first: they are the ones that really sign the mail
+        $customSelectors = self::parseDkimSelectors($domain->dkim_selector);
+        $providers = array_values(array_unique($providers));
 
         return [
             'spf_includes' => array_values(array_unique($allIncludes)),
-            'dkim_selectors' => array_values(array_unique($allSelectors)),
-            'provider_name' => null, // Multiple providers
-            'providers' => array_values(array_unique($providers)),
+            'dkim_selectors' => array_values(array_unique(array_merge($customSelectors, $allSelectors))),
+            'custom_dkim_selectors' => $customSelectors,
+            'provider_name' => count($providers) === 1 ? $providers[0] : null,
+            'providers' => $providers,
+            'dkim_selector_required_by' => array_values(array_unique($selectorRequiredBy)),
         ];
     }
 
@@ -222,7 +336,7 @@ class DomainVerificationService
                 break; // Found a valid DKIM record
             }
         }
-        $result->dkim = $this->analyzeDkimRecord($dkimRecord, $checkedSelectors);
+        $result->dkim = $this->analyzeDkimRecord($dkimRecord, $checkedSelectors, $providerConfig);
 
         // Check DMARC
         $dmarcRecord = $this->dnsLookup->getDmarcRecord($config->domain);
@@ -236,6 +350,8 @@ class DomainVerificationService
             'provider' => $providerConfig['provider_name'],
             'providers' => $providerConfig['providers'] ?? [],
             'dkim_selectors_checked' => $checkedSelectors,
+            'dkim_selector_found' => $dkimRecord !== null ? end($checkedSelectors) : null,
+            'dkim_selector_required_by' => $providerConfig['dkim_selector_required_by'] ?? [],
         ];
 
         // Update domain configuration
@@ -322,12 +438,27 @@ class DomainVerificationService
     /**
      * Analyze DKIM record and return status
      */
-    private function analyzeDkimRecord(?string $record, array $checkedSelectors = []): RecordAnalysis
+    private function analyzeDkimRecord(?string $record, array $checkedSelectors = [], array $providerConfig = []): RecordAnalysis
     {
         $analysis = new RecordAnalysis('dkim');
 
         if ($record === null) {
             $analysis->status = DomainConfiguration::STATUS_PENDING;
+            $selectorRequiredBy = $providerConfig['dkim_selector_required_by'] ?? [];
+
+            // The relay signs with selectors of its own (e.g. Amazon SES Easy DKIM tokens) and the user has not entered one yet
+            if (!empty($selectorRequiredBy) && empty($providerConfig['custom_dkim_selectors'])) {
+                $analysis->issues[] = [
+                    'code' => 'dkim_selector_needed',
+                    'severity' => 'warning',
+                    'message_key' => 'deliverability.issues.dkim_selector_needed',
+                    'context' => [
+                        'provider' => implode(', ', $selectorRequiredBy),
+                    ],
+                ];
+                return $analysis;
+            }
+
             $analysis->issues[] = [
                 'code' => 'dkim_missing',
                 'severity' => 'warning',
@@ -412,6 +543,8 @@ class DomainVerificationService
             'spf_status' => $result->spf->status,
             'dkim_status' => $result->dkim->status,
             'dmarc_status' => $result->dmarc->status,
+            // The policy actually published, so the generator and the upgrade advice start from it
+            'dmarc_policy' => $result->dmarc->parsed['policy'] ?? DomainConfiguration::DMARC_NONE,
             'dns_records' => $result->rawRecords,
             'last_check_at' => now(),
         ]);
@@ -512,45 +645,60 @@ class DomainVerificationService
      */
     public function generateOptimalDmarcRecord(DomainConfiguration $domain): array
     {
-        $reportEmail = 'dmarc-reports@' . $domain->domain;
+        $currentRecord = $domain->dns_records['dmarc'] ?? null;
+        $currentParsed = $currentRecord ? $this->dnsLookup->parseDmarcRecord($currentRecord) : null;
+
+        // Keep the report address the domain already publishes; otherwise suggest one on the domain
+        $rua = $currentParsed['rua'] ?? null;
+        $reportEmail = $rua
+            ? preg_replace('/^mailto:/i', '', trim(explode(',', $rua)[0]))
+            : 'dmarc-reports@' . $domain->domain;
+        $ruaValue = $rua ?: "mailto:{$reportEmail}";
+
+        // Relaxed alignment (the DMARC default) and no ruf: strict alignment fails mail sent from
+        // subdomains or relays that sign with a parent domain, and few receivers send forensic reports.
+        $record = fn (string $policy) => "v=DMARC1; p={$policy}; rua={$ruaValue}";
+        $entry = fn (string $policy, string $explanation) => [
+            'host' => '_dmarc.' . $domain->domain,
+            'host_display' => '_dmarc',
+            'type' => 'TXT',
+            'value' => $record($policy),
+            'ttl' => 3600,
+            'policy' => $policy,
+            'explanation_key' => 'deliverability.dmarc_generator.' . $explanation,
+        ];
+
+        $currentPolicy = $currentRecord ? ($domain->dmarc_policy ?? 'none') : null;
 
         return [
             'current' => [
-                'policy' => $domain->dmarc_policy ?? 'none',
-                'record' => $domain->dns_records['dmarc'] ?? null,
+                'policy' => $currentPolicy,
+                'record' => $currentRecord,
             ],
-            'initial' => [
-                'host' => '_dmarc.' . $domain->domain,
-                'host_display' => '_dmarc',
-                'type' => 'TXT',
-                'value' => "v=DMARC1; p=quarantine; pct=100; rua=mailto:{$reportEmail}; ruf=mailto:{$reportEmail}; adkim=s; aspf=s",
-                'ttl' => 3600,
-                'policy' => 'quarantine',
-                'explanation_key' => 'deliverability.dmarc_generator.initial_explanation',
+            // Step 1: monitor only. Nothing is blocked while the reports show who sends for the domain.
+            'initial' => $entry('none', 'initial_explanation') + [
                 'is_recommended_first_step' => true,
             ],
-            'recommended' => [
-                'host' => '_dmarc.' . $domain->domain,
-                'host_display' => '_dmarc',
-                'type' => 'TXT',
-                'value' => "v=DMARC1; p=reject; pct=100; rua=mailto:{$reportEmail}; adkim=s; aspf=s",
-                'ttl' => 3600,
-                'policy' => 'reject',
-                'explanation_key' => 'deliverability.dmarc_generator.recommended_explanation',
+            // Step 2: unauthenticated mail goes to spam
+            'quarantine' => $entry('quarantine', 'quarantine_explanation') + [
                 'upgrade_after_days' => 14,
+            ],
+            // Step 3: unauthenticated mail is rejected
+            'recommended' => $entry('reject', 'recommended_explanation') + [
+                'upgrade_after_days' => 28,
             ],
             'minimal' => [
                 'host' => '_dmarc.' . $domain->domain,
                 'host_display' => '_dmarc',
                 'type' => 'TXT',
-                'value' => "v=DMARC1; p=quarantine; rua=mailto:{$reportEmail}",
+                'value' => 'v=DMARC1; p=none',
                 'ttl' => 3600,
-                'policy' => 'quarantine',
+                'policy' => 'none',
                 'explanation_key' => 'deliverability.dmarc_generator.minimal_explanation',
             ],
             'report_email' => $reportEmail,
-            'can_upgrade' => $domain->dmarc_policy === 'quarantine',
-            'should_configure' => in_array($domain->dmarc_policy, [null, 'none', '']),
+            'can_upgrade' => in_array($currentPolicy, ['none', 'quarantine'], true),
+            'should_configure' => $currentRecord === null,
         ];
     }
 
@@ -564,48 +712,57 @@ class DomainVerificationService
     {
         // Get aggregated provider config from ALL mailboxes using this domain
         $providerConfig = $this->getAggregatedProviderConfig($domain);
+        $providers = $providerConfig['providers'] ?? [];
 
-        // Build the optimal SPF includes
-        $includes = [];
-        $explanation = [];
-
-        // Add aggregated includes from all providers
-        foreach ($providerConfig['spf_includes'] as $include) {
-            if (!empty($include)) {
-                $includes[] = "include:{$include}";
-            }
-        }
-
-        // Use providers list for explanation
-        $explanation = $providerConfig['providers'] ?? [];
-
-        // If no includes found (no mailboxes with known providers), use installation domain
-        if (empty($includes)) {
-            $installDomain = $this->getVerifyDomain();
-            $includes[] = 'include:_spf.' . $installDomain;
-            $explanation[] = 'NetSendo (' . $installDomain . ')';
-        }
-
-        $includesStr = implode(' ', $includes);
-        $lookupCount = count($includes);
-
-        // Get current SPF to check if we need IP addresses
         $currentSpf = $domain->dns_records['spf'] ?? null;
         $parsedCurrent = $currentSpf ? $this->dnsLookup->parseSpfRecord($currentSpf) : null;
 
-        // Preserve existing IP addresses from current SPF
-        $ipAddresses = [];
-        if ($parsedCurrent && !empty($parsedCurrent['ips'])) {
-            foreach ($parsedCurrent['ips'] as $ip) {
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                    $ipAddresses[] = "ip4:{$ip}";
-                } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                    $ipAddresses[] = "ip6:{$ip}";
+        // Keep every mechanism of the current record: other services (the mail host, a CRM,
+        // a helpdesk) send for the domain too, and dropping them would make their mail fail SPF.
+        $terms = [];
+        $modifiers = [];
+        if ($currentSpf) {
+            foreach (preg_split('/\s+/', trim($currentSpf)) as $term) {
+                $lower = strtolower($term);
+                if ($lower === '' || $lower === 'v=spf1' || preg_match('/^[+\-~?]?all$/', $lower)) {
+                    continue;
                 }
+                if (preg_match('/^(redirect|exp)=/', $lower)) {
+                    $modifiers[] = $term;
+                    continue;
+                }
+                $terms[] = $term;
             }
         }
 
-        $ipStr = !empty($ipAddresses) ? ' ' . implode(' ', $ipAddresses) : '';
+        // Add the includes the sending providers need and the record does not have yet
+        $added = [];
+        $currentIncludes = $parsedCurrent['includes'] ?? [];
+        foreach ($providerConfig['spf_includes'] as $include) {
+            if ($include === '' || in_array(strtolower($include), $currentIncludes, true)) {
+                continue;
+            }
+            $terms[] = "include:{$include}";
+            $added[] = $include;
+        }
+
+        // Nothing to build on: no record yet and no provider whose SPF include NetSendo knows.
+        // A guessed include would be wrong, so ask the user to take it from their SMTP provider.
+        $known = !empty($terms) || !empty($modifiers);
+        $hasRedirect = (bool) preg_grep('/^redirect=/i', $modifiers);
+
+        $build = function (string $all) use ($terms, $modifiers, $hasRedirect) {
+            $parts = array_merge(['v=spf1'], $terms);
+            // "redirect=" only applies when the record has no "all"
+            if (!$hasRedirect) {
+                $parts[] = $all;
+            }
+            return implode(' ', array_merge($parts, $modifiers));
+        };
+
+        $optimalValue = $known ? $build('-all') : null;
+        $softValue = $known ? $build('~all') : null;
+        $lookupCount = $known ? $this->countSpfLookups($optimalValue) : 0;
 
         return [
             'current' => [
@@ -613,28 +770,30 @@ class DomainVerificationService
                 'parsed' => $parsedCurrent,
                 'lookup_count' => $this->countSpfLookups($currentSpf),
             ],
-            'optimal' => [
+            'optimal' => $known ? [
                 'host' => $domain->domain,
                 'host_display' => '@',
                 'type' => 'TXT',
-                'value' => "v=spf1{$ipStr} {$includesStr} -all",
+                'value' => $optimalValue,
                 'ttl' => 3600,
                 'lookup_count' => $lookupCount,
-                'providers' => $explanation,
+                'providers' => $providers,
+                'added_includes' => $added,
                 'uses_hard_fail' => true,
                 'explanation_key' => 'deliverability.spf_generator.optimal_explanation',
-            ],
-            'soft_fail' => [
+            ] : null,
+            'soft_fail' => $known ? [
                 'host' => $domain->domain,
                 'host_display' => '@',
                 'type' => 'TXT',
-                'value' => "v=spf1{$ipStr} {$includesStr} ~all",
+                'value' => $softValue,
                 'ttl' => 3600,
                 'lookup_count' => $lookupCount,
                 'uses_hard_fail' => false,
                 'explanation_key' => 'deliverability.spf_generator.softfail_explanation',
-            ],
-            'providers' => $providerConfig['providers'] ?? [],
+            ] : null,
+            'providers' => $providers,
+            'needs_provider_include' => !$known,
             'max_lookups' => 10,
             'is_within_limit' => $lookupCount <= 10,
             'needs_optimization' => $this->countSpfLookups($currentSpf) > 8,
@@ -663,6 +822,9 @@ class DomainVerificationService
 
         // Count a records
         $count += preg_match_all('/\ba\b/i', $spf);
+
+        // Count exists
+        $count += preg_match_all('/\bexists:/i', $spf);
 
         // Count ptr (deprecated but still counts)
         $count += preg_match_all('/\bptr\b/i', $spf);

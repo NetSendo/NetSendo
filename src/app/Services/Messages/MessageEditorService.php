@@ -90,7 +90,7 @@ class MessageEditorService
             [
                 'user_id' => $message->user_id,
                 'name' => "Auto: {$message->subject}",
-                'description' => "Automatyzacja utworzona z wiadomości #{$message->id}",
+                'description' => __('messages.campaign.automation_description', ['id' => $message->id]),
                 'trigger_event' => $triggerEvent,
                 'trigger_config' => $triggerConfig,
                 'conditions' => [],
@@ -322,7 +322,7 @@ class MessageEditorService
     {
         // Create a copy of the message
         $newMessage = $message->replicate();
-        $newMessage->subject = $subject ?? ('[KOPIA] ' . $message->subject);
+        $newMessage->subject = $subject ?? (__('common.copy.prefix') . ' ' . $message->subject);
         $newMessage->status = 'draft';
         $newMessage->send_at = null;
         $newMessage->scheduled_at = null; // Reset - new message needs fresh scheduling

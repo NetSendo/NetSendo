@@ -316,9 +316,9 @@ const submit = () => {
                                         <!-- Default Mailbox Select -->
                                         <div class="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
                                             <label class="mb-1 block text-sm font-medium text-slate-900 dark:text-white">
-                                                {{ $t('mailing_lists.mailbox_defaults_label') }}
+                                                {{ $t('mailing_lists.settings.mailbox_defaults_label') }}
                                             </label>
-                                            <p class="mb-3 text-xs text-slate-500">{{ $t('mailing_lists.mailbox_defaults_desc') }}</p>
+                                            <p class="mb-3 text-xs text-slate-500">{{ $t('mailing_lists.settings.mailbox_defaults_desc') }}</p>
                                             <select
                                                 v-model="form.settings.sending.mailbox_id"
                                                 class="block w-full rounded-xl border-slate-200 bg-white px-4 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:focus:border-indigo-400"

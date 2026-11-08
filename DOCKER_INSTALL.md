@@ -50,10 +50,10 @@ DB_PASSWORD=YOUR_SECURE_PASSWORD   # CHANGE THIS!
 # WebSocket Configuration (Required for real-time features)
 BROADCAST_CONNECTION=reverb
 REVERB_APP_ID=netsendo
-REVERB_APP_KEY=netsendo-reverb-key
-REVERB_APP_SECRET=netsendo-reverb-secret
+REVERB_APP_KEY=YOUR_RANDOM_KEY       # e.g. openssl rand -hex 10
+REVERB_APP_SECRET=YOUR_RANDOM_SECRET # e.g. openssl rand -hex 16 (signs private channels)
 REVERB_HOST=reverb
-REVERB_PORT=8085
+REVERB_PORT=8085                     # inside the Docker network; leave at 8085
 REVERB_SCHEME=http
 
 VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
@@ -219,12 +219,15 @@ docker compose down && docker compose up -d
 ### Backup Commands
 
 ```bash
-# Database backup
-docker compose exec db mysqldump -u root -p netsendo_prod > backup.sql
+# Database backup (-T: no terminal, so nothing but the dump reaches the file;
+# the password and database name come from the db container's environment)
+docker compose exec -T db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > backup.sql
 
-# User uploads backup
+# User uploads backup (docker compose cp takes the service name, "app")
 docker compose cp app:/var/www/storage/app ./backup-storage/
 ```
+
+Check the dump before relying on it: `head -n 5 backup.sql` should show `-- MySQL dump` and no password prompt or warning text.
 
 ---
 
@@ -291,11 +294,7 @@ VITE_REVERB_SCHEME=https
 ```
 
 > [!IMPORTANT]
-> After changing `VITE_*` variables, rebuild the frontend:
->
-> ```bash
-> docker compose exec app npm run build
-> ```
+> After changing `VITE_*` variables, run `docker compose up -d`. Since 2.7.1 the browser gets the `VITE_REVERB_*` values from the server, so no frontend rebuild is needed (and `npm run build` fails in the production image: it deletes `node_modules` after building the assets, `docker/php/Dockerfile`).
 
 ---
 
@@ -412,11 +411,10 @@ curl http://localhost:8085
 # Should return a response from Reverb
 ```
 
-**5. Restart and rebuild:**
+**5. Apply the configuration:**
 
 ```bash
-docker compose restart reverb
-docker compose exec app npm run build
+docker compose up -d
 ```
 
 ### Port 8085 Already in Use
@@ -425,15 +423,26 @@ docker compose exec app npm run build
 # Find what's using the port
 lsof -i :8085
 
-# Change the port in .env if needed
-REVERB_PORT=8086
+# Publish Reverb on another host port. Keep REVERB_PORT=8085: the app reaches
+# Reverb inside the Docker network on 8085, whatever the host port is.
+REVERB_HOST_PORT=8086
 VITE_REVERB_PORT=8086
 
-# Update docker-compose.yml ports mapping
-# Then restart
-docker compose down
+# Then apply it
 docker compose up -d
 ```
+
+`REVERB_HOST_PORT` needs a `docker-compose.yml` newer than 2.7.2 (its `reverb` ports line mentions `REVERB_HOST_PORT`). With an older compose file, change the left side of the `reverb` ports mapping (`"8086:8085"`) instead, and never `REVERB_PORT`: with `REVERB_PORT=8086` the app looks for Reverb on port 8086 inside the network, where nothing listens, and real-time updates stop.
+
+### Reverb on a public server
+
+Out of the box Reverb listens on all interfaces of the host (`0.0.0.0:8085`), so browsers can reach it directly. If a reverse proxy on the host forwards `/app/` to it (see *WebSocket Configuration (Reverb)* in README), close the direct port:
+
+```env
+REVERB_BIND_ADDRESS=127.0.0.1
+```
+
+Installations made with NetSendo 2.7.2 or older, by hand or with `install.sh`, use the example `REVERB_APP_KEY` and `REVERB_APP_SECRET` from `.env.example`. Anyone who knows the secret can sign access to the private channels of Live Visitors, so replace both with random values (`openssl rand -hex 16`) and run `docker compose up -d`; open browser tabs pick up the new key when reloaded.
 
 ---
 
@@ -444,15 +453,18 @@ If you have an existing installation with the old `app-data` volume:
 ### 1. Backup Current Data
 
 ```bash
-# Backup database
-docker compose exec db mysqldump -u root -p netsendo > backup.sql
+# Backup database (-T keeps the terminal out of the dump; the database is the one in
+# DB_DATABASE, netsendo_prod by default)
+docker compose exec -T db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > backup.sql
 
-# Backup uploads
-docker compose cp netsendo-app:/var/www/storage/app ./backup-storage/
+# Backup uploads (service name "app", not the container name netsendo-app)
+docker compose cp app:/var/www/storage/app ./backup-storage/
 
 # Backup .env
 cp .env .env.backup
 ```
+
+Before the next step deletes the volumes, check the dump: `head -n 5 backup.sql` must show `-- MySQL dump`, and the file must not be empty.
 
 ### 2. Remove Old Volumes
 
@@ -470,7 +482,7 @@ docker compose up -d
 
 ```bash
 # Restore database
-docker compose exec -T db mysql -u root -p netsendo < backup.sql
+docker compose exec -T db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < backup.sql
 
 # Restore uploads
 docker compose cp ./backup-storage/. app:/var/www/storage/app/

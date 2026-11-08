@@ -110,30 +110,30 @@ class SmsProviderService
             SmsProvider::PROVIDER_TWILIO => [
                 ['name' => 'account_sid', 'label' => 'Account SID', 'type' => 'text', 'required' => true, 'placeholder' => 'ACXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'],
                 ['name' => 'auth_token', 'label' => 'Auth Token', 'type' => 'password', 'required' => true],
-                ['name' => 'from_number', 'label' => 'Numer nadawcy', 'type' => 'text', 'required' => true, 'placeholder' => '+48123456789'],
+                ['name' => 'from_number', 'label' => __('sms_providers.fields.from_number'), 'type' => 'text', 'required' => true, 'placeholder' => '+48123456789'],
             ],
 
             SmsProvider::PROVIDER_SMSAPI, SmsProvider::PROVIDER_SMSAPI_COM => [
-                ['name' => 'api_token', 'label' => 'Token API', 'type' => 'password', 'required' => true],
-                ['name' => 'from_name', 'label' => 'Nazwa nadawcy', 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => 'Max 11 znaków alfanumerycznych'],
-                ['name' => 'test_mode', 'label' => 'Tryb testowy', 'type' => 'checkbox', 'required' => false, 'hint' => 'Nie wysyła SMS, tylko testuje API'],
+                ['name' => 'api_token', 'label' => __('sms_providers.fields.api_token'), 'type' => 'password', 'required' => true],
+                ['name' => 'from_name', 'label' => __('sms_providers.fields.from_name'), 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => __('sms_providers.fields.from_name_hint_smsapi')],
+                ['name' => 'test_mode', 'label' => __('sms_providers.fields.test_mode'), 'type' => 'checkbox', 'required' => false, 'hint' => __('sms_providers.fields.test_mode_hint')],
             ],
 
             SmsProvider::PROVIDER_VONAGE => [
                 ['name' => 'api_key', 'label' => 'API Key', 'type' => 'text', 'required' => true, 'placeholder' => 'xxxxxxxx'],
                 ['name' => 'api_secret', 'label' => 'API Secret', 'type' => 'password', 'required' => true],
-                ['name' => 'from_name', 'label' => 'Nazwa nadawcy', 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => 'Lub numer telefonu'],
+                ['name' => 'from_name', 'label' => __('sms_providers.fields.from_name'), 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => __('sms_providers.fields.from_name_hint_vonage')],
             ],
 
             SmsProvider::PROVIDER_MESSAGEBIRD => [
                 ['name' => 'access_key', 'label' => 'Access Key', 'type' => 'password', 'required' => true, 'placeholder' => 'live_xxxxxxxx'],
-                ['name' => 'from_name', 'label' => 'Nazwa nadawcy', 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => 'Max 11 znaków lub numer telefonu'],
+                ['name' => 'from_name', 'label' => __('sms_providers.fields.from_name'), 'type' => 'text', 'required' => false, 'placeholder' => 'NetSendo', 'hint' => __('sms_providers.fields.from_name_hint_messagebird')],
             ],
 
             SmsProvider::PROVIDER_PLIVO => [
                 ['name' => 'auth_id', 'label' => 'Auth ID', 'type' => 'text', 'required' => true, 'placeholder' => 'MAXXXXXXXXXXXXXXXX'],
                 ['name' => 'auth_token', 'label' => 'Auth Token', 'type' => 'password', 'required' => true],
-                ['name' => 'from_number', 'label' => 'Numer nadawcy', 'type' => 'text', 'required' => true, 'placeholder' => '+48123456789'],
+                ['name' => 'from_number', 'label' => __('sms_providers.fields.from_number'), 'type' => 'text', 'required' => true, 'placeholder' => '+48123456789'],
             ],
 
             default => [],
@@ -149,37 +149,37 @@ class SmsProviderService
             [
                 'id' => SmsProvider::PROVIDER_TWILIO,
                 'name' => 'Twilio',
-                'description' => 'Globalny dostawca SMS (USA, Europa, Azja)',
+                'description' => __('sms_providers.providers.twilio'),
                 'icon' => 'twilio',
             ],
             [
                 'id' => SmsProvider::PROVIDER_SMSAPI,
-                'name' => 'SMS API (Polska)',
-                'description' => 'Polski dostawca SMS - najlepsza cena dla Polski',
+                'name' => __('sms_providers.providers.smsapi_name'),
+                'description' => __('sms_providers.providers.smsapi'),
                 'icon' => 'smsapi',
             ],
             [
                 'id' => SmsProvider::PROVIDER_SMSAPI_COM,
-                'name' => 'SMS API (Międzynarodowy)',
-                'description' => 'SMS API dla wysyłek międzynarodowych',
+                'name' => __('sms_providers.providers.smsapi_com_name'),
+                'description' => __('sms_providers.providers.smsapi_com'),
                 'icon' => 'smsapi',
             ],
             [
                 'id' => SmsProvider::PROVIDER_VONAGE,
                 'name' => 'Vonage (Nexmo)',
-                'description' => 'Globalny dostawca SMS #2 na świecie',
+                'description' => __('sms_providers.providers.vonage'),
                 'icon' => 'vonage',
             ],
             [
                 'id' => SmsProvider::PROVIDER_MESSAGEBIRD,
                 'name' => 'MessageBird',
-                'description' => 'Holenderski dostawca - świetne ceny w Europie',
+                'description' => __('sms_providers.providers.messagebird'),
                 'icon' => 'messagebird',
             ],
             [
                 'id' => SmsProvider::PROVIDER_PLIVO,
                 'name' => 'Plivo',
-                'description' => 'Ekonomiczna alternatywa dla Twilio',
+                'description' => __('sms_providers.providers.plivo'),
                 'icon' => 'plivo',
             ],
         ];
