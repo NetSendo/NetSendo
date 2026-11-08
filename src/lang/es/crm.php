@@ -156,4 +156,66 @@ return [
             'edit' => 'Editar',
         ],
     ],
+
+    // Default lead scoring rules (LeadScoringRule::getDefaultRules())
+    'scoring' => [
+        'defaults' => [
+            'email_opened' => [
+                'name' => 'Correo abierto',
+                'description' => 'Puntos por abrir un correo electrónico',
+            ],
+            'email_clicked' => [
+                'name' => 'Enlace clicado',
+                'description' => 'Puntos por hacer clic en un enlace de un correo',
+            ],
+            'email_replied' => [
+                'name' => 'Correo respondido',
+                'description' => 'Bono por responder a un mensaje',
+            ],
+            'contact_created' => [
+                'name' => 'Contacto creado',
+                'description' => 'Puntos iniciales al crear un contacto CRM',
+            ],
+            'form_submitted' => [
+                'name' => 'Formulario enviado',
+                'description' => 'Puntos por enviar cualquier formulario',
+            ],
+            'page_visited' => [
+                'name' => 'Página visitada',
+                'description' => 'Puntos por visitar una página',
+            ],
+            'page_visited_pricing' => [
+                'name' => 'Visita a precios',
+                'description' => 'Bono por visitar la página de precios',
+            ],
+            'product_viewed' => [
+                'name' => 'Producto visto',
+                'description' => 'Puntos por ver una página de producto',
+            ],
+            'add_to_cart' => [
+                'name' => 'Añadido al carrito',
+                'description' => 'Puntos por añadir un producto al carrito',
+            ],
+            'checkout_started' => [
+                'name' => 'Pago iniciado',
+                'description' => 'Bono por iniciar el proceso de pago',
+            ],
+            'tag_added_hot' => [
+                'name' => 'Etiqueta "hot"',
+                'description' => 'Bono por recibir la etiqueta \'hot\'',
+            ],
+            'tag_added_vip' => [
+                'name' => 'Etiqueta "vip"',
+                'description' => 'Bono por recibir la etiqueta \'vip\'',
+            ],
+            'decay_7_days' => [
+                'name' => 'Inactividad 7 días',
+                'description' => 'Decaimiento automático de puntos tras 7 días de inactividad',
+            ],
+            'decay_30_days' => [
+                'name' => 'Inactividad 30 días',
+                'description' => 'Gran decaimiento de puntos tras 30 días de inactividad',
+            ],
+        ],
+    ],
 ];

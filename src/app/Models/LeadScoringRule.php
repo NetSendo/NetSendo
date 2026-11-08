@@ -145,31 +145,36 @@ class LeadScoringRule extends Model
 
     /**
      * Get default scoring rules for a new user.
+     *
+     * Names and descriptions are stored, so they are written in the given
+     * locale (the account owner's), or in the current one when null.
      */
-    public static function getDefaultRules(): array
+    public static function getDefaultRules(?string $locale = null): array
     {
+        $t = fn (string $key): string => __("crm.scoring.defaults.{$key}", [], $locale);
+
         return [
             // Email events
             [
                 'event_type' => 'email_opened',
-                'name' => __('crm.scoring.defaults.email_opened.name'),
-                'description' => __('crm.scoring.defaults.email_opened.description'),
+                'name' => $t('email_opened.name'),
+                'description' => $t('email_opened.description'),
                 'points' => 3,
                 'cooldown_minutes' => 60,
                 'priority' => 10,
             ],
             [
                 'event_type' => 'email_clicked',
-                'name' => __('crm.scoring.defaults.email_clicked.name'),
-                'description' => __('crm.scoring.defaults.email_clicked.description'),
+                'name' => $t('email_clicked.name'),
+                'description' => $t('email_clicked.description'),
                 'points' => 10,
                 'cooldown_minutes' => 60,
                 'priority' => 20,
             ],
             [
                 'event_type' => 'email_replied',
-                'name' => __('crm.scoring.defaults.email_replied.name'),
-                'description' => __('crm.scoring.defaults.email_replied.description'),
+                'name' => $t('email_replied.name'),
+                'description' => $t('email_replied.description'),
                 'points' => 25,
                 'cooldown_minutes' => 0,
                 'priority' => 30,
@@ -178,8 +183,8 @@ class LeadScoringRule extends Model
             // Contact creation
             [
                 'event_type' => 'contact_created',
-                'name' => __('crm.scoring.defaults.contact_created.name'),
-                'description' => __('crm.scoring.defaults.contact_created.description'),
+                'name' => $t('contact_created.name'),
+                'description' => $t('contact_created.description'),
                 'points' => 5,
                 'cooldown_minutes' => 0,
                 'priority' => 35,
@@ -188,8 +193,8 @@ class LeadScoringRule extends Model
             // Form events
             [
                 'event_type' => 'form_submitted',
-                'name' => __('crm.scoring.defaults.form_submitted.name'),
-                'description' => __('crm.scoring.defaults.form_submitted.description'),
+                'name' => $t('form_submitted.name'),
+                'description' => $t('form_submitted.description'),
                 'points' => 20,
                 'cooldown_minutes' => 0,
                 'priority' => 40,
@@ -198,16 +203,16 @@ class LeadScoringRule extends Model
             // Page visits
             [
                 'event_type' => 'page_visited',
-                'name' => __('crm.scoring.defaults.page_visited.name'),
-                'description' => __('crm.scoring.defaults.page_visited.description'),
+                'name' => $t('page_visited.name'),
+                'description' => $t('page_visited.description'),
                 'points' => 2,
                 'cooldown_minutes' => 60,
                 'priority' => 5,
             ],
             [
                 'event_type' => 'page_visited',
-                'name' => __('crm.scoring.defaults.page_visited_pricing.name'),
-                'description' => __('crm.scoring.defaults.page_visited_pricing.description'),
+                'name' => $t('page_visited_pricing.name'),
+                'description' => $t('page_visited_pricing.description'),
                 'points' => 15,
                 'condition_field' => 'page_url',
                 'condition_operator' => 'contains',
@@ -219,24 +224,24 @@ class LeadScoringRule extends Model
             // E-commerce events
             [
                 'event_type' => 'product_viewed',
-                'name' => __('crm.scoring.defaults.product_viewed.name'),
-                'description' => __('crm.scoring.defaults.product_viewed.description'),
+                'name' => $t('product_viewed.name'),
+                'description' => $t('product_viewed.description'),
                 'points' => 5,
                 'cooldown_minutes' => 60,
                 'priority' => 15,
             ],
             [
                 'event_type' => 'add_to_cart',
-                'name' => __('crm.scoring.defaults.add_to_cart.name'),
-                'description' => __('crm.scoring.defaults.add_to_cart.description'),
+                'name' => $t('add_to_cart.name'),
+                'description' => $t('add_to_cart.description'),
                 'points' => 20,
                 'cooldown_minutes' => 0,
                 'priority' => 60,
             ],
             [
                 'event_type' => 'checkout_started',
-                'name' => __('crm.scoring.defaults.checkout_started.name'),
-                'description' => __('crm.scoring.defaults.checkout_started.description'),
+                'name' => $t('checkout_started.name'),
+                'description' => $t('checkout_started.description'),
                 'points' => 30,
                 'cooldown_minutes' => 0,
                 'priority' => 70,
@@ -245,8 +250,8 @@ class LeadScoringRule extends Model
             // Tag events
             [
                 'event_type' => 'tag_added',
-                'name' => __('crm.scoring.defaults.tag_added_hot.name'),
-                'description' => __('crm.scoring.defaults.tag_added_hot.description'),
+                'name' => $t('tag_added_hot.name'),
+                'description' => $t('tag_added_hot.description'),
                 'points' => 25,
                 'condition_field' => 'tag_name',
                 'condition_operator' => 'equals',
@@ -256,8 +261,8 @@ class LeadScoringRule extends Model
             ],
             [
                 'event_type' => 'tag_added',
-                'name' => __('crm.scoring.defaults.tag_added_vip.name'),
-                'description' => __('crm.scoring.defaults.tag_added_vip.description'),
+                'name' => $t('tag_added_vip.name'),
+                'description' => $t('tag_added_vip.description'),
                 'points' => 50,
                 'condition_field' => 'tag_name',
                 'condition_operator' => 'equals',
@@ -269,16 +274,16 @@ class LeadScoringRule extends Model
             // Decay rules (negative points)
             [
                 'event_type' => 'decay_7_days',
-                'name' => __('crm.scoring.defaults.decay_7_days.name'),
-                'description' => __('crm.scoring.defaults.decay_7_days.description'),
+                'name' => $t('decay_7_days.name'),
+                'description' => $t('decay_7_days.description'),
                 'points' => -5,
                 'cooldown_minutes' => 10080, // 7 days
                 'priority' => 1,
             ],
             [
                 'event_type' => 'decay_30_days',
-                'name' => __('crm.scoring.defaults.decay_30_days.name'),
-                'description' => __('crm.scoring.defaults.decay_30_days.description'),
+                'name' => $t('decay_30_days.name'),
+                'description' => $t('decay_30_days.description'),
                 'points' => -15,
                 'cooldown_minutes' => 43200, // 30 days
                 'priority' => 2,
@@ -291,7 +296,9 @@ class LeadScoringRule extends Model
      */
     public static function seedDefaultsForUser(int $userId): void
     {
-        foreach (self::getDefaultRules() as $ruleData) {
+        $locale = User::whereKey($userId)->value('locale') ?: null;
+
+        foreach (self::getDefaultRules($locale) as $ruleData) {
             self::create(array_merge($ruleData, ['user_id' => $userId]));
         }
     }
