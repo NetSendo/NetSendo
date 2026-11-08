@@ -30,8 +30,8 @@ cd NetSendo
 # Copy example configuration
 cp .env.example .env
 
-# Generate APP_KEY
-echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
+# Put a new APP_KEY into .env (the containers mount .env read-only and cannot write one)
+sed -i.bak "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" .env && rm .env.bak
 
 # Edit .env with your settings
 nano .env
@@ -139,7 +139,7 @@ docker compose up -d
 ### Update to Specific Version
 
 ```bash
-NETSENDO_VERSION=1.1.0 docker compose up -d
+NETSENDO_VERSION=2.6.0 docker compose up -d
 ```
 
 ### ⚠️ Manual Update Required (v1.6.9+)
@@ -491,7 +491,7 @@ docker compose up -d
 **Symptom:** Browser console shows:
 
 ```
-WebSocket connection to 'ws://localhost:8080/app/...' failed
+WebSocket connection to 'ws://localhost:8085/app/...' failed
 ```
 
 **Cause:** Wrong port configuration or Reverb not running.
@@ -500,7 +500,7 @@ WebSocket connection to 'ws://localhost:8080/app/...' failed
 
 1. Check `.env` has `REVERB_PORT=8085` and `VITE_REVERB_PORT=8085`
 2. Verify Reverb container: `docker compose ps`
-3. Rebuild frontend: `docker compose exec app npm run build`
+3. Apply the configuration again: `docker compose up -d` (the browser gets the `VITE_REVERB_*` values from the server, no frontend rebuild is needed)
 
 ### Reverb Container Not Starting
 
@@ -538,6 +538,6 @@ docker compose restart app reverb
 
 ## 📞 Support
 
-- 📖 Documentation: https://docs.netsendo.com
-- 💬 Forum: https://forum.netsendo.com
+- 📖 Documentation: https://netsendo.com/en/docs
+- 📢 Telegram: https://t.me/netsendo_official
 - 🐛 Issues: https://github.com/NetSendo/NetSendo/issues

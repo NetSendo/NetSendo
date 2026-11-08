@@ -6,8 +6,10 @@ Security fixes are released for the latest minor version only. Update to the new
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.2.x   | :white_check_mark: |
-| < 2.2   | :x:                |
+| 2.6.x   | :white_check_mark: |
+| < 2.6   | :x:                |
+
+The newest release is always on the [Releases](https://github.com/NetSendo/NetSendo/releases) page.
 
 ## Reporting a Vulnerability
 
