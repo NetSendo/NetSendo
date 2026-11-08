@@ -75,4 +75,8 @@ return [
         'success' => 'Instrukcje resetowania hasła zostały przekazane do systemu.',
         'button' => 'Zresetuj hasło',
     ],
+
+    // Login errors (Laravel's lang/en/auth.php; 'password' above stays a field label)
+    'failed' => 'Podane dane logowania są nieprawidłowe.',
+    'throttle' => 'Zbyt wiele prób logowania. Spróbuj ponownie za :seconds s.',
 ];
