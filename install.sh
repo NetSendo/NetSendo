@@ -122,6 +122,10 @@ set_env APP_KEY "base64:$(random_base64 32)"
 set_env APP_URL "http://localhost:${HTTP_PORT}"
 set_env HTTP_PORT "${HTTP_PORT}"
 set_env DB_PASSWORD "$(random_base64 32 | tr -dc 'a-zA-Z0-9' | head -c 24)"
+# Reverb (Live Visitors): the example key and secret are public, and the secret signs
+# access to the private channels, so every installation gets its own
+set_env REVERB_APP_KEY "$(random_base64 32 | tr -dc 'a-zA-Z0-9' | head -c 20)"
+set_env REVERB_APP_SECRET "$(random_base64 48 | tr -dc 'a-zA-Z0-9' | head -c 32)"
 set_env NETSENDO_VERSION "${NETSENDO_VERSION}"
 
 echo -e "${GREEN}✅ Configuration files created${NC}"

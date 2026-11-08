@@ -265,7 +265,7 @@ class ListSettingsAndFormsApiTest extends TestCase
         $copy = $this->api('POST', "forms/{$id}/duplicate")
             ->assertCreated()
             ->assertJsonPath('data.status', 'draft')
-            ->assertJsonPath('data.name', '[KOPIA] Footer signup');
+            ->assertJsonPath('data.name', '[COPY] Footer signup');
         $this->assertNotSame($slug, $copy->json('data.slug'));
 
         // Deleting a form with submissions needs confirmation

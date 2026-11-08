@@ -216,6 +216,7 @@ class DeliverabilityController extends Controller
                 'status_info' => $domain->getStatusInfo(),
                 'spf_status' => $domain->spf_status,
                 'dkim_status' => $domain->dkim_status,
+                'dkim_selector' => $domain->dkim_selector,
                 'dmarc_status' => $domain->dmarc_status,
                 'dmarc_policy' => $domain->dmarc_policy,
                 'dns_records' => $domain->dns_records,
@@ -268,6 +269,30 @@ class DeliverabilityController extends Controller
         $domain->refresh();
 
         return back()->with('success', __('deliverability.messages.status_refreshed'));
+    }
+
+    /**
+     * Save the DKIM selector(s) the domain's mail is signed with, then check again
+     */
+    public function updateDkimSelector(Request $request, DomainConfiguration $domain)
+    {
+        $this->authorize('update', $domain);
+
+        $validated = $request->validate([
+            'dkim_selector' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $selectors = DomainVerificationService::parseDkimSelectors($validated['dkim_selector'] ?? null);
+
+        $domain->update([
+            'dkim_selector' => $selectors ? implode(', ', $selectors) : null,
+        ]);
+
+        if ($domain->cname_verified) {
+            $this->domainService->checkDnsRecords($domain);
+        }
+
+        return back()->with('success', __('deliverability.messages.dkim_selector_saved'));
     }
 
     /**

@@ -100,7 +100,7 @@ _Modern, intuitive dashboard with real-time analytics and campaign management_
 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | bash
 ```
 
-The script creates a `netsendo/` folder with the compose file, its config files and a `.env` with a new `APP_KEY` and a random database password, then starts the stack on http://localhost:8080. To install a specific version:
+The script creates a `netsendo/` folder with the compose file, its config files and a `.env` with a new `APP_KEY` and a random database password, then starts the stack on http://localhost:5029 (`HTTP_PORT=8080` in front of `bash` picks another port). It also gives Reverb its own random `REVERB_APP_KEY` and `REVERB_APP_SECRET`. To install a specific version:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/install.sh | VERSION=2.7.2 bash

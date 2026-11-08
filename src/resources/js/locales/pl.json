@@ -311,7 +311,8 @@
         "characters": "znaków",
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "undo": "Cofnij",
-        "redo": "Ponów"
+        "redo": "Ponów",
+        "date": "Data"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -570,7 +571,10 @@
         },
         "simulations": {
             "recent": "Ostatnie symulacje",
-            "empty": "Brak przeprowadzonych symulacji."
+            "empty": "Brak przeprowadzonych symulacji.",
+            "history": "Historia symulacji",
+            "no_history": "Brak symulacji",
+            "no_history_desc": "Uruchom pierwszą symulację InboxPassport AI, aby zobaczyć tu wyniki."
         },
         "dmarc_wiz": {
             "title": "DMARC Wiz",
@@ -650,7 +654,8 @@
             "step2_desc": "Podaj temat i treść wiadomości, którą chcesz sprawdzić.",
             "step3_title": "Analiza AI",
             "step3_desc": "Nasza AI przeanalizuje wiadomość pod kątem filtrów antyspamowych.",
-            "what_we_check": "Co sprawdzamy?"
+            "what_we_check": "Co sprawdzamy?",
+            "title": "InboxPassport AI"
         },
         "delete_domain": "Usuń domenę",
         "confirm_delete_message": "Czy na pewno chcesz usunąć domenę \"{domain}\"? Wszystkie powiązane dane zostaną trwale usunięte.",
@@ -703,20 +708,24 @@
         "dmarc_generator": {
             "title": "Generator DMARC",
             "subtitle": "Wygeneruj optymalny rekord DMARC jednym kliknięciem",
-            "initial_explanation": "Zacznij od polityki \"quarantine\" do monitorowania bez blokowania. To bezpieczny start.",
-            "recommended_explanation": "Pełna ochrona z polityką \"reject\". Użyj po 7-14 dniach monitorowania bez problemów.",
-            "minimal_explanation": "Minimalna konfiguracja DMARC z polityką \"quarantine\" i podstawowym raportowaniem.",
-            "upgrade_notice": "Po 7-14 dniach bez problemów możesz bezpiecznie ulepszyć do polityki \"reject\" dla maksymalnej ochrony.",
+            "initial_explanation": "Zacznij tutaj: p=none tylko zbiera raporty i niczego nie blokuje. Czytaj raporty przez tydzień lub dwa, aby się upewnić, że każda usługa wysyłająca w imieniu domeny przechodzi SPF lub DKIM.",
+            "recommended_explanation": "Pełna ochrona: poczta, która nie przechodzi ani SPF, ani DKIM, jest odrzucana. Użyj po kilku tygodniach na quarantine bez problemów.",
+            "minimal_explanation": "Najkrótszy poprawny rekord DMARC: p=none bez raportów.",
+            "upgrade_notice": "Po tygodniu lub dwóch raportów bez nieznanych nadawców zmień p=none na p=quarantine, a później na p=reject.",
             "copy_record": "Kopiuj rekord",
             "current_policy": "Aktualna polityka",
             "recommended_policy": "Zalecana polityka",
             "report_email": "Email raportów",
-            "report_email_hint": "Będziesz otrzymywać raporty DMARC na ten adres"
+            "report_email_hint": "Będziesz otrzymywać raporty DMARC na ten adres",
+            "level_none": "Monitorowanie",
+            "level_quarantine": "Kwarantanna",
+            "level_reject": "Odrzucanie",
+            "quarantine_explanation": "Poczta, która nie przechodzi ani SPF, ani DKIM, trafia do spamu. Przejdź tu, gdy w raportach są tylko Twoje usługi."
         },
         "spf_generator": {
             "title": "Generator SPF",
             "subtitle": "Wygeneruj zoptymalizowany rekord SPF",
-            "optimal_explanation": "Uproszczony rekord SPF z twardym fail (-all). Zawiera tylko niezbędne include dla Twojego dostawcy.",
+            "optimal_explanation": "Twój obecny rekord z dopisanymi include, których potrzebują Twoi dostawcy wysyłki. Wszystko, co już w nim jest, zostaje, więc inne usługi wysyłające w imieniu domeny nadal działają. Kończy się na -all (hard fail).",
             "softfail_explanation": "Rekord SPF z miękkim fail (~all). Mniej restrykcyjny, ale może wpływać na dostarczalność.",
             "lookup_warning": "Twój obecny rekord SPF przekracza lub zbliża się do limitu 10 zapytań DNS. Zalecamy uproszczenie.",
             "lookup_count": "Liczba zapytań DNS",
@@ -724,7 +733,8 @@
             "copy_record": "Kopiuj rekord",
             "current_record": "Aktualny rekord",
             "optimal_record": "Optymalny rekord",
-            "provider_detected": "Wykryty dostawca"
+            "provider_detected": "Wykryty dostawca",
+            "needs_provider_include": "NetSendo nie wie, jakiego include SPF potrzebuje Twój dostawca SMTP. Weź go z instrukcji dostawcy (np. include:spf.example.net) i dopisz do rekordu SPF."
         },
         "dns_generator": {
             "instructions_title": "Jak dodać rekord DNS",
@@ -736,6 +746,29 @@
             "show_generator": "Pokaż generator",
             "hide_generator": "Ukryj generator",
             "one_click_fix": "Napraw jednym kliknięciem"
+        },
+        "stats": {
+            "domains": "Domeny",
+            "verified": "Zweryfikowane",
+            "critical": "Problemy krytyczne",
+            "avg_score": "Śr. wynik (7 dni)"
+        },
+        "new_simulation": "Nowa symulacja",
+        "recommendations_title": "Rekomendacje",
+        "policy_label": "Polityka",
+        "dkim_selector": {
+            "label": "Selektor DKIM",
+            "placeholder": "np. abcdef1234567890abcdef1234567890",
+            "help": "Selektor, którym podpisuje Twój dostawca: część przed ._domainkey w rekordzie DKIM, który od niego dostałeś. Amazon SES pokazuje trzy w konsoli SES (Easy DKIM); wystarczy jeden. Kilka oddziel przecinkami.",
+            "save": "Zapisz i sprawdź",
+            "checked": "Sprawdzone selektory",
+            "found": "Znaleziono z selektorem"
+        },
+        "table": {
+            "subject": "Temat",
+            "domain": "Domena",
+            "score": "Wynik",
+            "folder": "Folder"
         }
     },
     "navigation": {
@@ -4661,7 +4694,46 @@
             "honeypot": "Honeypot (ukryte pole)",
             "enable_captcha": "Włącz CAPTCHA",
             "site_key": "Site Key",
-            "secret_key": "Secret Key"
+            "secret_key": "Secret Key",
+            "design_presets": "Presety designu",
+            "placeholder_hint": "Ten tekst pojawi się w polu jako podpowiedź",
+            "style_section_container": "Kontener",
+            "style_section_fields": "Pola",
+            "style_section_button": "Przycisk",
+            "style_section_effects": "Efekty",
+            "transparent_container": "Przezroczysty kontener",
+            "transparent_container_hint": "Tylko pola i przycisk",
+            "background_opacity": "Przezroczystość tła",
+            "text_color": "Kolor tekstu",
+            "border_width": "Grubość ramki",
+            "field_text_color": "Kolor tekstu pola",
+            "placeholder_color": "Kolor placeholdera",
+            "field_border_focus": "Ramka pola (focus)",
+            "field_border_radius": "Zaokrąglenie pól",
+            "button_hover_color": "Kolor hover",
+            "font_size": "Rozmiar czcionki",
+            "shadow": "Cień",
+            "shadow_color": "Kolor cienia",
+            "opacity": "Przezroczystość",
+            "blur": "Rozmycie",
+            "gradient": "Gradient",
+            "direction": "Kierunek",
+            "dir_right": "Prawo →",
+            "dir_left": "Lewo ←",
+            "dir_down": "Dół ↓",
+            "dir_up": "Góra ↑",
+            "dir_down_right": "Prawy dół ↘",
+            "dir_down_left": "Lewy dół ↙",
+            "dir_up_right": "Prawy górny ↗",
+            "dir_up_left": "Lewy górny ↖",
+            "gradient_from": "Kolor od",
+            "gradient_to": "Kolor do",
+            "animation": "Animacja",
+            "redirect_title": "Przekierowanie po zapisie",
+            "use_list_redirect": "Użyj ustawień listy",
+            "use_list_redirect_hint": "Przekierowanie będzie zależeć od ustawień Double Opt-in listy",
+            "custom_redirect_hint": "Własny adres URL przekierowania po zapisie",
+            "validation_error": "Błąd walidacji: {errors}"
         },
         "code": {
             "title": "Kod embed",

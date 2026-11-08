@@ -69,6 +69,12 @@ return [
     'domain' => [
         'spf_warning' => 'Rekord SPF ma status ostrzegawczy - może wpływać na dostarczalność',
         'dmarc_policy_none' => 'Polityka DMARC jest ustawiona na "none" - wiadomości mogą trafić do spamu',
+        'not_verified' => 'Domena nie jest jeszcze zweryfikowana (brak rekordu CNAME)',
+        'spf_critical' => 'Rekord SPF jest błędny',
+        'dkim_critical' => 'Rekord DKIM jest błędny',
+        'dkim_warning' => 'Nie znaleziono podpisu DKIM albo wymaga on uwagi',
+        'dmarc_critical' => 'Nie znaleziono rekordu DMARC',
+        'dmarc_warning' => 'Rekord DMARC wymaga uwagi',
     ],
 
     // DNS Issues (detailed)
@@ -81,6 +87,7 @@ return [
         'dkim_invalid' => 'Rekord DKIM jest nieprawidłowy (brak klucza publicznego)',
         'dmarc_missing' => 'Brak rekordu DMARC dla domeny',
         'dmarc_none' => 'Polityka DMARC ustawiona na "none"',
+        'dkim_selector_needed' => ':provider podpisuje pocztę własnymi selektorami, których nie da się odgadnąć. Wpisz jeden z nich w polu Selektor DKIM (część przed ._domainkey w rekordach CNAME od dostawcy).',
     ],
 
     // Test email
@@ -144,6 +151,7 @@ return [
         'good' => 'Dobry',
         'fair' => 'Dostateczny',
         'poor' => 'Słaby',
+        'risky' => 'Ryzykowny',
     ],
 
     // Folders
@@ -151,13 +159,66 @@ return [
         'inbox' => 'Główna skrzynka',
         'promotions' => 'Oferty',
         'spam' => 'Spam',
+        'unknown' => 'Nieznany',
     ],
 
-    // Table headers
-    'subject' => 'Temat',
-    'domain' => 'Domena',
-    'score' => 'Wynik',
-    'folder' => 'Folder',
+    // Table headers (a group of their own: plain strings named 'domain', 'score' and 'folder'
+    // here replaced the groups of the same name above, so their keys were never found)
+    'table' => [
+        'subject' => 'Temat',
+        'domain' => 'Domena',
+        'score' => 'Wynik',
+        'folder' => 'Folder',
+    ],
+
+    'status' => [
+        'pending' => 'Oczekuje',
+        'safe' => 'Chroniona',
+        'warning' => 'Wymaga uwagi',
+        'critical' => 'Krytyczny',
+    ],
+
+    'cname' => [
+        'verified' => 'Domena zweryfikowana',
+        'pending' => 'Czekamy na rekord CNAME',
+    ],
+
+    'spf' => [
+        'pending' => 'Jeszcze nie sprawdzono',
+        'valid' => 'Rekord SPF jest poprawny',
+        'warning' => 'Rekord SPF wymaga uwagi',
+        'critical' => 'Rekord SPF jest błędny',
+    ],
+
+    'dkim' => [
+        'pending' => 'Nie znaleziono jeszcze podpisu DKIM',
+        'valid' => 'Znaleziono rekord DKIM',
+        'warning' => 'Rekord DKIM wymaga uwagi',
+        'critical' => 'Rekord DKIM jest błędny',
+    ],
+
+    'dmarc' => [
+        'pending' => 'Jeszcze nie sprawdzono',
+        'valid' => 'Polityka DMARC jest opublikowana',
+        'warning' => 'DMARC wymaga uwagi',
+        'critical' => 'Brak rekordu DMARC',
+    ],
+
+    'dmarc_policy' => [
+        'none' => 'Tylko monitorowanie (p=none)',
+        'quarantine' => 'Kwarantanna (p=quarantine)',
+        'reject' => 'Odrzucanie (p=reject)',
+    ],
+
+    'warnings' => [
+        'spf_softfail' => 'Rekord SPF kończy się na ~all (soft fail).',
+        'dmarc_quarantine' => 'Polityka DMARC to quarantine; pełną ochronę daje reject.',
+        'dmarc_no_reporting' => 'Rekord DMARC nie ma adresu rua, więc nie dostajesz raportów.',
+    ],
+
+    'actions' => [
+        'go_to_domain_settings' => 'Otwórz ustawienia domeny',
+    ],
 
     // Actions
     'confirm_delete' => 'Czy na pewno chcesz usunąć tę domenę?',
@@ -174,6 +235,8 @@ return [
         'gmail_managed_dns' => 'Gmail automatycznie zarządza SPF/DKIM dla Twojego konta. Nie wymaga dodatkowej konfiguracji DNS.',
         'domain_not_configured' => 'Domena :domain nie jest skonfigurowana w DMARC Wiz. Dodaj ją, aby uzyskać pełną analizę dostarczalności.',
         'no_domain_warning' => 'Brak skonfigurowanej domeny. Analiza oparta tylko na treści wiadomości.',
+        'dkim_selector_saved' => 'Zapisano selektor DKIM. Rekordy DNS sprawdzono ponownie.',
+        'copied_to_clipboard' => 'Skopiowano do schowka!',
     ],
 
     // Validation
@@ -257,22 +320,23 @@ return [
     'dmarc_generator' => [
         'title' => 'Generator DMARC',
         'subtitle' => 'Wygeneruj optymalny rekord DMARC jednym kliknięciem',
-        'initial_explanation' => 'Zacznij od polityki "quarantine", aby monitorować bez blokowania wiadomości. To bezpieczny start.',
-        'recommended_explanation' => 'Pełna ochrona z polityką "reject". Użyj po 7-14 dniach monitorowania bez problemów.',
-        'minimal_explanation' => 'Minimalna konfiguracja DMARC z polityką "quarantine" i podstawowym raportowaniem.',
-        'upgrade_notice' => 'Po 7-14 dniach bez problemów możesz bezpiecznie przejść na politykę "reject" dla maksymalnej ochrony.',
+        'initial_explanation' => 'Zacznij tutaj: p=none tylko zbiera raporty i niczego nie blokuje. Czytaj raporty przez tydzień lub dwa, aby się upewnić, że każda usługa wysyłająca w imieniu domeny przechodzi SPF lub DKIM.',
+        'recommended_explanation' => 'Pełna ochrona: poczta, która nie przechodzi ani SPF, ani DKIM, jest odrzucana. Użyj po kilku tygodniach na quarantine bez problemów.',
+        'minimal_explanation' => 'Najkrótszy poprawny rekord DMARC: p=none bez raportów.',
+        'upgrade_notice' => 'Po tygodniu lub dwóch raportów bez nieznanych nadawców zmień p=none na p=quarantine, a później na p=reject.',
         'copy_record' => 'Kopiuj rekord',
         'current_policy' => 'Obecna polityka',
         'recommended_policy' => 'Zalecana polityka',
         'report_email' => 'E-mail do raportów',
         'report_email_hint' => 'Na ten adres będziesz otrzymywać raporty DMARC',
+        'quarantine_explanation' => 'Poczta, która nie przechodzi ani SPF, ani DKIM, trafia do spamu. Przejdź tu, gdy w raportach są tylko Twoje usługi.',
     ],
 
     // SPF Generator (One-Click Fix)
     'spf_generator' => [
         'title' => 'Generator SPF',
         'subtitle' => 'Wygeneruj zoptymalizowany rekord SPF',
-        'optimal_explanation' => 'Uproszczony rekord SPF z twardym odrzuceniem (-all). Zawiera tylko niezbędne include dla Twojego dostawcy.',
+        'optimal_explanation' => 'Twój obecny rekord z dopisanymi include, których potrzebują Twoi dostawcy wysyłki. Wszystko, co już w nim jest, zostaje, więc inne usługi wysyłające w imieniu domeny nadal działają. Kończy się na -all (hard fail).',
         'softfail_explanation' => 'Rekord SPF z miękkim odrzuceniem (~all). Mniej restrykcyjny, ale może wpływać na dostarczalność.',
         'lookup_warning' => 'Twój obecny rekord SPF przekracza lub zbliża się do limitu 10 wyszukiwań DNS. Zalecamy uproszczenie.',
         'lookup_count' => 'Liczba wyszukiwań DNS',
@@ -281,6 +345,7 @@ return [
         'current_record' => 'Obecny rekord',
         'optimal_record' => 'Zoptymalizowany rekord',
         'provider_detected' => 'Wykryty dostawca',
+        'needs_provider_include' => 'NetSendo nie wie, jakiego include SPF potrzebuje Twój dostawca SMTP. Weź go z instrukcji dostawcy (np. include:spf.example.net) i dopisz do rekordu SPF.',
     ],
 
     // DNS Generator Common

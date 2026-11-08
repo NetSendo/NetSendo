@@ -309,7 +309,7 @@ class AutomationApiTest extends TestCase
 
         $copy = $this->api('POST', "automations/{$rule->id}/duplicate")->assertCreated()->json('data');
         $this->assertNotSame($rule->id, $copy['id']);
-        $this->assertSame('[KOPIA] Rule', $copy['name']);
+        $this->assertSame('[COPY] Rule', $copy['name']);
         $this->assertFalse($copy['is_active']);
 
         $this->api('DELETE', "automations/{$rule->id}")->assertOk()->assertJsonPath('data.deleted', true);

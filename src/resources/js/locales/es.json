@@ -311,7 +311,8 @@
         "show": "Mostrar",
         "view_all": "Ver todo",
         "undo": "Deshacer",
-        "redo": "Rehacer"
+        "redo": "Rehacer",
+        "date": "Fecha"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -996,7 +997,10 @@
         },
         "simulations": {
             "recent": "Simulaciones recientes",
-            "empty": "No hay simulaciones todavía."
+            "empty": "No hay simulaciones todavía.",
+            "history": "Historial de simulaciones",
+            "no_history": "Aún no hay simulaciones",
+            "no_history_desc": "Ejecute su primera simulación de InboxPassport AI para ver aquí los resultados."
         },
         "dmarc_wiz": {
             "title": "DMARC Wiz",
@@ -1076,7 +1080,8 @@
             "step2_desc": "Proporcione el asunto y el contenido del mensaje que desea comprobar.",
             "step3_title": "Análisis de IA",
             "step3_desc": "Nuestra IA analizará el mensaje en busca de filtros de spam.",
-            "what_we_check": "¿Qué comprobamos?"
+            "what_we_check": "¿Qué comprobamos?",
+            "title": "InboxPassport AI"
         },
         "delete_domain": "Eliminar dominio",
         "confirm_delete_message": "¿Está seguro de que desea eliminar el dominio \"{domain}\"? Todos los datos asociados serán eliminados permanentemente.",
@@ -1129,20 +1134,24 @@
         "dmarc_generator": {
             "title": "Generador DMARC",
             "subtitle": "Genere un registro DMARC óptimo con un clic",
-            "initial_explanation": "Comience con la política \"quarantine\" para monitorear sin bloquear. Es un inicio seguro.",
-            "recommended_explanation": "Protección completa con política \"reject\". Úsela después de 7-14 días de monitoreo sin problemas.",
-            "minimal_explanation": "Configuración mínima de DMARC con política \"quarantine\" y reportes básicos.",
-            "upgrade_notice": "Después de 7-14 días sin problemas, puede actualizar de forma segura a la política \"reject\" para máxima protección.",
+            "initial_explanation": "Empiece aquí: p=none solo recoge informes y no bloquea nada. Lea los informes durante una o dos semanas para comprobar que todos los servicios que envían por su dominio pasan SPF o DKIM.",
+            "recommended_explanation": "Protección completa: el correo que no pasa ni SPF ni DKIM se rechaza. Úselo tras unas semanas en quarantine sin problemas.",
+            "minimal_explanation": "El registro DMARC válido más corto: p=none sin informes.",
+            "upgrade_notice": "Tras una o dos semanas de informes sin remitentes desconocidos, cambie p=none por p=quarantine y, más adelante, por p=reject.",
             "copy_record": "Copiar registro",
             "current_policy": "Política actual",
             "recommended_policy": "Política recomendada",
             "report_email": "Email de reportes",
-            "report_email_hint": "Recibirá reportes DMARC en esta dirección"
+            "report_email_hint": "Recibirá reportes DMARC en esta dirección",
+            "level_none": "Supervisar",
+            "level_quarantine": "Cuarentena",
+            "level_reject": "Rechazar",
+            "quarantine_explanation": "El correo que no pasa ni SPF ni DKIM va a spam. Pase a este nivel cuando los informes muestren solo sus propios servicios."
         },
         "spf_generator": {
             "title": "Generador SPF",
             "subtitle": "Genere un registro SPF optimizado",
-            "optimal_explanation": "Registro SPF simplificado con fallo duro (-all). Incluye solo los includes necesarios para su proveedor.",
+            "optimal_explanation": "Su registro actual con los include que necesitan sus proveedores de envío. Todo lo que ya contiene se mantiene, así que los demás servicios que envían por el dominio siguen funcionando. Termina en -all (hard fail).",
             "softfail_explanation": "Registro SPF con fallo suave (~all). Menos restrictivo pero puede afectar la entregabilidad.",
             "lookup_warning": "Su registro SPF actual excede o se acerca al límite de 10 consultas DNS. Recomendamos simplificarlo.",
             "lookup_count": "Cantidad de consultas DNS",
@@ -1150,7 +1159,8 @@
             "copy_record": "Copiar registro",
             "current_record": "Registro actual",
             "optimal_record": "Registro óptimo",
-            "provider_detected": "Proveedor detectado"
+            "provider_detected": "Proveedor detectado",
+            "needs_provider_include": "NetSendo no sabe qué include SPF necesita su proveedor SMTP. Tómelo de la guía del proveedor (por ejemplo include:spf.example.net) y añádalo a su registro SPF."
         },
         "dns_generator": {
             "instructions_title": "Cómo añadir un registro DNS",
@@ -1162,6 +1172,29 @@
             "show_generator": "Mostrar generador",
             "hide_generator": "Ocultar generador",
             "one_click_fix": "Corrección con un clic"
+        },
+        "stats": {
+            "domains": "Dominios",
+            "verified": "Verificados",
+            "critical": "Problemas críticos",
+            "avg_score": "Puntuación media (7 días)"
+        },
+        "new_simulation": "Nueva simulación",
+        "recommendations_title": "Recomendaciones",
+        "policy_label": "Política",
+        "dkim_selector": {
+            "label": "Selector DKIM",
+            "placeholder": "p. ej. abcdef1234567890abcdef1234567890",
+            "help": "El selector con el que firma su proveedor: la parte antes de ._domainkey en el registro DKIM que le dio. Amazon SES muestra tres en la consola de SES (Easy DKIM); basta con uno. Separe varios con comas.",
+            "save": "Guardar y comprobar",
+            "checked": "Selectores comprobados",
+            "found": "Encontrado con el selector"
+        },
+        "table": {
+            "subject": "Asunto",
+            "domain": "Dominio",
+            "score": "Puntuación",
+            "folder": "Carpeta"
         }
     },
     "navigation": {
@@ -3714,7 +3747,46 @@
             "honeypot": "Honeypot (campo oculto)",
             "enable_captcha": "Activar CAPTCHA",
             "site_key": "Clave del sitio",
-            "secret_key": "Clave secreta"
+            "secret_key": "Clave secreta",
+            "design_presets": "Diseños predefinidos",
+            "placeholder_hint": "Este texto aparece en el campo como sugerencia",
+            "style_section_container": "Contenedor",
+            "style_section_fields": "Campos",
+            "style_section_button": "Botón",
+            "style_section_effects": "Efectos",
+            "transparent_container": "Contenedor transparente",
+            "transparent_container_hint": "Solo los campos y el botón",
+            "background_opacity": "Opacidad del fondo",
+            "text_color": "Color del texto",
+            "border_width": "Grosor del borde",
+            "field_text_color": "Color del texto del campo",
+            "placeholder_color": "Color del marcador de posición",
+            "field_border_focus": "Borde del campo (foco)",
+            "field_border_radius": "Redondeo de los campos",
+            "button_hover_color": "Color al pasar el ratón",
+            "font_size": "Tamaño de fuente",
+            "shadow": "Sombra",
+            "shadow_color": "Color de la sombra",
+            "opacity": "Opacidad",
+            "blur": "Desenfoque",
+            "gradient": "Degradado",
+            "direction": "Dirección",
+            "dir_right": "Derecha →",
+            "dir_left": "Izquierda ←",
+            "dir_down": "Abajo ↓",
+            "dir_up": "Arriba ↑",
+            "dir_down_right": "Abajo a la derecha ↘",
+            "dir_down_left": "Abajo a la izquierda ↙",
+            "dir_up_right": "Arriba a la derecha ↗",
+            "dir_up_left": "Arriba a la izquierda ↖",
+            "gradient_from": "Color inicial",
+            "gradient_to": "Color final",
+            "animation": "Animación",
+            "redirect_title": "Redirección tras la suscripción",
+            "use_list_redirect": "Usar la configuración de la lista",
+            "use_list_redirect_hint": "La redirección depende de la configuración de doble opt-in de la lista",
+            "custom_redirect_hint": "Su propia URL de redirección tras la suscripción",
+            "validation_error": "Error de validación: {errors}"
         },
         "code": {
             "title": "Código de inserción",

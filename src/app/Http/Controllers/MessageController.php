@@ -199,6 +199,27 @@ class MessageController extends Controller
     }
 
     /**
+     * Timezone of the date picked in the message form: Message > List > Group > User Account,
+     * the rule of Message::$effective_timezone, applied to the lists chosen in the form.
+     */
+    private function formTimezone(array $validated, ?Message $message = null): string
+    {
+        $listIds = array_key_exists('contact_list_ids', $validated)
+            ? ($validated['contact_list_ids'] ?? [])
+            : ($message ? $message->contactLists()->pluck('contact_lists.id')->all() : []);
+
+        $lists = $listIds
+            ? \App\Models\ContactList::with('group')->whereIn('id', $listIds)->get()
+            : collect();
+
+        return Message::resolveTimezone(
+            $validated['timezone'] ?? null,
+            $lists,
+            $message?->user ?? auth()->user()
+        );
+    }
+
+    /**
      * Get recipient counts for specific messages (for progressive loading)
      * Returns accurate counts including exclusions and filters
      */
@@ -370,7 +391,7 @@ class MessageController extends Controller
         if (!empty($validated['contact_list_ids'])) {
             $count = auth()->user()->accessibleLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
-                return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
+                return back()->withErrors(['contact_list_ids' => __('messages.campaign.invalid_lists')]);
             }
         }
 
@@ -378,7 +399,7 @@ class MessageController extends Controller
         if (!empty($validated['excluded_list_ids'])) {
             $count = auth()->user()->accessibleLists()->whereIn('id', $validated['excluded_list_ids'])->count();
             if ($count !== count($validated['excluded_list_ids'])) {
-                return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
+                return back()->withErrors(['excluded_list_ids' => __('messages.campaign.invalid_excluded_lists')]);
             }
         }
 
@@ -386,7 +407,7 @@ class MessageController extends Controller
         if (!empty($validated['mailbox_id'])) {
             $mailbox = auth()->user()->mailboxes()->find($validated['mailbox_id']);
             if (!$mailbox) {
-                return back()->withErrors(['mailbox_id' => 'Nieprawidłowa skrzynka nadawcza.']);
+                return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
             }
         }
 
@@ -395,9 +416,9 @@ class MessageController extends Controller
         $sendAt = null;
 
         if ($validated['status'] === 'scheduled') {
-            // Determine timezone for parsing the input date
-            // Priority: Form timezone -> User timezone -> App timezone (UTC)
-            $timezone = $validated['timezone'] ?? DateHelper::getUserTimezone();
+            // The date is entered in the message's timezone:
+            // Message > List > Group > User Account (as the form's Timezone field says)
+            $timezone = $this->formTimezone($validated);
 
             if (!empty($validated['send_at'])) {
                 // Parse the input date in the user's/selected timezone, then convert to UTC for storage
@@ -523,9 +544,9 @@ class MessageController extends Controller
 
         // Determine success message based on status
         $successMessage = match($message->status) {
-            'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
-            'draft' => 'Wiadomość została zapisana jako szkic.',
-            default => 'Wiadomość została zapisana.',
+            'scheduled' => $message->send_at ? __('messages.campaign.scheduled') : __('messages.campaign.queued'),
+            'draft' => __('messages.campaign.saved_draft'),
+            default => __('messages.campaign.saved'),
         };
 
         return redirect()->route('messages.index')
@@ -557,8 +578,9 @@ class MessageController extends Controller
                 'contact_list_ids' => $message->contactLists->pluck('id'),
                 'excluded_list_ids' => $message->excludedLists->pluck('id'),
                 // Convert stored UTC time back to user's timezone for display
+                // Shown in the timezone it was entered in (Message > List > Group > User Account)
                 'send_at' => $message->send_at
-                    ? $message->send_at->setTimezone($message->timezone ?? DateHelper::getUserTimezone())->format('Y-m-d H:i:s')
+                    ? $message->send_at->copy()->setTimezone($message->effective_timezone)->format('Y-m-d H:i:s')
                     : null,
                 'time_of_day' => $message->time_of_day ? substr($message->time_of_day, 0, 5) : null,
                 'timezone' => $message->timezone,
@@ -773,7 +795,7 @@ class MessageController extends Controller
         if (!empty($validated['contact_list_ids'])) {
             $count = auth()->user()->accessibleLists()->whereIn('id', $validated['contact_list_ids'])->count();
             if ($count !== count($validated['contact_list_ids'])) {
-                return back()->withErrors(['contact_list_ids' => 'Nieprawidłowa lista odbiorców.']);
+                return back()->withErrors(['contact_list_ids' => __('messages.campaign.invalid_lists')]);
             }
         }
 
@@ -781,7 +803,7 @@ class MessageController extends Controller
         if (!empty($validated['excluded_list_ids'])) {
             $count = auth()->user()->accessibleLists()->whereIn('id', $validated['excluded_list_ids'])->count();
             if ($count !== count($validated['excluded_list_ids'])) {
-                return back()->withErrors(['excluded_list_ids' => 'Nieprawidłowa lista wykluczeń.']);
+                return back()->withErrors(['excluded_list_ids' => __('messages.campaign.invalid_excluded_lists')]);
             }
         }
 
@@ -789,7 +811,7 @@ class MessageController extends Controller
         if (!empty($validated['mailbox_id'])) {
             $mailbox = auth()->user()->mailboxes()->find($validated['mailbox_id']);
             if (!$mailbox) {
-                return back()->withErrors(['mailbox_id' => 'Nieprawidłowa skrzynka nadawcza.']);
+                return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
             }
         }
 
@@ -798,9 +820,9 @@ class MessageController extends Controller
         $sendAt = null;
 
         if ($validated['status'] === 'scheduled') {
-            // Determine timezone for parsing the input date
-            // Priority: Form timezone -> User timezone -> App timezone (UTC)
-            $timezone = $validated['timezone'] ?? DateHelper::getUserTimezone();
+            // The date is entered in the message's timezone:
+            // Message > List > Group > User Account (as the form's Timezone field says)
+            $timezone = $this->formTimezone($validated, $message);
 
             if (!empty($validated['send_at'])) {
                 // Parse the input date in the user's/selected timezone, then convert to UTC for storage
@@ -939,9 +961,9 @@ class MessageController extends Controller
 
         // Determine success message based on status
         $successMessage = match($message->status) {
-            'scheduled' => $message->send_at ? 'Wiadomość została zaplanowana.' : 'Wiadomość została wysłana do kolejki.',
-            'draft' => 'Wiadomość została zapisana jako szkic.',
-            default => 'Wiadomość została zaktualizowana.',
+            'scheduled' => $message->send_at ? __('messages.campaign.scheduled') : __('messages.campaign.queued'),
+            'draft' => __('messages.campaign.saved_draft'),
+            default => __('messages.campaign.updated'),
         };
 
         return redirect()->route('messages.index')
@@ -981,7 +1003,7 @@ class MessageController extends Controller
         if ($message->type !== 'broadcast') {
             return response()->json([
                 'success' => false,
-                'message' => 'Tylko wiadomości jednorazowe (broadcast) mogą być ponownie wysłane.'
+                'message' => __('messages.campaign.resend_broadcast_only')
             ], 422);
         }
 
@@ -1004,7 +1026,7 @@ class MessageController extends Controller
         if ($newCount === 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Brak nowych odbiorców do wysłania. Wszyscy subskrybenci już otrzymali tę wiadomość.'
+                'message' => __('messages.campaign.resend_no_new_recipients')
             ], 422);
         }
 
@@ -1055,7 +1077,7 @@ class MessageController extends Controller
         return response()->json([
             'success' => true,
             'new_recipients' => $newCount,
-            'message' => "Wiadomość została zaplanowana do wysłania. Nowych odbiorców: {$newCount}."
+            'message' => __('messages.campaign.resend_scheduled', ['count' => $newCount])
         ]);
     }
 
@@ -1087,7 +1109,7 @@ class MessageController extends Controller
         $message->delete();
 
         return redirect()->route('messages.index')
-            ->with('success', 'Wiadomość została usunięta.');
+            ->with('success', __('messages.campaign.deleted'));
     }
 
     public function stats(Request $request, Message $message)
@@ -1593,7 +1615,7 @@ class MessageController extends Controller
         if (!$message->isQueueType()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tylko wiadomości typu Kolejka mogą mieć status aktywności.'
+                'message' => __('messages.campaign.queue_only_active')
             ], 422);
         }
 
@@ -1604,7 +1626,7 @@ class MessageController extends Controller
             'success' => true,
             'is_active' => $message->is_active,
             'status' => $message->status,
-            'message' => $message->is_active ? 'Wiadomość została aktywowana.' : 'Wiadomość została dezaktywowana.'
+            'message' => $message->is_active ? __('messages.campaign.activated') : __('messages.campaign.deactivated')
         ]);
     }
 
@@ -1734,7 +1756,7 @@ class MessageController extends Controller
         if (!$message->isQueueType()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ta funkcja jest dostępna tylko dla wiadomości typu Kolejka.',
+                'message' => __('messages.campaign.queue_only_feature'),
             ], 422);
         }
 
@@ -1765,14 +1787,14 @@ class MessageController extends Controller
         if (!$message->isQueueType()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ta funkcja jest dostępna tylko dla wiadomości typu Kolejka.',
+                'message' => __('messages.campaign.queue_only_feature'),
             ], 422);
         }
 
         if (!($message->is_active ?? true)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Wiadomość musi być aktywna, aby wysyłać do pominiętych subskrybentów.',
+                'message' => __('messages.campaign.must_be_active'),
             ], 422);
         }
 
@@ -1783,7 +1805,7 @@ class MessageController extends Controller
         if (empty($missedSubscribers)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Brak pominiętych subskrybentów do wysłania.',
+                'message' => __('messages.campaign.no_skipped'),
             ], 422);
         }
 
@@ -1795,7 +1817,7 @@ class MessageController extends Controller
             'success' => true,
             'created' => $created,
             'already_exists' => $alreadyExists,
-            'message' => "Zaplanowano wysyłkę do {$created} pominiętych subskrybentów.",
+            'message' => __('messages.campaign.skipped_scheduled', ['count' => $created]),
         ]);
     }
 

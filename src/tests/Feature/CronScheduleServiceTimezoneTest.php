@@ -165,7 +165,8 @@ class CronScheduleServiceTimezoneTest extends TestCase
 
     /**
      * Test: Autoresponder without subscriber timezone uses old behavior.
-     * With send_in_subscriber_timezone=false, the time_of_day is in UTC.
+     * With send_in_subscriber_timezone=false, the time_of_day is in the message timezone
+     * (Message > List > Group > User Account), here UTC: no list or account timezone is set.
      *
      * time_of_day = 10:00 UTC.
      * Current UTC time = 10:01 → should be dispatched.

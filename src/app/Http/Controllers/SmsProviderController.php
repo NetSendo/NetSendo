@@ -89,7 +89,7 @@ class SmsProviderController extends Controller
         }
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został dodany.');
+            ->with('success', __('sms_providers.notifications.created'));
     }
 
     /**
@@ -133,7 +133,7 @@ class SmsProviderController extends Controller
         }
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został zaktualizowany.');
+            ->with('success', __('sms_providers.notifications.updated'));
     }
 
     /**
@@ -148,7 +148,7 @@ class SmsProviderController extends Controller
         $smsProvider->delete();
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został usunięty.');
+            ->with('success', __('sms_providers.notifications.deleted'));
     }
 
     /**
@@ -172,7 +172,7 @@ class SmsProviderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Błąd: ' . $e->getMessage(),
+                'message' => __('sms_providers.notifications.test_failed', ['error' => $e->getMessage()]),
             ]);
         }
     }
@@ -190,7 +190,7 @@ class SmsProviderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Ustawiono jako domyślny dostawca SMS.',
+            'message' => __('sms_providers.notifications.set_default'),
         ]);
     }
 }

@@ -19,6 +19,7 @@ class DomainConfiguration extends Model
         'cname_verified_at',
         'spf_status',
         'dkim_status',
+        'dkim_selector',
         'dmarc_status',
         'dmarc_policy',
         'dmarc_upgraded_at',

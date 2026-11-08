@@ -907,6 +907,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify')->middleware('licensed:deliverability_shield');
         Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh')->middleware('licensed:deliverability_shield');
         Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts')->middleware('licensed:deliverability_shield');
+        Route::put('/domains/{domain}/dkim-selector', [\App\Http\Controllers\DeliverabilityController::class, 'updateDkimSelector'])->name('domains.dkim-selector')->middleware('licensed:deliverability_shield');
         Route::delete('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'removeDomain'])->name('domains.destroy');
 
         // DNS Record Generators (One-Click Fix)

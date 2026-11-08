@@ -271,7 +271,7 @@ class SubscriptionForm extends Model
     public function duplicate(): self
     {
         $newForm = $this->replicate();
-        $newForm->name = "[KOPIA] " . $this->name;
+        $newForm->name = __('common.copy.prefix') . ' ' . $this->name;
         $newForm->slug = self::generateUniqueSlug();
         $newForm->status = 'draft';
         $newForm->submissions_count = 0;

@@ -154,8 +154,12 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+    # Browsers connect here for Live Visitors. REVERB_PORT is also the port the app
+    # containers use to reach Reverb inside the network (always 8085), so pick another
+    # host port with REVERB_HOST_PORT. Behind a reverse proxy that forwards /app/ to
+    # this port, set REVERB_BIND_ADDRESS=127.0.0.1 so it is not reachable from outside.
     ports:
-      - "${REVERB_PORT:-8085}:8085"
+      - "${REVERB_BIND_ADDRESS:-0.0.0.0}:${REVERB_HOST_PORT:-${REVERB_PORT:-8085}}:8085"
     environment:
       # Only the app migrates and seeds; this container waits for the schema
       - NETSENDO_RUN_MIGRATIONS=false
