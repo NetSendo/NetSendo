@@ -3,6 +3,10 @@
 # =============================================================================
 # Minimal plugin set for development - only built-in plugins
 
+# SMTP AUTH with the logins NetSendo writes (one per domain with NMI on); only a
+# logged-in session may relay, every other outside recipient is refused
+netsendo_auth
+
 # Rate limiting
 limit
 

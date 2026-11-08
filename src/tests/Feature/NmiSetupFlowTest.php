@@ -40,9 +40,21 @@ class NmiSetupFlowTest extends TestCase
     {
         parent::setUp();
 
-        config(['nmi.features.enabled' => true, 'nmi.features.allow_new_mailboxes' => true]);
+        config([
+            'nmi.features.enabled' => true,
+            'nmi.features.allow_new_mailboxes' => true,
+            // The MTA login file (NmiMtaAuthFileTest) goes to a temporary place
+            'nmi.mta_auth_file' => sys_get_temp_dir() . '/nmi-setup-flow-' . getmypid() . '/mta-users.json',
+        ]);
         $this->user = User::factory()->create();
         $this->other = User::factory()->create();
+    }
+
+    protected function tearDown(): void
+    {
+        \Illuminate\Support\Facades\File::deleteDirectory(dirname(config('nmi.mta_auth_file')));
+
+        parent::tearDown();
     }
 
     private function domain(array $attributes = [], ?User $owner = null): DomainConfiguration

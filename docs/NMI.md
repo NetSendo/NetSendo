@@ -34,8 +34,18 @@ Navigate to **Settings → Mail Infrastructure** in the UI.
 
 The mailbox is refused while the domain is not verified, NMI is off for it, the IP belongs to another domain or has no DKIM keys. An IP a mailbox sends through cannot be moved, removed from its domain or deleted, and NMI cannot be switched off for a domain whose mailboxes use it. Without GOLD the setup stays readable, existing NMI mailboxes keep working and can be edited or switched off; setting NMI up for a new mailbox, assigning IPs and switching NMI on need GOLD.
 
+### How NetSendo logs in to the MTA
+
+Each domain with NMI on has its own login (`nmi-<domain id>-<8 characters>` and a 40-character random password, stored encrypted in the database). NetSendo writes the logins to `storage/nmi/mta-users.json`, in Docker the `nmi-auth` volume, mounted read-only into `nmi-mta`:
+
+```json
+{"version": 1, "users": {"nmi-3-k2j4h5g6": {"sha256": "<SHA-256 of the password>", "domain": "example.com"}}}
+```
+
+The file is rewritten when NMI is switched on or off for a domain or a domain is removed, and every 5 minutes by `php artisan nmi:sync-mta-auth` (scheduler). The Haraka plugin `netsendo_auth` (`docker/haraka/plugins/netsendo_auth.js`) reads it at every `AUTH`, so changes need no restart. `AUTH` is offered only to connections from the private Docker network or over TLS. Only a logged-in session may relay; every other outside recipient gets `550`.
+
 > [!WARNING]
-> **The MTA container does not deliver mail yet.** The Haraka configuration in `docker/haraka/config` loads only `limit` and `queue/smtp_forward`: it offers no `AUTH` and relays for nobody (`550 I cannot deliver mail for <…>`), queued mail would go to `queue/smtp_forward`, for which no `smtp_forward.ini` (forwarding host) is configured, and nothing binds outgoing connections to the dedicated IP. The panel setup above is complete; sending through NMI needs that MTA work first.
+> **The MTA does not deliver to recipients yet.** After the login, Haraka hands mail to `queue/smtp_forward`, for which no `smtp_forward.ini` (forwarding host) is configured: direct delivery to the recipients' mail servers is not set up. Nothing binds outgoing connections to the dedicated IP (on the Docker bridge network they leave from the host's main address), and `install.sh` does not download `docker/haraka`, from which `nmi-mta` is built.
 
 ---
 
@@ -111,6 +121,7 @@ NMI creates the following persistent volumes:
 | `nmi_logs`  | MTA log files       |
 | `nmi_dkim`  | DKIM private keys   |
 | `nmi_tls`   | TLS certificates    |
+| `nmi_auth`  | MTA logins written by NetSendo (hashes) |
 
 ---
 

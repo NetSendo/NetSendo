@@ -14,8 +14,12 @@ RUN adduser -D -h /opt/haraka haraka \
 WORKDIR /opt/haraka
 RUN haraka -i /opt/haraka
 
-# Copy configuration files
+# Copy configuration files and NetSendo's plugins
 COPY config/ /opt/haraka/config/
+COPY plugins/ /opt/haraka/plugins/
+
+# Logins written by NetSendo (nmi-auth volume, mounted read-only)
+RUN mkdir -p /opt/haraka/auth
 
 # Set permissions
 RUN chown -R haraka:haraka /opt/haraka

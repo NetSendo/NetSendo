@@ -92,6 +92,19 @@ class DomainConfiguration extends Model
                 $model->cname_selector = 'ns-' . Str::random(12);
             }
         });
+
+        // NetSendo MTA accepts the login of a domain with NMI on: keep its login file current
+        static::saved(function (self $model) {
+            if ($model->wasChanged(['nmi_enabled', 'nmi_smtp_username', 'nmi_smtp_password', 'deleted_at'])
+                || ($model->wasRecentlyCreated && $model->nmi_enabled)) {
+                app(\App\Services\Nmi\MtaAuthFile::class)->sync();
+            }
+        });
+        static::deleted(function (self $model) {
+            if ($model->nmi_enabled) {
+                app(\App\Services\Nmi\MtaAuthFile::class)->sync();
+            }
+        });
     }
 
     /**

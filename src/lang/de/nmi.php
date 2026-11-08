@@ -26,4 +26,5 @@ return [
     'domain_disabled' => 'NetSendo MTA ist für :domain ausgeschaltet.',
     'domain_not_verified' => 'Die Domain :domain ist noch nicht verifiziert. Fügen Sie zuerst ihren CNAME-Eintrag hinzu.',
     'domain_in_use' => 'Postfächer senden über NetSendo MTA dieser Domain (:count). Stellen Sie sie zuerst auf einen anderen Anbieter um.',
+    'installation_disabled' => 'NetSendo MTA ist in dieser Installation ausgeschaltet (NMI_ENABLED in .env).',
 ];

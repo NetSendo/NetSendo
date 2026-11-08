@@ -41,6 +41,8 @@ services:
       # Persistent user data
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+      # NetSendo MTA logins (written here, read by nmi-mta)
+      - nmi-auth:/var/www/storage/nmi
       # Shared volume for nginx to serve static files
       - netsendo-public:/var/www/public
     environment:
@@ -81,6 +83,8 @@ services:
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+      # NetSendo MTA logins, rewritten every 5 minutes (nmi:sync-mta-auth)
+      - nmi-auth:/var/www/storage/nmi
     environment:
       # Only the app migrates and seeds; this container waits for the schema
       - NETSENDO_RUN_MIGRATIONS=false
@@ -333,6 +337,8 @@ services:
       - ./docker/haraka/config:/opt/haraka/config:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
+      # Logins written by NetSendo (one per domain with NMI on)
+      - nmi-auth:/opt/haraka/auth:ro
       # DKIM keys - managed by application
       - nmi-dkim:/opt/haraka/config/dkim
       # TLS certificates
@@ -382,4 +388,6 @@ volumes:
   nmi-dkim:
     driver: local
   nmi-tls:
+    driver: local
+  nmi-auth:
     driver: local

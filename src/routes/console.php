@@ -223,6 +223,13 @@ Schedule::command('nmi:check-blacklists')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-blacklists.log'));
 
+// NMI - logins the MTA accepts (one per domain with NMI on), rewritten when they change and
+// every 5 minutes, e.g. after the nmi-auth volume was recreated. Without a GOLD condition:
+// NMI set up under GOLD keeps sending after the licence ends.
+Schedule::command('nmi:sync-mta-auth')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
 // NMI - Rotacja kluczy DKIM (jeśli auto-rotate włączone) - raz w tygodniu
 Schedule::command('nmi:rotate-dkim')
     ->when($licensed(Feature::MailInfrastructure))

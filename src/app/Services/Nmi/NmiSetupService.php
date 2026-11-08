@@ -74,6 +74,12 @@ class NmiSetupService
      */
     public function enable(DomainConfiguration $domain): void
     {
+        if (!config('nmi.features.enabled')) {
+            throw ValidationException::withMessages([
+                'domain' => __('nmi.installation_disabled'),
+            ]);
+        }
+
         if (!$domain->cname_verified) {
             throw ValidationException::withMessages([
                 'domain' => __('nmi.domain_not_verified', ['domain' => $domain->domain]),

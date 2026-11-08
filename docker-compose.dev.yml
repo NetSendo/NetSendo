@@ -194,6 +194,8 @@ services:
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     volumes:
       - ./docker/haraka/config:/opt/haraka/config
+      # Logins NetSendo writes to storage/nmi (src is mounted into the app)
+      - ./src/storage/nmi:/opt/haraka/auth:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
     environment:

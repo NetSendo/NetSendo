@@ -23,6 +23,10 @@ return [
     'mta_port' => env('NMI_MTA_PORT', 25),
     'mta_encryption' => env('NMI_MTA_ENCRYPTION', 'none'),
 
+    // Logins the MTA accepts (one per domain with NMI on), written by NetSendo and read by
+    // the netsendo_auth Haraka plugin. In Docker: the nmi-auth volume, shared with nmi-mta.
+    'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('nmi/mta-users.json')),
+
     /*
     |--------------------------------------------------------------------------
     | IP Provider Settings

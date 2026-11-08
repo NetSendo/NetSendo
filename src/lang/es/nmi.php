@@ -26,4 +26,5 @@ return [
     'domain_disabled' => 'NetSendo MTA está desactivado para :domain.',
     'domain_not_verified' => 'El dominio :domain aún no está verificado. Añada primero su registro CNAME.',
     'domain_in_use' => 'Hay cuentas de correo que envían a través de NetSendo MTA de este dominio (:count). Cámbielas primero a otro proveedor.',
+    'installation_disabled' => 'NetSendo MTA está desactivado en esta instalación (NMI_ENABLED en .env).',
 ];
